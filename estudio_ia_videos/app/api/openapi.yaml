@@ -1,0 +1,570 @@
+openapi: 3.0.3
+info:
+  title: MVP Vídeos TécnicoCursos API
+  description: |
+    API para produção de vídeos técnicos NR a partir de PPTX.
+    
+    ## Autenticação
+    A maioria dos endpoints requer autenticação via Supabase Auth.
+    Inclua o header `Authorization: Bearer <token>` nas requisições.
+    
+    ## Rate Limiting
+    - APIs padrão: 100 req/min
+    - APIs de render: 10 req/min
+    - APIs de TTS: 30 req/min
+  version: 1.0.0
+  contact:
+    name: Equipe TécnicoCursos
+  license:
+    name: MIT
+
+servers:
+  - url: /api
+    description: API Base
+
+tags:
+  - name: System
+    description: Informações do sistema e health checks
+  - name: Auth
+    description: Autenticação e usuários
+  - name: Projects
+    description: Gerenciamento de projetos de vídeo
+  - name: Render
+    description: Pipeline de renderização de vídeos
+  - name: PPTX
+    description: Upload e parsing de arquivos PPTX
+  - name: TTS
+    description: Text-to-Speech (ElevenLabs, Azure, etc.)
+  - name: Analytics
+    description: Métricas e estatísticas
+  - name: Compliance
+    description: LGPD/GDPR - Export e deleção de dados
+
+paths:
+  /system/version:
+    get:
+      tags: [System]
+      summary: Obter versão do sistema
+      description: Retorna informações de versão, build e features habilitadas
+      responses:
+        '200':
+          description: Informações de versão
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionInfo'
+
+  /system/info:
+    get:
+      tags: [System]
+      summary: Obter informações do sistema (Admin)
+      description: Retorna métricas detalhadas do sistema. Requer role admin.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Informações do sistema
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemInfo'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /analytics/usage-stats:
+    get:
+      tags: [Analytics]
+      summary: Estatísticas de uso
+      description: Retorna estatísticas agregadas de projetos, renders e usuários
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [7d, 30d, 90d, 1y]
+            default: 30d
+          description: Período de análise
+      responses:
+        '200':
+          description: Estatísticas de uso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsageStats'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /user/export-data:
+    get:
+      tags: [Compliance]
+      summary: Exportar dados do usuário (LGPD)
+      description: Exporta todos os dados do usuário em JSON ou CSV
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [json, csv]
+            default: json
+        - name: includeProjects
+          in: query
+          schema:
+            type: boolean
+            default: true
+        - name: includeRenders
+          in: query
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: Dados exportados
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataExport'
+            text/csv:
+              schema:
+                type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /user/delete-account:
+    get:
+      tags: [Compliance]
+      summary: Preview de deleção de conta
+      description: Retorna resumo do que será deletado
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Preview de deleção
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeletePreview'
+    post:
+      tags: [Compliance]
+      summary: Deletar conta (LGPD)
+      description: Deleta permanentemente a conta e todos os dados associados
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - confirmPhrase
+              properties:
+                confirmPhrase:
+                  type: string
+                  description: Frase de confirmação "DELETAR MINHA CONTA"
+      responses:
+        '200':
+          description: Conta deletada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteResult'
+        '400':
+          description: Frase de confirmação incorreta
+
+  /render/start:
+    post:
+      tags: [Render]
+      summary: Iniciar renderização
+      description: Inicia um job de renderização de vídeo
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RenderRequest'
+      responses:
+        '200':
+          description: Job criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderJob'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /render/jobs:
+    get:
+      tags: [Render]
+      summary: Listar jobs de renderização
+      description: Lista todos os jobs do usuário autenticado
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, queued, processing, completed, failed, cancelled]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+            maximum: 100
+      responses:
+        '200':
+          description: Lista de jobs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jobs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RenderJob'
+                  total:
+                    type: integer
+
+  /pptx/upload:
+    post:
+      tags: [PPTX]
+      summary: Upload de arquivo PPTX
+      description: Faz upload e processa um arquivo PowerPoint
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Arquivo .pptx
+                extractNotes:
+                  type: boolean
+                  default: true
+                extractImages:
+                  type: boolean
+                  default: true
+      responses:
+        '200':
+          description: PPTX processado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PPTXResult'
+        '400':
+          description: Arquivo inválido
+        '413':
+          description: Arquivo muito grande
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token JWT do Supabase Auth
+
+  responses:
+    Unauthorized:
+      description: Token inválido ou ausente
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Sem permissão para acessar este recurso
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    RateLimited:
+      description: Rate limit excedido
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+              description: Segundos até poder tentar novamente
+
+  schemas:
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Mensagem de erro
+        code:
+          type: string
+          description: Código do erro
+
+    VersionInfo:
+      type: object
+      properties:
+        version:
+          type: string
+          example: "1.0.0"
+        build:
+          type: object
+          properties:
+            date:
+              type: string
+              format: date-time
+            commit:
+              type: string
+        runtime:
+          type: object
+          properties:
+            node:
+              type: string
+            nextjs:
+              type: string
+        features:
+          type: object
+          additionalProperties:
+            type: boolean
+
+    SystemInfo:
+      type: object
+      properties:
+        database:
+          type: object
+          properties:
+            connected:
+              type: boolean
+            latencyMs:
+              type: number
+        redis:
+          type: object
+          properties:
+            connected:
+              type: boolean
+            memoryUsage:
+              type: string
+        storage:
+          type: object
+          properties:
+            available:
+              type: boolean
+            usedBytes:
+              type: integer
+        queue:
+          type: object
+          properties:
+            pendingJobs:
+              type: integer
+            processingJobs:
+              type: integer
+
+    UsageStats:
+      type: object
+      properties:
+        period:
+          type: string
+        projects:
+          type: object
+          properties:
+            total:
+              type: integer
+            created:
+              type: integer
+            byType:
+              type: object
+              additionalProperties:
+                type: integer
+        renders:
+          type: object
+          properties:
+            total:
+              type: integer
+            completed:
+              type: integer
+            failed:
+              type: integer
+            avgDurationMs:
+              type: number
+        users:
+          type: object
+          properties:
+            active:
+              type: integer
+            new:
+              type: integer
+
+    DataExport:
+      type: object
+      properties:
+        exportedAt:
+          type: string
+          format: date-time
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+            email:
+              type: string
+            createdAt:
+              type: string
+              format: date-time
+        projects:
+          type: array
+          items:
+            type: object
+        renders:
+          type: array
+          items:
+            type: object
+
+    DeletePreview:
+      type: object
+      properties:
+        userId:
+          type: string
+        dataToDelete:
+          type: object
+          properties:
+            projectsCount:
+              type: integer
+            rendersCount:
+              type: integer
+            storageBytes:
+              type: integer
+        confirmationRequired:
+          type: string
+          example: "DELETAR MINHA CONTA"
+
+    DeleteResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        deletedAt:
+          type: string
+          format: date-time
+        summary:
+          type: object
+          properties:
+            projectsDeleted:
+              type: integer
+            rendersDeleted:
+              type: integer
+            storageBytesFreed:
+              type: integer
+
+    RenderRequest:
+      type: object
+      required:
+        - projectId
+      properties:
+        projectId:
+          type: string
+          format: uuid
+        quality:
+          type: string
+          enum: [draft, production, ultra]
+          default: production
+        resolution:
+          type: string
+          enum: ["720p", "1080p", "4k"]
+          default: "1080p"
+        fps:
+          type: integer
+          enum: [24, 30, 60]
+          default: 30
+        format:
+          type: string
+          enum: [mp4, webm, mov]
+          default: mp4
+
+    RenderJob:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, queued, processing, completed, failed, cancelled]
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+        outputUrl:
+          type: string
+          format: uri
+          nullable: true
+        errorMessage:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    PPTXResult:
+      type: object
+      properties:
+        fileId:
+          type: string
+          format: uuid
+        fileName:
+          type: string
+        slideCount:
+          type: integer
+        slides:
+          type: array
+          items:
+            type: object
+            properties:
+              index:
+                type: integer
+              title:
+                type: string
+              content:
+                type: string
+              notes:
+                type: string
+              images:
+                type: array
+                items:
+                  type: string
+                  format: uri
+        theme:
+          type: object
+          properties:
+            primaryColor:
+              type: string
+            fontFamily:
+              type: string

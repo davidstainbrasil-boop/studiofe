@@ -1,0 +1,2103 @@
+{
+  "generatedAt": "2025-12-23T20:19:55.845Z",
+  "totalFilesScanned": 1634,
+  "totalFindings": 349,
+  "anyCount": 348,
+  "tsNoCheckCount": 1,
+  "findings": [
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/_Fases_REAL/EXECUTOR_AUTOMATIZADO.ts",
+      "line": 119,
+      "snippet": "private async extractSlideContent(slide: any): Promise<string[]> {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/_Fases_REAL/EXECUTOR_AUTOMATIZADO.ts",
+      "line": 164,
+      "snippet": "private async processImages(images: any[]): Promise<PPTXImage[]> {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/_Fases_REAL/EXECUTOR_AUTOMATIZADO.ts",
+      "line": 215,
+      "snippet": "private extractLayout(slide: any): PPTXLayout {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/_Fases_REAL/EXECUTOR_AUTOMATIZADO.ts",
+      "line": 285,
+      "snippet": "layout: slide.layout as any, // Converter para JSONB",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/layout.ts",
+      "line": 20,
+      "snippet": "metadata?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/layout.ts",
+      "line": 22,
+      "snippet": "viewport?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/layout.ts",
+      "line": 45,
+      "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/layout.ts",
+      "line": 48,
+      "snippet": "type PageParams = any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/layout.ts",
+      "line": 50,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/layout.ts",
+      "line": 51,
+      "snippet": "searchParams?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/layout.ts",
+      "line": 56,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/layout.ts",
+      "line": 61,
+      "snippet": "type RevalidateRange<T> = T extends { revalidate: any } ? NonNegative<T['revalidate']> : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/layout.ts",
+      "line": 63,
+      "snippet": "// If T is unknown or any, it will be an empty {} type. Otherwise, it will be the same as Omit<T, keyof Base>.",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/layout.ts",
+      "line": 64,
+      "snippet": "type OmitWithTag<T, K extends keyof any, _M> = Omit<T, K>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/layout.ts",
+      "line": 67,
+      "snippet": "type FirstArg<T extends Function> = T extends (...args: [infer T, any]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/layout.ts",
+      "line": 68,
+      "snippet": "type SecondArg<T extends Function> = T extends (...args: [any, infer T]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/layout.ts",
+      "line": 73,
+      "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/login/page.ts",
+      "line": 20,
+      "snippet": "metadata?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/login/page.ts",
+      "line": 22,
+      "snippet": "viewport?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/login/page.ts",
+      "line": 45,
+      "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/login/page.ts",
+      "line": 48,
+      "snippet": "type PageParams = any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/login/page.ts",
+      "line": 50,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/login/page.ts",
+      "line": 51,
+      "snippet": "searchParams?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/login/page.ts",
+      "line": 56,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/login/page.ts",
+      "line": 61,
+      "snippet": "type RevalidateRange<T> = T extends { revalidate: any } ? NonNegative<T['revalidate']> : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/login/page.ts",
+      "line": 63,
+      "snippet": "// If T is unknown or any, it will be an empty {} type. Otherwise, it will be the same as Omit<T, keyof Base>.",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/login/page.ts",
+      "line": 64,
+      "snippet": "type OmitWithTag<T, K extends keyof any, _M> = Omit<T, K>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/login/page.ts",
+      "line": 67,
+      "snippet": "type FirstArg<T extends Function> = T extends (...args: [infer T, any]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/login/page.ts",
+      "line": 68,
+      "snippet": "type SecondArg<T extends Function> = T extends (...args: [any, infer T]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/login/page.ts",
+      "line": 73,
+      "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/page.ts",
+      "line": 20,
+      "snippet": "metadata?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/page.ts",
+      "line": 22,
+      "snippet": "viewport?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/page.ts",
+      "line": 45,
+      "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/page.ts",
+      "line": 48,
+      "snippet": "type PageParams = any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/page.ts",
+      "line": 50,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/page.ts",
+      "line": 51,
+      "snippet": "searchParams?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/page.ts",
+      "line": 56,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/page.ts",
+      "line": 61,
+      "snippet": "type RevalidateRange<T> = T extends { revalidate: any } ? NonNegative<T['revalidate']> : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/page.ts",
+      "line": 63,
+      "snippet": "// If T is unknown or any, it will be an empty {} type. Otherwise, it will be the same as Omit<T, keyof Base>.",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/page.ts",
+      "line": 64,
+      "snippet": "type OmitWithTag<T, K extends keyof any, _M> = Omit<T, K>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/page.ts",
+      "line": 67,
+      "snippet": "type FirstArg<T extends Function> = T extends (...args: [infer T, any]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/page.ts",
+      "line": 68,
+      "snippet": "type SecondArg<T extends Function> = T extends (...args: [any, infer T]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/page.ts",
+      "line": 73,
+      "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/api/analytics/user-metrics/route.ts",
+      "line": 202,
+      "snippet": "const data = activity.eventData as Record<string, any> || {};",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/api/analytics/user-metrics/route.ts",
+      "line": 248,
+      "snippet": "const data = event.eventData as Record<string, any> || {};",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/api/avatar/render/route.ts",
+      "line": 32,
+      "snippet": "visemes: z.array(z.any()),",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/api/certificates/route.ts",
+      "line": 10,
+      "snippet": "var mockCertificates: Map<string, any>;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/api/certificates/verify/route.ts",
+      "line": 7,
+      "snippet": "var mockCertificates: Map<string, any>;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/api/external/media/search/route.ts",
+      "line": 111,
+      "snippet": "const results = data.results.map((photo: Record<string, any>) => ({",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/api/external/media/search/route.ts",
+      "line": 165,
+      "snippet": "const results = data.photos.map((photo: Record<string, any>) => ({",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/api/external/media/search/route.ts",
+      "line": 221,
+      "snippet": "const results = data.hits.map((image: Record<string, any>) => ({",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/api/external/media/search/route.ts",
+      "line": 276,
+      "snippet": "const results = data.data.map((image: Record<string, any>) => ({",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/api/org/[orgId]/audit-logs/export/route.ts",
+      "line": 51,
+      "snippet": "const csvData = result.logs.map((log: Record<string, any>) => ({",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/api/render/[jobId]/progress/route.ts",
+      "line": 139,
+      "snippet": "// eslint-disable-next-line @typescript-eslint/no-explicit-any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/api/render/[jobId]/progress/route.ts",
+      "line": 140,
+      "snippet": "queueEvents.on('progress', onProgress as any)",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/api/render/[jobId]/progress/route.ts",
+      "line": 141,
+      "snippet": "// eslint-disable-next-line @typescript-eslint/no-explicit-any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/api/render/[jobId]/progress/route.ts",
+      "line": 142,
+      "snippet": "queueEvents.on('completed', onCompleted as any)",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/api/render/[jobId]/progress/route.ts",
+      "line": 143,
+      "snippet": "// eslint-disable-next-line @typescript-eslint/no-explicit-any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/api/render/[jobId]/progress/route.ts",
+      "line": 144,
+      "snippet": "queueEvents.on('failed', onFailed as any)",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/api/render/[jobId]/progress/route.ts",
+      "line": 152,
+      "snippet": "// eslint-disable-next-line @typescript-eslint/no-explicit-any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/api/render/[jobId]/progress/route.ts",
+      "line": 153,
+      "snippet": "queueEvents.removeListener('progress', onProgress as any)",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/api/render/[jobId]/progress/route.ts",
+      "line": 154,
+      "snippet": "// eslint-disable-next-line @typescript-eslint/no-explicit-any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/api/render/[jobId]/progress/route.ts",
+      "line": 155,
+      "snippet": "queueEvents.removeListener('completed', onCompleted as any)",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/api/render/[jobId]/progress/route.ts",
+      "line": 156,
+      "snippet": "// eslint-disable-next-line @typescript-eslint/no-explicit-any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/api/render/[jobId]/progress/route.ts",
+      "line": 157,
+      "snippet": "queueEvents.removeListener('failed', onFailed as any)",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/api/timeline/projects/route.ts",
+      "line": 13,
+      "snippet": "tracks: z.array(z.any()), // We trust the structure for now, or could be more specific",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/avatar-system-real/components/AppearanceCustomizer.tsx",
+      "line": 125,
+      "snippet": "const updateSetting = (key: keyof AppearanceSettings, value: any) => {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/avatar-system-real/components/AvatarGenerator.tsx",
+      "line": 42,
+      "snippet": "onAvatarGenerated?: (avatar: any) => void;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/avatar-system-real/components/AvatarGenerator.tsx",
+      "line": 61,
+      "snippet": "const [generatedAvatar, setGeneratedAvatar] = useState<any>(null);",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/avatar-system-real/components/AvatarGenerator.tsx",
+      "line": 65,
+      "snippet": "const handleConfigChange = (key: keyof AvatarConfig, value: any) => {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/avatar-system-real/components/FacialAnimationSystem.tsx",
+      "line": 40,
+      "snippet": "avatar?: any;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/avatar-system-real/components/FacialAnimationSystem.tsx",
+      "line": 41,
+      "snippet": "onAnimationGenerated?: (animation: any) => void;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/avatar-system-real/components/FacialAnimationSystem.tsx",
+      "line": 72,
+      "snippet": "const [generatedAnimation, setGeneratedAnimation] = useState<any>(null);",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/avatar-system-real/components/LipSyncSystem.tsx",
+      "line": 41,
+      "snippet": "avatar?: any;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/avatar-system-real/components/RealTimeRenderer.tsx",
+      "line": 179,
+      "snippet": "const updateRenderSetting = (key: keyof RenderSettings, value: any) => {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/3d-environments/environment-studio.tsx",
+      "line": 37,
+      "snippet": "const [environments, setEnvironments] = useState<any[]>([]);",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/3d-environments/environment-studio.tsx",
+      "line": 38,
+      "snippet": "const [selectedEnvironment, setSelectedEnvironment] = useState<any>(null);",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/3d-environments/environment-studio.tsx",
+      "line": 42,
+      "snippet": "const [currentScene, setCurrentScene] = useState<any>(null);",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/HybridRenderPanel.tsx",
+      "line": 175,
+      "snippet": "onValueChange={(value: any) => setSettings(prev => ({ ...prev, proxyResolution: value }))}",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/HybridRenderPanel.tsx",
+      "line": 192,
+      "snippet": "onValueChange={(value: any) => setSettings(prev => ({ ...prev, finalResolution: value }))}",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/HybridRenderPanel.tsx",
+      "line": 209,
+      "snippet": "onValueChange={(value: any) => setSettings(prev => ({ ...prev, quality: value }))}",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/WorkflowAutomation.tsx",
+      "line": 643,
+      "snippet": "onCreate: (workflow: Omit<Workflow, 'id' | 'createdAt' | 'updatedAt' | 'executionCount' | 'lastExecuted' | 'averageExecutionTime' | 'success",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/ai/ai-assistant.tsx",
+      "line": 222,
+      "snippet": "let context: any = { confidence: 85 };",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/ai/content-optimizer.tsx",
+      "line": 38,
+      "snippet": "const [analysis, setAnalysis] = useState<any>(null)",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/ai-content-generation/ai-content-generator.tsx",
+      "line": 37,
+      "snippet": "result?: any;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/ai-content-generation/ai-content-generator.tsx",
+      "line": 48,
+      "snippet": "parameters: any;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/ai-content-generation/ai-powered-content-generator.tsx",
+      "line": 53,
+      "snippet": "result?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/ai-intelligence/content-analyzer.tsx",
+      "line": 22,
+      "snippet": "videoData?: any;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/analytics/charts-section.tsx",
+      "line": 74,
+      "snippet": "const CustomTooltip = ({ active, payload, label }: any) => {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/analytics/charts-section.tsx",
+      "line": 81,
+      "snippet": "{payload.map((entry: any, index: number) => (",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/analytics/charts-section.tsx",
+      "line": 139,
+      "snippet": "const ttsProvidersData = ttsStats.providerBreakdown.map((provider: any) => ({",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/analytics/charts.tsx",
+      "line": 23,
+      "snippet": "data: any[];",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/analytics/charts.tsx",
+      "line": 196,
+      "snippet": "formatter={(value: any, name: any) => [",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/analytics/charts.tsx",
+      "line": 231,
+      "snippet": "export function RealTimeMetrics({ data, className }: { data: any; className?: string }) {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/analytics/content-analysis-engine.tsx",
+      "line": 70,
+      "snippet": "[key: string]: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/analytics/content-analysis-engine.tsx",
+      "line": 467,
+      "snippet": "label={({ segment, percentage }: any) => `${segment} ${percentage}%`}",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/analytics/real-analytics-dashboard.tsx",
+      "line": 209,
+      "snippet": "icon: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/analytics/real-analytics-dashboard.tsx",
+      "line": 726,
+      "snippet": "label={({ name, percent }: any) => `${name} ${(Number(percent) * 100).toFixed(0)}%`}",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/analytics/real-time-analytics-real.tsx",
+      "line": 49,
+      "snippet": "eventsByDay: any[]",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/assets/assets-manager-premium.tsx",
+      "line": 246,
+      "snippet": "setFilters((prev: any) => ({ ...prev, ...preset.filters } as SearchFilters))",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/assets/assets-manager-premium.tsx",
+      "line": 650,
+      "snippet": "onCheckedChange={(checked) => setFilters((prev: any) => ({ ...prev, safeSearch: checked }))}",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/avatars/AppearanceCustomization.tsx",
+      "line": 339,
+      "snippet": "const updateAppearance = (category: keyof AppearanceSettings, updates: any) => {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/avatars/Avatar3DRenderer.tsx",
+      "line": 312,
+      "snippet": "const controlsRef = useRef<any>();",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/avatars/AvatarExportSystem.tsx",
+      "line": 113,
+      "snippet": "avatarData?: any;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/avatars/avatar-customizer.tsx",
+      "line": 31,
+      "snippet": "avatar: any;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/avatars/avatar-customizer.tsx",
+      "line": 32,
+      "snippet": "onCustomizationChange: (customization: any) => void;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/avatars/avatar-customizer.tsx",
+      "line": 69,
+      "snippet": "const handleCustomizationUpdate = (key: string, value: any) => {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/avatars/avatar-gallery.tsx",
+      "line": 92,
+      "snippet": "personality?: any;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/avatars/avatar-gallery.tsx",
+      "line": 93,
+      "snippet": "voice?: any;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/avatars/avatar-integration.tsx",
+      "line": 36,
+      "snippet": "onAvatarImported: (avatar: any) => void;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/avatars/avatar-integration.tsx",
+      "line": 44,
+      "snippet": "const [hyperAvatars, setHyperAvatars] = useState<any[]>([]);",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/avatars/avatar-studio.tsx",
+      "line": 67,
+      "snippet": "lipSyncData: any;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/avatars/avatar-studio.tsx",
+      "line": 89,
+      "snippet": "selectedAvatar?: any;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/avatars/avatar-studio.tsx",
+      "line": 90,
+      "snippet": "onAvatarChange?: (avatar: any) => void;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/avatars/vidnoz-talking-head-studio.tsx",
+      "line": 1270,
+      "snippet": "{selectedAvatar?.clothing.map((item: any) => (",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/avatars/vidnoz-talking-photo-pro.tsx",
+      "line": 184,
+      "snippet": "const [generatedVideos, setGeneratedVideos] = useState<any[]>([])",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/canvas/CanvasClient.tsx",
+      "line": 11,
+      "snippet": "onReady?: (canvas: any) => void;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/canvas/CanvasClient.tsx",
+      "line": 22,
+      "snippet": "const fabricCanvasRef = useRef<any>(null);",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/canvas/advanced-canvas-editor.tsx",
+      "line": 87,
+      "snippet": "// @ts-ignore - FabricManager returns any currently",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/canvas/advanced-canvas-editor.tsx",
+      "line": 136,
+      "snippet": "const handleSelection = useCallback((e: any) => {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/canvas/advanced-canvas-editor.tsx",
+      "line": 247,
+      "snippet": "fabric?.Image.fromURL(e.target?.result as string, (img: any) => {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/canvas-editor/professional-canvas-editor.tsx",
+      "line": 140,
+      "snippet": "canvas.on('selection:created', (e: any) => {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/canvas-editor/professional-canvas-editor.tsx",
+      "line": 291,
+      "snippet": "fabric.Image.fromURL(event.target?.result as string, (img: any) => {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/canvas-editor-pro/core/cache-manager.tsx",
+      "line": 238,
+      "snippet": "optimizeCacheStrategy: (canvas: any, stats: CacheStats) => {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/canvas-editor-pro/core/cache-manager.tsx",
+      "line": 246,
+      "snippet": "objects.forEach((obj: any, index: number) => {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/canvas-editor-pro/core/canvas-engine.tsx",
+      "line": 58,
+      "snippet": "// @ts-ignore - FabricManager returns any currently",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/canvas-editor-pro/core/canvas-engine.tsx",
+      "line": 101,
+      "snippet": "fabricCanvas.on('object:modified', (e: any) => {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/canvas-editor-pro/core/canvas-engine.tsx",
+      "line": 105,
+      "snippet": "// @ts-ignore - cacheObject expects any currently",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/canvas-editor-pro/core/canvas-engine.tsx",
+      "line": 111,
+      "snippet": "fabricCanvas.on('object:added', (e: any) => {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/canvas-editor-pro/core/performance-monitor.tsx",
+      "line": 23,
+      "snippet": "startMonitoring: (canvas: any) => void",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/canvas-editor-pro/core/performance-monitor.tsx",
+      "line": 48,
+      "snippet": "const updateMetrics = useCallback((canvas: any) => {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/canvas-editor-pro/core/performance-monitor.tsx",
+      "line": 87,
+      "snippet": "const startMonitoring = useCallback((canvas: any) => {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/canvas-editor-pro/ui/quick-actions-bar.tsx",
+      "line": 93,
+      "snippet": "canvas?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/canvas-editor-pro/ui/quick-actions-bar.tsx",
+      "line": 95,
+      "snippet": "selectedObjects?: any[]",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/collaboration/pptx-collaboration-hub.tsx",
+      "line": 97,
+      "snippet": "data?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/collaboration/realtime-collab-advanced.tsx",
+      "line": 66,
+      "snippet": "snapshot: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/collaboration/realtime-collab-advanced.tsx",
+      "line": 345,
+      "snippet": "<Tabs value={activeTab} onValueChange={(v: any) => setActiveTab(v)} className=\"flex-1 flex flex-col\">",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/dashboard/analytics-dashboard.tsx",
+      "line": 505,
+      "snippet": "label={(props: any) => `${props.name} ${(props.percent * 100).toFixed(0)}%`}",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/dashboard/external-apis.tsx",
+      "line": 602,
+      "snippet": "{Object.entries(complianceResults.checks || {}).map(([check, result]: [string, any]) => (",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/dashboard/prd-features-showcase.tsx",
+      "line": 33,
+      "snippet": "icon: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/dashboard/render-pipeline.tsx",
+      "line": 86,
+      "snippet": "settings: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/dashboard/render-pipeline.tsx",
+      "line": 232,
+      "snippet": "const getEstimatedTime = (job: any) => {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/dashboard/sprint9-overview.tsx",
+      "line": 55,
+      "snippet": "ml: any[];",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/dashboard/unified-dashboard-complete.tsx",
+      "line": 181,
+      "snippet": "data: any;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/demo/canvas-editor-demo-sprint29.tsx",
+      "line": 31,
+      "snippet": ") as React.ComponentType<any>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/demo/canvas-editor-demo-sprint29.tsx",
+      "line": 34,
+      "snippet": "const [canvasData, setCanvasData] = useState<any>(null)",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/demo/canvas-editor-demo-sprint29.tsx",
+      "line": 36,
+      "snippet": "const handleSave = (data: Record<string, any>) => {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/editor/ai-voice-avatar-panel.tsx",
+      "line": 33,
+      "snippet": "onContentGenerated: (content: { type: 'tts' | 'avatar'; data: any }) => void",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/editor/ai-voice-avatar-panel.tsx",
+      "line": 34,
+      "snippet": "onAddToSlide: (content: { type: 'tts' | 'avatar'; data: any }, slideIndex: number) => void",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/editor/animaker-editor-v2.tsx",
+      "line": 164,
+      "snippet": "const data = event.data as { action?: string; elementIds?: string[]; updates?: Partial<UnifiedElement>; settings?: any; jobId?: string };",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/editor/avatar-preview.tsx",
+      "line": 50,
+      "snippet": "onAvatarChange?: (updates: any) => void;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/editor/avatar-preview.tsx",
+      "line": 279,
+      "snippet": "const handleAvatarUpdate = (updates: any) => {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/editor/properties-panel.tsx",
+      "line": 94,
+      "snippet": "const updateProperty = (property: string, value: any) => {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/editor/properties-panel.tsx",
+      "line": 98,
+      "snippet": "const updateStyle = (property: string, value: any) => {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/editor/timeline-panel.tsx",
+      "line": 48,
+      "snippet": "onAddKeyframe: (elementId: string, time: number, property: string, value: any) => void;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/editor/unified-preview-player.tsx",
+      "line": 10,
+      "snippet": "content: any;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/editor/unified-preview-player.tsx",
+      "line": 102,
+      "snippet": "content: any;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/effects/lottie-animation-studio.tsx",
+      "line": 45,
+      "snippet": "animationData: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/effects/lottie-animation-studio.tsx",
+      "line": 254,
+      "snippet": "anim.addEventListener('enterFrame', (event: any) => {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/integration/editor-workflow.tsx",
+      "line": 51,
+      "snippet": "data?: any;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/layout/navbar.tsx",
+      "line": 24,
+      "snippet": "const [user, setUser] = useState<any>(null);",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/layouts/Breadcrumbs.tsx",
+      "line": 230,
+      "snippet": "{breadcrumbs.map((item: any, index: number) => {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/narration/slide-narration-studio.tsx",
+      "line": 40,
+      "snippet": "slides: any[]",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/notifications/NotificationsCenter.tsx",
+      "line": 73,
+      "snippet": "[key: string]: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/nr/NrCard.tsx",
+      "line": 36,
+      "snippet": "} catch (e: any) {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/prototypes/avatar-tts-prototype.tsx",
+      "line": 46,
+      "snippet": "onGenerate?: (config: any) => void",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/prototypes/compliance-prototype.tsx",
+      "line": 36,
+      "snippet": "onUpdate?: (report: any) => void",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/prototypes/editor-prototype.tsx",
+      "line": 29,
+      "snippet": "project?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/prototypes/labs-prototype.tsx",
+      "line": 34,
+      "snippet": "icon: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/providers/production-provider.tsx",
+      "line": 112,
+      "snippet": "// eslint-disable-next-line @typescript-eslint/no-explicit-any -- WebSocket class extension requires type assertion",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/real-system/unified-control-panel.tsx",
+      "line": 157,
+      "snippet": "voices.push(...elevenData.voices.map((v: any) => ({ ...v, provider: 'elevenlabs' })))",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/real-system/unified-control-panel.tsx",
+      "line": 162,
+      "snippet": "voices.push(...azureData.voices.map((v: any) => ({ ...v, provider: 'azure' })))",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/render/FFmpegProcessor.tsx",
+      "line": 100,
+      "snippet": "parameters: { [key: string]: any };",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/render/FFmpegProcessor.tsx",
+      "line": 115,
+      "snippet": "details?: any;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/render/RemotionComposer.tsx",
+      "line": 167,
+      "snippet": "transform: any;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/render/RemotionComposer.tsx",
+      "line": 215,
+      "snippet": "transform: any;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/render/RemotionComposer.tsx",
+      "line": 257,
+      "snippet": "transform: any;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/render/RenderEngine.tsx",
+      "line": 93,
+      "snippet": "details?: any;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/render/RenderEngine.tsx",
+      "line": 260,
+      "snippet": "const addLog = (level: RenderLog['level'], message: string, details?: any) => {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/render/advanced-render-pipeline.tsx",
+      "line": 311,
+      "snippet": "icon: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/render/batch-render-queue.tsx",
+      "line": 77,
+      "snippet": "const addToQueue = useCallback((projectData: any) => {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/render/professional-render-engine.tsx",
+      "line": 100,
+      "snippet": "const startRender = useCallback(async (projectData: any) => {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/studio/pptx-import-module.tsx",
+      "line": 159,
+      "snippet": "const projectSlides: ProjectSlide[] = slides.map((slide: any, index: number) => ({",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/studio/tts-module.tsx",
+      "line": 333,
+      "snippet": "// Pause any currently playing audio",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/templates/nr-compliance-engine.tsx",
+      "line": 170,
+      "snippet": "content: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/templates/nr-templates-gallery-enhanced.tsx",
+      "line": 217,
+      "snippet": "<Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/templates/nr-templates-gallery-enhanced.tsx",
+      "line": 237,
+      "snippet": "onValueChange={(v: any) => setDurationRange(v)}",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/templates/nr-templates-gallery.tsx",
+      "line": 32,
+      "snippet": "slides: any[]",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/templates/pptx-template-library.tsx",
+      "line": 122,
+      "snippet": "duration: 'any' | 'short' | 'medium' | 'long' // <2min, 2-10min, >10min",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/templates/pptx-template-library.tsx",
+      "line": 296,
+      "snippet": "duration: 'any',",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/templates/pptx-template-library.tsx",
+      "line": 327,
+      "snippet": "if (filters.duration !== 'any') {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/templates/pptx-template-library.tsx",
+      "line": 675,
+      "snippet": "<Select value={filters.duration} onValueChange={(value: string) => setFilters(prev => ({ ...prev, duration: value as 'any' | 'short' | 'medi",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/templates/pptx-template-library.tsx",
+      "line": 680,
+      "snippet": "<SelectItem value=\"any\">Qualquer</SelectItem>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/templates/pptx-template-library.tsx",
+      "line": 728,
+      "snippet": "duration: 'any',",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/templates/pptx-template-library.tsx",
+      "line": 774,
+      "snippet": "duration: 'any',",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/templates/template-3d-preview.tsx",
+      "line": 407,
+      "snippet": "const handleSettingsChange = (key: keyof ViewerSettings, value: any) => {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/templates/template-editor.tsx",
+      "line": 111,
+      "snippet": "const handleSettingsChange = (field: string, value: any) => {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/templates/template-studio-advanced.tsx",
+      "line": 566,
+      "snippet": "analytics?: any;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/templates/template-studio-advanced.tsx",
+      "line": 567,
+      "snippet": "complianceResult?: any;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/test/PPTXTest.tsx",
+      "line": 46,
+      "snippet": "const [templates, setTemplates] = useState<any[]>([]);",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/test/PPTXTest.tsx",
+      "line": 397,
+      "snippet": "{preview.slides?.map((slide: any, index: number) => (",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/test/RenderingTest.tsx",
+      "line": 29,
+      "snippet": "const [jobs, setJobs] = useState<any[]>([]);",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/timeline/TimelineEditorCollaborative.tsx",
+      "line": 25,
+      "snippet": "const [notifications, setNotifications] = useState<any[]>([])",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/timeline/TimelineEditorCollaborative.tsx",
+      "line": 26,
+      "snippet": "const [userCursors, setUserCursors] = useState<Map<string, any>>(new Map())",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/timeline/store/timeline-store.ts",
+      "line": 134,
+      "snippet": "// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Immer draft type workaround for deep nested arrays",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/timeline/store/timeline-store.ts",
+      "line": 135,
+      "snippet": "state.tracks.push(track as any);",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/timeline/store/timeline-store.ts",
+      "line": 153,
+      "snippet": "// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Immer draft type workaround",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/timeline/store/timeline-store.ts",
+      "line": 154,
+      "snippet": "track.elements.push(element as any);",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/timeline/store/timeline-store.ts",
+      "line": 192,
+      "snippet": "// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Immer draft type workaround",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/timeline/store/timeline-store.ts",
+      "line": 193,
+      "snippet": "targetTrack.elements.push(element as any);",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/components/ui/form.tsx",
+      "line": 37,
+      "snippet": "// eslint-disable-next-line @typescript-eslint/no-explicit-any -- react-hook-form Controller generic inference limitation",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/dashboard/admin/governanca/charts.tsx",
+      "line": 34,
+      "snippet": "any: item.any_remaining || 0",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/dashboard/admin/governanca/charts.tsx",
+      "line": 75,
+      "snippet": "<h3 className=\"text-lg font-medium mb-4 text-gray-700\">Redução de 'any' (Tipagem)</h3>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/dashboard/admin/governanca/charts.tsx",
+      "line": 92,
+      "snippet": "dataKey=\"any\"",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/dashboard/admin/governanca/page.tsx",
+      "line": 114,
+      "snippet": "function Th({ children }: { children: any }) { return <th className=\"px-2 py-1 text-left font-medium\">{children}</th>; }",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/dashboard/admin/governanca/page.tsx",
+      "line": 115,
+      "snippet": "function Td({ children, colSpan, className }: { children: any; colSpan?: number; className?: string }) { return <td colSpan={colSpan} classN",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/dashboard/admin/queues/page.tsx",
+      "line": 21,
+      "snippet": "data: any;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/dashboard/page.tsx",
+      "line": 28,
+      "snippet": "icon: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/dashboard/security-analytics/page.tsx",
+      "line": 284,
+      "snippet": "label={({ name, percent }: any) =>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/dashboard/security-analytics/page.tsx",
+      "line": 409,
+      "snippet": "label={({ name, percent }: any) =>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/e2e/helpers.ts",
+      "line": 288,
+      "snippet": "response: any,",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/editor/avatars/page.tsx",
+      "line": 54,
+      "snippet": "} catch (err: any) {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/editor/avatars/page.tsx",
+      "line": 98,
+      "snippet": "} catch (err: any) {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/editor/pptx/[id]/page.tsx",
+      "line": 134,
+      "snippet": "result?: any;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/editor/pro/components/KonvaStage.tsx",
+      "line": 156,
+      "snippet": "onChange: (attrs: any) => void",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/editor/pro/components/KonvaStage.tsx",
+      "line": 246,
+      "snippet": "}: any) => {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/editor/pro/components/Sidebar.tsx",
+      "line": 82,
+      "snippet": "const NavButton = ({ icon, active, onClick, label }: any) => (",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/hooks/use-external-apis.ts",
+      "line": 498,
+      "snippet": "const updateProviderConfig = useCallback(async (providerId: string, config: any) => {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/hooks/use-external-apis.ts",
+      "line": 512,
+      "snippet": "const testProvider = useCallback(async (providerId: string, testData: any) => {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/hooks/use-render-pipeline.ts",
+      "line": 263,
+      "snippet": "// Refresh data on any change",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/hooks/use-render-pipeline.ts",
+      "line": 486,
+      "snippet": "const updateRenderJob = useCallback(async (jobId: string, data: any) => {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/hooks/useAdvancedAI.ts",
+      "line": 285,
+      "snippet": "// Cancel any ongoing request",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/hooks/useAdvancedAI.ts",
+      "line": 362,
+      "snippet": "): Promise<any> => {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/hooks/useAdvancedEditor.ts",
+      "line": 1113,
+      "snippet": "// Clear any cached data",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/hooks/useAdvancedTemplates.ts",
+      "line": 596,
+      "snippet": "const isTemplateContent = (value: any): value is Template['content'] => {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/hooks/useEditor.ts",
+      "line": 117,
+      "snippet": "type ElementProperties = Record<string, any>;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/hooks/useEditor.ts",
+      "line": 507,
+      "snippet": "function getDefaultProperties(type: EditorElement['type']): Record<string, any> {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/hooks/useMagneticTimeline.ts",
+      "line": 12,
+      "snippet": "onBeatDetected?: (beats: any[]) => void;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/hooks/useMagneticTimeline.ts",
+      "line": 20,
+      "snippet": "beats: any[];",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/hooks/useMagneticTimeline.ts",
+      "line": 49,
+      "snippet": "const [beats, setBeats] = useState<any[]>([]);",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/hooks/useRealTimeCollaboration.ts",
+      "line": 490,
+      "snippet": "const broadcastUpdate = useCallback((event: string, payload: any) => {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/hooks/useRealTimeCollaboration.ts",
+      "line": 554,
+      "snippet": "const shareDocument = useCallback(async (type: string, data: any): Promise<string> => {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/hooks/useTimelineSocket.ts",
+      "line": 153,
+      "snippet": "leftPresences.forEach((p: any) => {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/lib/alerts/alert-manager.ts",
+      "line": 67,
+      "snippet": "async getAlertStatistics(orgId: string, startDate: Date, endDate: Date): Promise<any> {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/lib/audit-logging-real.ts",
+      "line": 10,
+      "snippet": "metadata?: Record<string, any>;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/lib/cache/cache-invalidation.ts",
+      "line": 20,
+      "snippet": "export interface CacheEntry<T = any> {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/lib/database/auth.ts",
+      "line": 27,
+      "snippet": "metadata: Record<string, any>;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/lib/database/repositories/notifications.repository.ts",
+      "line": 14,
+      "snippet": "data?: Record<string, any>;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/lib/database/repositories/templates.repository.ts",
+      "line": 15,
+      "snippet": "templateData: Record<string, any>;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/lib/database/repositories/tts-jobs.repository.ts",
+      "line": 16,
+      "snippet": "voiceSettings?: Record<string, any>;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/lib/error-handling.ts",
+      "line": 223,
+      "snippet": "* Normalize any error to a consistent format",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/lib/export/audio-processor.ts",
+      "line": 32,
+      "snippet": "export const DEFAULT_ENHANCEMENT_VALUES: Record<AudioEnhancementType, any> = {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/lib/hooks/use-rbac.ts",
+      "line": 78,
+      "snippet": "// eslint-disable-next-line @typescript-eslint/no-explicit-any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/lib/hybrid-rendering/cloud-orchestrator.ts",
+      "line": 166,
+      "snippet": "async processServerRender(job: Job<CloudRenderPayload>): Promise<any> {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/lib/intelligent-recommendation-system.ts",
+      "line": 46,
+      "snippet": "// 2. Recommend recent courses (if any)",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/lib/middleware/security.ts",
+      "line": 197,
+      "snippet": "// eslint-disable-next-line @typescript-eslint/no-explicit-any -- NextRequest extension pattern",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/lib/performance/tree-shaking.ts",
+      "line": 71,
+      "snippet": "// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Generic function type required for decorator pattern",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/lib/pptx/parsers/animation-parser.ts",
+      "line": 175,
+      "snippet": "private parseAnimationNode(parNode: Record<string, any>, index: number): AnimationEffect | null {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/lib/pptx/pptx-core-parser.ts",
+      "line": 72,
+      "snippet": "async parseFile(buffer: Buffer, filename: string, progressCallback?: (progress: number) => void): Promise<any> {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/lib/prisma-helpers.ts",
+      "line": 5,
+      "snippet": "* Reduces the need for `as any` casts throughout the codebase.",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/lib/prisma-helpers.ts",
+      "line": 12,
+      "snippet": "* Use this instead of `as any` when inserting/updating JSON fields.",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/lib/projects/test-types.ts",
+      "line": 5,
+      "snippet": "export type Json = any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/lib/services/monitoring-service.ts",
+      "line": 26,
+      "snippet": "// Usamos `any` para não exigir tipagens/instalação de @sentry/node em ambientes sem Sentry",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/lib/supabase/server.ts",
+      "line": 84,
+      "snippet": "// eslint-disable-next-line @typescript-eslint/no-explicit-any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/lib/supabase/server.ts",
+      "line": 85,
+      "snippet": "return (client as any).from(tableName) as ReturnType<SupabaseClient['from']> & {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/lib/types/remotion-types.ts",
+      "line": 16,
+      "snippet": "component: React.ComponentType<any>;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/lib/utils/type-guards.ts",
+      "line": 4,
+      "snippet": "* Funções auxiliares para reduzir uso de 'any' e melhorar type safety.",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/lib/video/scene-detector.ts",
+      "line": 124,
+      "snippet": "// Ensure at least one scene if we have any duration or just default to 0-0 if nothing",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/remotion/Root.tsx",
+      "line": 8,
+      "snippet": "{/* eslint-disable-next-line @typescript-eslint/no-explicit-any -- Remotion Composition generic typing requires component cast */}",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/scripts/create-test-pptx.ts",
+      "line": 153,
+      "snippet": "slide4.addTable(tableData as any, {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/src/components/MetricsDashboard.tsx",
+      "line": 613,
+      "snippet": "label={({ name, value }: any) => `${name}: ${value.toFixed(1)}%`}",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/studio-unified/page.tsx",
+      "line": 207,
+      "snippet": "const handleCreateProject = async (data: { name: string; type: UnifiedProject['type']; source?: { slides?: any[] } } | string, description?:",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/studio-unified/page.tsx",
+      "line": 211,
+      "snippet": "let source: { slides?: any[] } | undefined = undefined;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/supabase-test/page.tsx",
+      "line": 8,
+      "snippet": "const [tests, setTests] = useState<any[]>([])",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/types/database.ts",
+      "line": 5,
+      "snippet": "* Used to reduce `any` types in API routes that use Prisma raw queries.",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/types/external-apis.ts",
+      "line": 5,
+      "snippet": "* Substitui todos os `any` de APIs externas por contratos tipados",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/types/react-window.d.ts",
+      "line": 22,
+      "snippet": "ref?: Ref<any>;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/types/timeline.ts",
+      "line": 1,
+      "snippet": "// Tipos específicos para substituir Record<string, any>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/app/utils/emergency-loop-killer.tsx",
+      "line": 185,
+      "snippet": "export function withTimeout<T extends (...args: any[]) => any>(",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/audit-any.ts",
+      "line": 3,
+      "snippet": "* Script: audit-any.ts",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/audit-any.ts",
+      "line": 4,
+      "snippet": "* Objetivo: listar ocorrências de 'any' e arquivos com '// @ts-nocheck' para relatório de profissionalização.",
+      "type": "ts-nocheck"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/audit-any.ts",
+      "line": 4,
+      "snippet": "* Objetivo: listar ocorrências de 'any' e arquivos com '// @ts-nocheck' para relatório de profissionalização.",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/audit-any.ts",
+      "line": 5,
+      "snippet": "* Saída: JSON em stdout + arquivo opcional evidencias/fase-1/any-report.json (se pasta existir).",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/audit-any.ts",
+      "line": 10,
+      "snippet": "interface Finding { file: string; line: number; snippet: string; type: 'any' | 'ts-nocheck'; }",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/audit-any.ts",
+      "line": 39,
+      "snippet": "// crude 'any' detection not part of a word like 'many'",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/audit-any.ts",
+      "line": 40,
+      "snippet": "if (/\\bany\\b/.test(line) && !/\\/\\/\\s*@deprecated-any/.test(line)) {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/audit-any.ts",
+      "line": 41,
+      "snippet": "findings.push({ file, line: idx + 1, snippet: line.trim().slice(0, 140), type: 'any' });",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/audit-any.ts",
+      "line": 60,
+      "snippet": "anyCount: all.filter(f => f.type === 'any').length,",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/audit-any.ts",
+      "line": 70,
+      "snippet": "await fs.writeFile(path.join(evidenceDir, 'any-report.json'), json, 'utf8');",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/audit-any.ts",
+      "line": 75,
+      "snippet": "console.error(`Encontradas ${summary.anyCount} ocorrências de 'any'. Falhando conforme --fail-on-findings.`);",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/audit-any.ts",
+      "line": 81,
+      "snippet": "console.error('Erro audit-any:', err);",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/backup-db.ts",
+      "line": 56,
+      "snippet": "let allData: any[] = [];",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/fix-build.ts",
+      "line": 99,
+      "snippet": "component: React.ComponentType<any>;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/fix-build.ts",
+      "line": 100,
+      "snippet": "props: any;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/fix-build.ts",
+      "line": 128,
+      "snippet": "async getInfo(filePath: string): Promise<any> {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/fix-build.ts",
+      "line": 195,
+      "snippet": "} catch (error: any) {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/generate-api-docs.ts",
+      "line": 24,
+      "snippet": "schemas: Record<string, any>;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/generate-api-docs.ts",
+      "line": 25,
+      "snippet": "responses: Record<string, any>;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/generate-api-docs.ts",
+      "line": 26,
+      "snippet": "securitySchemes: Record<string, any>;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/generate-api-docs.ts",
+      "line": 52,
+      "snippet": "private zodToOpenAPI(schema: z.ZodSchema): any {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/generate-api-docs.ts",
+      "line": 60,
+      "snippet": "const properties: Record<string, any> = {};",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/generate-api-docs.ts",
+      "line": 67,
+      "snippet": "if (!(value as any).isOptional?.()) {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/generate-api-docs.ts",
+      "line": 100,
+      "snippet": "private generatePaths(): Record<string, any> {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/generate-api-docs.ts",
+      "line": 101,
+      "snippet": "const paths: Record<string, any> = {};",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/generate-api-docs.ts",
+      "line": 108,
+      "snippet": "const operation: any = {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/generate-api-docs.ts",
+      "line": 197,
+      "snippet": "generateOpenAPISpec(): any {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/generate-api-docs.ts",
+      "line": 267,
+      "snippet": "private async generateHTMLDocs(spec: any): Promise<void> {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/governanca/update-kpis.ts",
+      "line": 5,
+      "snippet": "* Consolidates coverage, 'any' count, and MTTR with historical diff",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/governanca/update-kpis.ts",
+      "line": 48,
+      "snippet": "// In a real implementation, this would run the audit-any script",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/governanca/update-kpis.ts",
+      "line": 51,
+      "snippet": "const anyReportPath = path.join(process.cwd(), 'evidencias/fase-1/any-report.json');",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/governanca/update-kpis.ts",
+      "line": 59,
+      "snippet": "console.warn('Could not read any count, using placeholder:', error);",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/governanca/update-kpis.ts",
+      "line": 161,
+      "snippet": "metric: 'any-count',",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/governanca/update-kpis.ts",
+      "line": 195,
+      "snippet": "let dashboardData: any = {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/governanca/update-kpis.ts",
+      "line": 224,
+      "snippet": "any_remaining: report.kpis.find(k => k.metric === 'any-count')?.change || 0",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/launch-production.ts",
+      "line": 387,
+      "snippet": "console.log('   Check logs for any startup issues.');",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/metrics/mttr-calc.ts",
+      "line": 25,
+      "snippet": "type Entry = { created_at: string; event_type: string; event_data: any };",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/metrics/mttr-calc.ts",
+      "line": 28,
+      "snippet": "let payload: any = e.event_data;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/metrics/webvitals-aggregate.ts",
+      "line": 13,
+      "snippet": "interface VitalRow { created_at: string; event_data: any; }",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/metrics/webvitals-aggregate.ts",
+      "line": 30,
+      "snippet": "let payload: any = r.event_data;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/migrate-db.ts",
+      "line": 106,
+      "snippet": "} catch (e: any) {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/migrate-db.ts",
+      "line": 141,
+      "snippet": "} catch (e: any) {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/monitoring.ts",
+      "line": 18,
+      "snippet": "details?: any;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/monitoring.ts",
+      "line": 398,
+      "snippet": "}, {} as Record<string, any>)",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/release/create-release.ts",
+      "line": 41,
+      "snippet": "const cov = await readJSON<any>(c);",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/release/create-release.ts",
+      "line": 44,
+      "snippet": "const anyReport = await readJSON<any>(path.join(process.cwd(),'evidencias','fase-1','any-report.json'));",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/release/create-release.ts",
+      "line": 53,
+      "snippet": "files: [coveragePct ? 'coverage-summary.json' : '', anyRemaining != null ? 'any-report.json' : ''].filter(Boolean)",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/render-worker-bull.ts",
+      "line": 21,
+      "snippet": "slides?: any[];",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/render-worker-bull.ts",
+      "line": 22,
+      "snippet": "config?: any;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/render-worker-bull.ts",
+      "line": 71,
+      "snippet": "} catch (error: any) {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/render-worker-bull.ts",
+      "line": 102,
+      "snippet": "} catch (e: any) {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/render-worker-bull.ts",
+      "line": 114,
+      "snippet": "async function triggerWebhooks(userId: string, event: string, payload: any) {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/render-worker-bull.ts",
+      "line": 145,
+      "snippet": "} catch (e: any) {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/render-worker-bull.ts",
+      "line": 149,
+      "snippet": "} catch (e: any) {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/render-worker-bull.ts",
+      "line": 260,
+      "snippet": "} catch (error: any) {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/security/deps-audit.ts",
+      "line": 11,
+      "snippet": "function runAudit(): Promise<any> {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/setup-complete.ts",
+      "line": 19,
+      "snippet": "details?: any;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/test-database-migrations.ts",
+      "line": 17,
+      "snippet": "validator: (supabase: any) => Promise<void>;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/test-database-migrations.ts",
+      "line": 21,
+      "snippet": "private supabase: any;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/test-pptx-integration.ts",
+      "line": 104,
+      "snippet": "const hasImages = result.slides.some(s => (s as any).images && (s as any).images.length > 0);",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/test-pptx-integration.ts",
+      "line": 105,
+      "snippet": "const hasNotes = result.slides.some(s => (s as any).notes && (s as any).notes.trim().length > 0);",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/test-pptx-integration.ts",
+      "line": 106,
+      "snippet": "const hasFormatting = result.slides.some(s => (s as any).formatting);",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/update-kpis.ts",
+      "line": 4,
+      "snippet": "* Atualiza métricas em docs/governanca/kpis.json a partir de artefatos gerados (coverage-summary.json, any-report.json).",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/update-kpis.ts",
+      "line": 6,
+      "snippet": "* - any_remaining: conta de ocorrências em evidencias/fase-1/any-report.json.",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/update-kpis.ts",
+      "line": 41,
+      "snippet": "let coverage: any = null;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/update-kpis.ts",
+      "line": 44,
+      "snippet": "coverage = await readJSON<any>(c, {});",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/update-kpis.ts",
+      "line": 48,
+      "snippet": "const anyReportPath = path.join(root, 'evidencias', 'fase-1', 'any-report.json');",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/update-kpis.ts",
+      "line": 49,
+      "snippet": "const anyReport = await readJSON<any>(anyReportPath, { anyCount: null });",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/update-kpis.ts",
+      "line": 51,
+      "snippet": "const mttr = await readJSON<any>(mttrPath, { mttr_minutes: null });",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/scripts/validate-consolidated.ts",
+      "line": 85,
+      "snippet": "} catch (error: any) {",
+      "type": "any"
+    }
+  ]
+}

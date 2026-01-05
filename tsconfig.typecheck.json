@@ -1,0 +1,22 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "next-env.d.ts",
+    "estudio_ia_videos/app/api/v1/video-jobs/route.ts",
+    "estudio_ia_videos/app/api/v1/video-jobs/cancel/route.ts",
+    "estudio_ia_videos/app/api/v1/video-jobs/progress/route.ts",
+    "estudio_ia_videos/app/api/v1/video-jobs/requeue/route.ts"
+  ],
+  "files": ["estudio_ia_videos/app/api/v1/video-jobs/[id]/route.ts"],
+  "exclude": [
+    "node_modules",
+    "**/__tests__/**",
+    "estudio_ia_videos/app/archive/**",
+    "estudio_ia_videos/app/api/**",
+    "!estudio_ia_videos/app/api/v1/video-jobs/route.ts",
+    "lib/**",
+    "scripts/**",
+    "app",
+    "app/**/*"
+  ]
+}

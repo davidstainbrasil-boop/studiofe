@@ -1,0 +1,467 @@
+{
+  "metadata": {
+    "project": "MVP Video TécnicoCursos v7",
+    "version": "1.0.0",
+    "created": "2025-12-20",
+    "lastUpdated": "2025-12-20",
+    "description": "Sistema de produção de vídeos técnicos NR a partir de PPTX"
+  },
+  "categories": {
+    "core": "Funcionalidades Core",
+    "pptx": "Processamento PPTX",
+    "render": "Pipeline de Renderização",
+    "auth": "Autenticação & RBAC",
+    "api": "APIs REST",
+    "database": "Database & Storage",
+    "testing": "Testes & QA",
+    "infra": "Infraestrutura & DevOps"
+  },
+  "features": [
+    {
+      "id": "core-001",
+      "category": "core",
+      "description": "Editor visual de slides funcional",
+      "steps": [
+        "Abrir projeto existente",
+        "Visualizar slides no canvas",
+        "Editar texto em slides",
+        "Salvar alterações"
+      ],
+      "passes": true
+    },
+    {
+      "id": "core-002",
+      "category": "core",
+      "description": "Sistema de navegação entre telas",
+      "steps": [
+        "Navegar da home para projetos",
+        "Abrir editor de projeto",
+        "Voltar para lista de projetos",
+        "Verificar breadcrumbs funcionais"
+      ],
+      "passes": true
+    },
+    {
+      "id": "core-003",
+      "category": "core",
+      "description": "Timeline multi-track para edição de vídeo",
+      "steps": [
+        "Abrir editor de timeline",
+        "Adicionar múltiplas tracks",
+        "Arrastar elementos na timeline",
+        "Reproduzir preview"
+      ],
+      "passes": true
+    },
+    {
+      "id": "pptx-001",
+      "category": "pptx",
+      "description": "Upload de arquivo PPTX",
+      "steps": [
+        "Acessar página de upload",
+        "Selecionar arquivo PPTX",
+        "Confirmar upload",
+        "Verificar processamento iniciado"
+      ],
+      "passes": true
+    },
+    {
+      "id": "pptx-002",
+      "category": "pptx",
+      "description": "Parsing de slides do PPTX",
+      "steps": [
+        "Fazer upload de PPTX com 5+ slides",
+        "Verificar extração de texto",
+        "Verificar extração de imagens",
+        "Verificar ordem dos slides mantida"
+      ],
+      "passes": true
+    },
+    {
+      "id": "pptx-003",
+      "category": "pptx",
+      "description": "Extração de notas do apresentador",
+      "steps": [
+        "Upload PPTX com notas em slides",
+        "Verificar notas extraídas",
+        "Verificar associação correta slide-nota"
+      ],
+      "passes": true
+    },
+    {
+      "id": "render-001",
+      "category": "render",
+      "description": "Iniciar job de renderização",
+      "steps": [
+        "Abrir projeto com slides",
+        "Clicar em Renderizar",
+        "Verificar job criado no banco",
+        "Verificar status pending/queued"
+      ],
+      "passes": true
+    },
+    {
+      "id": "render-002",
+      "category": "render",
+      "description": "Acompanhar progresso de renderização via SSE",
+      "steps": [
+        "Iniciar renderização",
+        "Abrir modal de progresso",
+        "Verificar updates em tempo real",
+        "Verificar porcentagem atualizada"
+      ],
+      "passes": true
+    },
+    {
+      "id": "render-003",
+      "category": "render",
+      "description": "Cancelar job de renderização",
+      "steps": [
+        "Ter um job em processamento",
+        "Clicar em cancelar",
+        "Verificar status atualizado para cancelled",
+        "Verificar recursos liberados"
+      ],
+      "passes": true
+    },
+    {
+      "id": "render-004",
+      "category": "render",
+      "description": "Download de vídeo renderizado",
+      "steps": [
+        "Ter um job completed",
+        "Clicar em download",
+        "Verificar download iniciado",
+        "Verificar arquivo MP4 válido"
+      ],
+      "passes": true
+    },
+    {
+      "id": "auth-001",
+      "category": "auth",
+      "description": "Login com Supabase Auth",
+      "steps": [
+        "Acessar página de login",
+        "Inserir credenciais válidas",
+        "Clicar em entrar",
+        "Verificar redirecionamento para dashboard"
+      ],
+      "passes": true
+    },
+    {
+      "id": "auth-002",
+      "category": "auth",
+      "description": "Logout funcional",
+      "steps": [
+        "Estar logado",
+        "Clicar em logout",
+        "Verificar sessão encerrada",
+        "Verificar redirecionamento para login"
+      ],
+      "passes": true
+    },
+    {
+      "id": "auth-003",
+      "category": "auth",
+      "description": "RBAC - Permissões por role",
+      "steps": [
+        "Login como user comum",
+        "Verificar acesso negado a admin panel",
+        "Login como admin",
+        "Verificar acesso permitido a admin panel"
+      ],
+      "passes": true
+    },
+    {
+      "id": "auth-004",
+      "category": "auth",
+      "description": "RLS - Row Level Security funcionando",
+      "steps": [
+        "User A cria projeto",
+        "User B tenta acessar projeto de A",
+        "Verificar acesso negado",
+        "User A acessa próprio projeto com sucesso"
+      ],
+      "passes": true
+    },
+    {
+      "id": "api-001",
+      "category": "api",
+      "description": "GET /api/render/jobs retorna lista de jobs",
+      "steps": [
+        "Fazer requisição GET autenticada",
+        "Verificar resposta 200",
+        "Verificar schema de resposta",
+        "Verificar paginação funcionando"
+      ],
+      "passes": true
+    },
+    {
+      "id": "api-002",
+      "category": "api",
+      "description": "POST /api/render/start cria novo job",
+      "steps": [
+        "Fazer POST com projectId válido",
+        "Verificar resposta 201",
+        "Verificar job criado no banco",
+        "Verificar job na fila BullMQ"
+      ],
+      "passes": true
+    },
+    {
+      "id": "api-003",
+      "category": "api",
+      "description": "Rate limiting funcional",
+      "steps": [
+        "Fazer 10+ requests em 1 minuto para /api/render/start",
+        "Verificar resposta 429 após limite",
+        "Verificar headers X-RateLimit-*",
+        "Aguardar reset e verificar acesso restaurado"
+      ],
+      "passes": true
+    },
+    {
+      "id": "api-004",
+      "category": "api",
+      "description": "Health check endpoint",
+      "steps": [
+        "GET /api/health",
+        "Verificar status do banco",
+        "Verificar status do Redis",
+        "Verificar resposta estruturada"
+      ],
+      "passes": true
+    },
+    {
+      "id": "database-001",
+      "category": "database",
+      "description": "Migrations aplicadas com sucesso",
+      "steps": [
+        "Rodar npm run setup:supabase",
+        "Verificar tabelas criadas",
+        "Verificar índices criados",
+        "Verificar RLS policies ativas"
+      ],
+      "passes": true
+    },
+    {
+      "id": "database-002",
+      "category": "database",
+      "description": "Supabase Storage funcionando",
+      "steps": [
+        "Upload de arquivo para bucket",
+        "Verificar URL gerada",
+        "Download do arquivo",
+        "Deletar arquivo"
+      ],
+      "passes": true
+    },
+    {
+      "id": "testing-001",
+      "category": "testing",
+      "description": "Jest unit tests passando",
+      "steps": [
+        "Rodar npm test",
+        "Verificar 2000+ testes passando",
+        "Verificar coverage > 70%",
+        "Verificar nenhum teste falhando"
+      ],
+      "passes": true
+    },
+    {
+      "id": "testing-002",
+      "category": "testing",
+      "description": "Contract tests API funcionando",
+      "steps": [
+        "Rodar npm run test:contract:video-jobs",
+        "Verificar contratos validados",
+        "Verificar schemas de resposta",
+        "Verificar edge cases"
+      ],
+      "passes": true
+    },
+    {
+      "id": "testing-003",
+      "category": "testing",
+      "description": "Playwright E2E tests passando",
+      "steps": [
+        "Rodar npm run test:e2e:playwright",
+        "Verificar smoke tests passando",
+        "Verificar RBAC tests passando",
+        "Verificar screenshots gerados"
+      ],
+      "passes": true
+    },
+    {
+      "id": "infra-001",
+      "category": "infra",
+      "description": "Docker compose funcional",
+      "steps": [
+        "Rodar docker compose up",
+        "Verificar Redis iniciado",
+        "Verificar worker iniciado",
+        "Verificar logs sem erros"
+      ],
+      "passes": true
+    },
+    {
+      "id": "infra-002",
+      "category": "infra",
+      "description": "Health check script",
+      "steps": [
+        "Rodar npm run health",
+        "Verificar score 0-100",
+        "Verificar detalhes por componente",
+        "Verificar recomendações geradas"
+      ],
+      "passes": true
+    },
+    {
+      "id": "database-003",
+      "category": "database",
+      "description": "Sincronização Prisma ↔ SQL completa",
+      "steps": [
+        "Verificar tabelas sessions no Prisma",
+        "Verificar tabelas video_projects no Prisma",
+        "Verificar campos faltantes em users",
+        "Verificar ENUMs mapeados"
+      ],
+      "passes": true
+    },
+    {
+      "id": "pptx-004",
+      "category": "pptx",
+      "description": "Suporte a temas PPTX",
+      "steps": [
+        "Upload PPTX com tema personalizado",
+        "Verificar cores extraídas",
+        "Verificar fontes mapeadas",
+        "Verificar aplicação no editor"
+      ],
+      "passes": true
+    },
+    {
+      "id": "render-005",
+      "category": "render",
+      "description": "TTS integrado na renderização",
+      "steps": [
+        "Projeto com notas de narração",
+        "Iniciar renderização com TTS",
+        "Verificar áudio gerado",
+        "Verificar sincronização áudio-vídeo"
+      ],
+      "passes": true
+    },
+    {
+      "id": "render-006",
+      "category": "render",
+      "description": "Avatar AI integrado",
+      "steps": [
+        "Selecionar avatar para apresentação",
+        "Configurar posição do avatar",
+        "Renderizar com avatar",
+        "Verificar lip-sync funcionando"
+      ],
+      "passes": true
+    },
+    {
+      "id": "core-004",
+      "category": "core",
+      "description": "Templates NR pré-configurados",
+      "steps": [
+        "Acessar galeria de templates",
+        "Selecionar template NR12",
+        "Verificar slides pré-populados",
+        "Verificar conteúdo técnico correto"
+      ],
+      "passes": true
+    },
+    {
+      "id": "api-005",
+      "category": "api",
+      "description": "Webhooks para eventos de render",
+      "steps": [
+        "Configurar webhook URL",
+        "Iniciar renderização",
+        "Verificar webhook disparado em completed",
+        "Verificar payload do webhook"
+      ],
+      "passes": true
+    },
+    {
+      "id": "auth-005",
+      "category": "auth",
+      "description": "Registro de novos usuários",
+      "steps": [
+        "Acessar página de registro",
+        "Preencher dados válidos",
+        "Confirmar email",
+        "Verificar conta ativada"
+      ],
+      "passes": true
+    },
+    {
+      "id": "api-006",
+      "category": "api",
+      "description": "System Info & Version API",
+      "steps": [
+        "GET /api/system/version retorna versão e build info",
+        "GET /api/system/info retorna métricas do sistema (admin)",
+        "Verificar formato de resposta JSON",
+        "Verificar cache headers corretos"
+      ],
+      "passes": true
+    },
+    {
+      "id": "api-007",
+      "category": "api",
+      "description": "Usage Statistics API",
+      "steps": [
+        "GET /api/analytics/usage-stats retorna estatísticas",
+        "Suporte a diferentes períodos (7d, 30d, 90d)",
+        "Contagem de projetos, renders, usuários",
+        "Autenticação obrigatória"
+      ],
+      "passes": true
+    },
+    {
+      "id": "compliance-001",
+      "category": "auth",
+      "description": "LGPD/GDPR Data Export",
+      "steps": [
+        "POST /api/user/export-data exporta dados do usuário",
+        "Suporte a formato JSON e CSV",
+        "Inclui projetos, renders, slides",
+        "Download automático do arquivo"
+      ],
+      "passes": true
+    },
+    {
+      "id": "compliance-002",
+      "category": "auth",
+      "description": "LGPD/GDPR Account Deletion",
+      "steps": [
+        "GET /api/user/delete-account mostra dados a serem deletados",
+        "DELETE requer confirmação explícita",
+        "Remove todos os dados do usuário",
+        "Invalida sessões após deleção"
+      ],
+      "passes": true
+    }
+  ],
+  "summary": {
+    "total": 36,
+    "passing": 36,
+    "failing": 0,
+    "categories": {
+      "core": { "total": 4, "passing": 4 },
+      "pptx": { "total": 4, "passing": 4 },
+      "render": { "total": 6, "passing": 6 },
+      "auth": { "total": 7, "passing": 7 },
+      "api": { "total": 7, "passing": 7 },
+      "database": { "total": 3, "passing": 3 },
+      "testing": { "total": 3, "passing": 3 },
+      "infra": { "total": 2, "passing": 2 }
+    }
+  }
+}

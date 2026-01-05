@@ -1,0 +1,7 @@
+1
+00:00:00,000 --> 00:00:10,588
+Olá, este é um teste de geração de legendas para vídeos de
+
+2
+00:00:10,588 --> 00:00:15,000
+treinamento em segurança do trabalho.
