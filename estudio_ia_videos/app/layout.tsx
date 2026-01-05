@@ -43,6 +43,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXTAUTH_URL || 'http://localhost:3000'),
   title: {
     default: 'VideoStudio Pro - Editor de Vídeo com IA',
     template: '%s | VideoStudio Pro'

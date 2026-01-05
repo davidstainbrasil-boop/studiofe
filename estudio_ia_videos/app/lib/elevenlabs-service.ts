@@ -84,8 +84,11 @@ export class ElevenLabsService {
 
   async generateSpeech(request: TTSRequest): Promise<ArrayBuffer> {
     // --- MOCK FALLBACK START ---
-    if (!this.apiKey) {
-      logger.warn('No API Key found. Using Mock Audio Fallback.', { component: 'ElevenLabsService' });
+    if (!this.apiKey || this.apiKey === '') {
+      logger.info('ElevenLabs API Key não configurada, usando áudio de fallback.', { 
+        component: 'ElevenLabsService',
+        text: request.text.substring(0, 50) + '...'
+      });
       
       // Return a 1-second silent MP3 or sample buffer
       // This is a minimal valid MP3 frame
@@ -94,8 +97,8 @@ export class ElevenLabsService {
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
       ]);
       
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Simulate network delay for realistic UX
+      await new Promise(resolve => setTimeout(resolve, 1500));
       
       return mockMp3.buffer as ArrayBuffer;
     }

@@ -146,6 +146,26 @@ class MockSupabaseClient {
 }
 
 let client: any;
+let connectionFailed = false;
+
+// Função para testar conectividade Supabase
+async function testSupabaseConnection(url: string, key: string): Promise<boolean> {
+  if (connectionFailed) return false; // Cache falha para evitar múltiplos tests
+  
+  try {
+    const testClient = createBrowserClient(url, key);
+    // Teste simples de conectividade
+    const { error } = await testClient.auth.getSession();
+    if (error && error.message.includes('fetch failed')) {
+      connectionFailed = true;
+      return false;
+    }
+    return true;
+  } catch (error) {
+    connectionFailed = true;
+    return false;
+  }
+}
 
 export function getBrowserClient() {
   if (client) {
@@ -168,12 +188,34 @@ export function getBrowserClient() {
   // 1. Supabase is not configured
   // 2. In E2E mode
   // 3. Realtime explicitly disabled
-  if (!supabaseUrl || !supabaseKey || isE2E || disableRealtime) {
+  // 4. Connection previously failed
+  if (!supabaseUrl || !supabaseKey || isE2E || disableRealtime || connectionFailed) {
     logger.info('[Supabase] Using mock client (no WebSocket connections)', { service: 'BrowserClient' });
     client = new MockSupabaseClient();
     return client;
   }
 
-  client = createBrowserClient(supabaseUrl, supabaseKey);
-  return client;
+  // Try to create real client, fallback to mock on failure
+  try {
+    client = createBrowserClient(supabaseUrl, supabaseKey);
+    
+    // Test connection in background (não bloquear UI)
+    if (typeof window !== 'undefined') {
+      testSupabaseConnection(supabaseUrl, supabaseKey).then(isConnected => {
+        if (!isConnected) {
+          logger.warn('[Supabase] Connection test failed, consider using mock client for better UX', { service: 'BrowserClient' });
+        }
+      });
+    }
+    
+    return client;
+  } catch (error) {
+    logger.warn('[Supabase] Failed to create client, using mock fallback', { 
+      service: 'BrowserClient',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+    connectionFailed = true;
+    client = new MockSupabaseClient();
+    return client;
+  }
 }
