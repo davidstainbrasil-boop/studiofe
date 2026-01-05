@@ -647,12 +647,14 @@ pending → queued → processing → completed | failed | cancelled
 
 ---
 
-### Milestone 10: Deploy & Go-Live (FUTURO)
+### Milestone 10: Deploy & Go-Live (EM PROGRESSO)
 **Duração Estimada:** 2 semanas  
 **Pré-requisitos:** Milestone 9 completo
 
+- [x] Corrigir erros de build para produção
+- [x] Preparar configuração de variáveis de ambiente
+- [x] Documentar processo de deploy (DEPLOY_GUIDE.md)
 - [ ] Deploy em staging (Vercel/AWS)
-- [ ] Configurar variáveis de produção
 - [ ] Aplicar migrations em staging
 - [ ] Executar E2E em staging
 - [ ] Performance testing (Lighthouse, K6)
