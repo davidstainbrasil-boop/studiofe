@@ -102,3 +102,5 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({ jobs });
 }
 
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic';

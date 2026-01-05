@@ -37,3 +37,5 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'An unexpected error occurred.' }, { status: 500 });
   }
 }
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic';

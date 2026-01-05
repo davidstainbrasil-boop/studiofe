@@ -114,3 +114,5 @@ export async function GET() {
   });
 }
 
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic';

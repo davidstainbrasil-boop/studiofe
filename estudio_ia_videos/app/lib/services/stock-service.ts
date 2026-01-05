@@ -74,4 +74,37 @@ export class StockService {
         }
         return mocks;
     }
+
+    /**
+     * Busca múltiplos termos de mídia em lote
+     * @param queries Array de queries para buscar
+     * @param type Tipo de mídia
+     * @returns Map com query como chave e resultados como valor
+     */
+    static async searchBatch(
+        queries: string[],
+        type: 'image' | 'video' | 'audio' = 'image'
+    ): Promise<Map<string, StockMedia[]>> {
+        const results = new Map<string, StockMedia[]>();
+        
+        for (const query of queries) {
+            try {
+                const media = await this.search(query, type);
+                results.set(query, media);
+            } catch (error) {
+                logger.error(`Failed to search stock media for: ${query}`, error as Error);
+                results.set(query, []);
+            }
+        }
+        
+        return results;
+    }
+}
+
+// Export helper function for backward compatibility
+export async function searchBatchMedia(
+    queries: string[],
+    type: 'image' | 'video' | 'audio' = 'image'
+): Promise<Map<string, StockMedia[]>> {
+    return StockService.searchBatch(queries, type);
 }

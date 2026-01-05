@@ -67,3 +67,5 @@ export async function GET(request: NextRequest) {
 export function registerSession(token: string, email: string, name: string, expiresAt: number) {
   sessions.set(token, { email, name, expiresAt });
 }
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic';

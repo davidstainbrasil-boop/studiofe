@@ -60,3 +60,6 @@ export const GET = withRateLimitMiddleware(handler, {
   max: 60, // 60 requests por minuto
   message: 'Too many requests for cache stats'
 });
+
+// Export dynamic para evitar static generation
+export const dynamic = 'force-dynamic';

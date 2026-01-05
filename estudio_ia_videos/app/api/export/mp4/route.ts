@@ -488,3 +488,5 @@ export async function DELETE(request: NextRequest) {
 }
 
 export { exportSystem }
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic';

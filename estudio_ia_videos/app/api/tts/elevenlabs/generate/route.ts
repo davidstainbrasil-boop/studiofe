@@ -100,3 +100,5 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic';
