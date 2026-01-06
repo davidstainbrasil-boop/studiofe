@@ -8,6 +8,10 @@
 import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js'
 import { execSync } from 'child_process'
+import fetch from 'node-fetch'
+
+// Force polyfill
+(global as any).fetch = fetch
 
 interface HealthCheckResult {
   service: string

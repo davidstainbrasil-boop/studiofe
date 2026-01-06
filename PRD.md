@@ -655,7 +655,8 @@ pending → queued → processing → completed | failed | cancelled
 - [x] Preparar configuração de variáveis de ambiente
 - [x] Documentar processo de deploy (DEPLOY_GUIDE.md)
 - [ ] Deploy em staging (Vercel/AWS)
-- [ ] Aplicar migrations em staging
+- [ ] Configurar variáveis de produção
+- [x] Aplicar migrations em staging
 - [ ] Executar E2E em staging
 - [ ] Performance testing (Lighthouse, K6)
 - [ ] Security audit (OWASP ZAP)
