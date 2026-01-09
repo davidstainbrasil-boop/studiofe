@@ -27,18 +27,34 @@
     ],
     "paths": {
       "@/*": [
-        "./app/*"
+        "./src/*"
+      ],
+      "@/app/*": [
+        "./src/app/*"
       ],
       "@/components/*": [
-        "./app/components/*",
-        "./components/*"
+        "./src/components/*"
       ],
       "@/lib/*": [
-        "./app/lib/*",
-        "./lib/*"
+        "./src/lib/*"
       ],
-      "~lib/*": [
-        "../lib/*"
+      "@lib/*": [
+        "./src/lib/*"
+      ],
+      "@components/*": [
+        "./src/components/*"
+      ],
+      "@hooks/*": [
+        "./src/hooks/*"
+      ],
+      "@types/*": [
+        "./src/types/*"
+      ],
+      "@shared-lib/*": [
+        "./src/lib/*"
+      ],
+      "@shared-components/*": [
+        "./src/components/*"
       ]
     },
     "plugins": [
@@ -49,40 +65,20 @@
   },
   "include": [
     "next-env.d.ts",
-    "types/**/*.ts",
-    "app/**/*.ts",
-    "app/**/*.tsx",
-    ".next/types/**/*.ts",
-    "../lib/**/*"
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    ".next/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",
-    ".next",
-    "app/.next",
-    "app/archive",
-    "app/archive/**/*",
-    "app/scripts/archive",
-    "app/scripts/archive/**/*",
-    "_next_temp",
-    "__tests__",
-    "app/(pages)",
-    "app/__tests__",
-    "src/__tests__",
-    "src/tests",
-    "src/test",
-    "src/lib/**/__tests__",
-    "tests",
-    "coverage",
-    "test-output",
-    "test-outputs",
-    "e2e",
-    "_apis_disabled",
-    "_archived_temp",
-    "_build_old_temp",
-    "archive",
-    "avatar-pipeline",
-    "workers",
-    "src/workers",
-    "src/index.tsx"
+    "app",
+    "components",
+    "lib",
+    "hooks",
+    "types",
+    "**/__tests__",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.spec.ts"
   ]
 }

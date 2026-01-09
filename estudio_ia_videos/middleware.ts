@@ -35,10 +35,11 @@ export async function middleware(request: NextRequest) {
       return NextResponse.next()
     }
 
-    // [DEV MODE] Bypass Auth with Cookie
-    if (request.cookies.get('dev_bypass')?.value === 'true') {
-        console.log('🛡️ Bypass Auth: Cookie found');
-        return NextResponse.next();
+    // [DEV/TEST ONLY] Bypass Auth with Cookie
+    // Never allow this in production.
+    if (process.env.NODE_ENV !== 'production' && request.cookies.get('dev_bypass')?.value === 'true') {
+      console.log('🛡️ Bypass Auth: Cookie found');
+      return NextResponse.next();
     }
 
     // 1. Initialize Supabase Client and refresh session

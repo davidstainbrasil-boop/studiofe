@@ -1,69 +1,23 @@
 /** @type {import('next').NextConfig} */
-// Force Rebuild 2
 const nextConfig = {
-  eslint: {
-    // Temporariamente ignorar erros de lint durante build para ambiente local
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    // Temporariamente ignorar erros de TypeScript durante build para ambiente local
-    ignoreBuildErrors: true,
-  },
+  reactStrictMode: true,
+  swcMinify: true,
   images: {
+    formats: ['image/avif', 'image/webp'],
     remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '**.supabase.co',
-      },
-      {
-        protocol: 'https',
-        hostname: '**.elevenlabs.io',
-      },
-      {
-        protocol: 'https',
-        hostname: '**.d-id.com',
-      },
-      {
-        protocol: 'https',
-        hostname: '**.synthesia.io',
-      },
-      {
-        protocol: 'https',
-        hostname: 'trae-api-us.mchost.guru',
-      },
+      { protocol: 'https', hostname: '**.supabase.co' },
+      { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
     ],
   },
-  // Disable source maps in development to prevent external fetches
-  productionBrowserSourceMaps: false,
-  // Disable dev indicators that might fetch external resources
-  devIndicators: {
-    buildActivity: false,
-    buildActivityPosition: 'bottom-right',
-  },
-  // Ensure no external fetches for error overlay
-  onDemandEntries: {
-    maxInactiveAge: 25 * 1000,
-    pagesBufferLength: 2,
-  },
   experimental: {
-    serverComponentsExternalPackages: ['@remotion/bundler', '@remotion/renderer', 'esbuild'],
+    optimizePackageImports: ['lucide-react', 'date-fns', 'recharts'],
   },
-  webpack: (config, { isServer }) => {
-    config.externals.push({
-      'utf-8-validate': 'commonjs utf-8-validate',
-      'bufferutil': 'commonjs bufferutil',
-      'canvas': 'commonjs canvas',
-    });
-
-    // Suppress warnings for critical dependencies in instrumentation libraries
-    config.ignoreWarnings = [
-      { module: /node_modules\/@opentelemetry\/instrumentation/ },
-      { module: /node_modules\/@prisma\/instrumentation/ },
-      { module: /node_modules\/require-in-the-middle/ },
-    ];
-
+  webpack: (config) => {
+    config.externals = [...(config.externals || []), { canvas: "canvas" }];
     return config;
   },
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
 };
-
 export default nextConfig;

@@ -17,4 +17,21 @@ export async function register() {
     const { initSentry } = await import('./app/lib/monitoring/sentry.server');
     initSentry();
   }
+
+  // Inicializar Worker caso habilitado via variável de ambiente
+  // (Evita travamentos no build do Vercel e garante separação de responsabilidades)
+  if (process.env.ENABLE_WORKER === 'true' && process.env.NEXT_RUNTIME === 'nodejs') {
+      const { CloudRenderingOrchestrator } = await import('./app/lib/hybrid-rendering/cloud-orchestrator');
+      const { logger } = await import('./app/lib/logger');
+      
+      const orchestrator = new CloudRenderingOrchestrator(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        process.env.REDIS_URL || 'redis://localhost:6379'
+      );
+      
+      orchestrator.startWorker().catch(error => {
+        logger.error(`[Instrumentation] Failed to start worker: ${error}`);
+      });
+  }
 }

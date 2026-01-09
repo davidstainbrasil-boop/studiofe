@@ -1,0 +1,103 @@
+/**
+ * 🎬 Timeline Snapshot API - Save and Restore Versions
+ * Sprint 43 - Timeline version snapshots
+ */
+
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@lib/prisma';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@lib/auth';
+import { Prisma } from '@prisma/client';
+import { logger } from '@lib/logger';
+
+/**
+ * POST - Create snapshot of current timeline
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json(
+        { success: false, message: 'Não autorizado' },
+        { status: 401 }
+      );
+    }
+
+    const body = await request.json();
+    const { projectId, description } = body;
+
+    if (!projectId) {
+      return NextResponse.json(
+        { success: false, message: 'projectId é obrigatório' },
+        { status: 400 }
+      );
+    }
+
+    logger.info(`📸 Criando snapshot de timeline do projeto ${projectId}...`, { component: 'API: v1/timeline/multi-track/snapshot' });
+
+    // Verify project access
+    const project = await prisma.project.findFirst({
+      where: {
+        id: projectId,
+        userId: session.user.id,
+      },
+    });
+
+    if (!project) {
+      return NextResponse.json(
+        { success: false, message: 'Projeto não encontrado' },
+        { status: 404 }
+      );
+    }
+
+    // Get current timeline
+    const timeline = await prisma.timeline.findUnique({
+      where: { projectId },
+    });
+
+    if (!timeline) {
+      return NextResponse.json(
+        { success: false, message: 'Timeline não encontrada' },
+        { status: 404 }
+      );
+    }
+
+    // Create snapshot
+    const snapshot = await prisma.timelineSnapshot.create({
+      data: {
+        timelineId: timeline.id,
+        version: timeline.version,
+        tracks: timeline.tracks as Prisma.InputJsonValue,
+        settings: timeline.settings as Prisma.InputJsonValue,
+        totalDuration: timeline.totalDuration,
+        createdBy: session.user.id,
+        description: description || `Snapshot v${timeline.version}`,
+      },
+    });
+
+    logger.info(`✅ Snapshot criado: ${snapshot.id} (v${snapshot.version})`, { component: 'API: v1/timeline/multi-track/snapshot' });
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        id: snapshot.id,
+        version: snapshot.version,
+        description: snapshot.description,
+        createdAt: snapshot.createdAt.toISOString(),
+        tracksCount: Array.isArray(timeline.tracks) ? timeline.tracks.length : 0,
+        totalDuration: timeline.totalDuration,
+      },
+      message: 'Snapshot criado com sucesso',
+    });
+
+  } catch (error: unknown) {
+    logger.error('❌ Erro ao criar snapshot:', error instanceof Error ? error : new Error(String(error)), { component: 'API: v1/timeline/multi-track/snapshot' });
+    const message = error instanceof Error ? error.message : String(error);
+    return NextResponse.json(
+      { success: false, message: 'Erro ao criar snapshot', error: message },
+      { status: 500 }
+    );
+  }
+}
+
+
