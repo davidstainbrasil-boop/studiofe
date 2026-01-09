@@ -167,7 +167,7 @@ let connectionFailed = false;
 
 function patchRealtimeToNoop(supabaseClient: any) {
   const noopChannel = (name: string, opts?: any) => {
-    logger.debug(`[Supabase] Realtime disabled; channel "${name}" is a noop`, {
+    logger.info(`[Supabase] Realtime disabled via config; patching channel "${name}" to no-op (Safe Mode)`, {
       service: 'BrowserClient',
     });
 

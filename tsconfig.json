@@ -23,6 +23,12 @@
       "@/*": [
         "estudio_ia_videos/app/*"
       ],
+      "@lib/*": [
+        "estudio_ia_videos/app/lib/*"
+      ],
+      "@components/*": [
+        "estudio_ia_videos/app/components/*"
+      ],
       "~lib/*": [
         "lib/*"
       ]

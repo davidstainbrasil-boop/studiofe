@@ -2,20 +2,20 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import './styles/mobile-first.css';
-import Providers from './components/providers';
-import { Toaster } from './components/ui/toaster';
-import { ThemeProvider } from './components/theme/theme-provider';
-import { InteractiveTutorial } from './components/tutorial/tutorial-simple';
-import { EmergencyErrorBoundary } from './lib/advanced-analytics-emergency';
-import PWAInstallPrompt from './components/pwa/pwa-install-prompt';
+import Providers from '@/components/providers';
+import { Toaster } from '@/components/ui/toaster';
+import { ThemeProvider } from '@/components/theme-provider';
+import { InteractiveTutorial } from '@/components/tutorial/tutorial-simple';
+import { EmergencyErrorBoundary } from '@/components/emergency-error-boundary';
+import PWAInstallPrompt from '@/components/pwa/pwa-install-prompt';
 
-import ProductionProvider from './components/providers/production-provider';
-import GlobalButtonFix from './components/ui/button-fix-global';
-import { AuthProvider } from '@hooks/use-auth';
-import { Navbar } from './components/layout/navbar';
+import ProductionProvider from '@/components/providers/production-provider';
+import GlobalButtonFix from '@/components/ui/button-fix-global';
+import { AuthProvider } from '@/hooks/use-auth';
+import { Navbar } from '@/components/layout/navbar';
 
 // DEV/E2E URL Isolation Guard - MUST be imported early
-import './lib/dev-url-guard';
+import '@/lib/dev-url-guard';
 
 // Import do sistema de correções melhorado
 // import './lib/emergency-fixes-improved';

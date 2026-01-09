@@ -12,6 +12,11 @@ module.exports = {
 
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/estudio_ia_videos/app/$1',
+    '^@lib/(.*)$': '<rootDir>/estudio_ia_videos/app/lib/$1',
+    '^@components/(.*)$': '<rootDir>/estudio_ia_videos/app/components/$1',
+    '^@hooks/(.*)$': '<rootDir>/estudio_ia_videos/app/hooks/$1',
+    '^@shared-lib/(.*)$': '<rootDir>/estudio_ia_videos/lib/$1',
+    '^@shared-components/(.*)$': '<rootDir>/estudio_ia_videos/components/$1',
     '^dnd-core$': 'dnd-core/dist/cjs',
     '^react-dnd$': 'react-dnd/dist/cjs',
     '^react-dnd-html5-backend$': 'react-dnd-html5-backend/dist/cjs',

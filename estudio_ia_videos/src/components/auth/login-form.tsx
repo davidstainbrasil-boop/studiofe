@@ -169,7 +169,11 @@ export function LoginForm() {
             router.push(redirectUrl);
             router.refresh();
         } catch (err) {
-            logger.error('Login error', err instanceof Error ? err : new Error(String(err)), { component: 'LoginForm' });
+            const errorMsg = err instanceof Error ? err.message : typeof err === 'object' ? JSON.stringify(err) : String(err);
+            logger.error('Login error', err instanceof Error ? err : new Error(errorMsg), {
+                component: 'LoginForm',
+                error: typeof err === 'object' ? err : { message: String(err) }
+            });
             setError(buildLoginErrorMessage(err));
         } finally {
             setIsLoading(false);

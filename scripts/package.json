@@ -1,46 +1,12 @@
 {
-  "name": "mvp-video-automation-suite",
-  "version": "2.0.0",
-  "description": "Suite completa de automação, monitoramento e deploy para MVP Video Técnico Cursos v7",
+  "name": "render-worker-scripts",
+  "version": "1.0.0",
   "type": "module",
-  "scripts": {
-    "setup:supabase": "tsx setup-supabase-auto.ts",
-    "test:supabase": "tsx test-supabase-integration.ts",
-    "validate:supabase": "tsx verify-database.ts",
-    "validate:env": "tsx validate-environment.ts",
-    "health": "tsx health-check.ts",
-    "secrets:generate": "tsx generate-secrets.ts",
-    "secrets:vapid": "tsx generate-vapid-keys.ts",
-    "deploy": "tsx deploy-assistant.ts",
-    "logs:test": "tsx test-logger.ts",
-    "perf:analyze": "tsx performance-analyzer.ts",
-    "perf:optimize": "tsx performance-optimizer.ts",
-    "monitor": "tsx system-monitor.ts",
-    "monitor:snapshot": "tsx system-monitor.ts snapshot",
-    "backup": "tsx backup-manager.ts",
-    "backup:list": "tsx backup-manager.ts list",
-    "help": "echo '🚀 Scripts Disponíveis:' && echo '' && echo '📦 Setup:' && echo '  npm run setup:supabase    - Setup automático do Supabase (15s)' && echo '' && echo '🧪 Testes:' && echo '  npm run test:supabase     - Testes de integração (19 testes)' && echo '  npm run logs:test         - Teste do sistema de logging' && echo '' && echo '✅ Validação:' && echo '  npm run validate:supabase - Validar database' && echo '  npm run validate:env      - Validar ambiente (10 checks)' && echo '  npm run health            - Health check completo (6 verificações)' && echo '' && echo '🔐 Segurança:' && echo '  npm run secrets:generate  - Gerar NEXTAUTH_SECRET e NEXTAUTH_URL' && echo '' && echo '⚡ Performance:' && echo '  npm run perf:analyze      - Analisar performance do sistema' && echo '  npm run perf:optimize     - Aplicar otimizações automáticas' && echo '' && echo '📊 Monitoramento:' && echo '  npm run monitor           - Monitor em tempo real (CPU, RAM, Disco)' && echo '  npm run monitor:snapshot  - Snapshot único de métricas' && echo '' && echo '💾 Backup:' && echo '  npm run backup            - Criar backup completo' && echo '  npm run backup:list       - Listar backups disponíveis' && echo '' && echo '🚀 Deploy:' && echo '  npm run deploy            - Assistente de deploy (4 plataformas)'"
-  },
   "dependencies": {
-    "@supabase/supabase-js": "^2.38.4"
-  },
-  "devDependencies": {
-    "@types/node": "^20.10.0",
-    "tsx": "^4.6.2",
-    "typescript": "^5.3.2"
-  },
-  "keywords": [
-    "supabase",
-    "automation",
-    "testing",
-    "deployment",
-    "monitoring",
-    "logging",
-    "health-check",
-    "next.js",
-    "typescript",
-    "mvp"
-  ],
-  "author": "Sistema de Automação MVP v2.0",
-  "license": "MIT"
+    "@remotion/bundler": "^4.0.402",
+    "@remotion/renderer": "^4.0.402",
+    "@supabase/supabase-js": "^2.x",
+    "dotenv": "^16.x",
+    "edge-tts": "^1.x"
+  }
 }

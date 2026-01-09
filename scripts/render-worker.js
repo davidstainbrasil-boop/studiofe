@@ -8,6 +8,8 @@ import util from 'util';
 import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 import { logger } from './logger.js';
+import { bundle } from '@remotion/bundler';
+import { renderMedia, selectComposition } from '@remotion/renderer';
 
 dotenv.config();
 
@@ -368,13 +370,19 @@ async function runWorker() {
                         const provider = slide.voice_provider || 'edge';
                         const voiceId = slide.voice_id || 'pt-BR-AntonioNeural';
                         
+                        // Generate audio directly in publicDir for Remotion bundle
                         const audioResult = await generateAudio(
-                            slide.content || slide.title || "Slide sem texto", 
-                            audioDir,
+                            slide.content || slide.title || "Slide sem texto",
+                            audioDir, // Already points to estudio_ia_videos/public/tts-audio
                             provider,
                             voiceId
                         );
-                        
+
+                        // Verify file exists
+                        if (!fs.existsSync(audioResult.path)) {
+                            throw new Error(`Audio file not found: ${audioResult.path}`);
+                        }
+
                         processedSlides.push({
                             ...slide,
                             audioUrl: `/tts-audio/${audioResult.filename}`,
@@ -388,9 +396,9 @@ async function runWorker() {
                             .eq('id', job.id);
                     }
 
-                    // 4. Render Video (Remotion)
-                    log('   🎥 Iniciando Renderização Remotion...');
-                    
+                    // 4. Render Video (Remotion) - Programmatic API
+                    log('   🎥 Iniciando Renderização Remotion (API Programática)...');
+
                     const inputProps = {
                         slides: processedSlides.map(s => ({
                             id: s.id,
@@ -404,19 +412,74 @@ async function runWorker() {
                     const outputFileName = `${job.id}.mp4`;
                     const outputFilePath = path.join(videoDir, outputFileName);
 
-                    const escapedProps = JSON.stringify(inputProps).replace(/"/g, '\\"');
-                    const remotionCommand = `npx remotion render app/remotion/index.ts MyVideo "${outputFilePath}" --props="${escapedProps}"`;
-                    
-                    log(`   🚀 Executando (em estudio_ia_videos): ${remotionCommand.substring(0, 100)}...`);
-                    
                     try {
-                        await execPromise(remotionCommand, { 
-                            cwd: path.join(process.cwd(), 'estudio_ia_videos'),
-                            maxBuffer: 1024 * 1024 * 10 
+                        const remotionRoot = path.join(process.cwd(), 'estudio_ia_videos', 'app', 'remotion', 'index.ts');
+                        const publicDir = path.join(process.cwd(), 'estudio_ia_videos', 'public');
+
+                        // Verify audio files exist before bundling
+                        log(`   🔍 Verificando áudios em ${audioDir}...`);
+                        const audioFiles = processedSlides.map(s => {
+                            const audioFile = path.join(audioDir, path.basename(s.audioUrl));
+                            const exists = fs.existsSync(audioFile);
+                            log(`      ${exists ? '✅' : '❌'} ${path.basename(s.audioUrl)}`);
+                            return { file: audioFile, exists };
                         });
+
+                        const missingAudio = audioFiles.filter(a => !a.exists);
+                        if (missingAudio.length > 0) {
+                            throw new Error(`Missing audio files: ${missingAudio.map(a => a.file).join(', ')}`);
+                        }
+
+                        log('   📦 Bundling Remotion...');
+                        const bundleLocation = await bundle({
+                            entryPoint: remotionRoot,
+                            webpackOverride: (config) => config,
+                        });
+
+                        // Copy audio files to bundle directory
+                        log('   📂 Copiando áudios para bundle...');
+                        const bundleTtsDir = path.join(bundleLocation, 'public', 'tts-audio');
+                        if (!fs.existsSync(bundleTtsDir)) {
+                            fs.mkdirSync(bundleTtsDir, { recursive: true });
+                        }
+
+                        for (const slide of processedSlides) {
+                            const sourceAudio = path.join(audioDir, path.basename(slide.audioUrl));
+                            const destAudio = path.join(bundleTtsDir, path.basename(slide.audioUrl));
+                            fs.copyFileSync(sourceAudio, destAudio);
+                            log(`      ✅ ${path.basename(slide.audioUrl)}`);
+                        }
+
+                        log('   🔍 Selecting composition...');
+                        const compositionId = 'MyVideo';
+                        const composition = await selectComposition({
+                            serveUrl: bundleLocation,
+                            id: compositionId,
+                            inputProps: inputProps,
+                        });
+
+                        log(`   🎬 Rendering ${composition.width}x${composition.height} @ ${composition.fps}fps, ${composition.durationInFrames} frames...`);
+                        await renderMedia({
+                            composition: composition,
+                            serveUrl: bundleLocation,
+                            codec: 'h264',
+                            outputLocation: outputFilePath,
+                            inputProps: inputProps,
+                            publicDir: publicDir,
+                            onProgress: ({ progress }) => {
+                                const percent = Math.round(progress * 100);
+                                if (percent % 10 === 0) {
+                                    log(`   🎞️ Progresso: ${percent}%`);
+                                }
+                            },
+                        });
+
                         log('   ✅ Renderização Remotion concluída!');
                     } catch (renderError) {
                         log(`   ❌ Erro no Remotion: ${renderError.message}`, 'ERROR');
+                        if (renderError.stack) {
+                            log(`   Stack: ${renderError.stack.substring(0, 500)}`, 'ERROR');
+                        }
                         throw new Error('Falha na renderização do vídeo');
                     }
 

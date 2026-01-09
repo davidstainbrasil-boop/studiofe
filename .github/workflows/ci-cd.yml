@@ -1,0 +1,66 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  validate:
+    name: Validate Quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: './estudio_ia_videos/package-lock.json'
+      
+      - name: Install dependencies
+        run: cd estudio_ia_videos && npm ci
+
+      - name: Lint
+        run: cd estudio_ia_videos && npm run lint
+
+      - name: Type Check
+        run: cd estudio_ia_videos && npm run type-check
+
+      - name: Unit Tests
+        run: cd estudio_ia_videos && npm run test:ci
+
+  security:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Audit
+        run: cd estudio_ia_videos && npm audit --audit-level=high
+
+  deploy-staging:
+    name: Deploy Staging
+    needs: [validate, security]
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy to Vercel (Placeholder)
+        run: echo "Deploying to Vercel Staging..."
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+  deploy-production:
+    name: Deploy Production
+    needs: [validate, security]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy to Vercel (Production)
+        run: echo "Deploying to Vercel Production..."
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
