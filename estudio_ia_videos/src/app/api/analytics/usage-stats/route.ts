@@ -99,7 +99,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const { count: createdProjects } = await supabase
       .from('projects')
       .select('*', { count: 'exact', head: true })
-      .gte('created_at', timeRange.start.toISOString());
+      .gte("createdAt", timeRange.start.toISOString());
     
     const { count: completedProjects } = await supabase
       .from('projects')
@@ -115,25 +115,25 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const { count: totalRenders } = await supabase
       .from('render_jobs')
       .select('*', { count: 'exact', head: true })
-      .gte('created_at', timeRange.start.toISOString());
+      .gte("createdAt", timeRange.start.toISOString());
     
     const { count: completedRenders } = await supabase
       .from('render_jobs')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'completed')
-      .gte('created_at', timeRange.start.toISOString());
+      .gte("createdAt", timeRange.start.toISOString());
     
     const { count: failedRenders } = await supabase
       .from('render_jobs')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'failed')
-      .gte('created_at', timeRange.start.toISOString());
+      .gte("createdAt", timeRange.start.toISOString());
     
     const { count: cancelledRenders } = await supabase
       .from('render_jobs')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'cancelled')
-      .gte('created_at', timeRange.start.toISOString());
+      .gte("createdAt", timeRange.start.toISOString());
 
     // Fetch user stats
     const { count: totalUsers } = await supabase
@@ -143,7 +143,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const { count: newUsers } = await supabase
       .from('users')
       .select('*', { count: 'exact', head: true })
-      .gte('created_at', timeRange.start.toISOString());
+      .gte("createdAt", timeRange.start.toISOString());
 
     // Calculate days in period
     const daysDiff = Math.ceil((timeRange.end.getTime() - timeRange.start.getTime()) / (1000 * 60 * 60 * 24));

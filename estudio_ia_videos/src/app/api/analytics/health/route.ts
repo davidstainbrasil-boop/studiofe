@@ -68,7 +68,7 @@ async function checkAnalytics(): Promise<HealthCheckResult> {
 
     const recentEvents = await prisma.analytics_events.count({
       where: {
-        created_at: {
+        createdAt: {
           gte: yesterday
         }
       }
@@ -153,8 +153,8 @@ async function checkAlerts(): Promise<HealthCheckResult> {
   try {
     const alertCount = await prisma.analytics_events.count({
       where: {
-        event_type: 'alert',
-        event_data: {
+        eventType: 'alert',
+        eventData: {
           path: ['status'],
           equals: 'active'
         }
@@ -187,8 +187,8 @@ async function checkReports(): Promise<HealthCheckResult> {
   try {
     const reportCount = await prisma.analytics_events.count({
       where: {
-        event_type: 'report_scheduled',
-        event_data: {
+        eventType: 'report_scheduled',
+        eventData: {
           path: ['status'],
           equals: 'pending' // Assuming 'pending' means scheduled/active
         }
@@ -221,9 +221,9 @@ async function getMetrics() {
 
     // Total de usuários únicos
     const usersResult = await prisma.analytics_events.groupBy({
-      by: ['user_id'],
+      by: ["userId"],
       _count: {
-        user_id: true
+        userId: true
       }
     });
     const uniqueUsers = usersResult.length;
@@ -235,13 +235,13 @@ async function getMetrics() {
     const [errorCount, recentCount] = await Promise.all([
       prisma.analytics_events.count({
         where: {
-          event_type: 'error', // Assuming 'error' is the eventType for errors
-          created_at: { gte: yesterday }
+          eventType: 'error', // Assuming 'error' is the eventType for errors
+          createdAt: { gte: yesterday }
         }
       }),
       prisma.analytics_events.count({
         where: {
-          created_at: { gte: yesterday }
+          createdAt: { gte: yesterday }
         }
       })
     ]);
@@ -254,8 +254,8 @@ async function getMetrics() {
     // Alertas ativos
     const activeAlertsCount = await prisma.analytics_events.count({
       where: {
-        event_type: 'alert',
-        event_data: {
+        eventType: 'alert',
+        eventData: {
           path: ['status'],
           equals: 'active'
         }
@@ -265,8 +265,8 @@ async function getMetrics() {
     // Relatórios agendados
     const scheduledReportsCount = await prisma.analytics_events.count({
       where: {
-        event_type: 'report_scheduled',
-        event_data: {
+        eventType: 'report_scheduled',
+        eventData: {
           path: ['status'],
           equals: 'pending'
         }

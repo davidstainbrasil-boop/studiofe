@@ -10,7 +10,7 @@ type DatabaseWithRBAC = {
     Tables: Database['public']['Tables'] & {
       user_roles: {
         Row: {
-          user_id: string
+          userId: string
           role_id: string
         }
         Insert: unknown
@@ -30,7 +30,7 @@ type DatabaseWithRBAC = {
     Views: Database['public']['Views']
     Functions: {
       user_has_permission: {
-        Args: { user_id: string; permission_name: string }
+        Args: { userId: string; permission_name: string }
         Returns: boolean
       }
       user_role: {
@@ -78,7 +78,7 @@ export function usePermission(permission: string) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const rpc = (supabase as unknown as { rpc: Function }).rpc;
         const { data, error: rpcError } = await rpc('user_has_permission', {
-          user_id: user.id,
+          userId: user.id,
           permission_name: permission
         })
 
@@ -224,7 +224,7 @@ export function useUserRoles() {
         const { data, error: queryError } = await supabase
           .from('user_roles')
           .select('role:roles(name)')
-          .eq('user_id', user.id)
+          .eq("userId", user.id)
 
         if (queryError) {
           throw queryError

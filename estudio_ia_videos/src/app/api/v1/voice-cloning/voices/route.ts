@@ -5,29 +5,29 @@ export async function GET() {
   // Return available voices for ElevenLabs integration
   const voices = [
     {
-      voice_id: 'pMsXgVXv3BLzUgSXRplE',
+      voiceId: 'pMsXgVXv3BLzUgSXRplE',
       name: 'Adam (PT-BR)',
       category: 'professional',
       language: 'pt-BR',
       gender: 'male',
-      preview_url: '/api/voices/preview/adam',
-      is_premium: true
+      previewUrl: '/api/voices/preview/adam',
+      isPremium: true
     },
     {
-      voice_id: 'EXAVITQu4vr4xnSDxMaL',
+      voiceId: 'EXAVITQu4vr4xnSDxMaL',
       name: 'Bella (PT-BR)',
       category: 'friendly',
       language: 'pt-BR',
       gender: 'female',
-      preview_url: '/api/voices/preview/bella',
-      is_premium: true
+      previewUrl: '/api/voices/preview/bella',
+      isPremium: true
     }
   ]
 
   return NextResponse.json({
     voices,
     total_count: voices.length,
-    premium_count: voices.filter(v => v.is_premium).length
+    premium_count: voices.filter(v => v.isPremium).length
   })
 }
 

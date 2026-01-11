@@ -36,7 +36,7 @@ export const SlideInputSchema = z.object({
 });
 
 export const VideoJobInputSchema = z.object({
-  project_id: z.string().uuid('ID de projeto inválido'),
+  projectId: z.string().uuid('ID de projeto inválido'),
   slides: z.array(SlideInputSchema).min(1, 'Pelo menos um slide é necessário'),
   tts_voice: z.string().optional(),
   quality: z.enum(['low', 'medium', 'high']).default('medium'),
@@ -214,7 +214,7 @@ export const VideoJobsListQuerySchema = z.object({
   projectId: z.string().uuid('ID de projeto inválido').optional(),
   limit: z.coerce.number().int().positive().max(100).default(20),
   offset: z.coerce.number().int().nonnegative().default(0),
-  sortBy: z.enum(['created_at', 'updated_at', 'status']).default('created_at'),
+  sortBy: z.enum(["createdAt", "updatedAt", 'status']).default("createdAt"),
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
 });
 
@@ -226,13 +226,13 @@ export type VideoJobsListQuery = z.infer<typeof VideoJobsListQuerySchema>;
 
 export const VideoJobResponseSchema = z.object({
   id: z.string().uuid(),
-  user_id: z.string().uuid(),
-  project_id: z.string().uuid().nullable(),
+  userId: z.string().uuid(),
+  projectId: z.string().uuid().nullable(),
   status: JobStatusEnum,
   progress: z.number().min(0).max(100),
   attempts: z.number().int().nonnegative(),
-  created_at: z.string().datetime(),
-  updated_at: z.string().datetime().optional(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime().optional(),
   completed_at: z.string().datetime().nullable(),
   duration_ms: z.number().nonnegative().nullable(),
   render_settings: z.record(z.unknown()).nullable(),

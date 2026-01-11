@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { userId, recommendationId, itemId, action } = body as {
-      user_id: string;
+      userId: string;
       recommendationId: string;
       itemId: string;
       action: 'view' | 'click' | 'dismiss' | 'apply';

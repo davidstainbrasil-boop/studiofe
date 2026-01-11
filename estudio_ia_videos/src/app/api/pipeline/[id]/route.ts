@@ -59,12 +59,12 @@ export async function GET(
     }
 
     // Verificar se o usuário tem acesso ao job
-    if (job.user_id !== user.id) {
+    if (job.userId !== user.id) {
       // Verificar se é admin
       const { data: userProfile } = await supabase
         .from('user_profiles')
         .select('role')
-        .eq('user_id', user.id)
+        .eq("userId", user.id)
         .single()
 
       if (userProfile?.role !== 'admin') {
@@ -83,21 +83,21 @@ export async function GET(
         status: job.status,
         priority: job.priority,
         progress: job.progress,
-        created_at: job.created_at,
-        started_at: job.started_at,
-        completed_at: job.completed_at,
+        createdAt: job.createdAt,
+        startedAt: job.startedAt,
+        completedAt: job.completedAt,
         error: job.error,
         metadata: {
           text_length: job.metadata.text_length,
-          estimated_duration: job.metadata.estimated_duration,
+          estimatedDuration: job.metadata.estimatedDuration,
           complexity_score: job.metadata.complexity_score,
           performance_target: job.metadata.performance_target
         }
       },
       output: job.output ? {
-        audio_url: job.output.audio_url,
-        video_url: job.output.video_url,
-        thumbnail_url: job.output.thumbnail_url,
+        audioUrl: job.output.audioUrl,
+        videoUrl: job.output.videoUrl,
+        thumbnailUrl: job.output.thumbnailUrl,
         duration: job.output.duration,
         file_sizes: job.output.file_sizes,
         quality_metrics: job.output.quality_metrics,
@@ -111,7 +111,7 @@ export async function GET(
     // Log da consulta
     logger.info('Job status retrieved', {
       id,
-      user_id: user.id,
+      userId: user.id,
       status: job.status,
       progress: job.progress.percentage
     })
@@ -173,12 +173,12 @@ export async function DELETE(
     }
 
     // Verificar se o usuário tem acesso ao job
-    if (job.user_id !== user.id) {
+    if (job.userId !== user.id) {
       // Verificar se é admin
       const { data: userProfile } = await supabase
         .from('user_profiles')
         .select('role')
-        .eq('user_id', user.id)
+        .eq("userId", user.id)
         .single()
 
       if (userProfile?.role !== 'admin') {
@@ -213,7 +213,7 @@ export async function DELETE(
     // Log do cancelamento
     logger.info('Job cancelled', {
       id,
-      user_id: user.id,
+      userId: user.id,
       cancelledBy: user.id,
       previousStatus: job.status,
       stage: job.progress.stage
@@ -223,14 +223,14 @@ export async function DELETE(
     await supabase.from('api_logs').insert({
       endpoint: `/api/pipeline/${id}`,
       method: 'DELETE',
-      user_id: user.id,
+      userId: user.id,
       request_data: {
         job_id: id,
         action: 'cancel',
         previous_status: job.status
       },
       response_status: 200,
-      created_at: new Date().toISOString()
+      createdAt: new Date().toISOString()
     })
 
     return NextResponse.json({
@@ -305,12 +305,12 @@ export async function PATCH(
     }
 
     // Verificar se o usuário tem acesso ao job
-    if (job.user_id !== user.id) {
+    if (job.userId !== user.id) {
       // Verificar se é admin
       const { data: userProfile } = await supabase
         .from('user_profiles')
         .select('role')
-        .eq('user_id', user.id)
+        .eq("userId", user.id)
         .single()
 
       if (userProfile?.role !== 'admin') {
@@ -337,14 +337,14 @@ export async function PATCH(
       .from('pipeline_jobs')
       .update({
         priority: body.priority,
-        updated_at: new Date().toISOString()
+        updatedAt: new Date().toISOString()
       })
       .eq('job_id', id)
 
     // Log da atualização
     logger.info('Job priority updated', {
       id,
-      user_id: user.id,
+      userId: user.id,
       oldPriority: job.priority,
       newPriority: body.priority
     })
@@ -355,7 +355,7 @@ export async function PATCH(
       job_id: id,
       old_priority: job.priority,
       new_priority: body.priority,
-      updated_at: new Date().toISOString()
+      updatedAt: new Date().toISOString()
     })
 
   } catch (error) {
@@ -371,7 +371,7 @@ export async function PATCH(
  * Gerar timeline do job
  */
 interface TimelineJob {
-  created_at: string;
+  createdAt: string;
   started_at?: string;
   completed_at?: string;
   status: string;
@@ -384,7 +384,7 @@ interface TimelineJob {
   };
   metadata: {
     text_length: number;
-    estimated_duration: number;
+    estimatedDuration: number;
     complexity_score: number;
     performance_target: number;
   };
@@ -396,16 +396,16 @@ function generateJobTimeline(job: TimelineJob) {
   // Job criado
   timeline.push({
     stage: 'created',
-    timestamp: job.created_at,
+    timestamp: job.createdAt,
     status: 'completed',
     description: 'Job criado e adicionado à fila'
   })
 
   // Job iniciado
-  if (job.started_at) {
+  if (job.startedAt) {
     timeline.push({
       stage: 'started',
-      timestamp: job.started_at,
+      timestamp: job.startedAt,
       status: 'completed',
       description: 'Processamento iniciado'
     })
@@ -432,10 +432,10 @@ function generateJobTimeline(job: TimelineJob) {
   })
 
   // Job completado
-  if (job.completed_at) {
+  if (job.completedAt) {
     timeline.push({
       stage: 'completed',
-      timestamp: job.completed_at,
+      timestamp: job.completedAt,
       status: job.status === 'completed' ? 'completed' : 'failed',
       description: job.status === 'completed' ? 
         'Processamento concluído com sucesso' : 

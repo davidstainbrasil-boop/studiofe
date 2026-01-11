@@ -30,10 +30,10 @@ export async function GET(req: Request) {
              const mockCert = global.mockCertificates.get(code);
              return NextResponse.json({
                 valid: true,
-                project_id: mockCert.project_id,
-                student_name: mockCert.student_name,
-                course_name: mockCert.course_name,
-                issued_at: mockCert.issued_at
+                projectId: mockCert.projectId,
+                studentName: mockCert.studentName,
+                courseName: mockCert.courseName,
+                issuedAt: mockCert.issuedAt
             });
          }
 
@@ -42,10 +42,10 @@ export async function GET(req: Request) {
 
     return NextResponse.json({
       valid: true,
-      project_id: certificate.project_id,
-      student_name: certificate.student_name,
-      course_name: certificate.course_name,
-      issued_at: certificate.issued_at
+      projectId: certificate.projectId,
+      studentName: certificate.studentName,
+      courseName: certificate.courseName,
+      issuedAt: certificate.issuedAt
     });
 
   } catch (error: unknown) {
@@ -58,10 +58,10 @@ export async function GET(req: Request) {
              const mockCert = global.mockCertificates.get(code);
              return NextResponse.json({
                 valid: true,
-                project_id: mockCert.project_id,
-                student_name: mockCert.student_name,
-                course_name: mockCert.course_name,
-                issued_at: mockCert.issued_at
+                projectId: mockCert.projectId,
+                studentName: mockCert.studentName,
+                courseName: mockCert.courseName,
+                issuedAt: mockCert.issuedAt
             });
          }
          return NextResponse.json({ valid: false, error: 'Certificate not found (mock)' }, { status: 404 });

@@ -398,8 +398,8 @@ async function handleGetDashboard(): Promise<NextResponse> {
       health: healthStatus,
       summary: {
         total_requests: recentMetrics.reduce((sum, m) => sum + (m.application?.throughput || 0), 0),
-        average_response_time: recentMetrics.length > 0 
-          ? recentMetrics.reduce((sum, m) => sum + (m.application?.response_time || 0), 0) / recentMetrics.length 
+        average_responseTime: recentMetrics.length > 0 
+          ? recentMetrics.reduce((sum, m) => sum + (m.application?.responseTime || 0), 0) / recentMetrics.length 
           : 0,
         error_rate: latestMetrics?.application?.error_rate || 0,
         cache_hit_rate: latestMetrics?.cache?.hit_rate || 0,
@@ -417,19 +417,19 @@ async function handleGetStats(): Promise<NextResponse> {
   const { data: systemStats } = await (supabase
     .from('system_stats' as never) as ReturnType<typeof supabase.from>)
     .select('*')
-    .order('created_at', { ascending: false })
+    .order("createdAt", { ascending: false })
     .limit(1)
     .single()
 
   const { data: ttsStats } = await (supabase
     .from('tts_jobs' as never) as ReturnType<typeof supabase.from>)
     .select('status, engine, processing_time')
-    .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+    .gte("createdAt", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
 
   const { data: renderStats } = await supabase
     .from('render_jobs')
     .select('status, duration_ms')
-    .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+    .gte("createdAt", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
 
   // Calcular estatísticas
   interface TTSJob { status: string; engine: string; processing_time?: number }
@@ -454,13 +454,13 @@ async function handleGetStats(): Promise<NextResponse> {
       }
     },
     avatar: {
-      total_renders: renderJobsArray.length,
+      totalRenders: renderJobsArray.length,
       completed_renders: renderJobsArray.filter((j) => j.status === 'completed').length,
       failed_renders: renderJobsArray.filter((j) => j.status === 'failed').length,
       average_render_time: renderJobsArray.length 
-        ? renderJobsArray.reduce((sum: number, j) => sum + (j.duration_ms || 0), 0) / renderJobsArray.length 
+        ? renderJobsArray.reduce((sum: number, j) => sum + (j.durationMs || 0), 0) / renderJobsArray.length 
         : 0,
-      average_quality_score: 0
+      average_qualityScore: 0
     }
   }
 

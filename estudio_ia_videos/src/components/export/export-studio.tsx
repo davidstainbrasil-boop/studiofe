@@ -52,7 +52,7 @@ interface ExportStudioProps {
 export default function ExportStudio({ projectId, projectData }: ExportStudioProps) {
   const [selectedTemplate, setSelectedTemplate] = useState<ExportTemplate | null>(null)
   const [configuration, setConfiguration] = useState<Partial<ExportConfiguration>>({
-    project_id: projectId,
+    projectId: projectId,
     export_format: 'mp4',
     quality_settings: {
       resolution: '1080p',
@@ -81,7 +81,7 @@ export default function ExportStudio({ projectId, projectData }: ExportStudioPro
     const mockHistory: ExportJob[] = [
       {
         id: 'export-1',
-        project_id: projectId,
+        projectId: projectId,
         configuration: configuration as ExportConfiguration,
         status: 'completed',
         progress: 100,

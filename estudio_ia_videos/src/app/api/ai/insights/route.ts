@@ -19,7 +19,7 @@ export async function POST() {
           description: 'Automatically rewrite content for better readability'
         }
       ],
-      created_at: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
       isRead: false,
       isActioned: false
     },
@@ -40,7 +40,7 @@ export async function POST() {
           description: 'Create a content outline for AI Ethics'
         }
       ],
-      created_at: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
       isRead: false,
       isActioned: false
     }

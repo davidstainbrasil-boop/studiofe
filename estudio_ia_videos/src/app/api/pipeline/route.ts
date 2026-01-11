@@ -18,18 +18,18 @@ const PipelineInputSchema = z.object({
   text: z.string().min(1).max(10000),
   voice_config: z.object({
     engine: z.enum(['elevenlabs', 'google', 'azure', 'aws']),
-    voice_id: z.string(),
+    voiceId: z.string(),
     settings: z.record(z.unknown()).optional()
   }),
-  avatar_config: z.object({
-    model_url: z.string().url(),
+  avatarConfig: z.object({
+    modelUrl: z.string().url(),
     animations: z.array(z.string()).optional(),
     materials: z.array(z.unknown()).optional(),
     lighting: z.unknown().optional(),
     camera: z.unknown().optional(),
     environment: z.unknown().optional()
   }),
-  render_settings: z.object({
+  renderSettings: z.object({
     width: z.number().min(480).max(4096),
     height: z.number().min(360).max(2160),
     fps: z.number().min(15).max(60),
@@ -104,18 +104,18 @@ export async function POST(request: NextRequest) {
     // Log da criação
     logger.info('Pipeline job created via API', {
       jobId,
-      user_id: user.id,
+      userId: user.id,
       priority,
       textLength: validatedInput.text.length,
       engine: validatedInput.voice_config.engine,
-      quality: validatedInput.render_settings.quality
+      quality: validatedInput.renderSettings.quality
     })
 
     // Salvar log no Supabase
     await supabase.from('api_logs').insert({
       endpoint: '/api/pipeline',
       method: 'POST',
-      user_id: user.id,
+      userId: user.id,
       request_data: {
         job_id: jobId,
         text_length: validatedInput.text.length,
@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
         priority
       },
       response_status: 201,
-      created_at: new Date().toISOString()
+      createdAt: new Date().toISOString()
     })
 
     return NextResponse.json({
@@ -215,13 +215,13 @@ export async function GET(request: NextRequest) {
 /**
  * Verificar limites do usuário
  */
-async function checkUserLimits(user_id: string, supabase: SupabaseClient) {
+async function checkUserLimits(userId: string, supabase: SupabaseClient) {
   try {
     // Verificar jobs ativos
     const { data: activeJobs } = await supabase
       .from('pipeline_jobs')
       .select('job_id')
-      .eq('user_id', userId)
+      .eq("userId", userId)
       .in('status', ['queued', 'processing'])
 
     // Verificar jobs nas últimas 24h
@@ -229,14 +229,14 @@ async function checkUserLimits(user_id: string, supabase: SupabaseClient) {
     const { data: recentJobs } = await supabase
       .from('pipeline_jobs')
       .select('job_id')
-      .eq('user_id', userId)
-      .gte('created_at', yesterday)
+      .eq("userId", userId)
+      .gte("createdAt", yesterday)
 
     // Verificar plano do usuário
     const { data: userProfile } = await supabase
       .from('user_profiles')
       .select('plan, limits')
-      .eq('user_id', userId)
+      .eq("userId", userId)
       .single()
 
     const plan = userProfile?.plan || 'free'
@@ -284,7 +284,7 @@ function getDefaultLimits(plan: string) {
 /**
  * Obter estatísticas do usuário
  */
-async function getUserStats(user_id: string, supabase: SupabaseClient) {
+async function getUserStats(userId: string, supabase: SupabaseClient) {
   try {
     const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
     const lastWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
@@ -293,29 +293,29 @@ async function getUserStats(user_id: string, supabase: SupabaseClient) {
     const { data: jobsByStatus } = await supabase
       .from('pipeline_jobs')
       .select('status')
-      .eq('user_id', userId)
+      .eq("userId", userId)
 
     // Jobs recentes
     const { data: recentJobs } = await supabase
       .from('pipeline_jobs')
       .select('*')
-      .eq('user_id', userId)
-      .gte('created_at', yesterday)
-      .order('created_at', { ascending: false })
+      .eq("userId", userId)
+      .gte("createdAt", yesterday)
+      .order("createdAt", { ascending: false })
       .limit(10)
 
     // Tempo médio de processamento
     const { data: completedJobs } = await supabase
       .from('pipeline_jobs')
       .select('created_at, completed_at')
-      .eq('user_id', userId)
+      .eq("userId", userId)
       .eq('status', 'completed')
-      .gte('created_at', lastWeek)
+      .gte("createdAt", lastWeek)
 
     const avgProcessingTime = completedJobs?.length ? 
       completedJobs.reduce((sum, job) => {
-        const start = new Date(job.created_at).getTime()
-        const end = new Date(job.completed_at).getTime()
+        const start = new Date(job.createdAt).getTime()
+        const end = new Date(job.completedAt).getTime()
         return sum + (end - start)
       }, 0) / completedJobs.length : 0
 
@@ -349,12 +349,12 @@ async function getUserStats(user_id: string, supabase: SupabaseClient) {
 /**
  * Verificar permissão de admin
  */
-async function checkAdminPermission(user_id: string, supabase: SupabaseClient): Promise<boolean> {
+async function checkAdminPermission(userId: string, supabase: SupabaseClient): Promise<boolean> {
   try {
     const { data } = await supabase
       .from('user_profiles')
       .select('role')
-      .eq('user_id', userId)
+      .eq("userId", userId)
       .single()
 
     return data?.role === 'admin'
@@ -379,13 +379,13 @@ async function getGeneralStats(supabase: SupabaseClient) {
     const { count: recentJobs } = await supabase
       .from('pipeline_jobs')
       .select('*', { count: 'exact', head: true })
-      .gte('created_at', yesterday)
+      .gte("createdAt", yesterday)
 
     // Jobs por engine
     const { data: jobsByEngine } = await supabase
       .from('pipeline_jobs')
       .select('input_data')
-      .gte('created_at', yesterday)
+      .gte("createdAt", yesterday)
 
     const engineCounts = jobsByEngine?.reduce((acc, job) => {
       const engine = job.input_data?.voice_config?.engine || 'unknown'
@@ -398,7 +398,7 @@ async function getGeneralStats(supabase: SupabaseClient) {
       .from('pipeline_jobs')
       .select('output_data')
       .eq('status', 'completed')
-      .gte('created_at', yesterday)
+      .gte("createdAt", yesterday)
 
     const avgPerformance = performanceData?.length ?
       performanceData.reduce((sum, job) => {

@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     // Verificar se o projeto existe e pertence ao usuário
     const { data: project, error: projectError } = await supabase
       .from('projects')
-      .select('user_id')
+      .select("userId")
       .eq('id', projectId)
       .single();
 
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Projeto não encontrado' }, { status: 404 });
     }
 
-    if (project.user_id !== user.id) {
+    if (project.userId !== user.id) {
       return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
     }
 
@@ -51,19 +51,19 @@ export async function POST(request: NextRequest) {
     const { error: insertError } = await (supabase as any)
       .from('nr_compliance_records')
       .insert({
-        project_id: projectId,
+        projectId: projectId,
         nr: nrType,
-        nr_name: nrType,
+        nrName: nrType,
         status: result.passed ? 'compliant' : 'non_compliant',
         score: result.score,
-        final_score: result.score,
-        requirements_met: Math.floor(result.score / 10),
-        requirements_total: 10,
-        validated_at: result.timestamp ? new Date(result.timestamp).toISOString() : new Date().toISOString(),
-        validated_by: user.id,
-        ai_analysis: result.report,
+        finalScore: result.score,
+        requirementsMet: Math.floor(result.score / 10),
+        requirementsTotal: 10,
+        validatedAt: result.timestamp ? new Date(result.timestamp).toISOString() : new Date().toISOString(),
+        validatedBy: user.id,
+        aiAnalysis: result.report,
         recommendations: result.report.recommendations,
-        critical_points: result.report.criticalPoints
+        criticalPoints: result.report.criticalPoints
       });
 
     if (insertError) {
@@ -153,7 +153,7 @@ export async function GET(request: NextRequest) {
     // Verificar permissão
     const { data: project, error: projectError } = await supabase
       .from('projects')
-      .select('user_id')
+      .select("userId")
       .eq('id', projectId)
       .single();
 
@@ -161,7 +161,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Projeto não encontrado' }, { status: 404 });
     }
 
-    if (project.user_id !== user.id) {
+    if (project.userId !== user.id) {
       return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
     }
 
@@ -170,8 +170,8 @@ export async function GET(request: NextRequest) {
     const { data: validations, error: fetchError } = await supabase
       .from('nr_compliance_records')
       .select('*')
-      .eq('project_id', projectId)
-      .order('validated_at', { ascending: false })
+      .eq("projectId", projectId)
+      .order("validatedAt", { ascending: false })
       .limit(10);
 
     if (fetchError) {

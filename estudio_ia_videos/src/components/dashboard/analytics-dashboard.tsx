@@ -651,7 +651,7 @@ export function AnalyticsDashboard() {
                       </div>
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      {new Date(job.created_at).toLocaleString()}
+                      {new Date(job.createdAt).toLocaleString()}
                     </div>
                   </div>
                 )) || (

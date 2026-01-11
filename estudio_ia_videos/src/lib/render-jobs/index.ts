@@ -8,8 +8,8 @@ export async function listRenderJobs(projectId: string): Promise<RenderJob[]> {
   const { data, error } = await supabase
     .from('render_jobs')
     .select('*')
-    .eq('project_id', projectId)
-    .order('created_at', { ascending: false })
+    .eq("projectId", projectId)
+    .order("createdAt", { ascending: false })
 
   if (error) {
     throw new Error(`Failed to load render jobs: ${error.message}`)

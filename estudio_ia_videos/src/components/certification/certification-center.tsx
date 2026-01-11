@@ -67,7 +67,7 @@ interface Certificate {
     verification_url: string
   }
   metadata: {
-    created_at: string
+    createdAt: string
     signed_by: string
     digital_signature: string
     pdf_url: string
@@ -155,7 +155,7 @@ export default function CertificationCenter() {
           verification_url: 'https://estudio-ia.com/verify/CERT-2025-001-ABC123'
         },
         metadata: {
-          created_at: '2025-08-25T10:45:00Z',
+          createdAt: '2025-08-25T10:45:00Z',
           signed_by: 'Prof. Maria Santos',
           digital_signature: 'DS-Q0VDVC0yMDI1LTAwMS1BQkMxMjM=-1724585100',
           pdf_url: '/certificates/CERT-2025-001-ABC123.pdf',

@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Verifica permissão
-    if (project.user_id !== session.user.id) {
+    if (project.userId !== session.user.id) {
       return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
     }
 
@@ -121,7 +121,7 @@ export async function GET(req: NextRequest) {
     // Busca registros de conformidade
     const records = await prisma.nr_compliance_records.findMany({
       where: { projectId },
-      orderBy: { created_at: 'desc' }
+      orderBy: { createdAt: 'desc' }
     })
 
     return NextResponse.json({ records })

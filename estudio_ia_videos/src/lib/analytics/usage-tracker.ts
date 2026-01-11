@@ -28,10 +28,10 @@ export async function trackUsage(
     const { error } = await supabase
       .from('analytics_events')
       .insert({
-        user_id: userId, // Can be null for system events or if user not known contextually
-        event_type: eventType,
-        event_data: data,
-        created_at: new Date().toISOString()
+        userId: userId, // Can be null for system events or if user not known contextually
+        eventType: eventType,
+        eventData: data,
+        createdAt: new Date().toISOString()
       });
 
     if (error) {

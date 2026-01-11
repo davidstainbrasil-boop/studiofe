@@ -24,8 +24,8 @@ export async function POST(
     const { data: slides, error: slidesError } = await supabase
       .from('slides')
       .select('*')
-      .eq('project_id', projectId)
-      .order('slide_order', { ascending: true });
+      .eq("projectId", projectId)
+      .order("slideOrder", { ascending: true });
 
     if (slidesError || !slides) {
       throw new Error('Failed to fetch slides');
@@ -50,7 +50,7 @@ export async function POST(
       const text = content?.text || content?.script || slide.notes;
 
       if (!text) {
-        currentTime += (slide.duration_seconds || 5);
+        currentTime += (slide.durationSeconds || 5);
         continue;
       }
 
@@ -60,13 +60,13 @@ export async function POST(
         const audioUrl = await generateAndUploadTTSAudio(
            text, 
            fileName, 
-           (slide.tts_settings as any)?.voice_id
+           (slide.ttsSettings as any)?.voiceId
         );
 
         // Update Slide Record
         await supabase
           .from('slides')
-          .update({ audio_url: audioUrl })
+          .update({ audioUrl: audioUrl })
           .eq('id', slide.id);
 
         // Create Timeline Audio Element
@@ -80,9 +80,9 @@ export async function POST(
         audioElements.push({
             id: `audio-${slide.id}-${Date.now()}`,
             type: 'audio',
-            name: `Narração Slide ${slide.slide_order}`,
+            name: `Narração Slide ${slide.slideOrder}`,
             startTime: currentTime,
-            duration: slide.duration_seconds || 5, // Ideally this should match audio length
+            duration: slide.durationSeconds || 5, // Ideally this should match audio length
             content: audioUrl,
             properties: { volume: 1 },
             locked: false,
@@ -93,7 +93,7 @@ export async function POST(
         logger.error(`Failed to generate TTS for slide ${slide.id}`, err as Error);
       }
 
-      currentTime += (slide.duration_seconds || 5);
+      currentTime += (slide.durationSeconds || 5);
     }
 
     // 3. Update Timeline
@@ -101,7 +101,7 @@ export async function POST(
     const { data: timeline } = await supabase
       .from('timelines')
       .select('*')
-      .eq('project_id', projectId)
+      .eq("projectId", projectId)
       .single();
 
     if (timeline) {

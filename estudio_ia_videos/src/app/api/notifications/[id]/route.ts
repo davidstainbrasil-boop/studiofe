@@ -36,7 +36,7 @@ export async function GET(
       .from('notifications')
       .select('*')
       .eq('id', notificationId)
-      .eq('user_id', session.user.id)
+      .eq("userId", session.user.id)
       .single()
 
     if (error) {
@@ -97,7 +97,7 @@ export async function PATCH(
     }
 
     const updateData: Record<string, unknown> = {
-      updated_at: new Date().toISOString()
+      updatedAt: new Date().toISOString()
     }
 
     // Only allow status updates for now
@@ -110,7 +110,7 @@ export async function PATCH(
       .from('notifications')
       .update(updateData)
       .eq('id', notificationId)
-      .eq('user_id', session.user.id)
+      .eq("userId", session.user.id)
       .select()
       .single()
 
@@ -129,14 +129,14 @@ export async function PATCH(
       await supabaseAdmin
         .from('analytics_events')
         .insert({
-          user_id: session.user.id,
-          event_type: `notification_${body.status || 'updated'}`,
-          event_data: {
+          userId: session.user.id,
+          eventType: `notification_${body.status || 'updated'}`,
+          eventData: {
             notification_id: notificationId,
             changes: updates,
             timestamp: new Date().toISOString()
           },
-          created_at: new Date().toISOString()
+          createdAt: new Date().toISOString()
         })
     } catch (analyticsError) {
       logger.warn('Failed to log notification update:', { component: 'API: notifications/[id]' })
@@ -183,7 +183,7 @@ export async function DELETE(
       .from('notifications')
       .delete()
       .eq('id', notificationId)
-      .eq('user_id', session.user.id)
+      .eq("userId", session.user.id)
 
     if (error) throw error
 
@@ -192,13 +192,13 @@ export async function DELETE(
       await supabaseAdmin
         .from('analytics_events')
         .insert({
-          user_id: session.user.id,
-          event_type: 'notification_deleted',
-          event_data: {
+          userId: session.user.id,
+          eventType: 'notification_deleted',
+          eventData: {
             notification_id: notificationId,
             timestamp: new Date().toISOString()
           },
-          created_at: new Date().toISOString()
+          createdAt: new Date().toISOString()
         })
     } catch (analyticsError) {
       logger.warn('Failed to log notification deletion:', { component: 'API: notifications/[id]' })

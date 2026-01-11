@@ -23,7 +23,7 @@ const TTSProviderSchema = z.object({
     voice_models: z.array(z.string()).optional(),
     languages: z.array(z.string()).optional(),
     max_characters: z.number().optional(),
-    rate_limit: z.number().optional()
+    rateLimit: z.number().optional()
   }).optional(),
   pricing: z.object({
     per_character: z.number().optional(),
@@ -54,7 +54,7 @@ const defaultProviders = [
       voice_models: ['en-US-AriaNeural', 'en-US-JennyNeural', 'en-US-GuyNeural'],
       languages: ['en-US', 'es-ES', 'fr-FR', 'de-DE', 'it-IT', 'pt-BR'],
       max_characters: 1000000,
-      rate_limit: 20
+      rateLimit: 20
     },
     pricing: {
       per_character: 0.000016,
@@ -71,7 +71,7 @@ const defaultProviders = [
       voice_models: ['en-US-Wavenet-D', 'en-US-Wavenet-F', 'en-US-Neural2-A'],
       languages: ['en-US', 'es-ES', 'fr-FR', 'de-DE', 'it-IT', 'pt-BR'],
       max_characters: 1000000,
-      rate_limit: 300
+      rateLimit: 300
     },
     pricing: {
       per_character: 0.000016,
@@ -88,7 +88,7 @@ const defaultProviders = [
       voice_models: ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'],
       languages: ['en-US'],
       max_characters: 4096,
-      rate_limit: 50
+      rateLimit: 50
     },
     pricing: {
       per_character: 0.000015,
@@ -105,7 +105,7 @@ const defaultProviders = [
       voice_models: ['21m00Tcm4TlvDq8ikWAM', 'AZnzlk1XvdvUeBnXmlld', 'EXAVITQu4vr4xnSDxMaL'],
       languages: ['en-US', 'es-ES', 'fr-FR', 'de-DE'],
       max_characters: 10000,
-      rate_limit: 10
+      rateLimit: 10
     },
     pricing: {
       per_character: 0.00003,
@@ -129,7 +129,7 @@ export async function GET(request: NextRequest) {
     const { data: userProviders, error } = await supabaseAdmin
       .from('user_external_api_configs')
       .select('*')
-      .eq('user_id', session.user.id)
+      .eq("userId", session.user.id)
       .eq('api_type', 'tts')
 
     if (error && error.code !== 'PGRST116') {
@@ -139,7 +139,7 @@ export async function GET(request: NextRequest) {
     // If no user configurations exist, create default ones
     if (!userProviders || userProviders.length === 0) {
       const defaultConfigs = defaultProviders.map(provider => ({
-        user_id: session.user.id,
+        userId: session.user.id,
         api_type: 'tts',
         provider_id: provider.id,
         provider_name: provider.name,
@@ -147,8 +147,8 @@ export async function GET(request: NextRequest) {
         enabled: provider.enabled,
         config: provider.config,
         pricing: provider.pricing,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       }))
 
       const { data: createdConfigs, error: createError } = await supabaseAdmin
@@ -236,7 +236,7 @@ export async function POST(request: NextRequest) {
     const { data: newProvider, error } = await supabaseAdmin
       .from('user_external_api_configs')
       .insert({
-        user_id: session.user.id,
+        userId: session.user.id,
         api_type: 'tts',
         provider_id: providerId,
         provider_name: providerData.name,
@@ -244,8 +244,8 @@ export async function POST(request: NextRequest) {
         enabled: providerData.enabled,
         config: providerData.config || {},
         pricing: providerData.pricing || {},
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       })
       .select()
       .single()
@@ -257,7 +257,7 @@ export async function POST(request: NextRequest) {
       await supabaseAdmin
         .from('analytics_events')
         .insert({
-          user_id: session.user.id,
+          userId: session.user.id,
           category: 'external_apis',
           action: 'tts_provider_created',
           metadata: {
@@ -265,7 +265,7 @@ export async function POST(request: NextRequest) {
             provider_type: providerData.type,
             timestamp: new Date().toISOString()
           } as Json,
-          created_at: new Date().toISOString()
+          createdAt: new Date().toISOString()
         })
     } catch (analyticsError) {
       logger.warn('Failed to log TTS provider creation', { component: 'API: external/tts/providers' })

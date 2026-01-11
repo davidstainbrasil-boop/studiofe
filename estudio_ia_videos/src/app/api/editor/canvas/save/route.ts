@@ -13,7 +13,7 @@ import { logger } from '@lib/logger'
 
 // Schemas de validação
 const CanvasDataSchema = z.object({
-  project_id: z.string(),
+  projectId: z.string(),
   canvas: z.object({
     width: z.number(),
     height: z.number(),
@@ -90,7 +90,7 @@ interface ProjectCanvasMetadata {
 }
 
 class CanvasEditor {
-  async saveCanvasData(project_id: string, canvasData: CanvasData, timeline: TimelineItem[]): Promise<SaveCanvasResult> {
+  async saveCanvasData(projectId: string, canvasData: CanvasData, timeline: TimelineItem[]): Promise<SaveCanvasResult> {
     try {
       // Validar elementos do canvas
       const validatedElements = canvasData.elements.map(element => {
@@ -186,7 +186,7 @@ class CanvasEditor {
     }
   }
 
-  async addElement(project_id: string, element: CanvasElement): Promise<CanvasElement> {
+  async addElement(projectId: string, element: CanvasElement): Promise<CanvasElement> {
     try {
       const project = await prisma.projects.findUnique({
         where: { id: projectId }
@@ -238,8 +238,8 @@ export async function POST(request: NextRequest) {
     // Verificar se o projeto existe e pertence ao usuário
     const project = await prisma.projects.findFirst({
       where: {
-        id: validatedData.project_id,
-        user_id: session.user.id
+        id: validatedData.projectId,
+        userId: session.user.id
       }
     })
 
@@ -249,7 +249,7 @@ export async function POST(request: NextRequest) {
 
     // Salvar dados do canvas
     const result = await canvasEditor.saveCanvasData(
-      validatedData.project_id,
+      validatedData.projectId,
       validatedData.canvas,
       validatedData.timeline
     )
@@ -261,7 +261,7 @@ export async function POST(request: NextRequest) {
     )
 
     // Atualizar workflow
-    await workflowManager.updateWorkflowStep(validatedData.project_id, 'edit', 'completed', {
+    await workflowManager.updateWorkflowStep(validatedData.projectId, 'edit', 'completed', {
       canvas: result.canvas,
       timeline: result.timeline,
       videoConfig
@@ -299,7 +299,7 @@ export async function PUT(request: NextRequest) {
     const project = await prisma.projects.findFirst({
       where: {
         id: projectId,
-        user_id: session.user.id
+        userId: session.user.id
       }
     })
 
@@ -340,7 +340,7 @@ export async function GET(request: NextRequest) {
     const project = await prisma.projects.findFirst({
       where: {
         id: projectId,
-        user_id: session.user.id
+        userId: session.user.id
       }
     })
 

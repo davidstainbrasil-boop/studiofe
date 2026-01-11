@@ -54,7 +54,7 @@ interface Analytics {
 // Helper interface for Supabase responses
 interface Project {
   id: string;
-  user_id: string;
+  userId: string;
 }
 
 interface ProjectCollaborator {
@@ -63,13 +63,13 @@ interface ProjectCollaborator {
 
 interface TimelineRecord {
   id: string;
-  project_id: string;
+  projectId: string;
   version: number;
   tracks: unknown; // JSON
   settings: unknown; // JSON
-  total_duration: number;
-  created_at: string;
-  updated_at: string;
+  totalDuration: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export async function POST(request: NextRequest) {
@@ -113,13 +113,13 @@ export async function POST(request: NextRequest) {
     const projectData = project as Project;
 
     // Check permission
-    let hasPermission = projectData.user_id === user.id;
+    let hasPermission = projectData.userId === user.id;
     if (!hasPermission) {
         const { data: collaborator } = await supabase
             .from('project_collaborators')
             .select('role')
-            .eq('project_id', projectId)
-            .eq('user_id', user.id)
+            .eq("projectId", projectId)
+            .eq("userId", user.id)
             .single();
         
         if (collaborator && ['owner', 'editor'].includes((collaborator as ProjectCollaborator).role)) {
@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
     const { data: existingTimeline } = await supabase
         .from('timelines')
         .select('id, version')
-        .eq('project_id', projectId)
+        .eq("projectId", projectId)
         .single();
 
     let timeline: TimelineRecord;
@@ -161,11 +161,11 @@ export async function POST(request: NextRequest) {
             .update({
                 tracks: tracks,
                 settings: toJsonValue(settings),
-                total_duration: Math.ceil(totalDuration || 0),
+                totalDuration: Math.ceil(totalDuration || 0),
                 version: (existingTimeline as TimelineRecord).version + 1,
-                updated_at: new Date().toISOString()
+                updatedAt: new Date().toISOString()
             })
-            .eq('project_id', projectId)
+            .eq("projectId", projectId)
             .select()
             .single();
         
@@ -175,10 +175,10 @@ export async function POST(request: NextRequest) {
         const { data, error } = await supabase
             .from('timelines')
             .insert({
-                project_id: projectId,
+                projectId: projectId,
                 tracks: tracks,
                 settings: toJsonValue(settings),
-                total_duration: Math.ceil(totalDuration || 0),
+                totalDuration: Math.ceil(totalDuration || 0),
                 version: 1
             })
             .select()
@@ -192,7 +192,7 @@ export async function POST(request: NextRequest) {
 
     // Track analytics event
     await AnalyticsTracker.trackTimelineEdit({
-      user_id: user.id,
+      userId: user.id,
       projectId,
       action: 'update',
       trackCount: tracks?.length || 0,
@@ -219,12 +219,12 @@ export async function POST(request: NextRequest) {
       success: true,
       data: {
         id: timeline.id,
-        project_id: timeline.project_id,
+        projectId: timeline.projectId,
         version: timeline.version,
-        totalDuration: timeline.total_duration,
+        totalDuration: timeline.totalDuration,
         tracks: timeline.tracks,
         settings: timeline.settings,
-        updated_at: timeline.updated_at,
+        updatedAt: timeline.updatedAt,
         analytics,
       },
       message: 'Timeline salva com sucesso',
@@ -290,7 +290,7 @@ export async function GET(request: NextRequest) {
             user_id
         )
       `)
-      .eq('project_id', projectId)
+      .eq("projectId", projectId)
       .single();
 
     if (error || !timelineData) {
@@ -301,17 +301,17 @@ export async function GET(request: NextRequest) {
     }
 
     // Type assertion for the joined query result
-    const timeline = timelineData as unknown as TimelineRecord & { projects: { id: string; name: string; status: string; user_id: string } };
+    const timeline = timelineData as unknown as TimelineRecord & { projects: { id: string; name: string; status: string; userId: string } };
     const project = timeline.projects;
 
     // Check access
-    let hasPermission = project.user_id === user.id;
+    let hasPermission = project.userId === user.id;
     if (!hasPermission) {
         const { data: collaborator } = await supabase
             .from('project_collaborators')
             .select('role')
-            .eq('project_id', projectId)
-            .eq('user_id', user.id)
+            .eq("projectId", projectId)
+            .eq("userId", user.id)
             .single();
         
         if (collaborator && ['owner', 'editor'].includes((collaborator as ProjectCollaborator).role)) {
@@ -332,14 +332,14 @@ export async function GET(request: NextRequest) {
       success: true,
       data: {
         id: timeline.id,
-        project_id: timeline.project_id,
+        projectId: timeline.projectId,
         projectName: project.name,
         tracks: timeline.tracks,
         settings: timeline.settings,
-        totalDuration: timeline.total_duration,
+        totalDuration: timeline.totalDuration,
         version: timeline.version,
-        created_at: timeline.created_at,
-        updated_at: timeline.updated_at,
+        createdAt: timeline.createdAt,
+        updatedAt: timeline.updatedAt,
       },
       message: 'Timeline carregada com sucesso',
     });
@@ -404,13 +404,13 @@ export async function DELETE(request: NextRequest) {
 
     // Check permission (only owner can delete timeline?)
     // Let's assume editors can too for now, or stick to owner
-    let hasPermission = projectData.user_id === user.id;
+    let hasPermission = projectData.userId === user.id;
     if (!hasPermission) {
         const { data: collaborator } = await supabase
             .from('project_collaborators')
             .select('role')
-            .eq('project_id', projectId)
-            .eq('user_id', user.id)
+            .eq("projectId", projectId)
+            .eq("userId", user.id)
             .single();
         
         if (collaborator && ['owner', 'editor'].includes((collaborator as ProjectCollaborator).role)) {
@@ -429,7 +429,7 @@ export async function DELETE(request: NextRequest) {
     const { error: deleteError } = await supabase
       .from('timelines')
       .delete()
-      .eq('project_id', projectId);
+      .eq("projectId", projectId);
 
     if (deleteError) throw deleteError;
 
@@ -439,7 +439,7 @@ export async function DELETE(request: NextRequest) {
       success: true,
       message: 'Timeline deletada com sucesso',
       data: {
-        project_id: projectId,
+        projectId: projectId,
       },
     });
 
@@ -497,13 +497,13 @@ export async function PATCH(request: NextRequest) {
     const projectData = project as Project;
 
     // Check permission
-    let hasPermission = projectData.user_id === user.id;
+    let hasPermission = projectData.userId === user.id;
     if (!hasPermission) {
         const { data: collaborator } = await supabase
             .from('project_collaborators')
             .select('role')
-            .eq('project_id', projectId)
-            .eq('user_id', user.id)
+            .eq("projectId", projectId)
+            .eq("userId", user.id)
             .single();
         
         if (collaborator && ['owner', 'editor'].includes((collaborator as ProjectCollaborator).role)) {
@@ -520,7 +520,7 @@ export async function PATCH(request: NextRequest) {
 
     // Build update data object with only provided fields
     const updateData: Record<string, unknown> = {
-      updated_at: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
 
     if (tracks !== undefined) {
@@ -532,7 +532,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     if (totalDuration !== undefined) {
-      updateData.total_duration = Math.ceil(totalDuration);
+      updateData.totalDuration = Math.ceil(totalDuration);
     }
 
     // Update timeline
@@ -541,7 +541,7 @@ export async function PATCH(request: NextRequest) {
     const { data: currentTimeline } = await supabase
         .from('timelines')
         .select('version')
-        .eq('project_id', projectId)
+        .eq("projectId", projectId)
         .single();
     
     if (currentTimeline) {
@@ -551,7 +551,7 @@ export async function PATCH(request: NextRequest) {
     const { data: timeline, error: updateError } = await supabase
       .from('timelines')
       .update(updateData)
-      .eq('project_id', projectId)
+      .eq("projectId", projectId)
       .select()
       .single();
 
@@ -563,11 +563,11 @@ export async function PATCH(request: NextRequest) {
 
     // Track analytics event
     await AnalyticsTracker.trackTimelineEdit({
-      user_id: user.id,
+      userId: user.id,
       projectId,
       action: 'partial_update',
       trackCount: tracks?.length || 0,
-      totalDuration: timelineRecord.total_duration,
+      totalDuration: timelineRecord.totalDuration,
     });
 
     // Calculate analytics for response
@@ -590,12 +590,12 @@ export async function PATCH(request: NextRequest) {
       success: true,
       data: {
         id: timelineRecord.id,
-        project_id: timelineRecord.project_id,
+        projectId: timelineRecord.projectId,
         version: timelineRecord.version,
-        totalDuration: timelineRecord.total_duration,
+        totalDuration: timelineRecord.totalDuration,
         tracks: timelineRecord.tracks,
         settings: timelineRecord.settings,
-        updated_at: timelineRecord.updated_at,
+        updatedAt: timelineRecord.updatedAt,
         analytics,
       },
       message: 'Timeline atualizada parcialmente com sucesso',

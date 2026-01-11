@@ -4,12 +4,12 @@ import { authOptions } from '@lib/auth';
 import { assertCan, UserContext, assignRoleWithAudit } from '@lib/rbac';
 import { supabaseAdmin } from '@lib/supabase/server';
 
-async function buildUserContext(user_id: string): Promise<UserContext> {
+async function buildUserContext(userId: string): Promise<UserContext> {
   const admin = supabaseAdmin;
-  const { data: rolesData } = await admin.from('user_roles').select('role').eq('user_id', userId);
+  const { data: rolesData } = await admin.from('user_roles').select('role').eq("userId", user_id);
   interface RoleRow { role: string }
   const roles = ((rolesData || []) as unknown as RoleRow[]).map((r) => r.role) as UserContext['roles'];
-  return { id: userId, roles: roles.length ? roles : ['viewer'] };
+  return { id: user_id, roles: roles.length ? roles : ['viewer'] };
 }
 
 export async function GET(req: NextRequest) {
@@ -22,12 +22,12 @@ export async function GET(req: NextRequest) {
   if (error) return NextResponse.json({ error: 'Falha ao buscar usuários' }, { status: 500 });
   // Carregar roles para cada usuário
   const rolesResp = await admin.from('user_roles').select('user_id, role');
-  interface UserRoleRow { user_id: string; role: string }
+  interface UserRoleRow { userId: string; role: string }
   const rolesMap = new Map<string, string[]>();
   ((rolesResp.data || []) as unknown as UserRoleRow[]).forEach((r) => {
-    const arr = rolesMap.get(r.user_id) || [];
+    const arr = rolesMap.get(r.userId) || [];
     arr.push(r.role as string);
-    rolesMap.set(r.user_id, arr);
+    rolesMap.set(r.userId, arr);
   });
   const users = (usersData || []).map((u: { id: string }) => ({ id: u.id, roles: rolesMap.get(u.id) || ['viewer'] }));
   return NextResponse.json({ users });

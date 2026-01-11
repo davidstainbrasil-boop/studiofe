@@ -34,12 +34,12 @@ export async function GET(request: NextRequest) {
     // Get recent validations with issues
     const recentValidations = await prisma.nr_compliance_records.findMany({
       where: {
-        project_id: { in: projectIds },
-        created_at: {
+        projectId: { in: projectIds },
+        createdAt: {
           gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // Last 7 days
         }
       },
-      orderBy: { created_at: 'desc' },
+      orderBy: { createdAt: 'desc' },
       take: 50
     });
 
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
     const alerts = [];
 
     for (const validation of recentValidations) {
-      const project = userProjects.find((p: any) => p.id === validation.project_id);
+      const project = userProjects.find((p: any) => p.id === validation.projectId);
       
       // Critical alerts (score < 60)
       if (validation.score < 60) {
@@ -56,11 +56,11 @@ export async function GET(request: NextRequest) {
           type: 'critical',
           title: 'Compliance Crítico Detectado',
           message: `Projeto "${project?.title}" tem score muito baixo (${validation.score}%) para ${validation.nr}`,
-          project_id: validation.project_id,
+          projectId: validation.projectId,
           projectTitle: project?.title,
           nrType: validation.nr,
           score: validation.score,
-          created_at: validation.created_at,
+          createdAt: validation.createdAt,
           suggestions: toStringArray(validation.recommendations),
           action: 'review_immediately'
         });
@@ -72,11 +72,11 @@ export async function GET(request: NextRequest) {
           type: 'warning',
           title: 'Compliance Precisa de Atenção',
           message: `Projeto "${project?.title}" tem score baixo (${validation.score}%) para ${validation.nr}`,
-          project_id: validation.project_id,
+          projectId: validation.projectId,
           projectTitle: project?.title,
           nrType: validation.nr,
           score: validation.score,
-          created_at: validation.created_at,
+          createdAt: validation.createdAt,
           suggestions: toStringArray(validation.recommendations),
           action: 'review_soon'
         });
@@ -91,11 +91,11 @@ export async function GET(request: NextRequest) {
             type: 'warning',
             title: 'Pontos Críticos Ausentes',
             message: `${missingPoints.length} pontos críticos ausentes em "${project?.title}" (${validation.nr})`,
-            project_id: validation.project_id,
+            projectId: validation.projectId,
             projectTitle: project?.title,
             nrType: validation.nr,
             score: validation.score,
-            created_at: validation.created_at,
+            createdAt: validation.createdAt,
             missingPoints,
             action: 'add_content'
           });
@@ -114,7 +114,7 @@ export async function GET(request: NextRequest) {
       const severityOrder: Record<string, number> = { critical: 3, warning: 2, info: 1 };
       const severityDiff = (severityOrder[b.type] || 0) - (severityOrder[a.type] || 0);
       if (severityDiff !== 0) return severityDiff;
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
 
     // Get summary

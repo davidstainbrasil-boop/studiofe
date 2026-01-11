@@ -18,7 +18,7 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   const requestId = crypto.randomUUID()
-  const contextLogger = logger.withContext({ ...logContext, requestId, user_id: params.id })
+  const contextLogger = logger.withContext({ ...logContext, requestId, userId: params.id })
 
   try {
     contextLogger.info('Assigning role to user')
@@ -55,7 +55,7 @@ export async function POST(
     const { data: existingRole } = await supabase
       .from('user_roles')
       .select('id')
-      .eq('user_id', params.id)
+      .eq("userId", params.id)
       .eq('role_id', roleData.id)
       .single()
 
@@ -71,7 +71,7 @@ export async function POST(
     const { error: insertError } = await supabase
       .from('user_roles')
       .insert({
-        user_id: params.id,
+        userId: params.id,
         role_id: roleData.id
       })
 

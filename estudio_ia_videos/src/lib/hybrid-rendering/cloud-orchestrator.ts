@@ -309,7 +309,7 @@ export class CloudRenderingOrchestrator {
       .update({
         status: job.status,
         progress: job.progress,
-        updated_at: new Date().toISOString()
+        updatedAt: new Date().toISOString()
       })
       .eq('id', job.id);
   }

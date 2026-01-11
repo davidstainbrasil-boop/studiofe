@@ -33,7 +33,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     if (!webhook) {
       return NextResponse.json({ error: 'Webhook not found' }, { status: 404 })
     }
-    if (webhook.user_id !== session.user.id) {
+    if (webhook.userId !== session.user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest, { params }: Params) {
 
       logger.info('Webhook test sent', { 
         webhookId: id, 
-        user_id: session.user.id,
+        userId: session.user.id,
         status: response.status,
         duration
       })

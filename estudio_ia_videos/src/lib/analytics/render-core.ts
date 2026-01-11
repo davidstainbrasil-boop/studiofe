@@ -7,7 +7,7 @@ import type { RenderJobSettings } from '../queue/setup'
 export interface BasicRenderJob {
   id: string
   status: string
-  created_at: string
+  createdAt: string
   started_at: string | null
   completed_at: string | null
   error_message: string | null
@@ -109,11 +109,11 @@ export function computeErrorAnalysis(jobs: BasicRenderJob[], limit = 10): ErrorA
     const raw = j.error_message as string
     const type = (raw?.split(':')[0] || raw || 'unknown').trim()
     if (!groups[type]) {
-      groups[type] = { error_type: type, count: 0, last_occurrence: j.created_at }
+      groups[type] = { error_type: type, count: 0, last_occurrence: j.createdAt }
     }
     groups[type].count++
-    if (new Date(j.created_at) > new Date(groups[type].last_occurrence)) {
-      groups[type].last_occurrence = j.created_at
+    if (new Date(j.createdAt) > new Date(groups[type].last_occurrence)) {
+      groups[type].last_occurrence = j.createdAt
     }
   }
   return Object.values(groups).sort((a, b) => b.count - a.count).slice(0, limit)
@@ -169,7 +169,7 @@ export function computeQueueStats(jobs: BasicRenderJob[]): QueueStatsResult {
   const processing = jobs.filter(j => j.status === 'processing')
   const started = jobs.filter(j => j.started_at)
   const waits = started.map(j => {
-    const created = new Date(j.created_at).getTime()
+    const created = new Date(j.createdAt).getTime()
     const startedAt = new Date(j.started_at as string).getTime()
     return startedAt > created ? (startedAt - created) / 1000 : 0
   }).filter(v => v > 0)

@@ -52,7 +52,7 @@ async function getHandler(req: NextRequest) {
     }
 
     const whereClause = {
-      created_at: { gte: startDate }
+      createdAt: { gte: startDate }
     };
 
     // Utilitários locais para acessar metadados e normalizar números
@@ -85,7 +85,7 @@ async function getHandler(req: NextRequest) {
       prisma.analytics_events.count({
         where: {
           ...whereClause,
-          created_at: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
+          createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
         }
       }),
 
@@ -93,7 +93,7 @@ async function getHandler(req: NextRequest) {
       prisma.analytics_events.count({
         where: { 
           ...whereClause, 
-          event_data: {
+          eventData: {
             path: ['status'],
             equals: 'error'
           }
@@ -121,12 +121,12 @@ async function getHandler(req: NextRequest) {
       // Eventos recentes
       prisma.analytics_events.findMany({
         where: whereClause,
-        orderBy: { created_at: 'desc' },
+        orderBy: { createdAt: 'desc' },
         take: 20,
         select: {
           id: true,
-          event_data: true,
-          created_at: true
+          eventData: true,
+          createdAt: true
         }
       }),
 
@@ -170,14 +170,14 @@ async function getHandler(req: NextRequest) {
       // Dados de projetos
       prisma.projects.count({
         where: {
-          created_at: { gte: startDate }
+          createdAt: { gte: startDate }
         }
       })
     ]);
 
     // Map recent events
     const recentEvents = recentEventsRaw.map((e: any) => {
-      const data = e.event_data as Record<string, unknown> || {};
+      const data = e.eventData as Record<string, unknown> || {};
       return {
         id: e.id,
         category: data.category as string,
@@ -186,7 +186,7 @@ async function getHandler(req: NextRequest) {
         status: data.status as string,
         duration: data.duration as number,
         fileSize: data.fileSize as number,
-        created_at: e.created_at
+        createdAt: e.createdAt
       };
     });
 
@@ -215,10 +215,10 @@ async function getHandler(req: NextRequest) {
 
     // Simular dados de usuários ativos (seria melhor ter uma tabela de sessões)
     const activeUsers = await prisma.analytics_events.groupBy({
-      by: ['user_id'],
+      by: ["userId"],
       where: {
         ...whereClause,
-        user_id: { not: null }
+        userId: { not: null }
       },
       _count: { id: true }
     });

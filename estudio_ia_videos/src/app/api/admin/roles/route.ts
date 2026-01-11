@@ -6,7 +6,7 @@ import { supabaseAdmin, fromUntypedTable } from '@lib/supabase/server';
 
 interface RoleRow { role: string; description?: string }
 
-async function buildUserContext(user_id: string): Promise<UserContext> {
+async function buildUserContext(userId: string): Promise<UserContext> {
   const admin = supabaseAdmin;
   const { data: rolesData } = await admin.from('user_roles').select('role').eq('user_id', userId);
   const roles = ((rolesData || []) as unknown as RoleRow[]).map((r) => r.role) as UserContext['roles'];

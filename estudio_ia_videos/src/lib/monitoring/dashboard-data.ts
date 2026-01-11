@@ -23,7 +23,7 @@ export async function getDashboardData(): Promise<DashboardData> {
   const basicJobs: BasicRenderJob[] = jobs.map(j => ({
       id: j.id,
       status: j.status,
-      created_at: j.createdAt.toISOString(),
+      createdAt: j.createdAt.toISOString(),
       started_at: j.startedAt?.toISOString() || null,
       completed_at: j.completedAt?.toISOString() || null,
       error_message: j.error || null,

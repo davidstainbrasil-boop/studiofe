@@ -40,12 +40,12 @@ export async function POST(request: NextRequest) {
         name: projectData.name,
         type: 'custom', // or 'pptx' if we can infer
         status: 'draft',
-        user_id: user.id,
+        userId: user.id,
         metadata: {
             ...projectData.metadata,
             timeline: body // Store full timeline JSON in metadata
         },
-        render_settings: {
+        renderSettings: {
             width: projectData.width,
             height: projectData.height,
             fps: projectData.fps,
@@ -77,12 +77,12 @@ interface TimelineTrack {
     
     if (slideTrack && slideTrack.elements) {
         const slidesToInsert = slideTrack.elements.map((el, index: number) => ({
-            project_id: newProject.id,
-            order_index: index,
+            projectId: newProject.id,
+            orderIndex: index,
             title: el.name,
             content: el.properties?.content || el.name, // Fallback
             duration: Math.round(el.duration),
-            background_image: el.properties?.src,
+            backgroundImage: el.properties?.src,
             // If it's an image slide, we might want to set content to empty or description
         }))
 
@@ -128,8 +128,8 @@ export async function GET(request: NextRequest) {
     const { data: projects, error } = await supabase
       .from('projects')
       .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
+      .eq("userId", user.id)
+      .order("createdAt", { ascending: false })
 
     if (error) throw error
 

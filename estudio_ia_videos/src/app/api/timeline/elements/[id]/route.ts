@@ -7,7 +7,7 @@ import { logger } from '@lib/logger';
 // Type for timeline element with track and project info
 interface TimelineElementWithTrack {
   id: string;
-  track_id: string;
+  trackId: string;
   start_time: number;
   duration: number;
   content?: string;
@@ -50,9 +50,9 @@ const updateElementSchema = z.object({
   }).optional(),
   effects: z.array(z.record(z.unknown())).optional(),
   transitions: z.record(z.unknown()).optional(),
-  thumbnail_url: z.string().url().optional(),
-  file_size: z.number().int().min(0).optional(),
-  mime_type: z.string().optional()
+  thumbnailUrl: z.string().url().optional(),
+  fileSize: z.number().int().min(0).optional(),
+  mimeType: z.string().optional()
 })
 
 interface RouteParams {
@@ -112,7 +112,7 @@ export async function GET(
     const project = element.track.project
     const hasPermission = project.owner_id === user.id || 
                          (Array.isArray(project.collaborators) && (project.collaborators as string[]).includes(user.id)) ||
-                         project.is_public
+                         project.isPublic
 
     if (!hasPermission) {
       return NextResponse.json(
@@ -219,7 +219,7 @@ export async function PUT(
       const { data: overlappingElements } = await supabase
         .from('timeline_elements')
         .select('id, start_time, duration')
-        .eq('track_id', existingElement.track_id)
+        .eq("trackId", existingElement.trackId)
         .neq('id', elementId)
         .or(`and(start_time.lte.${newStartTime},end_time.gt.${newStartTime}),and(start_time.lt.${newEndTime},end_time.gte.${newEndTime})`)
 
@@ -251,15 +251,15 @@ export async function PUT(
     }
 
     const element = updatedElement as unknown as TimelineElementWithTrack;
-    const projectId = existingElement.track?.project_id || existingElement.project_id;
+    const projectId = existingElement.track?.projectId || existingElement.projectId;
     
     if (projectId) {
       // Registrar no histórico
       await supabase
         .from('project_history')
         .insert({
-          project_id: projectId,
-          user_id: user.id,
+          projectId: projectId,
+          userId: user.id,
           action: 'update',
           entity_type: 'element',
           entity_id: elementId,
@@ -371,12 +371,12 @@ export async function DELETE(
     }
 
     // Registrar no histórico
-    if (existingElement.project_id) {
+    if (existingElement.projectId) {
       await supabase
         .from('project_history')
         .insert({
-          project_id: existingElement.project_id,
-          user_id: user.id,
+          projectId: existingElement.projectId,
+          userId: user.id,
           action: 'delete',
           entity_type: 'element',
           entity_id: elementId,

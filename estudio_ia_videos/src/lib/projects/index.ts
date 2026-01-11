@@ -10,8 +10,8 @@ export async function listProjectsByOwner(ownerId: string): Promise<Project[]> {
     const { data, error } = await supabase
       .from('projects')
       .select('*')
-      .eq('user_id', ownerId)
-      .order('created_at', { ascending: false })
+      .eq("userId", ownerId)
+      .order("createdAt", { ascending: false })
 
     if (error) {
       console.warn('Supabase projects error, using mock:', error.message)
@@ -51,7 +51,7 @@ export async function getProjectById(projectId: string): Promise<Project | null>
 export async function createProject(input: CreateProjectInput): Promise<Project> {
   const supabase = getServiceRoleClient() as SupabaseClient<Database>
   const payload = {
-    user_id: input.ownerId,
+    userId: input.ownerId,
     name: input.name,
     description: input.description ?? null,
     status: 'draft' as const,

@@ -72,7 +72,7 @@ export async function GET(req: NextRequest) {
 
     // Create video job
     if (action === 'create-video-job') {
-      const project_id = searchParams.get('project_id');
+      const project_id = searchParams.get("projectId");
       const preset_id = searchParams.get('preset_id');
       
       if (project_id && preset_id) {
@@ -86,7 +86,7 @@ export async function GET(req: NextRequest) {
           preset_id,
           message: 'Video render job created successfully',
           endpoint: '/api/render/start?action=create-video-job',
-          created_at: new Date().toISOString(),
+          createdAt: new Date().toISOString(),
           estimated_completion: new Date(Date.now() + 60000).toISOString()
         });
       } else {
@@ -165,7 +165,7 @@ export async function POST(req: NextRequest) {
     // Verifica se projeto existe e permissões (usando Prisma)
     const project = await prisma.projects.findUnique({
       where: { id: projectId },
-      select: { user_id: true }
+      select: { userId: true }
     });
 
     if (!project) {
@@ -176,7 +176,7 @@ export async function POST(req: NextRequest) {
     }
 
     // For local dev, skip strict permission check
-    const hasPermission = project.user_id === userId || true;
+    const hasPermission = project.userId === userId || true;
 
     if (!hasPermission) {
       return NextResponse.json(
@@ -209,7 +209,7 @@ export async function POST(req: NextRequest) {
     // Validar slides
     const validatedSlides = slides.map((slide: Record<string, unknown>, index: number) => ({
       id: (slide.id as string) || `slide_${index}`,
-      order_index: index,
+      orderIndex: index,
       imageUrl: (slide.imageUrl as string) || '',
       audioUrl: slide.audioUrl as string | undefined,
       duration: (slide.duration as number) || 5,
@@ -217,14 +217,14 @@ export async function POST(req: NextRequest) {
       transitionDuration: (slide.transitionDuration as number) || 0.5,
       title: slide.title as string | undefined,
       content: slide.content as string | undefined,
-      avatar_config: slide.avatar_config as Record<string, unknown> | undefined
+      avatarConfig: slide.avatarConfig as Record<string, unknown> | undefined
     }));
 
     const traceId = crypto.randomUUID();
     const logContext = {
       traceId,
       projectId,
-      user_id: userId,
+      userId: userId,
       slideCount: validatedSlides.length,
       config: renderConfig
     };
@@ -240,13 +240,13 @@ export async function POST(req: NextRequest) {
     // Convert local types to queue types
     const queueSlides: QueueRenderSlide[] = validatedSlides.map((slide, idx) => ({
       id: slide.id,
-      order_index: idx,
+      orderIndex: idx,
       title: slide.title,
       content: slide.content,
-      duration_ms: (slide.duration || 5) * 1000,
+      durationMs: (slide.duration || 5) * 1000,
       transition: {
         type: slide.transition === 'fade' ? 'fade' : 'none',
-        duration_ms: (slide.transitionDuration || 0.5) * 1000
+        durationMs: (slide.transitionDuration || 0.5) * 1000
       }
     }));
     
@@ -268,7 +268,7 @@ export async function POST(req: NextRequest) {
       projectId,
       slides: queueSlides,
       config: queueConfig,
-      user_id: userId as string
+      userId: userId as string
     });
 
     return NextResponse.json({
@@ -287,13 +287,13 @@ export async function POST(req: NextRequest) {
     let projectIdForLog: string | undefined;
     try {
       const body = await req.clone().json();
-      projectIdForLog = body?.project_id;
+      projectIdForLog = body?.projectId;
     } catch {
       // Ignore parse errors for logging
     }
     
     logger.error('Erro ao iniciar render', error as Error, { 
-      project_id: projectIdForLog 
+      projectId: projectIdForLog 
     });
     
     return NextResponse.json(

@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData();
     const file = formData.get('file') as File;
-    const projectName = formData.get('project_name') as string || 'Novo Projeto';
+    const projectName = formData.get("projectName") as string || 'Novo Projeto';
 
     if (!file) {
       return NextResponse.json(
@@ -161,7 +161,7 @@ export async function GET() {
       contentType: 'multipart/form-data',
       fields: {
         file: 'Arquivo PPTX (obrigatório)',
-        project_name: 'Nome do projeto (opcional)',
+        projectName: 'Nome do projeto (opcional)',
       },
     },
     example: {

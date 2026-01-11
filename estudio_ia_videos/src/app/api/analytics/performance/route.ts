@@ -50,7 +50,7 @@ async function getHandler(req: NextRequest) {
     const performanceData: Record<string, unknown> = {};
 
     // Métricas de tempo de resposta
-    if (metric === 'response_time' || metric === 'all') {
+    if (metric === "responseTime" || metric === 'all') {
       const responseTimeStats = await prisma.$queryRaw<Array<{ avg: number, max: number, min: number, count: bigint }>>`
         SELECT 
           AVG(CAST(event_data->>'duration' AS FLOAT)) as avg,
@@ -138,7 +138,7 @@ async function getHandler(req: NextRequest) {
       `;
 
       const avgThroughput = await prisma.analytics_events.count({
-        where: { created_at: { gte: startDate } }
+        where: { createdAt: { gte: startDate } }
       });
 
       const minutesInPeriod = Math.max(1, (Date.now() - startDate.getTime()) / (1000 * 60));
@@ -177,7 +177,7 @@ async function getHandler(req: NextRequest) {
 
       const totalRequests = await prisma.analytics_events.count({
         where: {
-          created_at: { gte: startDate }
+          createdAt: { gte: startDate }
         }
       });
 
@@ -317,9 +317,9 @@ async function postHandler(req: NextRequest) {
     await prisma.analytics_events.create({
       data: {
         id: crypto.randomUUID(),
-        user_id: userId,
-        event_type: 'performance_metric',
-        event_data: {
+        userId: userId,
+        eventType: 'performance_metric',
+        eventData: {
           organizationId,
           action: 'api_call',
           label: endpoint,

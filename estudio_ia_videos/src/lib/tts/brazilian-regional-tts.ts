@@ -1,7 +1,7 @@
 
 export interface BrazilianVoiceRegional {
   id: string;
-  display_name: string;
+  displayName: string;
   region: {
     name: string;
     state: string;
@@ -26,7 +26,7 @@ export class BrazilianRegionalTTS {
   static REGIONAL_VOICES: BrazilianVoiceRegional[] = [
     {
       id: 'br-sp-male-1',
-      display_name: 'Carlos (SP)',
+      displayName: 'Carlos (SP)',
       region: {
         name: 'Sudeste',
         state: 'São Paulo',
@@ -48,7 +48,7 @@ export class BrazilianRegionalTTS {
     },
     {
       id: 'br-rj-female-1',
-      display_name: 'Fernanda (RJ)',
+      displayName: 'Fernanda (RJ)',
       region: {
         name: 'Sudeste',
         state: 'Rio de Janeiro',
@@ -70,7 +70,7 @@ export class BrazilianRegionalTTS {
     },
     {
       id: 'br-ba-male-1',
-      display_name: 'João (BA)',
+      displayName: 'João (BA)',
       region: {
         name: 'Nordeste',
         state: 'Bahia',
@@ -92,7 +92,7 @@ export class BrazilianRegionalTTS {
     },
     {
       id: 'br-rs-female-1',
-      display_name: 'Ana (RS)',
+      displayName: 'Ana (RS)',
       region: {
         name: 'Sul',
         state: 'Rio Grande do Sul',

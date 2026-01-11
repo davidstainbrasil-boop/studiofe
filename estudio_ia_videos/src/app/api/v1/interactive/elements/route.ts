@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
           json: `/exports/interactive_${Date.now()}.json`
         }
       },
-      created_at: new Date().toISOString()
+      createdAt: new Date().toISOString()
     };
 
     return NextResponse.json({

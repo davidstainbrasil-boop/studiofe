@@ -33,7 +33,7 @@ export async function GET(
     }
 
     // Verificar se o webhook pertence ao usuário
-    if (webhook.user_id !== session.user.id) {
+    if (webhook.userId !== session.user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 

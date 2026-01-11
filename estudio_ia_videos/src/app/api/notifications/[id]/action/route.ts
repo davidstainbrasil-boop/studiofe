@@ -38,7 +38,7 @@ export async function POST(
       .from('notifications')
       .select('*')
       .eq('id', notificationId)
-      .eq('user_id', session.user.id)
+      .eq("userId", session.user.id)
       .single()
 
     if (fetchError) {
@@ -70,24 +70,24 @@ export async function POST(
     switch (action) {
       case 'accept_collaboration':
         // Handle collaboration invitation acceptance via project metadata
-        if (notification.project_id) {
+        if (notification.projectId) {
           try {
             const { data: project } = await supabaseAdmin
               .from('projects')
               .select('metadata')
-              .eq('id', notification.project_id)
+              .eq('id', notification.projectId)
               .single()
 
             if (project) {
               const metadata = (project.metadata || {}) as Record<string, unknown>
               const collaborators = ((metadata.collaborators || []) as Array<Record<string, unknown>>).map(c => 
-                c.user_id === session.user.id ? { ...c, status: 'accepted', updated_at: new Date().toISOString() } : c
+                c.userId === session.user.id ? { ...c, status: 'accepted', updatedAt: new Date().toISOString() } : c
               )
 
               await supabaseAdmin
                 .from('projects')
                 .update({ metadata: JSON.parse(JSON.stringify({ ...metadata, collaborators })) })
-                .eq('id', notification.project_id)
+                .eq('id', notification.projectId)
             }
 
             actionResult.message = 'Collaboration invitation accepted'
@@ -99,24 +99,24 @@ export async function POST(
 
       case 'decline_collaboration':
         // Handle collaboration invitation decline via project metadata
-        if (notification.project_id) {
+        if (notification.projectId) {
           try {
             const { data: project } = await supabaseAdmin
               .from('projects')
               .select('metadata')
-              .eq('id', notification.project_id)
+              .eq('id', notification.projectId)
               .single()
 
             if (project) {
               const metadata = (project.metadata || {}) as Record<string, unknown>
               const collaborators = ((metadata.collaborators || []) as Array<Record<string, unknown>>).map(c => 
-                c.user_id === session.user.id ? { ...c, status: 'declined', updated_at: new Date().toISOString() } : c
+                c.userId === session.user.id ? { ...c, status: 'declined', updatedAt: new Date().toISOString() } : c
               )
 
               await supabaseAdmin
                 .from('projects')
                 .update({ metadata: JSON.parse(JSON.stringify({ ...metadata, collaborators })) })
-                .eq('id', notification.project_id)
+                .eq('id', notification.projectId)
             }
 
             actionResult.message = 'Collaboration invitation declined'
@@ -129,7 +129,7 @@ export async function POST(
       case 'view_project':
         // This would typically redirect to the project, handled on frontend
         actionResult.message = 'Redirect to project'
-        actionResult.redirect = `/projects/${notification.project_id}`
+        actionResult.redirect = `/projects/${notification.projectId}`
         break
 
       case 'download_render':
@@ -138,15 +138,15 @@ export async function POST(
           try {
             const { data: renderJob, error: renderError } = await supabaseAdmin
               .from('render_jobs')
-              .select('output_url')
+              .select("outputUrl")
               .eq('id', notification.metadata.render_id)
-              .eq('user_id', session.user.id)
+              .eq("userId", session.user.id)
               .single()
 
             if (renderError) throw renderError
 
             actionResult.message = 'Render ready for download'
-            actionResult.download_url = renderJob.output_url
+            actionResult.download_url = renderJob.outputUrl
           } catch (error) {
             actionResult = { success: false, error: 'Failed to get render download URL' }
           }
@@ -161,11 +161,11 @@ export async function POST(
               .from('render_jobs')
               .update({
                 status: 'pending',
-                error_message: null,
-                updated_at: new Date().toISOString()
+                errorMessage: null,
+                updatedAt: new Date().toISOString()
               })
               .eq('id', notification.metadata.render_id)
-              .eq('user_id', session.user.id)
+              .eq("userId", session.user.id)
 
             if (retryError) throw retryError
 
@@ -193,7 +193,7 @@ export async function POST(
       .from('notifications')
       .update({
         status: 'read',
-        updated_at: new Date().toISOString()
+        updatedAt: new Date().toISOString()
       })
       .eq('id', notificationId)
 
@@ -206,15 +206,15 @@ export async function POST(
       await supabaseAdmin
         .from('analytics_events')
         .insert({
-          user_id: session.user.id,
-          event_type: `notification_action_${action}`,
-          event_data: {
+          userId: session.user.id,
+          eventType: `notification_action_${action}`,
+          eventData: {
             notification_id: notificationId,
             action_type: action,
             success: actionResult.success,
             timestamp: new Date().toISOString()
           },
-          created_at: new Date().toISOString()
+          createdAt: new Date().toISOString()
         })
     } catch (analyticsError) {
       logger.warn('Failed to log notification action', { component: 'API: notifications/[id]/action' })

@@ -6,7 +6,7 @@ export type SlideInsert = SlideTable['Insert']
 
 export type SlideUpdate = {
   id: string
-  project_id: string
+  projectId: string
   order_index: number
   title?: string | null
   content?: SlideTable['Insert']['content']

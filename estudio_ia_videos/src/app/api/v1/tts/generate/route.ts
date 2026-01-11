@@ -112,7 +112,7 @@ async function generateElevenLabsTTS(text: string, voice?: string, speed?: numbe
       body: JSON.stringify({
         text,
         model_id: 'eleven_multilingual_v2',
-        voice_settings: {
+        voiceSettings: {
           stability: 0.5,
           similarity_boost: 0.5,
           style: speed || 1.0,

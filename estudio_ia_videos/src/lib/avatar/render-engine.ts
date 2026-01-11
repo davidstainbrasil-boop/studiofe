@@ -137,7 +137,7 @@ export interface RenderResult {
   metadata: {
     job_id: string;
     duration: number;
-    file_size: number;
+    fileSize: number;
     format: string;
   };
 }
@@ -156,7 +156,7 @@ export class Avatar3DRenderEngine {
       metadata: {
         job_id: `job_${Date.now()}`,
         duration: 10,
-        file_size: 1024 * 1024,
+        fileSize: 1024 * 1024,
         format: settings.format
       }
     };

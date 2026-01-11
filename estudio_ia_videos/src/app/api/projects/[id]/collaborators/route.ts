@@ -4,16 +4,16 @@ import { z } from 'zod'
 import { logger } from '@lib/logger';
 
 interface CollaboratorRecord {
-  user_id: string;
+  userId: string;
   role: string;
-  created_at: string;
+  createdAt: string;
 }
 
 interface UserRecord {
   id: string;
   email: string;
   name: string;
-  avatar_url: string;
+  avatarUrl: string;
 }
 
 // Schema de validação para adicionar colaborador
@@ -48,7 +48,7 @@ export async function GET(
     // Verificar se o usuário tem acesso ao projeto
     const { data: project } = await supabase
       .from('projects')
-      .select('user_id')
+      .select("userId")
       .eq('id', projectId)
       .single()
 
@@ -59,15 +59,15 @@ export async function GET(
       )
     }
 
-    const ownerId = project.user_id
+    const ownerId = project.userId
     const isOwner = ownerId === user.id
 
     // Check if user is collaborator
     const { data: collaboratorRecord } = await supabase
       .from('project_collaborators')
       .select('id')
-      .eq('project_id', projectId)
-      .eq('user_id', user.id)
+      .eq("projectId", projectId)
+      .eq("userId", user.id)
       .single()
 
     const isCollaborator = !!collaboratorRecord
@@ -88,7 +88,7 @@ export async function GET(
         role,
         joined_at
       `)
-      .eq('project_id', projectId)
+      .eq("projectId", projectId)
 
     if (error) {
       logger.error('Erro ao buscar colaboradores:', error instanceof Error ? error : new Error(String(error)), { component: 'API: projects/[id]/collaborators' })
@@ -99,7 +99,7 @@ export async function GET(
     }
 
     // Buscar dados dos usuários colaboradores
-    const collaboratorUserIds = (collaboratorsData as CollaboratorRecord[] || []).map((c) => c.user_id)
+    const collaboratorUserIds = (collaboratorsData as CollaboratorRecord[] || []).map((c) => c.userId)
     let usersMap: Record<string, UserRecord> = {}
     
     if (collaboratorUserIds.length > 0) {
@@ -131,18 +131,18 @@ export async function GET(
         id: owner.id,
         email: owner.email,
         name: owner.name || owner.email,
-        avatar: owner.avatar_url,
+        avatar: owner.avatarUrl,
         role: 'owner',
         joined_at: null
       }] : []),
       // Collaborators
       ...((collaboratorsData as CollaboratorRecord[] || []).map((c) => {
-        const userData = usersMap[c.user_id] || {} as Partial<UserRecord>
+        const userData = usersMap[c.userId] || {} as Partial<UserRecord>
         return {
-          id: userData.id || c.user_id,
+          id: userData.id || c.userId,
           email: userData.email,
           name: userData.name || userData.email,
-          avatar: userData.avatar_url,
+          avatar: userData.avatarUrl,
           role: c.role || 'collaborator',
           joined_at: (c as unknown as { joined_at?: string }).joined_at
         }
@@ -194,7 +194,7 @@ export async function POST(
       )
     }
 
-    if (project.user_id !== user.id) {
+    if (project.userId !== user.id) {
       return NextResponse.json(
         { error: 'Apenas o dono pode adicionar colaboradores' },
         { status: 403 }
@@ -219,11 +219,11 @@ export async function POST(
     const { data: existingCollaborator } = await supabase
       .from('project_collaborators')
       .select('id')
-      .eq('project_id', projectId)
-      .eq('user_id', targetUser.id)
+      .eq("projectId", projectId)
+      .eq("userId", targetUser.id)
       .single()
 
-    if (existingCollaborator || targetUser.id === project.user_id) {
+    if (existingCollaborator || targetUser.id === project.userId) {
       return NextResponse.json(
         { error: 'Usuário já é colaborador deste projeto' },
         { status: 400 }
@@ -234,10 +234,10 @@ export async function POST(
     const { error: insertError } = await supabase
       .from('project_collaborators')
       .insert({
-        project_id: projectId,
-        user_id: targetUser.id,
+        projectId: projectId,
+        userId: targetUser.id,
         role: 'editor', // Default role
-        invited_by: user.id,
+        invitedBy: user.id,
         permissions: ['read', 'write']
       })
 
@@ -253,8 +253,8 @@ export async function POST(
     await supabase
       .from('project_history')
       .insert({
-        project_id: projectId,
-        user_id: user.id,
+        projectId: projectId,
+        userId: user.id,
         action: 'create',
         entity_type: 'collaborator',
         entity_id: targetUser.id,
@@ -310,7 +310,7 @@ export async function DELETE(
 
     const projectId = params.id
     const { searchParams } = new URL(request.url)
-    const collaboratorId = searchParams.get('user_id')
+    const collaboratorId = searchParams.get("userId")
 
     if (!collaboratorId) {
       return NextResponse.json(
@@ -322,7 +322,7 @@ export async function DELETE(
     // Verificar se o usuário é o dono do projeto
     const { data: project } = await supabase
       .from('projects')
-      .select('user_id')
+      .select("userId")
       .eq('id', projectId)
       .single()
 
@@ -334,7 +334,7 @@ export async function DELETE(
     }
 
     // Permitir que o próprio colaborador se remova ou que o dono remova qualquer um
-    const canRemove = project.user_id === user.id || collaboratorId === user.id
+    const canRemove = project.userId === user.id || collaboratorId === user.id
 
     if (!canRemove) {
       return NextResponse.json(
@@ -344,7 +344,7 @@ export async function DELETE(
     }
 
     // Não permitir remover o dono
-    if (collaboratorId === project.user_id) {
+    if (collaboratorId === project.userId) {
       return NextResponse.json(
         { error: 'Não é possível remover o dono do projeto' },
         { status: 400 }
@@ -355,8 +355,8 @@ export async function DELETE(
     const { error } = await supabase
       .from('project_collaborators')
       .delete()
-      .eq('project_id', projectId)
-      .eq('user_id', collaboratorId)
+      .eq("projectId", projectId)
+      .eq("userId", collaboratorId)
 
     if (error) {
       logger.error('Erro ao remover colaborador:', error instanceof Error ? error : new Error(String(error)), { component: 'API: projects/[id]/collaborators' })
@@ -370,8 +370,8 @@ export async function DELETE(
     await supabase
       .from('project_history')
       .insert({
-        project_id: projectId,
-        user_id: user.id,
+        projectId: projectId,
+        userId: user.id,
         action: 'delete',
         entity_type: 'collaborator',
         entity_id: collaboratorId,

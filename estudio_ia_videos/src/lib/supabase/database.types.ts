@@ -17,8 +17,8 @@ export interface Database {
           avatar_url: string | null
           role: string | null
           metadata: Json
-          created_at: string
-          updated_at: string | null
+          createdAt: string
+          updatedAt: string | null
         }
         Insert: {
           id: string
@@ -46,8 +46,8 @@ export interface Database {
         Row: {
           id: string
           name: string
-          user_id: string | null
-          project_id: string | null
+          userId: string | null
+          projectId: string | null
           provider: string | null
           avatar_id: string | null
           ready_player_me_url: string | null
@@ -57,11 +57,11 @@ export interface Database {
           animations: Json | null
           voice_settings: Json | null
           properties: Json | null
-          model_url: string | null
-          thumbnail_url: string | null
+          modelUrl: string | null
+          thumbnailUrl: string | null
           metadata: Json | null
-          created_at: string
-          updated_at: string | null
+          createdAt: string
+          updatedAt: string | null
         }
         Insert: {
           id?: string
@@ -106,13 +106,13 @@ export interface Database {
         Relationships: [
           {
             foreignKeyName: "avatars_3d_project_id_fkey"
-            columns: ["project_id"]
+            columns: ["projectId"]
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "avatars_3d_user_id_fkey"
-            columns: ["user_id"]
+            columns: ["userId"]
             referencedRelation: "users"
             referencedColumns: ["id"]
           }
@@ -123,9 +123,9 @@ export interface Database {
           id: string
           title: string
           description: string | null
-          thumbnail_url: string | null
-          created_at: string
-          updated_at: string | null
+          thumbnailUrl: string | null
+          createdAt: string
+          updatedAt: string | null
           author_id: string
         }
         Insert: {
@@ -154,11 +154,11 @@ export interface Database {
           title: string
           description: string | null
           video_url: string
-          thumbnail_url: string | null
+          thumbnailUrl: string | null
           duration: number | null
-          course_id: string
-          created_at: string
-          updated_at: string | null
+          courseId: string
+          createdAt: string
+          updatedAt: string | null
         }
         Insert: {
           id?: string
@@ -167,7 +167,7 @@ export interface Database {
           video_url: string
           thumbnail_url?: string | null
           duration?: number | null
-          course_id: string
+          courseId: string
           created_at?: string
           updated_at?: string | null
         }
@@ -187,18 +187,18 @@ export interface Database {
       user_progress: {
         Row: {
           id: string
-          user_id: string
-          video_id: string
+          userId: string
+          videoId: string
           progress_percentage: number
           completed: boolean
           last_watched_at: string
-          created_at: string
-          updated_at: string | null
+          createdAt: string
+          updatedAt: string | null
         }
         Insert: {
           id?: string
-          user_id: string
-          video_id: string
+          userId: string
+          videoId: string
           progress_percentage: number
           completed: boolean
           last_watched_at: string
@@ -220,7 +220,7 @@ export interface Database {
       projects: {
         Row: {
           id: string
-          user_id: string
+          userId: string
           owner_id: string | null
           name: string
           type: 'pptx' | 'template-nr' | 'talking-photo' | 'custom' | 'ai-generated'
@@ -228,7 +228,7 @@ export interface Database {
           status: string
           metadata: Json
           render_settings: Json
-          thumbnail_url: string | null
+          thumbnailUrl: string | null
           preview_url: string | null
           current_version: string
           is_template: boolean
@@ -236,13 +236,13 @@ export interface Database {
           collaboration_enabled: boolean
           collaborators: string[] | null
           settings: Json | null
-          created_at: string
-          updated_at: string | null
+          createdAt: string
+          updatedAt: string | null
           last_accessed_at: string | null
         }
         Insert: {
           id?: string
-          user_id: string
+          userId: string
           owner_id?: string | null
           name: string
           type?: 'pptx' | 'template-nr' | 'talking-photo' | 'custom' | 'ai-generated'
@@ -289,7 +289,7 @@ export interface Database {
       slides: {
         Row: {
           id: string
-          project_id: string
+          projectId: string
           order_index: number
           title: string | null
           content: string | null
@@ -298,12 +298,12 @@ export interface Database {
           background_image: string | null
           avatar_config: Json
           audio_config: Json
-          created_at: string
-          updated_at: string | null
+          createdAt: string
+          updatedAt: string | null
         }
         Insert: {
           id?: string
-          project_id: string
+          projectId: string
           order_index: number
           title?: string | null
           content?: string | null
@@ -334,7 +334,7 @@ export interface Database {
       render_jobs: {
         Row: {
           id: string
-          project_id: string
+          projectId: string
           status: string
           progress: number
           output_url: string | null
@@ -344,11 +344,11 @@ export interface Database {
           duration_ms: number | null
           started_at: string | null
           completed_at: string | null
-          created_at: string
+          createdAt: string
         }
         Insert: {
           id?: string
-          project_id: string
+          projectId: string
           status?: string
           progress?: number
           output_url?: string | null
@@ -379,18 +379,18 @@ export interface Database {
       analytics_events: {
         Row: {
           id: string
-          user_id: string | null
-          event_type: string
-          event_data: Json
-          session_id: string | null
-          ip_address: string | null
-          user_agent: string | null
-          created_at: string
+          userId: string | null
+          eventType: string
+          eventData: Json
+          sessionId: string | null
+          ipAddress: string | null
+          userAgent: string | null
+          createdAt: string
         }
         Insert: {
           id?: string
-          user_id: string | null
-          event_type: string
+          userId: string | null
+          eventType: string
           event_data?: Json
           session_id?: string | null
           ip_address?: string | null
@@ -415,13 +415,13 @@ export interface Database {
           course_code: string
           title: string
           description: string | null
-          thumbnail_url: string | null
+          thumbnailUrl: string | null
           duration: number | null
           modules_count: number
           status: string
           metadata: Json
-          created_at: string
-          updated_at: string | null
+          createdAt: string
+          updatedAt: string | null
         }
         Insert: {
           id?: string
@@ -454,20 +454,20 @@ export interface Database {
       nr_modules: {
         Row: {
           id: string
-          course_id: string
+          courseId: string
           order_index: number
           title: string
           description: string | null
-          thumbnail_url: string | null
+          thumbnailUrl: string | null
           video_url: string | null
           duration: number | null
           content: Json
-          created_at: string
-          updated_at: string | null
+          createdAt: string
+          updatedAt: string | null
         }
         Insert: {
           id?: string
-          course_id: string
+          courseId: string
           order_index: number
           title: string
           description?: string | null
@@ -502,8 +502,8 @@ export interface Database {
           slide_count: number
           duration_seconds: number
           template_config: Json
-          created_at: string
-          updated_at: string | null
+          createdAt: string
+          updatedAt: string | null
         }
         Insert: {
           id?: string
@@ -532,17 +532,17 @@ export interface Database {
       timelines: {
         Row: {
           id: string
-          project_id: string
+          projectId: string
           tracks: Json
           settings: Json
           total_duration: number
           version: number
-          created_at: string
-          updated_at: string | null
+          createdAt: string
+          updatedAt: string | null
         }
         Insert: {
           id?: string
-          project_id: string
+          projectId: string
           tracks?: Json
           settings?: Json
           total_duration?: number
@@ -565,7 +565,7 @@ export interface Database {
       timeline_tracks: {
         Row: {
           id: string
-          project_id: string
+          projectId: string
           name: string
           type: string
           order_index: number
@@ -575,12 +575,12 @@ export interface Database {
           locked: boolean
           muted: boolean
           properties: Json
-          created_at: string
-          updated_at: string | null
+          createdAt: string
+          updatedAt: string | null
         }
         Insert: {
           id?: string
-          project_id: string
+          projectId: string
           name: string
           type: string
           order_index: number
@@ -619,8 +619,8 @@ export interface Database {
           duration: number
           content: Json
           properties: Json
-          created_at: string
-          updated_at: string | null
+          createdAt: string
+          updatedAt: string | null
         }
         Insert: {
           id?: string
@@ -649,16 +649,16 @@ export interface Database {
       pptx_uploads: {
         Row: {
           id: string
-          project_id: string
+          projectId: string
           original_filename: string | null
           status: string
           slide_count: number
-          created_at: string
-          updated_at: string | null
+          createdAt: string
+          updatedAt: string | null
         }
         Insert: {
           id?: string
-          project_id: string
+          projectId: string
           original_filename?: string | null
           status?: string
           slide_count?: number
@@ -685,11 +685,11 @@ export interface Database {
           content: string | null
           duration: number
           transition_type: string
-          thumbnail_url: string | null
+          thumbnailUrl: string | null
           notes: string | null
           properties: Json
-          created_at: string
-          updated_at: string | null
+          createdAt: string
+          updatedAt: string | null
         }
         Insert: {
           id?: string
@@ -724,18 +724,18 @@ export interface Database {
       project_history: {
         Row: {
           id: string
-          project_id: string
-          user_id: string | null
+          projectId: string
+          userId: string | null
           action: string
           entity_type: string | null
           entity_id: string | null
           description: string | null
           changes: Json
-          created_at: string
+          createdAt: string
         }
         Insert: {
           id?: string
-          project_id: string
+          projectId: string
           user_id?: string | null
           action: string
           entity_type?: string | null
@@ -760,18 +760,18 @@ export interface Database {
       project_versions: {
         Row: {
           id: string
-          project_id: string
+          projectId: string
           version_number: string
           name: string
           description: string | null
           changes_summary: string | null
           created_by: string
-          created_at: string
+          createdAt: string
           metadata: Json
         }
         Insert: {
           id?: string
-          project_id: string
+          projectId: string
           version_number: string
           name: string
           description?: string | null
@@ -796,8 +796,8 @@ export interface Database {
       project_collaborators: {
         Row: {
           id: string
-          project_id: string
-          user_id: string
+          projectId: string
+          userId: string
           role: string
           permissions: string[]
           invited_by: string
@@ -806,8 +806,8 @@ export interface Database {
         }
         Insert: {
           id?: string
-          project_id: string
-          user_id: string
+          projectId: string
+          userId: string
           role: string
           permissions?: string[]
           invited_by: string
@@ -832,8 +832,8 @@ export interface Database {
           name: string
           description: string | null
           permissions: Json
-          created_at: string
-          updated_at: string | null
+          createdAt: string
+          updatedAt: string | null
         }
         Insert: {
           id?: string
@@ -856,24 +856,24 @@ export interface Database {
       notifications: {
         Row: {
           id: string
-          user_id: string
+          userId: string
           type: string
           title: string
           message: string
           category: string | null
           priority: string | null
           status: string
-          project_id: string | null
+          projectId: string | null
           metadata: Json
           actions: Json
-          created_at: string
-          updated_at: string | null
-          expires_at: string | null
+          createdAt: string
+          updatedAt: string | null
+          expiresAt: string | null
           read_at: string | null
         }
         Insert: {
           id?: string
-          user_id: string
+          userId: string
           type: string
           title: string
           message: string
@@ -910,13 +910,13 @@ export interface Database {
       user_roles: {
         Row: {
           id: string
-          user_id: string
+          userId: string
           role_id: string
-          created_at: string
+          createdAt: string
         }
         Insert: {
           id?: string
-          user_id: string
+          userId: string
           role_id: string
           created_at?: string
         }
@@ -934,7 +934,7 @@ export interface Database {
     Functions: {
       get_project_analytics: {
         Args: {
-          project_id: string
+          projectId: string
         }
         Returns: Json
       }

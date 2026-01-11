@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
       const certificate = await prisma.certificates.create({
         data: {
           projectId,
-          user_id: user.id,
+          userId: user.id,
           studentName,
           courseName,
           code,
@@ -99,14 +99,14 @@ export async function POST(request: NextRequest) {
         const mockCert = {
           id: uuidv4(),
           projectId,
-          user_id: user.id,
+          userId: user.id,
           studentName,
           courseName,
           code,
           certificateUrl: `https://cert.tecnocursos.com.br/${code}`,
-          issued_at: new Date().toISOString(),
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
+          issuedAt: new Date().toISOString(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         };
         
         global.mockCertificates.set(code, mockCert);

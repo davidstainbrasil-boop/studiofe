@@ -42,7 +42,9 @@
       "Bash(npm run lint:*)",
       "Bash(kill:*)",
       "Bash(while read chunk)",
-      "Bash(do echo \"Testing: $chunk\")"
+      "Bash(do echo \"Testing: $chunk\")",
+      "Bash(nginx -t:*)",
+      "Bash(systemctl reload:*)"
     ],
     "deny": [],
     "ask": []

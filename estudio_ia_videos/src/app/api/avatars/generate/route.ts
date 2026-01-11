@@ -10,10 +10,11 @@ import { authOptions } from '@lib/auth'
 import { prisma } from '@lib/prisma'
 import { workflowManager } from '@lib/workflow/unified-workflow-manager'
 import { z } from 'zod'
+import { Prisma } from '@prisma/client'
 
 // Schemas de validação
 const AvatarConfigSchema = z.object({
-  project_id: z.string(),
+  projectId: z.string(),
   avatarConfig: z.object({
     model: z.enum(['default', 'professional', 'casual', 'custom']),
     gender: z.enum(['male', 'female']).optional(),
@@ -70,7 +71,7 @@ interface AvatarData {
   script: string
   voice?: VoiceConfig
   status: string
-  created_at: string
+  createdAt: string
   generatedAt?: string
   videoUrl?: string
   thumbnailUrl?: string
@@ -97,7 +98,7 @@ interface AvatarModel {
 
 class Avatar3DGenerator {
   async generateAvatar(
-    project_id: string, 
+    projectId: string, 
     avatarConfig: AvatarConfig, 
     script: string, 
     voiceConfig?: VoiceConfig
@@ -111,7 +112,7 @@ class Avatar3DGenerator {
         script,
         voice: voiceConfig,
         status: 'generating',
-        created_at: new Date().toISOString()
+        createdAt: new Date().toISOString()
       }
 
       // Simular processo de geração
@@ -129,7 +130,7 @@ class Avatar3DGenerator {
               videoUrl: `/api/avatars/video/${avatarData.id}`,
               thumbnailUrl: `/api/avatars/thumbnail/${avatarData.id}`
             }
-          } satisfies ProjectAvatarMetadata
+          } as Prisma.InputJsonValue
         }
       })
 
@@ -249,8 +250,8 @@ export async function POST(request: NextRequest) {
     // Verificar se o projeto existe e pertence ao usuário
     const project = await prisma.projects.findFirst({
       where: {
-        id: validatedData.project_id,
-        user_id: session.user.id
+        id: validatedData.projectId,
+        userId: session.user.id
       }
     })
 
@@ -259,18 +260,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Atualizar workflow para "processing"
-    await workflowManager.updateWorkflowStep(validatedData.project_id, 'avatar', 'processing')
+    await workflowManager.updateWorkflowStep(validatedData.projectId, 'avatar', 'processing')
 
     // Gerar avatar
     const avatarResult = await avatar3DGenerator.generateAvatar(
-      validatedData.project_id,
+      validatedData.projectId,
       validatedData.avatarConfig,
       validatedData.script,
       validatedData.voice
     )
 
     // Atualizar workflow para "completed"
-    await workflowManager.updateWorkflowStep(validatedData.project_id, 'avatar', 'completed', avatarResult as unknown as Record<string, unknown>)
+    await workflowManager.updateWorkflowStep(validatedData.projectId, 'avatar', 'completed', avatarResult as unknown as Record<string, unknown>)
 
     return NextResponse.json({
       success: true,
@@ -283,8 +284,8 @@ export async function POST(request: NextRequest) {
     
     // Atualizar workflow para "error"
     const body = await request.json().catch(() => ({}))
-    if (body.project_id) {
-      await workflowManager.updateWorkflowStep(body.project_id, 'avatar', 'error', { error: error instanceof Error ? error.message : 'Unknown error' })
+    if (body.projectId) {
+      await workflowManager.updateWorkflowStep(body.projectId, 'avatar', 'error', { error: error instanceof Error ? error.message : 'Unknown error' })
     }
     
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -312,7 +313,7 @@ export async function GET(request: NextRequest) {
       const project = await prisma.projects.findFirst({
         where: {
           id: projectId,
-          user_id: session.user.id
+          userId: session.user.id
         }
       })
 
@@ -353,7 +354,7 @@ export async function PUT(request: NextRequest) {
     const project = await prisma.projects.findFirst({
       where: {
         id: projectId,
-        user_id: session.user.id
+        userId: session.user.id
       }
     })
 
@@ -371,9 +372,9 @@ export async function PUT(request: NextRequest) {
           avatar: {
             ...existingMetadata?.avatar,
             ...updates,
-            updated_at: new Date().toISOString()
+            updatedAt: new Date().toISOString()
           }
-        } satisfies ProjectAvatarMetadata
+        } as Prisma.InputJsonValue
       }
     })
 

@@ -40,31 +40,31 @@ async function getHandler(req: NextRequest) {
     if (!type) {
       const reports = await prisma.analytics_events.findMany({
         where: {
-          event_type: 'report_generated',
+          eventType: 'report_generated',
           ...(organizationId && { 
-            event_data: {
+            eventData: {
               path: ['organizationId'],
               equals: organizationId
             }
           })
         },
-        orderBy: { created_at: 'desc' },
+        orderBy: { createdAt: 'desc' },
         take: 50,
         select: {
           id: true,
-          event_data: true,
-          created_at: true
+          eventData: true,
+          createdAt: true
         }
       });
 
       return NextResponse.json({
         reports: reports.map((report: any) => {
-          const data = report.event_data as Record<string, unknown>;
+          const data = report.eventData as Record<string, unknown>;
           return {
             id: report.id,
             type: data.action,
             period: data.label,
-            generatedAt: report.created_at,
+            generatedAt: report.createdAt,
             metadata: data
           };
         }),
@@ -106,29 +106,29 @@ async function getHandler(req: NextRequest) {
       const label = reportGenerator['getDateRange'](type, date).label;
       const existingReport = await prisma.analytics_events.findFirst({
         where: {
-          event_type: 'report_generated',
-          event_data: {
+          eventType: 'report_generated',
+          eventData: {
             path: ['action'],
             equals: type
           },
           AND: {
-            event_data: {
+            eventData: {
               path: ['label'],
               equals: label
             }
           },
           ...(organizationId && { 
-            event_data: {
+            eventData: {
               path: ['organizationId'],
               equals: organizationId
             }
           })
         },
-        orderBy: { created_at: 'desc' }
+        orderBy: { createdAt: 'desc' }
       });
 
-      if (existingReport && existingReport.event_data) {
-        const cachedData = existingReport.event_data as Record<string, unknown>;
+      if (existingReport && existingReport.eventData) {
+        const cachedData = existingReport.eventData as Record<string, unknown>;
         
         if (format === 'html') {
           const htmlContent = await reportGenerator.generateHTMLReport(cachedData);
@@ -153,7 +153,7 @@ async function getHandler(req: NextRequest) {
         return NextResponse.json({
           ...cachedData,
           cached: true,
-          generatedAt: existingReport.created_at
+          generatedAt: existingReport.createdAt
         });
       }
     }
@@ -165,9 +165,9 @@ async function getHandler(req: NextRequest) {
     await prisma.analytics_events.create({
       data: {
         id: crypto.randomUUID(),
-        user_id: session.user.id,
-        event_type: 'report_generated',
-        event_data: {
+        userId: session.user.id,
+        eventType: 'report_generated',
+        eventData: {
           organizationId: organizationId || null,
           action: type,
           label: reportData.period.label,
@@ -271,9 +271,9 @@ async function postHandler(req: NextRequest) {
       await prisma.analytics_events.create({
         data: {
           id: crypto.randomUUID(),
-          user_id: session.user.id,
-          event_type: 'report_scheduled',
-          event_data: {
+          userId: session.user.id,
+          eventType: 'report_scheduled',
+          eventData: {
             organizationId: organizationId || null,
             action: type,
             label: `Auto-report ${type}`,
@@ -283,7 +283,7 @@ async function postHandler(req: NextRequest) {
             format,
             customFilters,
             createdBy: session.user.id,
-            created_at: new Date().toISOString()
+            createdAt: new Date().toISOString()
           } as unknown as any
         }
       });
@@ -303,9 +303,9 @@ async function postHandler(req: NextRequest) {
     await prisma.analytics_events.create({
       data: {
         id: crypto.randomUUID(),
-        user_id: session.user.id,
-        event_type: 'report_scheduled',
-        event_data: {
+        userId: session.user.id,
+        eventType: 'report_scheduled',
+        eventData: {
           organizationId: organizationId || null,
           action: type,
           label: `Scheduled ${type} report`,
@@ -315,7 +315,7 @@ async function postHandler(req: NextRequest) {
           format,
           customFilters,
           createdBy: session.user.id,
-          created_at: new Date().toISOString()
+          createdAt: new Date().toISOString()
         } as unknown as any
       }
     });
@@ -379,9 +379,9 @@ async function deleteHandler(req: NextRequest) {
       await prisma.analytics_events.deleteMany({
         where: {
           id: reportId,
-          user_id: session.user.id,
+          userId: session.user.id,
           ...(organizationId && { 
-            event_data: {
+            eventData: {
               path: ['organizationId'],
               equals: organizationId
             }
@@ -392,14 +392,14 @@ async function deleteHandler(req: NextRequest) {
       // Remover todos os agendamentos deste tipo
       await prisma.analytics_events.deleteMany({
         where: {
-          event_type: 'report_scheduled',
-          user_id: session.user.id,
-          event_data: {
+          eventType: 'report_scheduled',
+          userId: session.user.id,
+          eventData: {
             path: ['action'],
             equals: type
           },
           ...(organizationId && { 
-            event_data: {
+            eventData: {
               path: ['organizationId'],
               equals: organizationId
             }

@@ -100,9 +100,9 @@ export const TemplateSystem: React.FC<TemplateSystemProps> = ({ className }) => 
         .insert({
           name: `${template.name}`,
           type: 'template-nr',
-          user_id: user.id,
+          userId: user.id,
           status: 'draft',
-          thumbnail_url: template.thumbnail,
+          thumbnailUrl: template.thumbnail,
           render_settings: JSON.parse(JSON.stringify({
             template_id: template.id,
             template_data: template

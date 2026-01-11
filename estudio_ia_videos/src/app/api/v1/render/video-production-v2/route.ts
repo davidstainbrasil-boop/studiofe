@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
       const failedJob = renderJobs.get(jobId);
       if (failedJob) {
         failedJob.status = 'failed';
-        failedJob.error_message = error instanceof Error ? error.message : 'Erro desconhecido';
+        failedJob.errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
         failedJob.completedAt = new Date().toISOString();
         renderJobs.set(jobId, failedJob);
       }
@@ -157,7 +157,7 @@ export async function GET(request: NextRequest) {
       startedAt: job.startedAt,
       completedAt: job.completedAt,
       outputPath: job.outputPath || 'Em processamento...',
-      error_message: job.error_message,
+      errorMessage: job.errorMessage,
       settings: job.settings
     }
   });
@@ -246,7 +246,7 @@ async function processRenderJob(
     logger.error(`❌ [Video Render v2] Erro no job ${jobId}:`, error instanceof Error ? error : new Error(String(error)), { component: 'API: v1/render/video-production-v2' });
     
     job.status = 'failed';
-    job.error_message = error instanceof Error ? error.message : 'Erro desconhecido na renderização';
+    job.errorMessage = error instanceof Error ? error.message : 'Erro desconhecido na renderização';
     job.completedAt = new Date().toISOString();
     renderJobs.set(jobId, job);
   }

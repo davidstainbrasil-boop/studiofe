@@ -34,7 +34,7 @@ export enum ErrorType {
   AUTH = 'auth',
   VALIDATION = 'validation',
   NOT_FOUND = 'not_found',
-  RATE_LIMIT = 'rate_limit',
+  RATE_LIMIT = "rateLimit",
   UNKNOWN = 'unknown',
 }
 

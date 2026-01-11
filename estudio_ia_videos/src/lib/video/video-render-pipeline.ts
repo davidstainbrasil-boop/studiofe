@@ -36,7 +36,7 @@ interface AudioConfig {
 
 interface DatabaseSlide {
   id: string;
-  project_id: string;
+  projectId: string;
   order_index: number;
   title: string | null;
   content: string | null;
@@ -45,8 +45,8 @@ interface DatabaseSlide {
   background_image: string | null;
   avatar_config: Record<string, unknown>;
   audio_config: AudioConfig;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ========================================
@@ -111,7 +111,7 @@ export class VideoRenderPipeline {
       const { data: slides, error: slidesError } = await this.supabase
         .from('slides')
         .select('*')
-        .eq('project_id', projectId)
+        .eq("projectId", projectId)
         .order('order_index', { ascending: true });
 
       if (slidesError || !slides || slides.length === 0) {

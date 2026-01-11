@@ -47,11 +47,11 @@ async function postHandler(req: NextRequest) {
     await prisma.analytics_events.create({
       data: {
         id: crypto.randomUUID(),
-        user_id: userId,
-        event_type: category,
-        event_data: JSON.parse(JSON.stringify(eventData)),
-        user_agent: userAgent || req.headers.get('user-agent'),
-        ip_address: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
+        userId: userId,
+        eventType: category,
+        eventData: JSON.parse(JSON.stringify(eventData)),
+        userAgent: userAgent || req.headers.get('user-agent'),
+        ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
       }
     });
 
@@ -97,10 +97,10 @@ async function getHandler(req: NextRequest) {
     yesterday.setHours(yesterday.getHours() - 24);
 
     const stats = await prisma.analytics_events.groupBy({
-      by: ['event_type'],
+      by: ["eventType"],
       where: {
-        user_id: userId,
-        created_at: { gte: yesterday }
+        userId: userId,
+        createdAt: { gte: yesterday }
       },
       _count: {
         id: true

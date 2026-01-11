@@ -253,18 +253,18 @@ export default function NotificationsCenter() {
             filter: `user_id=eq.${user.id}`,
           },
           (payload) => {
-            const newEvent = payload.new as { id: string; event_type: string; event_data: { type: string; title: string; message: string; read: boolean; actionUrl?: string }; created_at: string }
-            if (newEvent.event_type === 'notification') {
-              const notificationType = newEvent.event_data.type as NotificationType
+            const newEvent = payload.new as { id: string; eventType: string; eventData: { type: string; title: string; message: string; read: boolean; actionUrl?: string }; createdAt: string }
+            if (newEvent.eventType === 'notification') {
+              const notificationType = newEvent.eventData.type as NotificationType
               const notification: Notification = {
                 id: newEvent.id,
                 type: notificationType,
-                title: newEvent.event_data.title,
-                message: newEvent.event_data.message,
-                read: newEvent.event_data.read,
-                createdAt: newEvent.created_at,
+                title: newEvent.eventData.title,
+                message: newEvent.eventData.message,
+                read: newEvent.eventData.read,
+                createdAt: newEvent.createdAt,
                 metadata: {
-                  url: newEvent.event_data.actionUrl
+                  url: newEvent.eventData.actionUrl
                 }
               }
 

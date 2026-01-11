@@ -4,7 +4,7 @@ import { logger } from '@lib/logger';
 interface Template {
   id: string
   isFavorite: boolean
-  updated_at: Date
+  updatedAt: Date
   metadata: {
     usage: {
       likes: number
@@ -35,7 +35,7 @@ export async function POST(
     }
 
     templates[templateIndex].isFavorite = isFavorite;
-    templates[templateIndex].updated_at = new Date();
+    templates[templateIndex].updatedAt = new Date();
 
     // Atualizar estatísticas de uso
     if (isFavorite) {

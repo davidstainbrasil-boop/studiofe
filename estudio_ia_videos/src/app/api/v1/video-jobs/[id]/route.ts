@@ -10,7 +10,7 @@ type RenderJobRow = {
   project_id?: string | null;
   created_at?: string | null;
   progress?: number | null;
-  user_id: string;
+  userId: string;
   render_settings?: unknown;
   attempts?: number | null;
   duration_ms?: number | null;
@@ -39,19 +39,19 @@ export async function GET(req: Request, ctx: { params: { id: string } }) {
     if (error || !data) return NextResponse.json({ code: 'NOT_FOUND', message: 'Job não encontrado' }, { status: 404 })
 
     const row = data as unknown as RenderJobRow
-    if (row.user_id !== userData.user.id) return NextResponse.json({ code: 'FORBIDDEN', message: 'Sem permissão' }, { status: 403 })
+    if (row.userId !== userData.user.id) return NextResponse.json({ code: 'FORBIDDEN', message: 'Sem permissão' }, { status: 403 })
 
     // Ocultar user_id no retorno público (monta resposta explicitamente)
     return NextResponse.json({
       job: {
         id: row.id,
         status: row.status,
-        project_id: row.project_id ?? null,
-        created_at: row.created_at ?? null,
+        projectId: row.projectId ?? null,
+        createdAt: row.createdAt ?? null,
         progress: row.progress ?? null,
         attempts: row.attempts ?? null,
-        duration_ms: row.duration_ms ?? null,
-        settings: row.render_settings,
+        durationMs: row.durationMs ?? null,
+        settings: row.renderSettings,
       },
     })
   } catch (err) {

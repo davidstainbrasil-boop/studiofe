@@ -21,7 +21,7 @@ interface TrackWithProject {
 
 interface TimelineElement {
   id: string;
-  track_id: string;
+  trackId: string;
   project_id?: string;
   start_time: number;
   duration: number;
@@ -37,8 +37,8 @@ interface TimelineElement {
 
 // Schema de validação para criação de elemento
 const createElementSchema = z.object({
-  track_id: z.string().uuid('ID da track inválido'),
-  project_id: z.string().uuid('ID do projeto inválido'),
+  trackId: z.string().uuid('ID da track inválido'),
+  projectId: z.string().uuid('ID do projeto inválido'),
   start_time: z.number().min(0, 'Tempo de início deve ser positivo'),
   duration: z.number().min(0.1, 'Duração deve ser maior que 0.1 segundos'),
   type: z.enum(['video', 'audio', 'text', 'image', 'pptx_slide', '3d_avatar']),
@@ -56,17 +56,17 @@ const createElementSchema = z.object({
   }).optional(),
   effects: z.array(z.record(z.unknown())).optional(),
   transitions: z.record(z.unknown()).optional(),
-  thumbnail_url: z.string().url().optional(),
-  file_size: z.number().int().min(0).optional(),
-  mime_type: z.string().optional()
+  thumbnailUrl: z.string().url().optional(),
+  fileSize: z.number().int().min(0).optional(),
+  mimeType: z.string().optional()
 })
 
 // Schema de validação para atualização de elemento
-const updateElementSchema = createElementSchema.omit({ track_id: true, project_id: true }).partial()
+const updateElementSchema = createElementSchema.omit({ trackId: true, projectId: true }).partial()
 
 // Schema de validação para mover elemento
 const moveElementSchema = z.object({
-  track_id: z.string().uuid().optional(),
+  trackId: z.string().uuid().optional(),
   start_time: z.number().min(0).optional(),
   duration: z.number().min(0.1).optional()
 })
@@ -85,8 +85,8 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    const trackId = searchParams.get('track_id')
-    const projectId = searchParams.get('project_id')
+    const trackId = searchParams.get("trackId")
+    const projectId = searchParams.get("projectId")
     const type = searchParams.get('type')
     const startTime = searchParams.get('start_time')
     const endTime = searchParams.get('end_time')
@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
       if (project) {
         hasPermission = project.owner_id === user.id || 
                        (Array.isArray(project.collaborators) && (project.collaborators as string[]).includes(user.id)) ||
-                       !!project.is_public
+                       !!project.isPublic
       }
     } else if (trackId) {
       const { data: trackData } = await supabase
@@ -126,7 +126,7 @@ export async function GET(request: NextRequest) {
       if (track?.project) {
         hasPermission = track.project.owner_id === user.id || 
                        (Array.isArray(track.project.collaborators) && (track.project.collaborators as string[]).includes(user.id)) ||
-                       !!track.project.is_public
+                       !!track.project.isPublic
       }
     }
 
@@ -144,10 +144,10 @@ export async function GET(request: NextRequest) {
       .order('start_time', { ascending: true })
 
     if (trackId) {
-      query = query.eq('track_id', trackId)
+      query = query.eq("trackId", trackId)
     }
     if (projectId) {
-      query = query.eq('project_id', projectId)
+      query = query.eq("projectId", projectId)
     }
     if (type) {
       query = query.eq('type', type)
@@ -203,7 +203,7 @@ export async function POST(request: NextRequest) {
         *,
         project:projects(owner_id, collaborators)
       `)
-      .eq('id', validatedData.track_id)
+      .eq('id', validatedData.trackId)
       .single()
 
     if (!trackData) {
@@ -213,10 +213,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const track = trackData as unknown as TrackWithProject & { project_id: string; locked?: boolean };
+    const track = trackData as unknown as TrackWithProject & { projectId: string; locked?: boolean };
     
     // Verificar se o project_id corresponde
-    if (track.project_id !== validatedData.project_id) {
+    if (track.projectId !== validatedData.projectId) {
       return NextResponse.json(
         { error: 'Track não pertence ao projeto especificado' },
         { status: 400 }
@@ -260,7 +260,7 @@ export async function POST(request: NextRequest) {
     const { data: overlappingElements } = await supabase
       .from('timeline_elements')
       .select('id, start_time, duration')
-      .eq('track_id', validatedData.track_id)
+      .eq("trackId", validatedData.trackId)
       .or(`and(start_time.lte.${validatedData.start_time},end_time.gt.${validatedData.start_time}),and(start_time.lt.${validatedData.start_time + validatedData.duration},end_time.gte.${validatedData.start_time + validatedData.duration})`)
 
     if (overlappingElements && overlappingElements.length > 0) {
@@ -299,8 +299,8 @@ export async function POST(request: NextRequest) {
     await supabase
       .from('project_history')
       .insert({
-        project_id: validatedData.project_id,
-        user_id: user.id,
+        projectId: validatedData.projectId,
+        userId: user.id,
         action: 'create',
         entity_type: 'element',
         entity_id: element.id,
@@ -389,11 +389,11 @@ export async function PUT(request: NextRequest) {
     }
 
     // Se mudando de track, verificar se a nova track existe e pertence ao mesmo projeto
-    if (validatedData.track_id && validatedData.track_id !== existingElement.track_id) {
+    if (validatedData.trackId && validatedData.trackId !== existingElement.trackId) {
       const { data: newTrackData } = await supabase
         .from('timeline_tracks')
         .select('project_id, locked')
-        .eq('id', validatedData.track_id)
+        .eq('id', validatedData.trackId)
         .single()
 
       if (!newTrackData) {
@@ -403,10 +403,10 @@ export async function PUT(request: NextRequest) {
         )
       }
 
-      const newTrack = newTrackData as unknown as { project_id: string; locked?: boolean };
-      const currentProjectId = existingElement.track?.project_id;
+      const newTrack = newTrackData as unknown as { projectId: string; locked?: boolean };
+      const currentProjectId = existingElement.track?.projectId;
       
-      if (newTrack.project_id !== currentProjectId) {
+      if (newTrack.projectId !== currentProjectId) {
         return NextResponse.json(
           { error: 'Track de destino deve pertencer ao mesmo projeto' },
           { status: 400 }
@@ -423,7 +423,7 @@ export async function PUT(request: NextRequest) {
 
     // Atualizar elemento
     const updateData: Record<string, unknown> = {}
-    if (validatedData.track_id) updateData.track_id = validatedData.track_id
+    if (validatedData.trackId) updateData.trackId = validatedData.trackId
     if (validatedData.start_time !== undefined) updateData.start_time = validatedData.start_time
     if (validatedData.duration !== undefined) updateData.duration = validatedData.duration
 
@@ -442,22 +442,22 @@ export async function PUT(request: NextRequest) {
       )
     }
 
-    const currentProjectId = existingElement.project_id || existingElement.track?.project_id;
+    const currentProjectId = existingElement.projectId || existingElement.track?.projectId;
     
     if (currentProjectId) {
       // Registrar no histórico
       await supabase
         .from('project_history')
         .insert({
-          project_id: currentProjectId,
-          user_id: user.id,
+          projectId: currentProjectId,
+          userId: user.id,
           action: 'update',
           entity_type: 'element',
           entity_id: elementId,
           description: 'Elemento movido na timeline',
           changes: {
             previous_data: {
-              track_id: existingElement.track_id,
+              trackId: existingElement.trackId,
               start_time: existingElement.start_time,
               duration: existingElement.duration
             },

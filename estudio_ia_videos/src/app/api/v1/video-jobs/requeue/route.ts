@@ -50,7 +50,7 @@ export async function POST(req: Request) {
       priority?: string | null
     }
     const row = existing as unknown as RenderJobRow
-    if (row.user_id && row.user_id !== userData.user.id) return NextResponse.json({ code: 'FORBIDDEN', message: 'Sem permissão' }, { status: 403 })
+    if (row.userId && row.userId !== userData.user.id) return NextResponse.json({ code: 'FORBIDDEN', message: 'Sem permissão' }, { status: 403 })
     if (!['failed','cancelled'].includes(row.status)) return NextResponse.json({ code: 'CONFLICT', message: 'Somente jobs failed/cancelled podem ser reenfileirados' }, { status: 409 })
     // Cap de tentativas
     const MAX_ATTEMPTS = 5
@@ -63,10 +63,10 @@ export async function POST(req: Request) {
       status: 'queued',
       progress: 0,
       attempts: nextAttempts,
-      started_at: null,
-      completed_at: null,
-      duration_ms: null,
-      error_message: null,
+      startedAt: null,
+      completedAt: null,
+      durationMs: null,
+      errorMessage: null,
       priority,
     }
 
@@ -87,7 +87,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ code: 'DB_ERROR', message: 'Falha ao reenfileirar job', details: updateErr?.message }, { status: 500 })
   }
   const updatedRow = updated as unknown as RenderJobRow
-  const jobResp = { id: updatedRow.id, status: updatedRow.status, project_id: updatedRow.project_id, created_at: updatedRow.created_at, progress: updatedRow.progress, attempts: updatedRow.attempts, duration_ms: updatedRow.duration_ms ?? null, settings: updatedRow.render_settings }
+  const jobResp = { id: updatedRow.id, status: updatedRow.status, projectId: updatedRow.projectId, createdAt: updatedRow.createdAt, progress: updatedRow.progress, attempts: updatedRow.attempts, durationMs: updatedRow.durationMs ?? null, settings: updatedRow.renderSettings }
   return NextResponse.json({ job: jobResp })
   } catch (err) {
     recordError('UNEXPECTED');

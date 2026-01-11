@@ -4,17 +4,17 @@ import { logger } from '@lib/logger'
 
 interface SlideRecord {
   id: string
-  project_id: string
-  order_index: number
+  projectId: string
+  orderIndex: number
   title: string
   content: string
   duration: number
-  background_color: string
-  background_image: string
-  avatar_config: Record<string, unknown> | null
-  audio_config: Record<string, unknown> | null
-  created_at: string
-  updated_at: string
+  backgroundColor: string
+  backgroundImage: string
+  avatarConfig: Record<string, unknown> | null
+  audioConfig: Record<string, unknown> | null
+  createdAt: string
+  updatedAt: string
 }
 
 export async function POST(request: NextRequest) {
@@ -49,8 +49,8 @@ export async function POST(request: NextRequest) {
     const { data: slides, error: slidesError } = await supabase
       .from('slides')
       .select('*')
-      .eq('project_id', projectId)
-      .order('order_index', { ascending: true })
+      .eq("projectId", projectId)
+      .order("orderIndex", { ascending: true })
 
     if (slidesError) {
         logger.error('Error fetching slides', slidesError , { component: 'API: import/pptx-to-timeline-real' })
@@ -70,14 +70,14 @@ export async function POST(request: NextRequest) {
     const timelineElements = typedSlides.map((slide, index) => ({
         id: `slide-${slide.id}`,
         type: 'image',
-        name: slide.title || `Slide ${slide.order_index + 1}`,
+        name: slide.title || `Slide ${slide.orderIndex + 1}`,
         duration: slide.duration || slideDuration,
         startTime: index * (slide.duration || slideDuration),
         layer: 0,
         visible: true,
         locked: false,
         properties: {
-            src: slide.background_image || '/placeholder.png',
+            src: slide.backgroundImage || '/placeholder.png',
             opacity: 1,
             x: 0,
             y: 0,
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
     const textElements = typedSlides.filter(s => s.title).map((slide, index) => ({
         id: `text-${slide.id}`,
         type: 'text',
-        name: `Title ${slide.order_index + 1}`,
+        name: `Title ${slide.orderIndex + 1}`,
         duration: slide.duration || slideDuration,
         startTime: index * (slide.duration || slideDuration),
         layer: 1,
@@ -152,7 +152,7 @@ export async function POST(request: NextRequest) {
             metadata: {
                 timeline: timelineData
             },
-            render_settings: {
+            renderSettings: {
                 duration: totalDuration,
                 fps: 30,
                 width: 1920,

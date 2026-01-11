@@ -9,7 +9,7 @@ export interface NRTemplate {
   category?: string;
   nr_code?: string; // e.g. "NR-12"
   content?: any;
-  created_at: string;
+  createdAt: string;
 }
 
 export const NRTemplatesService = {
@@ -18,7 +18,7 @@ export const NRTemplatesService = {
       const { data, error } = await supabase
         .from('nr_templates')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order("createdAt", { ascending: false });
 
       if (error) {
         console.error('Error fetching NR templates:', error);

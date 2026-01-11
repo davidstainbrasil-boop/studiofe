@@ -51,27 +51,27 @@ export async function GET(req: NextRequest) {
       // Total de uploads
       prisma.analytics_events.count({
         where: {
-          user_id: userId,
-          event_type: 'pptx_upload',
-          created_at: { gte: startDate }
+          userId: userId,
+          eventType: 'pptx_upload',
+          createdAt: { gte: startDate }
         }
       }),
 
       // Total de renders completos
       prisma.analytics_events.count({
         where: {
-          user_id: userId,
-          event_type: 'render_complete',
-          created_at: { gte: startDate }
+          userId: userId,
+          eventType: 'render_complete',
+          createdAt: { gte: startDate }
         }
       }),
 
       // Total de downloads
       prisma.analytics_events.count({
         where: {
-          user_id: userId,
-          event_type: 'video_download',
-          created_at: { gte: startDate }
+          userId: userId,
+          eventType: 'video_download',
+          createdAt: { gte: startDate }
         }
       }),
 
@@ -79,8 +79,8 @@ export async function GET(req: NextRequest) {
       prisma.render_jobs.groupBy({
         by: ['status'],
         where: {
-          user_id: userId,
-          created_at: { gte: startDate }
+          userId: userId,
+          createdAt: { gte: startDate }
         },
         _count: { id: true }
       }),
@@ -88,16 +88,16 @@ export async function GET(req: NextRequest) {
       // Projetos recentes
       prisma.projects.findMany({
         where: {
-          user_id: userId,
-          created_at: { gte: startDate }
+          userId: userId,
+          createdAt: { gte: startDate }
         },
-        orderBy: { created_at: 'desc' },
+        orderBy: { createdAt: 'desc' },
         take: 5,
         select: {
           id: true,
           name: true,
           status: true,
-          created_at: true
+          createdAt: true
         }
       }),
 

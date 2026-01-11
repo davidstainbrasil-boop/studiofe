@@ -31,7 +31,7 @@ export interface UE5AvatarConfig {
 export interface MetaHuman {
   id: string;
   name: string;
-  display_name: string;
+  displayName: string;
   gender: string;
   ethnicity?: string;
   age_range?: string;
@@ -53,7 +53,7 @@ export class UE5AvatarEngine {
       return {
         id: avatar.id,
         name: avatar.name,
-        display_name: avatar.name,
+        displayName: avatar.name,
         gender: avatar.gender,
         ethnicity: metadata.ethnicity as string | undefined,
         age_range: metadata.age_range as string | undefined,
@@ -77,7 +77,7 @@ export class UE5AvatarEngine {
     return {
       id: avatar.id,
       name: avatar.name,
-      display_name: avatar.name,
+      displayName: avatar.name,
       gender: avatar.gender,
       ethnicity: metadata.ethnicity as string | undefined,
       age_range: metadata.age_range as string | undefined,

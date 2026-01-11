@@ -19,7 +19,7 @@ export async function PATCH(
     // Verify ownership via project
     const { data: job, error: jobError } = await supabase
       .from('render_jobs')
-      .select('project_id')
+      .select("projectId")
       .eq('id', jobId)
       .single()
 
@@ -29,15 +29,15 @@ export async function PATCH(
 
     const { data: project, error: projectError } = await supabase
       .from('projects')
-      .select('user_id')
-      .eq('id', job.project_id)
+      .select("userId")
+      .eq('id', job.projectId)
       .single()
 
     if (projectError || !project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 })
     }
 
-    if (project.user_id !== user.id) {
+    if (project.userId !== user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 

@@ -30,7 +30,7 @@ export async function POST(
 
     await reviewWorkflowService.reopenForEditing({
       projectId,
-      user_id: user.id,
+      userId: user.id,
       reason,
     });
 

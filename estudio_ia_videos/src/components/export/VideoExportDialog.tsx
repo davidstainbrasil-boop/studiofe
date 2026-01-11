@@ -142,8 +142,8 @@ export function VideoExportDialog({
       }
 
       const job = await createRenderJob({
-        project_id: projectId,
-        user_id: userId,
+        projectId: projectId,
+        userId: userId,
         type: 'video',
         priority: 'normal',
         status: 'pending',

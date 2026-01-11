@@ -31,7 +31,7 @@ class IntegratedTTSAvatarPipeline {
     return this.instance;
   }
   
-  async createJob(user_id: string, text: string, config: Record<string, unknown>): Promise<string> {
+  async createJob(userId: string, text: string, config: Record<string, unknown>): Promise<string> {
     const jobId = `job_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
     const job = {
@@ -43,8 +43,8 @@ class IntegratedTTSAvatarPipeline {
       progress: 0,
       results: null,
       error: null,
-      created_at: new Date(),
-      updated_at: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
       estimatedDuration: 30000,
       actualDuration: null
     };
@@ -61,7 +61,7 @@ class IntegratedTTSAvatarPipeline {
     
     job.status = 'processing';
     job.progress = 50;
-    job.updated_at = new Date();
+    job.updatedAt = new Date();
     
     // Simulate processing
     await new Promise(resolve => setTimeout(resolve, 2000));
@@ -74,7 +74,7 @@ class IntegratedTTSAvatarPipeline {
       duration: 5000
     };
     job.actualDuration = 2000;
-    job.updated_at = new Date();
+    job.updatedAt = new Date();
     
     return job.results;
   }
@@ -83,8 +83,8 @@ class IntegratedTTSAvatarPipeline {
     return this.jobs.get(jobId) || null;
   }
   
-  getJobsByUser(user_id: string) {
-    return Array.from(this.jobs.values()).filter(job => job.user_id === userId);
+  getJobsByUser(userId: string) {
+    return Array.from(this.jobs.values()).filter(job => job.userId === userId);
   }
   
   getStats() {
@@ -104,7 +104,7 @@ class IntegratedTTSAvatarPipeline {
     if (!job) return false;
     
     job.status = 'cancelled';
-    job.updated_at = new Date();
+    job.updatedAt = new Date();
     return true;
   }
 }
@@ -259,8 +259,8 @@ export async function GET(request: NextRequest) {
             progress: job.progress,
             results: job.results,
             error: job.error,
-            created_at: job.created_at,
-            updated_at: job.updated_at,
+            createdAt: job.createdAt,
+            updatedAt: job.updatedAt,
             estimatedDuration: job.estimatedDuration,
             actualDuration: job.actualDuration
           }

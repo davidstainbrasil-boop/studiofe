@@ -87,14 +87,14 @@ export class NotificationManager {
   
   async create(notification: Omit<Notification, 'id' | 'read' | 'createdAt'>): Promise<Notification> {
     const notif = {
-      user_id: notification.userId,
+      userId: notification.userId,
       type: notification.type,
       title: notification.title,
       message: notification.message,
       read: false,
       action_url: notification.actionUrl,
-      expires_at: notification.expiresAt?.toISOString(),
-      created_at: new Date().toISOString()
+      expiresAt: notification.expiresAt?.toISOString(),
+      createdAt: new Date().toISOString()
     };
 
     // Note: Assuming a 'notifications' table exists. If not, we should create it or use a generic events table.
@@ -113,9 +113,9 @@ export class NotificationManager {
     const { data, error } = await this.supabase
       .from('analytics_events')
       .insert({
-        user_id: notification.userId,
-        event_type: 'notification',
-        event_data: {
+        userId: notification.userId,
+        eventType: 'notification',
+        eventData: {
           type: notification.type,
           title: notification.title,
           message: notification.message,
@@ -123,7 +123,7 @@ export class NotificationManager {
           actionUrl: notification.actionUrl,
           expiresAt: notification.expiresAt
         },
-        created_at: new Date().toISOString()
+        createdAt: new Date().toISOString()
       })
       .select()
       .single();
@@ -135,14 +135,14 @@ export class NotificationManager {
 
     return {
       id: data.id,
-      userId: data.user_id,
-      type: data.event_data.type,
-      title: data.event_data.title,
-      message: data.event_data.message,
-      read: data.event_data.read,
-      createdAt: new Date(data.created_at),
-      expiresAt: data.event_data.expiresAt ? new Date(data.event_data.expiresAt) : undefined,
-      actionUrl: data.event_data.actionUrl
+      userId: data.userId,
+      type: data.eventData.type,
+      title: data.eventData.title,
+      message: data.eventData.message,
+      read: data.eventData.read,
+      createdAt: new Date(data.createdAt),
+      expiresAt: data.eventData.expiresAt ? new Date(data.eventData.expiresAt) : undefined,
+      actionUrl: data.eventData.actionUrl
     };
   }
   
@@ -150,9 +150,9 @@ export class NotificationManager {
     const query = this.supabase
       .from('analytics_events')
       .select('*')
-      .eq('user_id', userId)
-      .eq('event_type', 'notification')
-      .order('created_at', { ascending: false });
+      .eq("userId", userId)
+      .eq("eventType", 'notification')
+      .order("createdAt", { ascending: false });
 
     // Filtering JSONB for 'read' status is possible but syntax depends on Supabase/Postgres version.
     // .filter('event_data->>read', 'eq', 'false')
@@ -167,14 +167,14 @@ export class NotificationManager {
 
     let notifications = data.map(row => ({
       id: row.id,
-      userId: row.user_id,
-      type: row.event_data.type,
-      title: row.event_data.title,
-      message: row.event_data.message,
-      read: row.event_data.read,
-      createdAt: new Date(row.created_at),
-      expiresAt: row.event_data.expiresAt ? new Date(row.event_data.expiresAt) : undefined,
-      actionUrl: row.event_data.actionUrl
+      userId: row.userId,
+      type: row.eventData.type,
+      title: row.eventData.title,
+      message: row.eventData.message,
+      read: row.eventData.read,
+      createdAt: new Date(row.createdAt),
+      expiresAt: row.eventData.expiresAt ? new Date(row.eventData.expiresAt) : undefined,
+      actionUrl: row.eventData.actionUrl
     }));
 
     if (unreadOnly) {
@@ -191,17 +191,17 @@ export class NotificationManager {
     
     const { data: current } = await this.supabase
       .from('analytics_events')
-      .select('event_data')
+      .select("eventData")
       .eq('id', notificationId)
       .single();
       
     if (!current) return false;
     
-    const newData = { ...current.event_data, read: true };
+    const newData = { ...current.eventData, read: true };
     
     const { error } = await this.supabase
       .from('analytics_events')
-      .update({ event_data: newData })
+      .update({ eventData: newData })
       .eq('id', notificationId);
 
     return !error;
@@ -220,8 +220,8 @@ export class NotificationManager {
     const { count, error } = await this.supabase
       .from('analytics_events')
       .delete({ count: 'exact' })
-      .eq('user_id', userId)
-      .eq('event_type', 'notification');
+      .eq("userId", userId)
+      .eq("eventType", 'notification');
       
     return error ? 0 : (count || 0);
   }

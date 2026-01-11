@@ -6,8 +6,8 @@ interface Template {
   name: string
   isCustom: boolean
   isFavorite: boolean
-  created_at: Date
-  updated_at: Date
+  createdAt: Date
+  updatedAt: Date
   downloads: number
   rating: number
   metadata: {
@@ -49,8 +49,8 @@ export async function POST(
       name: name || `${originalTemplate.name} (Cópia)`,
       isCustom: true,
       isFavorite: false,
-      created_at: new Date(),
-      updated_at: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
       downloads: 0,
       rating: 0,
       metadata: {

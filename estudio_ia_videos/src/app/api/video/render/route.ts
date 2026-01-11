@@ -14,15 +14,15 @@ interface RenderConfig {
 
 interface RenderJob {
   id: string;
-  user_id: string;
+  userId: string;
   text: string;
   config: RenderConfig;
   status: 'queued' | 'processing' | 'completed' | 'failed' | 'cancelled';
   progress: number;
   results: unknown;
   error: unknown;
-  created_at: Date;
-  updated_at: Date;
+  createdAt: Date;
+  updatedAt: Date;
   startedAt: Date | null;
   completedAt: Date | null;
   estimatedDuration: number;
@@ -55,7 +55,7 @@ class IntegratedTTSAvatarPipeline {
     return this.instance;
   }
   
-  async createJob(user_id: string, text: string, config: RenderConfig): Promise<string> {
+  async createJob(userId: string, text: string, config: RenderConfig): Promise<string> {
     const jobId = `job_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const job: RenderJob = {
       id: jobId,
@@ -66,8 +66,8 @@ class IntegratedTTSAvatarPipeline {
       progress: 0,
       results: null,
       error: null,
-      created_at: new Date(),
-      updated_at: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
       startedAt: null,
       completedAt: null,
       estimatedDuration: 45000,
@@ -82,8 +82,8 @@ class IntegratedTTSAvatarPipeline {
     return this.jobs.get(jobId) || null;
   }
   
-  getJobsByUser(user_id: string) {
-    return Array.from(this.jobs.values()).filter(job => job.user_id === userId);
+  getJobsByUser(userId: string) {
+    return Array.from(this.jobs.values()).filter(job => job.userId === userId);
   }
   
   getStats() {
@@ -104,7 +104,7 @@ class IntegratedTTSAvatarPipeline {
       job.status = 'cancelled';
       job.error = 'Cancelled by user';
       job.completedAt = new Date();
-      job.updated_at = new Date();
+      job.updatedAt = new Date();
       return true;
     }
     return false;
@@ -263,13 +263,13 @@ export async function GET(request: NextRequest) {
         success: true,
         data: {
           jobId: job.id,
-          user_id: job.user_id,
+          userId: job.userId,
           status: job.status,
           progress: job.progress,
           results: job.results,
           error: job.error,
-          created_at: job.created_at,
-          updated_at: job.updated_at,
+          createdAt: job.createdAt,
+          updatedAt: job.updatedAt,
           startedAt: job.startedAt,
           completedAt: job.completedAt,
           estimatedDuration: job.estimatedDuration,
@@ -288,8 +288,8 @@ export async function GET(request: NextRequest) {
             jobId: job.id,
             status: job.status,
             progress: job.progress,
-            created_at: job.created_at,
-            updated_at: job.updated_at,
+            createdAt: job.createdAt,
+            updatedAt: job.updatedAt,
             estimatedDuration: job.estimatedDuration,
             actualDuration: job.actualDuration
           })),

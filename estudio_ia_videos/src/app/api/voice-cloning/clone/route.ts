@@ -51,9 +51,9 @@ export async function POST(request: NextRequest) {
       status: 'training',
       estimated_completion: new Date(Date.now() + 15 * 60 * 1000).toISOString(), // 15 minutes
       file_count: files.length,
-      total_duration: files.length * 30, // Estimate 30 seconds per file
-      quality_score: 0.92 + Math.random() * 0.08, // Random quality between 92-100%
-      created_at: new Date().toISOString()
+      totalDuration: files.length * 30, // Estimate 30 seconds per file
+      qualityScore: 0.92 + Math.random() * 0.08, // Random quality between 92-100%
+      createdAt: new Date().toISOString()
     })
   } catch (error) {
     const errorObj = error instanceof Error ? error : new Error(String(error));
@@ -73,7 +73,7 @@ export async function GET() {
     max_files: 25,
     min_files: 1,
     recommended_files: '10-25',
-    max_file_size: '10MB',
+    max_fileSize: '10MB',
     total_duration_limit: '30 minutes',
     processing_time: '15-30 minutes'
   })

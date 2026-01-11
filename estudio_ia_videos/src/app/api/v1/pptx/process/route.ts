@@ -215,7 +215,7 @@ export async function POST(request: NextRequest) {
 
       await prisma.slide.create({
         data: {
-          project_id: projectId,
+          projectId: projectId,
           title: slide.title || '',
           content: slide.content || '',
           orderIndex: i, // Usar orderIndex em vez de slideNumber
@@ -231,7 +231,7 @@ export async function POST(request: NextRequest) {
 
     const result: PPTXProcessingResult = {
       success: true,
-      project_id: projectId,
+      projectId: projectId,
       extractedContent: extractionResult,
       thumbnailUrl: thumbnailUrl || undefined,
       processingTime
@@ -246,9 +246,9 @@ export async function POST(request: NextRequest) {
     const processingTime = Date.now() - startTime
     
     // Atualizar projeto com status de erro se projectId estiver disponível
-    if (requestBody.project_id) {
+    if (requestBody.projectId) {
       await prisma.projects.update({
-        where: { id: requestBody.project_id },
+        where: { id: requestBody.projectId },
         data: {
           status: 'ERROR',
           processingLog: {

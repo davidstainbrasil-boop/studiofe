@@ -32,7 +32,7 @@ class MockSupabaseClient {
         user_metadata: options?.data || {},
         app_metadata: {},
         aud: 'authenticated',
-        created_at: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
       };
       
       this.mockUsers.set(email, { ...user, password });

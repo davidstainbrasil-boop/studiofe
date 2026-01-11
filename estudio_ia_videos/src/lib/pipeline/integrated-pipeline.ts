@@ -11,7 +11,7 @@ export interface PipelineInput {
     settings?: Record<string, unknown>;
   };
   avatar_config: {
-    model_url: string;
+    modelUrl: string;
     animations?: string[];
     materials?: unknown[];
     lighting?: unknown;
@@ -42,7 +42,7 @@ export interface PipelineStage {
 export interface PipelineJob {
   id: string;
   userId: string;
-  user_id: string; // Alias for userId
+  userId: string; // Alias for userId
   stages: PipelineStage[];
   input: PipelineInput;
   priority: string;
@@ -50,7 +50,7 @@ export interface PipelineJob {
   currentStage: number;
   status: 'pending' | 'running' | 'completed' | 'failed' | 'queued' | 'processing' | 'cancelled';
   error?: string;
-  created_at: string;
+  createdAt: string;
   started_at?: string;
   completed_at?: string;
   progress: {
@@ -82,13 +82,13 @@ export class IntegratedPipeline {
     const job: PipelineJob = {
       id: jobId,
       userId,
-      user_id: userId,
+      userId: userId,
       stages: [], 
       input,
       priority,
       currentStage: 0,
       status: 'queued',
-      created_at: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
       progress: {
         percentage: 0,
         stage: 'queued',
@@ -132,7 +132,7 @@ export class IntegratedPipeline {
       job.output = (currentData as unknown as Record<string, unknown>) || {
         audio_url: 'mock_audio.mp3',
         video_url: 'mock_video.mp4',
-        thumbnail_url: 'mock_thumb.jpg',
+        thumbnailUrl: 'mock_thumb.jpg',
         duration: 30,
         file_sizes: {},
         quality_metrics: {},

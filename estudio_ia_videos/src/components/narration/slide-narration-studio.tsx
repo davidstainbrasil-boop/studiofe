@@ -375,7 +375,7 @@ export default function SlideNarrationStudio({
               {selectedVoice && (
                 <div className="mt-3 text-center">
                   <p className="text-sm text-muted-foreground">
-                    Voz selecionada: <span className="font-medium">{selectedVoice.display_name}</span>
+                    Voz selecionada: <span className="font-medium">{selectedVoice.displayName}</span>
                   </p>
                   <p className="text-xs text-muted-foreground">
                     Custo estimado: R$ {((slides.length * 0.30) * (qualityLevel === 'studio' ? 1.5 : qualityLevel === 'premium' ? 1.2 : 1.0)).toFixed(2)}

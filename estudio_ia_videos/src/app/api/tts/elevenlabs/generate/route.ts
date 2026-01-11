@@ -7,9 +7,9 @@ import { logger } from '@lib/logger'
 // Schema de validação com Zod
 const TTSRequestSchema = z.object({
   text: z.string().min(1, 'Texto é obrigatório').max(5000, 'Texto muito longo. Máximo 5000 caracteres.'),
-  voice_id: z.string().min(1, 'voice_id é obrigatório'),
+  voiceId: z.string().min(1, 'voice_id é obrigatório'),
   model_id: z.string().optional().default('eleven_multilingual_v2'),
-  voice_settings: z.object({
+  voiceSettings: z.object({
     stability: z.number().min(0).max(1).optional().default(0.5),
     similarity_boost: z.number().min(0).max(1).optional().default(0.5),
     style: z.number().min(0).max(1).optional().default(0),
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
       text,
       voice_id,
       model_id: model_id,
-      voice_settings: voice_settings || {
+      voiceSettings: voice_settings || {
         stability: 0.5,
         similarity_boost: 0.5,
         style: 0.0,
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
     // Log de uso para analytics
     logger.info('Usuário gerou áudio TTS', { 
       component: 'API: tts/elevenlabs', 
-      user_id: user.id, 
+      userId: user.id, 
       textLength: text.length, 
       voiceId: voice_id 
     })

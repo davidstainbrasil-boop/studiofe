@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
         data: {
           title: projectName,
           description: `Importado de PPTX (${slides.length} slides)`,
-          user_id: session.user.id,
+          userId: session.user.id,
           status: 'DRAFT',
           totalSlides: slides.length,
           slidesData: {
@@ -129,7 +129,7 @@ export async function POST(req: NextRequest) {
 
     const timeline = await prisma.timeline.create({
       data: {
-        project_id: project.id,
+        projectId: project.id,
         tracks: timelineData,
         totalDuration: Math.round(currentTime * 1000), // converter para milliseconds
       },
@@ -138,10 +138,10 @@ export async function POST(req: NextRequest) {
     // Log analytics
     await prisma.analyticsEvent.create({
       data: {
-        user_id: session.user.id,
+        userId: session.user.id,
         eventType: 'pptx_import',
         eventData: {
-          project_id: project.id,
+          projectId: project.id,
           timelineId: timeline.id,
           slidesCount: slides.length,
           clipsCreated: clips.length,
@@ -152,7 +152,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      project_id: project.id,
+      projectId: project.id,
       timelineId: timeline.id,
       clipsCreated: clips.length,
       duration: currentTime,

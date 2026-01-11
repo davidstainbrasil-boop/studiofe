@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     const project = await prisma.projects.findFirst({
       where: {
         id: projectId,
-        user_id: session.user.id,
+        userId: session.user.id,
       },
     });
 
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
         id: snapshot.id,
         version: snapshot.version,
         description: snapshot.description,
-        created_at: snapshot.created_at.toISOString(),
+        createdAt: snapshot.createdAt.toISOString(),
         tracksCount: Array.isArray(timeline.tracks) ? timeline.tracks.length : 0,
         totalDuration: timeline.totalDuration,
       },

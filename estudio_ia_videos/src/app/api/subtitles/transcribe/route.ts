@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     const { data: transcriptionData, error: dbError } = await supabase
       .from('transcriptions')
       .insert({
-        user_id: userId,
+        userId: userId,
         audio_path: finalAudioPath,
         language,
         duration: result.duration,
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
         segments: result.segments,
         karaoke_enabled: enableKaraoke,
         speaker_diarization_enabled: enableSpeakerDiarization,
-        created_at: new Date().toISOString()
+        createdAt: new Date().toISOString()
       })
       .select()
       .single();
@@ -136,8 +136,8 @@ export async function GET(request: NextRequest) {
     let query = supabase
       .from('transcriptions')
       .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
+      .eq("userId", userId)
+      .order("createdAt", { ascending: false });
 
     if (transcriptionId) {
       query = query.eq('id', transcriptionId);
@@ -187,7 +187,7 @@ export async function DELETE(request: NextRequest) {
       .from('transcriptions')
       .delete()
       .eq('id', transcriptionId)
-      .eq('user_id', userId);
+      .eq("userId", userId);
 
     if (error) {
       logger.error('Database error:', error instanceof Error ? error : new Error(String(error)), { component: 'API: subtitles/transcribe' });

@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         text,
         model_id,
-        voice_settings: actualSettings || {
+        voiceSettings: actualSettings || {
           stability: 0.5,
           similarity_boost: 0.8,
           style: 0.2,

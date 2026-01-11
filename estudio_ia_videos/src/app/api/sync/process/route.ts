@@ -17,7 +17,7 @@ const logger = new Logger('LipSyncAPI')
 interface SyncJob {
   id: string;
   job_id: string;
-  project_id: string;
+  projectId: string;
   avatar_id?: string;
   user_id?: string;
   status: string;
@@ -37,7 +37,7 @@ interface SyncJob {
   confidence_avg?: number;
   visemes_count?: number;
   phonemes_count?: number;
-  created_at: string;
+  createdAt: string;
   completed_at?: string;
   error_message?: string;
 }
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     const includeEmotions = formData.get('include_emotions') === 'true'
     const includeBreathing = formData.get('include_breathing') === 'true'
     const accuracyMode = (formData.get('accuracy_mode') as string) || 'balanced'
-    const projectId = formData.get('project_id') as string
+    const projectId = formData.get("projectId") as string
     const avatarId = formData.get('avatar_id') as string
 
     // Validar parâmetros obrigatórios
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { 
           error: 'Missing required parameters',
-          required: ['audio', 'project_id']
+          required: ['audio', "projectId"]
         },
         { status: 400 }
       )
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Extrair user_id do header de autenticação
-    let user_id: string | undefined
+    let userId: string | undefined
 
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -121,11 +121,11 @@ export async function POST(request: NextRequest) {
     // Salvar informações adicionais no banco
     // sync_jobs table is now properly typed
     await supabase.from('sync_jobs').update({
-      project_id: projectId,
+      projectId: projectId,
       avatar_id: avatarId,
-      user_id: userId,
-      file_name: audioFile.name,
-      file_size: audioFile.size,
+      userId: userId,
+      fileName: audioFile.name,
+      fileSize: audioFile.size,
       file_type: audioFile.type,
       options: {
         includeEmotions,
@@ -210,8 +210,8 @@ export async function GET(request: NextRequest) {
             job_id: job.job_id,
             status: job.status,
             progress: job.progress || 100,
-            created_at: job.created_at,
-            completed_at: job.completed_at,
+            createdAt: job.createdAt,
+            completedAt: job.completedAt,
             metadata: {
               audio_duration: job.audio_duration,
               processing_time: job.processing_time,
@@ -266,22 +266,22 @@ export async function GET(request: NextRequest) {
         })
 
       case 'history':
-        const userId = searchParams.get('user_id')
-        const projectId = searchParams.get('project_id')
+        const userId = searchParams.get("userId")
+        const projectId = searchParams.get("projectId")
         const limit = parseInt(searchParams.get('limit') || '10')
 
         let query = supabase
           .from('sync_jobs')
           .select('job_id, status, created_at, accuracy_score, audio_duration, file_name')
-          .order('created_at', { ascending: false })
+          .order("createdAt", { ascending: false })
           .limit(limit)
 
         if (userId) {
-          query = query.eq('user_id', userId)
+          query = query.eq("userId", userId)
         }
 
         if (projectId) {
-          query = query.eq('project_id', projectId)
+          query = query.eq("projectId", projectId)
         }
 
         const { data: history, error: historyError } = await query
@@ -366,7 +366,7 @@ export async function DELETE(request: NextRequest) {
       .from('sync_jobs')
       .update({ 
         status: 'cancelled',
-        updated_at: new Date().toISOString()
+        updatedAt: new Date().toISOString()
       })
       .eq('job_id', jobId)
 

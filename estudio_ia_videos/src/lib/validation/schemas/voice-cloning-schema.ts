@@ -241,7 +241,7 @@ export const VoiceResponseSchema = z.object({
   }).optional(),
   labels: z.record(z.string()).optional(),
   preview_url: z.string().url().nullable().optional(),
-  created_at: z.string().optional(),
+  createdAt: z.string().optional(),
 });
 
 export type VoiceResponse = z.infer<typeof VoiceResponseSchema>;

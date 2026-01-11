@@ -119,7 +119,7 @@ export default function VideoEditor({
 
     setSlides(items)
     Analytics.track('slide_reordered', {
-      project_id: projectId,
+      projectId: projectId,
       from_index: result.source.index,
       to_index: result.destination.index
     })
@@ -227,7 +227,7 @@ export default function VideoEditor({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          project_id: projectId,
+          projectId: projectId,
           type: 'video',
           priority: 'normal',
           metadata: {
@@ -358,7 +358,7 @@ export default function VideoEditor({
     setSelectedSlide(newSlide.id)
     
     Analytics.track('slide_added', {
-      project_id: projectId,
+      projectId: projectId,
       slides_count: slides.length + 1
     })
   }, [slides, projectId])

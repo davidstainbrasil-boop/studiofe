@@ -17,7 +17,7 @@ const CreateFromScriptSchema = z.object({
       visual_cues: z.array(z.string()),
       safety_highlights: z.array(z.string())
     })),
-    total_duration: z.number(),
+    totalDuration: z.number(),
     compliance_notes: z.array(z.string()),
     engagement_tips: z.array(z.string())
   }),
@@ -77,14 +77,14 @@ export async function POST(req: NextRequest) {
         description: `Treinamento ${nr} para ${audience}`,
         type: 'ai_generated',
         status: 'draft',
-        user_id: user.id,
+        userId: user.id,
         metadata: {
           nr,
           audience,
           company_context,
           generated_at: new Date().toISOString()
         },
-        duration: script.total_duration * 60, // minutes to seconds?? schema says Int... assuming seconds usually but let's check. 
+        duration: script.totalDuration * 60, // minutes to seconds?? schema says Int... assuming seconds usually but let's check. 
         // Wait, script duration is in minutes usually in the prompt. Let's assume input is minutes.
         // Prisma schema says duration Int? @default(0). usually seconds.
         // Let's store as seconds.
@@ -100,8 +100,8 @@ export async function POST(req: NextRequest) {
 
     // 3. Create Slides
     const slidesData = scenes.map((scene, index) => ({
-      project_id: project.id,
-      slide_order: index + 1,
+      projectId: project.id,
+      slideOrder: index + 1,
       title: scene.title,
       content: {
         text: scene.content,
@@ -109,16 +109,16 @@ export async function POST(req: NextRequest) {
         safety_highlights: scene.safety_highlights,
         avatar_instructions: scene.avatar_instructions
       },
-      duration_seconds: Math.ceil(scene.duration * 60), // scene duration in minutes to seconds
-      layout_type: 'split_right', // Default layout
+      durationSeconds: Math.ceil(scene.duration * 60), // scene duration in minutes to seconds
+      layoutType: 'split_right', // Default layout
       background: {
         type: 'image',
         value: stockAssets[index]?.url || null, // Real stock asset URL
         search_term: queries[index]
       },
-      tts_settings: {
+      ttsSettings: {
         provider: 'elevenlabs',
-        voice_id: '21m00Tcm4TlvDq8ikWAM' // Default voice
+        voiceId: '21m00Tcm4TlvDq8ikWAM' // Default voice
       }
     }));
 
@@ -182,9 +182,9 @@ export async function POST(req: NextRequest) {
     const { error: timelineError } = await supabase
       .from('timelines')
       .insert({
-        project_id: project.id,
+        projectId: project.id,
         tracks: tracks,
-        total_duration: currentTime,
+        totalDuration: currentTime,
         version: 1,
         settings: { resolution: { width: 1920, height: 1080 }, fps: 30 }
       });
@@ -195,7 +195,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      project_id: project.id,
+      projectId: project.id,
       slidesCreated: slidesData.length
     });
 

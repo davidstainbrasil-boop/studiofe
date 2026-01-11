@@ -58,7 +58,7 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  logger.warn('Account deletion requested', { user_id: user.id, email: user.email });
+  logger.warn('Account deletion requested', { userId: user.id, email: user.email });
 
   try {
     let projectsDeleted = 0;
@@ -72,7 +72,7 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
     const { data: userProjects } = await supabaseAdmin
       .from('projects')
       .select('id')
-      .eq('user_id', user.id);
+      .eq("userId", user.id);
     
     if (userProjects && userProjects.length > 0) {
       const projectIds = userProjects.map(p => p.id);
@@ -81,7 +81,7 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
       const { count: slidesCount } = await supabaseAdmin
         .from('slides')
         .delete({ count: 'exact' })
-        .in('project_id', projectIds);
+        .in("projectId", projectIds);
       slidesDeleted = slidesCount || 0;
     }
 
@@ -90,21 +90,21 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
       // First, delete output files from storage
       interface RenderJob {
         id: string;
-        output_url: string | null;
+        outputUrl: string | null;
       }
       // Use explicit typing to avoid deep instantiation
       const renderJobsQuery = supabaseAdmin
         .from('render_jobs')
         .select('id, output_url')
-        .eq('user_id', user.id);
+        .eq("userId", user.id);
       const { data: renderJobs } = await renderJobsQuery as unknown as { data: RenderJob[] | null };
       
       if (renderJobs) {
         for (const job of renderJobs) {
-          if (job.output_url) {
+          if (job.outputUrl) {
             // Extract file path and delete from storage
             try {
-              const url = new URL(job.output_url);
+              const url = new URL(job.outputUrl);
               const pathMatch = url.pathname.match(/\/storage\/v1\/object\/public\/videos\/(.+)/);
               if (pathMatch) {
                 await supabaseAdmin.storage.from('videos').remove([pathMatch[1]]);
@@ -120,7 +120,7 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
       const { count: rendersCount } = await supabaseAdmin
         .from('render_jobs')
         .delete({ count: 'exact' })
-        .eq('user_id', user.id);
+        .eq("userId", user.id);
       rendersDeleted = rendersCount || 0;
     }
 
@@ -129,7 +129,7 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
       const { count: projectsCount } = await supabaseAdmin
         .from('projects')
         .delete({ count: 'exact' })
-        .eq('user_id', user.id);
+        .eq("userId", user.id);
       projectsDeleted = projectsCount || 0;
     }
 
@@ -144,7 +144,7 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
     
     if (authDeleteError) {
       const errorInstance = authDeleteError instanceof Error ? authDeleteError : new Error(String(authDeleteError));
-      logger.error('Failed to delete auth user', errorInstance, { user_id: user.id });
+      logger.error('Failed to delete auth user', errorInstance, { userId: user.id });
       // Continue anyway - profile data is already deleted
     }
 
@@ -161,7 +161,7 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
     };
 
     logger.info('Account deleted successfully', { 
-      user_id: user.id, 
+      userId: user.id, 
       email: user.email,
       summary: result.summary 
     });
@@ -169,7 +169,7 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json(result);
   } catch (error) {
     const errorInstance = error instanceof Error ? error : new Error(String(error));
-    logger.error('Failed to delete account', errorInstance, { user_id: user.id });
+    logger.error('Failed to delete account', errorInstance, { userId: user.id });
     return NextResponse.json(
       { error: 'Internal Server Error', message: 'Failed to delete account. Please contact support.' },
       { status: 500 }
@@ -194,29 +194,29 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const { count: projectsCount } = await supabase
       .from('projects')
       .select('*', { count: 'exact', head: true })
-      .eq('user_id', user.id);
+      .eq("userId", user.id);
     
     const { count: rendersCount } = await supabase
       .from('render_jobs')
       .select('*', { count: 'exact', head: true })
-      .eq('user_id', user.id);
+      .eq("userId", user.id);
 
     const { data: userProjects } = await supabase
       .from('projects')
       .select('id')
-      .eq('user_id', user.id);
+      .eq("userId", user.id);
     
     let slidesCount = 0;
     if (userProjects && userProjects.length > 0) {
       const { count } = await supabase
         .from('slides')
         .select('*', { count: 'exact', head: true })
-        .in('project_id', userProjects.map(p => p.id));
+        .in("projectId", userProjects.map(p => p.id));
       slidesCount = count || 0;
     }
 
     return NextResponse.json({
-      user_id: user.id,
+      userId: user.id,
       email: user.email,
       dataToBeDeleted: {
         projects: projectsCount || 0,

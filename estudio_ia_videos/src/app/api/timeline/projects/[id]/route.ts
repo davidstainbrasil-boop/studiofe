@@ -41,7 +41,7 @@ export async function GET(
       .from('projects')
       .select('*')
       .eq('id', params.id)
-      .eq('user_id', user.id)
+      .eq("userId", user.id)
       .single()
 
     if (error || !project) {
@@ -49,7 +49,7 @@ export async function GET(
     }
 
     const metadata = project.metadata as ProjectMetadata | null;
-    const renderSettings = project.render_settings as RenderSettings | null;
+    const renderSettings = project.renderSettings as RenderSettings | null;
     
     // Return the timeline JSON stored in metadata
     // If metadata.timeline exists, return it.
@@ -98,14 +98,14 @@ export async function PUT(
       .from('projects')
       .update({
         name: body.name,
-        updated_at: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
         metadata: {
             // Preserve existing metadata if needed, but here we assume body is the full timeline
             // We should probably fetch existing metadata first if we want to merge
             // But for now, let's store the timeline in metadata.timeline
             timeline: body
         },
-        render_settings: {
+        renderSettings: {
             width: body.width,
             height: body.height,
             fps: body.fps,
@@ -113,7 +113,7 @@ export async function PUT(
         }
       })
       .eq('id', params.id)
-      .eq('user_id', user.id)
+      .eq("userId", user.id)
 
     if (updateError) throw updateError
 
@@ -132,7 +132,7 @@ interface TimelineTrack {
 
     // Sync 'slides' table for Worker compatibility
     // 1. Delete existing slides
-    await supabase.from('slides').delete().eq('project_id', params.id)
+    await supabase.from('slides').delete().eq("projectId", params.id)
 
     // 2. Insert new slides from tracks
     const tracks = body.tracks as TimelineTrack[]
@@ -140,12 +140,12 @@ interface TimelineTrack {
     
     if (slideTrack && slideTrack.elements) {
         const slidesToInsert = slideTrack.elements.map((el, index: number) => ({
-            project_id: params.id,
-            order_index: index,
+            projectId: params.id,
+            orderIndex: index,
             title: el.name,
             content: el.properties?.content || el.name,
             duration: Math.round(el.duration),
-            background_image: el.properties?.src
+            backgroundImage: el.properties?.src
         }))
 
         if (slidesToInsert.length > 0) {
@@ -188,7 +188,7 @@ export async function DELETE(
       .from('projects')
       .delete()
       .eq('id', params.id)
-      .eq('user_id', user.id)
+      .eq("userId", user.id)
 
     if (error) throw error
 

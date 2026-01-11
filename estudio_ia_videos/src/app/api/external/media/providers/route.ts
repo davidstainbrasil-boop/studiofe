@@ -142,7 +142,7 @@ export async function GET(request: NextRequest) {
     const { data: userProviders, error } = await supabaseAdmin
       .from('user_external_api_configs')
       .select('*')
-      .eq('user_id', session.user.id)
+      .eq("userId", session.user.id)
       .eq('api_type', 'media')
 
     if (error && error.code !== 'PGRST116') {
@@ -152,7 +152,7 @@ export async function GET(request: NextRequest) {
     // If no user configurations exist, create default ones
     if (!userProviders || userProviders.length === 0) {
       const defaultConfigs = defaultProviders.map(provider => ({
-        user_id: session.user.id,
+        userId: session.user.id,
         api_type: 'media',
         provider_id: provider.id,
         provider_name: provider.name,
@@ -160,8 +160,8 @@ export async function GET(request: NextRequest) {
         enabled: provider.enabled,
         config: provider.config,
         pricing: provider.pricing,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       }))
 
       const { data: createdConfigs, error: createError } = await supabaseAdmin
@@ -249,7 +249,7 @@ export async function POST(request: NextRequest) {
     const { data: newProvider, error } = await supabaseAdmin
       .from('user_external_api_configs')
       .insert({
-        user_id: session.user.id,
+        userId: session.user.id,
         api_type: 'media',
         provider_id: providerId,
         provider_name: providerData.name,
@@ -257,8 +257,8 @@ export async function POST(request: NextRequest) {
         enabled: providerData.enabled,
         config: providerData.config || {},
         pricing: providerData.pricing || {},
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       })
       .select()
       .single()
@@ -270,7 +270,7 @@ export async function POST(request: NextRequest) {
       await supabaseAdmin
         .from('analytics_events')
         .insert({
-          user_id: session.user.id,
+          userId: session.user.id,
           category: 'external_apis',
           action: 'media_provider_created',
           metadata: {
@@ -278,7 +278,7 @@ export async function POST(request: NextRequest) {
             provider_type: providerData.type,
             timestamp: new Date().toISOString()
           } as Json,
-          created_at: new Date().toISOString()
+          createdAt: new Date().toISOString()
         })
     } catch (analyticsError) {
       logger.warn('Failed to log media provider creation', { component: 'API: external/media/providers' })

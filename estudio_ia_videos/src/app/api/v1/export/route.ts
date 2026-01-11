@@ -53,7 +53,7 @@ interface SlidesDataJson {
        slidesForRender = slidesData.slides.map((s, index: number) => ({
          id: s.id || Math.random().toString(),
          number: index + 1,
-         order_index: index,
+         orderIndex: index,
          elements: (s.elements || []) as SlideElement[],
          content: s.content || '',
          title: s.title || '',
@@ -66,7 +66,7 @@ interface SlidesDataJson {
        slidesForRender = project.slides.map((s, index: number) => ({
          id: s.id,
          number: index + 1,
-         order_index: index,
+         orderIndex: index,
          elements: [] as SlideElement[], // Default empty elements if not present
          content: s.content || '',
          title: s.title || '',
@@ -121,7 +121,7 @@ interface SlidesDataJson {
             status: 'ERROR',
             metadata: {
               ...(project.metadata as object || {}),
-              error_message: error instanceof Error ? error.message : 'Unknown render error'
+              errorMessage: error instanceof Error ? error.message : 'Unknown render error'
             }
           }
         });

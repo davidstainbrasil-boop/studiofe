@@ -7,7 +7,7 @@ export async function GET() {
   const memory = 40 + Math.random() * 20; // 40-60%
   
   return NextResponse.json({
-    total_renders: 1542,
+    totalRenders: 1542,
     success_rate: 98.5,
     performance_metrics: {
       average_cpu_usage: cpu,

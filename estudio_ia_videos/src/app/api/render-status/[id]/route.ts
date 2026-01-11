@@ -40,8 +40,8 @@ export async function GET(
         id: job.id,
         status: job.status,
         progress: job.progress,
-        outputUrl: job.output_url,
-        error: job.error_message
+        outputUrl: job.outputUrl,
+        error: job.errorMessage
       }
     });
 

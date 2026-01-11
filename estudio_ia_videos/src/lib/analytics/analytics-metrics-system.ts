@@ -124,9 +124,9 @@ export class AnalyticsMetricsSystem {
 
   async trackEvent(type: string, properties?: Record<string, unknown>, metadata?: Record<string, unknown>): Promise<AnalyticsEvent> {
     const event = {
-      event_type: type,
-      event_data: { properties, metadata },
-      created_at: new Date().toISOString(),
+      eventType: type,
+      eventData: { properties, metadata },
+      createdAt: new Date().toISOString(),
     };
 
     const { data, error } = await this.supabase
@@ -139,19 +139,19 @@ export class AnalyticsMetricsSystem {
 
     return {
       id: data.id,
-      type: data.event_type,
-      userId: data.user_id,
-      timestamp: new Date(data.created_at),
-      properties: data.event_data?.properties,
-      metadata: data.event_data?.metadata,
+      type: data.eventType,
+      userId: data.userId,
+      timestamp: new Date(data.createdAt),
+      properties: data.eventData?.properties,
+      metadata: data.eventData?.metadata,
     };
   }
 
   async trackEventsBatch(events: TrackEventInput[]): Promise<AnalyticsEvent[]> {
     const dbEvents = events.map(e => ({
-      event_type: e.type,
-      event_data: { properties: e.properties, metadata: e.metadata },
-      created_at: new Date().toISOString(),
+      eventType: e.type,
+      eventData: { properties: e.properties, metadata: e.metadata },
+      createdAt: new Date().toISOString(),
     }));
 
     const { data, error } = await this.supabase
@@ -163,21 +163,21 @@ export class AnalyticsMetricsSystem {
 
     return data.map(d => ({
       id: d.id,
-      type: d.event_type,
-      userId: d.user_id,
-      timestamp: new Date(d.created_at),
-      properties: d.event_data?.properties,
-      metadata: d.event_data?.metadata,
+      type: d.eventType,
+      userId: d.userId,
+      timestamp: new Date(d.createdAt),
+      properties: d.eventData?.properties,
+      metadata: d.eventData?.metadata,
     }));
   }
 
   async getEvents(filters: EventFilters): Promise<AnalyticsEvent[]> {
     let query = this.supabase.from('analytics_events').select('*');
 
-    if (filters.types) query = query.in('event_type', filters.types);
-    if (filters.startDate) query = query.gte('created_at', filters.startDate.toISOString());
-    if (filters.endDate) query = query.lte('created_at', filters.endDate.toISOString());
-    if (filters.userId) query = query.eq('user_id', filters.userId);
+    if (filters.types) query = query.in("eventType", filters.types);
+    if (filters.startDate) query = query.gte("createdAt", filters.startDate.toISOString());
+    if (filters.endDate) query = query.lte("createdAt", filters.endDate.toISOString());
+    if (filters.userId) query = query.eq("userId", filters.userId);
     if (filters.limit) query = query.limit(filters.limit);
 
     const { data, error } = await query;
@@ -186,11 +186,11 @@ export class AnalyticsMetricsSystem {
 
     return data.map(d => ({
       id: d.id,
-      type: d.event_type,
-      userId: d.user_id,
-      timestamp: new Date(d.created_at),
-      properties: d.event_data?.properties,
-      metadata: d.event_data?.metadata,
+      type: d.eventType,
+      userId: d.userId,
+      timestamp: new Date(d.createdAt),
+      properties: d.eventData?.properties,
+      metadata: d.eventData?.metadata,
     }));
   }
 
@@ -199,18 +199,18 @@ export class AnalyticsMetricsSystem {
     // This assumes we store metrics as events with 'metric_record' type
     let query = this.supabase.from('analytics_events')
       .select('*')
-      .eq('event_type', 'metric_record');
+      .eq("eventType", 'metric_record');
 
-    if (filters.startDate) query = query.gte('created_at', filters.startDate.toISOString());
-    if (filters.endDate) query = query.lte('created_at', filters.endDate.toISOString());
+    if (filters.startDate) query = query.gte("createdAt", filters.startDate.toISOString());
+    if (filters.endDate) query = query.lte("createdAt", filters.endDate.toISOString());
     
     const { data, error } = await query;
     if (error) return [];
 
-    return data.map((d: { event_data: { value: number; labels: Record<string, string> }; created_at: string }) => ({
-      value: d.event_data?.value || 0,
-      timestamp: new Date(d.created_at),
-      labels: d.event_data?.labels
+    return data.map((d: { eventData: { value: number; labels: Record<string, string> }; createdAt: string }) => ({
+      value: d.eventData?.value || 0,
+      timestamp: new Date(d.createdAt),
+      labels: d.eventData?.labels
     }));
   }
 
@@ -224,9 +224,9 @@ export class AnalyticsMetricsSystem {
       const { count, error } = await this.supabase
         .from('analytics_events')
         .select('*', { count: 'exact', head: true })
-        .eq('event_type', step.event)
-        .gte('created_at', startDate.toISOString())
-        .lte('created_at', endDate.toISOString());
+        .eq("eventType", step.event)
+        .gte("createdAt", startDate.toISOString())
+        .lte("createdAt", endDate.toISOString());
       
       const currentCount = count || 0;
       const conversionRate = i === 0 ? 100 : (previousCount > 0 ? (currentCount / previousCount) * 100 : 0);
@@ -257,9 +257,9 @@ export class AnalyticsMetricsSystem {
   async createABTest(config: ABTestConfig): Promise<ABTestResult> {
     // Store A/B test config in a 'experiments' table or similar (using analytics_events for now)
     const event = {
-      event_type: 'ab_test_created',
-      event_data: config,
-      created_at: new Date().toISOString(),
+      eventType: 'ab_test_created',
+      eventData: config,
+      createdAt: new Date().toISOString(),
     };
     
     await this.supabase.from('analytics_events').insert(event).select().single();
@@ -290,15 +290,15 @@ export class AnalyticsMetricsSystem {
     // Example: Count events by type
     const { data, error } = await this.supabase
       .from('analytics_events')
-      .select('event_type')
-      .gte('created_at', startDate.toISOString())
-      .lte('created_at', endDate.toISOString());
+      .select("eventType")
+      .gte("createdAt", startDate.toISOString())
+      .lte("createdAt", endDate.toISOString());
 
     if (error) throw new Error(`Failed to calculate usage stats: ${error.message}`);
 
     const stats: Record<string, number> = {};
-    data.forEach((row: { event_type: string }) => {
-      stats[row.event_type] = (stats[row.event_type] || 0) + 1;
+    data.forEach((row: { eventType: string }) => {
+      stats[row.eventType] = (stats[row.eventType] || 0) + 1;
     });
 
     return stats;
@@ -309,8 +309,8 @@ export class AnalyticsMetricsSystem {
     const { data, error } = await this.supabase
       .from('render_jobs')
       .select('status, duration_ms')
-      .gte('created_at', startDate.toISOString())
-      .lte('created_at', endDate.toISOString());
+      .gte("createdAt", startDate.toISOString())
+      .lte("createdAt", endDate.toISOString());
 
     if (error) throw new Error(`Failed to calculate performance stats: ${error.message}`);
 

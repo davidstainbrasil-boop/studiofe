@@ -31,18 +31,18 @@ export class JobManager {
       const job = await prisma.render_jobs.findUnique({
         where: { id: jobId },
         select: {
-          project_id: true,
+          projectId: true,
           projects: {
-            select: { user_id: true }
+            select: { userId: true }
           }
         }
       });
 
-      if (!job || !job.project_id) return null;
+      if (!job || !job.projectId) return null;
 
       return {
-        projectId: job.project_id,
-        userId: job.projects?.user_id || ''
+        projectId: job.projectId,
+        userId: job.projects?.userId || ''
       };
     } catch (error) {
       logger.error('Error fetching job context:', error instanceof Error ? error : new Error(String(error)), { component: 'JobManager' });
@@ -56,9 +56,9 @@ export class JobManager {
     
     const existing = await prisma.render_jobs.findFirst({
       where: {
-        project_id: projectId,
+        projectId: projectId,
         status: 'pending',
-        created_at: { gt: oneMinuteAgo }
+        createdAt: { gt: oneMinuteAgo }
       },
       select: { id: true }
     });
@@ -71,8 +71,8 @@ export class JobManager {
     const job = await prisma.render_jobs.create({
       data: {
         id: randomUUID(),
-        project_id: projectId,
-        user_id: userId,
+        projectId: projectId,
+        userId: userId,
         status: 'pending',
         progress: 0,
         render_settings: {},
@@ -93,11 +93,11 @@ export class JobManager {
 
     return {
       id: data.id,
-      userId: data.user_id || '',
-      projectId: data.project_id || '',
+      userId: data.userId || '',
+      projectId: data.projectId || '',
       status: data.status as RenderJob['status'],
       progress: data.progress || 0,
-      createdAt: data.created_at || new Date(),
+      createdAt: data.createdAt || new Date(),
       startedAt: data.started_at || undefined,
       completedAt: data.completed_at || undefined,
       outputUrl: data.output_url || undefined,
@@ -110,7 +110,7 @@ export class JobManager {
       where: { id: jobId },
       data: {
         progress: Math.min(100, Math.max(0, progress)),
-        updated_at: new Date()
+        updatedAt: new Date()
       }
     });
   }
@@ -195,18 +195,18 @@ export class JobManager {
   async listJobs(projectId?: string, limit: number = 100): Promise<RenderJob[]> {
     try {
       const jobs = await prisma.render_jobs.findMany({
-        where: projectId ? { project_id: projectId } : undefined,
-        orderBy: { created_at: 'desc' },
+        where: projectId ? { projectId: projectId } : undefined,
+        orderBy: { createdAt: 'desc' },
         take: limit
       });
 
       return jobs.map((row) => ({
         id: row.id,
-        userId: row.user_id || '',
-        projectId: row.project_id || '',
+        userId: row.userId || '',
+        projectId: row.projectId || '',
         status: row.status as RenderJob['status'],
         progress: row.progress || 0,
-        createdAt: row.created_at || new Date(),
+        createdAt: row.createdAt || new Date(),
         startedAt: row.started_at || undefined,
         completedAt: row.completed_at || undefined,
         outputUrl: row.output_url || undefined,

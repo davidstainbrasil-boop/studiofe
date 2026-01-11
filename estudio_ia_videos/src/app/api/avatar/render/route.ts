@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
        return NextResponse.json({ error: 'Missing configuration' }, { status: 400 })
     }
 
-    logger.info('Starting avatar render', { user_id: user.id })
+    logger.info('Starting avatar render', { userId: user.id })
 
     // Use Real Pipeline V2
     // We map the complex config into the 'options' parameter
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
     }
 
     logger.info('Avatar render job queued', {
-      user_id: user.id,
+      userId: user.id,
       jobId: result.jobId
     })
 
@@ -164,10 +164,10 @@ export async function GET(request: NextRequest) {
     // List jobs
     const jobs = await prisma.render_jobs.findMany({
       where: {
-        user_id: user.id,
+        userId: user.id,
         ...(status ? { status: status as any } : {})
       },
-      orderBy: { created_at: 'desc' },
+      orderBy: { createdAt: 'desc' },
       take: limit
     })
 

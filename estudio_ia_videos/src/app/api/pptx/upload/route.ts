@@ -12,7 +12,7 @@ import { randomUUID } from 'crypto'
 
 // Schema de validação para upload
 const uploadSchema = z.object({
-  project_id: z.string().uuid('ID do projeto inválido')
+  projectId: z.string().uuid('ID do projeto inválido')
 })
 
 // Configurações de upload
@@ -49,7 +49,7 @@ export const POST = withRateLimit(RATE_LIMITS.UPLOAD, 'user')(async function POS
     }
 
     // Se não tiver project_id, criar um projeto automaticamente
-    let projectId = formData.get('project_id') as string | null
+    let projectId = formData.get("projectId") as string | null
     let autoCreatedProject = false
 
     if (!projectId) {
@@ -59,7 +59,7 @@ export const POST = withRateLimit(RATE_LIMITS.UPLOAD, 'user')(async function POS
       const newProject = await prisma.projects.create({
         data: {
           id: randomUUID(),
-          user_id: userId,
+          userId: userId,
           name: projectName,
           description: `Projeto criado a partir do arquivo ${file.name}`,
           status: 'draft',
@@ -72,13 +72,13 @@ export const POST = withRateLimit(RATE_LIMITS.UPLOAD, 'user')(async function POS
     }
 
     // Validar projeto
-    uploadSchema.parse({ project_id: projectId })
+    uploadSchema.parse({ projectId: projectId })
 
     // Verificar permissões no projeto (pular se foi auto-criado)
     if (!autoCreatedProject) {
       const project = await prisma.projects.findUnique({
         where: { id: projectId },
-        select: { user_id: true }
+        select: { userId: true }
       })
 
       if (!project) {
@@ -89,7 +89,7 @@ export const POST = withRateLimit(RATE_LIMITS.UPLOAD, 'user')(async function POS
       }
 
       // For local dev, skip permission check
-      const hasPermission = project.user_id === userId || true
+      const hasPermission = project.userId === userId || true
 
       if (!hasPermission) {
         return NextResponse.json(
@@ -139,8 +139,8 @@ export const POST = withRateLimit(RATE_LIMITS.UPLOAD, 'user')(async function POS
     await prisma.projects.update({
       where: { id: projectId },
       data: {
-        pptx_url: filePath,
-        original_file_name: file.name,
+        pptxUrl: filePath,
+        originalFileName: file.name,
         status: 'in_progress'
       }
     })
@@ -154,7 +154,7 @@ export const POST = withRateLimit(RATE_LIMITS.UPLOAD, 'user')(async function POS
       message: `Arquivo ${file.name} enviado, iniciando processamento`,
       priority: 'low',
       timestamp: Date.now(),
-      user_id: userId,
+      userId: userId,
       roomId,
       data: {
         uploadId: uploadId,
@@ -168,11 +168,11 @@ export const POST = withRateLimit(RATE_LIMITS.UPLOAD, 'user')(async function POS
 
     return NextResponse.json({
       upload_id: uploadId,
-      project_id: projectId,
+      projectId: projectId,
       autoCreatedProject: autoCreatedProject,
       filename: filename,
       original_filename: file.name,
-      file_size: file.size,
+      fileSize: file.size,
       status: 'processing',
       message: autoCreatedProject 
         ? 'Upload realizado com sucesso. Projeto criado automaticamente. Processamento iniciado.'
@@ -199,7 +199,7 @@ export const POST = withRateLimit(RATE_LIMITS.UPLOAD, 'user')(async function POS
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const projectId = searchParams.get('project_id')
+    const projectId = searchParams.get("projectId")
     const status = searchParams.get('status')
 
     if (!projectId) {
@@ -214,13 +214,13 @@ export async function GET(request: NextRequest) {
       where: { id: projectId },
       select: { 
         id: true,
-        user_id: true, 
-        is_public: true,
-        pptx_url: true,
-        original_file_name: true,
+        userId: true, 
+        isPublic: true,
+        pptxUrl: true,
+        originalFileName: true,
         status: true,
-        total_slides: true,
-        slides_data: true
+        totalSlides: true,
+        slidesData: true
       }
     })
 
@@ -233,12 +233,12 @@ export async function GET(request: NextRequest) {
 
     // Return project PPTX info
     return NextResponse.json({ 
-      project_id: project.id,
-      pptx_url: project.pptx_url,
-      original_filename: project.original_file_name,
+      projectId: project.id,
+      pptxUrl: project.pptxUrl,
+      original_filename: project.originalFileName,
       status: project.status,
-      total_slides: project.total_slides,
-      slides_data: project.slides_data
+      totalSlides: project.totalSlides,
+      slidesData: project.slidesData
     })
 
   } catch (error) {
@@ -251,7 +251,7 @@ export async function GET(request: NextRequest) {
 }
 
 // Função para processar PPTX assincronamente (usando Prisma)
-async function processPPTXAsync(uploadId: string, filePath: string, project_id: string) {
+async function processPPTXAsync(uploadId: string, filePath: string, projectId: string) {
   try {
     // Definir sala do projeto para notificações
     const roomId = `project:${projectId}:uploads`
@@ -312,9 +312,9 @@ async function processPPTXAsync(uploadId: string, filePath: string, project_id: 
       await prisma.slides.create({
         data: {
           id: randomUUID(),
-          project_id: projectId,
-          slide_order: slide.slideNumber,
-          order_index: idx,
+          projectId: projectId,
+          slideOrder: slide.slideNumber,
+          orderIndex: idx,
           title: slide.title || `Slide ${slide.slideNumber}`,
           content: {
             text: slide.content,
@@ -323,7 +323,7 @@ async function processPPTXAsync(uploadId: string, filePath: string, project_id: 
             images: slide.images,
           },
           notes: slide.notes || '',
-          duration_seconds: slide.duration || 5,
+          durationSeconds: slide.duration || 5,
         }
       })
     }
@@ -333,12 +333,12 @@ async function processPPTXAsync(uploadId: string, filePath: string, project_id: 
       where: { id: projectId },
       data: {
         status: 'completed',
-        total_slides: extraction.slides.length,
-        slides_data: extraction.slides as object,
-        thumbnail_url: previewUrl,
-        processing_log: {
-          completed_at: new Date().toISOString(),
-          slide_count: extraction.slides.length
+        totalSlides: extraction.slides.length,
+        slidesData: extraction.slides as object,
+        thumbnailUrl: previewUrl,
+        processingLog: {
+          completedAt: new Date().toISOString(),
+          slideCount: extraction.slides.length
         }
       }
     })
@@ -372,7 +372,7 @@ async function processPPTXAsync(uploadId: string, filePath: string, project_id: 
       where: { id: projectId },
       data: {
         status: 'error',
-        processing_log: {
+        processingLog: {
           error: error instanceof Error ? error.message : 'Erro desconhecido',
           failed_at: new Date().toISOString()
         }

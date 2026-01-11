@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
         nr_compliance: ['NR-06'],
         industry: ['Construção', 'Indústria', 'Mineração'],
         complexity: 'basic',
-        estimated_duration: 8,
+        estimatedDuration: 8,
         ai_confidence: 98.7
       },
       {
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
         nr_compliance: ['NR-10'],
         industry: ['Energia', 'Indústria', 'Manutenção'],
         complexity: 'advanced',
-        estimated_duration: 25,
+        estimatedDuration: 25,
         ai_confidence: 96.4
       }
     ]
@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
       status: 'processing',
       progress: 0,
       estimatedTime: duration * 60, // seconds
-      created_at: new Date().toISOString()
+      createdAt: new Date().toISOString()
     }
 
     // In a real implementation, this would trigger the actual AI generation

@@ -16,7 +16,7 @@ import { prisma } from '@lib/db'
 interface AvatarModelInfo {
   id: string;
   name: string;
-  display_name: string | null;
+  displayName: string | null;
   category?: string;
 }
 
@@ -69,7 +69,7 @@ export async function GET(
     const avatar: AvatarModelInfo | null = avatarData ? {
       id: avatarData.id,
       name: avatarData.name,
-      display_name: avatarData.displayName,
+      displayName: avatarData.displayName,
       category: avatarData.category ?? undefined
     } : null;
 
@@ -96,8 +96,8 @@ export async function GET(
         job: {
           id: job.id,
           avatarId: job.avatarId,
-          user_id: job.user_id,
-          avatarName: avatar?.name || avatar?.display_name || 'Desconhecido',
+          userId: job.userId,
+          avatarName: avatar?.name || avatar?.displayName || 'Desconhecido',
           status: job.status,
           progress: job.progress || 0,
           startTime: job.startTime ? new Date(job.startTime).toISOString() : null,
@@ -109,7 +109,7 @@ export async function GET(
         avatar: avatar ? {
           id: avatar.id,
           name: avatar.name,
-          displayName: avatar.display_name,
+          displayName: avatar.displayName,
           category: avatar.category
         } : null,
         output: {
@@ -149,8 +149,8 @@ export async function GET(
           timestamp: new Date().toISOString(),
           statusCheckedAt: currentTime,
           nextCheckRecommended: isProcessing ? currentTime + 5000 : null, // 5 segundos
-          created_at: job.created_at ? new Date(job.created_at).toISOString() : null,
-          updated_at: job.updated_at ? new Date(job.updated_at).toISOString() : null
+          createdAt: job.createdAt ? new Date(job.createdAt).toISOString() : null,
+          updatedAt: job.updatedAt ? new Date(job.updatedAt).toISOString() : null
         }
       }
     }
@@ -255,9 +255,9 @@ export async function POST(
           data: {
             status: 'queued',
             progress: 0,
-            error_message: null,
+            errorMessage: null,
             completedAt: null,
-            updated_at: new Date()
+            updatedAt: new Date()
           }
         })
 

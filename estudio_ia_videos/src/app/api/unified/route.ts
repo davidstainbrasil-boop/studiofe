@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
             analyticsData: {}
         },
         status: 'DRAFT',
-        user_id: session.user.id,
+        userId: session.user.id,
         description: '',
         originalFileName: '',
         thumbnailUrl: '',
@@ -145,7 +145,7 @@ export async function PUT(request: NextRequest) {
     const project = await prisma.projects.findFirst({
       where: {
         id: validatedData.id,
-        user_id: session.user.id
+        userId: session.user.id
       }
     })
 
@@ -208,7 +208,7 @@ export async function DELETE(request: NextRequest) {
     const project = await prisma.projects.findFirst({
       where: {
         id: projectId,
-        user_id: session.user.id
+        userId: session.user.id
       }
     })
 

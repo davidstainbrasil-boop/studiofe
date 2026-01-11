@@ -12,10 +12,10 @@ const VoiceSettingsSchema = z.object({
 }).passthrough()
 
 const GenerateVoiceRequestSchema = z.object({
-  voice_id: z.string().min(1, 'voice_id é obrigatório'),
+  voiceId: z.string().min(1, 'voice_id é obrigatório'),
   text: z.string().min(1, 'text é obrigatório').max(10000, 'Texto muito longo'),
   model_id: z.string().optional(),
-  voice_settings: VoiceSettingsSchema.optional(),
+  voiceSettings: VoiceSettingsSchema.optional(),
   output_format: z.string().optional()
 })
 
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
     
     logger.info(`[VoiceCloning] Usuário ${user.id} gerou voz: ${text.length} chars`, { 
       component: 'API: voice-cloning/generate',
-      user_id: user.id,
+      userId: user.id,
       textLength: text.length
     })
     

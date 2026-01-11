@@ -48,7 +48,7 @@ interface TTSProvider {
 
 // TTS Provider implementations
 class TTSProviderFactory {
-  static async generateTTS(provider: TTSProvider, params: TTSParams): Promise<{ audio_url: string; duration: number; size: number }> {
+  static async generateTTS(provider: TTSProvider, params: TTSParams): Promise<{ audioUrl: string; duration: number; size: number }> {
     switch (provider.provider_type) {
       case 'azure':
         return await this.generateAzureTTS(provider, params)
@@ -101,7 +101,7 @@ class TTSProviderFactory {
     // In a real implementation, you would upload this to your storage service
     // For now, we'll simulate the response
     return {
-      audio_url: `https://storage.example.com/tts/${Date.now()}.${params.format}`,
+      audioUrl: `https://storage.example.com/tts/${Date.now()}.${params.format}`,
       duration: Math.ceil(params.text.length / 10), // Rough estimate
       size: audioBuffer.byteLength
     }
@@ -145,7 +145,7 @@ class TTSProviderFactory {
     
     // In a real implementation, you would decode and upload the base64 audio
     return {
-      audio_url: `https://storage.example.com/tts/${Date.now()}.${params.format}`,
+      audioUrl: `https://storage.example.com/tts/${Date.now()}.${params.format}`,
       duration: Math.ceil(params.text.length / 10),
       size: Math.ceil(result.audioContent.length * 0.75) // Base64 to binary size estimate
     }
@@ -183,7 +183,7 @@ class TTSProviderFactory {
     const audioBuffer = await response.arrayBuffer()
     
     return {
-      audio_url: `https://storage.example.com/tts/${Date.now()}.${params.format}`,
+      audioUrl: `https://storage.example.com/tts/${Date.now()}.${params.format}`,
       duration: Math.ceil(params.text.length / 10),
       size: audioBuffer.byteLength
     }
@@ -200,7 +200,7 @@ class TTSProviderFactory {
     const requestBody = {
       text: params.text,
       model_id: 'eleven_monolingual_v1',
-      voice_settings: {
+      voiceSettings: {
         stability: 0.5,
         similarity_boost: 0.5,
         style: 0.0,
@@ -225,7 +225,7 @@ class TTSProviderFactory {
     const audioBuffer = await response.arrayBuffer()
     
     return {
-      audio_url: `https://storage.example.com/tts/${Date.now()}.${params.format}`,
+      audioUrl: `https://storage.example.com/tts/${Date.now()}.${params.format}`,
       duration: Math.ceil(params.text.length / 10),
       size: audioBuffer.byteLength
     }
@@ -251,7 +251,7 @@ export async function POST(request: NextRequest) {
     const { data: providerData, error: providerError } = await supabaseAdmin
       .from('user_external_api_configs')
       .select('*')
-      .eq('user_id', session.user.id)
+      .eq("userId", session.user.id)
       .eq('api_type', 'tts')
       .eq('provider_id', params.provider_id)
       .eq('enabled', true)
@@ -270,11 +270,11 @@ export async function POST(request: NextRequest) {
     const { data: usage, error: usageError } = await supabaseAdmin
       .from('external_api_usage')
       .select('*')
-      .eq('user_id', session.user.id)
+      .eq("userId", session.user.id)
       .eq('api_type', 'tts')
       .eq('provider_id', params.provider_id)
-      .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()) // Last 24 hours
-      .order('created_at', { ascending: false })
+      .gte("createdAt", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()) // Last 24 hours
+      .order("createdAt", { ascending: false })
 
     if (usageError) {
       logger.warn('Failed to check TTS usage:', { component: 'API: external/tts/generate' })
@@ -286,7 +286,7 @@ export async function POST(request: NextRequest) {
 
     // Check limits
     const maxCharacters = provider.config?.max_characters || 10000
-    const maxRequests = provider.config?.rate_limit || 10
+    const maxRequests = provider.config?.rateLimit || 10
 
     if (dailyUsage + params.text.length > maxCharacters) {
       return NextResponse.json(
@@ -315,7 +315,7 @@ export async function POST(request: NextRequest) {
       await supabaseAdmin
         .from('external_api_usage')
         .insert({
-          user_id: session.user.id,
+          userId: session.user.id,
           api_type: 'tts',
           provider_id: params.provider_id,
           characters_used: params.text.length,
@@ -326,7 +326,7 @@ export async function POST(request: NextRequest) {
             language: params.language,
             format: params.format,
             duration: result.duration,
-            file_size: result.size
+            fileSize: result.size
           }
         })
     } catch (usageLogError) {
@@ -338,7 +338,7 @@ export async function POST(request: NextRequest) {
       await supabaseAdmin
         .from('analytics_events')
         .insert({
-          user_id: session.user.id,
+          userId: session.user.id,
           category: 'external_apis',
           action: 'tts_generated',
           metadata: {
@@ -349,7 +349,7 @@ export async function POST(request: NextRequest) {
             cost: totalCost,
             timestamp: new Date().toISOString()
           } as Json,
-          created_at: new Date().toISOString()
+          createdAt: new Date().toISOString()
         })
     } catch (analyticsError) {
       logger.warn('Failed to log TTS generation:', { component: 'API: external/tts/generate' })
@@ -358,7 +358,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: {
-        audio_url: result.audio_url,
+        audioUrl: result.audioUrl,
         duration: result.duration,
         size: result.size,
         cost: totalCost,

@@ -16,7 +16,7 @@ export async function DELETE(
   const contextLogger = logger.withContext({
     ...logContext,
     requestId,
-    user_id: params.id,
+    userId: params.id,
     roleName: params.roleName
   })
 
@@ -44,7 +44,7 @@ export async function DELETE(
     const { error: deleteError } = await supabase
       .from('user_roles')
       .delete()
-      .eq('user_id', params.id)
+      .eq("userId", params.id)
       .eq('role_id', roleData.id)
 
     if (deleteError) {

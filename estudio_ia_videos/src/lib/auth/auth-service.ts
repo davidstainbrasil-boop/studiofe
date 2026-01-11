@@ -105,7 +105,7 @@ export class AuthService {
     return {
       accessToken: data.session.access_token,
       refreshToken: data.session.refresh_token,
-      expiresAt: (data.session.expires_at || (Date.now() / 1000) + 3600) * 1000,
+      expiresAt: (data.session.expiresAt || (Date.now() / 1000) + 3600) * 1000,
       user
     };
   }

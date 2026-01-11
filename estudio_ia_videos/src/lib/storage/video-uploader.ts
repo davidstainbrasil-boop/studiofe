@@ -307,7 +307,7 @@ export class VideoUploader {
         .from('videos')
         .list(`${userId}/`, {
           limit: 100,
-          sortBy: { column: 'created_at', order: 'desc' }
+          sortBy: { column: "createdAt", order: 'desc' }
         });
 
       if (error) {

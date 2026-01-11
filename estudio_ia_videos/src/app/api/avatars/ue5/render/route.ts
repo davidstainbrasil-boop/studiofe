@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
           error: 'MetaHuman não encontrado',
           available_metahumans: ue5AvatarEngine.getAvailableMetaHumans().map(mh => ({
             id: mh.id,
-            name: mh.display_name,
+            name: mh.displayName,
             gender: mh.gender,
             ethnicity: mh.ethnicity
           }))
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
       estimated_time_minutes: 2,
       metahuman: {
         id: metahuman.id,
-        name: metahuman.display_name,
+        name: metahuman.displayName,
         quality: 'Hiper-realista',
         technology: 'UE5 + Audio2Face'
       }

@@ -57,7 +57,7 @@ export async function PUT(
     templates[templateIndex] = {
       ...templates[templateIndex],
       ...updates,
-      updated_at: new Date(),
+      updatedAt: new Date(),
     };
 
     return NextResponse.json(templates[templateIndex]);
@@ -131,7 +131,7 @@ export async function PATCH(
     templates[templateIndex] = {
       ...templates[templateIndex],
       ...updates,
-      updated_at: new Date(),
+      updatedAt: new Date(),
     };
 
     return NextResponse.json(templates[templateIndex]);

@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       title: title || 'Nova Sessão Colaborativa',
       type: type || 'video_production',
       status: 'active',
-      created_at: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
       owner: {
         id: 'current_user',
         name: 'Ana Silva',
@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
           messages: [
             {
               id: 'msg1',
-              user_id: 'user2',
+              userId: 'user2',
               userName: 'Carlos Santos',
               message: 'Terminei de ajustar a narração da seção de segurança em máquinas. Podem revisar?',
               timestamp: new Date(Date.now() - 1800000).toISOString(),
@@ -130,7 +130,7 @@ export async function GET(request: NextRequest) {
             },
             {
               id: 'msg2',
-              user_id: 'system',
+              userId: 'system',
               userName: 'Sistema',
               message: 'Ana Silva fez alterações no template NR-12',
               timestamp: new Date(Date.now() - 1200000).toISOString(),
@@ -143,7 +143,7 @@ export async function GET(request: NextRequest) {
           recentChanges: [
             {
               id: 'change1',
-              user_id: 'user1',
+              userId: 'user1',
               userName: 'Ana Silva',
               action: 'timeline_updated',
               description: 'Atualizou a timeline principal',
@@ -151,7 +151,7 @@ export async function GET(request: NextRequest) {
             },
             {
               id: 'change2',
-              user_id: 'user2',
+              userId: 'user2',
               userName: 'Carlos Santos',
               action: 'audio_added',
               description: 'Adicionou narração em português',
@@ -239,7 +239,7 @@ export async function PUT(request: NextRequest) {
       case 'join':
         result = {
           sessionId,
-          user_id: data.user_id,
+          userId: data.userId,
           joinedAt: new Date().toISOString(),
           role: data.role || 'viewer',
           status: 'joined'
@@ -249,7 +249,7 @@ export async function PUT(request: NextRequest) {
       case 'leave':
         result = {
           sessionId,
-          user_id: data.user_id,
+          userId: data.userId,
           leftAt: new Date().toISOString(),
           status: 'left'
         };
@@ -259,7 +259,7 @@ export async function PUT(request: NextRequest) {
         result = {
           messageId: `msg_${Date.now()}`,
           sessionId,
-          user_id: data.user_id,
+          userId: data.userId,
           message: data.message,
           timestamp: new Date().toISOString(),
           status: 'sent'
@@ -269,7 +269,7 @@ export async function PUT(request: NextRequest) {
       case 'update_cursor':
         result = {
           sessionId,
-          user_id: data.user_id,
+          userId: data.userId,
           cursor: data.cursor,
           timestamp: new Date().toISOString(),
           status: 'updated'

@@ -7,12 +7,12 @@ import { recordRateLimitHit, recordError } from '@lib/video-jobs/utils/metrics'
 interface RenderJobRow {
   id: string;
   status: string;
-  project_id: string;
-  created_at: string;
+  projectId: string;
+  createdAt: string;
   progress: number;
   attempts: number;
   duration_ms?: number | null;
-  render_settings: unknown;
+  renderSettings: unknown;
   started_at?: string;
   user_id?: string;
   error_message?: string | null;
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
     if (fetchErr || !existing) return NextResponse.json({ code: 'NOT_FOUND', message: 'Job não encontrado' }, { status: 404 })
     
     const row = existing as unknown as RenderJobRow
-    if (row.user_id && row.user_id !== userData.user.id) {
+    if (row.userId && row.userId !== userData.user.id) {
       return NextResponse.json({ code: 'FORBIDDEN', message: 'Sem permissão para atualizar este job' }, { status: 403 })
     }
     if (!['queued','processing'].includes(row.status)) {
@@ -63,23 +63,23 @@ export async function POST(req: Request) {
     if (status) patch.status = status
     // Auto set started_at quando entrar em processing
     if (status === 'processing') {
-      const { data: currentRow } = await supabase.from('render_jobs').select('started_at').eq('id', jobId).single()
-      if (currentRow && !(currentRow as RenderJobRow).started_at) {
-        patch.started_at = new Date().toISOString()
+      const { data: currentRow } = await supabase.from('render_jobs').select("startedAt").eq('id', jobId).single()
+      if (currentRow && !(currentRow as RenderJobRow).startedAt) {
+        patch.startedAt = new Date().toISOString()
       }
     }
     // Se completou, calcular duration_ms (started_at já deve existir; se não, ignorar) e set completed_at
     if (status === 'completed' || status === 'failed') {
-      patch.completed_at = new Date().toISOString()
+      patch.completedAt = new Date().toISOString()
     }
 
     // Usa RPC de update simples via raw SQL se tipos inferidos bloquearem update
     if (status === 'completed') {
       const { data: existingForDuration } = await supabase.from('render_jobs').select('id,started_at').eq('id', jobId).single()
-      if (existingForDuration && (existingForDuration as unknown as RenderJobRow).started_at) {
-        const startedAtMs = Date.parse((existingForDuration as unknown as RenderJobRow).started_at!)
+      if (existingForDuration && (existingForDuration as unknown as RenderJobRow).startedAt) {
+        const startedAtMs = Date.parse((existingForDuration as unknown as RenderJobRow).startedAt!)
         const dur = Date.now() - startedAtMs
-        patch.duration_ms = dur
+        patch.durationMs = dur
       }
     }
     const { data: updated, error: updateErr } = await supabase
@@ -94,7 +94,7 @@ export async function POST(req: Request) {
       logger.error('video-jobs-progress', 'db-update-failed', updateErr as Error)
       return NextResponse.json({ code: 'DB_ERROR', message: 'Falha ao atualizar job', details: updateErr?.message }, { status: 500 })
     }
-  const jobResp = { id: (updated as RenderJobRow).id, status: (updated as RenderJobRow).status, project_id: (updated as RenderJobRow).project_id, created_at: (updated as RenderJobRow).created_at, progress: (updated as RenderJobRow).progress, attempts: (updated as RenderJobRow).attempts, duration_ms: (updated as RenderJobRow).duration_ms ?? null, settings: (updated as RenderJobRow).render_settings }
+  const jobResp = { id: (updated as RenderJobRow).id, status: (updated as RenderJobRow).status, projectId: (updated as RenderJobRow).projectId, createdAt: (updated as RenderJobRow).createdAt, progress: (updated as RenderJobRow).progress, attempts: (updated as RenderJobRow).attempts, durationMs: (updated as RenderJobRow).durationMs ?? null, settings: (updated as RenderJobRow).renderSettings }
   return NextResponse.json({ job: jobResp })
   } catch (err) {
     recordError('UNEXPECTED');

@@ -18,7 +18,7 @@ export const getCourses = async (): Promise<CourseRow[]> => {
   const { data, error } = await supabase
     .from('courses')
     .select('*')
-    .order('created_at', { ascending: false });
+    .order("createdAt", { ascending: false });
   
   if (error) throw error;
   return data ?? [];
@@ -40,8 +40,8 @@ export const getVideosByCourseId = async (courseId: string): Promise<VideoRow[]>
   const { data, error } = await supabase
     .from('videos')
     .select('*')
-    .eq('course_id', courseId)
-    .order('created_at', { ascending: true });
+    .eq("courseId", courseId)
+    .order("createdAt", { ascending: true });
   
   if (error) throw error;
   return data ?? [];
@@ -66,8 +66,8 @@ export const getUserProgress = async (
   const { data, error } = await supabase
     .from('user_progress')
     .select('*')
-    .eq('user_id', userId)
-    .eq('video_id', videoId)
+    .eq("userId", userId)
+    .eq("videoId", videoId)
     .single();
   
   if (error && error.code !== 'PGRST116') throw error; // Ignora erro de não encontrado
@@ -93,7 +93,7 @@ export const updateUserProgress = async (
         progress_percentage: progressPercentage,
         completed,
         last_watched_at: now,
-        updated_at: now,
+        updatedAt: now,
       })
       .eq('id', existingProgress.id);
     
@@ -103,12 +103,12 @@ export const updateUserProgress = async (
     const { error } = await supabase
       .from('user_progress')
       .insert({
-        user_id: userId,
-        video_id: videoId,
+        userId: userId,
+        videoId: videoId,
         progress_percentage: progressPercentage,
         completed,
         last_watched_at: now,
-        created_at: now,
+        createdAt: now,
       });
     
     if (error) throw error;
@@ -141,8 +141,8 @@ export const subscribeToUserProgress = (
 export const getUserStats = async (userId: string): Promise<unknown> => {
   // Cast supabase to include the RPC function which is missing from generated types
   const { data, error } = await (supabase as unknown as { 
-    rpc: (fn: string, args: { user_id: string }) => Promise<{ data: unknown, error: PostgrestError | null }> 
-  }).rpc('get_user_course_stats', { user_id: userId });
+    rpc: (fn: string, args: { userId: string }) => Promise<{ data: unknown, error: PostgrestError | null }> 
+  }).rpc('get_user_course_stats', { userId: userId });
   
   if (error) throw error;
   return data;

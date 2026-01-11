@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
     const { count: totalProjects, error: projectsError } = await supabase
       .from('projects')
       .select('*', { count: 'exact', head: true })
-      .eq('user_id', user.id)
+      .eq("userId", user.id)
 
     if (projectsError) throw projectsError
 
@@ -58,14 +58,14 @@ export async function GET(request: NextRequest) {
     // Let's assume we want all active renders for the user's projects.
     // Since Supabase RLS usually handles "my projects", we can just query render_jobs if RLS is set up correctly to join projects.
     // However, render_jobs table definition: project_id UUID REFERENCES public.projects(id)
-    // If RLS on render_jobs checks project.user_id, we are good.
+    // If RLS on render_jobs checks project.userId, we are good.
     // Let's try to query render_jobs directly.
     
     // Fetch project IDs first to be safe/explicit if RLS isn't perfect on joins yet
     const { data: userProjects } = await supabase
         .from('projects')
         .select('id')
-        .eq('user_id', user.id)
+        .eq("userId", user.id)
     
     const projectIds = userProjects?.map(p => p.id) || []
     
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
     const { count: activeCount } = await supabase
         .from('render_jobs')
         .select('*, projects!inner(user_id)', { count: 'exact', head: true })
-        .eq('projects.user_id', user.id)
+        .eq('projects.userId', user.id)
         .in('status', ['queued', 'processing'] as const)
     
     activeRenders = activeCount || 0
@@ -89,9 +89,9 @@ export async function GET(request: NextRequest) {
     const { count: completedCount } = await supabase
         .from('render_jobs')
         .select('*, projects!inner(user_id)', { count: 'exact', head: true })
-        .eq('projects.user_id', user.id)
+        .eq('projects.userId', user.id)
         .eq('status', 'completed' as const)
-        .gte('completed_at', startOfDay.toISOString())
+        .gte("completedAt", startOfDay.toISOString())
         
     completedToday = completedCount || 0
 
@@ -99,18 +99,18 @@ export async function GET(request: NextRequest) {
     const { data: recentJobs } = await supabase
         .from('render_jobs')
         .select('started_at, completed_at, projects!inner(user_id)')
-        .eq('projects.user_id', user.id)
+        .eq('projects.userId', user.id)
         .eq('status', 'completed')
-        .not('completed_at', 'is', null)
-        .not('started_at', 'is', null)
-        .order('completed_at', { ascending: false })
+        .not("completedAt", 'is', null)
+        .not("startedAt", 'is', null)
+        .order("completedAt", { ascending: false })
         .limit(10)
     
     if (recentJobs && recentJobs.length > 0) {
         const totalDurationMs = recentJobs.reduce((acc, job) => {
-            if (!job.started_at || !job.completed_at) return acc;
-            const start = new Date(job.started_at).getTime();
-            const end = new Date(job.completed_at).getTime();
+            if (!job.startedAt || !job.completedAt) return acc;
+            const start = new Date(job.startedAt).getTime();
+            const end = new Date(job.completedAt).getTime();
             return acc + (end - start);
         }, 0)
         avgRenderTime = Math.round((totalDurationMs / recentJobs.length) / 1000 / 60) // in minutes
@@ -121,8 +121,8 @@ export async function GET(request: NextRequest) {
     const { count: viewsCount } = await supabase
         .from('analytics_events')
         .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-        .eq('event_type', 'project_view') // Assuming this event type
+        .eq("userId", user.id)
+        .eq("eventType", 'project_view') // Assuming this event type
     
     const totalViews = viewsCount || 0
 

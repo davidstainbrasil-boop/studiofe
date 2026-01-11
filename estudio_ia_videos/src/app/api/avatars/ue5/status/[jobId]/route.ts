@@ -36,15 +36,15 @@ export async function GET(
       ).toFixed(2)
     }
     
-    if (job.timings.encoding_start && job.timings.completed_at) {
+    if (job.timings.encoding_start && job.timings.completedAt) {
       timings.encoding_seconds = (
-        (job.timings.completed_at.getTime() - job.timings.encoding_start.getTime()) / 1000
+        (job.timings.completedAt.getTime() - job.timings.encoding_start.getTime()) / 1000
       ).toFixed(2)
     }
     
-    if (job.timings.completed_at) {
+    if (job.timings.completedAt) {
       timings.total_seconds = (
-        (job.timings.completed_at.getTime() - job.timings.queued_at.getTime()) / 1000
+        (job.timings.completedAt.getTime() - job.timings.queued_at.getTime()) / 1000
       ).toFixed(2)
     }
     

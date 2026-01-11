@@ -36,7 +36,7 @@ export async function POST(
 
     await reviewWorkflowService.submitReview({
       reviewId: params.reviewId,
-      user_id: user.id,
+      userId: user.id,
       decision: normalizedDecision,
       comments: feedback,
     });

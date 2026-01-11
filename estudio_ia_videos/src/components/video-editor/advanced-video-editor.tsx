@@ -211,7 +211,7 @@ export default function AdvancedVideoEditor({
     items.splice(result.destination.index, 0, reorderedItem)
 
     setSlides(items)
-    Analytics.track('slide_reordered', { project_id: projectId })
+    Analytics.track('slide_reordered', { projectId: projectId })
   }, [slides, projectId])
 
   // Adicionar slide
@@ -224,7 +224,7 @@ export default function AdvancedVideoEditor({
     }
     setSlides([...slides, newSlide])
     setSelectedSlide(newSlide.id)
-    Analytics.track('slide_added', { project_id: projectId })
+    Analytics.track('slide_added', { projectId: projectId })
   }, [slides, projectId])
 
   const removeSlide = useCallback((slideId: string) => {
@@ -712,7 +712,7 @@ export default function AdvancedVideoEditor({
                 videoUrl={previewUrl || "/videos/demo.mp4"}
                 onExport={(format, packageUrl) => {
                   Analytics.track('lms_export_completed', {
-                    project_id: projectId,
+                    projectId: projectId,
                     format: format,
                     slides_count: slides.length
                   })

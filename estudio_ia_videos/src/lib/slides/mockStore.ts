@@ -1,6 +1,6 @@
 export type Slide = {
   id: string
-  project_id: string
+  projectId: string
   order_index: number
   title: string
   content: string
@@ -9,8 +9,8 @@ export type Slide = {
   background_image: string | null
   avatar_config: Record<string, unknown>
   audio_config: Record<string, unknown>
-  created_at: string
-  updated_at: string
+  createdAt: string
+  updatedAt: string
 }
 
 export const mockSlides = new Map<string, Slide>()
@@ -25,7 +25,7 @@ export function addSlidesBulk(slides: Slide[]) {
 
 export function getSlidesByProject(projectId: string): Slide[] {
   return Array.from(mockSlides.values())
-    .filter(s => s.project_id === projectId)
+    .filter(s => s.projectId === projectId)
     .sort((a, b) => a.order_index - b.order_index)
 }
 

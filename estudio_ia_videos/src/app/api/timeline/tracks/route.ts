@@ -7,15 +7,15 @@ import { type Json } from '@lib/supabase/types'
 
 // Interfaces para tipagem de queries
 interface TrackOrderIndex {
-  order_index: number;
+  orderIndex: number;
 }
 
 interface TrackCreated {
   id: string;
   name: string;
   type: string;
-  project_id: string;
-  order_index: number;
+  projectId: string;
+  orderIndex: number;
   color?: string | null;
   height?: number;
   visible?: boolean;
@@ -26,15 +26,15 @@ interface TrackCreated {
 
 interface ExistingTrackWithProjectId {
   id: string;
-  project_id: string;
+  projectId: string;
 }
 
 // Schema de validação para criação de track
 const createTrackSchema = z.object({
-  project_id: z.string().uuid('ID do projeto inválido'),
+  projectId: z.string().uuid('ID do projeto inválido'),
   name: z.string().min(1, 'Nome é obrigatório').max(255, 'Nome muito longo'),
   type: z.enum(['video', 'audio', 'text', 'image', 'pptx', '3d']),
-  order_index: z.number().int().min(0).optional(),
+  orderIndex: z.number().int().min(0).optional(),
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Cor inválida').optional(),
   height: z.number().int().min(40).max(200).optional(),
   visible: z.boolean().optional(),
@@ -44,13 +44,13 @@ const createTrackSchema = z.object({
 })
 
 // Schema de validação para atualização de track
-const updateTrackSchema = createTrackSchema.omit({ project_id: true }).partial()
+const updateTrackSchema = createTrackSchema.omit({ projectId: true }).partial()
 
 // Schema de validação para reordenação de tracks
 const reorderTracksSchema = z.object({
   tracks: z.array(z.object({
     id: z.string().uuid(),
-    order_index: z.number().int().min(0)
+    orderIndex: z.number().int().min(0)
   }))
 })
 
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    const projectId = searchParams.get('project_id')
+    const projectId = searchParams.get("projectId")
 
     if (!projectId) {
       return NextResponse.json(
@@ -91,14 +91,14 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    let hasPermission = project.user_id === user.id || project.is_public
+    let hasPermission = project.userId === user.id || project.isPublic
 
     if (!hasPermission) {
       const { data: collaborator } = await supabase
         .from('project_collaborators')
-        .select('user_id')
-        .eq('project_id', projectId)
-        .eq('user_id', user.id)
+        .select("userId")
+        .eq("projectId", projectId)
+        .eq("userId", user.id)
         .single()
       
       if (collaborator) hasPermission = true
@@ -118,8 +118,8 @@ export async function GET(request: NextRequest) {
         *,
         timeline_elements:timeline_elements(*)
       `)
-      .eq('project_id', projectId)
-      .order('order_index', { ascending: true })
+      .eq("projectId", projectId)
+      .order("orderIndex", { ascending: true })
 
     if (error) {
       const err = error instanceof Error ? error : new Error(String(error)); logger.error('Erro ao buscar tracks', err, { component: 'API: timeline/tracks' })
@@ -159,8 +159,8 @@ export async function POST(request: NextRequest) {
     // Verificar permissões no projeto
     const { data: project } = await supabase
       .from('projects')
-      .select('user_id')
-      .eq('id', validatedData.project_id)
+      .select("userId")
+      .eq('id', validatedData.projectId)
       .single()
 
     if (!project) {
@@ -170,14 +170,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    let hasPermission = project.user_id === user.id
+    let hasPermission = project.userId === user.id
 
     if (!hasPermission) {
       const { data: collaborator } = await supabase
         .from('project_collaborators')
         .select('permissions')
-        .eq('project_id', validatedData.project_id)
-        .eq('user_id', user.id)
+        .eq("projectId", validatedData.projectId)
+        .eq("userId", user.id)
         .single()
       
       // Check if permissions array contains 'write' or 'edit'
@@ -197,17 +197,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Se order_index não foi fornecido, usar o próximo disponível
-    if (validatedData.order_index === undefined) {
+    if (validatedData.orderIndex === undefined) {
       const { data: lastTrackData } = await supabase
         .from('timeline_tracks')
-        .select('order_index')
-        .eq('project_id', validatedData.project_id)
-        .order('order_index', { ascending: false })
+        .select("orderIndex")
+        .eq("projectId", validatedData.projectId)
+        .order("orderIndex", { ascending: false })
         .limit(1)
         .single()
 
       const lastTrack = lastTrackData as unknown as TrackOrderIndex | null;
-      validatedData.order_index = (lastTrack?.order_index ?? -1) + 1
+      validatedData.orderIndex = (lastTrack?.orderIndex ?? -1) + 1
     }
 
     // Definir cor padrão baseada no tipo
@@ -225,10 +225,10 @@ export async function POST(request: NextRequest) {
 
     // Criar track
     const trackInsert = {
-      project_id: validatedData.project_id,
+      projectId: validatedData.projectId,
       name: validatedData.name,
       type: validatedData.type,
-      order_index: validatedData.order_index,
+      orderIndex: validatedData.orderIndex,
       color: validatedData.color,
       height: validatedData.height || 80,
       visible: validatedData.visible !== false,
@@ -256,8 +256,8 @@ export async function POST(request: NextRequest) {
     await supabase
       .from('project_history')
       .insert({
-        project_id: validatedData.project_id,
-        user_id: user.id,
+        projectId: validatedData.projectId,
+        userId: user.id,
         action: 'create',
         entity_type: 'track',
         entity_id: track.id,
@@ -318,7 +318,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Verificar se todas as tracks pertencem ao mesmo projeto
-    const projectIds = [...new Set(existingTracks.map(t => t.project_id))]
+    const projectIds = [...new Set(existingTracks.map(t => t.projectId))]
     if (projectIds.length !== 1) {
       return NextResponse.json(
         { error: 'Todas as tracks devem pertencer ao mesmo projeto' },
@@ -331,7 +331,7 @@ export async function PUT(request: NextRequest) {
     // Verificar permissões no projeto
     const { data: project } = await supabase
       .from('projects')
-      .select('user_id')
+      .select("userId")
       .eq('id', projectId)
       .single()
 
@@ -342,14 +342,14 @@ export async function PUT(request: NextRequest) {
       )
     }
 
-    let hasPermission = project.user_id === user.id
+    let hasPermission = project.userId === user.id
 
     if (!hasPermission) {
       const { data: collaborator } = await supabase
         .from('project_collaborators')
         .select('permissions')
-        .eq('project_id', projectId)
-        .eq('user_id', user.id)
+        .eq("projectId", projectId)
+        .eq("userId", user.id)
         .single()
       
       // Check if permissions array contains 'write' or 'edit'
@@ -372,7 +372,7 @@ export async function PUT(request: NextRequest) {
     const updatePromises = tracks.map(track =>
       supabase
         .from('timeline_tracks')
-        .update({ order_index: track.order_index })
+        .update({ orderIndex: track.orderIndex })
         .eq('id', track.id)
     )
 
@@ -382,8 +382,8 @@ export async function PUT(request: NextRequest) {
     await supabase
       .from('project_history')
       .insert({
-        project_id: projectId,
-        user_id: user.id,
+        projectId: projectId,
+        userId: user.id,
         action: 'update',
         entity_type: 'track',
         description: 'Tracks reordenadas',

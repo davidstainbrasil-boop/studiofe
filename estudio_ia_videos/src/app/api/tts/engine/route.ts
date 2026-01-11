@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { 
           error: 'Missing required parameters',
-          required: ['text', 'voice_id', 'project_id']
+          required: ['text', "voiceId", "projectId"]
         },
         { status: 400 }
       )
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
 
     // Extrair user_id do header de autenticação (se disponível)
     const supabase = getSupabaseForRequest(request)
-    let user_id: string | undefined
+    let userId: string | undefined
 
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -64,8 +64,8 @@ export async function POST(request: NextRequest) {
       textLength: text.length,
       engine: options.engine,
       voiceId: voice_id,
-      project_id: project_id,
-      user_id: user_id
+      projectId: project_id,
+      userId: user_id
     })
 
     // Gerar TTS
@@ -75,13 +75,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: {
-        audio_url: result.audio_url,
+        audioUrl: result.audioUrl,
         duration: result.duration,
         visemes: result.visemes,
         job_id: result.metadata.job_id,
         metadata: {
           engine: result.metadata.engine,
-          voice_id: result.metadata.voice_id,
+          voiceId: result.metadata.voiceId,
           generation_time: result.metadata.generation_time,
           cache_hit: result.metadata.cache_hit
         }
@@ -133,7 +133,7 @@ export async function GET(request: NextRequest) {
             id: e.engine_id,
             status: e.status,
             success_rate: e.success_rate,
-            avg_response_time: e.avg_response_time,
+            avg_responseTime: e.avg_response_time,
             last_check: e.last_health_check
           }))
         }
@@ -183,7 +183,7 @@ export async function DELETE(request: NextRequest) {
       .from('tts_jobs' as never) as ReturnType<typeof supabase.from>)
       .update({ 
         status: 'cancelled',
-        updated_at: new Date().toISOString()
+        updatedAt: new Date().toISOString()
       })
       .eq('job_id', jobId)
 

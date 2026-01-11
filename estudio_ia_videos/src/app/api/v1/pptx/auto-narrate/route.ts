@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
           data: {
             slidesData: toJsonValue(slidesData),
             autoNarration: true,
-            updated_at: new Date()
+            updatedAt: new Date()
           }
         })
       }
@@ -158,7 +158,7 @@ export async function POST(request: NextRequest) {
         where: { id: projectId },
         data: {
           autoNarration: true,
-          updated_at: new Date()
+          updatedAt: new Date()
         }
       })
     }
@@ -238,7 +238,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      project_id: project.id,
+      projectId: project.id,
       projectName: project.title,
       autoNarration: project.autoNarration,
       narratedSlides,

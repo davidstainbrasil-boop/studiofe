@@ -32,7 +32,7 @@ export interface VoiceProfile {
     distribution_allowed: boolean;
     attribution_required: boolean;
   };
-  created_at: string;
+  createdAt: string;
   last_updated: string;
   status: 'ready' | 'training' | 'failed';
 }
@@ -141,7 +141,7 @@ export class VoiceCloningSystem {
           distribution_allowed: true,
           attribution_required: false
         },
-        created_at: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
         last_updated: new Date().toISOString(),
         status: 'ready'
       } : undefined

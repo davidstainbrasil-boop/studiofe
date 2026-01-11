@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
         event: {
           id: event.id,
           type: event.type,
-          user_id: event.user_id,
+          userId: event.userId,
           timestamp: event.timestamp,
         },
       });
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
         events: trackedEvents.map(e => ({
           id: e.id,
           type: e.type,
-          user_id: e.user_id,
+          userId: e.userId,
         })),
       });
     }
@@ -223,7 +223,7 @@ export async function GET(request: NextRequest) {
       // User ID
       const userId = searchParams.get('userId');
       if (userId) {
-        filters.user_id = userId;
+        filters.userId = userId;
       }
 
       // Limit

@@ -57,11 +57,11 @@ export function CreateProjectDialog({ trigger, open, onOpenChange }: CreateProje
                 .insert({
                     name,
                     type,
-                    user_id: user.id,
+                    userId: user.id,
                     status: 'draft',
-                    thumbnail_url: '/placeholder-project.jpg',
+                    thumbnailUrl: '/placeholder-project.jpg',
                     render_settings: {},
-                    updated_at: new Date().toISOString()
+                    updatedAt: new Date().toISOString()
                 })
                 .select('id, type')
                 .single()

@@ -27,16 +27,16 @@ export async function GET(
     }
 
     // Verify ownership
-    const jobWithProject = job as typeof job & { project?: { user_id: string } }
+    const jobWithProject = job as typeof job & { project?: { userId: string } }
     const project = jobWithProject.project
-    let hasPermission = project?.user_id === user.id
+    let hasPermission = project?.userId === user.id
 
     if (!hasPermission) {
       const { data: collaborator } = await supabase
         .from('project_collaborators')
-        .select('user_id')
-        .eq('project_id', job.project_id)
-        .eq('user_id', user.id)
+        .select("userId")
+        .eq("projectId", job.projectId)
+        .eq("userId", user.id)
         .single()
       
       if (collaborator) hasPermission = true
@@ -47,7 +47,7 @@ export async function GET(
     }
 
     // Remove project data from response
-    const { project: _, ...job_data } = job
+    const { project: _, ...jobData } = job
 
     return NextResponse.json({ success: true, data: jobData })
 
@@ -75,7 +75,7 @@ export async function DELETE(
     // We need to find the job first to get project_id
     const { data: job, error: jobError } = await supabase
       .from('render_jobs')
-      .select('project_id')
+      .select("projectId")
       .eq('id', jobId)
       .single()
 
@@ -85,22 +85,22 @@ export async function DELETE(
 
     const { data: project, error: projectError } = await supabase
       .from('projects')
-      .select('user_id')
-      .eq('id', job.project_id)
+      .select("userId")
+      .eq('id', job.projectId)
       .single()
 
     if (projectError || !project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 })
     }
 
-    let hasPermission = project.user_id === user.id
+    let hasPermission = project.userId === user.id
 
     if (!hasPermission) {
       const { data: collaborator } = await supabase
         .from('project_collaborators')
         .select('permissions')
-        .eq('project_id', job.project_id)
-        .eq('user_id', user.id)
+        .eq("projectId", job.projectId)
+        .eq("userId", user.id)
         .single()
       
       const permissions = collaborator?.permissions as { can_edit?: boolean } | null

@@ -42,17 +42,17 @@ export const GET = withRateLimit(RATE_LIMITS.AUTH_API, 'user')(async function GE
     const { data: project } = await supabase
       .from('projects')
       .select('user_id, is_public')
-      .eq('id', upload.project_id)
+      .eq('id', upload.projectId)
       .single()
 
-    let hasPermission = project && (project.user_id === user.id || project.is_public)
+    let hasPermission = project && (project.userId === user.id || project.isPublic)
 
     if (!hasPermission && project) {
       const { data: collaborator } = await supabase
         .from('project_collaborators')
-        .select('user_id')
-        .eq('project_id', upload.project_id)
-        .eq('user_id', user.id)
+        .select("userId")
+        .eq("projectId", upload.projectId)
+        .eq("userId", user.id)
         .single()
       
       if (collaborator) hasPermission = true
@@ -105,17 +105,17 @@ export const DELETE = withRateLimit(RATE_LIMITS.AUTH_STRICT, 'user')(async funct
     const { data: project } = await supabase
       .from('projects')
       .select('user_id, is_public')
-      .eq('id', upload.project_id)
+      .eq('id', upload.projectId)
       .single()
 
-    let hasPermission = project && (project.user_id === user.id || project.is_public)
+    let hasPermission = project && (project.userId === user.id || project.isPublic)
 
     if (!hasPermission && project) {
       const { data: collaborator } = await supabase
         .from('project_collaborators')
         .select('permissions')
-        .eq('project_id', upload.project_id)
-        .eq('user_id', user.id)
+        .eq("projectId", upload.projectId)
+        .eq("userId", user.id)
         .single()
       
       if (collaborator && (collaborator.permissions as { can_edit?: boolean })?.can_edit) {
@@ -134,13 +134,13 @@ export const DELETE = withRateLimit(RATE_LIMITS.AUTH_STRICT, 'user')(async funct
       .eq('upload_id', uploadId)
 
     // Limpar preview assets (S3 ou cache local)
-    if (upload.preview_url && typeof upload.preview_url === 'string') {
+    if (upload.previewUrl && typeof upload.previewUrl === 'string') {
       try {
-        if (upload.preview_url.startsWith('/api/s3/serve/')) {
-          const key = decodeURIComponent(upload.preview_url.replace('/api/s3/serve/', ''))
+        if (upload.previewUrl.startsWith('/api/s3/serve/')) {
+          const key = decodeURIComponent(upload.previewUrl.replace('/api/s3/serve/', ''))
           await S3StorageService.deleteFile(key)
-        } else if (upload.preview_url.startsWith('/api/videos/cache/')) {
-          const filename = decodeURIComponent(upload.preview_url.replace('/api/videos/cache/', ''))
+        } else if (upload.previewUrl.startsWith('/api/videos/cache/')) {
+          const filename = decodeURIComponent(upload.previewUrl.replace('/api/videos/cache/', ''))
           videoCache.delete(filename)
         }
       } catch (err) {
@@ -149,9 +149,9 @@ export const DELETE = withRateLimit(RATE_LIMITS.AUTH_STRICT, 'user')(async funct
     }
 
     // Remover arquivo original do disco, se existir
-    if (upload.file_path && typeof upload.file_path === 'string') {
+    if (upload.filePath && typeof upload.filePath === 'string') {
       try {
-        await unlink(upload.file_path)
+        await unlink(upload.filePath)
       } catch (err) {
         // Ignorar erros de remoção do arquivo local
       }
@@ -164,7 +164,7 @@ export const DELETE = withRateLimit(RATE_LIMITS.AUTH_STRICT, 'user')(async funct
       .eq('id', uploadId)
 
     // Notificar sala do projeto (opcional)
-    const roomId = `project:${upload.project_id}:uploads`
+    const roomId = `project:${upload.projectId}:uploads`
     notificationManager.sendNotification({
       id: `upload_${uploadId}_deleted_${Date.now()}`,
       type: 'system_alert',
@@ -173,7 +173,7 @@ export const DELETE = withRateLimit(RATE_LIMITS.AUTH_STRICT, 'user')(async funct
       priority: 'low',
       timestamp: Date.now(),
       roomId,
-      data: { uploadId, project_id: upload.project_id }
+      data: { uploadId, projectId: upload.projectId }
     })
 
     return NextResponse.json({ success: true })

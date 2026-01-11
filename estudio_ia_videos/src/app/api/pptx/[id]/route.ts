@@ -8,7 +8,7 @@ import { logger } from '@lib/logger';
 // Tipo para upload com projeto relacionado
 type PptxUploadWithProject = {
   id: string;
-  project_id: string | null;
+  projectId: string | null;
   projects: { owner_id: string; collaborators: string[] | null } | null;
   [key: string]: unknown;
 }
@@ -17,13 +17,13 @@ type PptxUploadWithProject = {
 const updateSchema = z.object({
   status: z.enum(['uploaded', 'processing', 'completed', 'failed']).optional(),
   processing_progress: z.number().min(0).max(100).optional(),
-  error_message: z.string().optional(),
-  slides_data: z.array(z.object({
+  errorMessage: z.string().optional(),
+  slidesData: z.array(z.object({
     slide_number: z.number(),
     title: z.string(),
     content: z.string(),
     duration: z.number().positive(),
-    transition_type: z.string().optional()
+    transitionType: z.string().optional()
   })).optional()
 })
 
@@ -82,7 +82,7 @@ export async function GET(
     const project = upload.projects as Record<string, unknown>
     const hasPermission = project.owner_id === user.id || 
                          (project.collaborators as string[])?.includes(user.id) ||
-                         project.is_public
+                         project.isPublic
 
     if (!hasPermission) {
       return NextResponse.json(
@@ -94,7 +94,7 @@ export async function GET(
     // Atualizar último acesso
     await supabase
       .from('pptx_uploads')
-      .update({ updated_at: new Date().toISOString() })
+      .update({ updatedAt: new Date().toISOString() })
       .eq('id', uploadId)
 
     return NextResponse.json({ upload })
@@ -166,14 +166,14 @@ export async function PUT(
     // Preparar dados para atualização
     const updateData: Record<string, unknown> = {
       ...validatedData,
-      updated_at: new Date().toISOString()
+      updatedAt: new Date().toISOString()
     }
 
     // Se status mudou para completed, definir processed_at
     if (validatedData.status === 'completed' && upload.status !== 'completed') {
       // Se há dados de slides, contar slides
-      if (validatedData.slides_data) {
-        updateData.slide_count = validatedData.slides_data.length
+      if (validatedData.slidesData) {
+        updateData.slideCount = validatedData.slidesData.length
       }
     }
 
@@ -197,8 +197,8 @@ export async function PUT(
     await supabase
       .from('project_history')
       .insert({
-        project_id: upload.project_id,
-        user_id: user.id,
+        projectId: upload.projectId,
+        userId: user.id,
         action: 'update',
         entity_type: 'pptx_upload',
         entity_id: uploadId,
@@ -296,7 +296,7 @@ export async function DELETE(
     // Tentar excluir arquivo físico (se existir)
     // Note: file_path may not exist in schema
     const uploadAny = upload as Record<string, unknown>
-    const filePath = uploadAny.file_path as string | undefined
+    const filePath = uploadAny.filePath as string | undefined
     try {
       if (filePath && existsSync(filePath)) {
         await unlink(filePath)
@@ -310,8 +310,8 @@ export async function DELETE(
     await supabase
       .from('project_history')
       .insert({
-        project_id: upload.project_id,
-        user_id: user.id,
+        projectId: upload.projectId,
+        userId: user.id,
         action: 'delete',
         entity_type: 'pptx_upload',
         entity_id: uploadId,

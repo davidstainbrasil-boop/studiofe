@@ -27,7 +27,7 @@ export async function GET() {
     const data = await response.json()
 
     interface ElevenLabsVoice {
-      voice_id: string;
+      voiceId: string;
       name: string;
       category?: string;
       description?: string;
@@ -46,7 +46,7 @@ export async function GET() {
 
     // Format the response for our component
     const formattedVoices = data.voices?.map((voice: ElevenLabsVoice) => ({
-      id: voice.voice_id,
+      id: voice.voiceId,
       name: voice.name,
       category: voice.category || 'professional',
       description: voice.description || '',
@@ -55,7 +55,7 @@ export async function GET() {
       accent: voice.labels?.accent || 'unknown',
       language: voice.labels?.language || 'en',
       useCase: voice.labels?.['use case'] || 'general',
-      previewUrl: voice.preview_url,
+      previewUrl: voice.previewUrl,
       samples: 0
     })) || []
 

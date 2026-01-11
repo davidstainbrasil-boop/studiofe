@@ -55,7 +55,7 @@ interface MediaResult {
   author: {
     name: string
     username: string
-    profile_url: string
+    profileUrl: string
   }
   download_url: string
   tags: string[]
@@ -119,7 +119,7 @@ class MediaProviderFactory {
       author: {
         name: photo.user.name,
         username: photo.user.username,
-        profile_url: photo.user.links.html
+        profileUrl: photo.user.links.html
       },
       download_url: photo.links.download,
       tags: photo.tags?.map((tag: { title: string }) => tag.title) || [],
@@ -173,7 +173,7 @@ class MediaProviderFactory {
       author: {
         name: photo.photographer,
         username: photo.photographer,
-        profile_url: photo.photographer_url
+        profileUrl: photo.photographer_url
       },
       download_url: photo.src.original,
       tags: [],
@@ -229,7 +229,7 @@ class MediaProviderFactory {
       author: {
         name: image.user,
         username: image.user,
-        profile_url: `https://pixabay.com/users/${image.user}-${image.user_id}/`
+        profileUrl: `https://pixabay.com/users/${image.user}-${image.userId}/`
       },
       download_url: image.fullHDURL || image.largeImageURL,
       tags: image.tags.split(', '),
@@ -282,9 +282,9 @@ class MediaProviderFactory {
       width: image.assets.preview.width,
       height: image.assets.preview.height,
       author: {
-        name: image.contributor.display_name,
-        username: image.contributor.display_name,
-        profile_url: `https://www.shutterstock.com/g/${image.contributor.display_name}`
+        name: image.contributor.displayName,
+        username: image.contributor.displayName,
+        profileUrl: `https://www.shutterstock.com/g/${image.contributor.displayName}`
       },
       download_url: image.assets.huge_jpg?.url || image.assets.preview.url,
       tags: image.keywords,
@@ -330,7 +330,7 @@ export async function GET(request: NextRequest) {
     const { data: providerData, error: providerError } = await supabaseAdmin
       .from('user_external_api_configs')
       .select('*')
-      .eq('user_id', session.user.id)
+      .eq("userId", session.user.id)
       .eq('api_type', 'media')
       .eq('provider_id', params.provider_id)
       .eq('enabled', true)
@@ -349,11 +349,11 @@ export async function GET(request: NextRequest) {
     const { data: usage, error: usageError } = await supabaseAdmin
       .from('external_api_usage')
       .select('*')
-      .eq('user_id', session.user.id)
+      .eq("userId", session.user.id)
       .eq('api_type', 'media')
       .eq('provider_id', params.provider_id)
-      .gte('created_at', new Date(Date.now() - 60 * 60 * 1000).toISOString()) // Last hour
-      .order('created_at', { ascending: false })
+      .gte("createdAt", new Date(Date.now() - 60 * 60 * 1000).toISOString()) // Last hour
+      .order("createdAt", { ascending: false })
 
     if (usageError) {
       logger.warn('Failed to check media usage', { component: 'API: external/media/search' })
@@ -381,7 +381,7 @@ export async function GET(request: NextRequest) {
       await supabaseAdmin
         .from('external_api_usage')
         .insert({
-          user_id: session.user.id,
+          userId: session.user.id,
           api_type: 'media',
           provider_id: params.provider_id,
           requests_made: 1,
@@ -402,7 +402,7 @@ export async function GET(request: NextRequest) {
       await supabaseAdmin
         .from('analytics_events')
         .insert({
-          user_id: session.user.id,
+          userId: session.user.id,
           category: 'external_apis',
           action: 'media_searched',
           metadata: {
@@ -413,7 +413,7 @@ export async function GET(request: NextRequest) {
             cost: searchCost,
             timestamp: new Date().toISOString()
           } as Json,
-          created_at: new Date().toISOString()
+          createdAt: new Date().toISOString()
         })
     } catch (analyticsError) {
       logger.warn('Failed to log media search', { component: 'API: external/media/search' })

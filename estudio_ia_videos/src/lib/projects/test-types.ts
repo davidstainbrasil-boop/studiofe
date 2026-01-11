@@ -53,7 +53,7 @@ const supabase = createClient<MyDatabase>('', '')
 
 async function test() {
   const payload = {
-    user_id: '123',
+    userId: '123',
     name: 'test',
     description: null,
     status: 'draft',

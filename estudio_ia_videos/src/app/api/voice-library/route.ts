@@ -6,7 +6,7 @@ interface VoiceLibraryItem {
   name: string
   type: 'custom' | 'professional' | 'few-shot'
   voiceId: string
-  user_id: string
+  userId: string
   quality: number
   language: string
   gender: 'male' | 'female' | 'neutral'
@@ -15,8 +15,8 @@ interface VoiceLibraryItem {
   sampleUrl?: string
   sampleDuration: number
   metadata?: Record<string, any>
-  created_at: Date
-  updated_at: Date
+  createdAt: Date
+  updatedAt: Date
 }
 
 /**
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
     // Fetch voices from database
     const voices = await prisma.voiceModel.findMany({
       where,
-      orderBy: { created_at: 'desc' }
+      orderBy: { createdAt: 'desc' }
     })
 
     return NextResponse.json({
@@ -56,8 +56,8 @@ export async function GET(request: NextRequest) {
         sampleUrl: v.sampleUrl,
         sampleDuration: v.sampleDuration,
         metadata: v.metadata,
-        created_at: v.created_at,
-        updated_at: v.updated_at
+        createdAt: v.createdAt,
+        updatedAt: v.updatedAt
       })),
       total: voices.length
     })
@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
         accent: voiceModel.accent,
         sampleUrl: voiceModel.sampleUrl,
         sampleDuration: voiceModel.sampleDuration,
-        created_at: voiceModel.created_at
+        createdAt: voiceModel.createdAt
       },
       message: 'Voice model saved successfully'
     })
@@ -166,7 +166,7 @@ export async function PUT(request: NextRequest) {
     const updateData: any = {}
     if (name) updateData.name = name
     if (metadata) updateData.metadata = metadata
-    updateData.updated_at = new Date()
+    updateData.updatedAt = new Date()
 
     const voiceModel = await prisma.voiceModel.update({
       where: { id },

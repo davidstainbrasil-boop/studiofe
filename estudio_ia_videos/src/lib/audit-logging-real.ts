@@ -34,13 +34,13 @@ export class AuditLoggingService {
       const { error } = await this.supabase
         .from('analytics_events')
         .insert({
-          user_id: log.userId,
-          event_type: `audit.${log.action}`,
-          event_data: {
+          userId: log.userId,
+          eventType: `audit.${log.action}`,
+          eventData: {
             resource: log.resource,
             ...log.metadata
           },
-          created_at: new Date().toISOString()
+          createdAt: new Date().toISOString()
         });
 
       if (error) {
@@ -56,15 +56,15 @@ export class AuditLoggingService {
       let query = this.supabase
         .from('analytics_events')
         .select('*')
-        .ilike('event_type', 'audit.%')
-        .order('created_at', { ascending: false });
+        .ilike("eventType", 'audit.%')
+        .order("createdAt", { ascending: false });
 
       if (filters.userId) {
-        query = query.eq('user_id', filters.userId);
+        query = query.eq("userId", filters.userId);
       }
 
       if (filters.action) {
-        query = query.eq('event_type', `audit.${filters.action}`);
+        query = query.eq("eventType", `audit.${filters.action}`);
       }
 
       const { data, error } = await query.limit(100);
@@ -73,11 +73,11 @@ export class AuditLoggingService {
 
       return (data || []).map(row => ({
         id: row.id,
-        userId: row.user_id,
-        action: row.event_type.replace('audit.', ''),
-        resource: row.event_data?.resource || 'unknown',
-        timestamp: new Date(row.created_at),
-        metadata: row.event_data
+        userId: row.userId,
+        action: row.eventType.replace('audit.', ''),
+        resource: row.eventData?.resource || 'unknown',
+        timestamp: new Date(row.createdAt),
+        metadata: row.eventData
       }));
     } catch (error) {
       logger.error('Failed to query audit logs', error instanceof Error ? error : new Error(String(error)), { component: 'AuditLoggingReal' });

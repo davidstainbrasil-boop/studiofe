@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
     const { data: preferences, error } = await supabaseAdmin
       .from('notification_preferences')
       .select('*')
-      .eq('user_id', session.user.id)
+      .eq("userId", session.user.id)
       .single()
 
     if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
@@ -92,10 +92,10 @@ export async function GET(request: NextRequest) {
       const { data: newPreferences, error: createError } = await supabaseAdmin
         .from('notification_preferences')
         .insert({
-          user_id: session.user.id,
+          userId: session.user.id,
           ...defaultPreferences,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
         })
         .select()
         .single()
@@ -146,7 +146,7 @@ export async function PATCH(request: NextRequest) {
     const { data: existingPreferences, error: fetchError } = await supabaseAdmin
       .from('notification_preferences')
       .select('*')
-      .eq('user_id', session.user.id)
+      .eq("userId", session.user.id)
       .single()
 
     if (fetchError && fetchError.code !== 'PGRST116') {
@@ -160,11 +160,11 @@ export async function PATCH(request: NextRequest) {
       const { data: newPreferences, error: createError } = await supabaseAdmin
         .from('notification_preferences')
         .insert({
-          user_id: session.user.id,
+          userId: session.user.id,
           ...defaultPreferences,
           ...validatedData,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
         })
         .select()
         .single()
@@ -175,7 +175,7 @@ export async function PATCH(request: NextRequest) {
       // Update existing preferences
       const updateData = {
         ...validatedData,
-        updated_at: new Date().toISOString()
+        updatedAt: new Date().toISOString()
       }
 
       // Handle nested objects properly
@@ -203,7 +203,7 @@ export async function PATCH(request: NextRequest) {
       const { data: updated, error: updateError } = await supabaseAdmin
         .from('notification_preferences')
         .update(updateData)
-        .eq('user_id', session.user.id)
+        .eq("userId", session.user.id)
         .select()
         .single()
 
@@ -216,13 +216,13 @@ export async function PATCH(request: NextRequest) {
       await supabaseAdmin
         .from('analytics_events')
         .insert({
-          user_id: session.user.id,
-          event_type: 'notification_preferences_updated',
-          event_data: {
+          userId: session.user.id,
+          eventType: 'notification_preferences_updated',
+          eventData: {
             changes: Object.keys(validatedData),
             timestamp: new Date().toISOString()
           },
-          created_at: new Date().toISOString()
+          createdAt: new Date().toISOString()
         })
     } catch (analyticsError) {
       logger.warn('Failed to log preference change:', { component: 'API: notifications/preferences' })
@@ -274,10 +274,10 @@ export async function DELETE(request: NextRequest) {
     const { data: resetPreferences, error } = await supabaseAdmin
       .from('notification_preferences')
       .upsert({
-        user_id: session.user.id,
+        userId: session.user.id,
         ...defaultPreferences,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       })
       .select()
       .single()
@@ -289,12 +289,12 @@ export async function DELETE(request: NextRequest) {
       await supabaseAdmin
         .from('analytics_events')
         .insert({
-          user_id: session.user.id,
-          event_type: 'notification_preferences_reset',
-          event_data: {
+          userId: session.user.id,
+          eventType: 'notification_preferences_reset',
+          eventData: {
             timestamp: new Date().toISOString()
           },
-          created_at: new Date().toISOString()
+          createdAt: new Date().toISOString()
         })
     } catch (analyticsError) {
       logger.warn('Failed to log preference reset:', { component: 'API: notifications/preferences' })

@@ -126,14 +126,14 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
 
 export async function updateUserProfile(
   userId: string,
-  updates: Partial<Omit<UserProfile, 'id' | 'created_at' | 'updated_at'>>
+  updates: Partial<Omit<UserProfile, 'id' | "createdAt" | "updatedAt">>
 ) {
   const supabase = createBrowserClient()
   const { data, error } = await supabase
     .from('users')
     .update({
       ...updates,
-      updated_at: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     })
     .eq('id', userId)
     .select()
@@ -148,7 +148,7 @@ export async function updateUserProfile(
         .from('users')
         .update({
           ...rest,
-          updated_at: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         })
         .eq('id', userId)
         .select()
@@ -176,8 +176,8 @@ export async function ensureUserProfile(userId: string, email: string) {
       id: userId,
       email,
       ...DEFAULT_PROFILE_VALUES,
-      created_at: timestamp,
-      updated_at: timestamp,
+      createdAt: timestamp,
+      updatedAt: timestamp,
     })
     .select()
     .single()
@@ -190,8 +190,8 @@ export async function ensureUserProfile(userId: string, email: string) {
         .insert({
           id: userId,
           email,
-          created_at: timestamp,
-          updated_at: timestamp,
+          createdAt: timestamp,
+          updatedAt: timestamp,
         })
         .select()
         .single()

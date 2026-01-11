@@ -92,7 +92,7 @@ async function getHandler(req: NextRequest) {
         avgSessionDuration: Math.round(avgSessionDuration),
         avgEventsPerSession: Math.round(avgEventsPerSession),
         totalSessions: sessionRows.length,
-        uniqueUsers: new Set(sessionRows.map((s: any) => s.user_id)).size,
+        uniqueUsers: new Set(sessionRows.map((s: any) => s.userId)).size,
         pageViews: pageViews,
         interactions: interactions
       };
@@ -103,22 +103,22 @@ async function getHandler(req: NextRequest) {
       // Navigation Flow
       const navigationFlow = await prisma.$queryRaw`
         SELECT 
-          prev.event_data->>'label' as from_page,
-          curr.event_data->>'label' as to_page,
+          prev.eventData->>'label' as from_page,
+          curr.eventData->>'label' as to_page,
           COUNT(*) as transitions
         FROM analytics_events prev
         JOIN analytics_events curr ON (
-          curr.user_id = prev.user_id 
-          AND curr.created_at > prev.created_at
-          AND curr.created_at <= (prev.created_at + interval '30 minutes')
+          curr.userId = prev.userId 
+          AND curr.createdAt > prev.createdAt
+          AND curr.createdAt <= (prev.createdAt + interval '30 minutes')
         )
-        WHERE prev.created_at >= ${startDate}
-        AND prev.event_type = 'page_view'
-        AND curr.event_type = 'page_view'
-        AND prev.event_data->>'label' IS NOT NULL
-        AND curr.event_data->>'label' IS NOT NULL
-        ${targetUserId ? (Prisma as any).sql`AND prev.user_id = ${targetUserId}::uuid` : (Prisma as any).sql``}
-        GROUP BY prev.event_data->>'label', curr.event_data->>'label'
+        WHERE prev.createdAt >= ${startDate}
+        AND prev.eventType = 'page_view'
+        AND curr.eventType = 'page_view'
+        AND prev.eventData->>'label' IS NOT NULL
+        AND curr.eventData->>'label' IS NOT NULL
+        ${targetUserId ? (Prisma as any).sql`AND prev.userId = ${targetUserId}::uuid` : (Prisma as any).sql``}
+        GROUP BY prev.eventData->>'label', curr.eventData->>'label'
         ORDER BY transitions DESC
         LIMIT 20
       ` as any[];
@@ -187,13 +187,13 @@ async function getHandler(req: NextRequest) {
       const funnelData = await Promise.all(
         funnelSteps.map(async (step) => {
           const where: any = {
-            created_at: { gte: startDate },
-            event_type: step.type,
-            ...(targetUserId && { user_id: targetUserId })
+            createdAt: { gte: startDate },
+            eventType: step.type,
+            ...(targetUserId && { userId: targetUserId })
           };
           
           if (step.action) {
-            where.event_data = {
+            where.eventData = {
               path: ['action'],
               equals: step.action
             };
@@ -203,10 +203,10 @@ async function getHandler(req: NextRequest) {
           
           // For unique users, we need to use groupBy or distinct
           const uniqueUsers = await prisma.analytics_events.groupBy({
-            by: ['user_id'],
+            by: ["userId"],
             where: {
               ...where,
-              user_id: { not: null }
+              userId: { not: null }
             }
           });
 
@@ -328,7 +328,7 @@ async function getHandler(req: NextRequest) {
     return NextResponse.json({
       period,
       metric,
-      user_id: targetUserId,
+      userId: targetUserId,
       generatedAt: new Date().toISOString(),
       ...behaviorData
     });
@@ -369,9 +369,9 @@ async function postHandler(req: NextRequest) {
     await prisma.analytics_events.create({
       data: {
         id: crypto.randomUUID(),
-        user_id: userId,
-        event_type: 'user_behavior', // or use eventType from body if it maps to valid types
-        event_data: {
+        userId: userId,
+        eventType: 'user_behavior', // or use eventType from body if it maps to valid types
+        eventData: {
           action: eventType, // Store original eventType as action
           label: page,
           value,

@@ -25,8 +25,8 @@ const NotificationCreateSchema = z.object({
   message: z.string().min(1).max(1000),
   category: z.string().min(1).max(50),
   priority: z.enum(['low', 'medium', 'high', 'urgent']).default('medium'),
-  expires_at: z.string().datetime().optional(),
-  project_id: z.string().uuid().optional(),
+  expiresAt: z.string().datetime().optional(),
+  projectId: z.string().uuid().optional(),
   metadata: z.record(z.unknown()).optional(),
   actions: z.array(z.object({
     id: z.string(),
@@ -44,7 +44,7 @@ const NotificationQuerySchema = z.object({
   priority: z.string().optional(),
   status: z.enum(['unread', 'read', 'archived', 'all']).default('all'),
   timeRange: z.enum(['1h', '24h', '7d', '30d']).optional(),
-  project_id: z.string().uuid().optional(),
+  projectId: z.string().uuid().optional(),
   limit: z.string().transform(val => parseInt(val)).default('50'),
   offset: z.string().transform(val => parseInt(val)).default('0')
 })
@@ -64,22 +64,22 @@ function getTimeRangeFilter(timeRange?: string) {
 }
 
 // Get notification statistics
-async function getNotificationStats(user_id: string, filters: z.infer<typeof NotificationQuerySchema>) {
+async function getNotificationStats(userId: string, filters: z.infer<typeof NotificationQuerySchema>) {
   try {
     let query = notificationsTable()
       .select('id, type, priority, status')
-      .eq('user_id', userId)
+      .eq("userId", userId)
 
     // Apply filters
     if (filters.timeRange) {
       const timeFilter = getTimeRangeFilter(filters.timeRange)
       if (timeFilter) {
-        query = query.gte('created_at', timeFilter.toISOString())
+        query = query.gte("createdAt", timeFilter.toISOString())
       }
     }
 
-    if (filters.project_id) {
-      query = query.eq('project_id', filters.project_id)
+    if (filters.projectId) {
+      query = query.eq("projectId", filters.projectId)
     }
 
     const { data: notificationsData, error } = await query
@@ -106,7 +106,7 @@ async function getNotificationStats(user_id: string, filters: z.infer<typeof Not
     // Recent activity (last 24 hours)
     const recentFilter = new Date(Date.now() - 24 * 60 * 60 * 1000)
     const recentActivity = notifications.filter((n) => 
-      new Date(n.created_at) > recentFilter
+      new Date(n.createdAt) > recentFilter
     ).length
 
     return {
@@ -148,7 +148,7 @@ export async function GET(request: NextRequest) {
       priority: searchParams.get('priority'),
       status: searchParams.get('status') || 'all',
       timeRange: searchParams.get('timeRange'),
-      project_id: searchParams.get('projectId'),
+      projectId: searchParams.get('projectId'),
       limit: searchParams.get('limit') || '50',
       offset: searchParams.get('offset') || '0'
     }
@@ -158,7 +158,7 @@ export async function GET(request: NextRequest) {
     // Build query
     let query = notificationsTable()
       .select('*')
-      .eq('user_id', session.user.id)
+      .eq("userId", session.user.id)
 
     // Apply filters
     if (validatedParams.type) {
@@ -182,17 +182,17 @@ export async function GET(request: NextRequest) {
     if (validatedParams.timeRange) {
       const timeFilter = getTimeRangeFilter(validatedParams.timeRange)
       if (timeFilter) {
-        query = query.gte('created_at', timeFilter.toISOString())
+        query = query.gte("createdAt", timeFilter.toISOString())
       }
     }
 
-    if (validatedParams.project_id) {
-      query = query.eq('project_id', validatedParams.project_id)
+    if (validatedParams.projectId) {
+      query = query.eq("projectId", validatedParams.projectId)
     }
 
     // Apply pagination and ordering
     query = query
-      .order('created_at', { ascending: false })
+      .order("createdAt", { ascending: false })
       .range(validatedParams.offset, validatedParams.offset + validatedParams.limit - 1)
 
     const { data: notifications, error } = await query
@@ -258,10 +258,10 @@ export async function POST(request: NextRequest) {
     const { data: notification, error } = await notificationsTable()
       .insert({
         ...validatedData,
-        user_id: session.user.id,
+        userId: session.user.id,
         status: 'unread',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       })
       .select()
       .single()

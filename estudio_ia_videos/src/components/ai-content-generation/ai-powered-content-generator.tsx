@@ -55,7 +55,7 @@ interface GenerationRequest {
     url?: string;
     metadata?: Record<string, unknown>;
   }
-  created_at: string
+  createdAt: string
 }
 
 interface AIModel {
@@ -178,7 +178,7 @@ const AIPoweredContentGenerator = () => {
       duration: 12,
       status: 'completed',
       progress: 100,
-      created_at: '2025-09-26T10:30:00Z'
+      createdAt: '2025-09-26T10:30:00Z'
     },
     {
       id: 'gen-002',
@@ -189,7 +189,7 @@ const AIPoweredContentGenerator = () => {
       duration: 8,
       status: 'completed',
       progress: 100,
-      created_at: '2025-09-26T09:15:00Z'
+      createdAt: '2025-09-26T09:15:00Z'
     },
     {
       id: 'gen-003',
@@ -200,7 +200,7 @@ const AIPoweredContentGenerator = () => {
       duration: 5,
       status: 'generating',
       progress: 67,
-      created_at: '2025-09-26T11:45:00Z'
+      createdAt: '2025-09-26T11:45:00Z'
     }
   ])
 
@@ -222,7 +222,7 @@ const AIPoweredContentGenerator = () => {
       duration,
       status: 'generating',
       progress: 0,
-      created_at: new Date().toISOString()
+      createdAt: new Date().toISOString()
     }
 
     setCurrentRequest(newRequest)

@@ -45,9 +45,9 @@ async function getHandler(req: NextRequest) {
     }
 
     const whereClause: any = {
-      created_at: { gte: startTime },
+      createdAt: { gte: startTime },
       ...(organizationId && { 
-        event_data: {
+        eventData: {
           path: ['organizationId'],
           equals: organizationId
         }
@@ -66,10 +66,10 @@ async function getHandler(req: NextRequest) {
     ] = await Promise.all([
       // Usuários ativos únicos na janela de tempo
       prisma.analytics_events.groupBy({
-        by: ['user_id'],
+        by: ["userId"],
         where: {
           ...whereClause,
-          user_id: { not: null }
+          userId: { not: null }
         }
       }),
 
@@ -82,7 +82,7 @@ async function getHandler(req: NextRequest) {
       prisma.analytics_events.count({
         where: {
           ...whereClause,
-          event_data: {
+          eventData: {
             path: ['status'],
             equals: 'error'
           }
@@ -92,14 +92,14 @@ async function getHandler(req: NextRequest) {
       // Eventos mais recentes (últimos 20)
       prisma.analytics_events.findMany({
         where: whereClause,
-        orderBy: { created_at: 'desc' },
+        orderBy: { createdAt: 'desc' },
         take: 20,
         select: {
           id: true,
-          event_type: true,
-          event_data: true,
-          created_at: true,
-          user_id: true
+          eventType: true,
+          eventData: true,
+          createdAt: true,
+          userId: true
         }
       }),
 
@@ -119,7 +119,7 @@ async function getHandler(req: NextRequest) {
 
       // Top categorias de eventos (usando eventType como categoria)
       prisma.analytics_events.groupBy({
-        by: ['event_type'],
+        by: ["eventType"],
         where: whereClause,
         _count: { id: true },
         orderBy: { _count: { id: 'desc' } },
@@ -152,7 +152,7 @@ async function getHandler(req: NextRequest) {
         const errorCount = await prisma.analytics_events.count({
           where: {
             ...whereClause,
-            event_data: {
+            eventData: {
               path: ['status'],
               equals: 'error'
             }
@@ -185,12 +185,12 @@ async function getHandler(req: NextRequest) {
     const previousStartTime = new Date(startTime.getTime() - (now.getTime() - startTime.getTime()));
     
     const previousWhereClause: any = {
-      created_at: { 
+      createdAt: { 
         gte: previousStartTime,
         lt: startTime
       },
       ...(organizationId && { 
-        event_data: {
+        eventData: {
           path: ['organizationId'],
           equals: organizationId
         }
@@ -202,10 +202,10 @@ async function getHandler(req: NextRequest) {
     });
 
     const previousPeriodUsers = await prisma.analytics_events.groupBy({
-      by: ['user_id'],
+      by: ["userId"],
       where: {
         ...previousWhereClause,
-        user_id: { not: null }
+        userId: { not: null }
       }
     });
 
@@ -274,7 +274,7 @@ async function getHandler(req: NextRequest) {
       },
       timeline,
       topCategories: topCategories.map((item: any) => ({
-        category: item.event_type,
+        category: item.eventType,
         count: item._count.id,
         percentage: totalEvents > 0 ? ((item._count.id / totalEvents) * 100).toFixed(1) : '0'
       })),
@@ -286,17 +286,17 @@ async function getHandler(req: NextRequest) {
         throughput: systemHealth.throughput
       },
       recentEvents: recentEvents.map((event: any) => {
-        const data = (event.event_data as Record<string, unknown>) || {};
+        const data = (event.eventData as Record<string, unknown>) || {};
         return {
           id: event.id,
-          category: event.event_type,
+          category: event.eventType,
           action: data.action || 'unknown',
           label: data.label || '',
           status: data.status || 'success',
           duration: data.duration || 0,
-          created_at: event.created_at,
-          user_id: event.user_id,
-          timeAgo: Math.round((now.getTime() - new Date(event.created_at).getTime()) / 1000) // segundos atrás
+          createdAt: event.createdAt,
+          userId: event.userId,
+          timeAgo: Math.round((now.getTime() - new Date(event.createdAt).getTime()) / 1000) // segundos atrás
         };
       }),
       anomalies,
@@ -347,9 +347,9 @@ async function postHandler(req: NextRequest) {
     // Processar eventos em lote
     const processedEvents = (events as unknown as Array<Record<string, unknown>>).map((event: any) => ({
       id: crypto.randomUUID(),
-      user_id: (event.user_id as string) || userId,
-      event_type: (event.category as string) || 'realtime',
-      event_data: {
+      userId: (event.userId as string) || userId,
+      eventType: (event.category as string) || 'realtime',
+      eventData: {
         organizationId,
         action: (event.action as string) || 'event',
         label: event.label as string | null | undefined,
@@ -358,7 +358,7 @@ async function postHandler(req: NextRequest) {
         value: event.value as number | null | undefined,
         status: (event.status as string) || 'success',
         errorCode: event.errorCode as string | null | undefined,
-        error_message: event.error_message as string | null | undefined,
+        errorMessage: event.errorMessage as string | null | undefined,
         metadata: {
           source,
           originalTimestamp: timestamp,

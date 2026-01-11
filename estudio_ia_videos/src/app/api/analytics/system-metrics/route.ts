@@ -63,10 +63,10 @@ async function getSystemResourceUsage() {
 async function getActiveUsersCount(timeRange: Date) {
   try {
     const activeUsers = await prisma.analytics_events.groupBy({
-      by: ['user_id'],
+      by: ["userId"],
       where: {
-        created_at: { gte: timeRange },
-        user_id: { not: null }
+        createdAt: { gte: timeRange },
+        userId: { not: null }
       }
     })
     return activeUsers.length
@@ -102,11 +102,11 @@ async function getRenderQueueStats() {
       prisma.render_jobs.findMany({
         where: {
           status: 'completed',
-          created_at: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+          createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
         },
         select: {
-          created_at: true,
-          completed_at: true
+          createdAt: true,
+          completedAt: true
         }
       })
     ])
@@ -115,7 +115,7 @@ async function getRenderQueueStats() {
     const renderTimes = completedJobs
       .filter((job: any) => job.completedAt)
       .map((job: any) => {
-        const start = new Date(job.created_at).getTime()
+        const start = new Date(job.createdAt).getTime()
         const end = new Date(job.completedAt!).getTime()
         return (end - start) / 1000 // Convert to seconds
       })
@@ -127,14 +127,14 @@ async function getRenderQueueStats() {
     return {
       active_renders: activeRenders,
       queue_length: queueLength,
-      avg_render_time: Math.round(avgRenderTime)
+      avgRenderTime: Math.round(avgRenderTime)
     }
   } catch (error) {
     logger.error('Error getting render queue stats', error instanceof Error ? error : new Error(String(error)), { component: 'API: analytics/system-metrics' })
     return {
       active_renders: 0,
       queue_length: 0,
-      avg_render_time: 0
+      avgRenderTime: 0
     }
   }
 }
@@ -143,16 +143,16 @@ async function getRenderQueueStats() {
 async function getErrorRate(timeRange: Date) {
   try {
     const totalEvents = await prisma.analytics_events.count({
-      where: { created_at: { gte: timeRange } }
+      where: { createdAt: { gte: timeRange } }
     })
 
     const errorEvents = await prisma.analytics_events.count({
       where: {
-        created_at: { gte: timeRange },
+        createdAt: { gte: timeRange },
         OR: [
-          { event_type: { contains: 'error' } },
+          { eventType: { contains: 'error' } },
           {
-             event_data: {
+             eventData: {
                path: ['status'],
                equals: 'error'
              }

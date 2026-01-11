@@ -6,15 +6,15 @@ import { authOptions } from '@lib/auth/auth-options'
 import { logger } from '@lib/logger'
 import { supabaseAdmin } from '@lib/supabase/server'
 
-async function isAdmin(user_id: string | undefined): Promise<boolean> {
-  if (!userId) {
+async function isAdmin(userId: string | undefined): Promise<boolean> {
+  if (!user_id) {
     return false
   }
 
   const { data } = await supabaseAdmin
     .from('users')
     .select('role')
-    .eq('id', userId)
+    .eq('id', user_id)
     .single()
 
   return data?.role === 'admin'
@@ -43,7 +43,7 @@ export async function GET(_request: NextRequest) {
     ] = await Promise.all([
       supabaseAdmin.from('users').select('*', { count: 'exact', head: true }).then(r => r.count || 0),
       supabaseAdmin.from('projects').select('*', { count: 'exact', head: true }).then(r => r.count || 0),
-      supabaseAdmin.from('projects').select('*', { count: 'exact', head: true }).gte('updated_at', last24h.toISOString()).then(r => r.count || 0),
+      supabaseAdmin.from('projects').select('*', { count: 'exact', head: true }).gte("updatedAt", last24h.toISOString()).then(r => r.count || 0),
       getRenderJobSummary(last24h),
     ])
 
@@ -80,8 +80,8 @@ async function getRenderJobSummary(since: Date) {
   const [total, processing, failed, completed] = await Promise.all([
     supabaseAdmin.from('render_jobs').select('*', { count: 'exact', head: true }).then(r => r.count || 0),
     supabaseAdmin.from('render_jobs').select('*', { count: 'exact', head: true }).in('status', ['pending', 'processing', 'queued']).then(r => r.count || 0),
-    supabaseAdmin.from('render_jobs').select('*', { count: 'exact', head: true }).eq('status', 'failed').gte('updated_at', since.toISOString()).then(r => r.count || 0),
-    supabaseAdmin.from('render_jobs').select('*', { count: 'exact', head: true }).eq('status', 'completed').gte('updated_at', since.toISOString()).then(r => r.count || 0),
+    supabaseAdmin.from('render_jobs').select('*', { count: 'exact', head: true }).eq('status', 'failed').gte("updatedAt", since.toISOString()).then(r => r.count || 0),
+    supabaseAdmin.from('render_jobs').select('*', { count: 'exact', head: true }).eq('status', 'completed').gte("updatedAt", since.toISOString()).then(r => r.count || 0),
   ])
 
   return {

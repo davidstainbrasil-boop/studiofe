@@ -162,7 +162,7 @@ export default function ProfessionalVoiceStudio({
       availableStyles = voice?.styleList || ['neutral']
     } else if (selectedProvider === 'regional') {
       const voice = regionalVoices.find(v => v.id === voiceId)
-      displayName = voice?.display_name || voiceId
+      displayName = voice?.displayName || voiceId
     }
     
     updateVoiceConfig({
@@ -267,7 +267,7 @@ export default function ProfessionalVoiceStudio({
       case 'azure':
         return azureVoices.map(v => ({ id: v.name, name: v.displayName, extra: v.voiceType }))
       case 'regional':
-        return regionalVoices.map(v => ({ id: v.id, name: v.display_name, extra: v.region.name }))
+        return regionalVoices.map(v => ({ id: v.id, name: v.displayName, extra: v.region.name }))
       default:
         return []
     }

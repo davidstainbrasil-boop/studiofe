@@ -15,10 +15,10 @@ const updateAvatarSchema = z.object({
     type: z.enum(['idle', 'talking', 'gesture', 'emotion', 'custom']),
     duration: z.number().positive(),
     loop: z.boolean().default(false),
-    file_url: z.string().url().optional()
+    fileUrl: z.string().url().optional()
   })).optional(),
-  voice_settings: z.object({
-    voice_id: z.string().optional(),
+  voiceSettings: z.object({
+    voiceId: z.string().optional(),
     language: z.string().optional(),
     speed: z.number().min(0.5).max(2.0).optional(),
     pitch: z.number().min(-20).max(20).optional(),
@@ -70,7 +70,7 @@ export async function GET(
 
     // Type the avatar data with joined project
     type AvatarWithProject = typeof avatarData & {
-      projects: { id: string; name: string; owner_id: string; collaborators: string[] | null; is_public: boolean } | null;
+      projects: { id: string; name: string; owner_id: string; collaborators: string[] | null; isPublic: boolean } | null;
     };
     const avatar = avatarData as AvatarWithProject;
 
@@ -78,7 +78,7 @@ export async function GET(
     const project = avatar.projects
     const hasPermission = project?.owner_id === user.id || 
                          project?.collaborators?.includes(user.id) ||
-                         project?.is_public
+                         project?.isPublic
 
     if (!hasPermission) {
       return NextResponse.json(
@@ -90,7 +90,7 @@ export async function GET(
     // Atualizar último acesso
     await supabase
       .from('avatars_3d')
-      .update({ updated_at: new Date().toISOString() })
+      .update({ updatedAt: new Date().toISOString() })
       .eq('id', avatarId)
 
     return NextResponse.json({ avatar })
@@ -169,7 +169,7 @@ export async function PUT(
       const { data: existingAvatarConflict } = await supabase
         .from('avatars_3d')
         .select('id')
-        .eq('project_id', avatar.project_id ?? '')
+        .eq("projectId", avatar.projectId ?? '')
         .eq('name', validatedData.name)
         .neq('id', avatarId)
         .single()
@@ -195,12 +195,12 @@ export async function PUT(
       model_url?: string;
       thumbnail_url?: string;
       metadata?: Record<string, unknown>;
-      updated_at: string;
+      updatedAt: string;
     }
 
     const updateData: AvatarUpdateData = {
       ...validatedData,
-      updated_at: new Date().toISOString()
+      updatedAt: new Date().toISOString()
     }
 
     // Se mudando URL do Ready Player Me, buscar novos dados
@@ -213,8 +213,8 @@ export async function PUT(
       }
 
       const avatarData = await fetchReadyPlayerMeData(validatedData.ready_player_me_url)
-      updateData.model_url = avatarData.model_url
-      updateData.thumbnail_url = avatarData.thumbnail_url
+      updateData.modelUrl = avatarData.modelUrl
+      updateData.thumbnailUrl = avatarData.thumbnailUrl
       updateData.metadata = avatarData.metadata
     }
 
@@ -226,10 +226,10 @@ export async function PUT(
       }
     }
 
-    if (validatedData.voice_settings && avatar.voice_settings) {
-      updateData.voice_settings = {
-        ...(avatar.voice_settings as Record<string, unknown>),
-        ...validatedData.voice_settings
+    if (validatedData.voiceSettings && avatar.voiceSettings) {
+      updateData.voiceSettings = {
+        ...(avatar.voiceSettings as Record<string, unknown>),
+        ...validatedData.voiceSettings
       }
     }
 
@@ -254,7 +254,7 @@ export async function PUT(
     await supabase
       .from('projects')
       .select('id')
-      .eq('id', avatar.project_id ?? '')
+      .eq('id', avatar.projectId ?? '')
       .single() // Just validate project exists, history logging can be done via trigger
 
     return NextResponse.json({ avatar: updatedAvatar })
@@ -337,7 +337,7 @@ export async function DELETE(
     const { count: usedCount } = await supabase
       .from('render_jobs')
       .select('id', { count: 'exact', head: true })
-      .eq('project_id', avatarDel.project_id ?? '')
+      .eq("projectId", avatarDel.projectId ?? '')
 
     // Skip timeline check for now since table not typed
     // In production, this would check timeline_elements
@@ -361,7 +361,7 @@ export async function DELETE(
     logger.info(`Avatar ${avatarDel.name} excluído`, { 
       component: 'API: avatars/[id]', 
       avatarId, 
-      project_id: avatarDel.project_id 
+      projectId: avatarDel.projectId 
     })
 
     return NextResponse.json({ 
@@ -395,11 +395,11 @@ async function fetchReadyPlayerMeData(url: string) {
   const avatarId = url.split('/').pop()?.split('.')[0] || 'default'
   
   return {
-    model_url: `https://models.readyplayer.me/${avatarId}.glb`,
-    thumbnail_url: `https://models.readyplayer.me/${avatarId}.png`,
+    modelUrl: `https://models.readyplayer.me/${avatarId}.glb`,
+    thumbnailUrl: `https://models.readyplayer.me/${avatarId}.png`,
     metadata: {
       id: avatarId,
-      created_at: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
       body_type: 'fullbody',
       outfit: 'casual',
       hair_color: '#8B4513',

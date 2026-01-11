@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status')
     const type = searchParams.get('type')
     const search = searchParams.get('search')
-    const userId = searchParams.get('user_id') // For dev/testing
+    const userId = searchParams.get("userId") // For dev/testing
 
     // Build where clause
     interface WhereClause {
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
     const whereClause: WhereClause = {}
     
     if (userId) {
-      whereClause.user_id = userId
+      whereClause.userId = userId
     }
     
     if (status) {
@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
     const [projects, count] = await Promise.all([
       prisma.projects.findMany({
         where: whereClause,
-        orderBy: { updated_at: 'desc' },
+        orderBy: { updatedAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
       }),
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     
     // Get user_id from body or header for local dev
-    const userId = body.user_id || request.headers.get('x-user-id') || 'demo-user'
+    const userId = body.userId || request.headers.get('x-user-id') || 'demo-user'
     
     // Validação dos dados
     const validationResult = ProjectSchema.safeParse(body)
@@ -130,9 +130,9 @@ export async function POST(request: NextRequest) {
         description: validatedData.description || '',
         type: validatedData.type,
         status: 'draft',
-        user_id: userId,
+        userId: userId,
         metadata: (validatedData.metadata || {}) as object,
-        is_public: false,
+        isPublic: false,
       },
       select: {
         id: true,

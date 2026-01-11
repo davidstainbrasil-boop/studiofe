@@ -200,7 +200,7 @@ export type TTSInput = z.infer<typeof ttsSchema>
 
 /** Configuração de render */
 export const renderConfigSchema = z.object({
-  project_id: uuidSchema,
+  projectId: uuidSchema,
   quality: z.enum(['draft', 'preview', 'production']).default('preview'),
   format: z.enum(['mp4', 'webm', 'gif']).default('mp4'),
   resolution: z.enum(['720p', '1080p', '4k']).default('1080p'),

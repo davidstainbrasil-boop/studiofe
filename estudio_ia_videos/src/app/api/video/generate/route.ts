@@ -42,7 +42,7 @@ const videoJobs = new Map<string, {
   progress: number;
   videoUrl?: string;
   error?: string;
-  created_at: number;
+  createdAt: number;
 }>();
 
 export async function POST(request: NextRequest) {
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
       status: 'processing',
       step: 'Iniciando...',
       progress: 0,
-      created_at: Date.now(),
+      createdAt: Date.now(),
     });
 
     // Processar em background
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
 
 async function processVideoGeneration(
   jobId: string,
-  project_id: string,
+  projectId: string,
   inputSlides: z.infer<typeof slideInputSchema>[],
   voice: string,
   generateAudio: boolean,

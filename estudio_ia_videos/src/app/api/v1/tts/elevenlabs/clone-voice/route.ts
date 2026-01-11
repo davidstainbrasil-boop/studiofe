@@ -17,11 +17,11 @@ export async function POST(request: NextRequest) {
 
     // Mock response - voice cloning ready for implementation
     return NextResponse.json({
-      voice_id: `cloned-${Date.now()}`,
+      voiceId: `cloned-${Date.now()}`,
       name,
       description,
       status: 'created',
-      created_at: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
       note: 'Voice cloning API ready - ElevenLabs integration ready'
     })
 

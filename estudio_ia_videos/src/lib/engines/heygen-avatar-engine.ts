@@ -62,7 +62,7 @@ export class HeyGenAvatarEngine {
   async checkStatus(jobId: string): Promise<HeyGenRenderResult> {
     const status = await heyGenService.checkStatus(jobId);
     return {
-      jobId: status.video_id,
+      jobId: status.videoId,
       status: status.status,
       videoUrl: status.video_url,
     };

@@ -10,7 +10,7 @@ import { logger } from '@lib/logger'
 
 // Interfaces
 interface AvatarRenderRequest {
-  project_id: string
+  projectId: string
   slideId: string
   avatarConfig: {
     model: string
@@ -29,7 +29,7 @@ interface AvatarRenderRequest {
 
 interface AvatarRenderJob {
   id: string
-  project_id: string
+  projectId: string
   slideId: string
   status: 'queued' | 'analyzing' | 'generating' | 'lip-sync' | 'rendering' | 'completed' | 'failed'
   progress: number
@@ -40,7 +40,7 @@ interface AvatarRenderJob {
   audioAnalysis?: AudioAnalysis
   lipSyncData?: LipSyncData
   gestureData?: GestureData
-  created_at: Date
+  createdAt: Date
   completedAt?: Date
 }
 
@@ -102,17 +102,17 @@ class Avatar3DRenderer {
   private renderJobs: Map<string, AvatarRenderJob> = new Map()
 
   // Create avatar render job
-  async createAvatarRenderJob(request: AvatarRenderRequest, user_id: string): Promise<AvatarRenderJob> {
+  async createAvatarRenderJob(request: AvatarRenderRequest, userId: string): Promise<AvatarRenderJob> {
     const jobId = `avatar_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     
     const renderJob: AvatarRenderJob = {
       id: jobId,
-      project_id: request.project_id,
+      projectId: request.projectId,
       slideId: request.slideId,
       status: 'queued',
       progress: 0,
       currentStage: 'Preparando renderização do avatar...',
-      created_at: new Date()
+      createdAt: new Date()
     }
 
     this.renderJobs.set(jobId, renderJob)
@@ -122,7 +122,7 @@ class Avatar3DRenderer {
       logger.error('Avatar render failed:', error instanceof Error ? error : new Error(String(error)), { component: 'API: avatars/render' })
       this.updateRenderJob(jobId, {
         status: 'failed',
-        error_message: error.message
+        errorMessage: error.message
       })
     })
 
@@ -189,7 +189,7 @@ class Avatar3DRenderer {
     } catch (error) {
       await this.updateRenderJob(jobId, {
         status: 'failed',
-        error_message: error instanceof Error ? error.message : 'Unknown error',
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
         currentStage: 'Erro na renderização do avatar'
       })
       throw error
@@ -578,7 +578,7 @@ export async function POST(request: NextRequest) {
     const body: AvatarRenderRequest = await request.json()
 
     // Validate request
-    if (!body.project_id || !body.slideId || !body.audioUrl) {
+    if (!body.projectId || !body.slideId || !body.audioUrl) {
       return NextResponse.json({ 
         error: 'Project ID, slide ID, and audio URL are required' 
       }, { status: 400 })
@@ -634,15 +634,15 @@ export async function GET(request: NextRequest) {
       success: true,
       renderJob: {
         id: renderJob.id,
-        project_id: renderJob.project_id,
+        projectId: renderJob.projectId,
         slideId: renderJob.slideId,
         status: renderJob.status,
         progress: renderJob.progress,
         currentStage: renderJob.currentStage,
         outputUrl: renderJob.outputUrl,
         thumbnailUrl: renderJob.thumbnailUrl,
-        error_message: renderJob.error_message,
-        created_at: renderJob.created_at,
+        errorMessage: renderJob.errorMessage,
+        createdAt: renderJob.createdAt,
         completedAt: renderJob.completedAt
       }
     })

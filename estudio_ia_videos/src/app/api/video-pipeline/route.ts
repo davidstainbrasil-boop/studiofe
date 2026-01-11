@@ -51,8 +51,8 @@ export async function POST(req: NextRequest) {
       .from('render_jobs')
       .insert({
         id: jobId,
-        project_id: project_id,
-        user_id: user.id,
+        projectId: project_id,
+        userId: user.id,
         status: 'queued',
         progress: 0,
         settings: { preset_id: preset_id || 'default' }
@@ -72,9 +72,9 @@ export async function POST(req: NextRequest) {
       success: true,
       job_id: job.id,
       status: job.status,
-      project_id: job.project_id,
+      projectId: job.projectId,
       message: "Video pipeline render job created successfully",
-      created_at: job.created_at
+      createdAt: job.createdAt
     });
 
   } catch (error) {

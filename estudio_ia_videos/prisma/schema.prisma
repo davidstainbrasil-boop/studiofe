@@ -9,367 +9,367 @@ datasource db {
 }
 
 model analytics_events {
-  id             String   @id
-  user_id        String?
-  event_type     String
-  event_category String?
-  event_data     Json?    @default("{}")
-  resource_type  String?
-  resource_id    String?
-  ip_address     String?
-  user_agent     String?
-  session_id     String?
-  created_at     DateTime @default(now())
-  users          users?   @relation(fields: [user_id], references: [id])
+  id            String   @id
+  userId        String?  @map("user_id")
+  eventType     String   @map("event_type")
+  eventCategory String?  @map("event_category")
+  eventData     Json?    @default("{}") @map("event_data")
+  resourceType  String?  @map("resource_type")
+  resourceId    String?  @map("resource_id")
+  ipAddress     String?  @map("ip_address")
+  userAgent     String?  @map("user_agent")
+  sessionId     String?  @map("session_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+  users         users?   @relation(fields: [userId], references: [id])
 
-  @@index([created_at])
-  @@index([event_type, event_category])
-  @@index([event_type])
-  @@index([resource_type, resource_id])
-  @@index([user_id])
+  @@index([createdAt])
+  @@index([eventType, eventCategory])
+  @@index([eventType])
+  @@index([resourceType, resourceId])
+  @@index([userId])
 }
 
 model api_keys {
-  id           String    @id
-  user_id      String
-  name         String
-  key_hash     String    @unique
-  key_prefix   String
-  permissions  Json      @default("[\"read\"]")
-  rate_limit   Int       @default(1000)
-  is_active    Boolean   @default(true)
-  last_used_at DateTime?
-  expires_at   DateTime?
-  created_at   DateTime  @default(now())
-  users        users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  id          String    @id
+  userId      String    @map("user_id")
+  name        String
+  keyHash     String    @unique @map("key_hash")
+  keyPrefix   String    @map("key_prefix")
+  permissions Json      @default("[\"read\"]")
+  rateLimit   Int       @default(1000) @map("rate_limit")
+  isActive    Boolean   @default(true) @map("is_active")
+  lastUsedAt  DateTime? @map("last_used_at")
+  expiresAt   DateTime? @map("expires_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  users       users     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([is_active, expires_at])
-  @@index([key_prefix])
-  @@index([user_id])
+  @@index([isActive, expiresAt])
+  @@index([keyPrefix])
+  @@index([userId])
 }
 
 model audit_logs {
-  id            String   @id
-  user_id       String?
-  action        String
-  resource_type String?
-  resource_id   String?
-  old_values    Json?
-  new_values    Json?
-  ip_address    String?
-  user_agent    String?
-  created_at    DateTime @default(now())
-  users         users?   @relation(fields: [user_id], references: [id])
+  id           String   @id
+  userId       String?  @map("user_id")
+  action       String
+  resourceType String?  @map("resource_type")
+  resourceId   String?  @map("resource_id")
+  oldValues    Json?    @map("old_values")
+  newValues    Json?    @map("new_values")
+  ipAddress    String?  @map("ip_address")
+  userAgent    String?  @map("user_agent")
+  createdAt    DateTime @default(now()) @map("created_at")
+  users        users?   @relation(fields: [userId], references: [id])
 
   @@index([action])
-  @@index([created_at])
-  @@index([resource_type, resource_id])
-  @@index([user_id])
+  @@index([createdAt])
+  @@index([resourceType, resourceId])
+  @@index([userId])
 }
 
 model avatar_models {
-  id                    String         @id
-  name                  String
-  display_name          String?
-  description           String?
-  category              String?
-  gender                String?
-  quality               String?
-  thumbnail_url         String?
-  model_url             String?
-  preview_video_url     String?
-  is_active             Boolean        @default(true)
-  audio2face_compatible Boolean        @default(false)
-  real_time_lipsync     Boolean        @default(false)
-  ray_tracing_support   Boolean        @default(false)
-  lipsync_accuracy      Int?           @default(90)
-  model_file_path       String?
-  texture_files         Json?
-  rig_file_path         String?
-  animation_sets        Json?
-  blend_shapes_file     String?
-  supported_languages   String[]
-  usage_count           Int            @default(0)
-  rating                Float?         @default(5.0)
-  created_at            DateTime       @default(now())
-  updated_at            DateTime       @default(now())
-  avatar_stats          avatar_stats[]
-  render_jobs           render_jobs[]
+  id                   String         @id
+  name                 String
+  displayName          String?        @map("display_name")
+  description          String?
+  category             String?
+  gender               String?
+  quality              String?
+  thumbnailUrl         String?        @map("thumbnail_url")
+  modelUrl             String?        @map("model_url")
+  previewVideoUrl      String?        @map("preview_video_url")
+  isActive             Boolean        @default(true) @map("is_active")
+  audio2faceCompatible Boolean        @default(false) @map("audio2face_compatible")
+  realTimeLipsync      Boolean        @default(false) @map("real_time_lipsync")
+  rayTracingSupport    Boolean        @default(false) @map("ray_tracing_support")
+  lipsyncAccuracy      Int?           @default(90) @map("lipsync_accuracy")
+  modelFilePath        String?        @map("model_file_path")
+  textureFiles         Json?          @map("texture_files")
+  rigFilePath          String?        @map("rig_file_path")
+  animationSets        Json?          @map("animation_sets")
+  blendShapesFile      String?        @map("blend_shapes_file")
+  supportedLanguages   String[]       @map("supported_languages")
+  usageCount           Int            @default(0) @map("usage_count")
+  rating               Float?         @default(5.0)
+  createdAt            DateTime       @default(now()) @map("created_at")
+  updatedAt            DateTime       @default(now()) @map("updated_at")
+  avatar_stats         avatar_stats[]
+  render_jobs          render_jobs[]
 }
 
 model avatar_stats {
-  id              String        @id
-  avatar_model_id String
-  total_renders   Int           @default(0)
-  avg_render_time Int?
-  last_used_at    DateTime      @default(now())
-  avatar_models   avatar_models @relation(fields: [avatar_model_id], references: [id], onDelete: Cascade)
+  id            String        @id
+  avatarModelId String        @map("avatar_model_id")
+  totalRenders  Int           @default(0) @map("total_renders")
+  avgRenderTime Int?          @map("avg_render_time")
+  lastUsedAt    DateTime      @default(now()) @map("last_used_at")
+  avatar_models avatar_models @relation(fields: [avatarModelId], references: [id], onDelete: Cascade)
 }
 
 model certificates {
   id                    String                 @id
-  project_id            String
-  user_id               String
-  nr_record_id          String?
-  student_name          String
-  course_name           String
+  projectId             String                 @map("project_id")
+  userId                String                 @map("user_id")
+  nrRecordId            String?                @map("nr_record_id")
+  studentName           String                 @map("student_name")
+  courseName            String                 @map("course_name")
   code                  String                 @unique
-  issued_at             DateTime               @default(now())
-  valid_until           DateTime?
-  certificate_url       String?
+  issuedAt              DateTime               @default(now()) @map("issued_at")
+  validUntil            DateTime?              @map("valid_until")
+  certificateUrl        String?                @map("certificate_url")
   metadata              Json?                  @default("{}")
-  created_at            DateTime               @default(now())
-  updated_at            DateTime               @default(now())
-  nr_compliance_records nr_compliance_records? @relation(fields: [nr_record_id], references: [id])
-  projects              projects               @relation(fields: [project_id], references: [id], onDelete: Cascade)
-  users                 users                  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  createdAt             DateTime               @default(now()) @map("created_at")
+  updatedAt             DateTime               @default(now()) @map("updated_at")
+  nr_compliance_records nr_compliance_records? @relation(fields: [nrRecordId], references: [id])
+  projects              projects               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  users                 users                  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([code])
-  @@index([project_id])
-  @@index([user_id])
+  @@index([projectId])
+  @@index([userId])
 }
 
 model collaborators {
   id                                    String            @id
-  project_id                            String
-  user_id                               String
+  projectId                             String            @map("project_id")
+  userId                                String            @map("user_id")
   role                                  CollaborationRole @default(viewer)
-  invited_by                            String?
-  accepted_at                           DateTime?
-  created_at                            DateTime          @default(now())
-  users_collaborators_invited_byTousers users?            @relation("collaborators_invited_byTousers", fields: [invited_by], references: [id])
-  projects                              projects          @relation(fields: [project_id], references: [id], onDelete: Cascade)
-  users_collaborators_user_idTousers    users             @relation("collaborators_user_idTousers", fields: [user_id], references: [id], onDelete: Cascade)
+  invitedBy                             String?           @map("invited_by")
+  acceptedAt                            DateTime?         @map("accepted_at")
+  createdAt                             DateTime          @default(now()) @map("created_at")
+  users_collaborators_invited_byTousers users?            @relation("collaborators_invited_byTousers", fields: [invitedBy], references: [id])
+  projects                              projects          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  users_collaborators_user_idTousers    users             @relation("collaborators_user_idTousers", fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([project_id, user_id])
-  @@index([project_id])
-  @@index([user_id])
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
 }
 
 model courses {
-  id            String   @id
-  title         String
-  description   String?
-  thumbnail_url String?
-  author_id     String?
-  created_at    DateTime @default(now())
-  updated_at    DateTime @default(now())
-  users         users?   @relation(fields: [author_id], references: [id], onDelete: Cascade)
-  videos        videos[]
+  id           String   @id
+  title        String
+  description  String?
+  thumbnailUrl String?  @map("thumbnail_url")
+  authorId     String?  @map("author_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @default(now()) @map("updated_at")
+  users        users?   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  videos       videos[]
 
-  @@index([author_id])
+  @@index([authorId])
 }
 
 model generated_videos {
-  id            String   @id
-  project_id    String
-  project_name  String
-  video_url     String
-  thumbnail_url String?
-  duration      Int      @default(0)
-  slide_count   Int      @default(0)
-  file_size     Int?
-  status        String   @default("completed")
-  metadata      Json?    @default("{}")
-  created_at    DateTime @default(now())
-  updated_at    DateTime @default(now())
+  id           String   @id
+  projectId    String   @map("project_id")
+  projectName  String   @map("project_name")
+  videoUrl     String   @map("video_url")
+  thumbnailUrl String?  @map("thumbnail_url")
+  duration     Int      @default(0)
+  slideCount   Int      @default(0) @map("slide_count")
+  fileSize     Int?     @map("file_size")
+  status       String   @default("completed")
+  metadata     Json?    @default("{}")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @default(now()) @map("updated_at")
 }
 
 model notifications {
-  id         String    @id
-  user_id    String
-  type       String
-  title      String
-  message    String?
-  data       Json?     @default("{}")
-  is_read    Boolean   @default(false)
-  read_at    DateTime?
-  created_at DateTime  @default(now())
-  users      users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  id        String    @id
+  userId    String    @map("user_id")
+  type      String
+  title     String
+  message   String?
+  data      Json?     @default("{}")
+  isRead    Boolean   @default(false) @map("is_read")
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  users     users     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([created_at])
-  @@index([user_id])
-  @@index([user_id, is_read])
+  @@index([createdAt])
+  @@index([userId])
+  @@index([userId, isRead])
 }
 
 model nr_compliance_records {
-  id                 String         @id
-  project_id         String
-  nr                 String
-  nr_name            String
-  status             String
-  score              Float
-  final_score        Float
-  requirements_met   Int
-  requirements_total Int
-  validated_at       DateTime       @default(now())
-  validated_by       String
-  recommendations    Json?
-  critical_points    Json?
-  ai_analysis        Json?
-  ai_score           Float?
-  confidence         Float?
-  created_at         DateTime       @default(now())
-  updated_at         DateTime       @default(now())
-  certificates       certificates[]
-  projects           projects       @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  id                String         @id
+  projectId         String         @map("project_id")
+  nr                String
+  nrName            String         @map("nr_name")
+  status            String
+  score             Float
+  finalScore        Float          @map("final_score")
+  requirementsMet   Int            @map("requirements_met")
+  requirementsTotal Int            @map("requirements_total")
+  validatedAt       DateTime       @default(now()) @map("validated_at")
+  validatedBy       String         @map("validated_by")
+  recommendations   Json?
+  criticalPoints    Json?          @map("critical_points")
+  aiAnalysis        Json?          @map("ai_analysis")
+  aiScore           Float?         @map("ai_score")
+  confidence        Float?
+  createdAt         DateTime       @default(now()) @map("created_at")
+  updatedAt         DateTime       @default(now()) @map("updated_at")
+  certificates      certificates[]
+  projects          projects       @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
-  @@index([project_id])
+  @@index([projectId])
 }
 
 model nr_courses {
-  id               String          @id
-  code             String          @unique
-  name             String
-  description      String?
-  category         String?
-  duration_minutes Int?
-  difficulty_level String          @default("intermediate")
-  thumbnail_url    String?
-  is_active        Boolean         @default(true)
-  metadata         Json?           @default("{}")
-  created_at       DateTime        @default(now())
-  updated_at       DateTime        @default(now())
-  course_code      String?         @unique
-  title            String?
-  modules_count    Int?            @default(0)
-  status           String?         @default("active")
-  duration         Int?
-  nr_modules       nr_modules[]
-  user_progress    user_progress[]
+  id              String          @id
+  code            String          @unique
+  name            String
+  description     String?
+  category        String?
+  durationMinutes Int?            @map("duration_minutes")
+  difficultyLevel String          @default("intermediate") @map("difficulty_level")
+  thumbnailUrl    String?         @map("thumbnail_url")
+  isActive        Boolean         @default(true) @map("is_active")
+  metadata        Json?           @default("{}")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @default(now()) @map("updated_at")
+  courseCode      String?         @unique @map("course_code")
+  title           String?
+  modulesCount    Int?            @default(0) @map("modules_count")
+  status          String?         @default("active")
+  duration        Int?
+  nr_modules      nr_modules[]
+  user_progress   user_progress[]
 
   @@index([code])
-  @@index([is_active])
+  @@index([isActive])
 }
 
 model nr_modules {
-  id               String          @id
-  course_id        String
-  module_order     Int
-  title            String
-  description      String?
-  content          Json?           @default("{}")
-  video_url        String?
-  duration_minutes Int?
-  is_active        Boolean         @default(true)
-  created_at       DateTime        @default(now())
-  updated_at       DateTime        @default(now())
-  order_index      Int?
-  thumbnail_url    String?
-  duration         Int?
-  nr_courses       nr_courses      @relation(fields: [course_id], references: [id], onDelete: Cascade)
-  user_progress    user_progress[]
+  id              String          @id
+  courseId        String          @map("course_id")
+  moduleOrder     Int             @map("module_order")
+  title           String
+  description     String?
+  content         Json?           @default("{}")
+  videoUrl        String?         @map("video_url")
+  durationMinutes Int?            @map("duration_minutes")
+  isActive        Boolean         @default(true) @map("is_active")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @default(now()) @map("updated_at")
+  orderIndex      Int?            @map("order_index")
+  thumbnailUrl    String?         @map("thumbnail_url")
+  duration        Int?
+  nr_courses      nr_courses      @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user_progress   user_progress[]
 
-  @@unique([course_id, module_order])
-  @@index([course_id])
+  @@unique([courseId, moduleOrder])
+  @@index([courseId])
 }
 
 model nr_templates {
-  id               String   @id
-  nr_number        String   @unique
-  title            String
-  description      String?
-  slide_count      Int      @default(5)
-  duration_seconds Int      @default(300)
-  template_config  Json?    @default("{}")
-  created_at       DateTime @default(now())
-  updated_at       DateTime @default(now())
+  id              String   @id
+  nrNumber        String   @unique @map("nr_number")
+  title           String
+  description     String?
+  slideCount      Int      @default(5) @map("slide_count")
+  durationSeconds Int      @default(300) @map("duration_seconds")
+  templateConfig  Json?    @default("{}") @map("template_config")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @default(now()) @map("updated_at")
 }
 
 model processing_queue {
-  id            String   @id
-  job_type      String
-  job_data      Json
-  status        String   @default("pending")
-  priority      Int      @default(0)
-  scheduled_for DateTime @default(now())
-  progress      Int      @default(0)
-  current_step  String?
-  maxAttempts   Int      @default(3)
-  attempts      Int      @default(0)
-  error_message String?
-  created_at    DateTime @default(now())
-  updated_at    DateTime @default(now())
+  id           String   @id
+  jobType      String   @map("job_type")
+  jobData      Json     @map("job_data")
+  status       String   @default("pending")
+  priority     Int      @default(0)
+  scheduledFor DateTime @default(now()) @map("scheduled_for")
+  progress     Int      @default(0)
+  currentStep  String?  @map("current_step")
+  maxAttempts  Int      @default(3)
+  attempts     Int      @default(0)
+  errorMessage String?  @map("error_message")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @default(now()) @map("updated_at")
 
-  @@index([job_type])
+  @@index([jobType])
   @@index([priority])
-  @@index([scheduled_for])
+  @@index([scheduledFor])
   @@index([status])
 }
 
 model project_comments {
   id                     String             @id
-  project_id             String
-  user_id                String
+  projectId              String             @map("project_id")
+  userId                 String             @map("user_id")
   content                String
   position               Json?
-  parent_id              String?
+  parentId               String?            @map("parent_id")
   resolved               Boolean            @default(false)
-  created_at             DateTime           @default(now())
-  updated_at             DateTime           @default(now())
-  project_comments       project_comments?  @relation("project_commentsToproject_comments", fields: [parent_id], references: [id], onDelete: Cascade)
+  createdAt              DateTime           @default(now()) @map("created_at")
+  updatedAt              DateTime           @default(now()) @map("updated_at")
+  project_comments       project_comments?  @relation("project_commentsToproject_comments", fields: [parentId], references: [id], onDelete: Cascade)
   other_project_comments project_comments[] @relation("project_commentsToproject_comments")
-  projects               projects           @relation(fields: [project_id], references: [id], onDelete: Cascade)
-  users                  users              @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  projects               projects           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  users                  users              @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([parent_id])
-  @@index([project_id])
-  @@index([user_id])
+  @@index([parentId])
+  @@index([projectId])
+  @@index([userId])
 }
 
 model project_versions {
   id                                       String    @id
-  project_id                               String
-  version_number                           String
+  projectId                                String    @map("project_id")
+  versionNumber                            String    @map("version_number")
   name                                     String
   description                              String?
-  changes_summary                          String?
-  created_by                               String
+  changesSummary                           String?   @map("changes_summary")
+  createdBy                                String    @map("created_by")
   metadata                                 Json?     @default("{}")
-  created_at                               DateTime  @default(now())
-  user_id                                  String?
-  project_data                             Json?     @default("{}")
-  updated_at                               DateTime?
-  users_project_versions_created_byTousers users     @relation("project_versions_created_byTousers", fields: [created_by], references: [id], onDelete: Cascade)
-  projects                                 projects  @relation(fields: [project_id], references: [id], onDelete: Cascade)
-  users_project_versions_user_idTousers    users?    @relation("project_versions_user_idTousers", fields: [user_id], references: [id], onDelete: Cascade)
+  createdAt                                DateTime  @default(now()) @map("created_at")
+  userId                                   String?   @map("user_id")
+  projectData                              Json?     @default("{}") @map("project_data")
+  updatedAt                                DateTime? @map("updated_at")
+  users_project_versions_created_byTousers users     @relation("project_versions_created_byTousers", fields: [createdBy], references: [id], onDelete: Cascade)
+  projects                                 projects  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  users_project_versions_user_idTousers    users?    @relation("project_versions_user_idTousers", fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([project_id, version_number])
-  @@index([created_by])
-  @@index([project_id])
+  @@unique([projectId, versionNumber])
+  @@index([createdBy])
+  @@index([projectId])
 }
 
 model projects {
   id                    String                  @id
-  user_id               String
+  userId                String                  @map("user_id")
   name                  String
   type                  ProjectType             @default(custom)
   status                ProjectStatus           @default(draft)
   description           String?
   metadata              Json?                   @default("{}")
-  current_version       String                  @default("1.0.0")
-  is_template           Boolean                 @default(false)
-  is_public             Boolean                 @default(false)
-  collaboration_enabled Boolean                 @default(false)
-  render_settings       Json?                   @default("{}")
-  thumbnail_url         String?
-  preview_url           String?
-  last_accessed_at      DateTime                @default(now())
-  created_at            DateTime                @default(now())
-  updated_at            DateTime                @default(now())
-  slides_data           Json?
-  total_slides          Int?                    @default(0)
+  currentVersion        String                  @default("1.0.0") @map("current_version")
+  isTemplate            Boolean                 @default(false) @map("is_template")
+  isPublic              Boolean                 @default(false) @map("is_public")
+  collaborationEnabled  Boolean                 @default(false) @map("collaboration_enabled")
+  renderSettings        Json?                   @default("{}") @map("render_settings")
+  thumbnailUrl          String?                 @map("thumbnail_url")
+  previewUrl            String?                 @map("preview_url")
+  lastAccessedAt        DateTime                @default(now()) @map("last_accessed_at")
+  createdAt             DateTime                @default(now()) @map("created_at")
+  updatedAt             DateTime                @default(now()) @map("updated_at")
+  slidesData            Json?                   @map("slides_data")
+  totalSlides           Int?                    @default(0) @map("total_slides")
   duration              Int?                    @default(0)
-  auto_narration        Boolean?                @default(false)
-  pptx_url              String?
-  original_file_name    String?
-  processing_log        Json?
+  autoNarration         Boolean?                @default(false) @map("auto_narration")
+  pptxUrl               String?                 @map("pptx_url")
+  originalFileName      String?                 @map("original_file_name")
+  processingLog         Json?                   @map("processing_log")
   certificates          certificates[]
   collaborators         collaborators[]
   nr_compliance_records nr_compliance_records[]
   project_comments      project_comments[]
   project_versions      project_versions[]
-  users                 users                   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  users                 users                   @relation(fields: [userId], references: [id], onDelete: Cascade)
   render_jobs           render_jobs[]
   slides                slides[]
   timeline_presence     timeline_presence[]
@@ -379,293 +379,293 @@ model projects {
   video_exports         video_exports[]
   video_projects        video_projects[]
 
-  @@index([is_public])
+  @@index([isPublic])
   @@index([status])
   @@index([type])
-  @@index([user_id])
+  @@index([userId])
 }
 
 model render_jobs {
-  id                 String          @id
-  video_project_id   String?
-  project_id         String?
-  user_id            String
-  status             JobStatus       @default(pending)
-  priority           PriorityLevel   @default(medium)
-  quality            video_quality   @default(p1080)
-  progress           Int             @default(0)
-  settings           Json?           @default("{}")
-  output_url         String?
-  error_message      String?
-  started_at         DateTime?
-  completed_at       DateTime?
-  estimated_duration Int?
-  actual_duration    Int?
-  worker_id          String?
-  retry_count        Int             @default(0)
-  max_retries        Int             @default(3)
-  created_at         DateTime        @default(now())
-  updated_at         DateTime        @default(now())
-  render_settings    Json?           @default("{}")
-  attempts           Int?            @default(1)
-  duration_ms        Int?
-  thumbnail_url      String?
-  avatar_model_id    String?
-  avatar_models      avatar_models?  @relation(fields: [avatar_model_id], references: [id])
-  projects           projects?       @relation(fields: [project_id], references: [id], onDelete: Cascade)
-  users              users           @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  video_projects     video_projects? @relation(fields: [video_project_id], references: [id], onDelete: Cascade)
+  id                String          @id
+  videoProjectId    String?         @map("video_project_id")
+  projectId         String?         @map("project_id")
+  userId            String          @map("user_id")
+  status            JobStatus       @default(pending)
+  priority          PriorityLevel   @default(medium)
+  quality           video_quality   @default(p1080)
+  progress          Int             @default(0)
+  settings          Json?           @default("{}")
+  outputUrl         String?         @map("output_url")
+  errorMessage      String?         @map("error_message")
+  startedAt         DateTime?       @map("started_at")
+  completedAt       DateTime?       @map("completed_at")
+  estimatedDuration Int?            @map("estimated_duration")
+  actualDuration    Int?            @map("actual_duration")
+  workerId          String?         @map("worker_id")
+  retryCount        Int             @default(0) @map("retry_count")
+  maxRetries        Int             @default(3) @map("max_retries")
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @default(now()) @map("updated_at")
+  renderSettings    Json?           @default("{}") @map("render_settings")
+  attempts          Int?            @default(1)
+  durationMs        Int?            @map("duration_ms")
+  thumbnailUrl      String?         @map("thumbnail_url")
+  avatarModelId     String?         @map("avatar_model_id")
+  avatar_models     avatar_models?  @relation(fields: [avatarModelId], references: [id])
+  projects          projects?       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  users             users           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  video_projects    video_projects? @relation(fields: [videoProjectId], references: [id], onDelete: Cascade)
 
-  @@index([project_id])
+  @@index([projectId])
   @@index([status])
-  @@index([status, priority, created_at])
-  @@index([user_id])
+  @@index([status, priority, createdAt])
+  @@index([userId])
 }
 
 model sessions {
-  id         String   @id
-  user_id    String
-  token      String   @unique
-  ip_address String?
-  user_agent String?
-  expires_at DateTime
-  created_at DateTime @default(now())
-  users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  id        String   @id
+  userId    String   @map("user_id")
+  token     String   @unique
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  users     users    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([expires_at])
+  @@index([expiresAt])
   @@index([token])
-  @@index([user_id])
+  @@index([userId])
 }
 
 model slides {
-  id                  String     @id
-  project_id          String
-  slide_order         Int        @default(0)
-  order_index         Int        @default(0)
-  title               String?
-  content             Json?      @default("{}")
-  layout_type         String     @default("blank")
-  background          Json?      @default("{\"type\": \"color\", \"value\": \"#ffffff\"}")
-  notes               String?
-  duration_seconds    Int        @default(5)
-  transition_type     String     @default("none")
-  transition_duration Int        @default(500)
-  audio_url           String?
-  audio_script        String?
-  tts_settings        Json?      @default("{}")
-  created_at          DateTime   @default(now())
-  updated_at          DateTime   @default(now())
-  background_color    String?
-  background_image    String?
-  avatar_config       Json?      @default("{}")
-  audio_config        Json?      @default("{}")
-  duration            Int?       @default(5)
-  projects            projects   @relation(fields: [project_id], references: [id], onDelete: Cascade)
-  tts_jobs            tts_jobs[]
+  id                 String     @id
+  projectId          String     @map("project_id")
+  slideOrder         Int        @default(0) @map("slide_order")
+  orderIndex         Int        @default(0) @map("order_index")
+  title              String?
+  content            Json?      @default("{}")
+  layoutType         String     @default("blank") @map("layout_type")
+  background         Json?      @default("{\"type\": \"color\", \"value\": \"#ffffff\"}")
+  notes              String?
+  durationSeconds    Int        @default(5) @map("duration_seconds")
+  transitionType     String     @default("none") @map("transition_type")
+  transitionDuration Int        @default(500) @map("transition_duration")
+  audioUrl           String?    @map("audio_url")
+  audioScript        String?    @map("audio_script")
+  ttsSettings        Json?      @default("{}") @map("tts_settings")
+  createdAt          DateTime   @default(now()) @map("created_at")
+  updatedAt          DateTime   @default(now()) @map("updated_at")
+  backgroundColor    String?    @map("background_color")
+  backgroundImage    String?    @map("background_image")
+  avatarConfig       Json?      @default("{}") @map("avatar_config")
+  audioConfig        Json?      @default("{}") @map("audio_config")
+  duration           Int?       @default(5)
+  projects           projects   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tts_jobs           tts_jobs[]
 
-  @@index([project_id])
-  @@index([project_id, slide_order])
+  @@index([projectId])
+  @@index([projectId, slideOrder])
 }
 
 model storage_files {
-  id             String   @id
-  user_id        String
-  bucket         String   @default("uploads")
-  file_path      String
-  original_name  String
-  mime_type      String?
-  file_size      BigInt?
-  checksum       String?
-  metadata       Json?    @default("{}")
-  is_public      Boolean  @default(false)
-  download_count Int      @default(0)
-  created_at     DateTime @default(now())
-  updated_at     DateTime @default(now())
-  users          users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  id            String   @id
+  userId        String   @map("user_id")
+  bucket        String   @default("uploads")
+  filePath      String   @map("file_path")
+  originalName  String   @map("original_name")
+  mimeType      String?  @map("mime_type")
+  fileSize      BigInt?  @map("file_size")
+  checksum      String?
+  metadata      Json?    @default("{}")
+  isPublic      Boolean  @default(false) @map("is_public")
+  downloadCount Int      @default(0) @map("download_count")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @default(now()) @map("updated_at")
+  users         users    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([bucket, file_path])
+  @@unique([bucket, filePath])
   @@index([bucket])
-  @@index([is_public])
-  @@index([user_id])
+  @@index([isPublic])
+  @@index([userId])
 }
 
 model system_settings {
-  id         String   @id
-  key        String   @unique
-  value      Json
-  created_at DateTime @default(now())
-  updated_at DateTime @default(now())
+  id        String   @id
+  key       String   @unique
+  value     Json
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @map("updated_at")
 }
 
 model templates {
-  id            String   @id
-  name          String
-  description   String?
-  category      String   @default("general")
-  thumbnail_url String?
-  preview_url   String?
-  template_data Json
-  is_premium    Boolean  @default(false)
-  is_public     Boolean  @default(true)
-  usage_count   Int      @default(0)
-  created_by    String?
-  created_at    DateTime @default(now())
-  updated_at    DateTime @default(now())
-  users         users?   @relation(fields: [created_by], references: [id])
+  id           String   @id
+  name         String
+  description  String?
+  category     String   @default("general")
+  thumbnailUrl String?  @map("thumbnail_url")
+  previewUrl   String?  @map("preview_url")
+  templateData Json     @map("template_data")
+  isPremium    Boolean  @default(false) @map("is_premium")
+  isPublic     Boolean  @default(true) @map("is_public")
+  usageCount   Int      @default(0) @map("usage_count")
+  createdBy    String?  @map("created_by")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @default(now()) @map("updated_at")
+  users        users?   @relation(fields: [createdBy], references: [id])
 
   @@index([category])
-  @@index([created_by])
-  @@index([is_public])
+  @@index([createdBy])
+  @@index([isPublic])
 }
 
 model timeline_presence {
-  id               String   @id
-  project_id       String
-  user_id          String
-  current_track_id String?
-  last_seen_at     DateTime @default(now())
-  created_at       DateTime @default(now())
-  updated_at       DateTime @default(now())
-  projects         projects @relation(fields: [project_id], references: [id], onDelete: Cascade)
-  users            users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  id             String   @id
+  projectId      String   @map("project_id")
+  userId         String   @map("user_id")
+  currentTrackId String?  @map("current_track_id")
+  lastSeenAt     DateTime @default(now()) @map("last_seen_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @default(now()) @map("updated_at")
+  projects       projects @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  users          users    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([project_id, user_id])
-  @@index([project_id])
-  @@index([user_id])
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
 }
 
 model timeline_snapshots {
-  id             String    @id
-  timeline_id    String
-  version        Int
-  tracks         Json?     @default("[]")
-  settings       Json?     @default("{}")
-  total_duration Int?      @default(0)
-  description    String?
-  created_by     String?
-  created_at     DateTime  @default(now())
-  users          users?    @relation(fields: [created_by], references: [id])
-  timelines      timelines @relation(fields: [timeline_id], references: [id], onDelete: Cascade)
+  id            String    @id
+  timelineId    String    @map("timeline_id")
+  version       Int
+  tracks        Json?     @default("[]")
+  settings      Json?     @default("{}")
+  totalDuration Int?      @default(0) @map("total_duration")
+  description   String?
+  createdBy     String?   @map("created_by")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  users         users?    @relation(fields: [createdBy], references: [id])
+  timelines     timelines @relation(fields: [timelineId], references: [id], onDelete: Cascade)
 
-  @@index([timeline_id])
+  @@index([timelineId])
 }
 
 model timeline_templates {
-  id             String   @id
-  name           String
-  description    String?
-  category       String   @default("custom")
-  is_public      Boolean  @default(false)
-  tracks         Json?    @default("[]")
-  settings       Json?    @default("{}")
-  total_duration Int?     @default(0)
-  metadata       Json?    @default("{}")
-  usage_count    Int      @default(0)
-  created_by     String
-  created_at     DateTime @default(now())
-  updated_at     DateTime @default(now())
-  users          users    @relation(fields: [created_by], references: [id], onDelete: Cascade)
+  id            String   @id
+  name          String
+  description   String?
+  category      String   @default("custom")
+  isPublic      Boolean  @default(false) @map("is_public")
+  tracks        Json?    @default("[]")
+  settings      Json?    @default("{}")
+  totalDuration Int?     @default(0) @map("total_duration")
+  metadata      Json?    @default("{}")
+  usageCount    Int      @default(0) @map("usage_count")
+  createdBy     String   @map("created_by")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @default(now()) @map("updated_at")
+  users         users    @relation(fields: [createdBy], references: [id], onDelete: Cascade)
 
   @@index([category])
-  @@index([created_by])
-  @@index([is_public])
+  @@index([createdBy])
+  @@index([isPublic])
 }
 
 model timeline_track_locks {
-  id         String   @id
-  project_id String
-  track_id   String
-  user_id    String
-  created_at DateTime @default(now())
-  updated_at DateTime @default(now())
-  projects   projects @relation(fields: [project_id], references: [id], onDelete: Cascade)
-  users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  id        String   @id
+  projectId String   @map("project_id")
+  trackId   String   @map("track_id")
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @map("updated_at")
+  projects  projects @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  users     users    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([project_id, track_id, user_id])
-  @@index([project_id])
-  @@index([user_id])
+  @@unique([projectId, trackId, userId])
+  @@index([projectId])
+  @@index([userId])
 }
 
 model timelines {
   id                 String               @id
-  project_id         String               @unique
+  projectId          String               @unique @map("project_id")
   tracks             Json?                @default("[]")
-  total_duration     Int?                 @default(0)
+  totalDuration      Int?                 @default(0) @map("total_duration")
   version            Int                  @default(1)
   settings           Json?                @default("{}")
-  created_at         DateTime             @default(now())
-  updated_at         DateTime             @default(now())
+  createdAt          DateTime             @default(now()) @map("created_at")
+  updatedAt          DateTime             @default(now()) @map("updated_at")
   timeline_snapshots timeline_snapshots[]
-  projects           projects             @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  projects           projects             @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
 
 model tts_jobs {
-  id               String      @id
-  user_id          String
-  project_id       String?
-  slide_id         String?
-  text_content     String
-  provider         TtsProvider @default(edge_tts)
-  voice_id         String?
-  voice_settings   Json?       @default("{}")
-  status           JobStatus   @default(pending)
-  output_url       String?
-  duration_seconds Decimal?    @db.Decimal(10, 2)
-  error_message    String?
-  created_at       DateTime    @default(now())
-  updated_at       DateTime    @default(now())
-  projects         projects?   @relation(fields: [project_id], references: [id])
-  slides           slides?     @relation(fields: [slide_id], references: [id])
-  users            users       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  id              String      @id
+  userId          String      @map("user_id")
+  projectId       String?     @map("project_id")
+  slideId         String?     @map("slide_id")
+  textContent     String      @map("text_content")
+  provider        TtsProvider @default(edge_tts)
+  voiceId         String?     @map("voice_id")
+  voiceSettings   Json?       @default("{}") @map("voice_settings")
+  status          JobStatus   @default(pending)
+  outputUrl       String?     @map("output_url")
+  durationSeconds Decimal?    @map("duration_seconds") @db.Decimal(10, 2)
+  errorMessage    String?     @map("error_message")
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @default(now()) @map("updated_at")
+  projects        projects?   @relation(fields: [projectId], references: [id])
+  slides          slides?     @relation(fields: [slideId], references: [id])
+  users           users       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([project_id])
-  @@index([slide_id])
+  @@index([projectId])
+  @@index([slideId])
   @@index([status])
-  @@index([user_id])
+  @@index([userId])
 }
 
 model user_progress {
-  id                  String      @id
-  user_id             String
-  course_id           String?
-  module_id           String?
-  progress_percent    Int         @default(0)
-  completed_at        DateTime?
-  last_accessed_at    DateTime    @default(now())
-  metadata            Json?       @default("{}")
-  created_at          DateTime    @default(now())
-  updated_at          DateTime    @default(now())
-  video_id            String?
-  progress_percentage Int?        @default(0)
-  completed           Boolean?    @default(false)
-  last_watched_at     DateTime?
-  nr_courses          nr_courses? @relation(fields: [course_id], references: [id], onDelete: Cascade)
-  nr_modules          nr_modules? @relation(fields: [module_id], references: [id], onDelete: Cascade)
-  users               users       @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  videos              videos?     @relation(fields: [video_id], references: [id], onDelete: Cascade)
+  id                 String      @id
+  userId             String      @map("user_id")
+  courseId           String?     @map("course_id")
+  moduleId           String?     @map("module_id")
+  progressPercent    Int         @default(0) @map("progress_percent")
+  completedAt        DateTime?   @map("completed_at")
+  lastAccessedAt     DateTime    @default(now()) @map("last_accessed_at")
+  metadata           Json?       @default("{}")
+  createdAt          DateTime    @default(now()) @map("created_at")
+  updatedAt          DateTime    @default(now()) @map("updated_at")
+  videoId            String?     @map("video_id")
+  progressPercentage Int?        @default(0) @map("progress_percentage")
+  completed          Boolean?    @default(false)
+  lastWatchedAt      DateTime?   @map("last_watched_at")
+  nr_courses         nr_courses? @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  nr_modules         nr_modules? @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  users              users       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  videos             videos?     @relation(fields: [videoId], references: [id], onDelete: Cascade)
 
-  @@unique([user_id, course_id, module_id])
-  @@index([course_id])
-  @@index([module_id])
-  @@index([user_id])
+  @@unique([userId, courseId, moduleId])
+  @@index([courseId])
+  @@index([moduleId])
+  @@index([userId])
 }
 
 model users {
   id                                                  String                 @id
   email                                               String                 @unique
-  password_hash                                       String?
+  passwordHash                                        String?                @map("password_hash")
   name                                                String?
-  avatar_url                                          String?
+  avatarUrl                                           String?                @map("avatar_url")
   role                                                UserRole?              @default(user)
-  is_active                                           Boolean                @default(true)
-  is_verified                                         Boolean                @default(false)
-  verification_token                                  String?
-  reset_token                                         String?
-  reset_token_expires                                 DateTime?
-  last_login                                          DateTime?
-  login_count                                         Int                    @default(0)
-  created_at                                          DateTime               @default(now())
-  updated_at                                          DateTime               @default(now())
+  isActive                                            Boolean                @default(true) @map("is_active")
+  isVerified                                          Boolean                @default(false) @map("is_verified")
+  verificationToken                                   String?                @map("verification_token")
+  resetToken                                          String?                @map("reset_token")
+  resetTokenExpires                                   DateTime?              @map("reset_token_expires")
+  lastLogin                                           DateTime?              @map("last_login")
+  loginCount                                          Int                    @default(0) @map("login_count")
+  createdAt                                           DateTime               @default(now()) @map("created_at")
+  updatedAt                                           DateTime               @default(now()) @map("updated_at")
   metadata                                            Json?                  @default("{}")
   analytics_events                                    analytics_events[]
   api_keys                                            api_keys[]
@@ -693,157 +693,157 @@ model users {
   video_projects                                      video_projects[]
 
   @@index([email])
-  @@index([is_active])
+  @@index([isActive])
   @@index([role])
 }
 
 model video_exports {
-  id             String   @id
-  project_id     String
-  user_id        String?
-  format         String   @default("mp4")
-  quality        String   @default("hd")
-  resolution     String?
-  fps            Int      @default(30)
-  status         String   @default("queued")
-  progress       Int      @default(0)
-  processing_log Json?
-  video_url      String?
-  file_url       String?
-  file_name      String?
-  file_size      BigInt?
-  duration       Int?
-  error_message  String?
-  created_at     DateTime @default(now())
-  updated_at     DateTime @default(now())
-  projects       projects @relation(fields: [project_id], references: [id], onDelete: Cascade)
-  users          users?   @relation(fields: [user_id], references: [id])
+  id            String   @id
+  projectId     String   @map("project_id")
+  userId        String?  @map("user_id")
+  format        String   @default("mp4")
+  quality       String   @default("hd")
+  resolution    String?
+  fps           Int      @default(30)
+  status        String   @default("queued")
+  progress      Int      @default(0)
+  processingLog Json?    @map("processing_log")
+  videoUrl      String?  @map("video_url")
+  fileUrl       String?  @map("file_url")
+  fileName      String?  @map("file_name")
+  fileSize      BigInt?  @map("file_size")
+  duration      Int?
+  errorMessage  String?  @map("error_message")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @default(now()) @map("updated_at")
+  projects      projects @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  users         users?   @relation(fields: [userId], references: [id])
 
-  @@index([project_id])
-  @@index([user_id])
+  @@index([projectId])
+  @@index([userId])
 }
 
 model video_projects {
-  id               String        @id
-  project_id       String?
-  user_id          String
-  name             String
-  description      String?
-  settings         Json?         @default("{}")
-  timeline_data    Json?         @default("{\"tracks\": [], \"duration\": 0}")
-  status           ProjectStatus @default(draft)
-  output_url       String?
-  thumbnail_url    String?
-  duration_seconds Int?
-  file_size_bytes  BigInt?
-  created_at       DateTime      @default(now())
-  updated_at       DateTime      @default(now())
-  render_jobs      render_jobs[]
-  projects         projects?     @relation(fields: [project_id], references: [id])
-  users            users         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  id              String        @id
+  projectId       String?       @map("project_id")
+  userId          String        @map("user_id")
+  name            String
+  description     String?
+  settings        Json?         @default("{}")
+  timelineData    Json?         @default("{\"tracks\": [], \"duration\": 0}") @map("timeline_data")
+  status          ProjectStatus @default(draft)
+  outputUrl       String?       @map("output_url")
+  thumbnailUrl    String?       @map("thumbnail_url")
+  durationSeconds Int?          @map("duration_seconds")
+  fileSizeBytes   BigInt?       @map("file_size_bytes")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @default(now()) @map("updated_at")
+  render_jobs     render_jobs[]
+  projects        projects?     @relation(fields: [projectId], references: [id])
+  users           users         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([project_id])
+  @@index([projectId])
   @@index([status])
-  @@index([user_id])
+  @@index([userId])
 }
 
 model videos {
   id            String          @id
   title         String
   description   String?
-  video_url     String
-  thumbnail_url String?
+  videoUrl      String          @map("video_url")
+  thumbnailUrl  String?         @map("thumbnail_url")
   duration      Int?
-  course_id     String?
-  order_index   Int?            @default(0)
-  created_at    DateTime        @default(now())
-  updated_at    DateTime        @default(now())
+  courseId      String?         @map("course_id")
+  orderIndex    Int?            @default(0) @map("order_index")
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @default(now()) @map("updated_at")
   user_progress user_progress[]
-  courses       courses?        @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  courses       courses?        @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
-  @@index([course_id])
+  @@index([courseId])
 }
 
 model voice_clones {
-  id              String   @id
-  user_id         String
-  name            String
-  description     String?
-  provider        String   @default("elevenlabs")
-  voice_id        String
-  sample_count    Int      @default(0)
-  training_status String?
-  quality_score   Float?
-  created_at      DateTime @default(now())
-  updated_at      DateTime @default(now())
+  id             String   @id
+  userId         String   @map("user_id")
+  name           String
+  description    String?
+  provider       String   @default("elevenlabs")
+  voiceId        String   @map("voice_id")
+  sampleCount    Int      @default(0) @map("sample_count")
+  trainingStatus String?  @map("training_status")
+  qualityScore   Float?   @map("quality_score")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @default(now()) @map("updated_at")
 
-  @@index([user_id])
+  @@index([userId])
 }
 
 model voice_models {
-  id                String   @id
-  user_id           String
-  name              String
-  type              String   @default("custom")
-  voice_id          String
-  quality           Float    @default(0.9)
-  language          String   @default("pt-BR")
-  gender            String   @default("neutral")
-  age               String   @default("adult")
-  accent            String   @default("neutral")
-  sample_url        String?
-  sample_duration   Int      @default(0)
-  training_status   String   @default("ready")
-  training_progress Int      @default(100)
-  metadata          Json?    @default("{}")
-  created_at        DateTime @default(now())
-  updated_at        DateTime @default(now())
+  id               String   @id
+  userId           String   @map("user_id")
+  name             String
+  type             String   @default("custom")
+  voiceId          String   @map("voice_id")
+  quality          Float    @default(0.9)
+  language         String   @default("pt-BR")
+  gender           String   @default("neutral")
+  age              String   @default("adult")
+  accent           String   @default("neutral")
+  sampleUrl        String?  @map("sample_url")
+  sampleDuration   Int      @default(0) @map("sample_duration")
+  trainingStatus   String   @default("ready") @map("training_status")
+  trainingProgress Int      @default(100) @map("training_progress")
+  metadata         Json?    @default("{}")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @default(now()) @map("updated_at")
 
   @@index([language])
   @@index([type])
-  @@index([user_id])
+  @@index([userId])
 }
 
 model webhook_deliveries {
-  id            String    @id
-  webhook_id    String
-  event         String
-  payload       Json
-  url           String
-  status        String
-  scheduled_for DateTime  @default(now())
-  delivered_at  DateTime?
-  response_code Int?
-  response_body String?
-  response_time Int?
-  attempts      Int       @default(0)
-  error         String?
-  next_retry_at DateTime?
-  created_at    DateTime  @default(now())
-  updated_at    DateTime  @default(now())
-  webhooks      webhooks  @relation(fields: [webhook_id], references: [id], onDelete: Cascade)
+  id           String    @id
+  webhookId    String    @map("webhook_id")
+  event        String
+  payload      Json
+  url          String
+  status       String
+  scheduledFor DateTime  @default(now()) @map("scheduled_for")
+  deliveredAt  DateTime? @map("delivered_at")
+  responseCode Int?      @map("response_code")
+  responseBody String?   @map("response_body")
+  responseTime Int?      @map("response_time")
+  attempts     Int       @default(0)
+  error        String?
+  nextRetryAt  DateTime? @map("next_retry_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @default(now()) @map("updated_at")
+  webhooks     webhooks  @relation(fields: [webhookId], references: [id], onDelete: Cascade)
 
   @@index([status])
-  @@index([webhook_id])
+  @@index([webhookId])
 }
 
 model webhooks {
-  id                    String               @id
-  user_id               String
-  url                   String
-  secret                String
-  events                Json
-  active                Boolean              @default(true)
-  created_at            DateTime             @default(now())
-  updated_at            DateTime             @default(now())
-  last_delivery_at      DateTime?
-  total_deliveries      Int                  @default(0)
-  successful_deliveries Int                  @default(0)
-  failed_deliveries     Int                  @default(0)
-  retry_interval        Int                  @default(60)
-  webhook_deliveries    webhook_deliveries[]
+  id                   String               @id
+  userId               String               @map("user_id")
+  url                  String
+  secret               String
+  events               Json
+  active               Boolean              @default(true)
+  createdAt            DateTime             @default(now()) @map("created_at")
+  updatedAt            DateTime             @default(now()) @map("updated_at")
+  lastDeliveryAt       DateTime?            @map("last_delivery_at")
+  totalDeliveries      Int                  @default(0) @map("total_deliveries")
+  successfulDeliveries Int                  @default(0) @map("successful_deliveries")
+  failedDeliveries     Int                  @default(0) @map("failed_deliveries")
+  retryInterval        Int                  @default(60) @map("retry_interval")
+  webhook_deliveries   webhook_deliveries[]
 
-  @@index([user_id])
+  @@index([userId])
 }
 
 enum CollaborationRole {

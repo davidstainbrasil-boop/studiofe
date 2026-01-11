@@ -128,7 +128,7 @@ export function VideoModal({ template, isOpen, onClose }: VideoModalProps) {
               <div className="space-y-4">
                 <div className="flex items-center gap-2 text-sm font-semibold text-green-500">
                   <span>98% Match</span>
-                  <span className="text-gray-400">{new Date(template.updated_at).getFullYear()}</span>
+                  <span className="text-gray-400">{new Date(template.updatedAt).getFullYear()}</span>
                   <Badge variant="outline" className="border-gray-600 text-gray-300">HD</Badge>
                   <Badge variant="outline" className="border-gray-600 text-gray-300">5.1</Badge>
                 </div>

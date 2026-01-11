@@ -55,11 +55,11 @@ export async function GET(req: NextRequest) {
     // Filtrar por duração
     if (minDuration) {
       const minDur = parseInt(minDuration)
-      templates = templates.filter((t) => (t.duration || t.duration_minutes || 0) >= minDur)
+      templates = templates.filter((t) => (t.duration || t.durationMinutes || 0) >= minDur)
     }
     if (maxDuration) {
       const maxDur = parseInt(maxDuration)
-      templates = templates.filter((t) => (t.duration || t.duration_minutes || 0) <= maxDur)
+      templates = templates.filter((t) => (t.duration || t.durationMinutes || 0) <= maxDur)
     }
 
     return NextResponse.json({
@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
       templateNR: template.nr || template.number,
       slides: template.slides || template.sections,
       customizations,
-      created_at: new Date().toISOString()
+      createdAt: new Date().toISOString()
     }
 
     return NextResponse.json({

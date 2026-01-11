@@ -11,7 +11,7 @@ import { logger } from '@lib/logger'
 // Validation schema for render settings
 const RenderSettingsSchema = z.object({
   auto_retry: z.boolean().optional(),
-  max_retries: z.number().min(0).max(10).optional(),
+  maxRetries: z.number().min(0).max(10).optional(),
   priority_boost: z.boolean().optional(),
   quality_preset: z.enum(['draft', 'standard', 'high', 'ultra']).optional(),
   notifications: z.object({
@@ -29,7 +29,7 @@ const RenderSettingsSchema = z.object({
 // Default settings
 const defaultSettings = {
   auto_retry: true,
-  max_retries: 3,
+  maxRetries: 3,
   priority_boost: false,
   quality_preset: 'standard' as const,
   notifications: {
@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
     const { data: settings, error } = await supabase
       .from('user_render_settings')
       .select('*')
-      .eq('user_id', user.id)
+      .eq("userId", user.id)
       .single()
 
     if (error && error.code !== 'PGRST116') {
@@ -72,10 +72,10 @@ export async function GET(request: NextRequest) {
       const { data: newSettings, error: createError } = await supabase
         .from('user_render_settings')
         .insert({
-          user_id: user.id,
+          userId: user.id,
           settings: defaultSettings,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
         })
         .select()
         .single()
@@ -129,7 +129,7 @@ export async function PATCH(request: NextRequest) {
     const { data: currentSettings, error: fetchError } = await supabase
       .from('user_render_settings')
       .select('*')
-      .eq('user_id', user.id)
+      .eq("userId", user.id)
       .single()
 
     if (fetchError && fetchError.code !== 'PGRST116') {
@@ -145,10 +145,10 @@ export async function PATCH(request: NextRequest) {
       const { data: newSettings, error: createError } = await supabase
         .from('user_render_settings')
         .insert({
-          user_id: user.id,
+          userId: user.id,
           settings: updatedSettings,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
         })
         .select()
         .single()
@@ -175,9 +175,9 @@ export async function PATCH(request: NextRequest) {
         .from('user_render_settings')
         .update({
           settings: updatedSettings,
-          updated_at: new Date().toISOString()
+          updatedAt: new Date().toISOString()
         })
-        .eq('user_id', user.id)
+        .eq("userId", user.id)
         .select()
         .single()
 
@@ -193,9 +193,9 @@ export async function PATCH(request: NextRequest) {
       await supabase
         .from('analytics_events')
         .insert({
-          user_id: user.id,
-          event_type: 'settings_updated',
-          event_data: {
+          userId: user.id,
+          eventType: 'settings_updated',
+          eventData: {
             scope: 'render',
             updated_fields: Object.keys(settingsUpdate),
             timestamp: new Date().toISOString()
@@ -252,9 +252,9 @@ export async function DELETE(request: NextRequest) {
     const { data: resetSettings, error } = await supabase
       .from('user_render_settings')
       .upsert({
-        user_id: user.id,
+        userId: user.id,
         settings: defaultSettings,
-        updated_at: new Date().toISOString()
+        updatedAt: new Date().toISOString()
       })
       .select()
       .single()
@@ -266,9 +266,9 @@ export async function DELETE(request: NextRequest) {
       await supabase
         .from('analytics_events')
         .insert({
-          user_id: user.id,
-          event_type: 'settings_reset',
-          event_data: {
+          userId: user.id,
+          eventType: 'settings_reset',
+          eventData: {
             scope: 'render',
             timestamp: new Date().toISOString()
           }

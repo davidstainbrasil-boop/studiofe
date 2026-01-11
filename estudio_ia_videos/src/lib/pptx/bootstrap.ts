@@ -46,7 +46,7 @@ export async function bootstrapSlidesFromPptx(
   }
 
   const payload: Database['public']['Tables']['slides']['Insert'][] = slides.map((slide, index) => ({
-    project_id: projectId,
+    projectId: projectId,
     title: slide.title.slice(0, 200),
     content: buildSlideContent(slide.textContent, slide.notes),
     order_index: index,
@@ -56,7 +56,7 @@ export async function bootstrapSlidesFromPptx(
   const { error: deleteError } = await supabase
     .from('slides')
     .delete()
-    .eq('project_id', projectId)
+    .eq("projectId", projectId)
   if (deleteError) {
     return {
       ok: false,
@@ -89,7 +89,7 @@ export async function bootstrapSlidesFromPptx(
   const projectUpdate: Database['public']['Tables']['projects']['Update'] = {
     status: 'draft',
     settings: mergedSettings as Json,
-    updated_at: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   }
 
   const { error: updateError } = await supabase

@@ -409,7 +409,7 @@ export function ProjectManagement() {
                 <div className="flex items-center justify-between text-sm text-muted-foreground">
                   <div className="flex items-center space-x-1">
                     <Clock className="h-3 w-3" />
-                    <span>{formatDistanceToNow(new Date(p.updated_at), { addSuffix: true })}</span>
+                    <span>{formatDistanceToNow(new Date(p.updatedAt), { addSuffix: true })}</span>
                   </div>
                   <div className="flex items-center space-x-1">
                     <Users className="h-3 w-3" />

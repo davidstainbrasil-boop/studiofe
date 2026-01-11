@@ -41,7 +41,7 @@ export async function GET(
     }
 
     // Verifica permissão
-    if (record.project.user_id !== session.user.id) {
+    if (record.project.userId !== session.user.id) {
       return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
     }
 

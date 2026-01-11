@@ -8,12 +8,12 @@ interface Project {
   title: string
   description: string
   status: string
-  created_at: string
+  createdAt: string
 }
 
 interface Slide {
   id: string
-  project_id: string
+  projectId: string
   title: string
   content: string
   duration: number
@@ -160,7 +160,7 @@ export function ProjectList() {
                 <h3 className="font-semibold">{proj.title}</h3>
                 <p className="text-sm text-gray-600">{proj.description}</p>
                 <p className="text-xs text-gray-400 mt-1">
-                  Status: {proj.status} | Criado: {new Date(proj.created_at).toLocaleDateString()}
+                  Status: {proj.status} | Criado: {new Date(proj.createdAt).toLocaleDateString()}
                 </p>
               </div>
             ))}

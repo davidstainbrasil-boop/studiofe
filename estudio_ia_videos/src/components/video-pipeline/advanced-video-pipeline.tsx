@@ -31,7 +31,7 @@ interface RenderJob {
   fps: number
   duration: number
   file_size?: number
-  created_at: Date
+  createdAt: Date
   started_at?: Date
   completed_at?: Date
   estimated_time?: number
@@ -260,7 +260,7 @@ const AdvancedVideoPipeline: React.FC = () => {
         resolution: '1920x1080',
         fps: 30,
         duration: 420,
-        created_at: new Date(Date.now() - 1800000),
+        createdAt: new Date(Date.now() - 1800000),
         started_at: new Date(Date.now() - 900000),
         estimated_time: 180,
         priority: 'high'
@@ -275,7 +275,7 @@ const AdvancedVideoPipeline: React.FC = () => {
         resolution: '3840x2160',
         fps: 60,
         duration: 1800,
-        created_at: new Date(Date.now() - 600000),
+        createdAt: new Date(Date.now() - 600000),
         estimated_time: 720,
         priority: 'normal'
       },
@@ -289,8 +289,8 @@ const AdvancedVideoPipeline: React.FC = () => {
         resolution: '1080x1080',
         fps: 30,
         duration: 180,
-        file_size: 156000000,
-        created_at: new Date(Date.now() - 3600000),
+        fileSize: 156000000,
+        createdAt: new Date(Date.now() - 3600000),
         started_at: new Date(Date.now() - 3300000),
         completed_at: new Date(Date.now() - 3000000),
         priority: 'low'
@@ -305,7 +305,7 @@ const AdvancedVideoPipeline: React.FC = () => {
         resolution: '1920x1080',
         fps: 30,
         duration: 900,
-        created_at: new Date(Date.now() - 7200000),
+        createdAt: new Date(Date.now() - 7200000),
         started_at: new Date(Date.now() - 6900000),
         priority: 'urgent'
       }
@@ -339,7 +339,7 @@ const AdvancedVideoPipeline: React.FC = () => {
       resolution: selectedPreset.resolution,
       fps: selectedPreset.fps,
       duration: 300, // 5 minutes
-      created_at: new Date(),
+      createdAt: new Date(),
       started_at: new Date(),
       estimated_time: parseInt(selectedPreset.processing_time) * 60,
       priority: 'normal'
@@ -362,7 +362,7 @@ const AdvancedVideoPipeline: React.FC = () => {
               progress: 100, 
               status: 'completed' as const,
               completed_at: new Date(),
-              file_size: Math.floor(Math.random() * 500000000 + 100000000)
+              fileSize: Math.floor(Math.random() * 500000000 + 100000000)
             }
           }
           return { ...job, progress: Math.min(newProgress, 100) }
@@ -773,8 +773,8 @@ const AdvancedVideoPipeline: React.FC = () => {
                         <span>{job.resolution}</span>
                         <span>{job.format}</span>
                         <span>{formatDuration(job.duration)}</span>
-                        {job.file_size && (
-                          <span>{formatFileSize(job.file_size)}</span>
+                        {job.fileSize && (
+                          <span>{formatFileSize(job.fileSize)}</span>
                         )}
                       </div>
                     </div>
@@ -817,7 +817,7 @@ const AdvancedVideoPipeline: React.FC = () => {
                   {/* Timestamps */}
                   <div className="flex items-center justify-between mt-3 text-xs text-gray-500">
                     <span>
-                      Criado: {job.created_at.toLocaleTimeString('pt-BR')}
+                      Criado: {job.createdAt.toLocaleTimeString('pt-BR')}
                     </span>
                     {job.completed_at && (
                       <span>

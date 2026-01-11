@@ -20,7 +20,7 @@ export async function GET() {
       metahumans: metahumanList.map(mh => ({
         id: mh.id,
         name: mh.name,
-        display_name: mh.display_name || mh.name,
+        displayName: mh.displayName || mh.name,
         gender: mh.gender,
         // Optional fields - use optional chaining
         ethnicity: mh.ethnicity ?? null,

@@ -26,9 +26,9 @@ export async function PATCH(request: NextRequest) {
       .from('notifications')
       .update({
         status: 'read',
-        updated_at: new Date().toISOString()
+        updatedAt: new Date().toISOString()
       })
-      .eq('user_id', session.user.id)
+      .eq("userId", session.user.id)
       .eq('status', 'unread')
       .select('id')
 
@@ -42,13 +42,13 @@ export async function PATCH(request: NextRequest) {
       await supabaseAdmin
         .from('analytics_events')
         .insert({
-          user_id: session.user.id,
-          event_type: 'mark_all_read',
-          event_data: {
+          userId: session.user.id,
+          eventType: 'mark_all_read',
+          eventData: {
             count: updatedCount,
             timestamp: new Date().toISOString()
           },
-          created_at: new Date().toISOString()
+          createdAt: new Date().toISOString()
         })
     } catch (analyticsError) {
       logger.warn('Failed to log mark all read action', { component: 'API: notifications/mark-all-read' })

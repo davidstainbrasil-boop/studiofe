@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
         isPublic: template.isPublic,
         tracksCount: getJsonProperty<number>(template.metadata, 'tracksCount', 0),
         totalDuration: template.totalDuration,
-        created_at: template.created_at.toISOString(),
+        createdAt: template.createdAt.toISOString(),
       },
       message: 'Template criado com sucesso',
     });
@@ -163,7 +163,7 @@ export async function GET(request: NextRequest) {
             name: template.creator.name,
             image: template.creator.avatarUrl,
           },
-          created_at: template.created_at.toISOString(),
+          createdAt: template.createdAt.toISOString(),
           usageCount: template.usageCount,
         },
       });
@@ -201,7 +201,7 @@ export async function GET(request: NextRequest) {
       },
       orderBy: [
         { usageCount: 'desc' },
-        { created_at: 'desc' },
+        { createdAt: 'desc' },
       ],
       take: limit,
       skip: offset,
@@ -216,7 +216,7 @@ export async function GET(request: NextRequest) {
           id: string; name: string; description?: string | null; category: string;
           isPublic: boolean; metadata: Record<string, unknown>; totalDuration: number | null;
           usageCount: number; creator: { id: string; name: string | null; avatarUrl?: string | null };
-          created_at: Date
+          createdAt: Date
         }>).map((t) => ({
           id: t.id,
           name: t.name,
@@ -231,7 +231,7 @@ export async function GET(request: NextRequest) {
             name: t.creator.name,
             image: t.creator.avatarUrl,
           },
-          created_at: t.created_at.toISOString(),
+          createdAt: t.createdAt.toISOString(),
         })),
         pagination: {
           total,
@@ -301,7 +301,7 @@ export async function PUT(request: NextRequest) {
     const project = await prisma.projects.findFirst({
       where: {
         id: projectId,
-        user_id: session.user.id,
+        userId: session.user.id,
       },
     });
 
@@ -327,7 +327,7 @@ export async function PUT(request: NextRequest) {
         settings: toJsonValue(template.settings ?? {}),
         totalDuration: template.totalDuration,
         version: { increment: 1 },
-        updated_at: new Date(),
+        updatedAt: new Date(),
       },
     });
 
@@ -345,12 +345,12 @@ export async function PUT(request: NextRequest) {
       success: true,
       data: {
         id: timeline.id,
-        project_id: timeline.project_id,
+        projectId: timeline.projectId,
         version: timeline.version,
         tracks: timeline.tracks,
         settings: timeline.settings,
         totalDuration: timeline.totalDuration,
-        updated_at: timeline.updated_at.toISOString(),
+        updatedAt: timeline.updatedAt.toISOString(),
       },
       message: 'Template aplicado com sucesso',
     });

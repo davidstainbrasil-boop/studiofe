@@ -61,7 +61,7 @@ export async function POST(req: Request) {
     const hasAuth = authToken.length > 0;
     const mockMode = shouldUseMockRenderJobs() || !hasAuth;
 
-    let user_id: string;
+    let userId: string;
     if (mockMode) {
       userId = getMockUserId(req);
     } else {
@@ -105,12 +105,12 @@ export async function POST(req: Request) {
     }
 
     const { error: insertErr, data } = await supabase.from('render_jobs').insert({
-      user_id: userId,
-      project_id: payload.project_id,
+      userId: userId,
+      projectId: payload.projectId,
       status: 'queued',
       progress: 0,
       attempts: 1,
-      render_settings: { slides: payload.slides.length, quality: payload.quality, tts_voice: payload.tts_voice },
+      renderSettings: { slides: payload.slides.length, quality: payload.quality, tts_voice: payload.tts_voice },
     }).select('id,status,project_id,created_at,progress,render_settings,attempts,duration_ms').single();
 
     if (insertErr) {
@@ -125,7 +125,7 @@ export async function POST(req: Request) {
 
     const durationMs = Date.now() - started;
     const row = data as unknown as RenderJobRow;
-    const job = data ? { id: row.id, status: row.status, project_id: row.project_id, created_at: row.created_at, progress: row.progress, attempts: row.attempts, duration_ms: row.duration_ms ?? null, settings: row.render_settings } : null;
+    const job = data ? { id: row.id, status: row.status, projectId: row.projectId, createdAt: row.createdAt, progress: row.progress, attempts: row.attempts, durationMs: row.durationMs ?? null, settings: row.renderSettings } : null;
     return NextResponse.json({ job, metrics: { validation_ms: durationMs } }, { status: 201 });
   } catch (err) {
     recordError('UNEXPECTED');
@@ -173,13 +173,13 @@ export async function GET(req: Request) {
     const CACHE_TTL_MS = 15_000;
     const globalAny = globalThis as unknown as GlobalWithCache;
     if (!globalAny.__vj_cache) globalAny.__vj_cache = new Map();
-    const cacheKey = `list:${userId}:${queryParams.limit}:${queryParams.offset}:${queryParams.status || 'all'}:${queryParams.project_id || 'all'}:${queryParams.sortBy}:${queryParams.sortOrder}`;
+    const cacheKey = `list:${userId}:${queryParams.limit}:${queryParams.offset}:${queryParams.status || 'all'}:${queryParams.projectId || 'all'}:${queryParams.sortBy}:${queryParams.sortOrder}`;
     const computeMockResponse = (cacheTag: 'MISS' | 'HIT' = 'MISS') => {
       const jobs = listMockJobs(userId, {
         limit: queryParams!.limit,
         offset: queryParams!.offset,
         status: queryParams!.status,
-        project_id: queryParams!.project_id,
+        projectId: queryParams!.projectId,
         sortBy: queryParams!.sortBy,
         sortOrder: queryParams!.sortOrder,
       });
@@ -211,10 +211,10 @@ export async function GET(req: Request) {
       throw new Error('Parâmetros da listagem não foram inicializados');
     }
     const { limit: dbLimit, offset, status: statusFilter, projectId, sortBy, sortOrder } = queryParams;
-    const sortColumn = sortBy === 'updated_at' ? 'updated_at' : sortBy === 'status' ? 'status' : 'created_at';
+    const sortColumn = sortBy === "updatedAt" ? "updatedAt" : sortBy === 'status' ? 'status' : "createdAt";
     let query = supabase.from('render_jobs')
       .select('id,status,project_id,created_at,updated_at,progress,render_settings,attempts,duration_ms')
-      .eq('user_id', userId)
+      .eq("userId", userId)
       .order(sortColumn, { ascending: sortOrder === 'asc' })
       .range(offset, offset + dbLimit - 1);
 
@@ -222,7 +222,7 @@ export async function GET(req: Request) {
       query = query.eq('status', statusFilter);
     }
     if (projectId) {
-      query = query.eq('project_id', projectId);
+      query = query.eq("projectId", projectId);
     }
 
     const { data, error } = await query;

@@ -77,10 +77,10 @@ export async function POST(request: NextRequest) {
 
     const job = await prisma.processing_queue.create({
       data: {
-        job_type: 'avatar-3d-render',
+        jobType: 'avatar-3d-render',
         status: 'pending',
         priority: 1,
-        job_data: jobData as any
+        jobData: jobData as any
       }
     });
 
@@ -94,9 +94,9 @@ export async function POST(request: NextRequest) {
           where: { id: job.id },
           data: {
             status: 'failed',
-            error_message: error.message,
-            job_data: {
-              ...job_data,
+            errorMessage: error.message,
+            jobData: {
+              ...jobData,
               error: error.message,
               errorDetails: { stack: error.stack }
             } as any
@@ -143,7 +143,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const jobData = (job.job_data ?? {}) as AvatarJobData;
+    const jobData = (job.jobData ?? {}) as AvatarJobData;
 
     return NextResponse.json({
       success: true,
@@ -154,9 +154,9 @@ export async function GET(request: NextRequest) {
       estimatedTime: jobData.estimatedTime,
       videoUrl: jobData.videoUrl,
       thumbnail: jobData.thumbnail,
-      error: job.error_message,
-      created_at: job.created_at,
-      updated_at: job.updated_at
+      error: job.errorMessage,
+      createdAt: job.createdAt,
+      updatedAt: job.updatedAt
     });
 
   } catch (error) {
@@ -185,7 +185,7 @@ async function processAvatarRendering(
   try {
     // Recuperar job atual para manter dados
     const currentJob = await prisma.processing_queue.findUnique({ where: { id: jobId } });
-    let currentData: AvatarJobData = (currentJob?.job_data ?? {}) as AvatarJobData;
+    let currentData: AvatarJobData = (currentJob?.jobData ?? {}) as AvatarJobData;
 
     // ETAPA 1: Gerar áudio TTS
     currentData = { ...currentData, currentStage: 'audio' };
@@ -194,7 +194,7 @@ async function processAvatarRendering(
       data: {
         status: 'processing',
         progress: 10,
-        job_data: currentData
+        jobData: currentData
       }
     });
 
@@ -222,7 +222,7 @@ async function processAvatarRendering(
       where: { id: jobId },
       data: {
         progress: 25,
-        job_data: currentData
+        jobData: currentData
       }
     });
 
@@ -232,7 +232,7 @@ async function processAvatarRendering(
       where: { id: jobId },
       data: {
         progress: 40,
-        job_data: currentData
+        jobData: currentData
       }
     });
 
@@ -245,7 +245,7 @@ async function processAvatarRendering(
       where: { id: jobId },
       data: {
         progress: 60,
-        job_data: currentData
+        jobData: currentData
       }
     });
 
@@ -262,7 +262,7 @@ async function processAvatarRendering(
       where: { id: jobId },
       data: {
         progress: 85,
-        job_data: currentData
+        jobData: currentData
       }
     });
 
@@ -289,7 +289,7 @@ async function processAvatarRendering(
       data: {
         status: 'completed',
         progress: 100,
-        job_data: currentData
+        jobData: currentData
       }
     });
 

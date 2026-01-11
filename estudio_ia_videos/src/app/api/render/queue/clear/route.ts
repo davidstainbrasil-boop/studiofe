@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     const deleteQuery = supabase
       .from('render_jobs')
       .delete()
-      .eq('user_id', user.id)
+      .eq("userId", user.id)
       .in('status', statuses)
     
     const { error } = await deleteQuery
@@ -45,9 +45,9 @@ export async function POST(request: NextRequest) {
       await supabase
         .from('analytics_events')
         .insert({
-          user_id: user.id,
-          event_type: 'render_queue_cleared',
-          event_data: {
+          userId: user.id,
+          eventType: 'render_queue_cleared',
+          eventData: {
             category: 'render',
             action: 'queue_cleared',
             cleared_statuses: statuses,

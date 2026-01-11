@@ -178,7 +178,7 @@ export default function BrazilianVoiceSelector({
             >
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm">{voice.display_name}</CardTitle>
+                  <CardTitle className="text-sm">{voice.displayName}</CardTitle>
                   <div className="flex items-center gap-1">
                     {voice.pricing_tier === 'gratuito' && (
                       <Badge variant="secondary" className="text-xs">Grátis</Badge>
@@ -261,7 +261,7 @@ export default function BrazilianVoiceSelector({
           <CardHeader>
             <CardTitle className="text-base">Configurações de Voz</CardTitle>
             <CardDescription>
-              Ajuste os parâmetros para {selectedVoice.display_name}
+              Ajuste os parâmetros para {selectedVoice.displayName}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">

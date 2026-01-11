@@ -86,8 +86,8 @@ export interface Template {
   tags: string[];
   isFavorite: boolean;
   isCustom: boolean;
-  created_at: Date;
-  updated_at: Date;
+  createdAt: Date;
+  updatedAt: Date;
   author: string;
   version: string;
   downloads: number;
@@ -120,7 +120,7 @@ export async function GET(request: NextRequest) {
       .select('*');
 
     if (category) {
-      systemTemplatesQuery = systemTemplatesQuery.eq('nr_number', category);
+      systemTemplatesQuery = systemTemplatesQuery.eq("nrNumber", category);
     }
     
     if (search) {
@@ -135,14 +135,14 @@ export async function GET(request: NextRequest) {
       id: nr.id,
       name: nr.title,
       description: nr.description || '',
-      category: nr.nr_number as NRCategory,
+      category: nr.nrNumber as NRCategory,
       thumbnail: `https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=${encodeURIComponent(nr.title + ' safety training')}&image_size=square`,
       preview: '',
-      tags: [nr.nr_number, 'NR', 'Safety'],
+      tags: [nr.nrNumber, 'NR', 'Safety'],
       isFavorite: false, 
       isCustom: false,
-      created_at: new Date(nr.created_at),
-      updated_at: new Date(nr.updated_at || Date.now()),
+      createdAt: new Date(nr.createdAt),
+      updatedAt: new Date(nr.updatedAt || Date.now()),
       author: 'Sistema',
       version: '1.0',
       downloads: 0,
@@ -153,7 +153,7 @@ export async function GET(request: NextRequest) {
         animations: [],
         interactions: [],
         settings: {
-          duration: nr.duration_seconds || 600,
+          duration: nr.durationSeconds || 600,
           resolution: { width: 1920, height: 1080 },
           frameRate: 30,
           renderSettings: {
@@ -162,7 +162,7 @@ export async function GET(request: NextRequest) {
           }
         },
         compliance: {
-          nrCategory: nr.nr_number as NRCategory,
+          nrCategory: nr.nrNumber as NRCategory,
           requirements: [],
           checkpoints: [],
           certifications: []
@@ -175,7 +175,7 @@ export async function GET(request: NextRequest) {
       },
       metadata: {
         difficulty: 'intermediate',
-        estimatedDuration: nr.duration_seconds ? nr.duration_seconds / 60 : 10,
+        estimatedDuration: nr.durationSeconds ? nr.durationSeconds / 60 : 10,
         targetAudience: [],
         learningObjectives: [],
         prerequisites: [],
@@ -189,12 +189,12 @@ export async function GET(request: NextRequest) {
           signLanguage: false
         },
         compliance: {
-          nrCategories: [nr.nr_number as NRCategory],
+          nrCategories: [nr.nrNumber as NRCategory],
           lastAudit: new Date(),
           auditScore: 100,
           certifications: [],
           status: 'compliant',
-          requirements: [`Requisito base da ${nr.nr_number}`, 'Conformidade técnica verificada']
+          requirements: [`Requisito base da ${nr.nrNumber}`, 'Conformidade técnica verificada']
         },
         performance: {
           renderTime: 0,
@@ -210,8 +210,8 @@ export async function GET(request: NextRequest) {
       let customQuery = supabase
         .from('projects')
         .select('*')
-        .eq('user_id', user.id)
-        .eq('is_template', true);
+        .eq("userId", user.id)
+        .eq("isTemplate", true);
 
       if (search) {
         customQuery = customQuery.ilike('name', `%${search}%`);
@@ -232,10 +232,10 @@ export async function GET(request: NextRequest) {
             tags: (metadata.tags as string[]) || ['Custom'],
             isFavorite: false,
             isCustom: true,
-            created_at: new Date(p.created_at),
-            updated_at: p.updated_at ? new Date(p.updated_at) : new Date(p.created_at),
+            createdAt: new Date(p.createdAt),
+            updatedAt: p.updatedAt ? new Date(p.updatedAt) : new Date(p.createdAt),
             author: user.email || 'User',
-            version: p.current_version || '1.0',
+            version: p.currentVersion || '1.0',
             downloads: 0,
             rating: 0,
             content: {
@@ -332,8 +332,8 @@ export async function POST(request: NextRequest) {
         description: templateData.description,
         type: 'custom', // or 'template-nr'
         status: 'completed', // Templates are usually ready
-        user_id: user.id,
-        is_template: true,
+        userId: user.id,
+        isTemplate: true,
         metadata: {
           category: templateData.category,
           tags: templateData.tags,
@@ -383,11 +383,11 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Template not found' }, { status: 404 });
     }
 
-    if (existingProject.user_id !== user.id) {
+    if (existingProject.userId !== user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    if (!existingProject.is_template) {
+    if (!existingProject.isTemplate) {
       return NextResponse.json({ error: 'Project is not a template' }, { status: 400 });
     }
 
@@ -405,7 +405,7 @@ export async function PUT(request: NextRequest) {
           tags: updates.tags,
           difficulty: updates.metadata?.difficulty
         },
-        updated_at: new Date().toISOString()
+        updatedAt: new Date().toISOString()
       })
       .eq('id', id)
       .select()
@@ -451,11 +451,11 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Template not found' }, { status: 404 });
     }
 
-    if (existingProject.user_id !== user.id) {
+    if (existingProject.userId !== user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    if (!existingProject.is_template) {
+    if (!existingProject.isTemplate) {
       return NextResponse.json({ error: 'Project is not a template' }, { status: 400 });
     }
 

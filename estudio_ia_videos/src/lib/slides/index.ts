@@ -12,7 +12,7 @@ export async function listSlides(projectId: string): Promise<Slide[]> {
     const { data, error } = await supabase
       .from('slides')
       .select('*')
-      .eq('project_id', projectId)
+      .eq("projectId", projectId)
       .order('order_index', { ascending: true })
       .returns<Slide[]>()
 
@@ -33,7 +33,7 @@ export async function upsertSlides(slides: SlideUpdate[]): Promise<void> {
   const payload: SlideInsert[] = slides.map((slide) => {
     const base: SlideInsert = {
       id: slide.id,
-      project_id: slide.project_id,
+      projectId: slide.projectId,
       order_index: slide.order_index,
     }
 

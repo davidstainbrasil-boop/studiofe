@@ -1,5 +1,5 @@
 export interface ExportConfiguration {
-  project_id: string;
+  projectId: string;
   export_format: 'mp4' | 'webm' | 'scorm' | 'html5' | 'gif';
   quality_settings: {
     resolution: '720p' | '1080p' | '4k';
@@ -17,7 +17,7 @@ export interface ExportConfiguration {
 
 export interface ExportJob {
   id: string;
-  project_id: string;
+  projectId: string;
   configuration: ExportConfiguration;
   status: 'pending' | 'processing' | 'completed' | 'failed';
   progress: number;
@@ -116,7 +116,7 @@ export const MultiFormatExportEngine = {
     // Mock implementation
     return {
       id: `job-${Date.now()}`,
-      project_id: config.project_id,
+      projectId: config.projectId,
       configuration: config,
       status: 'processing',
       progress: 0,
@@ -135,7 +135,7 @@ export const MultiFormatExportEngine = {
     // Mock implementation
     return {
       id: jobId,
-      project_id: 'mock',
+      projectId: 'mock',
       configuration: {} as unknown as ExportConfiguration,
       status: 'completed',
       progress: 100,

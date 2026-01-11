@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
       // Add to job queue
       const jobId = await addVideoJob({
         type: 'subtitle-generate',
-        user_id: 'default-user', // TODO: Get from auth
+        userId: 'default-user', // TODO: Get from auth
         videoUrl: url,
         videoKey: key,
         options: { language, model }

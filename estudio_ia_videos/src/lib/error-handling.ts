@@ -14,7 +14,7 @@ export enum ErrorCategory {
   AUTHORIZATION = 'authorization',
   NOT_FOUND = 'not_found',
   CONFLICT = 'conflict',
-  RATE_LIMIT = 'rate_limit',
+  RATE_LIMIT = "rateLimit",
   EXTERNAL_SERVICE = 'external_service',
   DATABASE = 'database',
   NETWORK = 'network',

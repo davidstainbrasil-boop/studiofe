@@ -89,7 +89,7 @@ export default function VoiceCloningStudio() {
           distribution_allowed: false,
           attribution_required: false
         },
-        created_at: '2025-08-28T14:20:00Z',
+        createdAt: '2025-08-28T14:20:00Z',
         last_updated: '2025-08-29T09:15:00Z',
         status: 'ready'
       }

@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
         name: 'Projeto de Teste',
         description: 'Projeto criado durante setup do banco',
         status: 'draft',
-        user_id: 'test-user-setup',
+        userId: 'test-user-setup',
         settings: {
           width: 1920,
           height: 1080,
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
         },
         metadata: {
           type: 'video',
-          is_public: false
+          isPublic: false
         }
       }
 

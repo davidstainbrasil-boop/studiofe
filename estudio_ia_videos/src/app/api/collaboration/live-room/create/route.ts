@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       projectId,
       name: roomName,
       maxCollaborators,
-      created_at: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
       expiresAt: expiresAt.toISOString(),
       status: 'active',
       settings: {
@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
         collaborators: 4,
         maxCollaborators: 10,
         status: 'active',
-        created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+        createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
         lastActivity: new Date(Date.now() - 5 * 60 * 1000).toISOString()
       },
       {
@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
         collaborators: 2,
         maxCollaborators: 6,
         status: 'active',
-        created_at: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
+        createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
         lastActivity: new Date(Date.now() - 2 * 60 * 1000).toISOString()
       }
     ];

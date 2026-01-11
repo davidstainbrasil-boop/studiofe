@@ -33,13 +33,13 @@ export async function GET(request: NextRequest) {
     // Get NR compliance records
     const nrRecords = await prisma.nr_compliance_records.findMany({
       where: {
-        project_id: { in: projectIds },
-        created_at: {
+        projectId: { in: projectIds },
+        createdAt: {
           gte: startDate,
           lte: endDate
         }
       },
-      orderBy: { created_at: 'desc' }
+      orderBy: { createdAt: 'desc' }
     });
 
     // Calculate metrics
@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
       nr,
       total: data.total,
       averageScore: data.scores.reduce((sum: number, score: number) => sum + score, 0) / data.scores.length,
-      lastValidation: nrRecords.find((v: any) => v.nr === nr)?.created_at
+      lastValidation: nrRecords.find((v: any) => v.nr === nr)?.createdAt
     }));
 
     // Trend data (last 7 days)
@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
       const dayEnd = new Date(date.setHours(23, 59, 59, 999));
 
       const dayValidations = nrRecords.filter((v: any) => 
-        v.created_at >= dayStart && v.created_at <= dayEnd
+        v.createdAt >= dayStart && v.createdAt <= dayEnd
       );
 
       trendData.push({
@@ -93,10 +93,10 @@ export async function GET(request: NextRequest) {
     // Recent validations
     const recentValidations = nrRecords.slice(0, 10).map((v: any) => ({
       id: v.id,
-      project_id: v.project_id,
+      projectId: v.projectId,
       nrType: v.nr,
       score: v.score,
-      created_at: v.created_at,
+      createdAt: v.createdAt,
       suggestions: Array.isArray(v.recommendations) ? v.recommendations : []
     }));
 

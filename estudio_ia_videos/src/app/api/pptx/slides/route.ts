@@ -10,8 +10,8 @@ const slideSchema = z.object({
   title: z.string().min(1, 'Título é obrigatório').max(200, 'Título muito longo'),
   content: z.string().max(5000, 'Conteúdo muito longo'),
   duration: z.number().positive('Duração deve ser positiva').max(300, 'Duração máxima de 5 minutos'),
-  transition_type: z.enum(['fade', 'slide', 'zoom', 'flip', 'none']).default('fade'),
-  thumbnail_url: z.string().url().optional(),
+  transitionType: z.enum(['fade', 'slide', 'zoom', 'flip', 'none']).default('fade'),
+  thumbnailUrl: z.string().url().optional(),
   notes: z.string().max(2000, 'Notas muito longas').optional(),
   properties: z.record(z.unknown()).optional()
 })
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const uploadId = searchParams.get('upload_id')
-    const projectId = searchParams.get('project_id')
+    const projectId = searchParams.get("projectId")
 
     if (!uploadId && !projectId) {
       return NextResponse.json(
@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
     if (uploadId) {
       query = query.eq('upload_id', uploadId)
     } else if (projectId) {
-      query = query.eq('project_id', projectId)
+      query = query.eq("projectId", projectId)
     }
 
     const { data: slides, error } = await query
@@ -81,18 +81,18 @@ export async function GET(request: NextRequest) {
       const { data: project } = await supabase
         .from('projects')
         .select('user_id, is_public')
-        .eq('id', String(upload.project_id))
+        .eq('id', String(upload.projectId))
         .single()
 
       if (project) {
-        let hasPermission = project.user_id === user.id || project.is_public
+        let hasPermission = project.userId === user.id || project.isPublic
 
         if (!hasPermission) {
           const { data: collaborator } = await supabase
             .from('project_collaborators')
-            .select('user_id')
-            .eq('project_id', String(upload.project_id))
-            .eq('user_id', user.id)
+            .select("userId")
+            .eq("projectId", String(upload.projectId))
+            .eq("userId", user.id)
             .single()
           
           if (collaborator) hasPermission = true
@@ -151,14 +151,14 @@ export async function POST(request: NextRequest) {
     }
 
     const project = upload.projects as Record<string, unknown>
-    let hasPermission = project.user_id === user.id
+    let hasPermission = project.userId === user.id
 
     if (!hasPermission) {
       const { data: collaborator } = await supabase
         .from('project_collaborators')
         .select('permissions')
-        .eq('project_id', upload.project_id)
-        .eq('user_id', user.id)
+        .eq("projectId", upload.projectId)
+        .eq("userId", user.id)
         .single()
       
       if (collaborator?.permissions?.includes('can_edit')) {
@@ -211,15 +211,15 @@ export async function POST(request: NextRequest) {
 
     await supabase
       .from('pptx_uploads')
-      .update({ slide_count: slideCount?.length || 0 })
+      .update({ slideCount: slideCount?.length || 0 })
       .eq('id', validatedData.upload_id)
 
     // Registrar no histórico
     await supabase
       .from('project_history')
       .insert({
-        project_id: upload.project_id,
-        user_id: user.id,
+        projectId: upload.projectId,
+        userId: user.id,
         action: 'create',
         entity_type: 'pptx_slide',
         entity_id: slide.id,
@@ -287,14 +287,14 @@ export async function PUT(request: NextRequest) {
     }
 
     const project = upload.projects as Record<string, unknown>
-    let hasPermission = project.user_id === user.id
+    let hasPermission = project.userId === user.id
 
     if (!hasPermission) {
       const { data: collaborator } = await supabase
         .from('project_collaborators')
         .select('permissions')
-        .eq('project_id', upload.project_id)
-        .eq('user_id', user.id)
+        .eq("projectId", upload.projectId)
+        .eq("userId", user.id)
         .single()
       
       if (collaborator?.permissions?.includes('can_edit')) {
@@ -327,8 +327,8 @@ export async function PUT(request: NextRequest) {
     await supabase
       .from('project_history')
       .insert({
-        project_id: upload.project_id,
-        user_id: user.id,
+        projectId: upload.projectId,
+        userId: user.id,
         action: 'update',
         entity_type: 'pptx_slides',
         entity_id: upload_id,

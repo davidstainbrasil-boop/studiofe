@@ -15,19 +15,19 @@ import type { JobStatus } from '@prisma/client'
 
 // Validation schemas
 const RenderJobCreateSchema = z.object({
-  project_id: z.string().min(1),
+  projectId: z.string().min(1),
   type: z.string().optional().default('video'),
   priority: z.enum(['low', 'normal', 'high']).optional().default('normal'),
   composition_id: z.string().optional().default('Main'),
   input_data: z.record(z.unknown()).optional(),
   metadata: z.record(z.unknown()).optional(),
-  estimated_duration: z.number().optional(),
+  estimatedDuration: z.number().optional(),
   webhook_url: z.string().url().optional()
 })
 
 const RenderJobQuerySchema = z.object({
   status: z.string().optional(),
-  project_id: z.string().optional(),
+  projectId: z.string().optional(),
   limit: z.string().transform(val => parseInt(val) || 50).optional(),
   offset: z.string().transform(val => parseInt(val) || 0).optional()
 })
@@ -43,8 +43,8 @@ export async function GET(request: NextRequest) {
       status?: { in: JobStatus[] }
     } = {}
     
-    if (query.project_id) {
-      whereClause.project_id = query.project_id
+    if (query.projectId) {
+      whereClause.projectId = query.projectId
     }
 
     if (query.status) {
@@ -58,16 +58,16 @@ export async function GET(request: NextRequest) {
         where: whereClause,
         select: {
           id: true,
-          project_id: true,
+          projectId: true,
           status: true,
           progress: true,
-          created_at: true,
-          completed_at: true,
-          output_url: true,
-          error_message: true,
-          render_settings: true,
+          createdAt: true,
+          completedAt: true,
+          outputUrl: true,
+          errorMessage: true,
+          renderSettings: true,
         },
-        orderBy: { created_at: 'desc' },
+        orderBy: { createdAt: 'desc' },
         skip: query.offset || 0,
         take: query.limit || 50,
       }),
@@ -77,14 +77,14 @@ export async function GET(request: NextRequest) {
     // Map to frontend-friendly format
     const jobs = renderJobs.map(job => ({
       id: job.id,
-      project_id: job.project_id,
+      projectId: job.projectId,
       status: job.status,
       progress: job.progress,
-      created_at: job.created_at,
-      completedAt: job.completed_at,
-      outputUrl: job.output_url,
-      error: job.error_message,
-      config: job.render_settings,
+      createdAt: job.createdAt,
+      completedAt: job.completedAt,
+      outputUrl: job.outputUrl,
+      error: job.errorMessage,
+      config: job.renderSettings,
     }))
 
     return NextResponse.json({
@@ -129,8 +129,8 @@ export async function POST(request: NextRequest) {
 
     // Verify project exists using Prisma
     const project = await prisma.projects.findUnique({
-      where: { id: jobData.project_id },
-      select: { id: true, user_id: true }
+      where: { id: jobData.projectId },
+      select: { id: true, userId: true }
     })
 
     if (!project) {
@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
     // Check for active renders
     const activeRender = await prisma.render_jobs.findFirst({
       where: {
-        project_id: jobData.project_id,
+        projectId: jobData.projectId,
         status: { in: ['queued', 'processing'] }
       }
     })
@@ -161,7 +161,7 @@ export async function POST(request: NextRequest) {
       priority: jobData.priority,
       input_data: jobData.input_data,
       metadata: jobData.metadata,
-      estimated_duration: jobData.estimated_duration
+      estimatedDuration: jobData.estimatedDuration
     }
 
     // Settings for queue
@@ -175,17 +175,17 @@ export async function POST(request: NextRequest) {
     }
 
     const jobId = randomUUID()
-    const effectiveUserId = project.user_id || userId
+    const effectiveUserId = project.userId || userId
 
     // Insert job using Prisma
     const createdJob = await prisma.render_jobs.create({
       data: {
         id: jobId,
-        project_id: jobData.project_id,
-        user_id: effectiveUserId,
+        projectId: jobData.projectId,
+        userId: effectiveUserId,
         status: 'queued',
         progress: 0,
-        render_settings: renderJobData as object
+        renderSettings: renderJobData as object
       }
     })
 
@@ -193,8 +193,8 @@ export async function POST(request: NextRequest) {
     try {
       await addVideoJob({
         jobId: createdJob.id,
-        project_id: jobData.project_id,
-        user_id: effectiveUserId,
+        projectId: jobData.projectId,
+        userId: effectiveUserId,
         settings: queueSettings,
         webhookUrl: jobData.webhook_url
       })
@@ -202,7 +202,7 @@ export async function POST(request: NextRequest) {
       logger.error('Failed to add job to queue', queueError instanceof Error ? queueError : new Error(String(queueError)), { component: 'API: render/jobs' })
       await prisma.render_jobs.update({
         where: { id: createdJob.id },
-        data: { status: 'failed', error_message: 'Failed to queue job' }
+        data: { status: 'failed', errorMessage: 'Failed to queue job' }
       })
       throw new Error('Failed to queue render job')
     }
@@ -212,10 +212,10 @@ export async function POST(request: NextRequest) {
       await prisma.analytics_events.create({
         data: {
           id: randomUUID(),
-          user_id: effectiveUserId,
-          event_type: 'render_started',
-          event_data: {
-            project_id: jobData.project_id,
+          userId: effectiveUserId,
+          eventType: 'render_started',
+          eventData: {
+            projectId: jobData.projectId,
             job_id: createdJob.id,
             type: jobData.type,
             settings: renderJobData

@@ -81,14 +81,14 @@ export async function GET(request: NextRequest) {
     if (!jobId) {
       // Se projectId for fornecido, retornar histórico
       if (projectId) {
-        const where: { project_id: string; status?: 'queued' | 'processing' | 'completed' | 'error' } = { projectId }
+        const where: { projectId: string; status?: 'queued' | 'processing' | 'completed' | 'error' } = { projectId }
         if (statusFilter && ['queued','processing','completed','error'].includes(statusFilter)) {
           where.status = statusFilter
         }
         const total = await prisma.videoExport.count({ where })
         const jobs = await prisma.videoExport.findMany({
           where,
-          orderBy: { created_at: 'desc' },
+          orderBy: { createdAt: 'desc' },
           take: limit,
           skip: offset
         })
@@ -99,9 +99,9 @@ export async function GET(request: NextRequest) {
             status: j.status,
             progress: j.progress,
             outputUrl: j.videoUrl,
-            error: j.error_message,
-            created_at: j.created_at,
-            updated_at: j.updated_at
+            error: j.errorMessage,
+            createdAt: j.createdAt,
+            updatedAt: j.updatedAt
           })),
           page: {
             total,
@@ -144,7 +144,7 @@ export async function GET(request: NextRequest) {
       success: true,
       job: {
         id: jobStatus.job.id,
-        project_id: jobStatus.job.project_id,
+        projectId: jobStatus.job.projectId,
         status: jobStatus.job.status,
         progress: jobStatus.job.progress,
         outputUrl: jobStatus.job.outputUrl,

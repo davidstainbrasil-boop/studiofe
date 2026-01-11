@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
     const job = {
       id: jobId,
       projectId,
-      user_id: user.id,
+      userId: user.id,
       timeline,
       settings: {
         proxyResolution: settings.proxyResolution || '720p',
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
       },
       status: 'pending' as const,
       progress: 0,
-      created_at: new Date()
+      createdAt: new Date()
     };
 
     logger.info(`[HybridRenderAPI] Starting hybrid render job ${jobId} for user ${user.id}`);
@@ -78,13 +78,13 @@ export async function POST(request: NextRequest) {
       .from('render_jobs')
       .insert({
         id: jobId,
-        project_id: projectId,
-        user_id: user.id,
+        projectId: projectId,
+        userId: user.id,
         status: 'pending',
         progress: 0,
         settings: job.settings,
-        created_at: job.created_at.toISOString(),
-        updated_at: job.created_at.toISOString()
+        createdAt: job.createdAt.toISOString(),
+        updatedAt: job.createdAt.toISOString()
       });
 
     if (dbError) {
@@ -140,8 +140,8 @@ export async function GET(request: NextRequest) {
       const { data: jobs, error } = await supabase
         .from('render_jobs')
         .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
+        .eq("userId", user.id)
+        .order("createdAt", { ascending: false })
         .limit(50);
 
       if (error) {
@@ -163,7 +163,7 @@ export async function GET(request: NextRequest) {
       .from('render_jobs')
       .select('*')
       .eq('id', jobId)
-      .eq('user_id', user.id)
+      .eq("userId", user.id)
       .single();
 
     if (error || !job) {

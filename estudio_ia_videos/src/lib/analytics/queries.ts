@@ -66,9 +66,9 @@ export async function getOverallMetrics(userId: string, dateRange: { startDate: 
   const { count: renderCount } = await supabase
     .from('render_jobs')
     .select('*', { count: 'exact', head: true })
-    .eq('user_id', userId)
-    .gte('created_at', dateRange.startDate.toISOString())
-    .lte('created_at', dateRange.endDate.toISOString());
+    .eq("userId", userId)
+    .gte("createdAt", dateRange.startDate.toISOString())
+    .lte("createdAt", dateRange.endDate.toISOString());
 
   return {
     totalUploads: 0,
@@ -100,7 +100,7 @@ export async function getProjectStats(userId: string, limit: number): Promise<Pr
   const { data: projects } = await supabase
     .from('projects')
     .select('id, name, last_accessed_at')
-    .eq('user_id', userId)
+    .eq("userId", userId)
     .order('last_accessed_at', { ascending: false })
     .limit(limit);
 
@@ -120,9 +120,9 @@ export async function getRenderStats(userId: string, dateRange: { startDate: Dat
   const { data: jobs } = await supabase
     .from('render_jobs')
     .select('status, created_at, completed_at, started_at')
-    .eq('user_id', userId)
-    .gte('created_at', dateRange.startDate.toISOString())
-    .lte('created_at', dateRange.endDate.toISOString());
+    .eq("userId", userId)
+    .gte("createdAt", dateRange.startDate.toISOString())
+    .lte("createdAt", dateRange.endDate.toISOString());
 
   const stats = {
     total: 0,

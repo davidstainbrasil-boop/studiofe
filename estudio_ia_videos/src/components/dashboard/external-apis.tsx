@@ -63,7 +63,7 @@ type AnyProvider = TTSProvider | MediaProvider | NRComplianceProvider
 const getProviderConfig = (provider: AnyProvider) => ({
   api_key: provider.config?.api_key,
   endpoint_url: provider.config?.endpoint,
-  rate_limit: 'rate_limit' in provider.config ? provider.config.rate_limit : undefined,
+  rateLimit: "rateLimit" in provider.config ? provider.config.rateLimit : undefined,
   last_error: 'last_error' in provider ? provider.last_error : undefined,
   rate_limit_exceeded: false // Could be computed from usage if needed
 })
@@ -335,14 +335,14 @@ export function ExternalAPIs() {
                         </div>
                       </div>
                       
-                      {provider.rate_limit && (
+                      {provider.rateLimit && (
                         <div className="space-y-2">
                           <div className="flex justify-between text-sm">
                             <span>Rate Limit</span>
-                            <span>{provider.usage_today || 0} / {provider.rate_limit}</span>
+                            <span>{provider.usage_today || 0} / {provider.rateLimit}</span>
                           </div>
                           <Progress 
-                            value={((provider.usage_today || 0) / provider.rate_limit) * 100} 
+                            value={((provider.usage_today || 0) / provider.rateLimit) * 100} 
                             className="h-2" 
                           />
                         </div>
@@ -472,7 +472,7 @@ export function ExternalAPIs() {
                             <div className="flex items-center justify-between text-xs text-muted-foreground">
                               <span>{result.author || 'Unknown'}</span>
                                                           <FileText className="h-4 w-4 text-muted-foreground" />
-                            <span>{result.file_size ? `${Math.round(result.file_size / 1024)}KB` : 'N/A'}</span>
+                            <span>{result.fileSize ? `${Math.round(result.fileSize / 1024)}KB` : 'N/A'}</span>
                           </div>
                             <div className="flex space-x-2">
                               <Button size="sm" variant="outline" className="flex-1">
@@ -687,7 +687,7 @@ export function ExternalAPIs() {
                 id="rate-limit"
                 type="number"
                 placeholder="1000"
-                defaultValue={selectedProvider ? getProviderConfig(selectedProvider).rate_limit : undefined}
+                defaultValue={selectedProvider ? getProviderConfig(selectedProvider).rateLimit : undefined}
               />
             </div>
             <div className="flex items-center space-x-2">

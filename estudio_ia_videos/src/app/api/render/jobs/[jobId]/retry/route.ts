@@ -29,15 +29,15 @@ export async function PATCH(
 
     const { data: project, error: projectError } = await supabase
       .from('projects')
-      .select('user_id')
-      .eq('id', job.project_id)
+      .select("userId")
+      .eq('id', job.projectId)
       .single()
 
     if (projectError || !project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 })
     }
 
-    if (project.user_id !== user.id) {
+    if (project.userId !== user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -47,10 +47,10 @@ export async function PATCH(
       .update({ 
         status: 'queued',
         progress: 0,
-        error_message: null,
+        errorMessage: null,
         attempts: (job.attempts || 0) + 1,
-        started_at: null,
-        completed_at: null
+        startedAt: null,
+        completedAt: null
       })
       .eq('id', jobId)
 

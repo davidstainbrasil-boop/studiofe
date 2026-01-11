@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     .from('render_jobs')
     .select('id')
     .eq('id', jobId)
-    .eq('user_id', user.id)
+    .eq("userId", user.id)
     .single();
 
   if (error || !job) {
@@ -55,9 +55,9 @@ export async function GET(request: NextRequest) {
             id: currentJob.id,
             status: currentJob.status,
             progress: currentJob.progress,
-            error: currentJob.error_message,
-            outputUrl: currentJob.output_url,
-            updated_at: 'updated_at' in currentJob ? currentJob.updated_at : undefined
+            error: currentJob.errorMessage,
+            outputUrl: currentJob.outputUrl,
+            updatedAt: "updatedAt" in currentJob ? currentJob.updatedAt : undefined
           };
 
           const sseData = `data: ${JSON.stringify(data)}\n\n`;

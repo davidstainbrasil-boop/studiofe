@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
     const { data: userRole } = await supabase
       .from('user_roles')
       .select('role:roles(name)')
-      .eq('user_id', user.id)
+      .eq("userId", user.id)
       .single();
 
     const typedUserRole = userRole as UserRoleWithRole | null;
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
     const { data: recentJobs } = await supabase
       .from('render_jobs')
       .select('*')
-      .order('created_at', { ascending: false })
+      .order("createdAt", { ascending: false })
       .limit(50);
 
     const waitingJobs = recentJobs?.filter(j => j.status === 'queued') || [];
@@ -85,11 +85,11 @@ export async function GET(request: NextRequest) {
 
 interface RenderJob {
   id: string;
-  project_id: string;
-  user_id: string;
+  projectId: string;
+  userId: string;
   progress: number;
   attempts?: number;
-  created_at: string;
+  createdAt: string;
   started_at?: string;
   completed_at?: string;
   error_message?: string;
@@ -99,13 +99,13 @@ function formatDbJob(job: RenderJob) {
   return {
     id: job.id,
     name: 'render-video',
-    data: { project_id: job.project_id, user_id: job.user_id },
+    data: { projectId: job.projectId, userId: job.userId },
     progress: job.progress,
     attemptsMade: job.attempts || 0,
-    timestamp: new Date(job.created_at).getTime(),
-    processedOn: job.started_at ? new Date(job.started_at).getTime() : undefined,
-    finishedOn: job.completed_at ? new Date(job.completed_at).getTime() : undefined,
-    failedReason: job.error_message,
+    timestamp: new Date(job.createdAt).getTime(),
+    processedOn: job.startedAt ? new Date(job.startedAt).getTime() : undefined,
+    finishedOn: job.completedAt ? new Date(job.completedAt).getTime() : undefined,
+    failedReason: job.errorMessage,
   };
 }
 

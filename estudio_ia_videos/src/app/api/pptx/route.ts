@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
     const { data: project, error: projectError } = await supabaseAdmin
       .from('projects')
       .insert({
-        user_id: user.id,
+        userId: user.id,
         name: file.name.replace('.pptx', ''),
         status: 'processing', // Or 'draft'
         type: 'pptx',
@@ -117,8 +117,8 @@ export async function POST(request: NextRequest) {
         const backgroundImage = slide.images.length > 0 ? slide.images[0].url : null;
         
         return {
-            project_id: project.id,
-            order_index: index,
+            projectId: project.id,
+            orderIndex: index,
             title: `Slide ${slide.slideNumber}`,
             content: textContent || `Slide ${slide.slideNumber}`, 
             duration: Math.max(5, slide.duration.estimatedDuration), // Use estimated duration or min 5s
@@ -151,13 +151,13 @@ export async function POST(request: NextRequest) {
       .from('projects')
       .update({
         status: 'draft', // Ready for editing
-        total_slides: slidesToInsert.length
+        totalSlides: slidesToInsert.length
       })
       .eq('id', project.id);
 
     return NextResponse.json({
       success: true,
-      project_id: project.id,
+      projectId: project.id,
       message: 'PPTX processado com sucesso',
       slideCount: slidesToInsert.length
     });

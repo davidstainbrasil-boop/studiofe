@@ -26,13 +26,13 @@ export async function POST(
     if (resolve) {
       await commentsService.resolveComment({
         commentId: params.commentId,
-        user_id: session.user.id,
+        userId: session.user.id,
         resolutionNote,
       });
     } else {
       await commentsService.reopenComment({
         commentId: params.commentId,
-        user_id: session.user.id,
+        userId: session.user.id,
       });
     }
 

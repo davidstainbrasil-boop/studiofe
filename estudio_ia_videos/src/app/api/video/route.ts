@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const action = searchParams.get('action');
-  const project_id = searchParams.get('project_id');
+  const project_id = searchParams.get("projectId");
   const preset_id = searchParams.get('preset_id');
 
   // Test endpoint
@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
       preset_id,
       message: 'Video render job created successfully',
       endpoint: '/api/video?action=create-job',
-      created_at: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
       estimated_completion: new Date(Date.now() + 60000).toISOString()
     });
   }
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
       options: options || {},
       message: 'Video render job created successfully via POST',
       endpoint: '/api/video (POST)',
-      created_at: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
       estimated_completion: new Date(Date.now() + 60000).toISOString()
     });
 

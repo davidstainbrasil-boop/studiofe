@@ -51,8 +51,8 @@ export async function POST(request: NextRequest) {
           id: `template-${Date.now()}-${i}`,
           isCustom: true,
           isFavorite: false,
-          created_at: new Date(),
-          updated_at: new Date(),
+          createdAt: new Date(),
+          updatedAt: new Date(),
           downloads: 0,
           rating: 0,
           metadata: {

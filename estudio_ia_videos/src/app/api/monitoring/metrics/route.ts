@@ -24,7 +24,7 @@ class MonitoringService {
 
 class IntegratedTTSAvatarPipeline {
   private static instance: IntegratedTTSAvatarPipeline;
-  private jobs: Array<{ user_id: string; status: string; actualDuration?: number; created_at: Date }> = [];
+  private jobs: Array<{ userId: string; status: string; actualDuration?: number; createdAt: Date }> = [];
   
   static getInstance(): IntegratedTTSAvatarPipeline {
     if (!this.instance) {
@@ -45,8 +45,8 @@ class IntegratedTTSAvatarPipeline {
     };
   }
   
-  getJobsByUser(user_id: string) {
-    return this.jobs.filter(job => job.user_id === userId);
+  getJobsByUser(userId: string) {
+    return this.jobs.filter(job => job.userId === userId);
   }
 }
 
@@ -185,7 +185,7 @@ export async function GET(request: NextRequest) {
             .reduce((acc, job) => acc + (job.actualDuration || 0), 0) / 
             Math.max(1, userJobs.filter(job => job.actualDuration).length),
           recentJobs: userJobs
-            .sort((a, b) => b.created_at.getTime() - a.created_at.getTime())
+            .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
             .slice(0, 10)
         };
 

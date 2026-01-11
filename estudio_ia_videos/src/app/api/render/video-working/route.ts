@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const action = searchParams.get('action');
-    const project_id = searchParams.get('project_id');
+    const project_id = searchParams.get("projectId");
     const preset_id = searchParams.get('preset_id');
 
     // Test endpoint
@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
         preset_id,
         message: 'Video render job created successfully',
         endpoint: '/api/render/video-working?action=create-job',
-        created_at: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
         estimated_completion: new Date(Date.now() + 60000).toISOString()
       });
     }
@@ -91,10 +91,10 @@ export async function POST(req: NextRequest) {
         status: 'queued',
         project_id,
         preset_id,
-        timeline_data: timeline_data ? 'received' : 'not_provided',
+        timelineData: timeline_data ? 'received' : 'not_provided',
         message: 'Video render job created successfully via POST',
         endpoint: '/api/render/video-working',
-        created_at: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
         estimated_completion: new Date(Date.now() + 60000).toISOString()
       });
     }

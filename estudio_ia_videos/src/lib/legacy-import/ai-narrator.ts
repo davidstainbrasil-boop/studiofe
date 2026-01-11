@@ -501,13 +501,13 @@ export class AINarrator {
       const { data, error } = await this.supabase
         .from('narrations')
         .insert({
-          user_id: userId,
+          userId: userId,
           pdf_id: pdfId,
           scripts: narration.scripts,
           total_duration: narration.totalDuration,
           audio_files: narration.audioFiles,
           transitions: narration.transitions,
-          created_at: new Date().toISOString()
+          createdAt: new Date().toISOString()
         })
         .select()
         .single();

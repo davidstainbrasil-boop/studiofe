@@ -33,7 +33,7 @@ interface Project {
   id: string;
   name: string;
   description?: string;
-  user_id: string;
+  userId: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -128,7 +128,7 @@ export const useEditorStore = create<EditorState>()(
           const { data: slides, error: slidesError } = await supabase
             .from('slides')
             .select('*')
-            .eq('project_id', projectId)
+            .eq("projectId", projectId)
             .order('order_index', { ascending: true });
 
           if (slidesError) throw slidesError;
@@ -173,7 +173,7 @@ export const useEditorStore = create<EditorState>()(
           // If you have temp IDs, you should handle them (e.g. remove ID to let DB generate, then reload)
           const slidesToSave = state.slides.map(s => ({
             id: s.id.includes('-') && s.id.length > 10 ? s.id : undefined, // Simple check for UUID-like
-            project_id: projectId,
+            projectId: projectId,
             order_index: s.order_index,
             title: s.title,
             content: s.content,
@@ -181,7 +181,7 @@ export const useEditorStore = create<EditorState>()(
             background_image: s.visualSettings?.backgroundImageUrl,
             background_color: s.visualSettings?.backgroundColor,
             audio_config: s.audioUrl ? { url: s.audioUrl } : undefined,
-            updated_at: new Date().toISOString()
+            updatedAt: new Date().toISOString()
           }));
 
           const { error } = await supabase
@@ -193,7 +193,7 @@ export const useEditorStore = create<EditorState>()(
           // Update project timestamp
           await supabase
             .from('projects')
-            .update({ updated_at: new Date().toISOString() })
+            .update({ updatedAt: new Date().toISOString() })
             .eq('id', projectId);
 
         } catch (error) {

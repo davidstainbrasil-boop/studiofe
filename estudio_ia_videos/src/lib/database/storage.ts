@@ -34,18 +34,18 @@ type BucketName = keyof typeof BUCKETS;
 
 export interface StorageFile {
   id: string;
-  user_id: string;
+  userId: string;
   bucket: string;
   file_path: string;
   original_name: string;
   mime_type: string | null;
-  file_size: number;
+  fileSize: number;
   checksum: string | null;
   metadata: Record<string, unknown>;
   is_public: boolean;
   download_count: number;
-  created_at: Date;
-  updated_at: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface UploadResult {
@@ -187,12 +187,12 @@ export async function uploadFile(
     
     // Salvar no banco de dados
     const storageFile = await insert<StorageFile>('storage_files', {
-      user_id: userId,
+      userId: userId,
       bucket,
       file_path: relativePath,
       original_name: originalName,
       mime_type: mimeType,
-      file_size: stats.size,
+      fileSize: stats.size,
       checksum,
       metadata: JSON.stringify(options?.metadata || {}),
       is_public: options?.isPublic || false,
@@ -394,7 +394,7 @@ export async function copyFile(
     }
     
     return uploadFile(
-      userId || sourceInfo.user_id,
+      userId || sourceInfo.userId,
       destBucket,
       content,
       destFilePath || sourceInfo.original_name,

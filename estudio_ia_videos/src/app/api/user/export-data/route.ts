@@ -24,7 +24,7 @@ interface UserDataExport {
   exportInfo: {
     requestedAt: string;
     format: string;
-    user_id: string;
+    userId: string;
     email: string;
   };
   profile: Record<string, unknown>;
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   try {
-    logger.info('User data export requested', { user_id: user.id, format: options.format });
+    logger.info('User data export requested', { userId: user.id, format: options.format });
 
     // Fetch user profile
     const { data: profile } = await supabase
@@ -78,8 +78,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       const { data: projectData } = await supabase
         .from('projects')
         .select('id, name, description, status, created_at, updated_at')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .eq("userId", user.id)
+        .order("createdAt", { ascending: false });
       projects = (projectData as ProjectRecord[]) || [];
     }
 
@@ -90,8 +90,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       const rendersTable = supabase.from('render_jobs');
       const { data: renderData } = await rendersTable
         .select('id, status, progress, created_at, completed_at, output_url')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false }) as unknown as { data: Record<string, unknown>[] | null };
+        .eq("userId", user.id)
+        .order("createdAt", { ascending: false }) as unknown as { data: Record<string, unknown>[] | null };
       renders = renderData || [];
     }
 
@@ -102,8 +102,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       const { data: slideData } = await supabase
         .from('slides')
         .select('id, project_id, order_index, title, content, created_at')
-        .in('project_id', projectIds)
-        .order('order_index', { ascending: true });
+        .in("projectId", projectIds)
+        .order("orderIndex", { ascending: true });
       slides = (slideData as Record<string, unknown>[]) || [];
     }
 
@@ -111,7 +111,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       exportInfo: {
         requestedAt: new Date().toISOString(),
         format: options.format,
-        user_id: user.id,
+        userId: user.id,
         email: user.email || 'unknown',
       },
       profile: profile || {},
@@ -138,7 +138,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     });
   } catch (error) {
     const errorInstance = error instanceof Error ? error : new Error(String(error));
-    logger.error('Failed to export user data', errorInstance, { user_id: user.id });
+    logger.error('Failed to export user data', errorInstance, { userId: user.id });
     return NextResponse.json(
       { error: 'Internal Server Error', message: 'Failed to export data' },
       { status: 500 }
@@ -152,7 +152,7 @@ function convertToCSV(data: UserDataExport): string {
   // Export info header
   lines.push('# User Data Export');
   lines.push(`# Requested At: ${data.exportInfo.requestedAt}`);
-  lines.push(`# User ID: ${data.exportInfo.user_id}`);
+  lines.push(`# User ID: ${data.exportInfo.userId}`);
   lines.push(`# Email: ${data.exportInfo.email}`);
   lines.push('');
   

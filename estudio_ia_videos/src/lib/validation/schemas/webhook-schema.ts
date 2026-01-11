@@ -60,12 +60,12 @@ export const WebhookPayloadBaseSchema = z.object({
  * HeyGen webhook payload
  */
 export const HeyGenWebhookPayloadSchema = z.object({
-  event_type: z.enum(['avatar_video.success', 'avatar_video.fail', 'avatar_video.progress']),
-  video_id: z.string(),
+  eventType: z.enum(['avatar_video.success', 'avatar_video.fail', 'avatar_video.progress']),
+  videoId: z.string(),
   callback_id: z.string().optional(),
   data: z.object({
     video_url: z.string().url().optional(),
-    thumbnail_url: z.string().url().optional(),
+    thumbnailUrl: z.string().url().optional(),
     duration: z.number().optional(),
     error: z.string().optional(),
     progress: z.number().min(0).max(100).optional(),
@@ -98,7 +98,7 @@ export const RenderWebhookPayloadSchema = z.object({
   status: z.enum(['queued', 'processing', 'completed', 'failed', 'cancelled']),
   progress: z.number().min(0).max(100).optional(),
   output_url: z.string().url().optional(),
-  thumbnail_url: z.string().url().optional(),
+  thumbnailUrl: z.string().url().optional(),
   duration: z.number().positive().optional(),
   error: z.object({
     message: z.string(),

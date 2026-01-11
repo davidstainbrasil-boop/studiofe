@@ -78,7 +78,7 @@ export async function GET(request: NextRequest, ctx: { params: { id?: string } }
 
   // Type the job with project relation
   const typedJob = job as unknown as RenderJobWithProject
-  const projectUserId = typedJob.projects?.user_id
+  const projectUserId = typedJob.projects?.userId
   if (projectUserId !== user.id) {
     return new Response(JSON.stringify({ error: 'Sem acesso a este job' }), {
       status: 403,
@@ -101,8 +101,8 @@ export async function GET(request: NextRequest, ctx: { params: { id?: string } }
         progress: typedJob.progress,
         stage: null,
         message: null,
-        videoUrl: typedJob.output_url,
-        error: typedJob.error_message,
+        videoUrl: typedJob.outputUrl,
+        error: typedJob.errorMessage,
       })
 
       // BullMQ event callbacks - typed internally, use generic handler for registration

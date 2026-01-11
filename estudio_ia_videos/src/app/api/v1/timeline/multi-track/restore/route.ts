@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify user has access
-    if (snapshot.timeline.project.user_id !== session.user.id) {
+    if (snapshot.timeline.project.userId !== session.user.id) {
       return NextResponse.json(
         { success: false, message: 'Acesso negado' },
         { status: 403 }
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
         settings: toJsonValue(snapshot.settings ?? {}),
         totalDuration: snapshot.totalDuration || 0,
         version: { increment: 1 },
-        updated_at: new Date(),
+        updatedAt: new Date(),
       },
     });
 
@@ -99,8 +99,8 @@ export async function POST(request: NextRequest) {
 
     // Track analytics
     await AnalyticsTracker.trackTimelineEdit({
-      user_id: session.user.id,
-      project_id: snapshot.timeline.project_id,
+      userId: session.user.id,
+      projectId: snapshot.timeline.projectId,
       action: 'restore',
       trackCount: Array.isArray(snapshot.tracks) ? snapshot.tracks.length : 0,
       totalDuration: snapshot.totalDuration || 0,
@@ -110,14 +110,14 @@ export async function POST(request: NextRequest) {
       success: true,
       data: {
         id: restoredTimeline.id,
-        project_id: restoredTimeline.project_id,
+        projectId: restoredTimeline.projectId,
         version: restoredTimeline.version,
         restoredFromVersion: snapshot.version,
         backupSnapshotId: backupSnapshot.id,
         tracks: restoredTimeline.tracks,
         settings: restoredTimeline.settings,
         totalDuration: restoredTimeline.totalDuration,
-        updated_at: restoredTimeline.updated_at.toISOString(),
+        updatedAt: restoredTimeline.updatedAt.toISOString(),
       },
       message: `Timeline restaurada para versão ${snapshot.version}`,
     });

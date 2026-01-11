@@ -7,13 +7,13 @@ import { logger } from '@lib/logger'
 
 const prisma = new PrismaClient()
 
-async function isAdmin(user_id: string | undefined) {
-  if (!userId) {
+async function isAdmin(userId: string | undefined) {
+  if (!user_id) {
     return false
   }
 
   const user = await prisma.users.findUnique({
-    where: { id: userId },
+    where: { id: user_id },
     select: { role: true },
   })
 
@@ -48,7 +48,7 @@ export async function PUT(
 
     await auditLogger.log({
       action: 'user.role_updated',
-      user_id: session.user.id,
+      userId: session.user.id,
       resource: `user:${params.id}`,
       metadata: { role, targetUserId: params.id },
     })
@@ -85,7 +85,7 @@ export async function DELETE(
 
     await auditLogger.log({
       action: 'user.deleted',
-      user_id: session.user.id,
+      userId: session.user.id,
       resource: `user:${params.id}`,
       metadata: { targetUserId: params.id },
     })

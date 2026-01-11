@@ -4,15 +4,15 @@ type JobStatus = 'queued' | 'processing' | 'completed' | 'failed' | 'cancelled'
 
 type MockJob = {
   id: string
-  user_id: string
-  project_id: string
+  userId: string
+  projectId: string
   status: JobStatus
   progress: number
   attempts: number
   duration_ms: number | null
   render_settings: Record<string, unknown>
-  created_at: string
-  updated_at: string
+  createdAt: string
+  updatedAt: string
   completed_at: string | null
 }
 
@@ -48,15 +48,15 @@ const createJob = (userId: string, partial: Partial<MockJob>): MockJob => {
   const now = new Date().toISOString()
   return {
     id: randomUUID(),
-    user_id: userId,
-    project_id: partial.project_id ?? randomUUID(),
+    userId: userId,
+    projectId: partial.projectId ?? randomUUID(),
     status: partial.status ?? 'queued',
     progress: partial.progress ?? 0,
     attempts: partial.attempts ?? 1,
     duration_ms: partial.duration_ms ?? (partial.status === 'completed' ? 42000 : null),
     render_settings: partial.render_settings ?? { slides: 4, quality: 'medium', tts_voice: 'br-Female' },
-    created_at: partial.created_at ?? now,
-    updated_at: partial.updated_at ?? now,
+    createdAt: partial.createdAt ?? now,
+    updatedAt: partial.updatedAt ?? now,
     completed_at: partial.completed_at ?? (partial.status === 'completed' ? now : null),
   }
 }
@@ -68,7 +68,7 @@ const generateSeedJobs = (userId: string): MockJob[] => {
       status: 'completed',
       progress: 100,
       duration_ms: 38000,
-      created_at: new Date(now - 30 * 60 * 1000).toISOString(),
+      createdAt: new Date(now - 30 * 60 * 1000).toISOString(),
       completed_at: new Date(now - 25 * 60 * 1000).toISOString(),
       render_settings: { slides: 12, quality: 'high', tts_voice: 'br-Male' },
     }),
@@ -76,7 +76,7 @@ const generateSeedJobs = (userId: string): MockJob[] => {
       status: 'completed',
       progress: 100,
       duration_ms: 52000,
-      created_at: new Date(now - 90 * 60 * 1000).toISOString(),
+      createdAt: new Date(now - 90 * 60 * 1000).toISOString(),
       completed_at: new Date(now - 88 * 60 * 1000).toISOString(),
       render_settings: { slides: 9, quality: 'medium' },
     }),
@@ -84,21 +84,21 @@ const generateSeedJobs = (userId: string): MockJob[] => {
       status: 'processing',
       progress: 65,
       duration_ms: null,
-      created_at: new Date(now - 5 * 60 * 1000).toISOString(),
+      createdAt: new Date(now - 5 * 60 * 1000).toISOString(),
       render_settings: { slides: 6, quality: 'medium' },
     }),
     createJob(userId, {
       status: 'queued',
       progress: 0,
       duration_ms: null,
-      created_at: new Date(now - 2 * 60 * 1000).toISOString(),
+      createdAt: new Date(now - 2 * 60 * 1000).toISOString(),
       render_settings: { slides: 3, quality: 'low' },
     }),
     createJob(userId, {
       status: 'failed',
       progress: 35,
       duration_ms: null,
-      created_at: new Date(now - 3 * 60 * 60 * 1000).toISOString(),
+      createdAt: new Date(now - 3 * 60 * 60 * 1000).toISOString(),
       render_settings: { slides: 8, quality: 'high' },
     }),
   ]
@@ -115,8 +115,8 @@ const ensureUserJobs = (userId: string): MockJob[] => {
 const toJobResponse = (job: MockJob) => ({
   id: job.id,
   status: job.status,
-  project_id: job.project_id,
-  created_at: job.created_at,
+  projectId: job.projectId,
+  createdAt: job.createdAt,
   progress: job.progress,
   attempts: job.attempts,
   duration_ms: job.duration_ms,
@@ -125,11 +125,11 @@ const toJobResponse = (job: MockJob) => ({
 
 export const insertMockJob = (
   userId: string,
-  payload: { project_id: string; slides: Array<{ order_index: number }>; quality?: string; tts_voice?: string }
+  payload: { projectId: string; slides: Array<{ order_index: number }>; quality?: string; tts_voice?: string }
 ) => {
   const jobs = ensureUserJobs(userId)
   const job = createJob(userId, {
-    project_id: payload.project_id,
+    projectId: payload.projectId,
     status: 'queued',
     progress: 0,
     attempts: 1,
@@ -149,7 +149,7 @@ type ListJobsOpts = {
   offset: number
   status?: string
   projectId?: string
-  sortBy: 'created_at' | 'updated_at' | 'status'
+  sortBy: "createdAt" | "updatedAt" | 'status'
   sortOrder: 'asc' | 'desc'
 }
 
@@ -157,7 +157,7 @@ export const listMockJobs = (userId: string, opts: ListJobsOpts) => {
   const jobs = ensureUserJobs(userId)
   let filtered = opts.status ? jobs.filter((job) => job.status === opts.status) : jobs
   if (opts.projectId) {
-    filtered = filtered.filter((job) => job.project_id === opts.projectId)
+    filtered = filtered.filter((job) => job.projectId === opts.projectId)
   }
 
   const sorted = filtered.slice().sort((a, b) => {
@@ -165,10 +165,10 @@ export const listMockJobs = (userId: string, opts: ListJobsOpts) => {
     if (opts.sortBy === 'status') {
       return a.status.localeCompare(b.status) * dir
     }
-    if (opts.sortBy === 'updated_at') {
-      return (a.updated_at.localeCompare(b.updated_at)) * dir
+    if (opts.sortBy === "updatedAt") {
+      return (a.updatedAt.localeCompare(b.updatedAt)) * dir
     }
-    return (a.created_at.localeCompare(b.created_at)) * dir
+    return (a.createdAt.localeCompare(b.createdAt)) * dir
   })
 
   return sorted.slice(opts.offset, opts.offset + opts.limit).map(toJobResponse)

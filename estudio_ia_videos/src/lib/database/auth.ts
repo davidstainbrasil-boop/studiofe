@@ -19,22 +19,22 @@ export interface User {
   name: string | null;
   avatar_url: string | null;
   role: 'admin' | 'manager' | 'editor' | 'viewer' | 'user';
-  is_active: boolean;
+  isActive: boolean;
   is_verified: boolean;
   last_login: Date | null;
-  created_at: Date;
-  updated_at: Date;
+  createdAt: Date;
+  updatedAt: Date;
   metadata: Record<string, any>;
 }
 
 export interface Session {
   id: string;
-  user_id: string;
+  userId: string;
   token: string;
-  ip_address: string | null;
-  user_agent: string | null;
-  expires_at: Date;
-  created_at: Date;
+  ipAddress: string | null;
+  userAgent: string | null;
+  expiresAt: Date;
+  createdAt: Date;
 }
 
 export interface AuthResult {
@@ -150,7 +150,7 @@ export async function register(
       password_hash: passwordHash,
       name: name || null,
       role: 'user',
-      is_active: true,
+      isActive: true,
       is_verified: false,
       verification_token: generateRandomToken(),
     });
@@ -190,7 +190,7 @@ export async function login(
     }
     
     // Verificar se conta está ativa
-    if (!user.is_active) {
+    if (!user.isActive) {
       return { success: false, error: 'Conta desativada' };
     }
     
@@ -208,11 +208,11 @@ export async function login(
     expiresAt.setSeconds(expiresAt.getSeconds() + parseExpiresIn(JWT_EXPIRES_IN));
     
     await insert('sessions', {
-      user_id: user.id,
+      userId: user.id,
       token,
-      ip_address: ipAddress || null,
-      user_agent: userAgent || null,
-      expires_at: expiresAt,
+      ipAddress: ipAddress || null,
+      userAgent: userAgent || null,
+      expiresAt: expiresAt,
     });
     
     // Atualizar último login

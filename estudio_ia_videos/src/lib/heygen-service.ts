@@ -40,7 +40,7 @@ export interface HeyGenVideoRequest {
 }
 
 export interface HeyGenJobStatus {
-  video_id: string;
+  videoId: string;
   status: 'pending' | 'processing' | 'completed' | 'failed';
   video_url?: string;
   thumbnail_url?: string;
@@ -138,12 +138,12 @@ export class HeyGenService {
   async listAvatars(): Promise<HeyGenAvatar[]> {
     try {
       const data = await this.request('avatars');
-      return data.data.avatars.map((a: { avatar_id: string; name: string; gender: string; preview_image_url: string; preview_video_url: string }) => ({
+      return data.data.avatars.map((a: { avatar_id: string; name: string; gender: string; preview_image_url: string; previewVideoUrl: string }) => ({
         avatar_id: a.avatar_id,
         name: a.name,
         gender: a.gender,
         preview_image_url: a.preview_image_url,
-        preview_video_url: a.preview_video_url,
+        previewVideoUrl: a.previewVideoUrl,
       }));
     } catch (error) {
       logger.info('HeyGen avatares não disponíveis, retornando lista mock.', { 
@@ -158,14 +158,14 @@ export class HeyGenService {
           name: 'Instrutor Virtual (Demo)',
           gender: 'male',
           preview_image_url: '/placeholder-avatar.jpg',
-          preview_video_url: undefined
+          previewVideoUrl: undefined
         },
         {
           avatar_id: 'mock-avatar-2', 
           name: 'Instrutora Virtual (Demo)',
           gender: 'female',
           preview_image_url: '/placeholder-avatar.jpg',
-          preview_video_url: undefined
+          previewVideoUrl: undefined
         }
       ];
     }
@@ -186,11 +186,11 @@ export class HeyGenService {
     
     const data = await this.request('video/generate', 'POST', request as unknown as Record<string, unknown>);
     
-    if (!data.data || !data.data.video_id) {
+    if (!data.data || !data.data.videoId) {
       throw new Error('Failed to get video_id from HeyGen response');
     }
 
-    return data.data.video_id;
+    return data.data.videoId;
   }
 
   async checkStatus(videoId: string): Promise<HeyGenJobStatus> {
@@ -198,7 +198,7 @@ export class HeyGenService {
     
     const status = data.data.status;
     const result: HeyGenJobStatus = {
-      video_id: videoId,
+      videoId: videoId,
       status: status === 'completed' ? 'completed' : 
               status === 'failed' ? 'failed' : 
               status === 'processing' ? 'processing' : 'pending',
@@ -206,7 +206,7 @@ export class HeyGenService {
 
     if (status === 'completed') {
       result.video_url = data.data.video_url;
-      result.thumbnail_url = data.data.thumbnail_url;
+      result.thumbnailUrl = data.data.thumbnailUrl;
     } else if (status === 'failed') {
       result.error = data.data.error?.message || 'Unknown error';
     }

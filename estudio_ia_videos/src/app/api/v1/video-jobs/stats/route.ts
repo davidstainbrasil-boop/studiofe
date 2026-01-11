@@ -120,13 +120,13 @@ export async function GET(req: Request) {
     let baseQuery = supabase
       .from('render_jobs')
       .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId)
+      .eq("userId", userId)
 
     if (queryParams.status) {
       baseQuery = baseQuery.eq('status', queryParams.status)
     }
-    if (queryParams.project_id) {
-      baseQuery = baseQuery.eq('project_id', queryParams.project_id)
+    if (queryParams.projectId) {
+      baseQuery = baseQuery.eq("projectId", queryParams.projectId)
     }
 
     const totalQuery = await baseQuery
@@ -138,14 +138,14 @@ export async function GET(req: Request) {
     let statusQuery: SupabaseQueryBuilder = supabase
       .from('render_jobs')
       .select('status')
-      .eq('user_id', userId)
+      .eq("userId", userId)
       .limit(queryParams.limit)
 
     if (queryParams.status) {
       statusQuery = statusQuery.eq('status', queryParams.status)
     }
-    if (queryParams.project_id) {
-      statusQuery = statusQuery.eq('project_id', queryParams.project_id)
+    if (queryParams.projectId) {
+      statusQuery = statusQuery.eq("projectId", queryParams.projectId)
     }
 
     const { data: statusRows, error: statusErr } = await statusQuery
@@ -177,12 +177,12 @@ export async function GET(req: Request) {
     let completedQueryBuilder: SupabaseQueryBuilder = supabase
       .from('render_jobs')
       .select('id', { count: 'exact' })
-      .eq('user_id', userId)
+      .eq("userId", userId)
       .eq('status', 'completed')
-      .gte('completed_at', sinceIso)
+      .gte("completedAt", sinceIso)
 
-    if (queryParams.project_id) {
-      completedQueryBuilder = completedQueryBuilder.eq('project_id', queryParams.project_id)
+    if (queryParams.projectId) {
+      completedQueryBuilder = completedQueryBuilder.eq("projectId", queryParams.projectId)
     }
 
     const completedQuery = await completedQueryBuilder
@@ -193,13 +193,13 @@ export async function GET(req: Request) {
     // Duração média (ms) para completados recentes (limitado a 5000)
     let durationQuery: SupabaseQueryBuilder = supabase
       .from('render_jobs')
-      .select('duration_ms')
-      .eq('user_id', userId)
+      .select("durationMs")
+      .eq("userId", userId)
       .eq('status', 'completed')
       .limit(queryParams.limit)
 
-    if (queryParams.project_id) {
-      durationQuery = durationQuery.eq('project_id', queryParams.project_id)
+    if (queryParams.projectId) {
+      durationQuery = durationQuery.eq("projectId", queryParams.projectId)
     }
 
     const { data: durationRows, error: durationErr } = await durationQuery
@@ -212,7 +212,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ code: 'DB_ERROR', message: 'Falha ao obter métricas de duração', details: durationErr.message }, { status: 500 })
     }
 
-    const durations = (durationRows || []).map((r: { duration_ms: number | null }) => (typeof r.duration_ms === 'number' ? r.duration_ms : null)).filter((v: number | null) => typeof v === 'number') as number[]
+    const durations = (durationRows || []).map((r: { durationMs: number | null }) => (typeof r.durationMs === 'number' ? r.durationMs : null)).filter((v: number | null) => typeof v === 'number') as number[]
     const avg_duration_ms = durations.length ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length) : 0
 
     // Percentis (p50/p90/p95) sobre durations
@@ -249,7 +249,7 @@ export async function GET(req: Request) {
         limit: queryParams.limit,
         filters: {
           status: queryParams.status ?? null,
-          project_id: queryParams.project_id ?? null,
+          projectId: queryParams.projectId ?? null,
         }
       }
     }

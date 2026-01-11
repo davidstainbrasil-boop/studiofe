@@ -398,7 +398,7 @@ export async function POST(request: NextRequest) {
       await supabaseAdmin
         .from('external_api_usage')
         .insert({
-          user_id: session.user.id,
+          userId: session.user.id,
           api_type: 'compliance',
           provider_id: 'nr-compliance',
           requests_made: 1,
@@ -409,7 +409,7 @@ export async function POST(request: NextRequest) {
             overall_score: results.overall_score,
             passed: results.passed
           },
-          created_at: new Date().toISOString()
+          createdAt: new Date().toISOString()
         })
     } catch (usageLogError) {
       logger.warn('Failed to log compliance check usage', { component: 'API: external/compliance/check' })
@@ -421,9 +421,9 @@ export async function POST(request: NextRequest) {
       await supabaseAdmin
         .from('analytics_events')
         .insert({
-          user_id: session.user.id,
-          event_type: 'external_api_compliance_check',
-          event_data: {
+          userId: session.user.id,
+          eventType: 'external_api_compliance_check',
+          eventData: {
             category: 'external_apis',
             action: 'compliance_checked',
             content_type: params.content_type,

@@ -68,9 +68,9 @@ async function getHandler(req: NextRequest) {
 
     // Listar alertas
     const whereClause: any = {
-      event_type: 'alert',
+      eventType: 'alert',
       ...(organizationId && { 
-        event_data: {
+        eventData: {
           path: ['organizationId'],
           equals: organizationId
         }
@@ -81,7 +81,7 @@ async function getHandler(req: NextRequest) {
       // We need to be careful with merging filters on eventData
       // Using AND is safer when multiple filters on the same JSON field are needed
       const statusFilter: any = {
-        event_data: {
+        eventData: {
           path: ['status'],
           equals: status
         }
@@ -100,7 +100,7 @@ async function getHandler(req: NextRequest) {
 
     if (severity !== 'all') {
       const severityFilter: any = {
-        event_data: {
+        eventData: {
           path: ['severity'],
           equals: severity
         }
@@ -119,7 +119,7 @@ async function getHandler(req: NextRequest) {
 
     const alerts = await prisma.analytics_events.findMany({
       where: whereClause,
-      orderBy: { created_at: 'desc' },
+      orderBy: { createdAt: 'desc' },
       take: limit
     });
 
@@ -127,9 +127,9 @@ async function getHandler(req: NextRequest) {
     const [totalAlerts, activeAlerts, criticalAlerts, recentAlerts] = await Promise.all([
       prisma.analytics_events.count({
         where: {
-          event_type: 'alert',
+          eventType: 'alert',
           ...(organizationId && { 
-            event_data: {
+            eventData: {
               path: ['organizationId'],
               equals: organizationId
             }
@@ -139,16 +139,16 @@ async function getHandler(req: NextRequest) {
       
       prisma.analytics_events.count({
         where: {
-          event_type: 'alert',
+          eventType: 'alert',
           AND: [
             {
-              event_data: {
+              eventData: {
                 path: ['status'],
                 equals: 'active'
               }
             },
             ...(organizationId ? [{
-              event_data: {
+              eventData: {
                 path: ['organizationId'],
                 equals: organizationId
               }
@@ -159,22 +159,22 @@ async function getHandler(req: NextRequest) {
       
       prisma.analytics_events.count({
         where: {
-          event_type: 'alert',
+          eventType: 'alert',
           AND: [
             {
-              event_data: {
+              eventData: {
                 path: ['status'],
                 equals: 'active'
               }
             },
             {
-              event_data: {
+              eventData: {
                 path: ['severity'],
                 equals: 'critical'
               }
             },
             ...(organizationId ? [{
-              event_data: {
+              eventData: {
                 path: ['organizationId'],
                 equals: organizationId
               }
@@ -185,12 +185,12 @@ async function getHandler(req: NextRequest) {
       
       prisma.analytics_events.count({
         where: {
-          event_type: 'alert',
-          created_at: {
+          eventType: 'alert',
+          createdAt: {
             gte: new Date(Date.now() - 24 * 60 * 60 * 1000) // Últimas 24h
           },
           ...(organizationId && { 
-            event_data: {
+            eventData: {
               path: ['organizationId'],
               equals: organizationId
             }
@@ -200,7 +200,7 @@ async function getHandler(req: NextRequest) {
     ]);
 
     const formattedAlerts = alerts.map((alert: any) => {
-      const data = (alert.event_data as unknown as AlertEventData) || {};
+      const data = (alert.eventData as unknown as AlertEventData) || {};
 
       const valueFromData = typeof data.value === 'number'
         ? data.value
@@ -219,9 +219,9 @@ async function getHandler(req: NextRequest) {
         threshold: typeof data.threshold === 'number' ? data.threshold : 0,
         status: data.status ?? 'success',
         organizationId: data.organizationId,
-        user_id: alert.user_id,
+        userId: alert.userId,
         metadata: data,
-        triggeredAt: alert.created_at,
+        triggeredAt: alert.createdAt,
         acknowledgedAt: data.acknowledgedAt ? new Date(data.acknowledgedAt) : null,
         resolvedAt: data.resolvedAt ? new Date(data.resolvedAt) : null,
         acknowledgedBy: data.acknowledgedBy,
@@ -323,9 +323,9 @@ async function postHandler(req: NextRequest) {
       const rule = await prisma.analytics_events.create({
         data: {
           id: crypto.randomUUID(),
-          user_id: session.user.id,
-          event_type: 'alert_rule',
-          event_data: {
+          userId: session.user.id,
+          eventType: 'alert_rule',
+          eventData: {
             organizationId,
             type,
             title: name,
@@ -338,7 +338,7 @@ async function postHandler(req: NextRequest) {
             channels: channels || [],
             cooldown,
             createdBy: session.user.id,
-            created_at: new Date().toISOString()
+            createdAt: new Date().toISOString()
           }
         }
       });
@@ -399,10 +399,10 @@ async function putHandler(req: NextRequest) {
     const existingRule = await prisma.analytics_events.findFirst({
       where: {
         id: ruleId,
-        event_type: 'alert_rule',
-        user_id: session.user.id,
+        eventType: 'alert_rule',
+        userId: session.user.id,
         ...(organizationId && { 
-          event_data: {
+          eventData: {
             path: ['organizationId'],
             equals: organizationId
           }
@@ -418,7 +418,7 @@ async function putHandler(req: NextRequest) {
     }
 
     // Atualizar regra
-    const currentData = (existingRule.event_data as Record<string, unknown> | null) || {};
+    const currentData = (existingRule.eventData as Record<string, unknown> | null) || {};
     const updatedData = {
       ...currentData,
       ...updates,
@@ -427,13 +427,13 @@ async function putHandler(req: NextRequest) {
       status: updates.isActive !== undefined ? 
         (updates.isActive ? 'active' : 'inactive') : currentData.status,
       updatedBy: session.user.id,
-      updated_at: new Date().toISOString()
+      updatedAt: new Date().toISOString()
     };
 
     await prisma.analytics_events.update({
       where: { id: ruleId },
       data: {
-        event_data: updatedData as any
+        eventData: updatedData as any
       }
     });
 
@@ -486,10 +486,10 @@ async function deleteHandler(req: NextRequest) {
     const existingRule = await prisma.analytics_events.findFirst({
       where: {
         id: ruleId,
-        event_type: 'alert_rule',
-        user_id: session.user.id,
+        eventType: 'alert_rule',
+        userId: session.user.id,
         ...(organizationId && { 
-          event_data: {
+          eventData: {
             path: ['organizationId'],
             equals: organizationId
           }

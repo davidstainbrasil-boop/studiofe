@@ -308,7 +308,7 @@ export async function POST(request: NextRequest) {
       tags,
       metadata: {
         ...metadata,
-        created_at: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
         size: JSON.stringify(value).length
       }
     };

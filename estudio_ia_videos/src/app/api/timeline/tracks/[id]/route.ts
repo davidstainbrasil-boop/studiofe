@@ -17,7 +17,7 @@ const updateTrackSchema = z.object({
 
 // Type interfaces
 interface ProjectInfo {
-  user_id: string;
+  userId: string;
   is_public?: boolean;
 }
 
@@ -30,7 +30,7 @@ interface TrackWithProject {
   visible?: boolean;
   locked?: boolean;
   muted?: boolean;
-  project_id: string;
+  projectId: string;
   project: ProjectInfo;
   timeline_elements?: unknown[];
 }
@@ -88,14 +88,14 @@ export async function GET(
     
     // Verificar permissões
     const project = track.project
-    let hasPermission = project.user_id === user.id || !!project.is_public
+    let hasPermission = project.userId === user.id || !!project.isPublic
 
     if (!hasPermission) {
       const { data: collaborator } = await supabase
         .from('project_collaborators')
-        .select('user_id')
-        .eq('project_id', track.project_id)
-        .eq('user_id', user.id)
+        .select("userId")
+        .eq("projectId", track.projectId)
+        .eq("userId", user.id)
         .single()
       
       if (collaborator) hasPermission = true
@@ -163,14 +163,14 @@ export async function PUT(
     
     // Verificar permissões
     const project = existingTrack.project
-    let hasPermission = project.user_id === user.id
+    let hasPermission = project.userId === user.id
 
     if (!hasPermission) {
       const { data: collaborator } = await supabase
         .from('project_collaborators')
         .select('permissions')
-        .eq('project_id', existingTrack.project_id)
-        .eq('user_id', user.id)
+        .eq("projectId", existingTrack.projectId)
+        .eq("userId", user.id)
         .single()
       
       // Check if permissions array contains 'write' or 'edit'
@@ -211,8 +211,8 @@ export async function PUT(
     await supabase
       .from('project_history')
       .insert({
-        project_id: existingTrack.project_id,
-        user_id: user.id,
+        projectId: existingTrack.projectId,
+        userId: user.id,
         action: 'update',
         entity_type: 'track',
         entity_id: trackId,
@@ -287,14 +287,14 @@ export async function DELETE(
     
     // Verificar permissões
     const project = existingTrack.project
-    let hasPermission = project.user_id === user.id
+    let hasPermission = project.userId === user.id
 
     if (!hasPermission) {
       const { data: collaborator } = await supabase
         .from('project_collaborators')
         .select('permissions')
-        .eq('project_id', existingTrack.project_id)
-        .eq('user_id', user.id)
+        .eq("projectId", existingTrack.projectId)
+        .eq("userId", user.id)
         .single()
       
       // Check if permissions array contains 'write' or 'edit'
@@ -317,7 +317,7 @@ export async function DELETE(
     const { data: elements } = await supabase
       .from('timeline_elements')
       .select('id')
-      .eq('track_id', trackId)
+      .eq("trackId", trackId)
       .limit(1)
 
     if (elements && elements.length > 0) {
@@ -345,8 +345,8 @@ export async function DELETE(
     await supabase
       .from('project_history')
       .insert({
-        project_id: existingTrack.project_id,
-        user_id: user.id,
+        projectId: existingTrack.projectId,
+        userId: user.id,
         action: 'delete',
         entity_type: 'track',
         entity_id: trackId,

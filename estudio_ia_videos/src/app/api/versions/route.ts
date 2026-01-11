@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Verifica permissão
-    if (project.user_id !== getUserId(session.user)) {
+    if (project.userId !== getUserId(session.user)) {
       return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
     }
 
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
     const version = await prisma.projectVersion.create({
       data: {
         projectId,
-        user_id: getUserId(session.user),
+        userId: getUserId(session.user),
         name,
         description,
         versionNumber: versionCount + 1,

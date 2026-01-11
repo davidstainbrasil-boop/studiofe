@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       .from('avatar_models' as never) as ReturnType<typeof supabaseClient.from>)
       .select('*')
       .eq('id', avatarId)
-      .eq('is_active', true)
+      .eq("isActive", true)
       .single()
 
     if (avatarError || !avatar) {
@@ -136,9 +136,9 @@ export async function POST(request: NextRequest) {
         avatar: {
           id: avatarData.id,
           name: avatarData.name,
-          displayName: avatarData.display_name,
+          displayName: avatarData.displayName,
           category: avatarData.category,
-          audio2FaceCompatible: avatarData.audio2face_compatible
+          audio2FaceCompatible: avatarData.audio2faceCompatible
         },
         render: {
           animation,
@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
         metadata: {
           startTime: renderResult.startTime ? new Date(renderResult.startTime).toISOString() : new Date().toISOString(),
           version: '2.0.0',
-          user_id: 'user-temp', // TODO: Obter userId real
+          userId: 'user-temp', // TODO: Obter userId real
           audioFile: audioFile ? audioFile.name : null,
           textLength: text?.length || 0
         }
@@ -215,7 +215,7 @@ export async function GET(request: NextRequest) {
           category
         )
       `))
-      .order('created_at', { ascending: false })
+      .order("createdAt", { ascending: false })
 
     // Filtrar por status
     if (status && status !== 'all') {
@@ -224,7 +224,7 @@ export async function GET(request: NextRequest) {
 
     // Filtrar por usuário
     if (userId) {
-      query = query.eq('user_id', userId)
+      query = query.eq("userId", userId)
     }
 
     // Aplicar paginação
@@ -245,7 +245,7 @@ export async function GET(request: NextRequest) {
       countQuery = countQuery.eq('status', status)
     }
     if (userId) {
-      countQuery = countQuery.eq('user_id', userId)
+      countQuery = countQuery.eq("userId", userId)
     }
 
     const { count: totalJobs } = await countQuery
@@ -254,11 +254,11 @@ export async function GET(request: NextRequest) {
     const stats = await avatar3DPipeline.getPipelineStats()
 
     interface RenderJobRecord {
-      id: string; avatar_model_id: string; user_id: string; status: string;
-      progress?: number; created_at: string; completed_at?: string;
+      id: string; avatarModelId: string; userId: string; status: string;
+      progress?: number; createdAt: string; completed_at?: string;
       output_video_url?: string; output_thumbnail_url?: string;
       error_message?: string; lipsync_accuracy?: number; audio2face_enabled?: boolean;
-      avatar_models?: { id: string; name: string; display_name: string; category: string };
+      avatar_models?: { id: string; name: string; displayName: string; category: string };
       quality?: string; resolution?: string; ray_tracing_enabled?: boolean;
       real_time_lipsync?: boolean; language?: string;
     }
@@ -267,31 +267,31 @@ export async function GET(request: NextRequest) {
       data: {
         jobs: (jobs || []).map((job: RenderJobRecord) => ({
           id: job.id,
-          avatarId: job.avatar_model_id,
-          user_id: job.user_id,
+          avatarId: job.avatarModelId,
+          userId: job.userId,
           status: job.status,
           progress: job.progress || 0,
-          startTime: job.created_at,
-          endTime: job.completed_at,
-          duration: job.completed_at ? 
-            new Date(job.completed_at).getTime() - new Date(job.created_at).getTime() : 
-            Date.now() - new Date(job.created_at).getTime(),
+          startTime: job.createdAt,
+          endTime: job.completedAt,
+          duration: job.completedAt ? 
+            new Date(job.completedAt).getTime() - new Date(job.createdAt).getTime() : 
+            Date.now() - new Date(job.createdAt).getTime(),
           outputVideo: job.output_video_url,
           outputThumbnail: job.output_thumbnail_url,
-          error: job.error_message,
-          lipSyncAccuracy: job.lipsync_accuracy,
+          error: job.errorMessage,
+          lipSyncAccuracy: job.lipsyncAccuracy,
           audio2FaceEnabled: job.audio2face_enabled,
           avatar: job.avatar_models ? {
             id: job.avatar_models.id,
             name: job.avatar_models.name,
-            displayName: job.avatar_models.display_name,
+            displayName: job.avatar_models.displayName,
             category: job.avatar_models.category
           } : null,
           render: {
             quality: job.quality,
             resolution: job.resolution,
             rayTracing: job.ray_tracing_enabled,
-            realTimeLipSync: job.real_time_lipsync,
+            realTimeLipSync: job.realTimeLipsync,
             language: job.language
           }
         })),
@@ -313,7 +313,7 @@ export async function GET(request: NextRequest) {
           timestamp: new Date().toISOString(),
           filters: {
             status: status || 'all',
-            user_id: userId || null
+            userId: userId || null
           }
         }
       }
@@ -387,7 +387,7 @@ export async function DELETE(request: NextRequest) {
       
       const oldJobsCount = await prisma.render_jobs.count({
         where: {
-          created_at: { lt: thirtyDaysAgo },
+          createdAt: { lt: thirtyDaysAgo },
           status: { in: ['completed', 'failed', 'cancelled'] }
         }
       })

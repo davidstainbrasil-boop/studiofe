@@ -13,7 +13,7 @@ jest.mock('../../lib/monitoring/real-time-monitor', () => ({
     getMetrics: jest.fn(() => []),
     getLatestMetrics: jest.fn(() => ({
       system: { cpu_usage: 10, memory_usage: 20 },
-      application: { response_time: 100, error_rate: 0, throughput: 10, concurrent_jobs: 1 },
+      application: { responseTime: 100, error_rate: 0, throughput: 10, concurrent_jobs: 1 },
       cache: { hit_rate: 0.9 }
     })),
     getAlerts: jest.fn(() => []),

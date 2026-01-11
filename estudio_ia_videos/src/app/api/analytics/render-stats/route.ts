@@ -19,22 +19,22 @@ const cache = getInMemoryCache({ ttl: 30000 })
 
 type TimeRange = RenderStatsQuery['timeRange']
 
-type RenderJobRow = Omit<BasicRenderJob, 'render_settings'> & {
+type RenderJobRow = Omit<BasicRenderJob, "renderSettings"> & {
   user_id?: string
   project_type?: string
-  render_settings: Record<string, unknown>
+  renderSettings: Record<string, unknown>
 }
 
 type RenderJobWithProject = {
   id: string
-  created_at: string
-  started_at: string | null
-  completed_at: string | null
+  createdAt: string
+  startedAt: string | null
+  completedAt: string | null
   status: string
-  error_message: string | null
-  render_settings: Record<string, unknown>
+  errorMessage: string | null
+  renderSettings: Record<string, unknown>
   projects: {
-    user_id: string
+    userId: string
     type: string
   } | null
 }
@@ -44,7 +44,7 @@ type RenderStatsPayload = {
     generated_at: string
     time_range: TimeRange
     filters: {
-      user_id: string | null
+      userId: string | null
       projectType: string | null
       status: RenderStatsQuery['status']
     }
@@ -103,12 +103,12 @@ export async function GET(req: NextRequest) {
       'id, created_at, started_at, completed_at, status, error_message, render_settings, projects!inner(user_id, type)',
       { count: 'exact' }
     )
-    .gte('created_at', getTimeRangeFilter(params.timeRange).toISOString())
-    .order('created_at', { ascending: false })
+    .gte("createdAt", getTimeRangeFilter(params.timeRange).toISOString())
+    .order("createdAt", { ascending: false })
     .limit(MAX_ROWS)
 
-  if (params.user_id) {
-    query = query.eq('projects.user_id', params.user_id)
+  if (params.userId) {
+    query = query.eq('projects.userId', params.userId)
   }
 
   if (params.projectType) {
@@ -130,13 +130,13 @@ export async function GET(req: NextRequest) {
   
   const jobs: RenderJobRow[] = rawJobs.map((job: any) => ({
     id: job.id,
-    created_at: job.created_at,
-    started_at: job.started_at,
-    completed_at: job.completed_at,
+    createdAt: job.createdAt,
+    startedAt: job.startedAt,
+    completedAt: job.completedAt,
     status: job.status,
-    error_message: job.error_message,
-    render_settings: job.render_settings,
-    user_id: job.projects?.user_id,
+    errorMessage: job.errorMessage,
+    renderSettings: job.renderSettings,
+    userId: job.projects?.userId,
     project_type: job.projects?.type
   }))
 
@@ -156,7 +156,7 @@ export async function GET(req: NextRequest) {
       generated_at: new Date().toISOString(),
       time_range: params.timeRange,
       filters: {
-        user_id: params.user_id ?? null,
+        userId: params.userId ?? null,
         projectType: params.projectType ?? null,
         status: params.status
       },

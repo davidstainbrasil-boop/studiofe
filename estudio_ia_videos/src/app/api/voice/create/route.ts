@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
 
     // Inicia treinamento
     const result = await trainVoice({
-      user_id: getUserId(session.user),
+      userId: getUserId(session.user),
       name,
       description,
       samples: sampleBuffers
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
     // Note: VoiceClone model must be present in schema.prisma and prisma generate run
     const voiceClone = await prisma.voiceClone.create({
       data: {
-        user_id: getUserId(session.user),
+        userId: getUserId(session.user),
         name,
         description,
         provider: 'elevenlabs',

@@ -1,12 +1,12 @@
 type Project = {
   id: string
-  user_id: string
+  userId: string
   title: string
   description: string
   status: 'draft' | 'processing' | 'ready' | 'error'
   settings: Record<string, unknown>
-  created_at: string
-  updated_at: string
+  createdAt: string
+  updatedAt: string
 }
 
 export const mockProjects = new Map<string, Project>()
@@ -17,6 +17,6 @@ export function addProject(project: Project) {
 
 export function getUserProjects(userId: string): Project[] {
   return Array.from(mockProjects.values())
-    .filter(p => p.user_id === userId)
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .filter(p => p.userId === userId)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 }

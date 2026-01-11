@@ -9,7 +9,7 @@ type Avatar3DWithProject = any;
 
 // Schema de validação para avatar 3D
 const avatarSchema = z.object({
-  project_id: z.string().refine((val) => /^[0-9a-fA-F-]{36}$/.test(val), 'ID do projeto inválido'),
+  projectId: z.string().refine((val) => /^[0-9a-fA-F-]{36}$/.test(val), 'ID do projeto inválido'),
   name: z.string().min(1, 'Nome é obrigatório').max(100, 'Nome muito longo'),
   ready_player_me_url: z.string().url('URL do Ready Player Me inválida'),
   avatar_type: z.enum(['full_body', 'half_body', 'head_only']).default('half_body'),
@@ -20,10 +20,10 @@ const avatarSchema = z.object({
     type: z.enum(['idle', 'talking', 'gesture', 'emotion', 'custom']),
     duration: z.number().positive(),
     loop: z.boolean().default(false),
-    file_url: z.string().url().optional()
+    fileUrl: z.string().url().optional()
   })).default([]),
-  voice_settings: z.object({
-    voice_id: z.string().optional(),
+  voiceSettings: z.object({
+    voiceId: z.string().optional(),
     language: z.string().default('pt-BR'),
     speed: z.number().min(0.5).max(2.0).default(1.0),
     pitch: z.number().min(-20).max(20).default(0),
@@ -32,7 +32,7 @@ const avatarSchema = z.object({
   properties: z.record(z.unknown()).default({})
 })
 
-const updateAvatarSchema = avatarSchema.omit({ project_id: true }).partial()
+const updateAvatarSchema = avatarSchema.omit({ projectId: true }).partial()
 
 // GET - Listar avatares 3D
 export async function GET(request: NextRequest) {
@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    const projectId = searchParams.get('project_id')
+    const projectId = searchParams.get("projectId")
     const avatarType = searchParams.get('avatar_type')
     const style = searchParams.get('style')
     const limit = parseInt(searchParams.get('limit') || '20')
@@ -66,11 +66,11 @@ export async function GET(request: NextRequest) {
           is_public
         )
       `)
-      .order('created_at', { ascending: false })
+      .order("createdAt", { ascending: false })
       .range(offset, offset + limit - 1)
 
     if (projectId) {
-      query = query.eq('project_id', projectId)
+      query = query.eq("projectId", projectId)
     }
 
     if (avatarType) {
@@ -99,7 +99,7 @@ export async function GET(request: NextRequest) {
       if (!project) return false
       return project.owner_id === user.id || 
              (Array.isArray(project.collaborators) && project.collaborators.includes(user.id)) ||
-             project.is_public
+             project.isPublic
     })
 
     return NextResponse.json({ avatars: authorizedAvatars })
@@ -133,7 +133,7 @@ export async function POST(request: NextRequest) {
     const { data: projectData } = await supabase
       .from('projects')
       .select('owner_id, collaborators')
-      .eq('id', validatedData.project_id)
+      .eq('id', validatedData.projectId)
       .single()
 
     if (!projectData) {
@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
     const { data: existingAvatar } = await supabase
       .from('avatars_3d')
       .select('id')
-      .eq('project_id', validatedData.project_id)
+      .eq("projectId", validatedData.projectId)
       .eq('name', validatedData.name)
       .single()
 
@@ -186,9 +186,9 @@ export async function POST(request: NextRequest) {
       .from('avatars_3d')
       .insert({
         ...validatedData,
-        user_id: user.id,
-        model_url: avatarData.model_url,
-        thumbnail_url: avatarData.thumbnail_url,
+        userId: user.id,
+        modelUrl: avatarData.modelUrl,
+        thumbnailUrl: avatarData.thumbnailUrl,
         metadata: avatarData.metadata
       } as any)
       .select()
@@ -206,8 +206,8 @@ export async function POST(request: NextRequest) {
     await supabase
       .from('project_history')
       .insert({
-        project_id: validatedData.project_id,
-        user_id: user.id,
+        projectId: validatedData.projectId,
+        userId: user.id,
         action: 'create',
         entity_type: 'avatar_3d',
         entity_id: avatar.id,
@@ -256,11 +256,11 @@ async function fetchReadyPlayerMeData(url: string) {
   const avatarId = url.split('/').pop()?.split('.')[0] || 'default'
   
   return {
-    model_url: `https://models.readyplayer.me/${avatarId}.glb`,
-    thumbnail_url: `https://models.readyplayer.me/${avatarId}.png`,
+    modelUrl: `https://models.readyplayer.me/${avatarId}.glb`,
+    thumbnailUrl: `https://models.readyplayer.me/${avatarId}.png`,
     metadata: {
       id: avatarId,
-      created_at: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
       body_type: 'fullbody',
       outfit: 'casual',
       hair_color: '#8B4513',
@@ -346,8 +346,8 @@ export async function PUT(request: NextRequest) {
     await supabase
       .from('project_history')
       .insert({
-        project_id: project_id,
-        user_id: user.id,
+        projectId: project_id,
+        userId: user.id,
         action: 'update',
         entity_type: 'project_settings',
         entity_id: project_id,

@@ -32,8 +32,8 @@ export async function POST(request: NextRequest) {
       format,
       width: width * multiplier,
       height: height * multiplier,
-      file_size: 1024000,
-      created_at: new Date().toISOString(),
+      fileSize: 1024000,
+      createdAt: new Date().toISOString(),
       status: 'success',
       note: 'Canvas export API ready - image rendering requires canvas library setup'
     })

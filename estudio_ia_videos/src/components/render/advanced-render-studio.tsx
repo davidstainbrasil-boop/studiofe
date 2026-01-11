@@ -153,7 +153,7 @@ export default function AdvancedRenderStudio() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          project_id: currentProject.id,
+          projectId: currentProject.id,
           scenes: currentProject.slides.map(slide => ({
             id: slide.id,
             type: 'slide',

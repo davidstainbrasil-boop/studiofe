@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
       project_id,
       preset_id,
       message: 'Video pipeline render job created successfully',
-      created_at: new Date().toISOString()
+      createdAt: new Date().toISOString()
     });
 
   } catch (error) {
@@ -71,14 +71,14 @@ export async function GET(req: NextRequest) {
         where: { id: jobId },
         select: {
           id: true,
-          project_id: true,
+          projectId: true,
           status: true,
           progress: true,
-          output_url: true,
-          error_message: true,
-          render_settings: true,
-          created_at: true,
-          completed_at: true
+          outputUrl: true,
+          errorMessage: true,
+          renderSettings: true,
+          createdAt: true,
+          completedAt: true
         }
       });
 
@@ -88,11 +88,11 @@ export async function GET(req: NextRequest) {
           jobId,
           status: renderJob.status,
           progress: renderJob.progress || 0,
-          outputUrl: renderJob.output_url,
-          error: renderJob.error_message,
-          config: renderJob.render_settings,
-          created_at: renderJob.created_at?.toISOString(),
-          completedAt: renderJob.completed_at?.toISOString(),
+          outputUrl: renderJob.outputUrl,
+          error: renderJob.errorMessage,
+          config: renderJob.renderSettings,
+          createdAt: renderJob.createdAt?.toISOString(),
+          completedAt: renderJob.completedAt?.toISOString(),
           timestamp: new Date().toISOString()
         });
       }

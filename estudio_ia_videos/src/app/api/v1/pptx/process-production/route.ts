@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
         title: processingResult.metadata?.title || 'Untitled',
         author: processingResult.metadata?.author || 'Unknown',
         subject: processingResult.metadata?.subject || '',
-        created_at: processingResult.metadata?.created_at || new Date().toISOString(),
+        createdAt: processingResult.metadata?.createdAt || new Date().toISOString(),
         modifiedAt: processingResult.metadata?.modifiedAt || new Date().toISOString()
       }
     }

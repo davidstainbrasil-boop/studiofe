@@ -13,7 +13,7 @@ import { logger } from '@lib/logger';
 
 // Schemas de validação
 const ExportConfigSchema = z.object({
-  project_id: z.string(),
+  projectId: z.string(),
   exportConfig: z.object({
     format: z.enum(['mp4', 'webm', 'mov', 'avi']).default('mp4'),
     quality: z.enum(['480p', '720p', '1080p', '4k']).default('1080p'),
@@ -54,7 +54,7 @@ interface ExportConfig {
 
 interface ExportJob {
   id: string
-  project_id: string
+  projectId: string
   status: 'queued' | 'processing' | 'completed' | 'error'
   progress: number
   config: ExportConfig
@@ -84,7 +84,7 @@ interface ExportFormat {
 class ExportSystem {
   private exportJobs: Map<string, ExportJob> = new Map()
 
-  async startExport(project_id: string, config: ExportConfig): Promise<ExportJob> {
+  async startExport(projectId: string, config: ExportConfig): Promise<ExportJob> {
     try {
       const jobId = `export_${projectId}_${Date.now()}`
       
@@ -123,7 +123,7 @@ class ExportSystem {
 
       // Obter dados do projeto
       const project = await prisma.projects.findUnique({
-        where: { id: job.project_id }
+        where: { id: job.projectId }
       })
 
       if (!project) throw new Error('Project not found')
@@ -150,7 +150,7 @@ class ExportSystem {
       // Salvar resultado no banco
       const currentMetadata = (project.metadata as unknown as ProjectMetadata) || {}
       await prisma.projects.update({
-        where: { id: job.project_id },
+        where: { id: job.projectId },
         data: {
           metadata: {
             ...currentMetadata,
@@ -187,7 +187,7 @@ class ExportSystem {
 
     job.status = status
     job.progress = progress
-    if (errorMessage) job.error_message = errorMessage
+    if (errorMessage) job.errorMessage = errorMessage
     if (outputUrl) job.outputUrl = outputUrl
     if (downloadUrl) job.downloadUrl = downloadUrl
     if (fileSize) job.fileSize = fileSize
@@ -292,8 +292,8 @@ class ExportSystem {
     return this.exportJobs.get(jobId) || null
   }
 
-  getProjectExportJobs(project_id: string): ExportJob[] {
-    return Array.from(this.exportJobs.values()).filter(job => job.project_id === projectId)
+  getProjectExportJobs(projectId: string): ExportJob[] {
+    return Array.from(this.exportJobs.values()).filter(job => job.projectId === projectId)
   }
 
   async cancelExport(jobId: string): Promise<boolean> {
@@ -354,8 +354,8 @@ export async function POST(request: NextRequest) {
     // Verificar se o projeto existe e pertence ao usuário
     const project = await prisma.projects.findFirst({
       where: {
-        id: validatedData.project_id,
-        user_id: session.user.id
+        id: validatedData.projectId,
+        userId: session.user.id
       }
     })
 
@@ -372,11 +372,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Atualizar workflow para "processing"
-    await workflowManager.updateWorkflowStep(validatedData.project_id, 'export', 'processing')
+    await workflowManager.updateWorkflowStep(validatedData.projectId, 'export', 'processing')
 
     // Iniciar exportação
     const exportJob = await exportSystem.startExport(
-      validatedData.project_id,
+      validatedData.projectId,
       validatedData.exportConfig || {
         format: 'mp4',
         quality: '1080p',
@@ -435,7 +435,7 @@ export async function GET(request: NextRequest) {
       const project = await prisma.projects.findFirst({
         where: {
           id: projectId,
-          user_id: session.user.id
+          userId: session.user.id
         }
       })
 
