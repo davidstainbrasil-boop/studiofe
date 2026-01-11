@@ -224,7 +224,7 @@ export async function POST(req: NextRequest) {
     const logContext = {
       traceId,
       projectId,
-      userId: userId,
+      user_id: userId,
       slideCount: validatedSlides.length,
       config: renderConfig
     };
@@ -268,7 +268,7 @@ export async function POST(req: NextRequest) {
       projectId,
       slides: queueSlides,
       config: queueConfig,
-      userId: userId as string
+      user_id: userId as string
     });
 
     return NextResponse.json({
@@ -287,13 +287,13 @@ export async function POST(req: NextRequest) {
     let projectIdForLog: string | undefined;
     try {
       const body = await req.clone().json();
-      projectIdForLog = body?.projectId;
+      projectIdForLog = body?.project_id;
     } catch {
       // Ignore parse errors for logging
     }
     
     logger.error('Erro ao iniciar render', error as Error, { 
-      projectId: projectIdForLog 
+      project_id: projectIdForLog 
     });
     
     return NextResponse.json(

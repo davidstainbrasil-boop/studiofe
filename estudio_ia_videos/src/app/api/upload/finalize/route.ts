@@ -18,7 +18,7 @@ interface UploadMetadata {
   totalSize: number;
   totalChunks: number;
   uploadedChunks: number[];
-  createdAt: string;
+  created_at: string;
   lastUpdated: string;
 }
 

@@ -22,6 +22,17 @@ function isSupabaseConfigured(): boolean {
 
 export async function middleware(request: NextRequest) {
   try {
+    // Early return for static assets - should never reach here due to matcher, but added as safety
+    const pathname = request.nextUrl.pathname;
+    if (
+      pathname.startsWith('/_next/static') ||
+      pathname.startsWith('/_next/image') ||
+      pathname.startsWith('/_next/data') ||
+      /\.(css|js|woff|woff2|ttf|eot|ico|json|svg|png|jpg|jpeg|gif|webp)$/.test(pathname)
+    ) {
+      return NextResponse.next();
+    }
+
     // Check if Supabase is configured before attempting to create client
     if (!isSupabaseConfigured()) {
       if (!hasLoggedConfigError) {
@@ -134,6 +145,8 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    // Exclude all static assets, Next.js internals, and common file types
+    // This prevents middleware from processing static asset requests
+    '/((?!_next/static|_next/image|_next/data|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|css|js|woff|woff2|ttf|eot|ico|json)$).*)',
   ],
 }

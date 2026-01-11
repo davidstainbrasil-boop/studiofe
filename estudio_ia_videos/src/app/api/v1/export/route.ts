@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch project
-    const project = await prisma.project.findUnique({
+    const project = await prisma.projects.findUnique({
       where: { id: projectId },
       include: { slides: true } // Assuming slides are in a relation or we use slidesData
     });
@@ -91,7 +91,7 @@ interface SlidesDataJson {
     logger.info(`Starting render for project ${projectId} with ${slidesForRender.length} slides`, { component: 'API: v1/export' });
     
     // Update status to processing immediately
-    await prisma.project.update({
+    await prisma.projects.update({
       where: { id: projectId },
       data: { status: 'PROCESSING' } // Ensure case matches enum
     });
@@ -102,7 +102,7 @@ interface SlidesDataJson {
     RenderService.renderVideo(projectId, slidesForRender)
       .then(async (result) => {
         logger.info(`Render success for ${projectId}`, { component: 'API: v1/export' });
-        await prisma.project.update({
+        await prisma.projects.update({
           where: { id: projectId },
           data: {
             status: 'COMPLETED',
@@ -115,13 +115,13 @@ interface SlidesDataJson {
       })
       .catch(async (error) => {
         const err = error instanceof Error ? error : new Error(String(error)); logger.error(`Render failed for ${projectId}`, err, { component: 'API: v1/export' });
-        await prisma.project.update({
+        await prisma.projects.update({
           where: { id: projectId },
           data: {
             status: 'ERROR',
             metadata: {
               ...(project.metadata as object || {}),
-              errorMessage: error instanceof Error ? error.message : 'Unknown render error'
+              error_message: error instanceof Error ? error.message : 'Unknown render error'
             }
           }
         });

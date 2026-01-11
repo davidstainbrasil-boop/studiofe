@@ -6,9 +6,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createRateLimiter, rateLimitPresets } from '../../../../lib/utils/rate-limit-middleware';
-import { avatar3DPipeline } from '../../../../lib/avatar-3d-pipeline'
-import { supabase as supabaseClient } from '../../../../lib/services'
+import { createRateLimiter, rateLimitPresets } from '@lib/utils/rate-limit-middleware';
+import { avatar3DPipeline } from '@lib/avatar-3d-pipeline'
+import { supabase as supabaseClient } from '@lib/services'
 import { logger } from '@lib/logger';
 import { prisma } from '@lib/db';
 
@@ -160,8 +160,8 @@ export async function GET(request: NextRequest) {
           supportedLanguages: avatar.supported_languages || ['pt-BR'],
           usageCount: avatar.usage_count || 0,
           rating: avatar.rating || 5.0,
-          createdAt: avatar.created_at,
-          updatedAt: avatar.updated_at
+          created_at: avatar.created_at,
+          updated_at: avatar.updated_at
         })),
         pagination: {
           page,
@@ -261,8 +261,8 @@ export async function POST(request: NextRequest) {
           usage_count: avatarData.usageCount,
           rating: avatarData.rating ?? undefined,
           is_active: avatarData.isActive,
-          created_at: avatarData.createdAt,
-          updated_at: avatarData.updatedAt
+          created_at: avatarData.created_at,
+          updated_at: avatarData.updated_at
         };
 
         return NextResponse.json({

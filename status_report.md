@@ -646,15 +646,11 @@ node scripts/execute-supabase-sql.js database-rbac-complete.sql
 ### 🚀 Próximos Milestones
 
 #### Milestone 1: Deploy to Staging
-**Data Alvo:** 20/01/2026  
+**Data Alvo:** 02/01/2026 (ANTECIPADO)
 **Duração:** 1 dia  
 **Owner:** DevOps  
-**Tarefas:**
-- [ ] Configurar ambiente de staging na Vercel/AWS
-- [ ] Aplicar migrations no DB de staging
-- [ ] Configurar variáveis de ambiente
-- [ ] Testar integrações externas (ElevenLabs, HeyGen)
-- [ ] Validar buckets do Supabase Storage
+**Status:** 🚀 DEPLOYED (Awaiting Manual SQL)
+**Tarefas:** [See FINAL_DEPLOY_INSTRUCTIONS.md]
 
 #### Milestone 2: E2E Tests in Staging
 **Data Alvo:** 25/01/2026  

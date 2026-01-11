@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import crypto from 'crypto';
-
-// Armazenamento de sessões (compartilhado com login - em produção usar Redis)
-const sessions = new Map<string, { email: string; name: string; expiresAt: number }>();
+import { sessionStore } from '@/lib/admin-auth';
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,14 +14,14 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const session = sessions.get(token);
+    const session = sessionStore.get(token);
 
     if (!session) {
       // Tentar verificar se é um token válido via header
       const authHeader = request.headers.get('authorization');
       if (authHeader?.startsWith('Bearer ')) {
         const bearerToken = authHeader.substring(7);
-        const bearerSession = sessions.get(bearerToken);
+        const bearerSession = sessionStore.get(bearerToken);
         if (bearerSession && Date.now() <= bearerSession.expiresAt) {
           return NextResponse.json({
             authenticated: true,
@@ -41,7 +38,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (Date.now() > session.expiresAt) {
-      sessions.delete(token);
+      sessionStore.delete(token);
       return NextResponse.json(
         { error: 'Sessão expirada' },
         { status: 401 }
@@ -61,11 +58,6 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-// Função helper para registrar sessão (chamada pelo login)
-export function registerSession(token: string, email: string, name: string, expiresAt: number) {
-  sessions.set(token, { email, name, expiresAt });
 }
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic';

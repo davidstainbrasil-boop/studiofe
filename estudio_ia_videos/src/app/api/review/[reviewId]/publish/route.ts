@@ -30,7 +30,7 @@ export async function POST(
 
     await reviewWorkflowService.publishProject({
       projectId,
-      userId: user.id,
+      user_id: user.id,
     });
 
     return NextResponse.json({ success: true });

@@ -20,7 +20,7 @@ const slideSchema = z.object({
 
 const renderSchema = z.object({
   slides: z.array(slideSchema).min(1).max(100),
-  projectId: z.string().optional(),
+  project_id: z.string().optional(),
   projectName: z.string().optional(),
   config: z.object({
     width: z.number().optional(),
@@ -38,7 +38,7 @@ const renderJobs = new Map<string, {
   progress: number;
   videoUrl?: string;
   error?: string;
-  createdAt: number;
+  created_at: number;
 }>();
 
 export async function POST(request: NextRequest) {
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     renderJobs.set(jobId, {
       status: 'queued',
       progress: 0,
-      createdAt: Date.now(),
+      created_at: Date.now(),
     });
 
     // Processar assincronamente
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       jobId,
-      projectId: finalProjectId,
+      project_id: finalProjectId,
       projectName: projectName || 'Video Project',
       slideCount: slides.length,
       status: 'queued',
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
 async function processRenderJob(
   jobId: string,
   slides: SlideData[],
-  projectId: string,
+  project_id: string,
   config: Record<string, unknown>
 ) {
   try {
@@ -171,7 +171,7 @@ export async function GET(request: NextRequest) {
             backgroundColor: '#1a1a2e (opcional)',
           },
         ],
-        projectId: 'UUID (opcional)',
+        project_id: 'UUID (opcional)',
         projectName: 'Nome do Projeto (opcional)',
         config: {
           width: 1920,

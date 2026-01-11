@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseForRequest } from '@lib/supabase/server'
 import { z } from 'zod'
 import { logger } from '@lib/logger';
-import type { Avatar3DWithProject, ProjectHistoryEntry } from '@types/database';
+
+// Inline type definition to avoid @types/database import
+type Avatar3DWithProject = any;
+
 
 // Schema de validação para avatar 3D
 const avatarSchema = z.object({
@@ -187,7 +190,7 @@ export async function POST(request: NextRequest) {
         model_url: avatarData.model_url,
         thumbnail_url: avatarData.thumbnail_url,
         metadata: avatarData.metadata
-      })
+      } as any)
       .select()
       .single()
 

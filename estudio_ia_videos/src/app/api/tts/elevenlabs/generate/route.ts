@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
     // Log de uso para analytics
     logger.info('Usuário gerou áudio TTS', { 
       component: 'API: tts/elevenlabs', 
-      userId: user.id, 
+      user_id: user.id, 
       textLength: text.length, 
       voiceId: voice_id 
     })

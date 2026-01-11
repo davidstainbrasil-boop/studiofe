@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     const endDate = searchParams.get('endDate');
 
     const stats = await reviewWorkflowService.getReviewStats({
-      userId: user.id,
+      user_id: user.id,
       organizationId: organizationId || undefined,
       startDate: startDate ? new Date(startDate) : undefined,
       endDate: endDate ? new Date(endDate) : undefined,

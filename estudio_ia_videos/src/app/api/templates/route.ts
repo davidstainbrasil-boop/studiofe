@@ -86,8 +86,8 @@ export interface Template {
   tags: string[];
   isFavorite: boolean;
   isCustom: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  created_at: Date;
+  updated_at: Date;
   author: string;
   version: string;
   downloads: number;
@@ -141,8 +141,8 @@ export async function GET(request: NextRequest) {
       tags: [nr.nr_number, 'NR', 'Safety'],
       isFavorite: false, 
       isCustom: false,
-      createdAt: new Date(nr.created_at),
-      updatedAt: new Date(nr.updated_at || Date.now()),
+      created_at: new Date(nr.created_at),
+      updated_at: new Date(nr.updated_at || Date.now()),
       author: 'Sistema',
       version: '1.0',
       downloads: 0,
@@ -232,8 +232,8 @@ export async function GET(request: NextRequest) {
             tags: (metadata.tags as string[]) || ['Custom'],
             isFavorite: false,
             isCustom: true,
-            createdAt: new Date(p.created_at),
-            updatedAt: p.updated_at ? new Date(p.updated_at) : new Date(p.created_at),
+            created_at: new Date(p.created_at),
+            updated_at: p.updated_at ? new Date(p.updated_at) : new Date(p.created_at),
             author: user.email || 'User',
             version: p.current_version || '1.0',
             downloads: 0,

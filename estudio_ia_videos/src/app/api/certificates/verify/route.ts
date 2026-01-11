@@ -20,7 +20,7 @@ export async function GET(req: Request) {
   }
 
   try {
-    const certificate = await prisma.certificate.findUnique({
+    const certificate = await prisma.certificates.findUnique({
       where: { code },
     });
 
@@ -30,10 +30,10 @@ export async function GET(req: Request) {
              const mockCert = global.mockCertificates.get(code);
              return NextResponse.json({
                 valid: true,
-                project_id: mockCert.projectId,
-                student_name: mockCert.studentName,
-                course_name: mockCert.courseName,
-                issued_at: mockCert.issuedAt
+                project_id: mockCert.project_id,
+                student_name: mockCert.student_name,
+                course_name: mockCert.course_name,
+                issued_at: mockCert.issued_at
             });
          }
 
@@ -42,10 +42,10 @@ export async function GET(req: Request) {
 
     return NextResponse.json({
       valid: true,
-      project_id: certificate.projectId,
-      student_name: certificate.studentName,
-      course_name: certificate.courseName,
-      issued_at: certificate.issuedAt
+      project_id: certificate.project_id,
+      student_name: certificate.student_name,
+      course_name: certificate.course_name,
+      issued_at: certificate.issued_at
     });
 
   } catch (error: unknown) {
@@ -58,10 +58,10 @@ export async function GET(req: Request) {
              const mockCert = global.mockCertificates.get(code);
              return NextResponse.json({
                 valid: true,
-                project_id: mockCert.projectId,
-                student_name: mockCert.studentName,
-                course_name: mockCert.courseName,
-                issued_at: mockCert.issuedAt
+                project_id: mockCert.project_id,
+                student_name: mockCert.student_name,
+                course_name: mockCert.course_name,
+                issued_at: mockCert.issued_at
             });
          }
          return NextResponse.json({ valid: false, error: 'Certificate not found (mock)' }, { status: 404 });

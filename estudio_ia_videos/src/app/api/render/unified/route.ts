@@ -11,7 +11,7 @@ import { db } from '@lib/db'
 
 // Interfaces
 interface RenderRequest {
-  projectId: string
+  project_id: string
   renderConfig: {
     resolution: '720p' | '1080p' | '4k'
     fps: 24 | 30 | 60
@@ -37,14 +37,14 @@ interface RenderRequest {
 
 interface RenderJob {
   id: string
-  projectId: string
+  project_id: string
   status: 'queued' | 'processing' | 'compositing' | 'encoding' | 'completed' | 'failed'
   progress: number
   currentStage: string
   outputUrl?: string
   errorMessage?: string
   renderConfig: RenderRequest['renderConfig']
-  createdAt: Date
+  created_at: Date
   completedAt?: Date
   estimatedDuration?: number
 }
@@ -68,17 +68,17 @@ class UnifiedRenderPipeline {
   private renderJobs: Map<string, RenderJob> = new Map()
 
   // Create render job
-  async createRenderJob(request: RenderRequest, userId: string): Promise<RenderJob> {
+  async createRenderJob(request: RenderRequest, user_id: string): Promise<RenderJob> {
     const jobId = `render_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     
     const renderJob: RenderJob = {
       id: jobId,
-      projectId: request.projectId,
+      project_id: request.project_id,
       status: 'queued',
       progress: 0,
       currentStage: 'Preparando renderização...',
       renderConfig: request.renderConfig,
-      createdAt: new Date(),
+      created_at: new Date(),
       estimatedDuration: this.calculateEstimatedDuration(request)
     }
 
@@ -92,7 +92,7 @@ class UnifiedRenderPipeline {
       logger.error('Render job failed:', error instanceof Error ? error : new Error(String(error)), { component: 'API: render/unified' })
       this.updateRenderJob(jobId, {
         status: 'failed',
-        errorMessage: error.message
+        error_message: error.message
       })
     })
 
@@ -199,7 +199,7 @@ class UnifiedRenderPipeline {
     } catch (error: unknown) {
       await this.updateRenderJob(jobId, {
         status: 'failed',
-        errorMessage: error instanceof Error ? error.message : String(error),
+        error_message: error instanceof Error ? error.message : String(error),
         currentStage: 'Erro na renderização'
       })
       throw error
@@ -387,7 +387,7 @@ class UnifiedRenderPipeline {
   }
 
   // Save to database
-  private async saveRenderJobToDatabase(job: RenderJob, userId: string): Promise<void> {
+  private async saveRenderJobToDatabase(job: RenderJob, user_id: string): Promise<void> {
     // Simulate database save
     logger.info('Saving render job to database:', { component: 'API: render/unified', jobId: job.id })
   }
@@ -413,7 +413,7 @@ export async function POST(request: NextRequest) {
     const body: RenderRequest = await request.json()
 
     // Validate request
-    if (!body.projectId || !body.slides || body.slides.length === 0) {
+    if (!body.project_id || !body.slides || body.slides.length === 0) {
       return NextResponse.json({ 
         error: 'Project ID and slides are required' 
       }, { status: 400 })
@@ -470,13 +470,13 @@ export async function GET(request: NextRequest) {
       success: true,
       renderJob: {
         id: renderJob.id,
-        projectId: renderJob.projectId,
+        project_id: renderJob.project_id,
         status: renderJob.status,
         progress: renderJob.progress,
         currentStage: renderJob.currentStage,
         outputUrl: renderJob.outputUrl,
-        errorMessage: renderJob.errorMessage,
-        createdAt: renderJob.createdAt,
+        error_message: renderJob.error_message,
+        created_at: renderJob.created_at,
         completedAt: renderJob.completedAt,
         estimatedDuration: renderJob.estimatedDuration
       }

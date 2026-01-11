@@ -7,12 +7,12 @@ import { logger } from '@lib/logger'
 
 const prisma = new PrismaClient()
 
-async function isAdmin(userId: string | undefined) {
+async function isAdmin(user_id: string | undefined) {
   if (!userId) {
     return false
   }
 
-  const user = await prisma.user.findUnique({
+  const user = await prisma.users.findUnique({
     where: { id: userId },
     select: { role: true },
   })
@@ -41,21 +41,21 @@ export async function PUT(
       return NextResponse.json({ error: 'Role is required' }, { status: 400 })
     }
 
-    const user = await prisma.user.update({
+    const user = await prisma.users.update({
       where: { id: params.id },
-      data: { role },
+      data: { role: role as any },
     })
 
     await auditLogger.log({
       action: 'user.role_updated',
-      userId: session.user.id,
+      user_id: session.user.id,
       resource: `user:${params.id}`,
       metadata: { role, targetUserId: params.id },
     })
 
     return NextResponse.json(user)
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+    if ((error as any).code === 'P2025') {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
@@ -79,20 +79,20 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    await prisma.user.delete({
+    await prisma.users.delete({
       where: { id: params.id },
     })
 
     await auditLogger.log({
       action: 'user.deleted',
-      userId: session.user.id,
+      user_id: session.user.id,
       resource: `user:${params.id}`,
       metadata: { targetUserId: params.id },
     })
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+    if ((error as any).code === 'P2025') {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 

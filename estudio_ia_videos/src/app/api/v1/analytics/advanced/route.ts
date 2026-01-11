@@ -153,7 +153,7 @@ export async function GET(request: NextRequest) {
     
     log.info('Advanced analytics fetched (REAL DATA)', {
       days,
-      userId: session.user.id,
+      user_id: session.user.id,
       organizationId: orgId,
     })
     

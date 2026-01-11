@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
-import { assertCan, UserContext } from '../../../lib/rbac';
-import { supabaseAdmin, fromUntypedTable } from '../../../lib/supabase/server';
+import { assertCan, UserContext } from '@lib/rbac';
+import { supabaseAdmin, fromUntypedTable } from '@lib/supabase/server';
 
 interface RoleRow { role: string; description?: string }
 
-async function buildUserContext(userId: string): Promise<UserContext> {
+async function buildUserContext(user_id: string): Promise<UserContext> {
   const admin = supabaseAdmin;
   const { data: rolesData } = await admin.from('user_roles').select('role').eq('user_id', userId);
   const roles = ((rolesData || []) as unknown as RoleRow[]).map((r) => r.role) as UserContext['roles'];

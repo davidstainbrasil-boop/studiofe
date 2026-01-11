@@ -173,7 +173,7 @@ export const DELETE = withRateLimit(RATE_LIMITS.AUTH_STRICT, 'user')(async funct
       priority: 'low',
       timestamp: Date.now(),
       roomId,
-      data: { uploadId, projectId: upload.project_id }
+      data: { uploadId, project_id: upload.project_id }
     })
 
     return NextResponse.json({ success: true })

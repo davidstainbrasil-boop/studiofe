@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
 
     // Salvar resultado no banco
     // Note: nr_compliance_records is a valid table but not in generated types
-    const { error: insertError } = await supabase
+    const { error: insertError } = await (supabase as any)
       .from('nr_compliance_records')
       .insert({
         project_id: projectId,

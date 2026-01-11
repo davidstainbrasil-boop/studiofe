@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
       templateNR: template.nr || template.number,
       slides: template.slides || template.sections,
       customizations,
-      createdAt: new Date().toISOString()
+      created_at: new Date().toISOString()
     }
 
     return NextResponse.json({

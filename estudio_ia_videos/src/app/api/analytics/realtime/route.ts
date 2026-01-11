@@ -44,10 +44,10 @@ async function getHandler(req: NextRequest) {
         startTime.setMinutes(now.getMinutes() - 15);
     }
 
-    const whereClause: Prisma.analytics_eventsWhereInput = {
-      createdAt: { gte: startTime },
+    const whereClause: any = {
+      created_at: { gte: startTime },
       ...(organizationId && { 
-        eventData: {
+        event_data: {
           path: ['organizationId'],
           equals: organizationId
         }
@@ -65,24 +65,24 @@ async function getHandler(req: NextRequest) {
       systemHealth
     ] = await Promise.all([
       // Usuários ativos únicos na janela de tempo
-      prisma.analyticsEvent.groupBy({
-        by: ['userId'],
+      prisma.analytics_events.groupBy({
+        by: ['user_id'],
         where: {
           ...whereClause,
-          userId: { not: null }
+          user_id: { not: null }
         }
       }),
 
       // Total de eventos na janela
-      prisma.analyticsEvent.count({
+      prisma.analytics_events.count({
         where: whereClause
       }),
 
       // Eventos de erro na janela
-      prisma.analyticsEvent.count({
+      prisma.analytics_events.count({
         where: {
           ...whereClause,
-          eventData: {
+          event_data: {
             path: ['status'],
             equals: 'error'
           }
@@ -90,16 +90,16 @@ async function getHandler(req: NextRequest) {
       }),
 
       // Eventos mais recentes (últimos 20)
-      prisma.analyticsEvent.findMany({
+      prisma.analytics_events.findMany({
         where: whereClause,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { created_at: 'desc' },
         take: 20,
         select: {
           id: true,
-          eventType: true,
-          eventData: true,
-          createdAt: true,
-          userId: true
+          event_type: true,
+          event_data: true,
+          created_at: true,
+          user_id: true
         }
       }),
 
@@ -111,15 +111,15 @@ async function getHandler(req: NextRequest) {
           COUNT(CASE WHEN event_data->>'status' = 'error' THEN 1 END) as errors
         FROM "AnalyticsEvent" 
         WHERE created_at >= ${startTime}
-        ${organizationId ? Prisma.sql`AND event_data->>'organizationId' = ${organizationId}` : Prisma.sql``}
+        ${organizationId ? (Prisma as any).sql`AND event_data->>'organizationId' = ${organizationId}` : (Prisma as any).sql``}
         GROUP BY minute
         ORDER BY minute DESC
         LIMIT 60
       `,
 
       // Top categorias de eventos (usando eventType como categoria)
-      prisma.analyticsEvent.groupBy({
-        by: ['eventType'],
+      prisma.analytics_events.groupBy({
+        by: ['event_type'],
         where: whereClause,
         _count: { id: true },
         orderBy: { _count: { id: 'desc' } },
@@ -136,7 +136,7 @@ async function getHandler(req: NextRequest) {
           FROM "AnalyticsEvent"
           WHERE created_at >= ${startTime}
           AND event_data->>'duration' IS NOT NULL
-          ${organizationId ? Prisma.sql`AND event_data->>'organizationId' = ${organizationId}` : Prisma.sql``}
+          ${organizationId ? (Prisma as any).sql`AND event_data->>'organizationId' = ${organizationId}` : (Prisma as any).sql``}
         `;
         
         const avgDuration = avgDurationResult[0]?.avg_duration || 0;
@@ -145,14 +145,14 @@ async function getHandler(req: NextRequest) {
         const durationSeconds = (now.getTime() - startTime.getTime()) / 1000;
         // We need totalEvents here, but we can't access it inside Promise.all easily without chaining
         // So we re-fetch count or assume it will be consistent
-        const count = await prisma.analyticsEvent.count({ where: whereClause });
+        const count = await prisma.analytics_events.count({ where: whereClause });
         const throughput = Math.round(count / Math.max(1, durationSeconds));
 
         // Calculate error rate
-        const errorCount = await prisma.analyticsEvent.count({
+        const errorCount = await prisma.analytics_events.count({
           where: {
             ...whereClause,
-            eventData: {
+            event_data: {
               path: ['status'],
               equals: 'error'
             }
@@ -175,7 +175,7 @@ async function getHandler(req: NextRequest) {
     const errorRate = totalEvents > 0 ? (errorEvents / totalEvents * 100).toFixed(2) : '0';
 
     // Processar dados de timeline
-    const timeline = (eventsByMinute as unknown as Array<Record<string, unknown>>).map(item => ({
+    const timeline = (eventsByMinute as unknown as Array<Record<string, unknown>>).map((item: any) => ({
       time: String(item.minute),
       events: Number(item.events),
       errors: Number(item.errors)
@@ -184,28 +184,28 @@ async function getHandler(req: NextRequest) {
     // Calcular tendências (comparar com período anterior)
     const previousStartTime = new Date(startTime.getTime() - (now.getTime() - startTime.getTime()));
     
-    const previousWhereClause: Prisma.analytics_eventsWhereInput = {
-      createdAt: { 
+    const previousWhereClause: any = {
+      created_at: { 
         gte: previousStartTime,
         lt: startTime
       },
       ...(organizationId && { 
-        eventData: {
+        event_data: {
           path: ['organizationId'],
           equals: organizationId
         }
       })
     };
 
-    const previousPeriodEvents = await prisma.analyticsEvent.count({
+    const previousPeriodEvents = await prisma.analytics_events.count({
       where: previousWhereClause
     });
 
-    const previousPeriodUsers = await prisma.analyticsEvent.groupBy({
-      by: ['userId'],
+    const previousPeriodUsers = await prisma.analytics_events.groupBy({
+      by: ['user_id'],
       where: {
         ...previousWhereClause,
-        userId: { not: null }
+        user_id: { not: null }
       }
     });
 
@@ -273,8 +273,8 @@ async function getHandler(req: NextRequest) {
         }
       },
       timeline,
-      topCategories: topCategories.map((item) => ({
-        category: item.eventType,
+      topCategories: topCategories.map((item: any) => ({
+        category: item.event_type,
         count: item._count.id,
         percentage: totalEvents > 0 ? ((item._count.id / totalEvents) * 100).toFixed(1) : '0'
       })),
@@ -285,18 +285,18 @@ async function getHandler(req: NextRequest) {
         responseTime: Math.round(systemHealth.responseTime),
         throughput: systemHealth.throughput
       },
-      recentEvents: recentEvents.map(event => {
-        const data = (event.eventData as Record<string, unknown>) || {};
+      recentEvents: recentEvents.map((event: any) => {
+        const data = (event.event_data as Record<string, unknown>) || {};
         return {
           id: event.id,
-          category: event.eventType,
+          category: event.event_type,
           action: data.action || 'unknown',
           label: data.label || '',
           status: data.status || 'success',
           duration: data.duration || 0,
-          createdAt: event.createdAt,
-          userId: event.userId,
-          timeAgo: Math.round((now.getTime() - new Date(event.createdAt).getTime()) / 1000) // segundos atrás
+          created_at: event.created_at,
+          user_id: event.user_id,
+          timeAgo: Math.round((now.getTime() - new Date(event.created_at).getTime()) / 1000) // segundos atrás
         };
       }),
       anomalies,
@@ -345,10 +345,11 @@ async function postHandler(req: NextRequest) {
     const organizationId = session?.user ? getOrgId(session.user) : null;
 
     // Processar eventos em lote
-    const processedEvents = (events as unknown as Array<Record<string, unknown>>).map((event) => ({
-      userId: (event.userId as string) || userId,
-      eventType: (event.category as string) || 'realtime',
-      eventData: {
+    const processedEvents = (events as unknown as Array<Record<string, unknown>>).map((event: any) => ({
+      id: crypto.randomUUID(),
+      user_id: (event.user_id as string) || userId,
+      event_type: (event.category as string) || 'realtime',
+      event_data: {
         organizationId,
         action: (event.action as string) || 'event',
         label: event.label as string | null | undefined,
@@ -357,7 +358,7 @@ async function postHandler(req: NextRequest) {
         value: event.value as number | null | undefined,
         status: (event.status as string) || 'success',
         errorCode: event.errorCode as string | null | undefined,
-        errorMessage: event.errorMessage as string | null | undefined,
+        error_message: event.error_message as string | null | undefined,
         metadata: {
           source,
           originalTimestamp: timestamp,
@@ -367,7 +368,7 @@ async function postHandler(req: NextRequest) {
     }));
 
     // Inserir eventos no banco
-    await prisma.analyticsEvent.createMany({
+    await prisma.analytics_events.createMany({
       data: processedEvents
     });
 

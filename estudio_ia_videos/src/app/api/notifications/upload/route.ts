@@ -9,7 +9,7 @@ import { logger } from '@lib/logger';
 
 interface UploadProgressData {
   uploadId: string;
-  userId: string;
+  user_id: string;
   roomId?: string;
   filename: string;
   progress: number;

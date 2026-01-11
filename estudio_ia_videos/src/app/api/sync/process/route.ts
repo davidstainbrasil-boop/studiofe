@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Extrair user_id do header de autenticação
-    let userId: string | undefined
+    let user_id: string | undefined
 
     try {
       const { data: { user } } = await supabase.auth.getUser()

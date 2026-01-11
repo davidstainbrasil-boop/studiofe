@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
     const job = {
       id: jobId,
       projectId,
-      userId: user.id,
+      user_id: user.id,
       timeline,
       settings: {
         proxyResolution: settings.proxyResolution || '720p',
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
       },
       status: 'pending' as const,
       progress: 0,
-      createdAt: new Date()
+      created_at: new Date()
     };
 
     logger.info(`[HybridRenderAPI] Starting hybrid render job ${jobId} for user ${user.id}`);
@@ -83,8 +83,8 @@ export async function POST(request: NextRequest) {
         status: 'pending',
         progress: 0,
         settings: job.settings,
-        created_at: job.createdAt.toISOString(),
-        updated_at: job.createdAt.toISOString()
+        created_at: job.created_at.toISOString(),
+        updated_at: job.created_at.toISOString()
       });
 
     if (dbError) {

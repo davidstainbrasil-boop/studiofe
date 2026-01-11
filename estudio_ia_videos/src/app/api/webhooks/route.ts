@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     const data = await request.json()
     
     const webhook = await webhookManager.registerWebhook({
-      userId: session.user.id,
+      user_id: session.user.id,
       url: data.url,
       events: data.events,
       description: data.description,

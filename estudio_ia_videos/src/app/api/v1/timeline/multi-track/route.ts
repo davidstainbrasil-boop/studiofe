@@ -192,7 +192,7 @@ export async function POST(request: NextRequest) {
 
     // Track analytics event
     await AnalyticsTracker.trackTimelineEdit({
-      userId: user.id,
+      user_id: user.id,
       projectId,
       action: 'update',
       trackCount: tracks?.length || 0,
@@ -219,12 +219,12 @@ export async function POST(request: NextRequest) {
       success: true,
       data: {
         id: timeline.id,
-        projectId: timeline.project_id,
+        project_id: timeline.project_id,
         version: timeline.version,
         totalDuration: timeline.total_duration,
         tracks: timeline.tracks,
         settings: timeline.settings,
-        updatedAt: timeline.updated_at,
+        updated_at: timeline.updated_at,
         analytics,
       },
       message: 'Timeline salva com sucesso',
@@ -332,14 +332,14 @@ export async function GET(request: NextRequest) {
       success: true,
       data: {
         id: timeline.id,
-        projectId: timeline.project_id,
+        project_id: timeline.project_id,
         projectName: project.name,
         tracks: timeline.tracks,
         settings: timeline.settings,
         totalDuration: timeline.total_duration,
         version: timeline.version,
-        createdAt: timeline.created_at,
-        updatedAt: timeline.updated_at,
+        created_at: timeline.created_at,
+        updated_at: timeline.updated_at,
       },
       message: 'Timeline carregada com sucesso',
     });
@@ -439,7 +439,7 @@ export async function DELETE(request: NextRequest) {
       success: true,
       message: 'Timeline deletada com sucesso',
       data: {
-        projectId: projectId,
+        project_id: projectId,
       },
     });
 
@@ -563,7 +563,7 @@ export async function PATCH(request: NextRequest) {
 
     // Track analytics event
     await AnalyticsTracker.trackTimelineEdit({
-      userId: user.id,
+      user_id: user.id,
       projectId,
       action: 'partial_update',
       trackCount: tracks?.length || 0,
@@ -590,12 +590,12 @@ export async function PATCH(request: NextRequest) {
       success: true,
       data: {
         id: timelineRecord.id,
-        projectId: timelineRecord.project_id,
+        project_id: timelineRecord.project_id,
         version: timelineRecord.version,
         totalDuration: timelineRecord.total_duration,
         tracks: timelineRecord.tracks,
         settings: timelineRecord.settings,
-        updatedAt: timelineRecord.updated_at,
+        updated_at: timelineRecord.updated_at,
         analytics,
       },
       message: 'Timeline atualizada parcialmente com sucesso',

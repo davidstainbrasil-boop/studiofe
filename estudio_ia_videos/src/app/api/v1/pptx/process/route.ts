@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     logger.info(`🔄 Processando projeto: ${projectId}, arquivo: ${s3Key}`, { component: 'API: v1/pptx/process' })
 
     // Atualizar status do projeto para processando
-    await prisma.project.update({
+    await prisma.projects.update({
       where: { id: projectId },
       data: {
         status: 'PROCESSING',
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
     // Verificar se o arquivo existe no S3
     const fileExists = await S3StorageService.fileExists(s3Key)
     if (!fileExists) {
-      await prisma.project.update({
+      await prisma.projects.update({
         where: { id: projectId },
         data: { 
           status: 'ERROR', 
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     if (!downloadResult.success || !downloadResult.buffer) {
       const errorMsg = `Erro ao baixar arquivo: ${downloadResult.error}`
       
-      await prisma.project.update({
+      await prisma.projects.update({
         where: { id: projectId },
         data: { 
           status: 'ERROR', 
@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
     if (!validation.isValid) {
       const errorMsg = `Arquivo PPTX inválido: ${validation.error || 'Erro desconhecido'}`
       
-      await prisma.project.update({
+      await prisma.projects.update({
         where: { id: projectId },
         data: { 
           status: 'ERROR', 
@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
     if (!extractionResult.success) {
       const errorMsg = `Erro ao processar PPTX: ${extractionResult.error}`
       
-      await prisma.project.update({
+      await prisma.projects.update({
         where: { id: projectId },
         data: {
           status: 'ERROR',
@@ -185,7 +185,7 @@ export async function POST(request: NextRequest) {
       extractionStats: extractionResult.extractionStats
     }));
 
-    const updatedProject = await prisma.project.update({
+    const updatedProject = await prisma.projects.update({
       where: { id: projectId },
       data: {
         status: 'COMPLETED',
@@ -215,7 +215,7 @@ export async function POST(request: NextRequest) {
 
       await prisma.slide.create({
         data: {
-          projectId: projectId,
+          project_id: projectId,
           title: slide.title || '',
           content: slide.content || '',
           orderIndex: i, // Usar orderIndex em vez de slideNumber
@@ -231,7 +231,7 @@ export async function POST(request: NextRequest) {
 
     const result: PPTXProcessingResult = {
       success: true,
-      projectId: projectId,
+      project_id: projectId,
       extractedContent: extractionResult,
       thumbnailUrl: thumbnailUrl || undefined,
       processingTime
@@ -246,9 +246,9 @@ export async function POST(request: NextRequest) {
     const processingTime = Date.now() - startTime
     
     // Atualizar projeto com status de erro se projectId estiver disponível
-    if (requestBody.projectId) {
-      await prisma.project.update({
-        where: { id: requestBody.projectId },
+    if (requestBody.project_id) {
+      await prisma.projects.update({
+        where: { id: requestBody.project_id },
         data: {
           status: 'ERROR',
           processingLog: {

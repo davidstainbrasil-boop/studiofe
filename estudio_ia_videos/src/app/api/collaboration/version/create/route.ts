@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
         id: 'user_current',
         avatar: '/avatars/user.jpg'
       },
-      createdAt: new Date().toISOString(),
+      created_at: new Date().toISOString(),
       changes: changes.length > 0 ? changes : [
         {
           id: `change_${Date.now()}`,
@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
           id: 'user_ana',
           avatar: '/avatars/ana.jpg'
         },
-        createdAt: new Date().toISOString(),
+        created_at: new Date().toISOString(),
         changes: [
           {
             id: 'change_1',

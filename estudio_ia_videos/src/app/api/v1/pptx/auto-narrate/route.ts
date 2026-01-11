@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 1. Buscar projeto no banco
-    const project = await prisma.project.findUnique({
+    const project = await prisma.projects.findUnique({
       where: { id: projectId },
       include: {
         timeline: true,
@@ -143,22 +143,22 @@ export async function POST(request: NextRequest) {
         }
 
         // Atualizar projeto com slidesData modificado
-        await prisma.project.update({
+        await prisma.projects.update({
           where: { id: projectId },
           data: {
             slidesData: toJsonValue(slidesData),
             autoNarration: true,
-            updatedAt: new Date()
+            updated_at: new Date()
           }
         })
       }
     } else {
       // Se não há slidesData, apenas marcar autoNarration como true
-      await prisma.project.update({
+      await prisma.projects.update({
         where: { id: projectId },
         data: {
           autoNarration: true,
-          updatedAt: new Date()
+          updated_at: new Date()
         }
       })
     }
@@ -205,7 +205,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const project = await prisma.project.findUnique({
+    const project = await prisma.projects.findUnique({
       where: { id: projectId },
       select: {
         id: true,
@@ -238,7 +238,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      projectId: project.id,
+      project_id: project.id,
       projectName: project.title,
       autoNarration: project.autoNarration,
       narratedSlides,

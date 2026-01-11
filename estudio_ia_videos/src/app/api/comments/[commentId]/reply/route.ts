@@ -29,7 +29,7 @@ export async function POST(
 
     const reply = await commentsService.replyToComment({
       commentId: params.commentId,
-      userId: session.user.id,
+      user_id: session.user.id,
       content,
     });
 

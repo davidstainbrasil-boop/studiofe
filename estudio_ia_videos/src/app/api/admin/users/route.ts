@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
-import { assertCan, UserContext, assignRoleWithAudit } from '../../../lib/rbac';
-import { supabaseAdmin } from '../../../lib/supabase/server';
+import { assertCan, UserContext, assignRoleWithAudit } from '@lib/rbac';
+import { supabaseAdmin } from '@lib/supabase/server';
 
-async function buildUserContext(userId: string): Promise<UserContext> {
+async function buildUserContext(user_id: string): Promise<UserContext> {
   const admin = supabaseAdmin;
   const { data: rolesData } = await admin.from('user_roles').select('role').eq('user_id', userId);
   interface RoleRow { role: string }

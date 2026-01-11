@@ -23,33 +23,33 @@ export async function GET(request: NextRequest) {
     startDate.setDate(startDate.getDate() - parseInt(period));
 
     // Get user's projects
-    const userProjects = await prisma.project.findMany({
+    const userProjects = await prisma.projects.findMany({
       where: { userId },
       select: { id: true }
     });
 
-    const projectIds = userProjects.map(p => p.id);
+    const projectIds = userProjects.map((p: any) => p.id);
 
     // Get NR compliance records
-    const nrRecords = await prisma.nRComplianceRecord.findMany({
+    const nrRecords = await prisma.nr_compliance_records.findMany({
       where: {
-        projectId: { in: projectIds },
-        createdAt: {
+        project_id: { in: projectIds },
+        created_at: {
           gte: startDate,
           lte: endDate
         }
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { created_at: 'desc' }
     });
 
     // Calculate metrics
     const totalValidations = nrRecords.length;
     const averageScore = nrRecords.length > 0 
-      ? nrRecords.reduce((sum, v) => sum + v.score, 0) / nrRecords.length 
+      ? nrRecords.reduce((sum: number, v: any) => sum + v.score, 0) / nrRecords.length 
       : 0;
 
     // Compliance by NR type
-    const complianceByNR = nrRecords.reduce((acc, validation) => {
+    const complianceByNR = nrRecords.reduce((acc: any, validation: any) => {
       const nr = validation.nr;
       if (!acc[nr]) {
         acc[nr] = { total: 0, scores: [] };
@@ -59,11 +59,11 @@ export async function GET(request: NextRequest) {
       return acc;
     }, {} as Record<string, { total: number; scores: number[] }>);
 
-    const nrMetrics = Object.entries(complianceByNR).map(([nr, data]) => ({
+    const nrMetrics = Object.entries(complianceByNR).map(([nr, data]: [string, any]) => ({
       nr,
       total: data.total,
-      averageScore: data.scores.reduce((sum, score) => sum + score, 0) / data.scores.length,
-      lastValidation: nrRecords.find(v => v.nr === nr)?.createdAt
+      averageScore: data.scores.reduce((sum: number, score: number) => sum + score, 0) / data.scores.length,
+      lastValidation: nrRecords.find((v: any) => v.nr === nr)?.created_at
     }));
 
     // Trend data (last 7 days)
@@ -74,29 +74,29 @@ export async function GET(request: NextRequest) {
       const dayStart = new Date(date.setHours(0, 0, 0, 0));
       const dayEnd = new Date(date.setHours(23, 59, 59, 999));
 
-      const dayValidations = nrRecords.filter(v => 
-        v.createdAt >= dayStart && v.createdAt <= dayEnd
+      const dayValidations = nrRecords.filter((v: any) => 
+        v.created_at >= dayStart && v.created_at <= dayEnd
       );
 
       trendData.push({
         date: dayStart.toISOString().split('T')[0],
         validations: dayValidations.length,
         averageScore: dayValidations.length > 0 
-          ? dayValidations.reduce((sum, v) => sum + v.score, 0) / dayValidations.length 
+          ? dayValidations.reduce((sum: number, v: any) => sum + v.score, 0) / dayValidations.length 
           : 0
       });
     }
 
     // Critical issues (scores below 70)
-    const criticalIssues = nrRecords.filter(v => v.score < 70).length;
+    const criticalIssues = nrRecords.filter((v: any) => v.score < 70).length;
 
     // Recent validations
-    const recentValidations = nrRecords.slice(0, 10).map(v => ({
+    const recentValidations = nrRecords.slice(0, 10).map((v: any) => ({
       id: v.id,
-      projectId: v.projectId,
+      project_id: v.project_id,
       nrType: v.nr,
       score: v.score,
-      createdAt: v.createdAt,
+      created_at: v.created_at,
       suggestions: Array.isArray(v.recommendations) ? v.recommendations : []
     }));
 
@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
         totalValidations,
         averageScore: Math.round(averageScore),
         criticalIssues,
-        complianceRate: Math.round((nrRecords.filter(v => v.score >= 80).length / Math.max(totalValidations, 1)) * 100)
+        complianceRate: Math.round((nrRecords.filter((v: any) => v.score >= 80).length / Math.max(totalValidations, 1)) * 100)
       },
       nrMetrics,
       trendData,

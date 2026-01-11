@@ -1,0 +1,14 @@
+[
+    {
+        "id": "avatar-1",
+        "name": "Anna",
+        "preview": "/avatars/anna.png",
+        "gender": "female"
+    },
+    {
+        "id": "avatar-2",
+        "name": "Bob",
+        "preview": "/avatars/bob.png",
+        "gender": "male"
+    }
+]

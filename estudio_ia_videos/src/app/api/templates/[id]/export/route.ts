@@ -16,8 +16,8 @@ interface Template {
   category: string
   author: string
   version: string
-  createdAt: string
-  updatedAt: string
+  created_at: string
+  updated_at: string
   downloads: number
   rating: number
   isCustom: boolean
@@ -136,8 +136,8 @@ function convertToXml(template: Template): string {
   <category>${template.category}</category>
   <author><![CDATA[${template.author}]]></author>
   <version>${template.version}</version>
-  <createdAt>${template.createdAt}</createdAt>
-  <updatedAt>${template.updatedAt}</updatedAt>
+  <createdAt>${template.created_at}</createdAt>
+  <updatedAt>${template.updated_at}</updatedAt>
   <downloads>${template.downloads}</downloads>
   <rating>${template.rating}</rating>
   <isCustom>${template.isCustom}</isCustom>

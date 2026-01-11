@@ -13,7 +13,7 @@ import { logger } from '@lib/logger'
 
 // Schemas de validação
 const CanvasDataSchema = z.object({
-  projectId: z.string(),
+  project_id: z.string(),
   canvas: z.object({
     width: z.number(),
     height: z.number(),
@@ -90,7 +90,7 @@ interface ProjectCanvasMetadata {
 }
 
 class CanvasEditor {
-  async saveCanvasData(projectId: string, canvasData: CanvasData, timeline: TimelineItem[]): Promise<SaveCanvasResult> {
+  async saveCanvasData(project_id: string, canvasData: CanvasData, timeline: TimelineItem[]): Promise<SaveCanvasResult> {
     try {
       // Validar elementos do canvas
       const validatedElements = canvasData.elements.map(element => {
@@ -126,10 +126,10 @@ class CanvasEditor {
       const totalDuration = Math.max(...timeline.map(item => item.startTime + item.duration), 0)
 
       // Salvar no banco
-      const project = await prisma.project.findUnique({ where: { id: projectId } });
+      const project = await prisma.projects.findUnique({ where: { id: projectId } });
       const currentMetadata = (project?.metadata as ProjectCanvasMetadata | null) || {};
 
-      await prisma.project.update({
+      await prisma.projects.update({
         where: { id: projectId },
         data: {
           metadata: {
@@ -186,9 +186,9 @@ class CanvasEditor {
     }
   }
 
-  async addElement(projectId: string, element: CanvasElement): Promise<CanvasElement> {
+  async addElement(project_id: string, element: CanvasElement): Promise<CanvasElement> {
     try {
-      const project = await prisma.project.findUnique({
+      const project = await prisma.projects.findUnique({
         where: { id: projectId }
       })
 
@@ -200,7 +200,7 @@ class CanvasEditor {
       const currentCanvas = projectMetadata?.canvas || { width: 1920, height: 1080, background: '#000000', elements: [] }
       const updatedElements = [...(currentCanvas.elements || []), element]
 
-      await prisma.project.update({
+      await prisma.projects.update({
         where: { id: projectId },
         data: {
           metadata: {
@@ -236,10 +236,10 @@ export async function POST(request: NextRequest) {
     const validatedData = CanvasDataSchema.parse(body)
 
     // Verificar se o projeto existe e pertence ao usuário
-    const project = await prisma.project.findFirst({
+    const project = await prisma.projects.findFirst({
       where: {
-        id: validatedData.projectId,
-        userId: session.user.id
+        id: validatedData.project_id,
+        user_id: session.user.id
       }
     })
 
@@ -249,7 +249,7 @@ export async function POST(request: NextRequest) {
 
     // Salvar dados do canvas
     const result = await canvasEditor.saveCanvasData(
-      validatedData.projectId,
+      validatedData.project_id,
       validatedData.canvas,
       validatedData.timeline
     )
@@ -261,7 +261,7 @@ export async function POST(request: NextRequest) {
     )
 
     // Atualizar workflow
-    await workflowManager.updateWorkflowStep(validatedData.projectId, 'edit', 'completed', {
+    await workflowManager.updateWorkflowStep(validatedData.project_id, 'edit', 'completed', {
       canvas: result.canvas,
       timeline: result.timeline,
       videoConfig
@@ -296,10 +296,10 @@ export async function PUT(request: NextRequest) {
     }
 
     // Verificar se o projeto existe e pertence ao usuário
-    const project = await prisma.project.findFirst({
+    const project = await prisma.projects.findFirst({
       where: {
         id: projectId,
-        userId: session.user.id
+        user_id: session.user.id
       }
     })
 
@@ -337,10 +337,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Project ID required' }, { status: 400 })
     }
 
-    const project = await prisma.project.findFirst({
+    const project = await prisma.projects.findFirst({
       where: {
         id: projectId,
-        userId: session.user.id
+        user_id: session.user.id
       }
     })
 

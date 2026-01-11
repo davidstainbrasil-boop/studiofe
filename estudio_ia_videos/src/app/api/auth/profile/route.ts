@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
         lastIp: undefined,
         userAgent: undefined
       },
-      createdAt: user.createdAt,
+      created_at: user.created_at,
       lastLoginAt: user.lastLoginAt
     });
 

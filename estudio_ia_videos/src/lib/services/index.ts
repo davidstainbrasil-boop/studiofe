@@ -7,4 +7,6 @@ export * from './nr-templates-service';
 export * from './transcription-service';
 export * from './redis-service';
 export * from './logger-service';
+export { logger } from '../logger';
+export { supabaseAdmin as supabase } from '../supabase/server'; // Export aliased supabase
 export * from './monitoring-service';

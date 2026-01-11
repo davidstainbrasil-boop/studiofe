@@ -240,3 +240,41 @@ export class ElevenLabsService {
 
 export const elevenLabsService = new ElevenLabsService();
 export default ElevenLabsService;
+
+// Wrapper functions to satisfy imports in other modules
+export const generateTTSAudio = async (text: string, voiceId?: string, modelId?: string) => {
+  return ElevenLabsService.getInstance().generateSpeech({
+    text,
+    voiceId,
+    modelId
+  });
+};
+
+export const listVoices = async () => {
+  return ElevenLabsService.getInstance().listVoices();
+};
+
+export const generateAndUploadTTSAudio = async (text: string, fileName: string, voiceId?: string) => {
+  const buffer = await generateTTSAudio(text, voiceId);
+  const service = ElevenLabsService.getInstance();
+  const supabase = service['supabase']; // Accessing private property via bracket notation or getter if added
+  
+  // Upload specific file
+  const { error } = await service['supabase'].storage
+    .from('assets')
+    .upload(fileName, buffer, {
+      contentType: 'audio/mpeg',
+      upsert: true
+    });
+    
+  if (error) {
+    logger.error('Failed to upload specific TTS file', error, { fileName });
+    throw error;
+  }
+  
+  const { data } = service['supabase'].storage
+    .from('assets')
+    .getPublicUrl(fileName);
+    
+  return data.publicUrl;
+};

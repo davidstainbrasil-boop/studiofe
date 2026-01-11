@@ -6,9 +6,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createRateLimiter, rateLimitPresets } from '../../../../lib/utils/rate-limit-middleware';
-import { avatar3DPipeline } from '../../../../lib/avatar-3d-pipeline'
-import { supabaseClient } from '../../../../lib/supabase'
+import { createRateLimiter, rateLimitPresets } from '@lib/utils/rate-limit-middleware';
+import { avatar3DPipeline } from '@lib/avatar-3d-pipeline'
+import { supabaseClient } from '@lib/supabase'
 import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
 import { logger } from '@lib/logger';
@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
         metadata: {
           startTime: renderResult.startTime ? new Date(renderResult.startTime).toISOString() : new Date().toISOString(),
           version: '2.0.0',
-          userId: 'user-temp', // TODO: Obter userId real
+          user_id: 'user-temp', // TODO: Obter userId real
           audioFile: audioFile ? audioFile.name : null,
           textLength: text?.length || 0
         }
@@ -268,7 +268,7 @@ export async function GET(request: NextRequest) {
         jobs: (jobs || []).map((job: RenderJobRecord) => ({
           id: job.id,
           avatarId: job.avatar_model_id,
-          userId: job.user_id,
+          user_id: job.user_id,
           status: job.status,
           progress: job.progress || 0,
           startTime: job.created_at,
@@ -313,7 +313,7 @@ export async function GET(request: NextRequest) {
           timestamp: new Date().toISOString(),
           filters: {
             status: status || 'all',
-            userId: userId || null
+            user_id: userId || null
           }
         }
       }
@@ -385,9 +385,9 @@ export async function DELETE(request: NextRequest) {
       const thirtyDaysAgo = new Date()
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
       
-      const oldJobsCount = await prisma.renderJob.count({
+      const oldJobsCount = await prisma.render_jobs.count({
         where: {
-          createdAt: { lt: thirtyDaysAgo },
+          created_at: { lt: thirtyDaysAgo },
           status: { in: ['completed', 'failed', 'cancelled'] }
         }
       })

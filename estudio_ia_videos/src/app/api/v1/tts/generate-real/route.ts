@@ -138,7 +138,7 @@ export async function GET(request: NextRequest) {
       }
 
       // Verificar status TTS do projeto
-      const project = await prisma.project.findUnique({
+      const project = await prisma.projects.findUnique({
         where: { id: projectId },
         include: {
           slides: {

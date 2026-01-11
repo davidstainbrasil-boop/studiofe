@@ -96,7 +96,7 @@ export async function GET(
         job: {
           id: job.id,
           avatarId: job.avatarId,
-          userId: job.userId,
+          user_id: job.user_id,
           avatarName: avatar?.name || avatar?.display_name || 'Desconhecido',
           status: job.status,
           progress: job.progress || 0,
@@ -149,8 +149,8 @@ export async function GET(
           timestamp: new Date().toISOString(),
           statusCheckedAt: currentTime,
           nextCheckRecommended: isProcessing ? currentTime + 5000 : null, // 5 segundos
-          createdAt: job.createdAt ? new Date(job.createdAt).toISOString() : null,
-          updatedAt: job.updatedAt ? new Date(job.updatedAt).toISOString() : null
+          created_at: job.created_at ? new Date(job.created_at).toISOString() : null,
+          updated_at: job.updated_at ? new Date(job.updated_at).toISOString() : null
         }
       }
     }
@@ -250,14 +250,14 @@ export async function POST(
         }
 
         // Atualizar job no Prisma para reprocessamento
-        await prisma.renderJob.update({
+        await prisma.render_jobs.update({
           where: { id: jobId },
           data: {
             status: 'queued',
             progress: 0,
-            errorMessage: null,
+            error_message: null,
             completedAt: null,
-            updatedAt: new Date()
+            updated_at: new Date()
           }
         })
 
@@ -356,7 +356,7 @@ export async function DELETE(
     }
 
     // Remover job usando Prisma
-    await prisma.renderJob.delete({
+    await prisma.render_jobs.delete({
       where: { id: jobId }
     })
 

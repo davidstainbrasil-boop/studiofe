@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
        return NextResponse.json({ error: 'Missing configuration' }, { status: 400 })
     }
 
-    logger.info('Starting avatar render', { userId: user.id })
+    logger.info('Starting avatar render', { user_id: user.id })
 
     // Use Real Pipeline V2
     // We map the complex config into the 'options' parameter
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
     }
 
     logger.info('Avatar render job queued', {
-      userId: user.id,
+      user_id: user.id,
       jobId: result.jobId
     })
 
@@ -145,7 +145,7 @@ export async function GET(request: NextRequest) {
 
     if (jobId) {
       // Use Prisma to fetch job
-      const job = await prisma.renderJob.findFirst({
+      const job = await prisma.render_jobs.findFirst({
         where: { id: jobId } // Assuming id matches job_id or we use id
       })
 
@@ -162,25 +162,12 @@ export async function GET(request: NextRequest) {
     }
 
     // List jobs
-    const jobs = await prisma.renderJob.findMany({
+    const jobs = await prisma.render_jobs.findMany({
       where: {
-        // We might need to filter by user if we had a direct user_id column or link
-        // For now, let's return recent jobs. In a real app, we'd filter by user.
-        // The schema has projectId, but not userId directly on RenderJob (it's on Project).
-        // But wait, the previous code used supabase.from('render_jobs').eq('user_id', user.id).
-        // Does RenderJob have user_id?
-        // Checking schema: RenderJob { id, projectId, ... } - No user_id!
-        // Ah, the previous code might have been using a different schema or I missed it.
-        // Let's check the schema again.
-        // Schema: RenderJob { id, projectId, ... }
-        // Project { id, userId, ... }
-        // So we filter by projects owned by user.
-        project: {
-          userId: user.id
-        },
-        ...(status ? { status } : {})
+        user_id: user.id,
+        ...(status ? { status: status as any } : {})
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { created_at: 'desc' },
       take: limit
     })
 
@@ -209,7 +196,7 @@ export async function DELETE(request: NextRequest) {
     // Auth check (omitted for brevity, same as above)
     // ...
 
-    await prisma.renderJob.update({
+    await prisma.render_jobs.update({
       where: { id: jobId },
       data: { status: 'cancelled' }
     })

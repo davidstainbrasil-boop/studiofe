@@ -3,7 +3,7 @@
  * Geração automática de narração para slides PPTX
  */
 
-import { generateAndUploadTTSAudio } from '@lib/services/tts/elevenlabs-service';
+import { generateAndUploadTTSAudio } from '@lib/elevenlabs-service';
 import { logger } from '@lib/logger';
 
 export interface NarrationOptions {

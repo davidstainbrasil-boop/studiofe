@@ -16,7 +16,7 @@ export async function DELETE(
   const contextLogger = logger.withContext({
     ...logContext,
     requestId,
-    userId: params.id,
+    user_id: params.id,
     roleName: params.roleName
   })
 

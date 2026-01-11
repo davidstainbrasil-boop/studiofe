@@ -125,8 +125,8 @@ export async function GET(req: Request) {
     if (queryParams.status) {
       baseQuery = baseQuery.eq('status', queryParams.status)
     }
-    if (queryParams.projectId) {
-      baseQuery = baseQuery.eq('project_id', queryParams.projectId)
+    if (queryParams.project_id) {
+      baseQuery = baseQuery.eq('project_id', queryParams.project_id)
     }
 
     const totalQuery = await baseQuery
@@ -144,8 +144,8 @@ export async function GET(req: Request) {
     if (queryParams.status) {
       statusQuery = statusQuery.eq('status', queryParams.status)
     }
-    if (queryParams.projectId) {
-      statusQuery = statusQuery.eq('project_id', queryParams.projectId)
+    if (queryParams.project_id) {
+      statusQuery = statusQuery.eq('project_id', queryParams.project_id)
     }
 
     const { data: statusRows, error: statusErr } = await statusQuery
@@ -181,8 +181,8 @@ export async function GET(req: Request) {
       .eq('status', 'completed')
       .gte('completed_at', sinceIso)
 
-    if (queryParams.projectId) {
-      completedQueryBuilder = completedQueryBuilder.eq('project_id', queryParams.projectId)
+    if (queryParams.project_id) {
+      completedQueryBuilder = completedQueryBuilder.eq('project_id', queryParams.project_id)
     }
 
     const completedQuery = await completedQueryBuilder
@@ -198,8 +198,8 @@ export async function GET(req: Request) {
       .eq('status', 'completed')
       .limit(queryParams.limit)
 
-    if (queryParams.projectId) {
-      durationQuery = durationQuery.eq('project_id', queryParams.projectId)
+    if (queryParams.project_id) {
+      durationQuery = durationQuery.eq('project_id', queryParams.project_id)
     }
 
     const { data: durationRows, error: durationErr } = await durationQuery
@@ -249,7 +249,7 @@ export async function GET(req: Request) {
         limit: queryParams.limit,
         filters: {
           status: queryParams.status ?? null,
-          projectId: queryParams.projectId ?? null,
+          project_id: queryParams.project_id ?? null,
         }
       }
     }

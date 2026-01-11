@@ -111,7 +111,7 @@ export async function GET(
     // Log da consulta
     logger.info('Job status retrieved', {
       id,
-      userId: user.id,
+      user_id: user.id,
       status: job.status,
       progress: job.progress.percentage
     })
@@ -213,7 +213,7 @@ export async function DELETE(
     // Log do cancelamento
     logger.info('Job cancelled', {
       id,
-      userId: user.id,
+      user_id: user.id,
       cancelledBy: user.id,
       previousStatus: job.status,
       stage: job.progress.stage
@@ -344,7 +344,7 @@ export async function PATCH(
     // Log da atualização
     logger.info('Job priority updated', {
       id,
-      userId: user.id,
+      user_id: user.id,
       oldPriority: job.priority,
       newPriority: body.priority
     })

@@ -23,7 +23,7 @@ export async function GET(
     const recordId = params.id
 
     // Busca registro de compliance
-    const record = await prisma.nRComplianceRecord.findUnique({
+    const record = await prisma.nr_compliance_records.findUnique({
       where: { id: recordId },
       include: {
         project: {
@@ -41,7 +41,7 @@ export async function GET(
     }
 
     // Verifica permissão
-    if (record.project.userId !== session.user.id) {
+    if (record.project.user_id !== session.user.id) {
       return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
     }
 
@@ -49,7 +49,7 @@ export async function GET(
     const reportBuffer = await generateComplianceReport(record)
 
     // Retorna PDF - Buffer is compatible with NextResponse body
-    return new NextResponse(reportBuffer as Uint8Array, {
+    return new NextResponse(Buffer.from(reportBuffer), {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="relatorio-compliance-${record.nr}-${record.id}.pdf"`

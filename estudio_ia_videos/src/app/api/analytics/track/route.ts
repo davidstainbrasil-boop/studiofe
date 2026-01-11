@@ -44,13 +44,14 @@ async function postHandler(req: NextRequest) {
     };
 
     // Registrar no banco via Prisma
-    await prisma.analyticsEvent.create({
+    await prisma.analytics_events.create({
       data: {
-        userId,
-        eventType: category,
-        eventData: JSON.parse(JSON.stringify(eventData)),
-        userAgent: userAgent || req.headers.get('user-agent'),
-        ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
+        id: crypto.randomUUID(),
+        user_id: userId,
+        event_type: category,
+        event_data: JSON.parse(JSON.stringify(eventData)),
+        user_agent: userAgent || req.headers.get('user-agent'),
+        ip_address: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
       }
     });
 
@@ -95,18 +96,18 @@ async function getHandler(req: NextRequest) {
     const yesterday = new Date();
     yesterday.setHours(yesterday.getHours() - 24);
 
-    const stats = await prisma.analyticsEvent.groupBy({
-      by: ['eventType'],
+    const stats = await prisma.analytics_events.groupBy({
+      by: ['event_type'],
       where: {
-        userId: userId,
-        createdAt: { gte: yesterday }
+        user_id: userId,
+        created_at: { gte: yesterday }
       },
       _count: {
         id: true
       }
     });
 
-    const formattedStats = stats.reduce((acc, curr) => {
+    const formattedStats = stats.reduce((acc: Record<string, number>, curr: any) => {
       acc[curr.eventType] = curr._count.id;
       return acc;
     }, {} as Record<string, number>);

@@ -154,7 +154,7 @@ export const POST = withRateLimit(RATE_LIMITS.UPLOAD, 'user')(async function POS
       message: `Arquivo ${file.name} enviado, iniciando processamento`,
       priority: 'low',
       timestamp: Date.now(),
-      userId: userId,
+      user_id: userId,
       roomId,
       data: {
         uploadId: uploadId,
@@ -168,7 +168,7 @@ export const POST = withRateLimit(RATE_LIMITS.UPLOAD, 'user')(async function POS
 
     return NextResponse.json({
       upload_id: uploadId,
-      projectId: projectId,
+      project_id: projectId,
       autoCreatedProject: autoCreatedProject,
       filename: filename,
       original_filename: file.name,
@@ -251,7 +251,7 @@ export async function GET(request: NextRequest) {
 }
 
 // Função para processar PPTX assincronamente (usando Prisma)
-async function processPPTXAsync(uploadId: string, filePath: string, projectId: string) {
+async function processPPTXAsync(uploadId: string, filePath: string, project_id: string) {
   try {
     // Definir sala do projeto para notificações
     const roomId = `project:${projectId}:uploads`

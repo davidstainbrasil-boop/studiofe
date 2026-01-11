@@ -37,7 +37,7 @@ async function handler(request: NextRequest): Promise<NextResponse> {
     });
 
   } catch (error) {
-    logger.error('Failed to get cache stats', error, {
+    logger.error('Failed to get cache stats', error instanceof Error ? error : new Error(String(error)), {
       component: 'CacheStatsAPI'
     });
 

@@ -6,7 +6,7 @@ import { authOptions } from '@lib/auth/auth-options'
 import { logger } from '@lib/logger'
 import { supabaseAdmin } from '@lib/supabase/server'
 
-async function isAdmin(userId: string | undefined): Promise<boolean> {
+async function isAdmin(user_id: string | undefined): Promise<boolean> {
   if (!userId) {
     return false
   }

@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
     // Log da criação
     logger.info('Pipeline job created via API', {
       jobId,
-      userId: user.id,
+      user_id: user.id,
       priority,
       textLength: validatedInput.text.length,
       engine: validatedInput.voice_config.engine,
@@ -215,7 +215,7 @@ export async function GET(request: NextRequest) {
 /**
  * Verificar limites do usuário
  */
-async function checkUserLimits(userId: string, supabase: SupabaseClient) {
+async function checkUserLimits(user_id: string, supabase: SupabaseClient) {
   try {
     // Verificar jobs ativos
     const { data: activeJobs } = await supabase
@@ -284,7 +284,7 @@ function getDefaultLimits(plan: string) {
 /**
  * Obter estatísticas do usuário
  */
-async function getUserStats(userId: string, supabase: SupabaseClient) {
+async function getUserStats(user_id: string, supabase: SupabaseClient) {
   try {
     const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
     const lastWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
@@ -349,7 +349,7 @@ async function getUserStats(userId: string, supabase: SupabaseClient) {
 /**
  * Verificar permissão de admin
  */
-async function checkAdminPermission(userId: string, supabase: SupabaseClient): Promise<boolean> {
+async function checkAdminPermission(user_id: string, supabase: SupabaseClient): Promise<boolean> {
   try {
     const { data } = await supabase
       .from('user_profiles')

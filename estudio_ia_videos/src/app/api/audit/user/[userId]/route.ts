@@ -12,7 +12,7 @@ import { supabase } from '@lib/services';
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: { user_id: string } }
 ) {
   try {
     const session = await getServerSession();
@@ -21,7 +21,7 @@ export async function GET(
     }
 
     // Usuários só podem ver seus próprios logs; admins podem ver qualquer usuário
-    if (session.user.id !== params.userId) {
+    if (session.user.id !== params.user_id) {
       const { data: userData, error: userError } = await supabase
         .from('users')
         .select('role')
@@ -36,7 +36,7 @@ export async function GET(
     const { searchParams } = new URL(req.url);
     const limit = parseInt(searchParams.get('limit') || '100');
 
-    const activity = await auditLogger.getUserActivity(params.userId, limit);
+    const activity = await auditLogger.getUserActivity(params.user_id, limit);
 
     return NextResponse.json({ activity });
   } catch (error: unknown) {

@@ -32,7 +32,7 @@ async function getSystemResourceUsage() {
   try {
     const [renderJobsCount, eventsCount, projectsCount] = await Promise.all([
       prisma.render_jobs.count(),
-      prisma.analyticsEvent.count(),
+      prisma.analytics_events.count(),
       prisma.projects.count()
     ])
 
@@ -62,11 +62,11 @@ async function getSystemResourceUsage() {
 // Get active users count
 async function getActiveUsersCount(timeRange: Date) {
   try {
-    const activeUsers = await prisma.analyticsEvent.groupBy({
-      by: ['userId'],
+    const activeUsers = await prisma.analytics_events.groupBy({
+      by: ['user_id'],
       where: {
-        createdAt: { gte: timeRange },
-        userId: { not: null }
+        created_at: { gte: timeRange },
+        user_id: { not: null }
       }
     })
     return activeUsers.length
@@ -82,7 +82,7 @@ async function getProjectStats() {
     const [total, active] = await Promise.all([
       prisma.projects.count(),
       prisma.projects.count({
-        where: { status: 'in-progress' } // Assuming 'in-progress' maps to active
+        where: { status: 'in_progress' } // Assuming 'in_progress' maps to active
       })
     ])
 
@@ -98,30 +98,30 @@ async function getRenderQueueStats() {
   try {
     const [activeRenders, queueLength, completedJobs] = await Promise.all([
       prisma.render_jobs.count({ where: { status: 'processing' } }),
-      prisma.render_jobs.count({ where: { status: 'queued' } }), // 'queued' or 'pending'
+      prisma.render_jobs.count({ where: { status: 'pending' } }), // 'pending' status
       prisma.render_jobs.findMany({
         where: {
           status: 'completed',
-          createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+          created_at: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
         },
         select: {
-          createdAt: true,
-          completedAt: true
+          created_at: true,
+          completed_at: true
         }
       })
     ])
 
     // Calculate average render time
     const renderTimes = completedJobs
-      .filter(job => job.completedAt)
-      .map(job => {
-        const start = new Date(job.createdAt).getTime()
+      .filter((job: any) => job.completedAt)
+      .map((job: any) => {
+        const start = new Date(job.created_at).getTime()
         const end = new Date(job.completedAt!).getTime()
         return (end - start) / 1000 // Convert to seconds
       })
 
     const avgRenderTime = renderTimes.length > 0 
-      ? renderTimes.reduce((sum, time) => sum + time, 0) / renderTimes.length 
+      ? renderTimes.reduce((sum: number, time: number) => sum + time, 0) / renderTimes.length 
       : 0
 
     return {
@@ -142,17 +142,17 @@ async function getRenderQueueStats() {
 // Calculate error rate
 async function getErrorRate(timeRange: Date) {
   try {
-    const totalEvents = await prisma.analyticsEvent.count({
-      where: { createdAt: { gte: timeRange } }
+    const totalEvents = await prisma.analytics_events.count({
+      where: { created_at: { gte: timeRange } }
     })
 
-    const errorEvents = await prisma.analyticsEvent.count({
+    const errorEvents = await prisma.analytics_events.count({
       where: {
-        createdAt: { gte: timeRange },
+        created_at: { gte: timeRange },
         OR: [
-          { eventType: { contains: 'error' } },
+          { event_type: { contains: 'error' } },
           {
-             eventData: {
+             event_data: {
                path: ['status'],
                equals: 'error'
              }

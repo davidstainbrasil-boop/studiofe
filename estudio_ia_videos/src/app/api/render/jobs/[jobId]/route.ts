@@ -47,7 +47,7 @@ export async function GET(
     }
 
     // Remove project data from response
-    const { project: _, ...jobData } = job
+    const { project: _, ...job_data } = job
 
     return NextResponse.json({ success: true, data: jobData })
 

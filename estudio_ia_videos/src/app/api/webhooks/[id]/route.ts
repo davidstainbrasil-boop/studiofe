@@ -34,7 +34,7 @@ export async function GET(request: NextRequest, { params }: Params) {
     }
 
     // Verificar se o usuário é dono do webhook
-    if (webhook.userId !== session.user.id) {
+    if (webhook.user_id !== session.user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -89,7 +89,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     if (!webhook) {
       return NextResponse.json({ error: 'Webhook not found' }, { status: 404 })
     }
-    if (webhook.userId !== session.user.id) {
+    if (webhook.user_id !== session.user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -104,7 +104,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       }
     })
 
-    logger.info('Webhook updated', { webhookId: id, userId: session.user.id })
+    logger.info('Webhook updated', { webhookId: id, user_id: session.user.id })
     return NextResponse.json(updated)
   } catch (error) {
     logger.error('Update webhook error', error instanceof Error ? error : new Error(String(error)), { component: 'API: webhooks/[id]' })

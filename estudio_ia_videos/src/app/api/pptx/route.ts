@@ -157,7 +157,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      projectId: project.id,
+      project_id: project.id,
       message: 'PPTX processado com sucesso',
       slideCount: slidesToInsert.length
     });

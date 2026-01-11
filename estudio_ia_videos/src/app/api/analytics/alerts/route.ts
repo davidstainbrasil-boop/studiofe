@@ -67,10 +67,10 @@ async function getHandler(req: NextRequest) {
     }
 
     // Listar alertas
-    const whereClause: Prisma.analytics_eventsWhereInput = {
-      eventType: 'alert',
+    const whereClause: any = {
+      event_type: 'alert',
       ...(organizationId && { 
-        eventData: {
+        event_data: {
           path: ['organizationId'],
           equals: organizationId
         }
@@ -80,8 +80,8 @@ async function getHandler(req: NextRequest) {
     if (status !== 'all') {
       // We need to be careful with merging filters on eventData
       // Using AND is safer when multiple filters on the same JSON field are needed
-      const statusFilter: Prisma.analytics_eventsWhereInput = {
-        eventData: {
+      const statusFilter: any = {
+        event_data: {
           path: ['status'],
           equals: status
         }
@@ -89,9 +89,9 @@ async function getHandler(req: NextRequest) {
       
       if (whereClause.AND) {
         if (Array.isArray(whereClause.AND)) {
-          (whereClause.AND as Prisma.analytics_eventsWhereInput[]).push(statusFilter);
+          (whereClause.AND as any[]).push(statusFilter);
         } else {
-          whereClause.AND = [whereClause.AND as Prisma.analytics_eventsWhereInput, statusFilter];
+          whereClause.AND = [whereClause.AND as any, statusFilter];
         }
       } else {
         whereClause.AND = [statusFilter];
@@ -99,8 +99,8 @@ async function getHandler(req: NextRequest) {
     }
 
     if (severity !== 'all') {
-      const severityFilter: Prisma.analytics_eventsWhereInput = {
-        eventData: {
+      const severityFilter: any = {
+        event_data: {
           path: ['severity'],
           equals: severity
         }
@@ -108,28 +108,28 @@ async function getHandler(req: NextRequest) {
 
       if (whereClause.AND) {
         if (Array.isArray(whereClause.AND)) {
-          (whereClause.AND as Prisma.analytics_eventsWhereInput[]).push(severityFilter);
+          (whereClause.AND as any[]).push(severityFilter);
         } else {
-          whereClause.AND = [whereClause.AND as Prisma.analytics_eventsWhereInput, severityFilter];
+          whereClause.AND = [whereClause.AND as any, severityFilter];
         }
       } else {
         whereClause.AND = [severityFilter];
       }
     }
 
-    const alerts = await prisma.analyticsEvent.findMany({
+    const alerts = await prisma.analytics_events.findMany({
       where: whereClause,
-      orderBy: { createdAt: 'desc' },
+      orderBy: { created_at: 'desc' },
       take: limit
     });
 
     // Buscar estatísticas dos alertas
     const [totalAlerts, activeAlerts, criticalAlerts, recentAlerts] = await Promise.all([
-      prisma.analyticsEvent.count({
+      prisma.analytics_events.count({
         where: {
-          eventType: 'alert',
+          event_type: 'alert',
           ...(organizationId && { 
-            eventData: {
+            event_data: {
               path: ['organizationId'],
               equals: organizationId
             }
@@ -137,18 +137,18 @@ async function getHandler(req: NextRequest) {
         }
       }),
       
-      prisma.analyticsEvent.count({
+      prisma.analytics_events.count({
         where: {
-          eventType: 'alert',
+          event_type: 'alert',
           AND: [
             {
-              eventData: {
+              event_data: {
                 path: ['status'],
                 equals: 'active'
               }
             },
             ...(organizationId ? [{
-              eventData: {
+              event_data: {
                 path: ['organizationId'],
                 equals: organizationId
               }
@@ -157,24 +157,24 @@ async function getHandler(req: NextRequest) {
         }
       }),
       
-      prisma.analyticsEvent.count({
+      prisma.analytics_events.count({
         where: {
-          eventType: 'alert',
+          event_type: 'alert',
           AND: [
             {
-              eventData: {
+              event_data: {
                 path: ['status'],
                 equals: 'active'
               }
             },
             {
-              eventData: {
+              event_data: {
                 path: ['severity'],
                 equals: 'critical'
               }
             },
             ...(organizationId ? [{
-              eventData: {
+              event_data: {
                 path: ['organizationId'],
                 equals: organizationId
               }
@@ -183,14 +183,14 @@ async function getHandler(req: NextRequest) {
         }
       }),
       
-      prisma.analyticsEvent.count({
+      prisma.analytics_events.count({
         where: {
-          eventType: 'alert',
-          createdAt: {
+          event_type: 'alert',
+          created_at: {
             gte: new Date(Date.now() - 24 * 60 * 60 * 1000) // Últimas 24h
           },
           ...(organizationId && { 
-            eventData: {
+            event_data: {
               path: ['organizationId'],
               equals: organizationId
             }
@@ -199,8 +199,8 @@ async function getHandler(req: NextRequest) {
       })
     ]);
 
-    const formattedAlerts = alerts.map(alert => {
-      const data = (alert.eventData as unknown as AlertEventData) || {};
+    const formattedAlerts = alerts.map((alert: any) => {
+      const data = (alert.event_data as unknown as AlertEventData) || {};
 
       const valueFromData = typeof data.value === 'number'
         ? data.value
@@ -219,9 +219,9 @@ async function getHandler(req: NextRequest) {
         threshold: typeof data.threshold === 'number' ? data.threshold : 0,
         status: data.status ?? 'success',
         organizationId: data.organizationId,
-        userId: alert.userId,
+        user_id: alert.user_id,
         metadata: data,
-        triggeredAt: alert.createdAt,
+        triggeredAt: alert.created_at,
         acknowledgedAt: data.acknowledgedAt ? new Date(data.acknowledgedAt) : null,
         resolvedAt: data.resolvedAt ? new Date(data.resolvedAt) : null,
         acknowledgedBy: data.acknowledgedBy,
@@ -320,11 +320,12 @@ async function postHandler(req: NextRequest) {
       }
 
       // Criar regra de alerta
-      const rule = await prisma.analyticsEvent.create({
+      const rule = await prisma.analytics_events.create({
         data: {
-          userId: session.user.id,
-          eventType: 'alert_rule',
-          eventData: {
+          id: crypto.randomUUID(),
+          user_id: session.user.id,
+          event_type: 'alert_rule',
+          event_data: {
             organizationId,
             type,
             title: name,
@@ -337,7 +338,7 @@ async function postHandler(req: NextRequest) {
             channels: channels || [],
             cooldown,
             createdBy: session.user.id,
-            createdAt: new Date().toISOString()
+            created_at: new Date().toISOString()
           }
         }
       });
@@ -395,13 +396,13 @@ async function putHandler(req: NextRequest) {
     const organizationId = getOrgId(session.user);
 
     // Verificar se a regra existe e pertence ao usuário/organização
-    const existingRule = await prisma.analyticsEvent.findFirst({
+    const existingRule = await prisma.analytics_events.findFirst({
       where: {
         id: ruleId,
-        eventType: 'alert_rule',
-        userId: session.user.id,
+        event_type: 'alert_rule',
+        user_id: session.user.id,
         ...(organizationId && { 
-          eventData: {
+          event_data: {
             path: ['organizationId'],
             equals: organizationId
           }
@@ -417,7 +418,7 @@ async function putHandler(req: NextRequest) {
     }
 
     // Atualizar regra
-    const currentData = (existingRule.eventData as Record<string, unknown> | null) || {};
+    const currentData = (existingRule.event_data as Record<string, unknown> | null) || {};
     const updatedData = {
       ...currentData,
       ...updates,
@@ -426,13 +427,13 @@ async function putHandler(req: NextRequest) {
       status: updates.isActive !== undefined ? 
         (updates.isActive ? 'active' : 'inactive') : currentData.status,
       updatedBy: session.user.id,
-      updatedAt: new Date().toISOString()
+      updated_at: new Date().toISOString()
     };
 
-    await prisma.analyticsEvent.update({
+    await prisma.analytics_events.update({
       where: { id: ruleId },
       data: {
-        eventData: updatedData as Prisma.InputJsonValue
+        event_data: updatedData as any
       }
     });
 
@@ -482,13 +483,13 @@ async function deleteHandler(req: NextRequest) {
     const organizationId = getOrgId(session.user);
 
     // Verificar se a regra existe e pertence ao usuário/organização
-    const existingRule = await prisma.analyticsEvent.findFirst({
+    const existingRule = await prisma.analytics_events.findFirst({
       where: {
         id: ruleId,
-        eventType: 'alert_rule',
-        userId: session.user.id,
+        event_type: 'alert_rule',
+        user_id: session.user.id,
         ...(organizationId && { 
-          eventData: {
+          event_data: {
             path: ['organizationId'],
             equals: organizationId
           }
@@ -504,7 +505,7 @@ async function deleteHandler(req: NextRequest) {
     }
 
     // Remover regra
-    await prisma.analyticsEvent.delete({
+    await prisma.analytics_events.delete({
       where: { id: ruleId }
     });
 

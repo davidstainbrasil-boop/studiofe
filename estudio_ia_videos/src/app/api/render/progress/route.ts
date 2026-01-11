@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
             progress: currentJob.progress,
             error: currentJob.error_message,
             outputUrl: currentJob.output_url,
-            updatedAt: 'updated_at' in currentJob ? currentJob.updated_at : undefined
+            updated_at: 'updated_at' in currentJob ? currentJob.updated_at : undefined
           };
 
           const sseData = `data: ${JSON.stringify(data)}\n\n`;

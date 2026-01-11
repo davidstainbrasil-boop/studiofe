@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
         videoId: analysis.videoId,
         status: analysis.status,
         progress: analysis.progress,
-        createdAt: analysis.createdAt,
+        created_at: analysis.created_at,
       },
     });
   } catch (error) {
@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
         progress: analysis.progress,
         results: analysis.results,
         error: analysis.error,
-        createdAt: analysis.createdAt,
+        created_at: analysis.created_at,
         completedAt: analysis.completedAt,
       },
     });

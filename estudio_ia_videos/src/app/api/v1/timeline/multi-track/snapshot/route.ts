@@ -36,10 +36,10 @@ export async function POST(request: NextRequest) {
     logger.info(`📸 Criando snapshot de timeline do projeto ${projectId}...`, { component: 'API: v1/timeline/multi-track/snapshot' });
 
     // Verify project access
-    const project = await prisma.project.findFirst({
+    const project = await prisma.projects.findFirst({
       where: {
         id: projectId,
-        userId: session.user.id,
+        user_id: session.user.id,
       },
     });
 
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
         id: snapshot.id,
         version: snapshot.version,
         description: snapshot.description,
-        createdAt: snapshot.createdAt.toISOString(),
+        created_at: snapshot.created_at.toISOString(),
         tracksCount: Array.isArray(timeline.tracks) ? timeline.tracks.length : 0,
         totalDuration: timeline.totalDuration,
       },

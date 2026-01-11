@@ -1,7 +1,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseForRequest } from '@lib/supabase/server';
-import { generateAndUploadTTSAudio } from '@lib/services/tts/elevenlabs-service';
+import { generateAndUploadTTSAudio } from '@lib/elevenlabs-service';
 import { logger } from '@lib/logger';
 import { prisma } from '@lib/prisma'; // Using Prisma for easier JSON manipulation if Supabase client is tricky for deep JSON updates
 

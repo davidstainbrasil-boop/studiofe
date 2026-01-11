@@ -29,7 +29,7 @@ export async function POST(
 
     await commentsService.addReaction({
       commentId: params.commentId,
-      userId: session.user.id,
+      user_id: session.user.id,
       emoji,
     });
 

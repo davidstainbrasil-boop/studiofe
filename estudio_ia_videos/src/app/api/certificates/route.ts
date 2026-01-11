@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@lib/prisma';
 import { createClient } from '@supabase/supabase-js';
 import { getSupabaseForRequest } from '@lib/supabase/server';
+// @ts-expect-error - uuid types not available in production build
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '@lib/logger';
 
@@ -69,10 +70,10 @@ export async function POST(request: NextRequest) {
 
     // Try to create in DB
     try {
-      const certificate = await prisma.certificate.create({
+      const certificate = await prisma.certificates.create({
         data: {
           projectId,
-          userId: user.id,
+          user_id: user.id,
           studentName,
           courseName,
           code,
@@ -98,14 +99,14 @@ export async function POST(request: NextRequest) {
         const mockCert = {
           id: uuidv4(),
           projectId,
-          userId: user.id,
+          user_id: user.id,
           studentName,
           courseName,
           code,
           certificateUrl: `https://cert.tecnocursos.com.br/${code}`,
-          issuedAt: new Date().toISOString(),
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+          issued_at: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         };
         
         global.mockCertificates.set(code, mockCert);

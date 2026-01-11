@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
     
     logger.info(`[VoiceCloning] Usuário ${user.id} gerou voz: ${text.length} chars`, { 
       component: 'API: voice-cloning/generate',
-      userId: user.id,
+      user_id: user.id,
       textLength: text.length
     })
     

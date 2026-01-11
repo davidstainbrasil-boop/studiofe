@@ -17,7 +17,7 @@ const generateSchema = z.object({
   slides: z.array(slideSchema).min(1).max(100).optional(),
   text: z.string().optional(),
   duration: z.number().min(1).max(3600).optional(),
-  projectId: z.string().optional(),
+  project_id: z.string().optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -112,7 +112,7 @@ export async function GET() {
               { text: 'Texto do slide 1', duration: 10 },
               { text: 'Texto do slide 2', duration: 15 },
             ],
-            projectId: 'opcional',
+            project_id: 'opcional',
           },
         },
         {
@@ -120,7 +120,7 @@ export async function GET() {
           body: {
             text: 'Texto completo para legendar',
             duration: 60,
-            projectId: 'opcional',
+            project_id: 'opcional',
           },
         },
       ],

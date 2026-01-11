@@ -44,7 +44,7 @@ type RenderStatsPayload = {
     generated_at: string
     time_range: TimeRange
     filters: {
-      userId: string | null
+      user_id: string | null
       projectType: string | null
       status: RenderStatsQuery['status']
     }
@@ -107,12 +107,12 @@ export async function GET(req: NextRequest) {
     .order('created_at', { ascending: false })
     .limit(MAX_ROWS)
 
-  if (params.userId) {
-    query = query.eq('projects.user_id', params.userId)
+  if (params.user_id) {
+    query = query.eq('projects.user_id', params.user_id)
   }
 
   if (params.projectType) {
-    query = query.eq('projects.type', params.projectType)
+    query = query.eq('projects.type', params.projectType as any)
   }
 
   if (params.status !== 'all') {
@@ -128,7 +128,7 @@ export async function GET(req: NextRequest) {
 
   const rawJobs = (data as unknown) as RenderJobWithProject[]
   
-  const jobs: RenderJobRow[] = rawJobs.map(job => ({
+  const jobs: RenderJobRow[] = rawJobs.map((job: any) => ({
     id: job.id,
     created_at: job.created_at,
     started_at: job.started_at,
@@ -156,7 +156,7 @@ export async function GET(req: NextRequest) {
       generated_at: new Date().toISOString(),
       time_range: params.timeRange,
       filters: {
-        userId: params.userId ?? null,
+        user_id: params.user_id ?? null,
         projectType: params.projectType ?? null,
         status: params.status
       },

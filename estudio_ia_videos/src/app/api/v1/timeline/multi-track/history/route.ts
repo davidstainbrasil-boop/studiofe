@@ -43,10 +43,10 @@ export async function GET(request: NextRequest) {
     });
 
     // Verify project access
-    const project = await prisma.project.findFirst({
+    const project = await prisma.projects.findFirst({
       where: {
         id: projectId,
-        userId: session.user.id,
+        user_id: session.user.id,
       },
     });
 
@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
     // Get timeline snapshots (history)
     const snapshots = await prisma.timelineSnapshot.findMany({
       where: { timelineId: currentTimeline.id },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { created_at: 'desc' },
       take: limit,
       skip: offset,
     });
@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
       count: snapshots.length
     });
 
-    interface SnapshotRecord { id: string; version: number; createdAt: Date; createdBy: string | null; description?: string | null; tracks: unknown[] | unknown; totalDuration: number | null }
+    interface SnapshotRecord { id: string; version: number; created_at: Date; createdBy: string | null; description?: string | null; tracks: unknown[] | unknown; totalDuration: number | null }
     return NextResponse.json({
       success: true,
       data: {
@@ -94,7 +94,7 @@ export async function GET(request: NextRequest) {
         history: snapshots.map((snapshot: SnapshotRecord) => ({
           id: snapshot.id,
           version: snapshot.version,
-          createdAt: snapshot.createdAt.toISOString(),
+          created_at: snapshot.created_at.toISOString(),
           createdBy: snapshot.createdBy,
           description: snapshot.description,
           tracksCount: Array.isArray(snapshot.tracks) ? snapshot.tracks.length : 0,

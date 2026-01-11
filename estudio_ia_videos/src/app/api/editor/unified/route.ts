@@ -7,7 +7,7 @@ export async function POST() {
 }
 
 // Workflow manager stub
-export const workflowManager = {
+const workflowManager = {
   async process(data: unknown) {
     logger.info('Processing workflow', { component: 'API: editor/unified', data });
     return { success: true };

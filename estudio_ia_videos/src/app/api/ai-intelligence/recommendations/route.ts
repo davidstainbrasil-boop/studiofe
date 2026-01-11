@@ -40,8 +40,8 @@ export async function GET(request: NextRequest) {
           { metric: 'User Satisfaction', improvement: '+29%' }
         ],
         status: 'available',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         metadata: {
           basedOnAnalysis: 'engagement_pattern_detection',
           similarImplementations: 1247,
@@ -71,8 +71,8 @@ export async function GET(request: NextRequest) {
           { metric: 'Attention Retention', improvement: '+18%' }
         ],
         status: 'available',
-        createdAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date().toISOString()
+        created_at: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+        updated_at: new Date().toISOString()
       },
       {
         id: 'smart_rec_3',
@@ -96,8 +96,8 @@ export async function GET(request: NextRequest) {
           { metric: 'Course Completion', improvement: '+28%' }
         ],
         status: 'available',
-        createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(Date.now() - 60 * 60 * 1000).toISOString()
+        created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+        updated_at: new Date(Date.now() - 60 * 60 * 1000).toISOString()
       },
       {
         id: 'smart_rec_4',
@@ -121,8 +121,8 @@ export async function GET(request: NextRequest) {
           { metric: 'Adaptive Learning', improvement: '+34%' }
         ],
         status: 'in_development',
-        createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date().toISOString()
+        created_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
+        updated_at: new Date().toISOString()
       },
       {
         id: 'smart_rec_5',
@@ -146,8 +146,8 @@ export async function GET(request: NextRequest) {
           { metric: 'Audit Readiness', improvement: '+67%' }
         ],
         status: 'available',
-        createdAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-        updatedAt: new Date().toISOString()
+        created_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+        updated_at: new Date().toISOString()
       }
     ];
 

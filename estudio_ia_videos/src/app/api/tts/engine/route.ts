@@ -64,8 +64,8 @@ export async function POST(request: NextRequest) {
       textLength: text.length,
       engine: options.engine,
       voiceId: voice_id,
-      projectId: project_id,
-      userId: user_id
+      project_id: project_id,
+      user_id: user_id
     })
 
     // Gerar TTS

@@ -1,6 +1,6 @@
 
 import { Metadata } from 'next'
-import ProfessionalRenderEngine from '../components/render/professional-render-engine'
+import ProfessionalRenderEngine from '@components/render/professional-render-engine';
 
 export const metadata: Metadata = {
   title: 'Professional Render Engine - Estúdio IA de Vídeos',
@@ -17,7 +17,7 @@ export default function RenderEnginePage() {
             Sistema de renderização profissional com FFmpeg para vídeos de cinema-grade
           </p>
         </div>
-        
+
         <ProfessionalRenderEngine />
       </div>
     </div>

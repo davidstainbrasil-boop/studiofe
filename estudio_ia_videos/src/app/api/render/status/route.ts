@@ -91,7 +91,7 @@ export async function GET(req: NextRequest) {
           outputUrl: renderJob.output_url,
           error: renderJob.error_message,
           config: renderJob.render_settings,
-          createdAt: renderJob.created_at?.toISOString(),
+          created_at: renderJob.created_at?.toISOString(),
           completedAt: renderJob.completed_at?.toISOString(),
           timestamp: new Date().toISOString()
         });

@@ -4,7 +4,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
-  testDir: './app/e2e',
+  testDir: './src/app/e2e',
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
@@ -23,7 +23,7 @@ export default defineConfig({
   },
 
   // Global setup to enforce URL isolation
-  globalSetup: require.resolve('./app/e2e/global-setup.ts'),
+  globalSetup: require.resolve('./src/app/e2e/global-setup.ts'),
 
   projects: [
     {

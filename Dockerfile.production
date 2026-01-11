@@ -4,10 +4,23 @@
 # ================================
 # Stage 1: Dependencies
 # ================================
-FROM node:20-alpine AS deps
+# Stage 1: Dependencies
+# ================================
+FROM node:20-slim AS deps
 
 # Install security updates and required packages
-RUN apk add --no-cache libc6-compat curl
+# Debian uses apt-get. We install python3, make, g++, and build tools for canvas/native modules
+RUN apt-get update && apt-get install -y \
+    python3 \
+    make \
+    g++ \
+    pkg-config \
+    libcairo2-dev \
+    libpango1.0-dev \
+    libjpeg-dev \
+    libgif-dev \
+    librsvg2-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /app
@@ -23,10 +36,22 @@ RUN npm ci --only=production --audit false --legacy-peer-deps && \
 # ================================
 # Stage 2: Builder
 # ================================
-FROM node:20-alpine AS builder
+# Stage 2: Builder
+# ================================
+FROM node:20-slim AS builder
 
 # Install build dependencies
-RUN apk add --no-cache libc6-compat
+RUN apt-get update && apt-get install -y \
+    python3 \
+    make \
+    g++ \
+    pkg-config \
+    libcairo2-dev \
+    libpango1.0-dev \
+    libjpeg-dev \
+    libgif-dev \
+    librsvg2-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -35,12 +60,30 @@ COPY package.json package-lock.json ./
 COPY estudio_ia_videos/package.json ./estudio_ia_videos/
 RUN npm ci --audit false --legacy-peer-deps
 
+# Install app dependencies
+WORKDIR /app/estudio_ia_videos
+COPY estudio_ia_videos/package-lock.json ./
+RUN npm ci --audit false --legacy-peer-deps
+WORKDIR /app
+
 # Copy source code
 COPY . .
 
 # Environment variables for build
+# CRITICAL: Next.js needs these at build time to inline them into the bundle
+ARG NEXT_PUBLIC_SUPABASE_URL
+ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
+ARG NEXT_PUBLIC_SITE_URL
+ARG NEXT_PUBLIC_SENTRY_DSN
+
+ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
+ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
+ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
+ENV NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN
+
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_OPTIONS="--max-old-space-size=8192"
 
 # Build the application
 WORKDIR /app/estudio_ia_videos
@@ -50,19 +93,25 @@ RUN npm run build && \
 # ================================
 # Stage 3: Runtime
 # ================================
-FROM node:20-alpine AS runtime
+# Stage 3: Runtime
+# ================================
+FROM node:20-slim AS runtime
 
 # Security: Create non-root user
-RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nextjs
+RUN groupadd -r nodejs && useradd -r -g nodejs nextjs
 
 WORKDIR /app
 
-# Install runtime security updates
-RUN apk add --no-cache \
+# Install runtime security updates and minimal runtime deps for canvas (if needed)
+RUN apt-get update && apt-get install -y \
     curl \
     tini \
-    && rm -rf /var/cache/apk/*
+    libcairo2 \
+    libpango-1.0-0 \
+    libjpeg62-turbo \
+    libgif7 \
+    librsvg2-2 \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy built application
 COPY --from=builder /app/estudio_ia_videos/next.config.mjs ./
@@ -83,7 +132,7 @@ ENV HOSTNAME="0.0.0.0"
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:3000/api/health || exit 1
+    CMD curl -f http://localhost:3000/api/health || exit 1
 
 # Expose port
 EXPOSE 3000

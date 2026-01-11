@@ -24,7 +24,7 @@ interface UserDataExport {
   exportInfo: {
     requestedAt: string;
     format: string;
-    userId: string;
+    user_id: string;
     email: string;
   };
   profile: Record<string, unknown>;
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   try {
-    logger.info('User data export requested', { userId: user.id, format: options.format });
+    logger.info('User data export requested', { user_id: user.id, format: options.format });
 
     // Fetch user profile
     const { data: profile } = await supabase
@@ -111,7 +111,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       exportInfo: {
         requestedAt: new Date().toISOString(),
         format: options.format,
-        userId: user.id,
+        user_id: user.id,
         email: user.email || 'unknown',
       },
       profile: profile || {},
@@ -138,7 +138,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     });
   } catch (error) {
     const errorInstance = error instanceof Error ? error : new Error(String(error));
-    logger.error('Failed to export user data', errorInstance, { userId: user.id });
+    logger.error('Failed to export user data', errorInstance, { user_id: user.id });
     return NextResponse.json(
       { error: 'Internal Server Error', message: 'Failed to export data' },
       { status: 500 }
@@ -152,7 +152,7 @@ function convertToCSV(data: UserDataExport): string {
   // Export info header
   lines.push('# User Data Export');
   lines.push(`# Requested At: ${data.exportInfo.requestedAt}`);
-  lines.push(`# User ID: ${data.exportInfo.userId}`);
+  lines.push(`# User ID: ${data.exportInfo.user_id}`);
   lines.push(`# Email: ${data.exportInfo.email}`);
   lines.push('');
   

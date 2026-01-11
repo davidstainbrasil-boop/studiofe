@@ -34,7 +34,7 @@ async function handler(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json(data, { status: response.status });
 
   } catch (error) {
-    logger.error('Cache invalidation webhook failed', error, {
+    logger.error('Cache invalidation webhook failed', error instanceof Error ? error : new Error(String(error)), {
       component: 'CacheWebhookAPI'
     });
 

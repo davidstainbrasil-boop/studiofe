@@ -35,8 +35,8 @@ export async function GET(request: NextRequest) {
       durationSeconds: t.durationSeconds,
       durationFormatted: formatDuration(t.durationSeconds || 0),
       config: t.templateConfig,
-      createdAt: t.createdAt,
-      updatedAt: t.updatedAt,
+      created_at: t.created_at,
+      updated_at: t.updated_at,
     }));
 
     return NextResponse.json({

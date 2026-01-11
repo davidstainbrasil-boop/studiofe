@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 
 import { logger } from '@lib/services'
 import { getSupabaseForRequest } from '@lib/services/server'
-import { checkRateLimit } from '@lib/utils/rate-limit'
+import { checkRateLimit } from '@lib/rate-limit';
 import { parseCancelJobInput } from '@lib/video-jobs/handlers/video-jobs-cancel'
 import { recordRateLimitHit, recordError } from '@lib/video-jobs/utils/metrics'
 
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
     }
     const { id: jobId, reason } = parsed.data
     if (reason) {
-      logger.info('video-jobs-cancel', 'cancel-reason', { jobId, userId: userData.user.id, reason })
+      logger.info('video-jobs-cancel', 'cancel-reason', { jobId, user_id: userData.user.id, reason })
     }
 
     // Buscar job do usuário

@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { userId, types, limit } = body as {
-      userId: string;
+      user_id: string;
       types?: RecommendationType[];
       limit?: number;
     };

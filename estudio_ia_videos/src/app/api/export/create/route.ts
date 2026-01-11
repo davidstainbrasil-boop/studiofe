@@ -17,8 +17,8 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { projectId, userId, options } = body as {
-      projectId: string;
-      userId: string;
+      project_id: string;
+      user_id: string;
       options: ExportOptions;
     };
 
@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
         thumbnailPath: job.thumbnailPath,
         metadata: job.metadata,
         error: job.error,
-        createdAt: job.createdAt,
+        created_at: job.created_at,
         completedAt: job.completedAt,
       },
     });

@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     const { name, type, userId, tasks, config } = body as {
       name: string;
       type: BatchJobType;
-      userId: string;
+      user_id: string;
       tasks: Record<string, unknown>[];
       config?: Record<string, unknown>;
     };
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
         status: job.status,
         totalTasks: job.totalTasks,
         progress: job.progress,
-        createdAt: job.createdAt,
+        created_at: job.created_at,
       },
     });
   } catch (error) {
@@ -100,7 +100,7 @@ export async function GET(request: NextRequest) {
         estimatedTime: job.estimatedTime,
         remainingTime: job.remainingTime,
         statistics: job.statistics,
-        createdAt: job.createdAt,
+        created_at: job.created_at,
         startedAt: job.startedAt,
         completedAt: job.completedAt,
         error: job.error,

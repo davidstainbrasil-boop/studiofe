@@ -38,14 +38,14 @@ interface TimelineData {
   totalDuration: number | null;
   tracks: Prisma.JsonValue;
   settings: Prisma.JsonValue;
-  updatedAt: Date;
+  updated_at: Date;
 }
 
 interface TimelineSnapshot {
   id: string;
   timelineId: string;
   version: number;
-  createdAt: Date;
+  created_at: Date;
   createdBy: string;
 }
 
@@ -152,10 +152,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Verify project access
-    const project = await prisma.project.findFirst({
+    const project = await prisma.projects.findFirst({
       where: {
         id: projectId,
-        userId: session.user.id,
+        user_id: session.user.id,
       },
     });
 
@@ -222,7 +222,7 @@ export async function GET(request: NextRequest) {
 /**
  * Timeline Summary Analytics
  */
-async function getTimelineSummary(timeline: TimelineData, projectId: string): Promise<AnalyticsSummary> {
+async function getTimelineSummary(timeline: TimelineData, project_id: string): Promise<AnalyticsSummary> {
   const tracks = (timeline.tracks as unknown as Track[]) || [];
   
   // Calculate basic metrics
@@ -263,14 +263,14 @@ async function getTimelineSummary(timeline: TimelineData, projectId: string): Pr
         : 0,
     },
     settings: (timeline.settings as unknown as TimelineSettings) || {},
-    lastUpdated: timeline.updatedAt,
+    lastUpdated: timeline.updated_at,
   };
 }
 
 /**
  * Usage Statistics
  */
-async function getUsageStats(projectId: string): Promise<UsageStats> {
+async function getUsageStats(project_id: string): Promise<UsageStats> {
   // Get timeline history
   const timeline = await prisma.timeline.findUnique({
     where: { projectId },
@@ -288,12 +288,12 @@ async function getUsageStats(projectId: string): Promise<UsageStats> {
 
   const snapshots = await prisma.timelineSnapshot.findMany({
     where: { timelineId: timeline.id },
-    orderBy: { createdAt: 'desc' },
+    orderBy: { created_at: 'desc' },
     take: 50,
   }) as TimelineSnapshot[];
 
   // Calculate edit frequency
-  const editTimes = snapshots.map((s: TimelineSnapshot) => s.createdAt.getTime());
+  const editTimes = snapshots.map((s: TimelineSnapshot) => s.created_at.getTime());
   const intervals = editTimes.slice(1).map((time: number, i: number) => 
     editTimes[i] - time
   );
@@ -308,7 +308,7 @@ async function getUsageStats(projectId: string): Promise<UsageStats> {
   // Calculate version growth
   const versionChanges = snapshots.map((s: TimelineSnapshot, i: number) => ({
     version: s.version,
-    timestamp: s.createdAt,
+    timestamp: s.created_at,
     changeSize: i < snapshots.length - 1 
       ? Math.abs(s.version - snapshots[i + 1].version) 
       : 0,
@@ -320,8 +320,8 @@ async function getUsageStats(projectId: string): Promise<UsageStats> {
     currentVersion: timeline.version as number,
     averageEditInterval: Math.round(avgEditInterval / 1000 / 60), // minutes
     editHistory: versionChanges.slice(0, 10),
-    firstEdit: snapshots[snapshots.length - 1]?.createdAt,
-    lastEdit: snapshots[0]?.createdAt,
+    firstEdit: snapshots[snapshots.length - 1]?.created_at,
+    lastEdit: snapshots[0]?.created_at,
   };
 }
 
@@ -406,7 +406,7 @@ async function getPerformanceMetrics(timeline: TimelineData): Promise<Performanc
 /**
  * Editing Patterns Analysis
  */
-async function getEditingPatterns(projectId: string): Promise<EditingPatterns> {
+async function getEditingPatterns(project_id: string): Promise<EditingPatterns> {
   const timeline = await prisma.timeline.findUnique({
     where: { projectId },
   });
@@ -432,7 +432,7 @@ async function getEditingPatterns(projectId: string): Promise<EditingPatterns> {
 
   const snapshots = await prisma.timelineSnapshot.findMany({
     where: { timelineId: timeline.id },
-    orderBy: { createdAt: 'asc' },
+    orderBy: { created_at: 'asc' },
     take: 100,
   }) as TimelineSnapshot[];
 
@@ -441,7 +441,7 @@ async function getEditingPatterns(projectId: string): Promise<EditingPatterns> {
   const dailyDistribution: Record<number, number> = {};
 
   snapshots.forEach((snapshot: TimelineSnapshot) => {
-    const date = new Date(snapshot.createdAt);
+    const date = new Date(snapshot.created_at);
     const hour = date.getHours();
     const day = date.getDay();
 

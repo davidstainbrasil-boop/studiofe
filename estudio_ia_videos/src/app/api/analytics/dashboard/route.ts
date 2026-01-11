@@ -52,7 +52,7 @@ async function getHandler(req: NextRequest) {
     }
 
     const whereClause = {
-      createdAt: { gte: startDate }
+      created_at: { gte: startDate }
     };
 
     // Utilitários locais para acessar metadados e normalizar números
@@ -79,21 +79,21 @@ async function getHandler(req: NextRequest) {
       projectsData
     ] = await Promise.all([
       // Total de eventos no período
-      prisma.analyticsEvent.count({ where: whereClause }),
+      prisma.analytics_events.count({ where: whereClause }),
 
       // Eventos dos últimos 7 dias
-      prisma.analyticsEvent.count({
+      prisma.analytics_events.count({
         where: {
           ...whereClause,
-          createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
+          created_at: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
         }
       }),
 
       // Eventos de erro (status inside eventData)
-      prisma.analyticsEvent.count({
+      prisma.analytics_events.count({
         where: { 
           ...whereClause, 
-          eventData: {
+          event_data: {
             path: ['status'],
             equals: 'error'
           }
@@ -119,14 +119,14 @@ async function getHandler(req: NextRequest) {
       `,
 
       // Eventos recentes
-      prisma.analyticsEvent.findMany({
+      prisma.analytics_events.findMany({
         where: whereClause,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { created_at: 'desc' },
         take: 20,
         select: {
           id: true,
-          eventData: true,
-          createdAt: true
+          event_data: true,
+          created_at: true
         }
       }),
 
@@ -170,14 +170,14 @@ async function getHandler(req: NextRequest) {
       // Dados de projetos
       prisma.projects.count({
         where: {
-          createdAt: { gte: startDate }
+          created_at: { gte: startDate }
         }
       })
     ]);
 
     // Map recent events
-    const recentEvents = recentEventsRaw.map(e => {
-      const data = e.eventData as Record<string, unknown> || {};
+    const recentEvents = recentEventsRaw.map((e: any) => {
+      const data = e.event_data as Record<string, unknown> || {};
       return {
         id: e.id,
         category: data.category as string,
@@ -186,7 +186,7 @@ async function getHandler(req: NextRequest) {
         status: data.status as string,
         duration: data.duration as number,
         fileSize: data.fileSize as number,
-        createdAt: e.createdAt
+        created_at: e.created_at
       };
     });
 
@@ -194,13 +194,13 @@ async function getHandler(req: NextRequest) {
     const errorRate = totalEvents > 0 ? ((errorEvents / totalEvents) * 100).toFixed(2) : '0';
     
     // Processar dados de categoria com percentuais
-    const eventsByCategoryList = eventsByCategory.map(item => ({
+    const eventsByCategoryList = eventsByCategory.map((item: any) => ({
       category: item.category || 'Unknown',
       count: Number(item.count)
     }));
     
-    const totalCategoryEvents = eventsByCategoryList.reduce((sum, item) => sum + item.count, 0);
-    const processedEventsByCategory = eventsByCategoryList.map(item => ({
+    const totalCategoryEvents = eventsByCategoryList.reduce((sum: number, item: any) => sum + item.count, 0);
+    const processedEventsByCategory = eventsByCategoryList.map((item: any) => ({
       category: item.category,
       count: item.count,
       percentage: totalCategoryEvents > 0 ? 
@@ -208,17 +208,17 @@ async function getHandler(req: NextRequest) {
     }));
 
     // Processar dados de ação
-    const processedEventsByAction = eventsByAction.map(item => ({
+    const processedEventsByAction = eventsByAction.map((item: any) => ({
       action: item.action || 'Unknown',
       count: Number(item.count)
     }));
 
     // Simular dados de usuários ativos (seria melhor ter uma tabela de sessões)
-    const activeUsers = await prisma.analyticsEvent.groupBy({
-      by: ['userId'],
+    const activeUsers = await prisma.analytics_events.groupBy({
+      by: ['user_id'],
       where: {
         ...whereClause,
-        userId: { not: null }
+        user_id: { not: null }
       },
       _count: { id: true }
     });
@@ -238,7 +238,7 @@ async function getHandler(req: NextRequest) {
         LIMIT 5
       `;
 
-    const slowestEndpoints = endpointPerformance.map(item => ({
+    const slowestEndpoints = endpointPerformance.map((item: any) => ({
         endpoint: item.endpoint || 'Unknown',
         avgTime: Math.round(Number(item.avg_time)),
         calls: Number(item.calls)
@@ -259,7 +259,7 @@ async function getHandler(req: NextRequest) {
         LIMIT 5
       `;
 
-    const topPages = pageViews.map(item => ({
+    const topPages = pageViews.map((item: any) => ({
         page: item.page || 'Unknown',
         views: Number(item.views),
         avgTimeOnPage: Math.round(Number(item.avg_time || 0))
@@ -277,7 +277,7 @@ async function getHandler(req: NextRequest) {
         ORDER BY count DESC
       `;
 
-    const deviceTypes = deviceData.map(item => ({
+    const deviceTypes = deviceData.map((item: any) => ({
         type: item.type || 'Unknown',
         count: Number(item.count)
     }));
@@ -295,7 +295,7 @@ async function getHandler(req: NextRequest) {
         LIMIT 5
       `;
 
-    const browserStats = browserData.map(item => ({
+    const browserStats = browserData.map((item: any) => ({
         browser: item.browser || 'Unknown',
         count: Number(item.count)
     }));
@@ -316,7 +316,7 @@ async function getHandler(req: NextRequest) {
       },
       eventsByCategory: processedEventsByCategory,
       eventsByAction: processedEventsByAction,
-      timelineData: timelineData.map(item => ({
+      timelineData: timelineData.map((item: any) => ({
         date: String(item.date),
         events: Number(item.events),
         errors: Number(item.errors),

@@ -116,7 +116,7 @@ export async function GET(request: NextRequest) {
         { status: 500 }
       );
     }
-  });
+  })(request);
 }
 
 export async function POST(request: NextRequest) {
@@ -203,6 +203,7 @@ export async function POST(request: NextRequest) {
           organizationId: filters.organizationId || getOrgId(session.user)
         },
         includeMetadata,
+
         compression,
         maxRecords: Math.min(maxRecords, 50000) // Limitar a 50k registros
       };
@@ -242,7 +243,7 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
-  });
+  })(request);
 }
 
 // Endpoint para listar histórico de exportações
@@ -275,5 +276,5 @@ export async function PUT(request: NextRequest) {
         { status: 500 }
       );
     }
-  });
+  })(request);
 }

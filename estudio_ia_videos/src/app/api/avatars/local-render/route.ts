@@ -28,6 +28,7 @@ interface AvatarJobData {
   audioUrl?: string;
   duration?: number;
   lipSyncData?: unknown;
+  fileSize?: number;
 }
 
 export async function POST(request: NextRequest) {
@@ -74,12 +75,12 @@ export async function POST(request: NextRequest) {
       errorDetails: null
     };
 
-    const job = await prisma.processingQueue.create({
+    const job = await prisma.processing_queue.create({
       data: {
-        jobType: 'avatar-3d-render',
+        job_type: 'avatar-3d-render',
         status: 'pending',
         priority: 1,
-        jobData: jobData as Prisma.InputJsonValue
+        job_data: jobData as any
       }
     });
 
@@ -89,18 +90,18 @@ export async function POST(request: NextRequest) {
       .catch(error => {
         logger.error(`[Job ${job.id}] Erro no processamento`, error instanceof Error ? error : new Error(String(error)), { component: 'API: avatars/local-render' });
         // Atualiza job com erro
-        prisma.processingQueue.update({
+        prisma.processing_queue.update({
           where: { id: job.id },
           data: {
             status: 'failed',
-            errorMessage: error.message,
-            jobData: {
-              ...jobData,
+            error_message: error.message,
+            job_data: {
+              ...job_data,
               error: error.message,
               errorDetails: { stack: error.stack }
-            } as Prisma.InputJsonValue
+            } as any
           }
-        }).catch((err) => logger.error('Erro ao atualizar job falho', err instanceof Error ? err : new Error(String(err)), { component: 'API: avatars/local-render' }));
+        }).catch((err: any) => logger.error('Erro ao atualizar job falho', err instanceof Error ? err : new Error(String(err)), { component: 'API: avatars/local-render' }));
       });
 
     return NextResponse.json({
@@ -131,7 +132,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const job = await prisma.processingQueue.findUnique({
+    const job = await prisma.processing_queue.findUnique({
       where: { id: jobId }
     });
 
@@ -142,7 +143,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const jobData = (job.jobData ?? {}) as AvatarJobData;
+    const jobData = (job.job_data ?? {}) as AvatarJobData;
 
     return NextResponse.json({
       success: true,
@@ -153,9 +154,9 @@ export async function GET(request: NextRequest) {
       estimatedTime: jobData.estimatedTime,
       videoUrl: jobData.videoUrl,
       thumbnail: jobData.thumbnail,
-      error: job.errorMessage,
-      createdAt: job.createdAt,
-      updatedAt: job.updatedAt
+      error: job.error_message,
+      created_at: job.created_at,
+      updated_at: job.updated_at
     });
 
   } catch (error) {
@@ -183,17 +184,17 @@ async function processAvatarRendering(
 
   try {
     // Recuperar job atual para manter dados
-    const currentJob = await prisma.processingQueue.findUnique({ where: { id: jobId } });
-    let currentData: AvatarJobData = (currentJob?.jobData ?? {}) as AvatarJobData;
+    const currentJob = await prisma.processing_queue.findUnique({ where: { id: jobId } });
+    let currentData: AvatarJobData = (currentJob?.job_data ?? {}) as AvatarJobData;
 
     // ETAPA 1: Gerar áudio TTS
     currentData = { ...currentData, currentStage: 'audio' };
-    await prisma.processingQueue.update({
+    await prisma.processing_queue.update({
       where: { id: jobId },
       data: {
         status: 'processing',
         progress: 10,
-        jobData: currentData
+        job_data: currentData
       }
     });
 
@@ -217,21 +218,21 @@ async function processAvatarRendering(
       estimatedTime: Math.ceil(duration / 100)
     };
 
-    await prisma.processingQueue.update({
+    await prisma.processing_queue.update({
       where: { id: jobId },
       data: {
         progress: 25,
-        jobData: currentData
+        job_data: currentData
       }
     });
 
     // ETAPA 2: Processar lip sync e animação
     currentData = { ...currentData, currentStage: 'lipsync' };
-    await prisma.processingQueue.update({
+    await prisma.processing_queue.update({
       where: { id: jobId },
       data: {
         progress: 40,
-        jobData: currentData
+        job_data: currentData
       }
     });
 
@@ -240,11 +241,11 @@ async function processAvatarRendering(
 
     // ETAPA 3: Renderizar vídeo
     currentData = { ...currentData, currentStage: 'rendering' };
-    await prisma.processingQueue.update({
+    await prisma.processing_queue.update({
       where: { id: jobId },
       data: {
         progress: 60,
-        jobData: currentData
+        job_data: currentData
       }
     });
 
@@ -257,11 +258,11 @@ async function processAvatarRendering(
 
     // ETAPA 4: Upload para S3
     currentData = { ...currentData, currentStage: 'encoding' };
-    await prisma.processingQueue.update({
+    await prisma.processing_queue.update({
       where: { id: jobId },
       data: {
         progress: 85,
-        jobData: currentData
+        job_data: currentData
       }
     });
 
@@ -283,12 +284,12 @@ async function processAvatarRendering(
       fileSize: uploadResult.size
     };
 
-    await prisma.processingQueue.update({
+    await prisma.processing_queue.update({
       where: { id: jobId },
       data: {
         status: 'completed',
         progress: 100,
-        jobData: currentData
+        job_data: currentData
       }
     });
 

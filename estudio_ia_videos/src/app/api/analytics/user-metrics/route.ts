@@ -33,7 +33,7 @@ interface UserRoleQueryResult {
 // Validation schema
 const UserMetricsQuerySchema = z.object({
   timeRange: z.enum(['1h', '24h', '7d', '30d', '90d']).default('24h'),
-  userId: z.string().optional(),
+  user_id: z.string().optional(),
   includeActivity: z.string().transform(val => val === 'true').default('true'),
   includePatterns: z.string().transform(val => val === 'true').default('false')
 });
@@ -52,35 +52,35 @@ function getTimeRangeDate(timeRange: string): Date {
 }
 
 // Get user project statistics
-async function getUserProjectStats(userId: string, timeRange: Date) {
+async function getUserProjectStats(user_id: string, timeRange: Date) {
   try {
     // Using raw query because 'type' is missing in Prisma schema
     const projects = await prisma.$queryRaw<ProjectQueryResult[]>`
       SELECT id, status, type, created_at, updated_at
       FROM projects
-      WHERE user_id = ${userId}::uuid
+      WHERE user_id = ${user_id}::uuid
       AND created_at >= ${timeRange}
     `;
 
     const projectsList = projects;
     const total = projectsList.length;
-    const completed = projectsList.filter(p => p.status === 'completed').length;
-    const active = projectsList.filter(p => p.status === 'active' || p.status === 'in-progress').length;
+    const completed = projectsList.filter((p: any) => p.status === 'completed').length;
+    const active = projectsList.filter((p: any) => p.status === 'active' || p.status === 'in-progress').length;
 
     // Calculate average project duration for completed projects
-    const completedProjects = projectsList.filter(p => p.status === 'completed');
-    const durations = completedProjects.map(p => {
+    const completedProjects = projectsList.filter((p: any) => p.status === 'completed');
+    const durations = completedProjects.map((p: any) => {
       const start = new Date(p.created_at).getTime();
       const end = new Date(p.updated_at).getTime();
       return (end - start) / (1000 * 60 * 60 * 24); // Convert to days
     });
 
     const avgDuration = durations.length > 0 
-      ? durations.reduce((sum, duration) => sum + duration, 0) / durations.length 
+      ? durations.reduce((sum: number, duration: number) => sum + duration, 0) / durations.length 
       : 0;
 
     // Get favorite project types
-    const projectTypeCounts = projectsList.reduce((acc: Record<string, number>, project) => {
+    const projectTypeCounts = projectsList.reduce((acc: Record<string, number>, project: any) => {
       const type = project.type || 'unknown';
       acc[type] = (acc[type] || 0) + 1;
       return acc;
@@ -111,23 +111,23 @@ async function getUserProjectStats(userId: string, timeRange: Date) {
 }
 
 // Get user render statistics
-async function getUserRenderStats(userId: string, timeRange: Date) {
+async function getUserRenderStats(user_id: string, timeRange: Date) {
   try {
     const renders = await prisma.render_jobs.findMany({
       where: {
-        project: { userId: userId },
-        createdAt: { gte: timeRange }
+        user_id: user_id,
+        created_at: { gte: timeRange }
       },
       select: {
         id: true,
         status: true,
-        durationMs: true
+        duration_ms: true
       }
     });
 
-    const completedRenders = renders.filter(r => r.status === 'completed');
-    const totalRenderTime = completedRenders.reduce((sum, render) => {
-      return sum + ((render.durationMs || 0) / 1000); // Convert ms to seconds
+    const completedRenders = renders.filter((r: any) => r.status === 'completed');
+    const totalRenderTime = completedRenders.reduce((sum: number, render: any) => {
+      return sum + ((render.duration_ms || 0) / 1000); // Convert ms to seconds
     }, 0);
 
     return {
@@ -144,15 +144,15 @@ async function getUserRenderStats(userId: string, timeRange: Date) {
 }
 
 // Get collaboration statistics
-async function getCollaborationStats(userId: string) {
+async function getCollaborationStats(user_id: string) {
   try {
     const ownedProjectsCount = await prisma.projects.count({
-      where: { userId: userId }
+      where: { user_id: user_id }
     });
 
     // ProjectCollaborator table is missing in Prisma schema, use raw query
     const collaborations = await prisma.$queryRaw<CollaboratorQueryResult[]>`
-      SELECT project_id, role FROM project_collaborators WHERE user_id = ${userId}::uuid
+      SELECT project_id, role FROM project_collaborators WHERE user_id = ${user_id}::uuid
     `;
     const collaborationsList = collaborations;
 
@@ -161,7 +161,7 @@ async function getCollaborationStats(userId: string) {
       SELECT DISTINCT p.id 
       FROM projects p
       JOIN project_collaborators pc ON p.id = pc.project_id
-      WHERE p.user_id = ${userId}::uuid
+      WHERE p.user_id = ${user_id}::uuid
     `;
     const sharedProjectsList = sharedProjects;
 
@@ -181,32 +181,32 @@ async function getCollaborationStats(userId: string) {
 }
 
 // Get recent activity
-async function getRecentActivity(userId: string, timeRange: Date, limit: number = 20) {
+async function getRecentActivity(user_id: string, timeRange: Date, limit: number = 20) {
   try {
-    const activities = await prisma.analyticsEvent.findMany({
+    const activities = await prisma.analytics_events.findMany({
       where: {
-        userId: userId,
-        createdAt: { gte: timeRange }
+        user_id: user_id,
+        created_at: { gte: timeRange }
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { created_at: 'desc' },
       take: limit,
       select: {
         id: true,
-        eventType: true,
-        eventData: true,
-        createdAt: true
+        event_type: true,
+        event_data: true,
+        created_at: true
       }
     });
 
-    return activities.map(activity => {
-      const data = activity.eventData as Record<string, any> || {};
+    return activities.map((activity: any) => {
+      const data = activity.event_data as Record<string, any> || {};
       return {
         id: activity.id,
         type: activity.eventType,
         action: data.action || activity.eventType,
-        timestamp: activity.createdAt,
+        timestamp: activity.created_at,
         metadata: data,
-        project_id: data.projectId || null
+        project_id: data.project_id || null
       };
     });
   } catch (error) {
@@ -216,38 +216,38 @@ async function getRecentActivity(userId: string, timeRange: Date, limit: number 
 }
 
 // Get usage patterns (if requested)
-async function getUsagePatterns(userId: string, timeRange: Date) {
+async function getUsagePatterns(user_id: string, timeRange: Date) {
   try {
-    const events = await prisma.analyticsEvent.findMany({
+    const events = await prisma.analytics_events.findMany({
       where: {
-        userId: userId,
-        createdAt: { gte: timeRange }
+        user_id: user_id,
+        created_at: { gte: timeRange }
       },
       select: {
-        createdAt: true,
-        eventType: true,
-        eventData: true
+        created_at: true,
+        event_type: true,
+        event_data: true
       }
     });
 
     // Calculate most active hours
     const hourCounts = new Array(24).fill(0);
-    events.forEach(event => {
-      const hour = new Date(event.createdAt).getHours();
+    events.forEach((event: any) => {
+      const hour = new Date(event.created_at).getHours();
       hourCounts[hour]++;
     });
 
     const mostActiveHours = hourCounts
-      .map((count, hour) => ({ hour, count }))
+      .map((count: number, hour: number) => ({ hour, count }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 3)
-      .map(item => item.hour);
+      .map((item: any) => item.hour);
 
     // Calculate preferred features
-    const featureCounts = events.reduce((acc: Record<string, number>, event) => {
-      const data = event.eventData as Record<string, any> || {};
+    const featureCounts = events.reduce((acc: Record<string, number>, event: any) => {
+      const data = event.event_data as Record<string, any> || {};
       const action = data.action || 'unknown';
-      const feature = `${event.eventType}_${action}`;
+      const feature = `${event.event_type}_${action}`;
       acc[feature] = (acc[feature] || 0) + 1;
       return acc;
     }, {});
@@ -261,14 +261,14 @@ async function getUsagePatterns(userId: string, timeRange: Date) {
     const sessionDurations: number[] = [];
     if (events.length > 1) {
       const sortedEvents = [...events].sort((a, b) => 
-        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
       );
       
-      let sessionStart = new Date(sortedEvents[0].createdAt).getTime();
+      let sessionStart = new Date(sortedEvents[0].created_at).getTime();
       let lastEventTime = sessionStart;
       
       for (let i = 1; i < sortedEvents.length; i++) {
-        const eventTime = new Date(sortedEvents[i].createdAt).getTime();
+        const eventTime = new Date(sortedEvents[i].created_at).getTime();
         const timeSinceLastEvent = (eventTime - lastEventTime) / 1000; // seconds
         
         if (timeSinceLastEvent > 1800) { // 30 min gap = new session
@@ -283,7 +283,7 @@ async function getUsagePatterns(userId: string, timeRange: Date) {
     }
     
     const avgSessionDuration = sessionDurations.length > 0 
-      ? Math.round(sessionDurations.reduce((sum, dur) => sum + dur, 0) / sessionDurations.length)
+      ? Math.round(sessionDurations.reduce((sum: number, dur: number) => sum + dur, 0) / sessionDurations.length)
       : 0;
 
     return {
@@ -314,7 +314,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const queryParams = {
       timeRange: searchParams.get('timeRange') || '24h',
-      userId: searchParams.get('userId'),
+      user_id: searchParams.get('userId'),
       includeActivity: searchParams.get('includeActivity') || 'true',
       includePatterns: searchParams.get('includePatterns') || 'false'
     };
@@ -322,7 +322,7 @@ export async function GET(request: NextRequest) {
     const validatedParams = UserMetricsQuerySchema.parse(queryParams);
     
     let targetUserId = session.user.id;
-    if (validatedParams.userId && validatedParams.userId !== session.user.id) {
+    if (validatedParams.user_id && validatedParams.user_id !== session.user.id) {
       // Check if current user is admin
       const userRole = await prisma.$queryRaw<UserRoleQueryResult[]>`SELECT role FROM users WHERE id = ${session.user.id}::uuid`;
       const role = userRole[0]?.role;
@@ -334,7 +334,7 @@ export async function GET(request: NextRequest) {
         );
       }
       
-      targetUserId = validatedParams.userId;
+      targetUserId = validatedParams.user_id;
     }
 
     const timeRangeDate = getTimeRangeDate(validatedParams.timeRange);
@@ -365,7 +365,7 @@ export async function GET(request: NextRequest) {
       success: true,
       data: userMetrics,
       metadata: {
-        userId: targetUserId,
+        user_id: targetUserId,
         timeRange: validatedParams.timeRange,
         generatedAt: new Date().toISOString(),
         includeActivity: validatedParams.includeActivity,

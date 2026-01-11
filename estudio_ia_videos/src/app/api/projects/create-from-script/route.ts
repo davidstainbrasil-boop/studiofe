@@ -195,7 +195,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      projectId: project.id,
+      project_id: project.id,
       slidesCreated: slidesData.length
     });
 

@@ -57,7 +57,7 @@ interface TTSRequest {
 }
 
 class PPTXProcessor {
-  async processPPTX(filePath: string, projectId: string): Promise<PPTXSlide[]> {
+  async processPPTX(filePath: string, project_id: string): Promise<PPTXSlide[]> {
     try {
       // Simular processamento do PPTX (integrar com biblioteca real)
       const slides: PPTXSlide[] = [
@@ -112,7 +112,7 @@ class PPTXProcessor {
       ]
 
       // Salvar no banco de dados
-      await prisma.project.update({
+      await prisma.projects.update({
         where: { id: projectId },
         data: {
           metadata: JSON.parse(JSON.stringify({
@@ -155,7 +155,7 @@ class PPTXProcessor {
     }
   }
 
-  async generateAutoTTS(slides: PPTXSlide[], projectId: string): Promise<Record<string, unknown>> {
+  async generateAutoTTS(slides: PPTXSlide[], project_id: string): Promise<Record<string, unknown>> {
     try {
       logger.info('🎤 Iniciando geração automática de TTS...', { component: 'API: pptx/process' })
       
@@ -194,7 +194,7 @@ class PPTXProcessor {
       }
 
       // Atualizar projeto com dados de TTS
-      await prisma.project.update({
+      await prisma.projects.update({
         where: { id: projectId },
         data: {
           metadata: JSON.parse(JSON.stringify({
@@ -237,7 +237,7 @@ class PPTXProcessor {
     }
   }
 
-  async triggerAvatarGeneration(projectId: string, slides: PPTXSlide[]): Promise<Record<string, unknown>> {
+  async triggerAvatarGeneration(project_id: string, slides: PPTXSlide[]): Promise<Record<string, unknown>> {
     try {
       logger.info('👤 Iniciando geração automática de Avatar...', { component: 'API: pptx/process' })
       
@@ -300,10 +300,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar se o projeto existe e pertence ao usuário
-    const project = await prisma.project.findFirst({
+    const project = await prisma.projects.findFirst({
       where: {
         id: projectId,
-        userId: session.user.id
+        user_id: session.user.id
       }
     })
 
@@ -402,10 +402,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Project ID required' }, { status: 400 })
     }
 
-    const project = await prisma.project.findFirst({
+    const project = await prisma.projects.findFirst({
       where: {
         id: projectId,
-        userId: session.user.id
+        user_id: session.user.id
       }
     })
 
@@ -446,10 +446,10 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Project ID and slide IDs required' }, { status: 400 })
     }
 
-    const project = await prisma.project.findFirst({
+    const project = await prisma.projects.findFirst({
       where: {
         id: projectId,
-        userId: session.user.id
+        user_id: session.user.id
       }
     })
 

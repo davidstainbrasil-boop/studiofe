@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import { getSupabaseForRequest } from '@lib/services/server'
-import { checkRateLimit } from '@lib/utils/rate-limit'
+import { checkRateLimit } from '@lib/rate-limit';
 import { parseUpdateProgress } from '@lib/video-jobs/handlers/video-jobs-progress'
 import { recordRateLimitHit, recordError } from '@lib/video-jobs/utils/metrics'
 interface RenderJobRow {

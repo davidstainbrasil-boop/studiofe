@@ -99,7 +99,7 @@ function formatDbJob(job: RenderJob) {
   return {
     id: job.id,
     name: 'render-video',
-    data: { projectId: job.project_id, userId: job.user_id },
+    data: { project_id: job.project_id, user_id: job.user_id },
     progress: job.progress,
     attemptsMade: job.attempts || 0,
     timestamp: new Date(job.created_at).getTime(),

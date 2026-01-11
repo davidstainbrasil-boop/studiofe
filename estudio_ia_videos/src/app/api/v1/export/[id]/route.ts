@@ -76,7 +76,7 @@ export async function GET(
         fileSize: job.fileSize,
         duration: job.duration,
         error: job.error,
-        createdAt: job.createdAt,
+        created_at: job.created_at,
         startedAt: job.startedAt,
         completedAt: job.completedAt,
         elapsedTime,

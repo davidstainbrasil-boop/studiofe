@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Busca projeto
-    const project = await prisma.project.findUnique({
+    const project = await prisma.projects.findUnique({
       where: { id: projectId },
       include: {
         slides: {
@@ -43,13 +43,13 @@ export async function POST(req: NextRequest) {
     }
 
     // Verifica permissão
-    if (project.userId !== session.user.id) {
+    if (project.user_id !== session.user.id) {
       return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
     }
 
     // Prepara conteúdo para análise
     const projectContent = {
-      slides: project.slides.map((slide) => ({
+      slides: project.slides.map((slide: any) => ({
         number: slide.orderIndex,
         title: slide.title,
         content: slide.content,
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
         audioPath: null // TODO: Extract from audioConfig if needed
       })),
       totalDuration: project.duration || 0,
-      imageUrls: project.slides.map((slide) => slide.backgroundImage).filter(Boolean),
+      imageUrls: project.slides.map((slide: any) => slide.backgroundImage).filter(Boolean),
       audioFiles: []
     }
 
@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
     const result = await checkCompliance(nr as NRCode, projectContent, true)
 
     // Salva resultado no banco
-    const complianceRecord = await prisma.nRComplianceRecord.create({
+    const complianceRecord = await prisma.nr_compliance_records.create({
       data: {
         projectId,
         nr: result.nr,
@@ -78,9 +78,9 @@ export async function POST(req: NextRequest) {
         requirementsTotal: result.requirementsTotal,
         validatedAt: new Date(),
         validatedBy: 'AI',
-        recommendations: (result.recommendations || []) as Prisma.InputJsonValue,
-        criticalPoints: (result.criticalPoints || []) as Prisma.InputJsonValue,
-        aiAnalysis: (result.aiAnalysis || {}) as Prisma.InputJsonValue,
+        recommendations: (result.recommendations || []) as any,
+        criticalPoints: (result.criticalPoints || []) as any,
+        aiAnalysis: (result.aiAnalysis || {}) as any,
         aiScore: result.aiScore,
         confidence: result.confidence
       }
@@ -119,9 +119,9 @@ export async function GET(req: NextRequest) {
     }
 
     // Busca registros de conformidade
-    const records = await prisma.nRComplianceRecord.findMany({
+    const records = await prisma.nr_compliance_records.findMany({
       where: { projectId },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { created_at: 'desc' }
     })
 
     return NextResponse.json({ records })

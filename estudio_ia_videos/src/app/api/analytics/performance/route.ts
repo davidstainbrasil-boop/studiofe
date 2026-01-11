@@ -60,7 +60,7 @@ async function getHandler(req: NextRequest) {
         FROM "AnalyticsEvent"
         WHERE created_at >= ${startDate}
         AND event_data->>'duration' IS NOT NULL
-        ${endpoint ? Prisma.sql`AND event_data->'metadata'->>'endpoint' LIKE ${'%' + endpoint + '%'}` : Prisma.sql``}
+        ${endpoint ? (Prisma as any).sql`AND event_data->'metadata'->>'endpoint' LIKE ${'%' + endpoint + '%'}` : (Prisma as any).sql``}
       `;
 
       const stats = responseTimeStats[0] || { avg: 0, max: 0, min: 0, count: 0 };
@@ -80,7 +80,7 @@ async function getHandler(req: NextRequest) {
         FROM "AnalyticsEvent" 
         WHERE created_at >= ${startDate} 
         AND event_data->>'duration' IS NOT NULL
-        ${endpoint ? Prisma.sql`AND event_data->'metadata'->>'endpoint' LIKE ${'%' + endpoint + '%'}` : Prisma.sql``}
+        ${endpoint ? (Prisma as any).sql`AND event_data->'metadata'->>'endpoint' LIKE ${'%' + endpoint + '%'}` : (Prisma as any).sql``}
         GROUP BY range
         ORDER BY 
           CASE range
@@ -115,8 +115,8 @@ async function getHandler(req: NextRequest) {
           min: Number(stats.min || 0),
           count: Number(stats.count || 0)
         },
-        distribution: responseTimeDistribution.map(item => ({ range: item.range, count: Number(item.count) })),
-        byEndpoint: endpointPerformance.map((item) => ({
+        distribution: responseTimeDistribution.map((item: any) => ({ range: item.range, count: Number(item.count) })),
+        byEndpoint: endpointPerformance.map((item: any) => ({
           endpoint: item.endpoint || 'Unknown',
           avgTime: Math.round(Number(item.avg_time || 0)),
           requests: Number(item.requests)
@@ -137,15 +137,15 @@ async function getHandler(req: NextRequest) {
         LIMIT 60
       `;
 
-      const avgThroughput = await prisma.analyticsEvent.count({
-        where: { createdAt: { gte: startDate } }
+      const avgThroughput = await prisma.analytics_events.count({
+        where: { created_at: { gte: startDate } }
       });
 
       const minutesInPeriod = Math.max(1, (Date.now() - startDate.getTime()) / (1000 * 60));
 
       performanceData.throughput = {
         avgRequestsPerMinute: Math.round(avgThroughput / minutesInPeriod),
-        timeline: throughputData.map(item => ({ minute: item.minute, requests: Number(item.requests) })),
+        timeline: throughputData.map((item: any) => ({ minute: item.minute, requests: Number(item.requests) })),
         totalRequests: avgThroughput
       };
     }
@@ -175,22 +175,22 @@ async function getHandler(req: NextRequest) {
         LIMIT 10
       `;
 
-      const totalRequests = await prisma.analyticsEvent.count({
+      const totalRequests = await prisma.analytics_events.count({
         where: {
-          createdAt: { gte: startDate }
+          created_at: { gte: startDate }
         }
       });
 
-      const totalErrors = errorStats.reduce((sum, item) => sum + Number(item.count), 0);
+      const totalErrors = errorStats.reduce((sum: number, item: any) => sum + Number(item.count), 0);
 
       performanceData.errors = {
         errorRate: totalRequests > 0 ? ((totalErrors / totalRequests) * 100).toFixed(2) : '0',
         totalErrors,
-        byStatus: errorStats.map((item) => ({
+        byStatus: errorStats.map((item: any) => ({
           status: item.status || 'Unknown',
           count: Number(item.count)
         })),
-        byCategory: errorsByCategory.map((item) => ({
+        byCategory: errorsByCategory.map((item: any) => ({
           category: item.category || 'Unknown',
           errorCode: item.error_code || 'Unknown',
           count: Number(item.count)
@@ -202,7 +202,7 @@ async function getHandler(req: NextRequest) {
     if (metric === 'all') {
       // Queue size from render jobs
       const queueSize = await prisma.render_jobs.count({
-        where: { status: 'queued' }
+        where: { status: 'pending' }
       });
       
       const processingCount = await prisma.render_jobs.count({
@@ -235,9 +235,9 @@ async function getHandler(req: NextRequest) {
         GROUP BY event_data->>'action'
       `;
 
-      const totalHits = Number(cacheStats.find(s => s.action === 'hit')?.count || 0);
-      const totalMisses = Number(cacheStats.find(s => s.action === 'miss')?.count || 0);
-      const evictions = Number(cacheStats.find(s => s.action === 'eviction')?.count || 0);
+      const totalHits = Number(cacheStats.find((s: any) => s.action === 'hit')?.count || 0);
+      const totalMisses = Number(cacheStats.find((s: any) => s.action === 'miss')?.count || 0);
+      const evictions = Number(cacheStats.find((s: any) => s.action === 'eviction')?.count || 0);
       const total = totalHits + totalMisses;
 
       const hitRate = total > 0 ? ((totalHits / total) * 100).toFixed(1) : '0';
@@ -314,11 +314,12 @@ async function postHandler(req: NextRequest) {
     const organizationId = getOrgId(session.user);
 
     // Registrar métrica de performance
-    await prisma.analyticsEvent.create({
+    await prisma.analytics_events.create({
       data: {
-        userId,
-        eventType: 'performance_metric',
-        eventData: {
+        id: crypto.randomUUID(),
+        user_id: userId,
+        event_type: 'performance_metric',
+        event_data: {
           organizationId,
           action: 'api_call',
           label: endpoint,

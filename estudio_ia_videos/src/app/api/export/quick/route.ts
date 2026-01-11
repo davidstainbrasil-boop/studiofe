@@ -17,8 +17,8 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { projectId, userId, platform } = body as {
-      projectId: string;
-      userId: string;
+      project_id: string;
+      user_id: string;
       platform: TargetPlatform;
     };
 

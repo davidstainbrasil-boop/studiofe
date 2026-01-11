@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
-import { SilenceDetector } from '../../../lib/silence-removal/silence-detector';
+import { SilenceDetector } from '@lib/silence-removal/silence-detector';
 import { logger } from '@lib/logger';
 
 const UPLOAD_DIR = '/tmp/silence-detection';

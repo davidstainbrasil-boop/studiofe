@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Buscar status do projeto
-    const project = await prisma.project.findUnique({
+    const project = await prisma.projects.findUnique({
       where: { id: projectId },
       select: {
         id: true,

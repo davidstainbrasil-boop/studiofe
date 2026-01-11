@@ -28,7 +28,7 @@ interface UploadMetadata {
   totalSize: number;
   totalChunks: number;
   uploadedChunks: number[];
-  createdAt: string;
+  created_at: string;
   lastUpdated: string;
 }
 
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
         totalSize,
         totalChunks: chunks.length,
         uploadedChunks: [],
-        createdAt: new Date().toISOString(),
+        created_at: new Date().toISOString(),
         lastUpdated: new Date().toISOString()
       };
 

@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Verifica se o projeto existe
-    const project = await prisma.project.findUnique({
+    const project = await prisma.projects.findUnique({
       where: { id: projectId }
     })
 

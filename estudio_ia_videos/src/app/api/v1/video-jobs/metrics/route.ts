@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import { getSupabaseForRequest } from '@lib/services/server'
-import { getMetricsSnapshot } from '@lib/utils/metrics'
+import { getMetricsSnapshot } from '@lib/metrics';
 
 export async function GET(req: Request) {
   try {

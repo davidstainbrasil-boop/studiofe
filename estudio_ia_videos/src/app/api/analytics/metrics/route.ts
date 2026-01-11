@@ -49,29 +49,29 @@ export async function GET(req: NextRequest) {
       eventsByDay
     ] = await Promise.all([
       // Total de uploads
-      prisma.analyticsEvent.count({
+      prisma.analytics_events.count({
         where: {
-          userId,
-          eventType: 'pptx_upload',
-          createdAt: { gte: startDate }
+          user_id: userId,
+          event_type: 'pptx_upload',
+          created_at: { gte: startDate }
         }
       }),
 
       // Total de renders completos
-      prisma.analyticsEvent.count({
+      prisma.analytics_events.count({
         where: {
-          userId,
-          eventType: 'render_complete',
-          createdAt: { gte: startDate }
+          user_id: userId,
+          event_type: 'render_complete',
+          created_at: { gte: startDate }
         }
       }),
 
       // Total de downloads
-      prisma.analyticsEvent.count({
+      prisma.analytics_events.count({
         where: {
-          userId,
-          eventType: 'video_download',
-          createdAt: { gte: startDate }
+          user_id: userId,
+          event_type: 'video_download',
+          created_at: { gte: startDate }
         }
       }),
 
@@ -79,8 +79,8 @@ export async function GET(req: NextRequest) {
       prisma.render_jobs.groupBy({
         by: ['status'],
         where: {
-          project: { userId },
-          createdAt: { gte: startDate }
+          user_id: userId,
+          created_at: { gte: startDate }
         },
         _count: { id: true }
       }),
@@ -88,16 +88,16 @@ export async function GET(req: NextRequest) {
       // Projetos recentes
       prisma.projects.findMany({
         where: {
-          userId,
-          createdAt: { gte: startDate }
+          user_id: userId,
+          created_at: { gte: startDate }
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { created_at: 'desc' },
         take: 5,
         select: {
           id: true,
-          title: true,
+          name: true,
           status: true,
-          createdAt: true
+          created_at: true
         }
       }),
 
@@ -146,12 +146,12 @@ export async function GET(req: NextRequest) {
           ? Math.round(avgDuration / 1000) // ms para segundos
           : null
       },
-      renderJobs: renderJobs.map((item) => ({
+      renderJobs: renderJobs.map((item: any) => ({
         status: item.status || 'unknown',
         count: item._count.id
       })),
       recentProjects,
-      eventsByDay: eventsByDay.map(e => ({
+      eventsByDay: eventsByDay.map((e: any) => ({
         ...e,
         count: Number(e.count) // Serializar bigint para JSON
       }))

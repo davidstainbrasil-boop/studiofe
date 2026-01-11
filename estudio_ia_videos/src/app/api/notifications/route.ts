@@ -44,7 +44,7 @@ const NotificationQuerySchema = z.object({
   priority: z.string().optional(),
   status: z.enum(['unread', 'read', 'archived', 'all']).default('all'),
   timeRange: z.enum(['1h', '24h', '7d', '30d']).optional(),
-  projectId: z.string().uuid().optional(),
+  project_id: z.string().uuid().optional(),
   limit: z.string().transform(val => parseInt(val)).default('50'),
   offset: z.string().transform(val => parseInt(val)).default('0')
 })
@@ -64,7 +64,7 @@ function getTimeRangeFilter(timeRange?: string) {
 }
 
 // Get notification statistics
-async function getNotificationStats(userId: string, filters: z.infer<typeof NotificationQuerySchema>) {
+async function getNotificationStats(user_id: string, filters: z.infer<typeof NotificationQuerySchema>) {
   try {
     let query = notificationsTable()
       .select('id, type, priority, status')
@@ -78,8 +78,8 @@ async function getNotificationStats(userId: string, filters: z.infer<typeof Noti
       }
     }
 
-    if (filters.projectId) {
-      query = query.eq('project_id', filters.projectId)
+    if (filters.project_id) {
+      query = query.eq('project_id', filters.project_id)
     }
 
     const { data: notificationsData, error } = await query
@@ -148,7 +148,7 @@ export async function GET(request: NextRequest) {
       priority: searchParams.get('priority'),
       status: searchParams.get('status') || 'all',
       timeRange: searchParams.get('timeRange'),
-      projectId: searchParams.get('projectId'),
+      project_id: searchParams.get('projectId'),
       limit: searchParams.get('limit') || '50',
       offset: searchParams.get('offset') || '0'
     }
@@ -186,8 +186,8 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    if (validatedParams.projectId) {
-      query = query.eq('project_id', validatedParams.projectId)
+    if (validatedParams.project_id) {
+      query = query.eq('project_id', validatedParams.project_id)
     }
 
     // Apply pagination and ordering

@@ -12,7 +12,7 @@ const renderJobs = new Map<string, {
   progress: number;
   videoUrl?: string;
   error?: string;
-  createdAt: number;
+  created_at: number;
 }>();
 
 export async function GET(
@@ -43,7 +43,7 @@ export async function GET(
     progress: job.progress,
     videoUrl: job.videoUrl,
     error: job.error,
-    createdAt: job.createdAt,
+    created_at: job.created_at,
   });
 }
 

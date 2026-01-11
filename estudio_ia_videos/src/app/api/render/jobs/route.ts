@@ -77,10 +77,10 @@ export async function GET(request: NextRequest) {
     // Map to frontend-friendly format
     const jobs = renderJobs.map(job => ({
       id: job.id,
-      projectId: job.project_id,
+      project_id: job.project_id,
       status: job.status,
       progress: job.progress,
-      createdAt: job.created_at,
+      created_at: job.created_at,
       completedAt: job.completed_at,
       outputUrl: job.output_url,
       error: job.error_message,
@@ -193,8 +193,8 @@ export async function POST(request: NextRequest) {
     try {
       await addVideoJob({
         jobId: createdJob.id,
-        projectId: jobData.project_id,
-        userId: effectiveUserId,
+        project_id: jobData.project_id,
+        user_id: effectiveUserId,
         settings: queueSettings,
         webhookUrl: jobData.webhook_url
       })

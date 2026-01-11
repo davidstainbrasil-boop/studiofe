@@ -236,7 +236,7 @@ export async function PUT(
     // Atualizar avatar
     const { data: updatedAvatar, error: updateError } = await supabase
       .from('avatars_3d')
-      .update(updateData)
+      .update(updateData as any)
       .eq('id', avatarId)
       .select()
       .single()
@@ -361,7 +361,7 @@ export async function DELETE(
     logger.info(`Avatar ${avatarDel.name} excluído`, { 
       component: 'API: avatars/[id]', 
       avatarId, 
-      projectId: avatarDel.project_id 
+      project_id: avatarDel.project_id 
     })
 
     return NextResponse.json({ 

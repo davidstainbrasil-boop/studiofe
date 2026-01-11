@@ -15,11 +15,11 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
-      avatars: avatarsData.avatars,
-      blendShapes: avatarsData.blendShapes,
-      gestures: avatarsData.gestures,
-      backgrounds: avatarsData.backgrounds,
-      count: avatarsData.avatars.length
+      avatars: avatarsData,
+      blendShapes: [],
+      gestures: [],
+      backgrounds: [],
+      count: avatarsData.length
     });
   } catch (error) {
     const errorObj = error instanceof Error ? error : new Error(String(error));

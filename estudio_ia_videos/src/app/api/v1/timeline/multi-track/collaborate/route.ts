@@ -43,10 +43,10 @@ export async function POST(request: NextRequest) {
     logger.info(`🔒 ${action.toUpperCase()} track ${trackId} no projeto ${projectId}...`, { component: 'API: v1/timeline/multi-track/collaborate' });
 
     // Verify project access
-    const project = await prisma.project.findFirst({
+    const project = await prisma.projects.findFirst({
       where: {
         id: projectId,
-        userId: session.user.id,
+        user_id: session.user.id,
       },
     });
 
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
         where: {
           projectId,
           trackId,
-          userId: { not: session.user.id },
+          user_id: { not: session.user.id },
         },
       });
 
@@ -72,8 +72,8 @@ export async function POST(request: NextRequest) {
           { 
             success: false, 
             message: 'Track já está bloqueada por outro usuário',
-            lockedBy: existingLock.userId,
-            lockedAt: existingLock.createdAt,
+            lockedBy: existingLock.user_id,
+            lockedAt: existingLock.created_at,
           },
           { status: 409 }
         );
@@ -82,19 +82,19 @@ export async function POST(request: NextRequest) {
       // Create or update lock
       const lock = await prisma.timelineTrackLock.upsert({
         where: {
-          projectId_trackId_userId: {
+          projectId_trackId_user_id: {
             projectId,
             trackId,
-            userId: session.user.id,
+            user_id: session.user.id,
           },
         },
         create: {
           projectId,
           trackId,
-          userId: session.user.id,
+          user_id: session.user.id,
         },
         update: {
-          updatedAt: new Date(),
+          updated_at: new Date(),
         },
       });
 
@@ -105,8 +105,8 @@ export async function POST(request: NextRequest) {
         data: {
           id: lock.id,
           trackId: lock.trackId,
-          userId: lock.userId,
-          lockedAt: lock.createdAt.toISOString(),
+          user_id: lock.user_id,
+          lockedAt: lock.created_at.toISOString(),
         },
         message: 'Track bloqueada com sucesso',
       });
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
         where: {
           projectId,
           trackId,
-          userId: session.user.id,
+          user_id: session.user.id,
         },
       });
 
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
         success: true,
         data: {
           trackId,
-          userId: session.user.id,
+          user_id: session.user.id,
           unlockedAt: new Date().toISOString(),
         },
         message: 'Track desbloqueada com sucesso',
@@ -202,21 +202,21 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    interface LockRecord { id: string; trackId: string; userId: string; user: { name: string | null; avatarUrl?: string | null }; createdAt: Date }
-    interface PresenceRecord { userId: string; user: { name: string | null; avatarUrl?: string | null }; lastSeenAt: Date; currentTrackId?: string | null }
+    interface LockRecord { id: string; trackId: string; user_id: string; user: { name: string | null; avatarUrl?: string | null }; created_at: Date }
+    interface PresenceRecord { user_id: string; user: { name: string | null; avatarUrl?: string | null }; lastSeenAt: Date; currentTrackId?: string | null }
     return NextResponse.json({
       success: true,
       data: {
         locks: locks.map((lock: LockRecord) => ({
           id: lock.id,
           trackId: lock.trackId,
-          userId: lock.userId,
+          user_id: lock.user_id,
           userName: lock.user.name || 'Unknown',
           userImage: lock.user.avatarUrl,
-          lockedAt: lock.createdAt.toISOString(),
+          lockedAt: lock.created_at.toISOString(),
         })),
         activeUsers: activeUsers.map((presence: PresenceRecord) => ({
-          userId: presence.userId,
+          user_id: presence.user_id,
           userName: presence.user.name || 'Unknown',
           userImage: presence.user.avatarUrl,
           lastSeenAt: presence.lastSeenAt.toISOString(),
@@ -261,14 +261,14 @@ export async function PUT(request: NextRequest) {
     // Update or create presence
     const presence = await prisma.timelinePresence.upsert({
       where: {
-        projectId_userId: {
+        projectId_user_id: {
           projectId,
-          userId: session.user.id,
+          user_id: session.user.id,
         },
       },
       create: {
         projectId,
-        userId: session.user.id,
+        user_id: session.user.id,
         currentTrackId: currentTrackId || null,
         lastSeenAt: new Date(),
       },
@@ -281,7 +281,7 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: {
-        userId: presence.userId,
+        user_id: presence.user_id,
         lastSeenAt: presence.lastSeenAt.toISOString(),
       },
       message: 'Presença atualizada',

@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server';
 import { shouldUseMockRenderJobs, getMockUserId, insertMockJob, listMockJobs } from '@lib/render-jobs/mock-store';
 import { logger } from '@lib/services';
 import { getSupabaseForRequest } from '@lib/services/server';
-import { checkRateLimit, inspectRateLimit } from '@lib/utils/rate-limit';
+import { checkRateLimit, inspectRateLimit } from '@lib/rate-limit';
 import { parseVideoJobInput, isErr } from '@lib/video-jobs/handlers/video-jobs';
 import { parseVideoJobsQuery, type VideoJobsQuery } from '@lib/video-jobs/handlers/video-jobs-query';
 import { recordRateLimitHit, recordError } from '@lib/video-jobs/utils/metrics';
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
     const hasAuth = authToken.length > 0;
     const mockMode = shouldUseMockRenderJobs() || !hasAuth;
 
-    let userId: string;
+    let user_id: string;
     if (mockMode) {
       userId = getMockUserId(req);
     } else {
@@ -173,13 +173,13 @@ export async function GET(req: Request) {
     const CACHE_TTL_MS = 15_000;
     const globalAny = globalThis as unknown as GlobalWithCache;
     if (!globalAny.__vj_cache) globalAny.__vj_cache = new Map();
-    const cacheKey = `list:${userId}:${queryParams.limit}:${queryParams.offset}:${queryParams.status || 'all'}:${queryParams.projectId || 'all'}:${queryParams.sortBy}:${queryParams.sortOrder}`;
+    const cacheKey = `list:${userId}:${queryParams.limit}:${queryParams.offset}:${queryParams.status || 'all'}:${queryParams.project_id || 'all'}:${queryParams.sortBy}:${queryParams.sortOrder}`;
     const computeMockResponse = (cacheTag: 'MISS' | 'HIT' = 'MISS') => {
       const jobs = listMockJobs(userId, {
         limit: queryParams!.limit,
         offset: queryParams!.offset,
         status: queryParams!.status,
-        projectId: queryParams!.projectId,
+        project_id: queryParams!.project_id,
         sortBy: queryParams!.sortBy,
         sortOrder: queryParams!.sortOrder,
       });

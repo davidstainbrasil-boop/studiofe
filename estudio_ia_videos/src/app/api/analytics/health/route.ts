@@ -66,9 +66,9 @@ async function checkAnalytics(): Promise<HealthCheckResult> {
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
 
-    const recentEvents = await prisma.analyticsEvent.count({
+    const recentEvents = await prisma.analytics_events.count({
       where: {
-        createdAt: {
+        created_at: {
           gte: yesterday
         }
       }
@@ -151,10 +151,10 @@ async function checkStorage(): Promise<HealthCheckResult> {
 async function checkAlerts(): Promise<HealthCheckResult> {
   const start = Date.now();
   try {
-    const alertCount = await prisma.analyticsEvent.count({
+    const alertCount = await prisma.analytics_events.count({
       where: {
-        eventType: 'alert',
-        eventData: {
+        event_type: 'alert',
+        event_data: {
           path: ['status'],
           equals: 'active'
         }
@@ -185,10 +185,10 @@ async function checkAlerts(): Promise<HealthCheckResult> {
 async function checkReports(): Promise<HealthCheckResult> {
   const start = Date.now();
   try {
-    const reportCount = await prisma.analyticsEvent.count({
+    const reportCount = await prisma.analytics_events.count({
       where: {
-        eventType: 'report_scheduled',
-        eventData: {
+        event_type: 'report_scheduled',
+        event_data: {
           path: ['status'],
           equals: 'pending' // Assuming 'pending' means scheduled/active
         }
@@ -217,13 +217,13 @@ async function checkReports(): Promise<HealthCheckResult> {
 async function getMetrics() {
   try {
     // Total de eventos
-    const totalEvents = await prisma.analyticsEvent.count();
+    const totalEvents = await prisma.analytics_events.count();
 
     // Total de usuários únicos
-    const usersResult = await prisma.analyticsEvent.groupBy({
-      by: ['userId'],
+    const usersResult = await prisma.analytics_events.groupBy({
+      by: ['user_id'],
       _count: {
-        userId: true
+        user_id: true
       }
     });
     const uniqueUsers = usersResult.length;
@@ -233,15 +233,15 @@ async function getMetrics() {
     yesterday.setDate(yesterday.getDate() - 1);
     
     const [errorCount, recentCount] = await Promise.all([
-      prisma.analyticsEvent.count({
+      prisma.analytics_events.count({
         where: {
-          eventType: 'error', // Assuming 'error' is the eventType for errors
-          createdAt: { gte: yesterday }
+          event_type: 'error', // Assuming 'error' is the eventType for errors
+          created_at: { gte: yesterday }
         }
       }),
-      prisma.analyticsEvent.count({
+      prisma.analytics_events.count({
         where: {
-          createdAt: { gte: yesterday }
+          created_at: { gte: yesterday }
         }
       })
     ]);
@@ -252,10 +252,10 @@ async function getMetrics() {
     const avgResponseTime = 250; // ms
 
     // Alertas ativos
-    const activeAlertsCount = await prisma.analyticsEvent.count({
+    const activeAlertsCount = await prisma.analytics_events.count({
       where: {
-        eventType: 'alert',
-        eventData: {
+        event_type: 'alert',
+        event_data: {
           path: ['status'],
           equals: 'active'
         }
@@ -263,10 +263,10 @@ async function getMetrics() {
     });
 
     // Relatórios agendados
-    const scheduledReportsCount = await prisma.analyticsEvent.count({
+    const scheduledReportsCount = await prisma.analytics_events.count({
       where: {
-        eventType: 'report_scheduled',
-        eventData: {
+        event_type: 'report_scheduled',
+        event_data: {
           path: ['status'],
           equals: 'pending'
         }

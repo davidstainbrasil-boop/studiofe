@@ -18,7 +18,7 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   const requestId = crypto.randomUUID()
-  const contextLogger = logger.withContext({ ...logContext, requestId, userId: params.id })
+  const contextLogger = logger.withContext({ ...logContext, requestId, user_id: params.id })
 
   try {
     contextLogger.info('Assigning role to user')

@@ -120,7 +120,7 @@ export async function GET(request: NextRequest) {
         startTime: job.startTime,
         endTime: job.endTime,
         outputPath: job.outputPath,
-        errorMessage: job.errorMessage
+        error_message: job.error_message
       }))
     });
   }
@@ -144,7 +144,7 @@ export async function GET(request: NextRequest) {
       startTime: job.startTime,
       endTime: job.endTime,
       outputPath: job.outputPath,
-      errorMessage: job.errorMessage,
+      error_message: job.error_message,
       settings: job.settings
     }
   });

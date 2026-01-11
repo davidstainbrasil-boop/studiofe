@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
     const validatedData = ProjectCreateSchema.parse(body)
 
     // Criar projeto no banco
-    const project = await prisma.project.create({
+    const project = await prisma.projects.create({
       data: {
         title: validatedData.name,
         metadata: {
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
             analyticsData: {}
         },
         status: 'DRAFT',
-        userId: session.user.id,
+        user_id: session.user.id,
         description: '',
         originalFileName: '',
         thumbnailUrl: '',
@@ -142,10 +142,10 @@ export async function PUT(request: NextRequest) {
     const body = await request.json()
     const validatedData = ProjectUpdateSchema.parse(body)
 
-    const project = await prisma.project.findFirst({
+    const project = await prisma.projects.findFirst({
       where: {
         id: validatedData.id,
-        userId: session.user.id
+        user_id: session.user.id
       }
     })
 
@@ -170,7 +170,7 @@ export async function PUT(request: NextRequest) {
         result = await workflowManager.executeStep(validatedData.id, 'export', validatedData.data as StepData)
         break
       case 'delete':
-        await prisma.project.delete({ where: { id: validatedData.id } })
+        await prisma.projects.delete({ where: { id: validatedData.id } })
         return NextResponse.json({ message: 'Project deleted' })
       default:
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
@@ -205,10 +205,10 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Project ID required' }, { status: 400 })
     }
 
-    const project = await prisma.project.findFirst({
+    const project = await prisma.projects.findFirst({
       where: {
         id: projectId,
-        userId: session.user.id
+        user_id: session.user.id
       }
     })
 
@@ -217,7 +217,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Remover do banco
-    await prisma.project.delete({ where: { id: projectId } })
+    await prisma.projects.delete({ where: { id: projectId } })
 
     return NextResponse.json({ message: 'Project and workflow deleted' })
 

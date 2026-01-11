@@ -3,7 +3,7 @@ import type { Prisma } from '@prisma/client'
 import { prisma } from '@lib/prisma'
 import { logger } from '@lib/logger'
 import { getServiceRoleClient } from '@lib/supabase/service'
-import { generateTTSAudio, listVoices as listElevenLabsVoices } from '@lib/services/tts/elevenlabs-service'
+import { generateTTSAudio, listVoices as listElevenLabsVoices } from '@lib/elevenlabs-service'
 
 type TTSProvider = 'elevenlabs' | 'azure'
 

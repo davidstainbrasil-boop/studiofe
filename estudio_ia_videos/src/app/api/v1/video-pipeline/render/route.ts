@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 interface VideoRenderRequest {
-  projectId: string;
+  project_id: string;
   format: string;
   quality: string;
   resolution: number;
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
         audioQuality: `${body.audioQuality}kbps`
       },
       metadata: {
-        projectId: body.projectId,
+        project_id: body.project_id,
         startTime: new Date().toISOString(),
         estimatedSize: `${Math.round((body.bitrate * 60 * 5) / 8000)}MB`, // ~5 min video
         codec: body.customSettings?.videoCodec || 'h264',

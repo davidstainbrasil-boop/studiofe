@@ -86,10 +86,10 @@ export async function POST(request: NextRequest) {
     });
 
     // Verify project access
-    const project = await prisma.project.findFirst({
+    const project = await prisma.projects.findFirst({
       where: {
         id: projectId,
-        userId: session.user.id,
+        user_id: session.user.id,
       },
     });
 
@@ -282,7 +282,7 @@ export async function POST(request: NextRequest) {
       data: {
         tracks: updatedTracks as unknown as Prisma.InputJsonValue,
         version: { increment: 1 },
-        updatedAt: new Date(),
+        updated_at: new Date(),
       },
     });
 
@@ -301,7 +301,7 @@ export async function POST(request: NextRequest) {
           id: updatedTimeline.id,
           version: updatedTimeline.version,
           tracksCount: updatedTracks.length,
-          updatedAt: updatedTimeline.updatedAt.toISOString(),
+          updated_at: updatedTimeline.updated_at.toISOString(),
         },
       },
       message: `Operação ${operation} executada com sucesso`,

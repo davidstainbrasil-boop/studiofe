@@ -58,7 +58,7 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  logger.warn('Account deletion requested', { userId: user.id, email: user.email });
+  logger.warn('Account deletion requested', { user_id: user.id, email: user.email });
 
   try {
     let projectsDeleted = 0;
@@ -144,7 +144,7 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
     
     if (authDeleteError) {
       const errorInstance = authDeleteError instanceof Error ? authDeleteError : new Error(String(authDeleteError));
-      logger.error('Failed to delete auth user', errorInstance, { userId: user.id });
+      logger.error('Failed to delete auth user', errorInstance, { user_id: user.id });
       // Continue anyway - profile data is already deleted
     }
 
@@ -161,7 +161,7 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
     };
 
     logger.info('Account deleted successfully', { 
-      userId: user.id, 
+      user_id: user.id, 
       email: user.email,
       summary: result.summary 
     });
@@ -169,7 +169,7 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json(result);
   } catch (error) {
     const errorInstance = error instanceof Error ? error : new Error(String(error));
-    logger.error('Failed to delete account', errorInstance, { userId: user.id });
+    logger.error('Failed to delete account', errorInstance, { user_id: user.id });
     return NextResponse.json(
       { error: 'Internal Server Error', message: 'Failed to delete account. Please contact support.' },
       { status: 500 }
@@ -216,7 +216,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     }
 
     return NextResponse.json({
-      userId: user.id,
+      user_id: user.id,
       email: user.email,
       dataToBeDeleted: {
         projects: projectsCount || 0,
