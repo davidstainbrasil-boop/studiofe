@@ -53,7 +53,7 @@ interface SlidesDataJson {
        slidesForRender = slidesData.slides.map((s, index: number) => ({
          id: s.id || Math.random().toString(),
          number: index + 1,
-         orderIndex: index,
+         order_index: index,
          elements: (s.elements || []) as SlideElement[],
          content: s.content || '',
          title: s.title || '',
@@ -66,9 +66,9 @@ interface SlidesDataJson {
        slidesForRender = project.slides.map((s, index: number) => ({
          id: s.id,
          number: index + 1,
-         orderIndex: index,
+         order_index: index,
          elements: [] as SlideElement[], // Default empty elements if not present
-         content: s.content || '',
+         content: String(s.content || ''),
          title: s.title || '',
          duration: s.duration || 5,
          visualSettings: {
@@ -93,7 +93,7 @@ interface SlidesDataJson {
     // Update status to processing immediately
     await prisma.projects.update({
       where: { id: projectId },
-      data: { status: 'PROCESSING' } // Ensure case matches enum
+      data: { status: 'in_progress' } // Ensure case matches enum
     });
 
     // Trigger render in background (Fire & Forget)
@@ -105,7 +105,7 @@ interface SlidesDataJson {
         await prisma.projects.update({
           where: { id: projectId },
           data: {
-            status: 'COMPLETED',
+            status: 'completed',
             metadata: {
               ...(project.metadata as object || {}),
               videoUrl: result.videoUrl
@@ -118,7 +118,7 @@ interface SlidesDataJson {
         await prisma.projects.update({
           where: { id: projectId },
           data: {
-            status: 'ERROR',
+            status: 'error',
             metadata: {
               ...(project.metadata as object || {}),
               errorMessage: error instanceof Error ? error.message : 'Unknown render error'

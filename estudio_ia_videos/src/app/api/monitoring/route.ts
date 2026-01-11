@@ -399,7 +399,7 @@ async function handleGetDashboard(): Promise<NextResponse> {
       summary: {
         total_requests: recentMetrics.reduce((sum, m) => sum + (m.application?.throughput || 0), 0),
         average_responseTime: recentMetrics.length > 0 
-          ? recentMetrics.reduce((sum, m) => sum + (m.application?.responseTime || 0), 0) / recentMetrics.length 
+          ? recentMetrics.reduce((sum, m) => sum + (m.application?.response_time || 0), 0) / recentMetrics.length 
           : 0,
         error_rate: latestMetrics?.application?.error_rate || 0,
         cache_hit_rate: latestMetrics?.cache?.hit_rate || 0,
@@ -458,7 +458,7 @@ async function handleGetStats(): Promise<NextResponse> {
       completed_renders: renderJobsArray.filter((j) => j.status === 'completed').length,
       failed_renders: renderJobsArray.filter((j) => j.status === 'failed').length,
       average_render_time: renderJobsArray.length 
-        ? renderJobsArray.reduce((sum: number, j) => sum + (j.durationMs || 0), 0) / renderJobsArray.length 
+        ? renderJobsArray.reduce((sum: number, j) => sum + (j.duration_ms || 0), 0) / renderJobsArray.length 
         : 0,
       average_qualityScore: 0
     }

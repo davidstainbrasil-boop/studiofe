@@ -327,10 +327,10 @@ export async function GET(request: NextRequest) {
     })
 
     // Get provider configuration
-    const { data: providerData, error: providerError } = await supabaseAdmin
+    const { data: providerData, error: providerError } = await (supabaseAdmin as any)
       .from('user_external_api_configs')
       .select('*')
-      .eq("userId", session.user.id)
+      .eq("user_id", session.user.id)
       .eq('api_type', 'media')
       .eq('provider_id', params.provider_id)
       .eq('enabled', true)
@@ -346,14 +346,14 @@ export async function GET(request: NextRequest) {
     }
 
     // Check rate limits
-    const { data: usage, error: usageError } = await supabaseAdmin
+    const { data: usage, error: usageError } = await (supabaseAdmin as any)
       .from('external_api_usage')
       .select('*')
-      .eq("userId", session.user.id)
+      .eq("user_id", session.user.id)
       .eq('api_type', 'media')
       .eq('provider_id', params.provider_id)
-      .gte("createdAt", new Date(Date.now() - 60 * 60 * 1000).toISOString()) // Last hour
-      .order("createdAt", { ascending: false })
+      .gte("created_at", new Date(Date.now() - 60 * 60 * 1000).toISOString()) // Last hour
+      .order("created_at", { ascending: false })
 
     if (usageError) {
       logger.warn('Failed to check media usage', { component: 'API: external/media/search' })
@@ -378,10 +378,10 @@ export async function GET(request: NextRequest) {
 
     // Record usage
     try {
-      await supabaseAdmin
+      await (supabaseAdmin as any)
         .from('external_api_usage')
         .insert({
-          userId: session.user.id,
+          user_id: session.user.id,
           api_type: 'media',
           provider_id: params.provider_id,
           requests_made: 1,
@@ -391,7 +391,8 @@ export async function GET(request: NextRequest) {
             category: params.category,
             results_count: result.results.length,
             total_results: result.total
-          }
+          },
+          created_at: new Date().toISOString()
         })
     } catch (usageLogError) {
       logger.warn('Failed to log media search usage', { component: 'API: external/media/search' })
@@ -403,17 +404,20 @@ export async function GET(request: NextRequest) {
         .from('analytics_events')
         .insert({
           userId: session.user.id,
-          category: 'external_apis',
-          action: 'media_searched',
-          metadata: {
-            provider_id: params.provider_id,
-            provider_type: provider.provider_type,
-            query: params.query,
-            results_count: result.results.length,
-            cost: searchCost,
-            timestamp: new Date().toISOString()
-          } as Json,
-          createdAt: new Date().toISOString()
+          eventType: 'media_searched',
+          event_data: {
+            category: 'external_apis',
+            action: 'media_searched',
+            metadata: {
+              provider_id: params.provider_id,
+              provider_type: provider.provider_type,
+              query: params.query,
+              results_count: result.results.length,
+              cost: searchCost,
+              timestamp: new Date().toISOString()
+            }
+          } as any,
+          created_at: new Date().toISOString()
         })
     } catch (analyticsError) {
       logger.warn('Failed to log media search', { component: 'API: external/media/search' })

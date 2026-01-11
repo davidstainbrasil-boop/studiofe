@@ -15,12 +15,12 @@ export async function GET(request: NextRequest) {
     let templates;
     
     if (nrNumber) {
-      templates = await prisma.nrTemplate.findMany({
+      templates = await prisma.nr_templates.findMany({
         where: { nrNumber: nrNumber },
         orderBy: { nrNumber: 'asc' },
       });
     } else {
-      templates = await prisma.nrTemplate.findMany({
+      templates = await prisma.nr_templates.findMany({
         orderBy: { nrNumber: 'asc' },
       });
     }
@@ -148,11 +148,11 @@ export async function POST(request: NextRequest) {
     // Buscar template
     let template;
     if (templateId) {
-      template = await prisma.nrTemplate.findUnique({
+      template = await prisma.nr_templates.findUnique({
         where: { id: templateId },
       });
     } else {
-      template = await prisma.nrTemplate.findFirst({
+      template = await prisma.nr_templates.findFirst({
         where: { nrNumber: nrNumber },
       });
     }

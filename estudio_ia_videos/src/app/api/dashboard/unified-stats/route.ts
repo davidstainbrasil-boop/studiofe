@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
         .select('*, projects!inner(user_id)', { count: 'exact', head: true })
         .eq('projects.userId', user.id)
         .eq('status', 'completed' as const)
-        .gte("completedAt", startOfDay.toISOString())
+        .gte("completed_at", startOfDay.toISOString())
         
     completedToday = completedCount || 0
 
@@ -101,16 +101,16 @@ export async function GET(request: NextRequest) {
         .select('started_at, completed_at, projects!inner(user_id)')
         .eq('projects.userId', user.id)
         .eq('status', 'completed')
-        .not("completedAt", 'is', null)
-        .not("startedAt", 'is', null)
-        .order("completedAt", { ascending: false })
+        .not("completed_at", 'is', null)
+        .not("started_at", 'is', null)
+        .order("completed_at", { ascending: false })
         .limit(10)
     
     if (recentJobs && recentJobs.length > 0) {
         const totalDurationMs = recentJobs.reduce((acc, job) => {
-            if (!job.startedAt || !job.completedAt) return acc;
-            const start = new Date(job.startedAt).getTime();
-            const end = new Date(job.completedAt).getTime();
+            if (!job.started_at || !job.completed_at) return acc;
+            const start = new Date(job.started_at).getTime();
+            const end = new Date(job.completed_at).getTime();
             return acc + (end - start);
         }, 0)
         avgRenderTime = Math.round((totalDurationMs / recentJobs.length) / 1000 / 60) // in minutes

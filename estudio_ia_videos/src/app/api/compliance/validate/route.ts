@@ -168,10 +168,10 @@ export async function GET(request: NextRequest) {
     // Buscar validações
     // Note: nr_compliance_records is a valid table but not in generated types
     const { data: validations, error: fetchError } = await supabase
-      .from('nr_compliance_records')
+      .from('nr_compliance_records' as never)
       .select('*')
-      .eq("projectId", projectId)
-      .order("validatedAt", { ascending: false })
+      .eq("project_id", projectId)
+      .order("validated_at", { ascending: false })
       .limit(10);
 
     if (fetchError) {

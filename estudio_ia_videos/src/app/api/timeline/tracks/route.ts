@@ -7,7 +7,7 @@ import { type Json } from '@lib/supabase/types'
 
 // Interfaces para tipagem de queries
 interface TrackOrderIndex {
-  orderIndex: number;
+  order_index: number;
 }
 
 interface TrackCreated {
@@ -15,7 +15,7 @@ interface TrackCreated {
   name: string;
   type: string;
   projectId: string;
-  orderIndex: number;
+  order_index: number;
   color?: string | null;
   height?: number;
   visible?: boolean;
@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
     // Verificar permissões no projeto
     const { data: project } = await supabase
       .from('projects')
-      .select('user_id, is_public')
+      .select('userId, is_public')
       .eq('id', projectId)
       .single()
 
@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    let hasPermission = project.userId === user.id || project.isPublic
+    let hasPermission = project.userId === user.id || project.is_public
 
     if (!hasPermission) {
       const { data: collaborator } = await supabase
@@ -119,7 +119,7 @@ export async function GET(request: NextRequest) {
         timeline_elements:timeline_elements(*)
       `)
       .eq("projectId", projectId)
-      .order("orderIndex", { ascending: true })
+      .order("order_index", { ascending: true })
 
     if (error) {
       const err = error instanceof Error ? error : new Error(String(error)); logger.error('Erro ao buscar tracks', err, { component: 'API: timeline/tracks' })
@@ -200,14 +200,14 @@ export async function POST(request: NextRequest) {
     if (validatedData.orderIndex === undefined) {
       const { data: lastTrackData } = await supabase
         .from('timeline_tracks')
-        .select("orderIndex")
+        .select("order_index")
         .eq("projectId", validatedData.projectId)
-        .order("orderIndex", { ascending: false })
+        .order("order_index", { ascending: false })
         .limit(1)
         .single()
 
       const lastTrack = lastTrackData as unknown as TrackOrderIndex | null;
-      validatedData.orderIndex = (lastTrack?.orderIndex ?? -1) + 1
+      validatedData.orderIndex = (lastTrack?.order_index ?? -1) + 1
     }
 
     // Definir cor padrão baseada no tipo
@@ -228,7 +228,7 @@ export async function POST(request: NextRequest) {
       projectId: validatedData.projectId,
       name: validatedData.name,
       type: validatedData.type,
-      orderIndex: validatedData.orderIndex,
+      order_index: validatedData.orderIndex,
       color: validatedData.color,
       height: validatedData.height || 80,
       visible: validatedData.visible !== false,
@@ -257,14 +257,14 @@ export async function POST(request: NextRequest) {
       .from('project_history')
       .insert({
         projectId: validatedData.projectId,
-        userId: user.id,
+        user_id: user.id,
         action: 'create',
         entity_type: 'track',
         entity_id: track.id,
         description: `Track "${track.name}" criada`,
         changes: {
           created_track: track
-        } as Json
+        } as any
       })
 
     return NextResponse.json(track, { status: 201 })
@@ -372,7 +372,7 @@ export async function PUT(request: NextRequest) {
     const updatePromises = tracks.map(track =>
       supabase
         .from('timeline_tracks')
-        .update({ orderIndex: track.orderIndex })
+        .update({ order_index: track.orderIndex })
         .eq('id', track.id)
     )
 
@@ -383,13 +383,13 @@ export async function PUT(request: NextRequest) {
       .from('project_history')
       .insert({
         projectId: projectId,
-        userId: user.id,
+        user_id: user.id,
         action: 'update',
         entity_type: 'track',
         description: 'Tracks reordenadas',
         changes: {
           reordered_tracks: tracks
-        } as Json
+        } as any
       })
 
     return NextResponse.json({ message: 'Tracks reordenadas com sucesso' })

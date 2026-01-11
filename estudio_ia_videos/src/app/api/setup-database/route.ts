@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
     
     // Verificar se as tabelas já existem
     const { data: existingTables, error: checkError } = await supabase
-      .rpc('check_table_exists', { table_name: 'projects' })
+      .rpc('check_table_exists' as any, { table_name: 'projects' })
     
     if (checkError) {
       logger.info('⚠️ [SETUP-DB] Não foi possível verificar tabelas existentes, prosseguindo...', { component: 'API: setup-database' })
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       );
     `
 
-    const { error: createError } = await supabase.rpc('exec_sql', { 
+    const { error: createError } = await supabase.rpc('exec_sql' as any, { 
       query: createProjectsTable 
     })
 

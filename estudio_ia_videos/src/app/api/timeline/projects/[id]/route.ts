@@ -49,7 +49,7 @@ export async function GET(
     }
 
     const metadata = project.metadata as ProjectMetadata | null;
-    const renderSettings = project.renderSettings as RenderSettings | null;
+    const renderSettings = project.render_settings as RenderSettings | null;
     
     // Return the timeline JSON stored in metadata
     // If metadata.timeline exists, return it.
@@ -141,11 +141,11 @@ interface TimelineTrack {
     if (slideTrack && slideTrack.elements) {
         const slidesToInsert = slideTrack.elements.map((el, index: number) => ({
             projectId: params.id,
-            orderIndex: index,
+            order_index: index,
             title: el.name,
             content: el.properties?.content || el.name,
             duration: Math.round(el.duration),
-            backgroundImage: el.properties?.src
+            background_image: el.properties?.src
         }))
 
         if (slidesToInsert.length > 0) {

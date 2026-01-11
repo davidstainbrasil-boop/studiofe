@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     const project = await prisma.projects.findUnique({
       where: { id: projectId },
       include: {
-        timeline: true,
+        timelines: true,
         slides: true
       }
     })
@@ -69,9 +69,9 @@ export async function POST(request: NextRequest) {
           elements: Array.isArray(slide.elements) ? (slide.elements as unknown[]) : []
         }))
       }
-    } else if (project.timeline?.tracks) {
+    } else if (project.timelines?.tracks) {
       // Usar timeline tracks
-      const tracksUnknown = project.timeline.tracks as unknown
+      const tracksUnknown = project.timelines.tracks as unknown
       if (Array.isArray(tracksUnknown)) {
         const tracks = tracksUnknown as Array<Record<string, unknown>>
         const videoTrack = tracks.find((t) => t?.type === 'video' || t?.type === 'main') as Record<string, unknown> | undefined
@@ -209,7 +209,7 @@ export async function GET(request: NextRequest) {
       where: { id: projectId },
       select: {
         id: true,
-        title: true,
+        name: true,
         autoNarration: true,
         slidesData: true,
         totalSlides: true
@@ -239,7 +239,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       projectId: project.id,
-      projectName: project.title,
+      projectName: project.name,
       autoNarration: project.autoNarration,
       narratedSlides,
       totalSlides,

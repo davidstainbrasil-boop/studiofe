@@ -90,7 +90,7 @@ export async function GET(
     // Atualizar último acesso
     await supabase
       .from('avatars_3d')
-      .update({ updatedAt: new Date().toISOString() })
+      .update({ updated_at: new Date().toISOString() })
       .eq('id', avatarId)
 
     return NextResponse.json({ avatar })
@@ -149,13 +149,14 @@ export async function PUT(
 
     // Type the avatar with joined project for PUT
     type AvatarWithProjectPut = typeof avatarData & {
+      projectId: string | null;
       projects: { owner_id: string; collaborators: string[] | null } | null;
     };
-    const avatar = avatarData as AvatarWithProjectPut;
+    const avatar = avatarData as unknown as AvatarWithProjectPut;
 
-    const project = avatar.projects as Record<string, unknown>
-    const hasPermission = project.owner_id === user.id || 
-                         (project.collaborators as string[])?.includes(user.id)
+    const project = avatar.projects as unknown as Record<string, unknown>
+    const hasPermission = project?.owner_id === user.id ||
+                         (project?.collaborators as string[])?.includes(user.id)
 
     if (!hasPermission) {
       return NextResponse.json(
@@ -169,7 +170,7 @@ export async function PUT(
       const { data: existingAvatarConflict } = await supabase
         .from('avatars_3d')
         .select('id')
-        .eq("projectId", avatar.projectId ?? '')
+        .eq("project_id", avatar.projectId ?? '')
         .eq('name', validatedData.name)
         .neq('id', avatarId)
         .single()
@@ -195,12 +196,12 @@ export async function PUT(
       model_url?: string;
       thumbnail_url?: string;
       metadata?: Record<string, unknown>;
-      updatedAt: string;
+      updated_at: string;
     }
 
     const updateData: AvatarUpdateData = {
       ...validatedData,
-      updatedAt: new Date().toISOString()
+      updated_at: new Date().toISOString()
     }
 
     // Se mudando URL do Ready Player Me, buscar novos dados
@@ -213,8 +214,8 @@ export async function PUT(
       }
 
       const avatarData = await fetchReadyPlayerMeData(validatedData.ready_player_me_url)
-      updateData.modelUrl = avatarData.modelUrl
-      updateData.thumbnailUrl = avatarData.thumbnailUrl
+      updateData.model_url = avatarData.model_url
+      updateData.thumbnail_url = avatarData.thumbnail_url
       updateData.metadata = avatarData.metadata
     }
 
@@ -226,9 +227,9 @@ export async function PUT(
       }
     }
 
-    if (validatedData.voiceSettings && avatar.voiceSettings) {
-      updateData.voiceSettings = {
-        ...(avatar.voiceSettings as Record<string, unknown>),
+    if (validatedData.voiceSettings && avatar.voice_settings) {
+      updateData.voice_settings = {
+        ...(avatar.voice_settings as Record<string, unknown>),
         ...validatedData.voiceSettings
       }
     }
@@ -276,7 +277,6 @@ export async function PUT(
   }
 }
 
-// DELETE - Excluir avatar
 // DELETE - Deletar avatar
 export async function DELETE(
   request: NextRequest,
@@ -317,13 +317,14 @@ export async function DELETE(
 
     // Type the avatar with joined project for DELETE
     type AvatarWithProjectDel = typeof avatarDataDel & {
+      projectId: string | null;
       projects: { owner_id: string; collaborators: string[] | null } | null;
     };
-    const avatarDel = avatarDataDel as AvatarWithProjectDel;
+    const avatarDel = avatarDataDel as unknown as AvatarWithProjectDel;
 
-    const projectDel = avatarDel.projects;
+    const projectDel = avatarDel.projects as unknown as Record<string, unknown>
     const hasPermission = projectDel?.owner_id === user.id || 
-                         projectDel?.collaborators?.includes(user.id)
+                         (projectDel?.collaborators as string[])?.includes(user.id)
 
     if (!hasPermission) {
       return NextResponse.json(
@@ -337,7 +338,7 @@ export async function DELETE(
     const { count: usedCount } = await supabase
       .from('render_jobs')
       .select('id', { count: 'exact', head: true })
-      .eq("projectId", avatarDel.projectId ?? '')
+      .eq("project_id", avatarDel.projectId ?? '')
 
     // Skip timeline check for now since table not typed
     // In production, this would check timeline_elements
@@ -358,10 +359,10 @@ export async function DELETE(
     }
 
     // Log deletion (project_history table not typed, skip for now)
-    logger.info(`Avatar ${avatarDel.name} excluído`, { 
-      component: 'API: avatars/[id]', 
-      avatarId, 
-      projectId: avatarDel.projectId 
+    logger.info(`Avatar ${avatarDel.name} excluído`, {
+      component: 'API: avatars/[id]',
+      avatarId,
+      projectId: avatarDel.projectId
     })
 
     return NextResponse.json({ 
@@ -393,13 +394,13 @@ function isValidReadyPlayerMeUrl(url: string): boolean {
 async function fetchReadyPlayerMeData(url: string) {
   // Em produção, isso faria uma requisição real para a API do Ready Player Me
   const avatarId = url.split('/').pop()?.split('.')[0] || 'default'
-  
+
   return {
-    modelUrl: `https://models.readyplayer.me/${avatarId}.glb`,
-    thumbnailUrl: `https://models.readyplayer.me/${avatarId}.png`,
+    model_url: `https://models.readyplayer.me/${avatarId}.glb`,
+    thumbnail_url: `https://models.readyplayer.me/${avatarId}.png`,
     metadata: {
       id: avatarId,
-      createdAt: new Date().toISOString(),
+      created_at: new Date().toISOString(),
       body_type: 'fullbody',
       outfit: 'casual',
       hair_color: '#8B4513',

@@ -7,13 +7,13 @@ import { logger } from '@lib/logger'
 interface ProjectInfo {
   id: string;
   name?: string;
-  userId: string;
+  user_id: string;
   is_public?: boolean;
 }
 
 interface PptxUploadWithProject {
   id: string;
-  projectId: string;
+  project_id: string;
   original_filename?: string;
   status?: string;
   projects: ProjectInfo;
@@ -98,7 +98,7 @@ export async function GET(
     const upload = typedSlide.pptx_uploads
     const project = upload.projects
     
-    let hasPermission = project.userId === user.id || project.isPublic
+    let hasPermission = project.user_id === user.id || project.is_public
 
     if (!hasPermission) {
       const { data: collaborator } = await supabase
@@ -182,7 +182,7 @@ export async function PUT(
     const upload = slideForPut.pptx_uploads
     const project = upload.projects
     
-    let hasPermission = project.userId === user.id
+    let hasPermission = project.user_id === user.id
 
     if (!hasPermission) {
       const { data: collaborator } = await supabase
@@ -238,7 +238,7 @@ export async function PUT(
       .update({
         ...updateData,
         properties: updateData.properties ? JSON.parse(JSON.stringify(updateData.properties)) : undefined,
-        updatedAt: new Date().toISOString()
+        updated_at: new Date().toISOString()
       })
       .eq('id', slideId)
       .select()
@@ -256,7 +256,7 @@ export async function PUT(
     await supabase
       .from('project_history')
       .insert({
-        projectId: upload.projectId,
+        projectId: upload.project_id,
         userId: user.id,
         action: 'update',
         entity_type: 'pptx_slide',
@@ -330,7 +330,7 @@ export async function DELETE(
     const upload = deleteTypedSlide.pptx_uploads
     const project = upload.projects
     
-    let hasPermission = project.userId === user.id
+    let hasPermission = project.user_id === user.id
 
     if (!hasPermission) {
       const { data: collaborator } = await supabase
@@ -375,7 +375,7 @@ export async function DELETE(
 
     await supabase
       .from('pptx_uploads')
-      .update({ slideCount: slideCount?.length || 0 })
+      .update({ slide_count: slideCount?.length || 0 })
       .eq('id', slide.upload_id)
 
     // Reordenar slides restantes
@@ -399,7 +399,7 @@ export async function DELETE(
     await supabase
       .from('project_history')
       .insert({
-        projectId: upload.projectId,
+        projectId: upload.project_id,
         userId: user.id,
         action: 'delete',
         entity_type: 'pptx_slide',

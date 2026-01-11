@@ -77,6 +77,7 @@ export async function POST(request: NextRequest) {
 
     const job = await prisma.processing_queue.create({
       data: {
+        id: crypto.randomUUID(),
         jobType: 'avatar-3d-render',
         status: 'pending',
         priority: 1,
@@ -194,7 +195,7 @@ async function processAvatarRendering(
       data: {
         status: 'processing',
         progress: 10,
-        jobData: currentData
+        jobData: currentData as any
       }
     });
 
@@ -222,7 +223,7 @@ async function processAvatarRendering(
       where: { id: jobId },
       data: {
         progress: 25,
-        jobData: currentData
+        jobData: currentData as any
       }
     });
 
@@ -232,7 +233,7 @@ async function processAvatarRendering(
       where: { id: jobId },
       data: {
         progress: 40,
-        jobData: currentData
+        jobData: currentData as any
       }
     });
 
@@ -245,7 +246,7 @@ async function processAvatarRendering(
       where: { id: jobId },
       data: {
         progress: 60,
-        jobData: currentData
+        jobData: currentData as any
       }
     });
 
@@ -262,7 +263,7 @@ async function processAvatarRendering(
       where: { id: jobId },
       data: {
         progress: 85,
-        jobData: currentData
+        jobData: currentData as any
       }
     });
 
@@ -289,7 +290,7 @@ async function processAvatarRendering(
       data: {
         status: 'completed',
         progress: 100,
-        jobData: currentData
+        jobData: currentData as any
       }
     });
 

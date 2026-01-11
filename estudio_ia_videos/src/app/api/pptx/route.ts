@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
         
         return {
             projectId: project.id,
-            orderIndex: index,
+            order_index: index,
             title: `Slide ${slide.slideNumber}`,
             content: textContent || `Slide ${slide.slideNumber}`, 
             duration: Math.max(5, slide.duration.estimatedDuration), // Use estimated duration or min 5s
@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
       .from('projects')
       .update({
         status: 'draft', // Ready for editing
-        totalSlides: slidesToInsert.length
+
       })
       .eq('id', project.id);
 

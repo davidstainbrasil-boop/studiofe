@@ -1,9 +1,10 @@
 
 import { Job } from 'bullmq';
 
-export const createRenderQueueEvents = jest.fn((queueName: string) => ({
+export const createRenderQueueEvents = jest.fn((queueName: string = 'default') => ({
   on: jest.fn(),
   emit: jest.fn(),
+  removeListener: jest.fn(),
   close: jest.fn(),
 }));
 

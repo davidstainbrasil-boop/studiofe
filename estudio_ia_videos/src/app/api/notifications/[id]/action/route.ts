@@ -134,19 +134,19 @@ export async function POST(
 
       case 'download_render':
         // Handle render download
-        if (notification.metadata?.render_id) {
+        if ((notification.metadata as any)?.render_id) {
           try {
             const { data: renderJob, error: renderError } = await supabaseAdmin
               .from('render_jobs')
-              .select("outputUrl")
-              .eq('id', notification.metadata.render_id)
+              .select("output_url")
+              .eq('id', (notification.metadata as any).render_id)
               .eq("userId", session.user.id)
               .single()
 
             if (renderError) throw renderError
 
             actionResult.message = 'Render ready for download'
-            actionResult.download_url = renderJob.outputUrl
+            actionResult.download_url = renderJob.output_url
           } catch (error) {
             actionResult = { success: false, error: 'Failed to get render download URL' }
           }
@@ -155,7 +155,7 @@ export async function POST(
 
       case 'retry_render':
         // Handle render retry
-        if (notification.metadata?.render_id) {
+        if ((notification.metadata as any)?.render_id) {
           try {
             const { error: retryError } = await supabaseAdmin
               .from('render_jobs')
@@ -164,7 +164,7 @@ export async function POST(
                 errorMessage: null,
                 updatedAt: new Date().toISOString()
               })
-              .eq('id', notification.metadata.render_id)
+              .eq('id', (notification.metadata as any).render_id)
               .eq("userId", session.user.id)
 
             if (retryError) throw retryError
@@ -208,13 +208,13 @@ export async function POST(
         .insert({
           userId: session.user.id,
           eventType: `notification_action_${action}`,
-          eventData: {
+          event_data: {
             notification_id: notificationId,
             action_type: action,
             success: actionResult.success,
             timestamp: new Date().toISOString()
-          },
-          createdAt: new Date().toISOString()
+          } as any,
+          created_at: new Date().toISOString()
         })
     } catch (analyticsError) {
       logger.warn('Failed to log notification action', { component: 'API: notifications/[id]/action' })

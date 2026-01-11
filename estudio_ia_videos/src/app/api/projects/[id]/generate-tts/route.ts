@@ -24,8 +24,8 @@ export async function POST(
     const { data: slides, error: slidesError } = await supabase
       .from('slides')
       .select('*')
-      .eq("projectId", projectId)
-      .order("slideOrder", { ascending: true });
+      .eq("project_id", projectId)
+      .order("order_index", { ascending: true });
 
     if (slidesError || !slides) {
       throw new Error('Failed to fetch slides');
@@ -47,10 +47,10 @@ export async function POST(
     for (const slide of slides) {
       // Extract text
       const content = slide.content as any;
-      const text = content?.text || content?.script || slide.notes;
+      const text = content?.text || content?.script || (slide as any).notes;
 
       if (!text) {
-        currentTime += (slide.durationSeconds || 5);
+        currentTime += (slide.duration || 5);
         continue;
       }
 
@@ -60,13 +60,13 @@ export async function POST(
         const audioUrl = await generateAndUploadTTSAudio(
            text, 
            fileName, 
-           (slide.ttsSettings as any)?.voiceId
+           ((slide as any).audio_config as any)?.voice_id || 'default'
         );
 
         // Update Slide Record
         await supabase
           .from('slides')
-          .update({ audioUrl: audioUrl })
+          .update({ audio_url: audioUrl } as any)
           .eq('id', slide.id);
 
         // Create Timeline Audio Element
@@ -80,9 +80,9 @@ export async function POST(
         audioElements.push({
             id: `audio-${slide.id}-${Date.now()}`,
             type: 'audio',
-            name: `Narração Slide ${slide.slideOrder}`,
+            name: `Narração Slide ${(slide as any).order_index}`,
             startTime: currentTime,
-            duration: slide.durationSeconds || 5, // Ideally this should match audio length
+            duration: slide.duration || 5, // Ideally this should match audio length
             content: audioUrl,
             properties: { volume: 1 },
             locked: false,
@@ -93,7 +93,7 @@ export async function POST(
         logger.error(`Failed to generate TTS for slide ${slide.id}`, err as Error);
       }
 
-      currentTime += (slide.durationSeconds || 5);
+      currentTime += (slide.duration || 5);
     }
 
     // 3. Update Timeline
@@ -101,7 +101,7 @@ export async function POST(
     const { data: timeline } = await supabase
       .from('timelines')
       .select('*')
-      .eq("projectId", projectId)
+      .eq("project_id", projectId)
       .single();
 
     if (timeline) {

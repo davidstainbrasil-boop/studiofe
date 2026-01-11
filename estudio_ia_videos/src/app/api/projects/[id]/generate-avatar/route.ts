@@ -23,7 +23,7 @@ export async function POST(
     // Check D-ID connection
     let didService;
     try {
-        didService = new DIDService();
+        didService = DIDService;
     } catch {
         return NextResponse.json({ 
             success: false, 
@@ -39,7 +39,7 @@ export async function POST(
       .from('slides')
       .select('*')
       .eq("projectId", projectId)
-      .order("slideOrder", { ascending: true });
+      .order("order_index", { ascending: true });
 
     if (slidesError || !slides) {
       throw new Error('Failed to fetch slides');
@@ -65,10 +65,13 @@ export async function POST(
     // We will attempt to process all, but client should handle timeout.
     
     for (const slide of slides) {
-        if (!slide.audioUrl) continue;
+        const slideAny = slide as any;
+        if (!slideAny.audio_url && !slideAny.audio_config?.audio_url) continue;
         
+        const audioUrl = slideAny.audio_url || slideAny.audio_config?.audio_url;
+
         // Skip if already has video (optional, maybe force regen?)
-        // if (slide.videoUrl && slide.videoUrl.includes('d-id')) continue;
+        // if (slideAny.video_url && slideAny.video_url.includes('d-id')) continue;
 
         try {
             logger.info(`Generating avatar for slide ${slide.id}`);
@@ -79,22 +82,22 @@ export async function POST(
             
             const videoUrl = await didService.createTalk({
                 sourceUrl: DEFAULT_AVATAR, // In proper app, let user select avatar per slide
-                audioUrl: slide.audioUrl
+                audioUrl: audioUrl
             });
 
             // Update Slide
             await supabase.from('slides').update({
-                videoUrl: videoUrl,
-                layoutType: 'avatar_overlay'
-            }).eq('id', slide.id);
+                video_url: videoUrl,
+                layout: 'avatar_overlay'
+            } as any).eq('id', slide.id);
 
             // Add to Timeline
             // We'll create a new Video/Overlay Track for Avatars
             avatarElements.push({
                 id: `avatar-${slide.id}-${randomUUID()}`,
                 type: 'video',
-                name: `Avatar Slide ${slide.slideOrder}`,
-                startTime: (slide.slideOrder - 1) * 5, // Simplified timing, ideally calculate from prev slides durations
+                name: `Avatar Slide ${slide.order_index}`,
+                startTime: (slide.order_index - 1) * 5, // Simplified timing, ideally calculate from prev slides durations
                 // Better: we need exact start time from existing audio track?
                 // For now, let's assume loose coupling or client refresh aligns it.
                 // Wait, if we just push elements to a new track, they start at 0?

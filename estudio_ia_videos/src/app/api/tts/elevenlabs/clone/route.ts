@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      voiceId: result.voiceId,
+      voiceId: result.voice_id,
       message: 'Voz clonada com sucesso'
     })
   } catch (error) {

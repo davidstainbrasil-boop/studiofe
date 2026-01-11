@@ -37,7 +37,7 @@ interface SyncJob {
   confidence_avg?: number;
   visemes_count?: number;
   phonemes_count?: number;
-  createdAt: string;
+  created_at: string;
   completed_at?: string;
   error_message?: string;
 }
@@ -120,12 +120,12 @@ export async function POST(request: NextRequest) {
 
     // Salvar informações adicionais no banco
     // sync_jobs table is now properly typed
-    await supabase.from('sync_jobs').update({
-      projectId: projectId,
+    await supabase.from('sync_jobs' as any).update({
+      project_id: projectId,
       avatar_id: avatarId,
-      userId: userId,
-      fileName: audioFile.name,
-      fileSize: audioFile.size,
+      user_id: userId,
+      file_name: audioFile.name,
+      file_size: audioFile.size,
       file_type: audioFile.type,
       options: {
         includeEmotions,
@@ -191,7 +191,7 @@ export async function GET(request: NextRequest) {
 
         // Buscar status do job
         const { data: jobData, error } = await supabase
-          .from('sync_jobs')
+          .from('sync_jobs' as any)
           .select('*')
           .eq('job_id', jobId)
           .single()
@@ -210,8 +210,8 @@ export async function GET(request: NextRequest) {
             job_id: job.job_id,
             status: job.status,
             progress: job.progress || 100,
-            createdAt: job.createdAt,
-            completedAt: job.completedAt,
+            created_at: job.created_at,
+            completed_at: job.completed_at,
             metadata: {
               audio_duration: job.audio_duration,
               processing_time: job.processing_time,
@@ -233,7 +233,7 @@ export async function GET(request: NextRequest) {
 
         // Buscar resultado completo do job
         const { data: resultJobData, error: resultError } = await supabase
-          .from('sync_jobs')
+          .from('sync_jobs' as any)
           .select('*')
           .eq('job_id', jobId)
           .eq('status', 'completed')
@@ -271,17 +271,17 @@ export async function GET(request: NextRequest) {
         const limit = parseInt(searchParams.get('limit') || '10')
 
         let query = supabase
-          .from('sync_jobs')
+          .from('sync_jobs' as any)
           .select('job_id, status, created_at, accuracy_score, audio_duration, file_name')
-          .order("createdAt", { ascending: false })
+          .order("created_at", { ascending: false })
           .limit(limit)
 
         if (userId) {
-          query = query.eq("userId", userId)
+          query = query.eq("user_id", userId)
         }
 
         if (projectId) {
-          query = query.eq("projectId", projectId)
+          query = query.eq("project_id", projectId)
         }
 
         const { data: history, error: historyError } = await query
@@ -298,7 +298,7 @@ export async function GET(request: NextRequest) {
       case 'stats':
         // Estatísticas gerais de processamento
         const { data: statsData, error: statsError } = await supabase
-          .from('sync_jobs')
+          .from('sync_jobs' as any)
           .select('accuracy_score, processing_time, audio_duration, status')
           .eq('status', 'completed')
 
@@ -363,10 +363,10 @@ export async function DELETE(request: NextRequest) {
 
     // Marcar job como cancelado
     const { error } = await supabase
-      .from('sync_jobs')
+      .from('sync_jobs' as any)
       .update({ 
         status: 'cancelled',
-        updatedAt: new Date().toISOString()
+        updated_at: new Date().toISOString()
       })
       .eq('job_id', jobId)
 

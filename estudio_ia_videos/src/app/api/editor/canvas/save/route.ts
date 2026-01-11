@@ -8,6 +8,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@lib/auth'
 import { prisma } from '@lib/prisma'
 import { workflowManager } from '@lib/workflow/unified-workflow-manager'
+import { Prisma } from '@prisma/client'
 import { z } from 'zod'
 import { logger } from '@lib/logger'
 
@@ -141,7 +142,8 @@ class CanvasEditor {
             timeline,
             totalDuration,
             editedAt: new Date().toISOString()
-          } satisfies ProjectCanvasMetadata
+
+          } as unknown as Prisma.InputJsonValue
         }
       })
 
@@ -209,7 +211,7 @@ class CanvasEditor {
               ...currentCanvas,
               elements: updatedElements
             }
-          } satisfies ProjectCanvasMetadata
+          } as unknown as Prisma.InputJsonValue
         }
       })
 

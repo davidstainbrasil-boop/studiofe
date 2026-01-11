@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
 
     // Build where clause
     interface WhereClause {
-      user_id?: string
+      userId?: string
       status?: string
       type?: string
       name?: { contains: string; mode: 'insensitive' }
@@ -63,12 +63,12 @@ export async function GET(request: NextRequest) {
     // Get projects and count using Prisma
     const [projects, count] = await Promise.all([
       prisma.projects.findMany({
-        where: whereClause,
+        where: whereClause as any,
         orderBy: { updatedAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
       }),
-      prisma.projects.count({ where: whereClause })
+      prisma.projects.count({ where: whereClause as any })
     ])
 
     const response = {
@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
         id: randomUUID(),
         name: validatedData.name,
         description: validatedData.description || '',
-        type: validatedData.type,
+        type: validatedData.type as any,
         status: 'draft',
         userId: userId,
         metadata: (validatedData.metadata || {}) as object,

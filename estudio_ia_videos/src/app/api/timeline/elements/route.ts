@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
       if (project) {
         hasPermission = project.owner_id === user.id || 
                        (Array.isArray(project.collaborators) && (project.collaborators as string[]).includes(user.id)) ||
-                       !!project.isPublic
+                       !!project.is_public
       }
     } else if (trackId) {
       const { data: trackData } = await supabase
@@ -126,7 +126,7 @@ export async function GET(request: NextRequest) {
       if (track?.project) {
         hasPermission = track.project.owner_id === user.id || 
                        (Array.isArray(track.project.collaborators) && (track.project.collaborators as string[]).includes(user.id)) ||
-                       !!track.project.isPublic
+                       !!track.project.is_public
       }
     }
 
@@ -147,7 +147,7 @@ export async function GET(request: NextRequest) {
       query = query.eq("trackId", trackId)
     }
     if (projectId) {
-      query = query.eq("projectId", projectId)
+      query = query.eq("project_id", projectId)
     }
     if (type) {
       query = query.eq('type', type)
@@ -213,10 +213,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const track = trackData as unknown as TrackWithProject & { projectId: string; locked?: boolean };
+    const track = trackData as unknown as TrackWithProject & { project_id: string; locked?: boolean };
     
     // Verificar se o project_id corresponde
-    if (track.projectId !== validatedData.projectId) {
+    if (track.project_id !== validatedData.projectId) {
       return NextResponse.json(
         { error: 'Track não pertence ao projeto especificado' },
         { status: 400 }
@@ -273,14 +273,27 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Prepare input data by excluding non-column fields and mapping keys
+    const { 
+      trackId, effects, transitions, projectId, 
+      thumbnailUrl, fileSize, mimeType,
+      ...insertData 
+    } = validatedData;
+
     // Criar elemento
     const { data: elementData, error } = await supabase
       .from('timeline_elements')
       .insert({
-        ...validatedData,
-        properties: defaultProperties,
-        effects: validatedData.effects || [],
-        transitions: validatedData.transitions || {}
+        ...insertData,
+        track_id: trackId,
+        thumbnail_url: thumbnailUrl,
+        file_size: fileSize,
+        mime_type: mimeType,
+        properties: {
+          ...defaultProperties,
+          effects: validatedData.effects || [],
+          transitions: validatedData.transitions || {}
+        } as any
       })
       .select()
       .single()
@@ -300,14 +313,14 @@ export async function POST(request: NextRequest) {
       .from('project_history')
       .insert({
         projectId: validatedData.projectId,
-        userId: user.id,
+        user_id: user.id,
         action: 'create',
-        entity_type: 'element',
+        entity_type: 'timeline_element',
         entity_id: element.id,
         description: `Elemento ${element.type || 'desconhecido'} adicionado à timeline`,
         changes: {
           created_element: element
-        }
+        } as any
       })
 
     return NextResponse.json(element, { status: 201 })
@@ -403,10 +416,10 @@ export async function PUT(request: NextRequest) {
         )
       }
 
-      const newTrack = newTrackData as unknown as { projectId: string; locked?: boolean };
-      const currentProjectId = existingElement.track?.projectId;
+      const newTrack = newTrackData as unknown as { project_id: string; locked?: boolean };
+      const currentProjectId = existingElement.track?.project_id;
       
-      if (newTrack.projectId !== currentProjectId) {
+      if (newTrack.project_id !== currentProjectId) {
         return NextResponse.json(
           { error: 'Track de destino deve pertencer ao mesmo projeto' },
           { status: 400 }
@@ -442,7 +455,7 @@ export async function PUT(request: NextRequest) {
       )
     }
 
-    const currentProjectId = existingElement.projectId || existingElement.track?.projectId;
+    const currentProjectId = existingElement.project_id || existingElement.track?.project_id;
     
     if (currentProjectId) {
       // Registrar no histórico
@@ -450,9 +463,9 @@ export async function PUT(request: NextRequest) {
         .from('project_history')
         .insert({
           projectId: currentProjectId,
-          userId: user.id,
+          user_id: user.id,
           action: 'update',
-          entity_type: 'element',
+          entity_type: 'timeline_element',
           entity_id: elementId,
           description: 'Elemento movido na timeline',
           changes: {
@@ -462,7 +475,7 @@ export async function PUT(request: NextRequest) {
               duration: existingElement.duration
             },
             new_data: updateData
-          }
+          } as any
         })
     }
 

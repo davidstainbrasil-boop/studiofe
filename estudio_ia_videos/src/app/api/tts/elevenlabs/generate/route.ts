@@ -49,15 +49,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { text, voice_id, model_id, voice_settings } = validationResult.data
+    const { text, voiceId, model_id, voiceSettings } = validationResult.data
 
     const elevenLabsService = ElevenLabsService.getInstance()
     
     const audioBuffer = await elevenLabsService.generateSpeech({
       text,
-      voice_id,
+      voice_id: voiceId,
       model_id: model_id,
-      voiceSettings: voice_settings || {
+      voice_settings: voiceSettings || {
         stability: 0.5,
         similarity_boost: 0.5,
         style: 0.0,
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
       component: 'API: tts/elevenlabs', 
       userId: user.id, 
       textLength: text.length, 
-      voiceId: voice_id 
+      voiceId: voiceId 
     })
 
     // Retornar o áudio como resposta
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
       headers: {
         'Content-Type': 'audio/mpeg',
         'Content-Length': buffer.length.toString(),
-        'Content-Disposition': `attachment; filename="tts-${voice_id}-${Date.now()}.mp3"`,
+        'Content-Disposition': `attachment; filename="tts-${voiceId}-${Date.now()}.mp3"`,
         'X-User-Id': user.id
       }
     })

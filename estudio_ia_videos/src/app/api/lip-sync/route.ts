@@ -10,9 +10,9 @@ export async function POST(request: NextRequest) {
   try {
     // Validação de recursos
     const validation = await validateLipSyncResources();
-    if (!validation.valid) {
+    if (!validation) {
       return NextResponse.json(
-        { error: 'Recursos não configurados', details: validation.errors },
+        { error: 'Recursos não configurados', details: ['Check server configuration'] },
         { status: 500 }
       );
     }

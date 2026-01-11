@@ -79,7 +79,7 @@ export async function GET(
     }
 
     // Verificar permissões
-    const project = upload.projects as Record<string, unknown>
+    const project = (upload as any).projects as Record<string, unknown>
     const hasPermission = project.owner_id === user.id || 
                          (project.collaborators as string[])?.includes(user.id) ||
                          project.isPublic
@@ -94,7 +94,7 @@ export async function GET(
     // Atualizar último acesso
     await supabase
       .from('pptx_uploads')
-      .update({ updatedAt: new Date().toISOString() })
+      .update({ updated_at: new Date().toISOString() })
       .eq('id', uploadId)
 
     return NextResponse.json({ upload })
@@ -152,7 +152,7 @@ export async function PUT(
       )
     }
 
-    const project = upload.projects
+    const project = (upload as any).projects
     const hasPermission = project?.owner_id === user.id || 
                          project?.collaborators?.includes(user.id)
 
@@ -166,14 +166,14 @@ export async function PUT(
     // Preparar dados para atualização
     const updateData: Record<string, unknown> = {
       ...validatedData,
-      updatedAt: new Date().toISOString()
+      updated_at: new Date().toISOString()
     }
 
     // Se status mudou para completed, definir processed_at
     if (validatedData.status === 'completed' && upload.status !== 'completed') {
       // Se há dados de slides, contar slides
       if (validatedData.slidesData) {
-        updateData.slideCount = validatedData.slidesData.length
+        updateData.slide_count = validatedData.slidesData.length
       }
     }
 
@@ -197,7 +197,7 @@ export async function PUT(
     await supabase
       .from('project_history')
       .insert({
-        projectId: upload.projectId,
+        projectId: (upload as any).project_id,
         userId: user.id,
         action: 'update',
         entity_type: 'pptx_upload',
@@ -262,7 +262,7 @@ export async function DELETE(
       )
     }
 
-    const project = upload.projects as Record<string, unknown>
+    const project = (upload as any).projects as Record<string, unknown>
     const hasPermission = project.owner_id === user.id || 
                          (project.collaborators as string[])?.includes(user.id)
 
@@ -310,7 +310,7 @@ export async function DELETE(
     await supabase
       .from('project_history')
       .insert({
-        projectId: upload.projectId,
+        projectId: (upload as any).project_id,
         userId: user.id,
         action: 'delete',
         entity_type: 'pptx_upload',

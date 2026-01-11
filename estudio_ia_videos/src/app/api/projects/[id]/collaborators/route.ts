@@ -13,7 +13,7 @@ interface UserRecord {
   id: string;
   email: string;
   name: string;
-  avatarUrl: string;
+  avatar_url: string;
 }
 
 // Schema de validação para adicionar colaborador
@@ -48,7 +48,7 @@ export async function GET(
     // Verificar se o usuário tem acesso ao projeto
     const { data: project } = await supabase
       .from('projects')
-      .select("userId")
+      .select("owner_id")
       .eq('id', projectId)
       .single()
 
@@ -59,7 +59,7 @@ export async function GET(
       )
     }
 
-    const ownerId = project.userId
+    const ownerId = project.owner_id
     const isOwner = ownerId === user.id
 
     // Check if user is collaborator
@@ -99,7 +99,7 @@ export async function GET(
     }
 
     // Buscar dados dos usuários colaboradores
-    const collaboratorUserIds = (collaboratorsData as CollaboratorRecord[] || []).map((c) => c.userId)
+    const collaboratorUserIds = ((collaboratorsData as any) as CollaboratorRecord[] || []).map((c) => c.userId)
     let usersMap: Record<string, UserRecord> = {}
     
     if (collaboratorUserIds.length > 0) {
@@ -117,11 +117,15 @@ export async function GET(
     }
 
     // Buscar dados do dono
-    const { data: ownerData } = await supabase
-      .from('users')
-      .select('id, email, name, avatar_url')
-      .eq('id', ownerId)
-      .single()
+    let ownerData = null
+    if (ownerId) {
+      const { data } = await supabase
+        .from('users')
+        .select('id, email, name, avatar_url')
+        .eq('id', ownerId)
+        .single()
+      ownerData = data
+    }
 
     const owner = ownerData as UserRecord | null
 
@@ -131,18 +135,18 @@ export async function GET(
         id: owner.id,
         email: owner.email,
         name: owner.name || owner.email,
-        avatar: owner.avatarUrl,
+        avatar: owner.avatar_url,
         role: 'owner',
         joined_at: null
       }] : []),
       // Collaborators
-      ...((collaboratorsData as CollaboratorRecord[] || []).map((c) => {
+      ...(((collaboratorsData as any) as CollaboratorRecord[] || []).map((c) => {
         const userData = usersMap[c.userId] || {} as Partial<UserRecord>
         return {
           id: userData.id || c.userId,
           email: userData.email,
           name: userData.name || userData.email,
-          avatar: userData.avatarUrl,
+          avatar: userData.avatar_url,
           role: c.role || 'collaborator',
           joined_at: (c as unknown as { joined_at?: string }).joined_at
         }
@@ -183,7 +187,7 @@ export async function POST(
     // Verificar se o usuário é o dono do projeto
     const { data: project } = await supabase
       .from('projects')
-      .select('user_id, name')
+      .select('owner_id, name')
       .eq('id', projectId)
       .single()
 
@@ -194,7 +198,7 @@ export async function POST(
       )
     }
 
-    if (project.userId !== user.id) {
+    if (project.owner_id !== user.id) {
       return NextResponse.json(
         { error: 'Apenas o dono pode adicionar colaboradores' },
         { status: 403 }
@@ -223,7 +227,7 @@ export async function POST(
       .eq("userId", targetUser.id)
       .single()
 
-    if (existingCollaborator || targetUser.id === project.userId) {
+    if (existingCollaborator || targetUser.id === project.owner_id) {
       return NextResponse.json(
         { error: 'Usuário já é colaborador deste projeto' },
         { status: 400 }
@@ -237,7 +241,7 @@ export async function POST(
         projectId: projectId,
         userId: targetUser.id,
         role: 'editor', // Default role
-        invitedBy: user.id,
+        invited_by: user.id,
         permissions: ['read', 'write']
       })
 
@@ -322,7 +326,7 @@ export async function DELETE(
     // Verificar se o usuário é o dono do projeto
     const { data: project } = await supabase
       .from('projects')
-      .select("userId")
+      .select("owner_id")
       .eq('id', projectId)
       .single()
 
@@ -334,7 +338,7 @@ export async function DELETE(
     }
 
     // Permitir que o próprio colaborador se remova ou que o dono remova qualquer um
-    const canRemove = project.userId === user.id || collaboratorId === user.id
+    const canRemove = project.owner_id === user.id || collaboratorId === user.id
 
     if (!canRemove) {
       return NextResponse.json(
@@ -344,7 +348,7 @@ export async function DELETE(
     }
 
     // Não permitir remover o dono
-    if (collaboratorId === project.userId) {
+    if (collaboratorId === project.owner_id) {
       return NextResponse.json(
         { error: 'Não é possível remover o dono do projeto' },
         { status: 400 }

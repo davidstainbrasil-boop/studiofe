@@ -27,7 +27,7 @@ async function checkRedis() {
       }
     }
 
-    const redis = getRedisClient()
+    const redis = (await getRedisClient()) as any
     const start = Date.now()
     
     // Ping Redis para medir latência

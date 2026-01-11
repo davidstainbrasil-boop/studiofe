@@ -14,7 +14,7 @@ import { Prisma } from '@prisma/client'
 
 // Schemas de validação
 const AvatarConfigSchema = z.object({
-  projectId: z.string(),
+  project_id: z.string(),
   avatarConfig: z.object({
     model: z.enum(['default', 'professional', 'casual', 'custom']),
     gender: z.enum(['male', 'female']).optional(),
@@ -53,10 +53,10 @@ interface VoiceConfig {
 interface AvatarMetadata {
   id?: string
   status?: string
-  videoUrl?: string
-  thumbnailUrl?: string
-  generatedAt?: string
-  updatedAt?: string
+  video_url?: string
+  thumbnail_url?: string
+  generated_at?: string
+  updated_at?: string
   [key: string]: unknown
 }
 
@@ -71,10 +71,10 @@ interface AvatarData {
   script: string
   voice?: VoiceConfig
   status: string
-  createdAt: string
-  generatedAt?: string
-  videoUrl?: string
-  thumbnailUrl?: string
+  created_at: string
+  generated_at?: string
+  video_url?: string
+  thumbnail_url?: string
 }
 
 interface AvatarResult extends AvatarData {
@@ -98,7 +98,7 @@ interface AvatarModel {
 
 class Avatar3DGenerator {
   async generateAvatar(
-    projectId: string, 
+    project_id: string, 
     avatarConfig: AvatarConfig, 
     script: string, 
     voiceConfig?: VoiceConfig
@@ -106,13 +106,13 @@ class Avatar3DGenerator {
     try {
       // Simular geração do avatar 3D (integrar com Blender/Three.js)
       const avatarData: AvatarData = {
-        id: `avatar_${projectId}_${Date.now()}`,
+        id: `avatar_${project_id}_${Date.now()}`,
         model: avatarConfig.model,
         config: avatarConfig,
         script,
         voice: voiceConfig,
         status: 'generating',
-        createdAt: new Date().toISOString()
+        created_at: new Date().toISOString()
       }
 
       // Simular processo de geração
@@ -120,25 +120,25 @@ class Avatar3DGenerator {
 
       // Salvar no banco
       await prisma.projects.update({
-        where: { id: projectId },
+        where: { id: project_id },
         data: {
           metadata: {
             avatar: {
               ...avatarData,
               status: 'completed',
-              generatedAt: new Date().toISOString(),
-              videoUrl: `/api/avatars/video/${avatarData.id}`,
-              thumbnailUrl: `/api/avatars/thumbnail/${avatarData.id}`
+              generated_at: new Date().toISOString(),
+              video_url: `/api/avatars/video/${avatarData.id}`,
+              thumbnail_url: `/api/avatars/thumbnail/${avatarData.id}`
             }
-          } as Prisma.InputJsonValue
+          } as unknown as Prisma.InputJsonValue
         }
       })
 
       return {
         ...avatarData,
         status: 'completed',
-        videoUrl: `/api/avatars/video/${avatarData.id}`,
-        thumbnailUrl: `/api/avatars/thumbnail/${avatarData.id}`
+        video_url: `/api/avatars/video/${avatarData.id}`,
+        thumbnail_url: `/api/avatars/thumbnail/${avatarData.id}`
       }
 
     } catch (error) {
@@ -250,7 +250,7 @@ export async function POST(request: NextRequest) {
     // Verificar se o projeto existe e pertence ao usuário
     const project = await prisma.projects.findFirst({
       where: {
-        id: validatedData.projectId,
+        id: validatedData.project_id,
         userId: session.user.id
       }
     })
@@ -260,18 +260,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Atualizar workflow para "processing"
-    await workflowManager.updateWorkflowStep(validatedData.projectId, 'avatar', 'processing')
+    await workflowManager.updateWorkflowStep(validatedData.project_id, 'avatar', 'processing')
 
     // Gerar avatar
     const avatarResult = await avatar3DGenerator.generateAvatar(
-      validatedData.projectId,
+      validatedData.project_id,
       validatedData.avatarConfig,
       validatedData.script,
       validatedData.voice
     )
 
     // Atualizar workflow para "completed"
-    await workflowManager.updateWorkflowStep(validatedData.projectId, 'avatar', 'completed', avatarResult as unknown as Record<string, unknown>)
+    await workflowManager.updateWorkflowStep(validatedData.project_id, 'avatar', 'completed', avatarResult as unknown as Record<string, unknown>)
 
     return NextResponse.json({
       success: true,
@@ -284,8 +284,8 @@ export async function POST(request: NextRequest) {
     
     // Atualizar workflow para "error"
     const body = await request.json().catch(() => ({}))
-    if (body.projectId) {
-      await workflowManager.updateWorkflowStep(body.projectId, 'avatar', 'error', { error: error instanceof Error ? error.message : 'Unknown error' })
+    if (body.project_id) {
+      await workflowManager.updateWorkflowStep(body.project_id, 'avatar', 'error', { error: error instanceof Error ? error.message : 'Unknown error' })
     }
     
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -372,9 +372,9 @@ export async function PUT(request: NextRequest) {
           avatar: {
             ...existingMetadata?.avatar,
             ...updates,
-            updatedAt: new Date().toISOString()
+            updated_at: new Date().toISOString()
           }
-        } as Prisma.InputJsonValue
+        } as unknown as Prisma.InputJsonValue
       }
     })
 

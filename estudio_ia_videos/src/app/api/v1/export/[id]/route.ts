@@ -16,7 +16,7 @@ import {
   ExportFormat,
   ExportResolution,
   ExportQuality,
-} from '@types/export.types'
+} from '@/types/export.types'
 import { getExportQueue } from '@lib/export/export-queue'
 import { logger } from '@lib/logger'
 

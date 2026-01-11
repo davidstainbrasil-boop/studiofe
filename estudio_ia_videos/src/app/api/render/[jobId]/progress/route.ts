@@ -4,11 +4,25 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { z } from 'zod'
 import { createRenderQueueEvents } from '@lib/queue/render-queue'
 import type { Database } from '@lib/supabase/types'
-import type { 
-  RenderJobWithProject, 
-  RenderProgressData, 
-  RenderCompleteData
-} from '@types/database'
+interface RenderJobWithProject {
+  id: string
+  project_id: string
+  status: string
+  progress: number
+  output_url: string | null
+  error_message: string | null
+  projects: {
+    user_id: string
+  } | null
+}
+
+interface RenderProgressData {
+  progress: number
+}
+
+interface RenderCompleteData {
+  videoUrl: string
+}
 
 const paramsSchema = z.object({
   id: z.string().uuid('ID do job inválido'),
@@ -78,7 +92,7 @@ export async function GET(request: NextRequest, ctx: { params: { id?: string } }
 
   // Type the job with project relation
   const typedJob = job as unknown as RenderJobWithProject
-  const projectUserId = typedJob.projects?.userId
+  const projectUserId = typedJob.projects?.user_id
   if (projectUserId !== user.id) {
     return new Response(JSON.stringify({ error: 'Sem acesso a este job' }), {
       status: 403,
@@ -101,8 +115,8 @@ export async function GET(request: NextRequest, ctx: { params: { id?: string } }
         progress: typedJob.progress,
         stage: null,
         message: null,
-        videoUrl: typedJob.outputUrl,
-        error: typedJob.errorMessage,
+        videoUrl: typedJob.output_url,
+        error: typedJob.error_message,
       })
 
       // BullMQ event callbacks - typed internally, use generic handler for registration

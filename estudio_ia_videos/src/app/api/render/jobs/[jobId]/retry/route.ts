@@ -19,7 +19,7 @@ export async function PATCH(
     // Verify ownership via project
     const { data: job, error: jobError } = await supabase
       .from('render_jobs')
-      .select('project_id, attempts')
+      .select('projectId, attempts')
       .eq('id', jobId)
       .single()
 
@@ -29,7 +29,7 @@ export async function PATCH(
 
     const { data: project, error: projectError } = await supabase
       .from('projects')
-      .select("userId")
+      .select("owner_id")
       .eq('id', job.projectId)
       .single()
 
@@ -37,7 +37,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Project not found' }, { status: 404 })
     }
 
-    if (project.userId !== user.id) {
+    if (project.owner_id !== user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -47,10 +47,10 @@ export async function PATCH(
       .update({ 
         status: 'queued',
         progress: 0,
-        errorMessage: null,
+        error_message: null,
         attempts: (job.attempts || 0) + 1,
-        startedAt: null,
-        completedAt: null
+        started_at: null,
+        completed_at: null
       })
       .eq('id', jobId)
 
@@ -59,7 +59,8 @@ export async function PATCH(
     return NextResponse.json({ success: true })
 
   } catch (error) {
-    logger.error('Error retrying render job', error instanceof Error ? error : new Error(String(error)), { component: 'API: render/jobs/[jobId]/retry' })
+    logger.error('Error retrying render job', error instanceof Error ? error : new Error(String(error))
+, { component: 'API: render/jobs/[jobId]/retry' })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

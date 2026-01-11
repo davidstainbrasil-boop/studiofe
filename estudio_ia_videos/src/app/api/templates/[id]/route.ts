@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Template } from '@types/templates';
+// Local definition
+interface Template {
+  id: string;
+  downloads: number;
+  isCustom?: boolean;
+  updatedAt?: Date;
+  [key: string]: any;
+}
 import { logger } from '@lib/logger';
 
 // This would be replaced with actual database operations in production

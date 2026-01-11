@@ -32,7 +32,7 @@ interface UploadMetadata {
   lastUpdated: string;
 }
 
-const rateLimiterPost = createRateLimiter(rateLimitPresets.upload);
+const rateLimiterPost = createRateLimiter(rateLimitPresets.authenticated);
 export async function POST(request: NextRequest) {
   return rateLimiterPost(request, async (request: NextRequest) => {
   await ensureDirectories();

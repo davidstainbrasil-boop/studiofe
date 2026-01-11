@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
             ...projectData.metadata,
             timeline: body // Store full timeline JSON in metadata
         },
-        renderSettings: {
+        render_settings: {
             width: projectData.width,
             height: projectData.height,
             fps: projectData.fps,
@@ -78,11 +78,11 @@ interface TimelineTrack {
     if (slideTrack && slideTrack.elements) {
         const slidesToInsert = slideTrack.elements.map((el, index: number) => ({
             projectId: newProject.id,
-            orderIndex: index,
+            order_index: index,
             title: el.name,
             content: el.properties?.content || el.name, // Fallback
             duration: Math.round(el.duration),
-            backgroundImage: el.properties?.src,
+            background_image: el.properties?.src,
             // If it's an image slide, we might want to set content to empty or description
         }))
 

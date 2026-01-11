@@ -58,9 +58,9 @@ export async function GET(request: NextRequest) {
 
     // Get user's render settings
     const { data: settings, error } = await supabase
-      .from('user_render_settings')
+      .from('user_render_settings' as any)
       .select('*')
-      .eq("userId", user.id)
+      .eq("user_id", user.id)
       .single()
 
     if (error && error.code !== 'PGRST116') {
@@ -70,12 +70,12 @@ export async function GET(request: NextRequest) {
     // If no settings exist, create default settings
     if (!settings) {
       const { data: newSettings, error: createError } = await supabase
-        .from('user_render_settings')
+        .from('user_render_settings' as any)
         .insert({
-          userId: user.id,
+          user_id: user.id,
           settings: defaultSettings,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         })
         .select()
         .single()
@@ -84,14 +84,14 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json({
         success: true,
-        data: newSettings?.settings,
+        data: (newSettings as any)?.settings,
         message: 'Default render settings created'
       })
     }
 
     return NextResponse.json({
       success: true,
-      data: settings?.settings,
+      data: (settings as any)?.settings,
       message: 'Render settings retrieved successfully'
     })
 
@@ -127,9 +127,9 @@ export async function PATCH(request: NextRequest) {
 
     // Get current settings
     const { data: currentSettings, error: fetchError } = await supabase
-      .from('user_render_settings')
+      .from('user_render_settings' as any)
       .select('*')
-      .eq("userId", user.id)
+      .eq("user_id", user.id)
       .single()
 
     if (fetchError && fetchError.code !== 'PGRST116') {
@@ -143,48 +143,48 @@ export async function PATCH(request: NextRequest) {
       updatedSettings = { ...defaultSettings, ...settingsUpdate }
       
       const { data: newSettings, error: createError } = await supabase
-        .from('user_render_settings')
+        .from('user_render_settings' as any)
         .insert({
-          userId: user.id,
+          user_id: user.id,
           settings: updatedSettings,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         })
         .select()
         .single()
 
       if (createError) throw createError
 
-      updatedSettings = newSettings?.settings
+      updatedSettings = (newSettings as any)?.settings
     } else {
       // Update existing settings (deep merge)
       updatedSettings = {
-        ...currentSettings?.settings,
+        ...(currentSettings as any)?.settings,
         ...settingsUpdate,
         notifications: {
-          ...currentSettings?.settings?.notifications,
+          ...(currentSettings as any)?.settings?.notifications,
           ...settingsUpdate.notifications
         },
         resource_limits: {
-          ...currentSettings?.settings?.resource_limits,
+          ...(currentSettings as any)?.settings?.resource_limits,
           ...settingsUpdate.resource_limits
         }
       }
 
       const { data: updated, error: updateError } = await supabase
-        .from('user_render_settings')
+        .from('user_render_settings' as any)
         .update({
           settings: updatedSettings,
-          updatedAt: new Date().toISOString()
+          updated_at: new Date().toISOString()
         })
-        .eq("userId", user.id)
+        .eq("user_id", user.id)
         .select()
         .single()
 
       if (updateError) throw updateError
 
       // Extract settings from updated record
-      const updatedRecord = updated as { settings: Record<string, unknown> } | null;
+      const updatedRecord = updated as unknown as { settings: Record<string, unknown> } | null;
       updatedSettings = updatedRecord?.settings ?? updatedSettings;
     }
 
@@ -195,7 +195,7 @@ export async function PATCH(request: NextRequest) {
         .insert({
           userId: user.id,
           eventType: 'settings_updated',
-          eventData: {
+          event_data: {
             scope: 'render',
             updated_fields: Object.keys(settingsUpdate),
             timestamp: new Date().toISOString()
@@ -250,11 +250,11 @@ export async function DELETE(request: NextRequest) {
 
     // Reset to default settings
     const { data: resetSettings, error } = await supabase
-      .from('user_render_settings')
+      .from('user_render_settings' as any)
       .upsert({
-        userId: user.id,
+        user_id: user.id,
         settings: defaultSettings,
-        updatedAt: new Date().toISOString()
+        updated_at: new Date().toISOString()
       })
       .select()
       .single()
@@ -268,7 +268,7 @@ export async function DELETE(request: NextRequest) {
         .insert({
           userId: user.id,
           eventType: 'settings_reset',
-          eventData: {
+          event_data: {
             scope: 'render',
             timestamp: new Date().toISOString()
           }
@@ -278,7 +278,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Extract settings from reset record
-    const resetRecord = resetSettings as { settings: Record<string, unknown> } | null;
+    const resetRecord = resetSettings as unknown as { settings: Record<string, unknown> } | null;
 
     return NextResponse.json({
       success: true,

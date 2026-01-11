@@ -166,7 +166,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const timeline = await prisma.timeline.findUnique({
+    const timeline = await prisma.timelines.findUnique({
       where: { projectId },
     });
 
@@ -242,8 +242,8 @@ async function getTimelineSummary(timeline: TimelineData, projectId: string): Pr
   );
 
   // Get snapshot count
-  const snapshotCount = await prisma.timelineSnapshot.count({
-    where: { timeline: { projectId } },
+  const snapshotCount = await prisma.timeline_snapshots.count({
+    where: { timelines: { projectId: projectId } },
   });
 
   return {
@@ -272,7 +272,7 @@ async function getTimelineSummary(timeline: TimelineData, projectId: string): Pr
  */
 async function getUsageStats(projectId: string): Promise<UsageStats> {
   // Get timeline history
-  const timeline = await prisma.timeline.findUnique({
+  const timeline = await prisma.timelines.findUnique({
     where: { projectId },
   });
 
@@ -286,7 +286,7 @@ async function getUsageStats(projectId: string): Promise<UsageStats> {
     };
   }
 
-  const snapshots = await prisma.timelineSnapshot.findMany({
+  const snapshots = await prisma.timeline_snapshots.findMany({
     where: { timelineId: timeline.id },
     orderBy: { createdAt: 'desc' },
     take: 50,
@@ -294,7 +294,7 @@ async function getUsageStats(projectId: string): Promise<UsageStats> {
 
   // Calculate edit frequency
   const editTimes = snapshots.map((s: TimelineSnapshot) => s.createdAt.getTime());
-  const intervals = editTimes.slice(1).map((time: number, i: number) => 
+  const intervals = editTimes.slice(1).map((time: number, i: number) =>
     editTimes[i] - time
   );
 
@@ -309,8 +309,8 @@ async function getUsageStats(projectId: string): Promise<UsageStats> {
   const versionChanges = snapshots.map((s: TimelineSnapshot, i: number) => ({
     version: s.version,
     timestamp: s.createdAt,
-    changeSize: i < snapshots.length - 1 
-      ? Math.abs(s.version - snapshots[i + 1].version) 
+    changeSize: i < snapshots.length - 1
+      ? Math.abs(s.version - snapshots[i + 1].version)
       : 0,
   }));
 
@@ -407,7 +407,7 @@ async function getPerformanceMetrics(timeline: TimelineData): Promise<Performanc
  * Editing Patterns Analysis
  */
 async function getEditingPatterns(projectId: string): Promise<EditingPatterns> {
-  const timeline = await prisma.timeline.findUnique({
+  const timeline = await prisma.timelines.findUnique({
     where: { projectId },
   });
 
@@ -430,7 +430,7 @@ async function getEditingPatterns(projectId: string): Promise<EditingPatterns> {
     };
   }
 
-  const snapshots = await prisma.timelineSnapshot.findMany({
+  const snapshots = await prisma.timeline_snapshots.findMany({
     where: { timelineId: timeline.id },
     orderBy: { createdAt: 'asc' },
     take: 100,
@@ -465,7 +465,7 @@ async function getEditingPatterns(projectId: string): Promise<EditingPatterns> {
       dailyDistribution,
       peakActivity: {
         hour: peakHourEntry ? `${peakHourEntry[0]}:00` : 'N/A',
-        day: peakDayEntry ? dayNames[parseInt(peakDayEntry[0])] : 'N/A',
+        day: peakDayEntry ? dayNames[Number(peakDayEntry[0])] : 'N/A',
       },
     },
     patterns: {

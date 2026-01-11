@@ -113,20 +113,20 @@ export async function GET(request: NextRequest) {
     const stats = await avatar3DPipeline.getPipelineStats()
 
     // Obter categorias e qualidades disponíveis usando Prisma
-    const categoriesData = await prisma.avatarModel.findMany({
+    const categoriesData = await prisma.avatar_models.findMany({
       where: { isActive: true, category: { not: null } },
       select: { category: true },
       distinct: ['category']
     })
 
-    const qualitiesData = await prisma.avatarModel.findMany({
+    const qualitiesData = await prisma.avatar_models.findMany({
       where: { isActive: true, quality: { not: null } },
       select: { quality: true },
       distinct: ['quality']
     })
 
-    const categories = categoriesData.map(item => item.category).filter((c): c is string => Boolean(c))
-    const qualities = qualitiesData.map(item => item.quality).filter((q): q is string => Boolean(q))
+    const categories = categoriesData.map((item: any) => item.category).filter((c: any): c is string => Boolean(c))
+    const qualities = qualitiesData.map((item: any) => item.quality).filter((q: any): q is string => Boolean(q))
 
     const response = {
       success: true,
@@ -143,25 +143,25 @@ export async function GET(request: NextRequest) {
             audio2FaceCompatible: avatar.audio2faceCompatible,
             realTimeLipSync: avatar.realTimeLipsync,
             rayTracing: avatar.rayTracingSupport,
-            lipSyncAccuracy: avatar.lipsyncAccuracy || 95
+            lipSyncAccuracy: avatar.lipsync_accuracy || 95
           },
           preview: {
-            thumbnail: avatar.thumbnailUrl || `/api/v2/avatars/${avatar.id}/thumbnail.jpg`,
-            model3D: avatar.modelUrl || `/api/v2/avatars/${avatar.id}/preview.gltf`,
-            animation: avatar.previewVideoUrl || `/api/v2/avatars/${avatar.id}/idle.mp4`
+            thumbnail: avatar.thumbnail_url || `/api/v2/avatars/${avatar.id}/thumbnail.jpg`,
+            model3D: avatar.model_url || `/api/v2/avatars/${avatar.id}/preview.gltf`,
+            animation: avatar.preview_video_url || `/api/v2/avatars/${avatar.id}/idle.mp4`
           },
           assets: {
-            modelFile: avatar.modelFilePath,
-            textureFiles: avatar.textureFiles,
-            rigFile: avatar.rigFilePath,
-            animationSets: avatar.animationSets,
-            blendShapes: avatar.blendShapesFile
+            modelFile: avatar.model_file_path,
+            textureFiles: avatar.texture_files,
+            rigFile: avatar.rig_file_path,
+            animationSets: avatar.animation_sets,
+            blendShapes: avatar.blend_shapes_file
           },
-          supportedLanguages: avatar.supportedLanguages || ['pt-BR'],
-          usageCount: avatar.usageCount || 0,
+          supportedLanguages: avatar.supported_languages || ['pt-BR'],
+          usageCount: avatar.usage_count || 0,
           rating: avatar.rating || 5.0,
-          createdAt: avatar.createdAt,
-          updatedAt: avatar.updatedAt
+          createdAt: avatar.created_at,
+          updatedAt: avatar.updated_at
         })),
         pagination: {
           page,
@@ -225,7 +225,7 @@ export async function POST(request: NextRequest) {
     switch (action) {
       case 'preview': {
         // Buscar avatar usando Prisma
-        const avatarData = await prisma.avatarModel.findFirst({
+        const avatarData = await prisma.avatar_models.findFirst({
           where: { id: avatarId, isActive: true }
         })
 
@@ -274,22 +274,22 @@ export async function POST(request: NextRequest) {
               displayName: avatar.displayName,
               description: avatar.description,
               preview: {
-                thumbnail: avatar.thumbnailUrl || `/api/v2/avatars/${avatar.id}/thumbnail.jpg`,
-                model3D: avatar.modelUrl || `/api/v2/avatars/${avatar.id}/preview.gltf`,
-                animation: avatar.previewVideoUrl || `/api/v2/avatars/${avatar.id}/idle.mp4`
+                thumbnail: avatar.thumbnail_url || `/api/v2/avatars/${avatar.id}/thumbnail.jpg`,
+                model3D: avatar.model_url || `/api/v2/avatars/${avatar.id}/preview.gltf`,
+                animation: avatar.preview_video_url || `/api/v2/avatars/${avatar.id}/idle.mp4`
               },
               features: {
                 audio2FaceCompatible: avatar.audio2faceCompatible,
                 realTimeLipSync: avatar.realTimeLipsync,
                 rayTracing: avatar.rayTracingSupport,
-                lipSyncAccuracy: avatar.lipsyncAccuracy || 95
+                lipSyncAccuracy: avatar.lipsync_accuracy || 95
               },
               assets: {
-                modelFile: avatar.modelFilePath,
-                textureFiles: avatar.textureFiles,
-                rigFile: avatar.rigFilePath,
-                animationSets: avatar.animationSets,
-                blendShapes: avatar.blendShapesFile
+                modelFile: avatar.model_file_path,
+                textureFiles: avatar.texture_files,
+                rigFile: avatar.rig_file_path,
+                animationSets: avatar.animation_sets,
+                blendShapes: avatar.blend_shapes_file
               }
             }
           }
@@ -308,7 +308,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Verificar se o avatar existe usando Prisma
-        const avatarData = await prisma.avatarModel.findFirst({
+        const avatarData = await prisma.avatar_models.findFirst({
           where: { id: avatarId, isActive: true },
           select: { id: true, name: true, audio2FaceCompatible: true }
         })

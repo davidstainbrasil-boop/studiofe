@@ -27,14 +27,14 @@ type RenderJobRow = Omit<BasicRenderJob, "renderSettings"> & {
 
 type RenderJobWithProject = {
   id: string
-  createdAt: string
-  startedAt: string | null
-  completedAt: string | null
+  created_at: string
+  started_at: string | null
+  completed_at: string | null
   status: string
-  errorMessage: string | null
-  renderSettings: Record<string, unknown>
+  error_message: string | null
+  render_settings: Record<string, unknown>
   projects: {
-    userId: string
+    user_id: string
     type: string
   } | null
 }
@@ -103,12 +103,12 @@ export async function GET(req: NextRequest) {
       'id, created_at, started_at, completed_at, status, error_message, render_settings, projects!inner(user_id, type)',
       { count: 'exact' }
     )
-    .gte("createdAt", getTimeRangeFilter(params.timeRange).toISOString())
-    .order("createdAt", { ascending: false })
+    .gte("created_at", getTimeRangeFilter(params.timeRange).toISOString())
+    .order("created_at", { ascending: false })
     .limit(MAX_ROWS)
 
   if (params.userId) {
-    query = query.eq('projects.userId', params.userId)
+    query = query.eq('projects.user_id', params.userId)
   }
 
   if (params.projectType) {
@@ -130,13 +130,13 @@ export async function GET(req: NextRequest) {
   
   const jobs: RenderJobRow[] = rawJobs.map((job: any) => ({
     id: job.id,
-    createdAt: job.createdAt,
-    startedAt: job.startedAt,
-    completedAt: job.completedAt,
+    createdAt: job.created_at,
+    started_at: job.started_at,
+    completed_at: job.completed_at,
     status: job.status,
-    errorMessage: job.errorMessage,
-    renderSettings: job.renderSettings,
-    userId: job.projects?.userId,
+    error_message: job.error_message,
+    renderSettings: job.render_settings,
+    user_id: job.projects?.user_id,
     project_type: job.projects?.type
   }))
 
@@ -176,4 +176,3 @@ export async function GET(req: NextRequest) {
   response.headers.set('X-Cache', 'MISS')
   return response
 }
-

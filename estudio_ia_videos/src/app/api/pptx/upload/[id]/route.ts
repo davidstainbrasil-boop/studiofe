@@ -42,16 +42,16 @@ export const GET = withRateLimit(RATE_LIMITS.AUTH_API, 'user')(async function GE
     const { data: project } = await supabase
       .from('projects')
       .select('user_id, is_public')
-      .eq('id', upload.projectId)
+      .eq('id', (upload as any).project_id)
       .single()
 
-    let hasPermission = project && (project.userId === user.id || project.isPublic)
+    let hasPermission = project && ((project as any).user_id === user.id || (project as any).is_public)
 
     if (!hasPermission && project) {
       const { data: collaborator } = await supabase
         .from('project_collaborators')
         .select("userId")
-        .eq("projectId", upload.projectId)
+        .eq("projectId", (upload as any).project_id)
         .eq("userId", user.id)
         .single()
       
@@ -105,16 +105,16 @@ export const DELETE = withRateLimit(RATE_LIMITS.AUTH_STRICT, 'user')(async funct
     const { data: project } = await supabase
       .from('projects')
       .select('user_id, is_public')
-      .eq('id', upload.projectId)
+      .eq('id', (upload as any).project_id)
       .single()
 
-    let hasPermission = project && (project.userId === user.id || project.isPublic)
+    let hasPermission = project && ((project as any).user_id === user.id || (project as any).is_public)
 
     if (!hasPermission && project) {
       const { data: collaborator } = await supabase
         .from('project_collaborators')
         .select('permissions')
-        .eq("projectId", upload.projectId)
+        .eq("projectId", (upload as any).project_id)
         .eq("userId", user.id)
         .single()
       
@@ -134,13 +134,13 @@ export const DELETE = withRateLimit(RATE_LIMITS.AUTH_STRICT, 'user')(async funct
       .eq('upload_id', uploadId)
 
     // Limpar preview assets (S3 ou cache local)
-    if (upload.previewUrl && typeof upload.previewUrl === 'string') {
+    if ((upload as any).preview_url && typeof (upload as any).preview_url === 'string') {
       try {
-        if (upload.previewUrl.startsWith('/api/s3/serve/')) {
-          const key = decodeURIComponent(upload.previewUrl.replace('/api/s3/serve/', ''))
+        if ((upload as any).preview_url.startsWith('/api/s3/serve/')) {
+          const key = decodeURIComponent((upload as any).preview_url.replace('/api/s3/serve/', ''))
           await S3StorageService.deleteFile(key)
-        } else if (upload.previewUrl.startsWith('/api/videos/cache/')) {
-          const filename = decodeURIComponent(upload.previewUrl.replace('/api/videos/cache/', ''))
+        } else if ((upload as any).preview_url.startsWith('/api/videos/cache/')) {
+          const filename = decodeURIComponent((upload as any).preview_url.replace('/api/videos/cache/', ''))
           videoCache.delete(filename)
         }
       } catch (err) {
@@ -149,9 +149,9 @@ export const DELETE = withRateLimit(RATE_LIMITS.AUTH_STRICT, 'user')(async funct
     }
 
     // Remover arquivo original do disco, se existir
-    if (upload.filePath && typeof upload.filePath === 'string') {
+    if ((upload as any).file_path && typeof (upload as any).file_path === 'string') {
       try {
-        await unlink(upload.filePath)
+        await unlink((upload as any).file_path)
       } catch (err) {
         // Ignorar erros de remoção do arquivo local
       }
@@ -164,16 +164,16 @@ export const DELETE = withRateLimit(RATE_LIMITS.AUTH_STRICT, 'user')(async funct
       .eq('id', uploadId)
 
     // Notificar sala do projeto (opcional)
-    const roomId = `project:${upload.projectId}:uploads`
+    const roomId = `project:${(upload as any).project_id}:uploads`
     notificationManager.sendNotification({
       id: `upload_${uploadId}_deleted_${Date.now()}`,
       type: 'system_alert',
       title: 'Upload removido',
-      message: `O upload ${upload.original_filename || upload.filename} foi removido do projeto`,
+      message: `O upload ${upload.original_filename || 'unknown'} foi removido do projeto`,
       priority: 'low',
       timestamp: Date.now(),
       roomId,
-      data: { uploadId, projectId: upload.projectId }
+      data: { uploadId, projectId: (upload as any).project_id }
     })
 
     return NextResponse.json({ success: true })

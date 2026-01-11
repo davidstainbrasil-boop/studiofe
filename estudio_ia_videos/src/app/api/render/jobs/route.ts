@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
 
     // Build where clause
     const whereClause: {
-      project_id?: string
+      projectId?: string
       status?: { in: JobStatus[] }
     } = {}
     
@@ -144,7 +144,7 @@ export async function POST(request: NextRequest) {
     const activeRender = await prisma.render_jobs.findFirst({
       where: {
         projectId: jobData.projectId,
-        status: { in: ['queued', 'processing'] }
+        status: { in: ['queued', 'processing'] as any[] }
       }
     })
 
@@ -183,7 +183,7 @@ export async function POST(request: NextRequest) {
         id: jobId,
         projectId: jobData.projectId,
         userId: effectiveUserId,
-        status: 'queued',
+        status: 'queued' as any,
         progress: 0,
         renderSettings: renderJobData as object
       }
@@ -219,7 +219,7 @@ export async function POST(request: NextRequest) {
             job_id: createdJob.id,
             type: jobData.type,
             settings: renderJobData
-          }
+          } as any
         }
       })
     } catch (historyError) {

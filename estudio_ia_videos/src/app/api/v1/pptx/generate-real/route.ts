@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
       where: { id: projectId },
       select: {
         id: true,
-        title: true,
+        name: true,
         pptxUrl: true,
         status: true,
         metadata: true
@@ -94,7 +94,7 @@ export async function GET(request: NextRequest) {
       success: true,
       project: {
         id: project.id,
-        name: project.title,
+        name: project.name,
         hasPptx: !!project.pptxUrl,
         pptxUrl: project.pptxUrl,
         status: project.status,

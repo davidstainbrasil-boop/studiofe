@@ -75,13 +75,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: {
-        audioUrl: result.audioUrl,
+        audioUrl: result.audio_url,
         duration: result.duration,
         visemes: result.visemes,
         job_id: result.metadata.job_id,
         metadata: {
           engine: result.metadata.engine,
-          voiceId: result.metadata.voiceId,
+          voiceId: result.metadata.voice_id,
           generation_time: result.metadata.generation_time,
           cache_hit: result.metadata.cache_hit
         }

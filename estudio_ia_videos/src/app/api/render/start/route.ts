@@ -13,7 +13,9 @@ import { jobManager } from '@lib/render/job-manager';
 import { logger } from '@lib/logger';
 import { globalRateLimiter } from '@lib/rate-limit';
 import crypto from 'crypto';
-import type { RenderConfig as QueueRenderConfig, RenderSlide as QueueRenderSlide } from '@lib/queue/types';
+// Local type definitions replacing missing module
+type QueueRenderConfig = any;
+type QueueRenderSlide = any;
 
 // Define interfaces locally to match API expectations
 interface RenderConfig {

@@ -248,10 +248,10 @@ export async function POST(request: NextRequest) {
     const params = TTSGenerateSchema.parse(body)
 
     // Get provider configuration
-    const { data: providerData, error: providerError } = await supabaseAdmin
+    const { data: providerData, error: providerError } = await (supabaseAdmin as any)
       .from('user_external_api_configs')
       .select('*')
-      .eq("userId", session.user.id)
+      .eq("user_id", session.user.id)
       .eq('api_type', 'tts')
       .eq('provider_id', params.provider_id)
       .eq('enabled', true)
@@ -267,14 +267,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Check rate limits and quotas
-    const { data: usage, error: usageError } = await supabaseAdmin
+    const { data: usage, error: usageError } = await (supabaseAdmin as any)
       .from('external_api_usage')
       .select('*')
-      .eq("userId", session.user.id)
+      .eq("user_id", session.user.id)
       .eq('api_type', 'tts')
       .eq('provider_id', params.provider_id)
-      .gte("createdAt", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()) // Last 24 hours
-      .order("createdAt", { ascending: false })
+      .gte("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()) // Last 24 hours
+      .order("created_at", { ascending: false })
 
     if (usageError) {
       logger.warn('Failed to check TTS usage:', { component: 'API: external/tts/generate' })
@@ -312,10 +312,10 @@ export async function POST(request: NextRequest) {
 
     // Record usage
     try {
-      await supabaseAdmin
+      await (supabaseAdmin as any)
         .from('external_api_usage')
         .insert({
-          userId: session.user.id,
+          user_id: session.user.id,
           api_type: 'tts',
           provider_id: params.provider_id,
           characters_used: params.text.length,
@@ -327,7 +327,8 @@ export async function POST(request: NextRequest) {
             format: params.format,
             duration: result.duration,
             fileSize: result.size
-          }
+          },
+          created_at: new Date().toISOString()
         })
     } catch (usageLogError) {
       logger.warn('Failed to log TTS usage:', { component: 'API: external/tts/generate' })
@@ -339,17 +340,20 @@ export async function POST(request: NextRequest) {
         .from('analytics_events')
         .insert({
           userId: session.user.id,
-          category: 'external_apis',
-          action: 'tts_generated',
-          metadata: {
-            provider_id: params.provider_id,
-            provider_type: provider.provider_type,
-            characters: params.text.length,
-            duration: result.duration,
-            cost: totalCost,
-            timestamp: new Date().toISOString()
-          } as Json,
-          createdAt: new Date().toISOString()
+          eventType: 'tts_generated',
+          event_data: {
+            category: 'external_apis',
+            action: 'tts_generated',
+            metadata: {
+              provider_id: params.provider_id,
+              provider_type: provider.provider_type,
+              characters: params.text.length,
+              duration: result.duration,
+              cost: totalCost,
+              timestamp: new Date().toISOString()
+            }
+          } as any,
+          created_at: new Date().toISOString()
         })
     } catch (analyticsError) {
       logger.warn('Failed to log TTS generation:', { component: 'API: external/tts/generate' })

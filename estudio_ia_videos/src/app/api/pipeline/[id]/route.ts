@@ -84,12 +84,12 @@ export async function GET(
         priority: job.priority,
         progress: job.progress,
         createdAt: job.createdAt,
-        startedAt: job.startedAt,
-        completedAt: job.completedAt,
+        startedAt: job.started_at,
+        completedAt: job.completed_at,
         error: job.error,
         metadata: {
           text_length: job.metadata.text_length,
-          estimatedDuration: job.metadata.estimatedDuration,
+          estimatedDuration: job.metadata.estimated_duration,
           complexity_score: job.metadata.complexity_score,
           performance_target: job.metadata.performance_target
         }
@@ -384,7 +384,7 @@ interface TimelineJob {
   };
   metadata: {
     text_length: number;
-    estimatedDuration: number;
+    estimated_duration: number;
     complexity_score: number;
     performance_target: number;
   };
@@ -402,10 +402,10 @@ function generateJobTimeline(job: TimelineJob) {
   })
 
   // Job iniciado
-  if (job.startedAt) {
+  if (job.started_at) {
     timeline.push({
       stage: 'started',
-      timestamp: job.startedAt,
+      timestamp: job.started_at,
       status: 'completed',
       description: 'Processamento iniciado'
     })
@@ -432,10 +432,10 @@ function generateJobTimeline(job: TimelineJob) {
   })
 
   // Job completado
-  if (job.completedAt) {
+  if (job.completed_at) {
     timeline.push({
       stage: 'completed',
-      timestamp: job.completedAt,
+      timestamp: job.completed_at,
       status: job.status === 'completed' ? 'completed' : 'failed',
       description: job.status === 'completed' ? 
         'Processamento concluído com sucesso' : 

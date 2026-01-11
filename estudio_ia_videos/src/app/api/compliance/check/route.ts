@@ -68,6 +68,8 @@ export async function POST(req: NextRequest) {
     // Salva resultado no banco
     const complianceRecord = await prisma.nr_compliance_records.create({
       data: {
+        id: crypto.randomUUID(),
+
         projectId,
         nr: result.nr,
         nrName: result.nrName,

@@ -1,5 +1,5 @@
 export const DIDService = {
-  async createTalk(text: string, avatarId: string) {
+  async createTalk(params: any) {
     return {
       id: `talk_${Date.now()}`,
       status: 'created',

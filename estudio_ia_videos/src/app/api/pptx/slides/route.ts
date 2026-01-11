@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
     const authorizedSlides = []
     
     for (const slide of slides || []) {
-      const upload = slide.pptx_uploads as Record<string, unknown>
+      const upload = (slide as any).pptx_uploads as Record<string, unknown>
       
       // Buscar projeto para verificar permissões
       const { data: project } = await supabase
@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
         .single()
 
       if (project) {
-        let hasPermission = project.userId === user.id || project.isPublic
+        let hasPermission = (project as any).owner_id === user.id || (project as any).is_public
 
         if (!hasPermission) {
           const { data: collaborator } = await supabase
@@ -150,14 +150,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const project = upload.projects as Record<string, unknown>
-    let hasPermission = project.userId === user.id
+    const project = (upload as any).projects as Record<string, unknown>
+    let hasPermission = (project as any).user_id === user.id
 
     if (!hasPermission) {
       const { data: collaborator } = await supabase
         .from('project_collaborators')
         .select('permissions')
-        .eq("projectId", upload.projectId)
+        .eq("projectId", (upload as any).project_id)
         .eq("userId", user.id)
         .single()
       
@@ -191,7 +191,12 @@ export async function POST(request: NextRequest) {
     // Criar slide
     const { data: slide, error } = await supabase
       .from('pptx_slides')
-      .insert(validatedData)
+      .insert({
+        ...validatedData,
+        transition_type: validatedData.transitionType,
+        thumbnail_url: validatedData.thumbnailUrl,
+        properties: validatedData.properties as any
+      })
       .select()
       .single()
 
@@ -211,14 +216,14 @@ export async function POST(request: NextRequest) {
 
     await supabase
       .from('pptx_uploads')
-      .update({ slideCount: slideCount?.length || 0 })
+      .update({ slide_count: slideCount?.length || 0 })
       .eq('id', validatedData.upload_id)
 
     // Registrar no histórico
     await supabase
       .from('project_history')
       .insert({
-        projectId: upload.projectId,
+        projectId: (upload as any).project_id,
         userId: user.id,
         action: 'create',
         entity_type: 'pptx_slide',
@@ -286,14 +291,14 @@ export async function PUT(request: NextRequest) {
       )
     }
 
-    const project = upload.projects as Record<string, unknown>
-    let hasPermission = project.userId === user.id
+    const project = (upload as any).projects as Record<string, unknown>
+    let hasPermission = (project as any).user_id === user.id
 
     if (!hasPermission) {
       const { data: collaborator } = await supabase
         .from('project_collaborators')
         .select('permissions')
-        .eq("projectId", upload.projectId)
+        .eq("projectId", (upload as any).project_id)
         .eq("userId", user.id)
         .single()
       
@@ -327,7 +332,7 @@ export async function PUT(request: NextRequest) {
     await supabase
       .from('project_history')
       .insert({
-        projectId: upload.projectId,
+        projectId: (upload as any).project_id,
         userId: user.id,
         action: 'update',
         entity_type: 'pptx_slides',

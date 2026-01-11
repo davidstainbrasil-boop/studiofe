@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     // Get user's projects
     const userProjects = await prisma.projects.findMany({
       where: { userId },
-      select: { id: true, title: true }
+      select: { id: true, name: true }
     });
 
     const projectIds = userProjects.map((p: any) => p.id);
@@ -55,9 +55,9 @@ export async function GET(request: NextRequest) {
           id: `critical-${validation.id}`,
           type: 'critical',
           title: 'Compliance Crítico Detectado',
-          message: `Projeto "${project?.title}" tem score muito baixo (${validation.score}%) para ${validation.nr}`,
+          message: `Projeto "${project?.name}" tem score muito baixo (${validation.score}%) para ${validation.nr}`,
           projectId: validation.projectId,
-          projectTitle: project?.title,
+          projectTitle: project?.name,
           nrType: validation.nr,
           score: validation.score,
           createdAt: validation.createdAt,
@@ -71,9 +71,9 @@ export async function GET(request: NextRequest) {
           id: `warning-${validation.id}`,
           type: 'warning',
           title: 'Compliance Precisa de Atenção',
-          message: `Projeto "${project?.title}" tem score baixo (${validation.score}%) para ${validation.nr}`,
+          message: `Projeto "${project?.name}" tem score baixo (${validation.score}%) para ${validation.nr}`,
           projectId: validation.projectId,
-          projectTitle: project?.title,
+          projectTitle: project?.name,
           nrType: validation.nr,
           score: validation.score,
           createdAt: validation.createdAt,
@@ -90,9 +90,9 @@ export async function GET(request: NextRequest) {
             id: `missing-${validation.id}`,
             type: 'warning',
             title: 'Pontos Críticos Ausentes',
-            message: `${missingPoints.length} pontos críticos ausentes em "${project?.title}" (${validation.nr})`,
+            message: `${missingPoints.length} pontos críticos ausentes em "${project?.name}" (${validation.nr})`,
             projectId: validation.projectId,
-            projectTitle: project?.title,
+            projectTitle: project?.name,
             nrType: validation.nr,
             score: validation.score,
             createdAt: validation.createdAt,

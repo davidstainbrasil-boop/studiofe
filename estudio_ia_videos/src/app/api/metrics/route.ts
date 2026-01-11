@@ -36,7 +36,7 @@ export async function GET(request: Request) {
   }
   
   // Default: Prometheus format
-  return new NextResponse(renderPrometheus(), {
+  return new NextResponse(await renderPrometheus(), {
     headers: {
       'Content-Type': 'text/plain; version=0.0.4; charset=utf-8',
       'Cache-Control': 'no-store',

@@ -97,7 +97,15 @@ export async function POST(request: NextRequest) {
     // Criar job no pipeline
     const jobId = await integratedPipeline.createJob(
       user.id,
-      validatedInput,
+      {
+        ...validatedInput,
+        render_settings: validatedInput.renderSettings,
+        avatar_config: validatedInput.avatarConfig,
+        voice_config: {
+            ...validatedInput.voice_config,
+            voice_id: validatedInput.voice_config.voiceId
+        }
+      },
       priority
     )
 
@@ -314,8 +322,8 @@ async function getUserStats(userId: string, supabase: SupabaseClient) {
 
     const avgProcessingTime = completedJobs?.length ? 
       completedJobs.reduce((sum, job) => {
-        const start = new Date(job.createdAt).getTime()
-        const end = new Date(job.completedAt).getTime()
+        const start = new Date(job.created_at).getTime()
+        const end = new Date(job.completed_at).getTime()
         return sum + (end - start)
       }, 0) / completedJobs.length : 0
 

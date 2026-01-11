@@ -40,13 +40,14 @@ export async function GET(
         id: job.id,
         status: job.status,
         progress: job.progress,
-        outputUrl: job.outputUrl,
-        error: job.errorMessage
+        outputUrl: job.output_url,
+        error: job.error_message
       }
     });
 
   } catch (error) {
-    logger.error("Render Status API error", error instanceof Error ? error : new Error(String(error)), { component: 'API: render-status/[id]' });
+    logger.error("Render Status API error", error instanceof Error ? error : new Error(String(error))
+, { component: 'API: render-status/[id]' });
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }

@@ -88,7 +88,7 @@ export async function GET(
     
     // Verificar permissões
     const project = track.project
-    let hasPermission = project.userId === user.id || !!project.isPublic
+    let hasPermission = project.userId === user.id || !!project.is_public
 
     if (!hasPermission) {
       const { data: collaborator } = await supabase

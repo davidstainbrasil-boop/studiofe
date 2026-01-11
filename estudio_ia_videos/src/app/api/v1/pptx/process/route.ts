@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     await prisma.projects.update({
       where: { id: projectId },
       data: {
-        status: 'PROCESSING',
+        status: 'in_progress',
         processingLog: {
           processingStarted: new Date().toISOString(),
           s3Key: s3Key,
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
       await prisma.projects.update({
         where: { id: projectId },
         data: { 
-          status: 'ERROR', 
+          status: 'error', 
           processingLog: { error: 'Arquivo não encontrado no S3', failedAt: new Date().toISOString() } as Prisma.InputJsonValue
         }
       })
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
       await prisma.projects.update({
         where: { id: projectId },
         data: { 
-          status: 'ERROR', 
+          status: 'error', 
           processingLog: { error: errorMsg, failedAt: new Date().toISOString() } as Prisma.InputJsonValue
         }
       })
@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
       await prisma.projects.update({
         where: { id: projectId },
         data: { 
-          status: 'ERROR', 
+          status: 'error', 
           processingLog: { error: errorMsg, failedAt: new Date().toISOString() } as Prisma.InputJsonValue
         }
       })
@@ -144,7 +144,7 @@ export async function POST(request: NextRequest) {
       await prisma.projects.update({
         where: { id: projectId },
         data: {
-          status: 'ERROR',
+          status: 'error',
           processingLog: { error: errorMsg, failedAt: new Date().toISOString() } as Prisma.InputJsonValue,
         },
       })
@@ -188,7 +188,7 @@ export async function POST(request: NextRequest) {
     const updatedProject = await prisma.projects.update({
       where: { id: projectId },
       data: {
-        status: 'COMPLETED',
+        status: 'completed',
         slidesData: safeSlidesData as Prisma.InputJsonValue,
         totalSlides: extractionResult.slides.length,
         duration: extractionResult.timeline ? Math.round(extractionResult.timeline.totalDuration / 1000) : 0, // Converter para segundos
@@ -213,8 +213,9 @@ export async function POST(request: NextRequest) {
         audioText: slide.content + (slide.notes ? '\n\n' + slide.notes : '')
       }));
 
-      await prisma.slide.create({
+      await prisma.slides.create({
         data: {
+          id: crypto.randomUUID(),
           projectId: projectId,
           title: slide.title || '',
           content: slide.content || '',
@@ -250,7 +251,7 @@ export async function POST(request: NextRequest) {
       await prisma.projects.update({
         where: { id: requestBody.projectId },
         data: {
-          status: 'ERROR',
+          status: 'error',
           processingLog: {
             error: errorMessage,
             timestamp: new Date().toISOString(),

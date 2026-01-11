@@ -10,10 +10,10 @@ import { prisma } from '@lib/prisma';
 import { createRateLimiter, rateLimitPresets } from '@lib/utils/rate-limit-middleware';
 import { logger } from '@lib/logger';
 
-const rateLimiter = createRateLimiter(rateLimitPresets.upload);
+const rateLimiter = createRateLimiter(rateLimitPresets.authenticated);
 
 export async function POST(req: NextRequest) {
-  return rateLimiter(req, async (req) => {
+  return rateLimiter(req, async (req: NextRequest) => {
     try {
       const session = await getServerSession(authOptions);
       if (!session?.user?.id) {
@@ -33,18 +33,19 @@ export async function POST(req: NextRequest) {
       // Criar projeto
       const project = await prisma.projects.create({
         data: {
-          title: projectName,
+          id: crypto.randomUUID(),
+          name: projectName,
           description: `Importado de PPTX (${slides.length} slides)`,
           userId: session.user.id,
-          status: 'DRAFT',
-          totalSlides: slides.length,
-          slidesData: {
-            pptxId,
-            importConfig: config,
-            slides: slides.length,
-          },
-          settings: {
-            type: 'pptx-import'
+          status: 'draft',
+          metadata: {
+            type: 'pptx-import',
+            totalSlides: slides.length,
+            slidesData: {
+              pptxId,
+              importConfig: config,
+              slides: slides.length,
+            }
           }
       },
     });
@@ -127,8 +128,9 @@ export async function POST(req: NextRequest) {
       clips,
     };
 
-    const timeline = await prisma.timeline.create({
+    const timeline = await prisma.timelines.create({
       data: {
+        id: crypto.randomUUID(),
         projectId: project.id,
         tracks: timelineData,
         totalDuration: Math.round(currentTime * 1000), // converter para milliseconds
@@ -136,8 +138,9 @@ export async function POST(req: NextRequest) {
     });
 
     // Log analytics
-    await prisma.analyticsEvent.create({
+    await prisma.analytics_events.create({
       data: {
+        id: crypto.randomUUID(),
         userId: session.user.id,
         eventType: 'pptx_import',
         eventData: {

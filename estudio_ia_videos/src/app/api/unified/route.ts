@@ -79,7 +79,8 @@ export async function POST(request: NextRequest) {
     // Criar projeto no banco
     const project = await prisma.projects.create({
       data: {
-        title: validatedData.name,
+        id: crypto.randomUUID(),
+        name: validatedData.name,
         metadata: {
             type: validatedData.type,
             fileSize: 0,
@@ -102,7 +103,7 @@ export async function POST(request: NextRequest) {
             complianceData: {},
             analyticsData: {}
         },
-        status: 'DRAFT',
+        status: 'draft',
         userId: session.user.id,
         description: '',
         originalFileName: '',

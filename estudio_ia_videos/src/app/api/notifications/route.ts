@@ -9,13 +9,12 @@ import { authOptions } from '@lib/auth'
 import { supabase } from '@lib/services'
 import { supabaseAdmin } from '@lib/services/server'
 import { fromUntypedTable } from '@lib/supabase/server'
-import type { NotificationRow } from '@types/database'
 import { z } from 'zod'
 import { logger } from '@lib/logger'
 
 // Helper para acessar tabela notifications com tipagem
 function notificationsTable() {
-  return fromUntypedTable<NotificationRow>(supabaseAdmin, 'notifications')
+  return fromUntypedTable<any>(supabaseAdmin, 'notifications')
 }
 
 // Validation schemas
@@ -86,7 +85,7 @@ async function getNotificationStats(userId: string, filters: z.infer<typeof Noti
 
     if (error) throw error
 
-    const notifications = (notificationsData || []) as NotificationRow[]
+    const notifications = (notificationsData || []) as any[]
 
     const total = notifications.length
     const unread = notifications.filter((n) => n.status === 'unread').length

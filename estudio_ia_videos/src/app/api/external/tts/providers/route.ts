@@ -126,10 +126,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user's TTS provider configurations
-    const { data: userProviders, error } = await supabaseAdmin
+    const { data: userProviders, error } = await (supabaseAdmin as any)
       .from('user_external_api_configs')
       .select('*')
-      .eq("userId", session.user.id)
+      .eq("user_id", session.user.id)
       .eq('api_type', 'tts')
 
     if (error && error.code !== 'PGRST116') {
@@ -139,7 +139,7 @@ export async function GET(request: NextRequest) {
     // If no user configurations exist, create default ones
     if (!userProviders || userProviders.length === 0) {
       const defaultConfigs = defaultProviders.map(provider => ({
-        userId: session.user.id,
+        user_id: session.user.id,
         api_type: 'tts',
         provider_id: provider.id,
         provider_name: provider.name,
@@ -147,11 +147,11 @@ export async function GET(request: NextRequest) {
         enabled: provider.enabled,
         config: provider.config,
         pricing: provider.pricing,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       }))
 
-      const { data: createdConfigs, error: createError } = await supabaseAdmin
+      const { data: createdConfigs, error: createError } = await (supabaseAdmin as any)
         .from('user_external_api_configs')
         .insert(defaultConfigs)
         .select()
@@ -233,10 +233,10 @@ export async function POST(request: NextRequest) {
     const providerId = `${providerData.type}-${Date.now()}`
 
     // Create new TTS provider configuration
-    const { data: newProvider, error } = await supabaseAdmin
+    const { data: newProvider, error } = await (supabaseAdmin as any)
       .from('user_external_api_configs')
       .insert({
-        userId: session.user.id,
+        user_id: session.user.id,
         api_type: 'tts',
         provider_id: providerId,
         provider_name: providerData.name,
@@ -244,8 +244,8 @@ export async function POST(request: NextRequest) {
         enabled: providerData.enabled,
         config: providerData.config || {},
         pricing: providerData.pricing || {},
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       })
       .select()
       .single()
@@ -258,14 +258,17 @@ export async function POST(request: NextRequest) {
         .from('analytics_events')
         .insert({
           userId: session.user.id,
-          category: 'external_apis',
-          action: 'tts_provider_created',
-          metadata: {
-            provider_id: providerId,
-            provider_type: providerData.type,
-            timestamp: new Date().toISOString()
-          } as Json,
-          createdAt: new Date().toISOString()
+          eventType: 'tts_provider_created',
+          event_data: {
+            category: 'external_apis',
+            action: 'tts_provider_created',
+            metadata: {
+              provider_id: providerId,
+              provider_type: providerData.type,
+              timestamp: new Date().toISOString()
+            }
+          } as any,
+          created_at: new Date().toISOString()
         })
     } catch (analyticsError) {
       logger.warn('Failed to log TTS provider creation', { component: 'API: external/tts/providers' })

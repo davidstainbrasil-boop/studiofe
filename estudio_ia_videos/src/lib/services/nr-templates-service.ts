@@ -57,9 +57,9 @@ export const listNRTemplates = async () => {
     return NRTemplatesService.getTemplates();
 };
 export const getNRTemplate = async (id: string) => NRTemplatesService.getTemplateById(id);
-export const searchNRTemplates = async () => [];
-export const createNRTemplate = async () => ({});
-export const updateNRTemplate = async () => ({});
-export const deleteNRTemplate = async () => ({});
+export const searchNRTemplates = async (query: string) => [];
+export const createNRTemplate = async (data: any) => ({});
+export const updateNRTemplate = async (id: string, data: any) => ({});
+export const deleteNRTemplate = async (id: string) => ({});
 
 

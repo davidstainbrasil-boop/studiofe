@@ -47,13 +47,13 @@ export async function GET(
       }, { status: 404 })
     }
 
-    let hasPermission = project.userId === user.id || project.isPublic
+    let hasPermission = (project.owner_id || project.userId) === user.id || project.is_public
 
     if (!hasPermission) {
       const { data: collaborator } = await supabase
         .from('project_collaborators')
         .select("userId")
-        .eq("projectId", params.id)
+        .eq("project_id", params.id)
         .eq("userId", user.id)
         .single()
       
@@ -73,7 +73,7 @@ export async function GET(
        const { data: slides } = await supabase
            .from('pptx_slides')
            .select('*')
-           .eq("projectId", params.id)
+           .eq("project_id", params.id)
            .order('slide_number');
        
        if (slides && slides.length > 0) {
@@ -216,7 +216,7 @@ export async function PUT(
     // Verificar permissões
     const { data: project } = await supabase
       .from('projects')
-      .select("userId")
+      .select("owner_id")
       .eq('id', params.id)
       .single()
 
@@ -228,14 +228,14 @@ export async function PUT(
       }, { status: 404 })
     }
 
-    let hasPermission = project.userId === user.id
+    let hasPermission = project.owner_id === user.id
 
     if (!hasPermission) {
       type CollaboratorPermissions = { can_edit?: boolean; can_view?: boolean; can_delete?: boolean };
       const { data: collaborator } = await supabase
         .from('project_collaborators')
         .select('permissions')
-        .eq("projectId", params.id)
+        .eq("project_id", params.id)
         .eq("userId", user.id)
         .single()
       
@@ -251,14 +251,14 @@ export async function PUT(
     
     // Preparar dados para atualização
     const updateData: Record<string, unknown> = {
-      updatedAt: new Date().toISOString()
+      updated_at: new Date().toISOString()
     }
 
     if (validatedData.name) updateData.name = validatedData.name
     if (validatedData.description !== undefined) updateData.description = validatedData.description
     if (validatedData.type) updateData.type = validatedData.type
     if (validatedData.status) updateData.status = validatedData.status
-    if (validatedData.isPublic !== undefined) updateData.isPublic = validatedData.isPublic
+    if (validatedData.isPublic !== undefined) updateData.is_public = validatedData.isPublic
     
     // Se houver settings, precisamos fazer merge com o existente ou substituir
     // Como é JSONB, o update do supabase faz merge se for top-level, mas aqui é uma coluna
@@ -270,14 +270,14 @@ export async function PUT(
         // Actually, let's fetch first to be safe if we want partial update inside jsonb
         const { data: currentProject } = await supabase
             .from('projects')
-            .select("renderSettings")
+            .select("render_settings")
             .eq('id', params.id)
             .single()
         
-        const currentSettings = (typeof currentProject?.renderSettings === 'object' && currentProject?.renderSettings !== null) 
-          ? currentProject.renderSettings as Record<string, unknown>
+        const currentSettings = (typeof currentProject?.render_settings === 'object' && currentProject?.render_settings !== null)  
+          ? (currentProject as any).render_settings as Record<string, unknown>
           : {}
-        updateData.renderSettings = { ...currentSettings, ...validatedData.settings }
+        updateData.render_settings = { ...currentSettings, ...validatedData.settings }
     }
 
     const { data: updatedProject, error } = await supabase
@@ -328,7 +328,7 @@ export async function DELETE(
       .from('projects')
       .delete()
       .eq('id', params.id)
-      .eq("userId", user.id)
+      .eq("owner_id", user.id)
 
     if (error) throw error
 

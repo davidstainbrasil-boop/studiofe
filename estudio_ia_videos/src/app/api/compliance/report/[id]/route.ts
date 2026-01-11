@@ -26,7 +26,7 @@ export async function GET(
     const record = await prisma.nr_compliance_records.findUnique({
       where: { id: recordId },
       include: {
-        project: {
+        projects: {
           include: {
             slides: {
               orderBy: { orderIndex: 'asc' }
@@ -41,7 +41,7 @@ export async function GET(
     }
 
     // Verifica permissão
-    if (record.project.userId !== session.user.id) {
+    if (record.projects.userId !== session.user.id) {
       return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
     }
 

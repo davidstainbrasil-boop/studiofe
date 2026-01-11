@@ -112,7 +112,7 @@ export async function GET(
     const project = element.track.project
     const hasPermission = project.owner_id === user.id || 
                          (Array.isArray(project.collaborators) && (project.collaborators as string[]).includes(user.id)) ||
-                         project.isPublic
+                         project.is_public
 
     if (!hasPermission) {
       return NextResponse.json(
@@ -251,7 +251,7 @@ export async function PUT(
     }
 
     const element = updatedElement as unknown as TimelineElementWithTrack;
-    const projectId = existingElement.track?.projectId || existingElement.projectId;
+    const projectId = existingElement.track?.project_id || existingElement.project_id;
     
     if (projectId) {
       // Registrar no histórico
@@ -259,9 +259,9 @@ export async function PUT(
         .from('project_history')
         .insert({
           projectId: projectId,
-          userId: user.id,
+          user_id: user.id,
           action: 'update',
-          entity_type: 'element',
+          entity_type: 'timeline_element',
           entity_id: elementId,
           description: `Elemento ${element.type || 'desconhecido'} atualizado`,
           changes: {
@@ -273,8 +273,16 @@ export async function PUT(
               effects: existingElement.effects,
               transitions: existingElement.transitions
             },
-            new_data: validatedData
-          }
+            new_data: {
+              start_time: element.start_time,
+              duration: element.duration,
+              content: element.content,
+              properties: element.properties,
+              effects: element.effects,
+              transitions: element.transitions
+            }
+          } as any,
+          created_at: new Date().toISOString()
         })
     }
 
@@ -371,14 +379,14 @@ export async function DELETE(
     }
 
     // Registrar no histórico
-    if (existingElement.projectId) {
+    if (existingElement.project_id) {
       await supabase
         .from('project_history')
         .insert({
-          projectId: existingElement.projectId,
-          userId: user.id,
+          projectId: existingElement.project_id,
+          user_id: user.id,
           action: 'delete',
-          entity_type: 'element',
+          entity_type: 'timeline_element',
           entity_id: elementId,
           description: `Elemento ${existingElement.type} excluído`,
           changes: {

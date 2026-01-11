@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
       .insert({
         name: title,
         description: `Treinamento ${nr} para ${audience}`,
-        type: 'ai_generated',
+        type: 'ai-generated',
         status: 'draft',
         userId: user.id,
         metadata: {
@@ -101,25 +101,22 @@ export async function POST(req: NextRequest) {
     // 3. Create Slides
     const slidesData = scenes.map((scene, index) => ({
       projectId: project.id,
-      slideOrder: index + 1,
+      order_index: index + 1,
       title: scene.title,
-      content: {
-        text: scene.content,
+      content: scene.content, // Script text
+      duration: Math.ceil(scene.duration * 60), // seconds
+      layout: 'split_right', // Default layout
+      background_image: stockAssets[index]?.url || null,
+      audio_config: {
+        provider: 'elevenlabs',
+        voice_id: '21m00Tcm4TlvDq8ikWAM' // Default voice
+      },
+      // Store AI metadata
+      notes: JSON.stringify({
         visual_cues: scene.visual_cues,
         safety_highlights: scene.safety_highlights,
         avatar_instructions: scene.avatar_instructions
-      },
-      durationSeconds: Math.ceil(scene.duration * 60), // scene duration in minutes to seconds
-      layoutType: 'split_right', // Default layout
-      background: {
-        type: 'image',
-        value: stockAssets[index]?.url || null, // Real stock asset URL
-        search_term: queries[index]
-      },
-      ttsSettings: {
-        provider: 'elevenlabs',
-        voiceId: '21m00Tcm4TlvDq8ikWAM' // Default voice
-      }
+      })
     }));
 
     const { error: slidesError } = await supabase

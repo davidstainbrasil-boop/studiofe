@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@lib/prisma';
 import { createClient } from '@supabase/supabase-js';
 import { getSupabaseForRequest } from '@lib/supabase/server';
-// @ts-expect-error - uuid types not available in production build
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '@lib/logger';
 
@@ -72,6 +71,7 @@ export async function POST(request: NextRequest) {
     try {
       const certificate = await prisma.certificates.create({
         data: {
+          id: uuidv4(),
           projectId,
           userId: user.id,
           studentName,

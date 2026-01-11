@@ -61,7 +61,14 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'No slides found for this project' }, { status: 404 })
     }
 
-    const typedSlides = slides as SlideRecord[]
+    const typedSlides = (slides as any[]).map(s => ({
+        ...s,
+        orderIndex: s.order_index,
+        backgroundColor: s.background_color,
+        backgroundImage: s.background_image,
+        avatarConfig: s.avatar_config,
+        audioConfig: s.audio_config
+    })) as SlideRecord[]
 
     // 2. Convert to Timeline Format
     const slideDuration = 5 // Default duration
