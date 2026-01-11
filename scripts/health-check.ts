@@ -60,8 +60,18 @@ async function checkRedis(): Promise<HealthCheckResult> {
   
   // Test Redis connectivity (via BullMQ)
   try {
-    const { getRedisClient } = await import('../estudio_ia_videos/app/lib/services/redis-service')
-    const client = getRedisClient()
+    const { getRedisClient } = await import('../estudio_ia_videos/src/lib/services/redis-service')
+    const client = await getRedisClient()
+    
+    // Check if Redis is stubbed
+    if (client === null) {
+      return {
+        service: 'Redis',
+        status: 'warning',
+        message: 'Redis service is stubbed (not configured)',
+        duration: Date.now() - start
+      }
+    }
     
     // Ping Redis
     await client.ping()
