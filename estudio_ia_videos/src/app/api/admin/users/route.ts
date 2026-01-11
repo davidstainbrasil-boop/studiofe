@@ -6,10 +6,10 @@ import { supabaseAdmin } from '@lib/supabase/server';
 
 async function buildUserContext(userId: string): Promise<UserContext> {
   const admin = supabaseAdmin;
-  const { data: rolesData } = await admin.from('user_roles').select('role').eq("userId", user_id);
+  const { data: rolesData } = await admin.from('user_roles').select('role').eq("user_id", userId);
   interface RoleRow { role: string }
   const roles = ((rolesData || []) as unknown as RoleRow[]).map((r) => r.role) as UserContext['roles'];
-  return { id: user_id, roles: roles.length ? roles : ['viewer'] };
+  return { id: userId, roles: roles.length ? roles : ['viewer'] };
 }
 
 export async function GET(req: NextRequest) {

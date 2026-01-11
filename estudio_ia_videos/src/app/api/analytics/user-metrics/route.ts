@@ -58,7 +58,7 @@ async function getUserProjectStats(userId: string, timeRange: Date) {
     const projects = await prisma.$queryRaw<ProjectQueryResult[]>`
       SELECT id, status, type, created_at, updated_at
       FROM projects
-      WHERE user_id = ${user_id}::uuid
+      WHERE user_id = ${userId}::uuid
       AND created_at >= ${timeRange}
     `;
 
@@ -115,7 +115,7 @@ async function getUserRenderStats(userId: string, timeRange: Date) {
   try {
     const renders = await prisma.render_jobs.findMany({
       where: {
-        userId: user_id,
+        userId: userId,
         createdAt: { gte: timeRange }
       },
       select: {
@@ -147,21 +147,21 @@ async function getUserRenderStats(userId: string, timeRange: Date) {
 async function getCollaborationStats(userId: string) {
   try {
     const ownedProjectsCount = await prisma.projects.count({
-      where: { userId: user_id }
+      where: { userId: userId }
     });
 
     // ProjectCollaborator table is missing in Prisma schema, use raw query
     const collaborations = await prisma.$queryRaw<CollaboratorQueryResult[]>`
-      SELECT project_id, role FROM project_collaborators WHERE user_id = ${user_id}::uuid
+      SELECT project_id, role FROM project_collaborators WHERE user_id = ${userId}::uuid
     `;
     const collaborationsList = collaborations;
 
     // Shared projects (owned by user, has collaborators)
     const sharedProjects = await prisma.$queryRaw<SharedProjectQueryResult[]>`
-      SELECT DISTINCT p.id 
+      SELECT DISTINCT p.id
       FROM projects p
       JOIN project_collaborators pc ON p.id = pc.projectId
-      WHERE p.userId = ${user_id}::uuid
+      WHERE p.userId = ${userId}::uuid
     `;
     const sharedProjectsList = sharedProjects;
 
@@ -185,7 +185,7 @@ async function getRecentActivity(userId: string, timeRange: Date, limit: number 
   try {
     const activities = await prisma.analytics_events.findMany({
       where: {
-        userId: user_id,
+        userId: userId,
         createdAt: { gte: timeRange }
       },
       orderBy: { createdAt: 'desc' },
@@ -220,7 +220,7 @@ async function getUsagePatterns(userId: string, timeRange: Date) {
   try {
     const events = await prisma.analytics_events.findMany({
       where: {
-        userId: user_id,
+        userId: userId,
         createdAt: { gte: timeRange }
       },
       select: {

@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
 
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      user_id = user?.id
+      userId = user?.id
     } catch (error) {
       logger.warn('Failed to extract user from token', { error })
     }
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
       engine: body.engine,
       settings: body.settings || {},
       project_id,
-      user_id,
+      user_id: userId,
       priority: body.priority || 'normal'
     }
 
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
       engine: options.engine,
       voiceId: voice_id,
       projectId: project_id,
-      userId: user_id
+      userId: userId
     })
 
     // Gerar TTS

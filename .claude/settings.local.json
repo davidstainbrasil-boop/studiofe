@@ -44,7 +44,8 @@
       "Bash(while read chunk)",
       "Bash(do echo \"Testing: $chunk\")",
       "Bash(nginx -t:*)",
-      "Bash(systemctl reload:*)"
+      "Bash(systemctl reload:*)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": []

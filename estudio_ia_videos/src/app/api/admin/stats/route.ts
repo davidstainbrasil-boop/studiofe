@@ -7,14 +7,14 @@ import { logger } from '@lib/logger'
 import { supabaseAdmin } from '@lib/supabase/server'
 
 async function isAdmin(userId: string | undefined): Promise<boolean> {
-  if (!user_id) {
+  if (!userId) {
     return false
   }
 
   const { data } = await supabaseAdmin
     .from('users')
     .select('role')
-    .eq('id', user_id)
+    .eq('id', userId)
     .single()
 
   return data?.role === 'admin'

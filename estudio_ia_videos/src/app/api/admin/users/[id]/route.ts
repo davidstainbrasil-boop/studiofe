@@ -8,12 +8,12 @@ import { logger } from '@lib/logger'
 const prisma = new PrismaClient()
 
 async function isAdmin(userId: string | undefined) {
-  if (!user_id) {
+  if (!userId) {
     return false
   }
 
   const user = await prisma.users.findUnique({
-    where: { id: user_id },
+    where: { id: userId },
     select: { role: true },
   })
 
