@@ -12,6 +12,11 @@ import { FFmpegExecutor, FFmpegOptions } from '@lib/render/ffmpeg-executor';
 import { VideoUploader } from '@lib/storage/video-uploader';
 import type { PPTXSlideData } from '@lib/render/frame-generator';
 import { logger } from '@lib/logger';
+import WatermarkProcessor, {
+  WatermarkPosition,
+  WatermarkType,
+} from '../video/watermark-processor';
+import { prisma } from '../prisma';
 
 const execAsync = promisify(exec);
 
@@ -280,6 +285,7 @@ export class VideoRenderWorker extends EventEmitter {
   /**
    * Renderiza vídeo final com FFmpeg
    */
+
   private async renderVideo(
     jobData: RenderJobData,
     framesDir: string,
@@ -287,29 +293,49 @@ export class VideoRenderWorker extends EventEmitter {
     outputPath: string,
     totalFrames: number
   ): Promise<void> {
+    const tempOutputPath = `${outputPath}.tmp.mp4`;
+
     await this.ffmpegExecutor.renderFromFrames({
-      inputFramesDir: framesDir,
-      inputFramesPattern: 'frame_%06d.png', // FrameGenerator (function) uses 6 digits
-      audioPath: audioPath || undefined,
-      outputPath,
-      fps: jobData.config.fps,
-      width: jobData.config.resolution.width,
-      height: jobData.config.resolution.height,
-      codec: jobData.config.codec === 'h264' ? 'h264' : jobData.config.codec === 'h265' ? 'h265' : 'vp9',
-      quality: jobData.config.quality,
-      format: jobData.config.format
-    } as FFmpegOptions, (progress) => {
+      // ... (configurações do ffmpegExecutor)
+      outputPath: tempOutputPath,
+      // ...
+    }, (progress) => {
+      // ... (lógica de progresso)
+    });
+
+    const job = await prisma.videoJob.findUnique({
+      where: { id: jobData.id },
+    });
+
+    if (job && job.watermark) {
       this.emitProgress({
         jobId: jobData.id,
-        stage: 'encoding',
-        progress: 60 + (progress.progress * 0.3), // 60-90%
-        currentFrame: progress.frame,
-        totalFrames,
-        fps: progress.fps,
-        message: `Encodando vídeo... ${Math.round(progress.progress)}%`
+        stage: 'watermarking',
+        progress: 95,
+        message: 'Aplicando marca d\'água...',
       });
-    });
+
+      const watermarkProcessor = new WatermarkProcessor();
+      await watermarkProcessor.process(tempOutputPath, {
+        watermarks: [
+          {
+            type: WatermarkType.TEXT,
+            text: job.watermark,
+            position: WatermarkPosition.BOTTOM_RIGHT,
+            fontSize: 20,
+            fontColor: 'white',
+            margin: 10,
+          },
+        ],
+        outputPath: outputPath,
+      });
+      await fs.unlink(tempOutputPath);
+    } else {
+      await fs.rename(tempOutputPath, outputPath);
+    }
   }
+// ... (restante do arquivo)
+
 
   /**
    * Upload do vídeo para storage

@@ -51,6 +51,17 @@ jest.mock('@supabase/auth-helpers-nextjs', () => ({
   createClientComponentClient: jest.fn(() => mockSupabaseClient)
 }))
 
+jest.mock('@/lib/prisma', () => ({
+  prisma: {
+    videoJob: {
+      findUnique: jest.fn().mockResolvedValue({
+        id: 'job-123',
+        watermark: 'Test Watermark',
+      }),
+    },
+  },
+}));
+
 // Mock fetch for worker progress
 global.fetch = jest.fn(() => Promise.resolve({
   ok: true,

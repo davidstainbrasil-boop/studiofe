@@ -37,7 +37,7 @@ const config = {
         timeout: 8000
     },
     worker: {
-        healthUrl: process.env.WORKER_HEALTH_URL || 'http://localhost:3001/health',
+        healthUrl: process.env.WORKER_HEALTH_URL || (process.env.NODE_ENV === 'staging' ? 'https://staging.cursostecno.com.br/health' : 'http://localhost:3001/health'),
         timeout: 5000
     }
 };
@@ -68,9 +68,9 @@ class HealthCheck {
             timestamp: new Date().toISOString(),
             ...details
         };
-        
+
         this.results.summary.total++;
-        
+
         switch (status) {
             case 'healthy':
                 this.results.summary.healthy++;
@@ -86,20 +86,20 @@ class HealthCheck {
 
     calculateScore() {
         if (this.results.summary.total === 0) return 0;
-        
+
         const healthyWeight = 10;
         const warningWeight = 5;
         const criticalWeight = 0;
-        
+
         const totalScore = (
             this.results.summary.healthy * healthyWeight +
             this.results.summary.warning * warningWeight +
             this.results.summary.critical * criticalWeight
         );
-        
+
         const maxScore = this.results.summary.total * healthyWeight;
         this.results.score = Math.round((totalScore / maxScore) * 100);
-        
+
         // Determine overall status
         if (this.results.score >= 90) {
             this.results.overall = 'healthy';
@@ -108,7 +108,7 @@ class HealthCheck {
         } else {
             this.results.overall = 'critical';
         }
-        
+
         return this.results.score;
     }
 
@@ -124,17 +124,17 @@ class HealthCheck {
 
 async function checkApplication(healthCheck) {
     console.log('🔍 Checking application health...');
-    
+
     try {
         const startTime = Date.now();
         const url = `${config.app.url}/api/health`;
-        
+
         const response = await makeHttpRequest(url, config.app.timeout);
         const responseTime = Date.now() - startTime;
-        
+
         if (response.statusCode === 200) {
             const data = JSON.parse(response.body);
-            
+
             healthCheck.addCheck('application', 'healthy', {
                 responseTime: `${responseTime}ms`,
                 version: data.version,
@@ -158,35 +158,35 @@ async function checkApplication(healthCheck) {
 
 async function checkDatabase(healthCheck) {
     console.log('🔍 Checking database connectivity...');
-    
+
     if (!config.database.url) {
         healthCheck.addCheck('database', 'warning', {
             error: 'Database URL not configured'
         });
         return;
     }
-    
+
     try {
         // Try connecting with pg client
         const startTime = Date.now();
-        
+
         // For now, we'll check if the database script works
         const testScript = path.join(process.cwd(), 'scripts', 'test-database-connection.js');
-        
+
         if (fs.existsSync(testScript)) {
-            execSync(`node "${testScript}"`, { 
-                stdio: 'pipe', 
-                timeout: config.database.timeout 
+            execSync(`node "${testScript}"`, {
+                stdio: 'pipe',
+                timeout: config.database.timeout
             });
         }
-        
+
         const responseTime = Date.now() - startTime;
-        
+
         healthCheck.addCheck('database', 'healthy', {
             responseTime: `${responseTime}ms`,
             url: config.database.url.replace(/\/\/.*@/, '//***:***@') // Hide credentials
         });
-        
+
     } catch (error) {
         healthCheck.addCheck('database', 'critical', {
             error: error.message.substring(0, 200),
@@ -197,30 +197,30 @@ async function checkDatabase(healthCheck) {
 
 async function checkRedis(healthCheck) {
     console.log('🔍 Checking Redis connectivity...');
-    
+
     let redis;
     try {
         const startTime = Date.now();
-        
+
         redis = new Redis(config.redis.url, {
             connectTimeout: config.redis.timeout,
             lazyConnect: true,
             maxRetriesPerRequest: 1
         });
-        
+
         await redis.ping();
         const responseTime = Date.now() - startTime;
-        
+
         // Get Redis info
         const info = await redis.info('server');
         const version = info.match(/redis_version:([^\r\n]+)/)?.[1] || 'unknown';
-        
+
         healthCheck.addCheck('redis', 'healthy', {
             responseTime: `${responseTime}ms`,
             version: version,
             url: config.redis.url
         });
-        
+
     } catch (error) {
         healthCheck.addCheck('redis', 'critical', {
             error: error.message,
@@ -235,21 +235,21 @@ async function checkRedis(healthCheck) {
 
 async function checkStorage(healthCheck) {
     console.log('🔍 Checking Supabase storage...');
-    
+
     if (!config.storage.supabaseUrl) {
         healthCheck.addCheck('storage', 'warning', {
             error: 'Supabase URL not configured'
         });
         return;
     }
-    
+
     try {
         const startTime = Date.now();
         const url = `${config.storage.supabaseUrl}/rest/v1/`;
-        
+
         const response = await makeHttpRequest(url, config.storage.timeout);
         const responseTime = Date.now() - startTime;
-        
+
         if (response.statusCode === 200 || response.statusCode === 401) {
             // 401 is expected without auth, means service is up
             healthCheck.addCheck('storage', 'healthy', {
@@ -263,7 +263,7 @@ async function checkStorage(healthCheck) {
                 url: config.storage.supabaseUrl
             });
         }
-        
+
     } catch (error) {
         healthCheck.addCheck('storage', 'critical', {
             error: error.message,
@@ -274,16 +274,16 @@ async function checkStorage(healthCheck) {
 
 async function checkWorker(healthCheck) {
     console.log('🔍 Checking render worker...');
-    
+
     try {
         const startTime = Date.now();
-        
+
         const response = await makeHttpRequest(config.worker.healthUrl, config.worker.timeout);
         const responseTime = Date.now() - startTime;
-        
+
         if (response.statusCode === 200) {
             const data = JSON.parse(response.body);
-            
+
             healthCheck.addCheck('worker', 'healthy', {
                 responseTime: `${responseTime}ms`,
                 status: data.status,
@@ -297,7 +297,7 @@ async function checkWorker(healthCheck) {
                 url: config.worker.healthUrl
             });
         }
-        
+
     } catch (error) {
         healthCheck.addCheck('worker', 'warning', {
             error: error.message,
@@ -308,13 +308,13 @@ async function checkWorker(healthCheck) {
 
 async function checkSystemResources(healthCheck) {
     console.log('🔍 Checking system resources...');
-    
+
     try {
         // Check disk space
         const diskUsage = execSync('df -h /', { encoding: 'utf8' });
         const diskLine = diskUsage.split('\n')[1];
         const diskUsagePercent = parseInt(diskLine.split(/\s+/)[4]);
-        
+
         // Check memory usage
         const memInfo = execSync('free', { encoding: 'utf8' });
         const memLine = memInfo.split('\n')[1];
@@ -322,37 +322,37 @@ async function checkSystemResources(healthCheck) {
         const memTotal = parseInt(memParts[1]);
         const memUsed = parseInt(memParts[2]);
         const memUsagePercent = Math.round((memUsed / memTotal) * 100);
-        
+
         // Check load average
         const loadAvg = execSync('uptime', { encoding: 'utf8' });
         const loadMatch = loadAvg.match(/load average: ([\d.]+)/);
         const load = loadMatch ? parseFloat(loadMatch[1]) : 0;
-        
+
         let resourceStatus = 'healthy';
         const warnings = [];
-        
+
         if (diskUsagePercent > 80) {
             resourceStatus = 'warning';
             warnings.push(`High disk usage: ${diskUsagePercent}%`);
         }
-        
+
         if (memUsagePercent > 85) {
             resourceStatus = 'warning';
             warnings.push(`High memory usage: ${memUsagePercent}%`);
         }
-        
+
         if (load > 2) {
             resourceStatus = 'warning';
             warnings.push(`High load average: ${load}`);
         }
-        
+
         healthCheck.addCheck('resources', resourceStatus, {
             diskUsage: `${diskUsagePercent}%`,
             memoryUsage: `${memUsagePercent}%`,
             loadAverage: load.toString(),
             warnings: warnings.length > 0 ? warnings : undefined
         });
-        
+
     } catch (error) {
         healthCheck.addCheck('resources', 'warning', {
             error: 'Unable to check system resources',
@@ -369,7 +369,7 @@ function makeHttpRequest(url, timeout = 5000) {
     return new Promise((resolve, reject) => {
         const isHttps = url.startsWith('https');
         const client = isHttps ? https : http;
-        
+
         const req = client.get(url, {
             timeout: timeout,
             headers: {
@@ -377,11 +377,11 @@ function makeHttpRequest(url, timeout = 5000) {
             }
         }, (res) => {
             let body = '';
-            
+
             res.on('data', (chunk) => {
                 body += chunk;
             });
-            
+
             res.on('end', () => {
                 resolve({
                     statusCode: res.statusCode,
@@ -390,12 +390,12 @@ function makeHttpRequest(url, timeout = 5000) {
                 });
             });
         });
-        
+
         req.on('timeout', () => {
             req.abort();
             reject(new Error(`Request timeout after ${timeout}ms`));
         });
-        
+
         req.on('error', (err) => {
             reject(err);
         });
@@ -408,9 +408,9 @@ function makeHttpRequest(url, timeout = 5000) {
 
 async function runHealthCheck() {
     console.log('🩺 Starting comprehensive health check...\n');
-    
+
     const healthCheck = new HealthCheck();
-    
+
     // Run all checks in parallel for faster execution
     await Promise.allSettled([
         checkApplication(healthCheck),
@@ -420,45 +420,45 @@ async function runHealthCheck() {
         checkWorker(healthCheck),
         checkSystemResources(healthCheck)
     ]);
-    
+
     const results = healthCheck.getResults();
-    
+
     // Display results
     console.log('\n📊 Health Check Results:');
     console.log('='.repeat(50));
     console.log(`Overall Status: ${getStatusEmoji(results.overall)} ${results.overall.toUpperCase()}`);
     console.log(`Health Score: ${results.score}/100`);
     console.log(`Checks: ${results.summary.healthy} healthy, ${results.summary.warning} warnings, ${results.summary.critical} critical\n`);
-    
+
     // Display individual checks
     Object.entries(results.checks).forEach(([name, check]) => {
         console.log(`${getStatusEmoji(check.status)} ${name.toUpperCase()}: ${check.status}`);
-        
+
         if (check.responseTime) {
             console.log(`  ⏱️  Response Time: ${check.responseTime}`);
         }
-        
+
         if (check.error) {
             console.log(`  ❌ Error: ${check.error}`);
         }
-        
+
         if (check.warnings && check.warnings.length > 0) {
             check.warnings.forEach(warning => {
                 console.log(`  ⚠️  ${warning}`);
             });
         }
-        
+
         console.log('');
     });
-    
+
     // Return exit code based on health
     const exitCode = results.overall === 'critical' ? 1 : 0;
-    
+
     // Save results to file for monitoring systems
     const resultsFile = path.join(process.cwd(), 'health-check-results.json');
     fs.writeFileSync(resultsFile, JSON.stringify(results, null, 2));
     console.log(`📄 Results saved to: ${resultsFile}`);
-    
+
     return exitCode;
 }
 

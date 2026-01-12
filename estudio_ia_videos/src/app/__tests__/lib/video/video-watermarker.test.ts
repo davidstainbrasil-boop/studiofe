@@ -16,10 +16,10 @@ import VideoWatermarker, {
   WatermarkResult,
   TextWatermark,
   ImageWatermark
-} from '../../../lib/video/video-watermarker';
+} from '@lib/video/video-watermarker';
 import ffmpeg from 'fluent-ffmpeg';
 import { promises as fs } from 'fs';
-import { WatermarkPosition } from '../../../types/watermark.types';
+import { WatermarkPosition } from '@/types/watermark.types';
 
 // ==================== MOCKS ====================
 

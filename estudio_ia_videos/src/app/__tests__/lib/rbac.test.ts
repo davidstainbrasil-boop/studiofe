@@ -1,4 +1,4 @@
-import { getPermissions, can, assignRole } from '../../lib/rbac';
+import { getPermissions, can, assignRole } from '@lib/rbac';
 
 describe('RBAC core', () => {
   const admin = { id: 'u1', roles: ['admin'] } as const;

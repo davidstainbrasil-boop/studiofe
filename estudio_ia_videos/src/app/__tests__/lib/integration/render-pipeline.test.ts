@@ -5,7 +5,7 @@
  * to completion, including queue management and status updates.
  */
 
-import { RenderJobStatus } from '../../lib/types/render'
+import { RenderJobStatus } from '@lib/types/render'
 
 // Mock Redis/BullMQ
 const mockQueueAdd = jest.fn()

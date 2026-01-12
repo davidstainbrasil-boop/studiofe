@@ -7,6 +7,16 @@
 
 import { logger } from '@lib/logger';
 
+// Dynamic Sentry import (only in production)
+let Sentry: typeof import('@sentry/nextjs') | null = null;
+if (typeof window === 'undefined' && process.env.NODE_ENV === 'production') {
+  try {
+    Sentry = require('@sentry/nextjs');
+  } catch (e) {
+    // Sentry not available
+  }
+}
+
 export enum CircuitState {
   CLOSED = 'closed',      // Normal operation
   OPEN = 'open',          // Failing, reject requests immediately
@@ -152,13 +162,32 @@ export class CircuitBreaker {
   private transitionToOpen(): void {
     this.stats.state = CircuitState.OPEN;
     this.stats.successes = 0;
-    
+
     logger.error(`Circuit breaker ${this.options.name} opened`, {
       component: 'CircuitBreaker',
       circuit: this.options.name,
       failures: this.stats.failures,
       totalFailures: this.stats.totalFailures,
     });
+
+    // Alert via Sentry
+    if (Sentry) {
+      Sentry.captureMessage(`Circuit breaker opened: ${this.options.name}`, {
+        level: 'warning',
+        tags: {
+          circuit_breaker: this.options.name,
+          state: 'OPEN',
+        },
+        contexts: {
+          circuit: {
+            name: this.options.name,
+            failures: this.stats.failures,
+            totalFailures: this.stats.totalFailures,
+            totalRequests: this.stats.totalRequests,
+          },
+        },
+      });
+    }
 
     // Schedule transition to half-open
     this.halfOpenTimer = setTimeout(() => {

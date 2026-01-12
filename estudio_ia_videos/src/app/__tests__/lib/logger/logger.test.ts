@@ -3,7 +3,7 @@
  * Professional Logger Service with levels, formatting, and production-ready features
  */
 
-import { Logger, logger, log } from '../../../lib/logger'
+import { Logger, logger, log } from '@lib/logger'
 
 // Mock Sentry
 jest.mock('@sentry/nextjs', () => ({

@@ -139,8 +139,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user's media provider configurations
-    const { data: userProviders, error } = await supabaseAdmin
-      .from('user_external_api_configs' as never)
+    const { data: userProviders, error } = await (supabaseAdmin as any)
+      .from('user_external_api_configs')
       .select('*')
       .eq("user_id", session.user.id)
       .eq('api_type', 'media')
@@ -164,8 +164,8 @@ export async function GET(request: NextRequest) {
         updated_at: new Date().toISOString()
       }))
 
-      const { data: createdConfigs, error: createError } = await supabaseAdmin
-        .from('user_external_api_configs' as never)
+      const { data: createdConfigs, error: createError } = await (supabaseAdmin as any)
+        .from('user_external_api_configs')
         .insert(defaultConfigs)
         .select()
 

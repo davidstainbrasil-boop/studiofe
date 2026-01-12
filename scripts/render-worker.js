@@ -256,16 +256,13 @@ async function generateAudio(text, outputDir, provider = 'edge', voiceId = 'pt-B
             };
         } catch (e) {
             log(`   ⚠️ Tentativa ${attempt}/${retries} falhou: ${e.message}`, 'WARN');
-            
+
             if (attempt === retries) {
-                log('   ❌ Todas as tentativas de TTS falharam. Usando mock silencioso.', 'ERROR');
-                fs.writeFileSync(outputPath, 'DUMMY AUDIO CONTENT');
-                return {
-                    success: false,
-                    path: outputPath,
-                    filename: fileName,
-                    duration: 5
-                };
+                log(`   ❌ FALHA CRÍTICA: Todas as tentativas de TTS falharam após ${retries} tentativas`, 'ERROR');
+                log(`   Erro: ${e.message}`, 'ERROR');
+
+                // Lançar erro para parar a renderização ao invés de criar áudio dummy
+                throw new Error(`TTS audio generation failed after ${retries} attempts: ${e.message}`);
             }
             await sleep(1000 * attempt);
         }

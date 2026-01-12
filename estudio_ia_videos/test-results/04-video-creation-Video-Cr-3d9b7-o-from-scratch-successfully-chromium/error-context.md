@@ -1,0 +1,56 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e7]:
+        - img [ref=e8]
+        - text: Estúdio IA de Vídeos
+      - blockquote [ref=e12]:
+        - paragraph [ref=e13]: “Esta plataforma revolucionou a forma como criamos treinamentos de segurança. A geração automática a partir de PPTX economiza semanas de trabalho.”
+        - contentinfo [ref=e14]: Dev Team - MVP v2.4
+      - generic [ref=e15]:
+        - generic [ref=e16]:
+          - generic [ref=e17]:
+            - img [ref=e18]
+            - generic [ref=e20]: IA Generativa
+          - paragraph [ref=e21]: Avatares e Vozes realistas
+        - generic [ref=e22]:
+          - generic [ref=e23]:
+            - img [ref=e24]
+            - generic [ref=e27]: Render Rápido
+          - paragraph [ref=e28]: Pipeline FFmpeg otimizado
+        - generic [ref=e29]:
+          - generic [ref=e30]:
+            - img [ref=e31]
+            - generic [ref=e34]: Seguro
+          - paragraph [ref=e35]: RBAC e RLS integrados
+    - generic [ref=e38]:
+      - generic [ref=e39]:
+        - heading "Bem-vindo de volta" [level=1] [ref=e40]
+        - paragraph [ref=e41]: Entre com suas credenciais para acessar o estúdio
+      - generic [ref=e42]:
+        - generic [ref=e43]:
+          - heading "Login" [level=3] [ref=e44]
+          - paragraph [ref=e45]: Acesse sua conta para gerenciar vídeos e templates
+        - generic [ref=e46]:
+          - generic [ref=e47]:
+            - generic [ref=e48]:
+              - text: Email
+              - textbox "Email" [ref=e49]:
+                - /placeholder: seu@email.com
+            - generic [ref=e50]:
+              - generic [ref=e51]:
+                - generic [ref=e52]: Senha
+                - button "Esqueceu a senha?" [ref=e53] [cursor=pointer]
+              - textbox "Senha" [ref=e54]
+            - button "Entrar" [ref=e55] [cursor=pointer]
+          - link "Esqueceu a senha?" [ref=e57] [cursor=pointer]:
+            - /url: /forgot-password
+        - paragraph [ref=e59]:
+          - text: Protegido por autenticação segura Supabase.
+          - text: Ao entrar, você concorda com nossos termos de serviço.
+  - region "Notifications alt+T"
+  - alert [ref=e60]
+```

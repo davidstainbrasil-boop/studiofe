@@ -1,4 +1,4 @@
-import { computeBasicStats, computePerformanceMetrics, computeErrorAnalysis, computeQueueStats, computeErrorCategories, normalizeErrorMessage, BasicRenderJob } from '../../../lib/analytics/render-core'
+import { computeBasicStats, computePerformanceMetrics, computeErrorAnalysis, computeQueueStats, computeErrorCategories, normalizeErrorMessage, BasicRenderJob } from '@lib/analytics/render-core'
 
 function makeJob(partial: Partial<BasicRenderJob>): BasicRenderJob {
   return {

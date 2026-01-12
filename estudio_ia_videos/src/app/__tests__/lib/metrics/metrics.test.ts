@@ -15,7 +15,7 @@ import {
   dbMetrics,
   ttsMetrics,
   avatarMetrics,
-} from '../../../lib/metrics'
+} from '@lib/metrics'
 
 describe('Metrics Module', () => {
   beforeEach(() => {

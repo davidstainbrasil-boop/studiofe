@@ -5,7 +5,7 @@
 
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useProjects, Project } from '@/hooks/use-projects'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -66,6 +66,17 @@ export function ProjectManagement() {
     restoreProject,
     refresh
   } = useProjects()
+
+  // Debug Logging
+  useEffect(() => {
+    console.log('[ProjectManagement] State:', {
+      total,
+      projectsCount: projects?.length,
+      isLoading,
+      error: error?.message,
+      projects
+    })
+  }, [projects, total, isLoading, error])
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)

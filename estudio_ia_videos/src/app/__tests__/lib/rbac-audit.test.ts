@@ -1,6 +1,6 @@
-import { assignRoleWithAudit, UserContext } from '../../lib/rbac';
+import { assignRoleWithAudit, UserContext } from '@lib/rbac';
 
-jest.mock('../../lib/supabase/server', () => ({
+jest.mock('@lib/supabase/server', () => ({
   supabaseAdmin: {
     from() {
       return { upsert: jest.fn().mockResolvedValue({}), insert: jest.fn().mockResolvedValue({}) } as any;

@@ -24,7 +24,7 @@ import {
   createBasicLibrary,
   createPremiumLibrary,
   createDevLibrary,
-} from '../../../lib/video/template-library';
+} from '@lib/video/template-library';
 
 describe('VideoTemplateLibrary', () => {
   let library: VideoTemplateLibrary;

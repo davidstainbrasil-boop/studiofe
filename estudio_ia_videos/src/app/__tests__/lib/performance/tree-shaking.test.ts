@@ -10,7 +10,7 @@ import {
   bundleAnalyzer,
   featureSplitting,
   DEFAULT_TREE_SHAKING_CONFIG
-} from '../../../lib/performance/tree-shaking';
+} from '@lib/performance/tree-shaking';
 
 describe('Pure function decorator', () => {
   it('should mark function as pure', () => {

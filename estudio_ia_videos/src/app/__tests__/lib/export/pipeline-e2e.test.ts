@@ -4,9 +4,9 @@
  * Sprint 54 - E2E Testing
  */
 
-import { RenderingPipeline, PipelineStage } from '../../../lib/export/rendering-pipeline'
-import { videoValidator } from '../../../lib/export/video-validator'
-import type { ExportSettings } from '../../../types/export.types'
+import { RenderingPipeline, PipelineStage } from '@lib/export/rendering-pipeline'
+import { videoValidator } from '@lib/export/video-validator'
+import type { ExportSettings } from '@/types/export.types'
 import path from 'path'
 import fs from 'fs/promises'
 

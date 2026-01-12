@@ -20,7 +20,7 @@ export default function TimelineEditorPage() {
   return (
     <div className="min-h-screen">
       <Suspense fallback={<TimelineEditorFallback />}>
-        <TimelineEditorSimple />
+        <TimelineEditor />
       </Suspense>
     </div>
   );

@@ -3,7 +3,7 @@
  * Utility functions for class names and formatting
  */
 
-import { cn, formatTime } from '../../lib/utils'
+import { cn, formatTime } from '@lib/utils'
 
 describe('Utils Module', () => {
   describe('cn function (className merger)', () => {

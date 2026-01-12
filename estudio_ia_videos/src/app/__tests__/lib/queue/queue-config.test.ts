@@ -22,7 +22,7 @@ describe('Queue Config Module', () => {
       process.env.REDIS_URL = 'redis://localhost:6379'
       process.env.RENDER_QUEUE_NAME = 'test-queue'
       
-      const { getQueueConfig } = await import('../../../lib/queue/config')
+      const { getQueueConfig } = await import('@lib/queue/config');
       const config = getQueueConfig()
       
       expect(config.redisUrl).toBe('redis://localhost:6379')

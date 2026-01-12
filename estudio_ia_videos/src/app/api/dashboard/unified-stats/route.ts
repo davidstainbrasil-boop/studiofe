@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
     const { count: totalProjects, error: projectsError } = await supabase
       .from('projects')
       .select('*', { count: 'exact', head: true })
-      .eq("userId", user.id)
+      .eq('user_id', user.id)
 
     if (projectsError) throw projectsError
 
@@ -62,68 +62,75 @@ export async function GET(request: NextRequest) {
     // Let's try to query render_jobs directly.
     
     // Fetch project IDs first to be safe/explicit if RLS isn't perfect on joins yet
-    const { data: userProjects } = await supabase
+    const { data: userProjects, error: userProjectsError } = await supabase
         .from('projects')
         .select('id')
-        .eq("userId", user.id)
-    
-    const projectIds = userProjects?.map(p => p.id) || []
+        .eq('user_id', user.id)
+
+    if (userProjectsError) throw userProjectsError
+
+    const projectIds = userProjects?.map(p => p.id) ?? []
     
     let activeRenders = 0
     let completedToday = 0
     let avgRenderTime = 0
 
-    // Optimized query using inner join to avoid large IN clause
-    const { count: activeCount } = await supabase
+    if (projectIds.length > 0) {
+      const { count: activeCount, error: activeError } = await supabase
         .from('render_jobs')
-        .select('*, projects!inner(user_id)', { count: 'exact', head: true })
-        .eq('projects.userId', user.id)
-        .in('status', ['queued', 'processing'] as const)
-    
-    activeRenders = activeCount || 0
+        .select('*', { count: 'exact', head: true })
+        .in('project_id', projectIds)
+        .in('status', ['queued', 'processing'])
 
-    // 3. Completed Today - Optimized with JOIN
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
-    
-    const { count: completedCount } = await supabase
-        .from('render_jobs')
-        .select('*, projects!inner(user_id)', { count: 'exact', head: true })
-        .eq('projects.userId', user.id)
-        .eq('status', 'completed' as const)
-        .gte("completed_at", startOfDay.toISOString())
-        
-    completedToday = completedCount || 0
+      if (activeError) throw activeError
+      activeRenders = activeCount || 0
 
-    // 5. Average Render Time (last 10 completed jobs) - Optimized with JOIN
-    const { data: recentJobs } = await supabase
+      const startOfDay = new Date()
+      startOfDay.setHours(0, 0, 0, 0)
+
+      const { count: completedCount, error: completedError } = await supabase
         .from('render_jobs')
-        .select('started_at, completed_at, projects!inner(user_id)')
-        .eq('projects.userId', user.id)
+        .select('*', { count: 'exact', head: true })
+        .in('project_id', projectIds)
         .eq('status', 'completed')
-        .not("completed_at", 'is', null)
-        .not("started_at", 'is', null)
-        .order("completed_at", { ascending: false })
+        .gte('completed_at', startOfDay.toISOString())
+
+      if (completedError) throw completedError
+      completedToday = completedCount || 0
+
+      const { data: recentJobs, error: recentJobsError } = await supabase
+        .from('render_jobs')
+        .select('started_at, completed_at')
+        .in('project_id', projectIds)
+        .eq('status', 'completed')
+        .not('completed_at', 'is', null)
+        .not('started_at', 'is', null)
+        .order('completed_at', { ascending: false })
         .limit(10)
-    
-    if (recentJobs && recentJobs.length > 0) {
+
+      if (recentJobsError) throw recentJobsError
+
+      if (recentJobs && recentJobs.length > 0) {
         const totalDurationMs = recentJobs.reduce((acc, job) => {
-            if (!job.started_at || !job.completed_at) return acc;
-            const start = new Date(job.started_at).getTime();
-            const end = new Date(job.completed_at).getTime();
-            return acc + (end - start);
+          if (!job.started_at || !job.completed_at) return acc
+          const start = new Date(job.started_at).getTime()
+          const end = new Date(job.completed_at).getTime()
+          return acc + (end - start)
         }, 0)
-        avgRenderTime = Math.round((totalDurationMs / recentJobs.length) / 1000 / 60) // in minutes
+        avgRenderTime = Math.round((totalDurationMs / recentJobs.length) / 1000 / 60)
+      }
     }
 
     // 4. Total Views (Mocked for now as we don't have a clear views table yet, maybe analytics_events?)
     // Let's check analytics_events for 'view_project' or similar
-    const { count: viewsCount } = await supabase
-        .from('analytics_events')
-        .select('*', { count: 'exact', head: true })
-        .eq("userId", user.id)
-        .eq("eventType", 'project_view') // Assuming this event type
-    
+    const { count: viewsCount, error: viewsError } = await supabase
+      .from('analytics_events')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .in('event_type', ['project_view', 'project_viewed'])
+
+    if (viewsError) throw viewsError
+
     const totalViews = viewsCount || 0
 
     // 6. System Health (Mocked or check a health endpoint)

@@ -25,7 +25,7 @@ import {
   createHighPerformanceProcessor,
   createServerProcessor,
   createDevelopmentProcessor,
-} from '../../../lib/video/batch-processor';
+} from '@lib/video/batch-processor';
 
 // Mock fs/promises
 jest.mock('fs/promises');

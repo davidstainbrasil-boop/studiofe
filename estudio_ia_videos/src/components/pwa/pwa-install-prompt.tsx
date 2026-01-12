@@ -2,12 +2,11 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { logger } from '@lib/logger'
 import { Button } from '../ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
+import { Card, CardContent } from '../ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog'
-import { Badge } from '../ui/badge'
 import { 
   Smartphone, 
   Download, 
@@ -34,26 +33,34 @@ export default function PWAInstallPrompt() {
   const [showPrompt, setShowPrompt] = useState(false)
   const [isInstalled, setIsInstalled] = useState(false)
   const [supportsPWA, setSupportsPWA] = useState(false)
+  const [hasDismissed, setHasDismissed] = useState(false)
 
   useEffect(() => {
-    // Check if app is already installed
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    const dismissed = localStorage.getItem('pwa-prompt-dismissed') === 'true'
+    setHasDismissed(dismissed)
+
     if (window.matchMedia('(display-mode: standalone)').matches) {
       setIsInstalled(true)
     }
 
-    // Check for PWA support
     if ('serviceWorker' in navigator) {
       setSupportsPWA(true)
     }
 
-    // Listen for PWA install prompt
-    const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault()
-      setDeferredPrompt(e as BeforeInstallPromptEvent)
-      setShowPrompt(true)
+    const handleBeforeInstallPrompt = (event: Event) => {
+      event.preventDefault()
+      autoPromptTriggered.current = false
+      const promptEvent = event as BeforeInstallPromptEvent
+      setDeferredPrompt(promptEvent)
+      if (!dismissed) {
+        setShowPrompt(true)
+      }
     }
 
-    // Listen for app installed event
     const handleAppInstalled = () => {
       setIsInstalled(true)
       setShowPrompt(false)
@@ -63,44 +70,53 @@ export default function PWAInstallPrompt() {
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
     window.addEventListener('appinstalled', handleAppInstalled)
 
-    // Auto-show prompt after 30 seconds if not installed
-    const timer = setTimeout(() => {
-      if (!isInstalled && deferredPrompt && !localStorage.getItem('pwa-prompt-dismissed')) {
-        setShowPrompt(true)
-      }
-    }, 30000)
-
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
       window.removeEventListener('appinstalled', handleAppInstalled)
-      clearTimeout(timer)
     }
-  }, [deferredPrompt, isInstalled])
+  }, [])
 
-  const handleInstallClick = async () => {
+  const handleInstallClick = useCallback(async () => {
     if (!deferredPrompt) return
 
     try {
       await deferredPrompt.prompt()
       const { outcome } = await deferredPrompt.userChoice
-      
+
       if (outcome === 'accepted') {
         toast.success('Instalação iniciada!')
+        setIsInstalled(true)
       } else {
         toast('Instalação cancelada')
       }
-      
+
       setDeferredPrompt(null)
       setShowPrompt(false)
     } catch (error) {
       logger.error('Erro na instalação', error instanceof Error ? error : new Error(String(error)), { component: 'PWAInstallPrompt' })
       toast.error('Erro na instalação do app')
     }
-  }
+  }, [deferredPrompt])
+
+  // Auto-show UI prompt after delay (not auto-install - that requires user gesture)
+  useEffect(() => {
+    if (!deferredPrompt || hasDismissed) {
+      return
+    }
+
+    const timerId = window.setTimeout(() => {
+      setShowPrompt(true)
+    }, 3000)
+
+    return () => {
+      window.clearTimeout(timerId)
+    }
+  }, [deferredPrompt, hasDismissed])
 
   const handleDismiss = () => {
     setShowPrompt(false)
     localStorage.setItem('pwa-prompt-dismissed', 'true')
+    setHasDismissed(true)
     toast('Você pode instalar o app a qualquer momento nas configurações')
   }
 

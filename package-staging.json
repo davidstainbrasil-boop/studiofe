@@ -1,0 +1,8 @@
+{
+  "name": "staging-build-script",
+  "scripts": {
+    "staging:build": "STAGING_DEPLOY=true NODE_ENV=production next build estudio_ia_videos/app",
+    "staging:start": "NODE_ENV=production PORT=3001 next start estudio_ia_videos/app -p 3001",
+    "staging:health": "curl -f http://localhost:3001/api/health || exit 1"
+  }
+}

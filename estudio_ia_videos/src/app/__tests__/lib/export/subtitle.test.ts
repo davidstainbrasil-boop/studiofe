@@ -10,7 +10,7 @@
  */
 
 import { SubtitleParser } from '@lib/export/subtitle-parser'
-import { SubtitleFormat, type SubtitleFile } from '@types/subtitle.types'
+import { SubtitleFormat, type SubtitleFile } from '@/types/subtitle.types'
 
 describe('SubtitleParser - Static Methods', () => {
   describe('Format Detection', () => {

@@ -13,16 +13,16 @@ import {
   PipelineStage,
   type PipelineProgress,
   type PipelineResult
-} from '../../../lib/export/rendering-pipeline'
+} from '@lib/export/rendering-pipeline'
 import { 
   ExportFormat,
   ExportResolution,
   ExportQuality,
   type ExportSettings 
-} from '../../../types/export.types'
-import { VideoFilterType } from '../../../lib/export/video-filters'
-import { AudioEnhancementType } from '../../../lib/export/audio-processor'
-import { WatermarkType, WatermarkPosition } from '../../../types/watermark.types'
+} from '@/types/export.types'
+import { VideoFilterType } from '@lib/export/video-filters'
+import { AudioEnhancementType } from '@lib/export/audio-processor'
+import { WatermarkType, WatermarkPosition } from '@/types/watermark.types'
 
 describe('RenderingPipeline - Integration Validation', () => {
   describe('Pipeline Stages', () => {

@@ -40,11 +40,12 @@ jest.mock('@/lib/prisma', () => {
     settings: { fps: 30 },
     createdAt: new Date(),
     updatedAt: new Date()
-  }
-  
+  };
+
   return {
     prisma: {
       project: {
+        findUnique: jest.fn().mockResolvedValue({ id: 'p1', userId: 'u1' }),
         findFirst: jest.fn().mockResolvedValue({ id: 'p1', userId: 'u1' })
       },
       timeline: {
@@ -83,7 +84,7 @@ jest.mock('@/lib/prisma', () => {
           usageCount: 0,
           createdAt: new Date()
         })),
-        findUnique: jest.fn().mockImplementation(async ({ where }: any) => 
+        findUnique: jest.fn().mockImplementation(async ({ where }: any) =>
           where.id === 'tpl1' ? {
             id: 'tpl1',
             name: 'Template Test',
@@ -108,8 +109,8 @@ jest.mock('@/lib/prisma', () => {
         findMany: jest.fn().mockResolvedValue([])
       }
     }
-  }
-})
+  };
+});
 
 jest.mock('next-auth', () => ({
   getServerSession: jest.fn().mockResolvedValue({ user: { id: 'u1' } })

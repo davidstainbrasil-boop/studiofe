@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get current timeline
-    const timeline = await prisma.timeline.findUnique({
+    const timeline = await prisma.timelines.findUnique({
       where: { projectId },
     });
 
@@ -63,8 +63,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Create snapshot
-    const snapshot = await prisma.timelineSnapshot.create({
+    const snapshot = await prisma.timeline_snapshots.create({
       data: {
+        id: crypto.randomUUID(),
         timelineId: timeline.id,
         version: timeline.version,
         tracks: timeline.tracks as Prisma.InputJsonValue,

@@ -65,16 +65,16 @@ export async function GET(
     }
 
     // --- PPTX IMPORT ADAPTER ---
-    // If project is PPTX import and no timeline exists, generate one from pptx_slides
+    // If project is PPTX import and no timeline exists, generate one from slides
     // Cast to any to get around strict type checks for adapter logic
     const projectAny = project as any;
     
-    if ((projectAny.type === 'pptx_import' || projectAny.project_type === 'pptx_import') && (!projectAny.timeline || projectAny.timeline.length === 0)) {
+    if ((projectAny.type === 'pptx' || projectAny.type === 'pptx_import') && (!projectAny.timeline || projectAny.timeline.length === 0)) {
        const { data: slides } = await supabase
-           .from('pptx_slides')
+           .from('slides')
            .select('*')
            .eq("project_id", params.id)
-           .order('slide_number');
+           .order('order_index');
        
        if (slides && slides.length > 0) {
            // Convert to Timeline Structure
@@ -83,16 +83,17 @@ export async function GET(
            let currentTime = 0;
 
            slides.forEach((slide: any, index: number) => {
-               const duration = slide.duration || 5;
+               const duration = slide.durationSeconds || 5;
+               const slideContent = typeof slide.content === 'object' ? slide.content?.text : slide.content;
                
                // 1. Text Element
                elements.push({
                    id: `text-${slide.id}`,
                    type: 'text',
-                   name: `Slide ${slide.slide_number} Text`,
+                   name: `Slide ${index + 1} Text`,
                    startTime: currentTime,
                    duration: duration,
-                   content: slide.content?.substring(0, 100) || 'Texto do slide',
+                   content: (slideContent || 'Texto do slide').substring(0, 100),
                    properties: {
                        fontSize: 40,
                        color: '#ffffff',
@@ -103,20 +104,19 @@ export async function GET(
                });
 
                // 2. Image Element (if any)
-               // Check various possible image fields
-               const imgUrl = slide.image_url || slide.thumbnailUrl || (slide.properties as any)?.images?.[0];
+               const imgUrl = slide.background_image || slide.backgroundImage;
 
                if (imgUrl) {
                    imageElements.push({
                         id: `img-${slide.id}`,
                         type: 'image',
-                        name: `Slide ${slide.slide_number} Image`,
+                        name: `Slide ${index + 1} Image`,
                         startTime: currentTime,
                         duration: duration,
                         content: imgUrl,
                         properties: {
-                            x: 1000, y: 100,
-                            width: 800, height: 600,
+                            x: 0, y: 0, // Fill screen
+                            width: 1920, height: 1080,
                             opacity: 1
                         },
                         locked: false, visible: true
@@ -126,16 +126,7 @@ export async function GET(
                currentTime += duration;
            });
 
-           const tracks = [
-               {
-                   id: 'track-text',
-                   name: 'Texto Slides',
-                   type: 'video', // Using video track for visual elements
-                   elements: elements,
-                   height: 100, color: '#3B82F6',
-                   visible: true, locked: false, muted: false, volume: 1
-               }
-           ];
+           const tracks = [];
 
            if (imageElements.length > 0) {
                tracks.push({
@@ -147,6 +138,16 @@ export async function GET(
                    visible: true, locked: false, muted: false, volume: 1
                });
            }
+
+           tracks.push({
+                id: 'track-text',
+                name: 'Texto Slides',
+                type: 'video', // Using video track for visual elements
+                elements: elements,
+                height: 100, color: '#3B82F6',
+                visible: true, locked: false, muted: false, volume: 1
+            });
+
 
            // Mock a timeline object attached to project for the frontend
            projectAny.timeline = [{

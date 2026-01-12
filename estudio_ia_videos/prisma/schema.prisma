@@ -1,11 +1,13 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_DATABASE_URL")
+  schemas   = ["public", "auth"]
 }
 
 model analytics_events {
@@ -27,6 +29,7 @@ model analytics_events {
   @@index([eventType])
   @@index([resourceType, resourceId])
   @@index([userId])
+  @@schema("public")
 }
 
 model api_keys {
@@ -46,6 +49,7 @@ model api_keys {
   @@index([isActive, expiresAt])
   @@index([keyPrefix])
   @@index([userId])
+  @@schema("public")
 }
 
 model audit_logs {
@@ -65,6 +69,7 @@ model audit_logs {
   @@index([createdAt])
   @@index([resourceType, resourceId])
   @@index([userId])
+  @@schema("public")
 }
 
 model avatar_models {
@@ -95,6 +100,7 @@ model avatar_models {
   updatedAt            DateTime       @default(now()) @map("updated_at")
   avatar_stats         avatar_stats[]
   render_jobs          render_jobs[]
+  @@schema("public")
 }
 
 model avatar_stats {
@@ -104,6 +110,7 @@ model avatar_stats {
   avgRenderTime Int?          @map("avg_render_time")
   lastUsedAt    DateTime      @default(now()) @map("last_used_at")
   avatar_models avatar_models @relation(fields: [avatarModelId], references: [id], onDelete: Cascade)
+  @@schema("public")
 }
 
 model certificates {
@@ -127,6 +134,7 @@ model certificates {
   @@index([code])
   @@index([projectId])
   @@index([userId])
+  @@schema("public")
 }
 
 model collaborators {
@@ -144,6 +152,7 @@ model collaborators {
   @@unique([projectId, userId])
   @@index([projectId])
   @@index([userId])
+  @@schema("public")
 }
 
 model courses {
@@ -158,6 +167,7 @@ model courses {
   videos       videos[]
 
   @@index([authorId])
+  @@schema("public")
 }
 
 model generated_videos {
@@ -173,6 +183,7 @@ model generated_videos {
   metadata     Json?    @default("{}")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @default(now()) @map("updated_at")
+  @@schema("public")
 }
 
 model notifications {
@@ -190,6 +201,7 @@ model notifications {
   @@index([createdAt])
   @@index([userId])
   @@index([userId, isRead])
+  @@schema("public")
 }
 
 model nr_compliance_records {
@@ -215,6 +227,7 @@ model nr_compliance_records {
   projects          projects       @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
+  @@schema("public")
 }
 
 model nr_courses {
@@ -240,6 +253,7 @@ model nr_courses {
 
   @@index([code])
   @@index([isActive])
+  @@schema("public")
 }
 
 model nr_modules {
@@ -262,6 +276,7 @@ model nr_modules {
 
   @@unique([courseId, moduleOrder])
   @@index([courseId])
+  @@schema("public")
 }
 
 model nr_templates {
@@ -274,6 +289,7 @@ model nr_templates {
   templateConfig  Json?    @default("{}") @map("template_config")
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @default(now()) @map("updated_at")
+  @@schema("public")
 }
 
 model processing_queue {
@@ -295,6 +311,7 @@ model processing_queue {
   @@index([priority])
   @@index([scheduledFor])
   @@index([status])
+  @@schema("public")
 }
 
 model project_comments {
@@ -315,6 +332,7 @@ model project_comments {
   @@index([parentId])
   @@index([projectId])
   @@index([userId])
+  @@schema("public")
 }
 
 model project_versions {
@@ -337,6 +355,7 @@ model project_versions {
   @@unique([projectId, versionNumber])
   @@index([createdBy])
   @@index([projectId])
+  @@schema("public")
 }
 
 model projects {
@@ -383,6 +402,7 @@ model projects {
   @@index([status])
   @@index([type])
   @@index([userId])
+  @@schema("public")
 }
 
 model render_jobs {
@@ -411,6 +431,7 @@ model render_jobs {
   durationMs        Int?            @map("duration_ms")
   thumbnailUrl      String?         @map("thumbnail_url")
   avatarModelId     String?         @map("avatar_model_id")
+  idempotencyKey    String?         @unique @map("idempotency_key")
   avatar_models     avatar_models?  @relation(fields: [avatarModelId], references: [id])
   projects          projects?       @relation(fields: [projectId], references: [id], onDelete: Cascade)
   users             users           @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -420,7 +441,12 @@ model render_jobs {
   @@index([status])
   @@index([status, priority, createdAt])
   @@index([userId])
+  @@index([idempotencyKey])
+  @@schema("public")
 }
+
+
+
 
 model sessions {
   id        String   @id
@@ -435,6 +461,7 @@ model sessions {
   @@index([expiresAt])
   @@index([token])
   @@index([userId])
+  @@schema("public")
 }
 
 model slides {
@@ -465,6 +492,7 @@ model slides {
 
   @@index([projectId])
   @@index([projectId, slideOrder])
+  @@schema("public")
 }
 
 model storage_files {
@@ -487,6 +515,7 @@ model storage_files {
   @@index([bucket])
   @@index([isPublic])
   @@index([userId])
+  @@schema("public")
 }
 
 model system_settings {
@@ -495,6 +524,7 @@ model system_settings {
   value     Json
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @map("updated_at")
+  @@schema("public")
 }
 
 model templates {
@@ -516,6 +546,7 @@ model templates {
   @@index([category])
   @@index([createdBy])
   @@index([isPublic])
+  @@schema("public")
 }
 
 model timeline_presence {
@@ -532,6 +563,7 @@ model timeline_presence {
   @@unique([projectId, userId])
   @@index([projectId])
   @@index([userId])
+  @@schema("public")
 }
 
 model timeline_snapshots {
@@ -548,6 +580,7 @@ model timeline_snapshots {
   timelines     timelines @relation(fields: [timelineId], references: [id], onDelete: Cascade)
 
   @@index([timelineId])
+  @@schema("public")
 }
 
 model timeline_templates {
@@ -569,6 +602,7 @@ model timeline_templates {
   @@index([category])
   @@index([createdBy])
   @@index([isPublic])
+  @@schema("public")
 }
 
 model timeline_track_locks {
@@ -584,6 +618,7 @@ model timeline_track_locks {
   @@unique([projectId, trackId, userId])
   @@index([projectId])
   @@index([userId])
+  @@schema("public")
 }
 
 model timelines {
@@ -597,6 +632,8 @@ model timelines {
   updatedAt          DateTime             @default(now()) @map("updated_at")
   timeline_snapshots timeline_snapshots[]
   projects           projects             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@schema("public")
 }
 
 model tts_jobs {
@@ -622,6 +659,7 @@ model tts_jobs {
   @@index([slideId])
   @@index([status])
   @@index([userId])
+  @@schema("public")
 }
 
 model user_progress {
@@ -648,6 +686,24 @@ model user_progress {
   @@index([courseId])
   @@index([moduleId])
   @@index([userId])
+  @@schema("public")
+}
+
+model user_preferences {
+  id                String   @id
+  userId            String   @unique @map("user_id")
+  theme             String   @default("light")
+  language          String   @default("en")
+  notifications     Json     @default("{\"email\": true, \"push\": true}")
+  defaultQuality    String   @default("1080p") @map("default_quality")
+  lastProjectId     String?  @map("last_project_id")
+  showTutorials     Boolean  @default(true) @map("show_tutorials")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @default(now()) @map("updated_at")
+  users             users    @relation("UserPreferences", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@schema("public")
 }
 
 model users {
@@ -688,13 +744,15 @@ model users {
   timeline_templates                                  timeline_templates[]
   timeline_track_locks                                timeline_track_locks[]
   tts_jobs                                            tts_jobs[]
+  user_preferences                                    user_preferences?      @relation("UserPreferences")
   user_progress                                       user_progress[]
   video_exports                                       video_exports[]
   video_projects                                      video_projects[]
+  subscriptions                                       subscriptions[]
 
   @@index([email])
-  @@index([isActive])
   @@index([role])
+  @@schema("public")
 }
 
 model video_exports {
@@ -721,6 +779,7 @@ model video_exports {
 
   @@index([projectId])
   @@index([userId])
+  @@schema("public")
 }
 
 model video_projects {
@@ -745,6 +804,7 @@ model video_projects {
   @@index([projectId])
   @@index([status])
   @@index([userId])
+  @@schema("public")
 }
 
 model videos {
@@ -762,6 +822,7 @@ model videos {
   courses       courses?        @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@index([courseId])
+  @@schema("public")
 }
 
 model voice_clones {
@@ -778,6 +839,7 @@ model voice_clones {
   updatedAt      DateTime @default(now()) @map("updated_at")
 
   @@index([userId])
+  @@schema("public")
 }
 
 model voice_models {
@@ -802,6 +864,7 @@ model voice_models {
   @@index([language])
   @@index([type])
   @@index([userId])
+  @@schema("public")
 }
 
 model webhook_deliveries {
@@ -825,6 +888,7 @@ model webhook_deliveries {
 
   @@index([status])
   @@index([webhookId])
+  @@schema("public")
 }
 
 model webhooks {
@@ -844,6 +908,54 @@ model webhooks {
   webhook_deliveries   webhook_deliveries[]
 
   @@index([userId])
+  @@schema("public")
+}
+
+model subscriptions {
+  id                   String    @id
+  userId               String    @unique @map("user_id")
+  planId               String    @map("plan_id")
+  status               String
+  startDate            DateTime  @map("start_date")
+  endDate              DateTime? @map("end_date")
+  trialStartDate       DateTime? @map("trial_start_date")
+  trialEndDate         DateTime? @map("trial_end_date")
+  cancellationReason   String?   @map("cancellation_reason")
+  autoRenew            Boolean   @default(true) @map("auto_renew")
+  paymentGateway       String?   @map("payment_gateway")
+  paymentGatewaySubId  String?   @unique @map("payment_gateway_sub_id")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @default(now()) @map("updated_at")
+  users                users     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription_plans   subscription_plans @relation(fields: [planId], references: [id])
+
+  @@index([planId])
+  @@index([status])
+  @@index([userId])
+  @@schema("public")
+}
+
+model subscription_plans {
+  id                 String          @id
+  name               String
+  description        String?
+  price              Float
+  currency           String
+  billingCycle       String          @map("billing_cycle")
+  features           Json
+  isActive           Boolean         @default(true) @map("is_active")
+  trialDays          Int             @default(0) @map("trial_days")
+  createdAt          DateTime        @default(now()) @map("created_at")
+  updatedAt          DateTime        @default(now()) @map("updated_at")
+  stripePriceId      String?         @unique @map("stripe_price_id")
+  maxVideoProjects   Int?            @map("max_video_projects")
+  maxStorageGb       Int?            @map("max_storage_gb")
+  maxTeamMembers     Int?            @map("max_team_members")
+  supportLevel       String?         @map("support_level")
+  subscriptions      subscriptions[]
+
+  @@index([isActive])
+  @@schema("public")
 }
 
 enum CollaborationRole {
@@ -851,6 +963,8 @@ enum CollaborationRole {
   editor
   viewer
   reviewer
+
+  @@schema("public")
 }
 
 enum JobStatus {
@@ -859,6 +973,8 @@ enum JobStatus {
   completed
   failed
   cancelled
+
+  @@schema("public")
 }
 
 enum PriorityLevel {
@@ -866,6 +982,8 @@ enum PriorityLevel {
   medium
   high
   urgent
+
+  @@schema("public")
 }
 
 enum ProjectStatus {
@@ -875,6 +993,8 @@ enum ProjectStatus {
   completed
   archived
   error
+
+  @@schema("public")
 }
 
 enum ProjectType {
@@ -883,6 +1003,8 @@ enum ProjectType {
   talking_photo
   custom
   ai_generated
+
+  @@schema("public")
 }
 
 enum TtsProvider {
@@ -891,6 +1013,8 @@ enum TtsProvider {
   google
   openai
   edge_tts
+
+  @@schema("public")
 }
 
 enum UserRole {
@@ -899,10 +1023,14 @@ enum UserRole {
   editor
   viewer
   user
+
+  @@schema("public")
 }
 
 enum video_quality {
   p720
   p1080
   p4k
+
+  @@schema("public")
 }

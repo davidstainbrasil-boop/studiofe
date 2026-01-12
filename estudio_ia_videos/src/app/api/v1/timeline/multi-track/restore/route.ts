@@ -38,12 +38,12 @@ export async function POST(request: NextRequest) {
     logger.info(`⏪ Restaurando timeline do snapshot ${snapshotId}...`, { component: 'API: v1/timeline/multi-track/restore' });
 
     // Get snapshot
-    const snapshot = await prisma.timelineSnapshot.findUnique({
+    const snapshot = await prisma.timeline_snapshots.findUnique({
       where: { id: snapshotId },
       include: {
-        timeline: {
+        timelines: {
           include: {
-            project: true,
+            projects: true,
           },
         },
       },
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify user has access
-    if (snapshot.timeline.project.userId !== session.user.id) {
+    if (snapshot.timelines.projects.userId !== session.user.id) {
       return NextResponse.json(
         { success: false, message: 'Acesso negado' },
         { status: 403 }
@@ -65,13 +65,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Create a backup snapshot of current state before restoring
-    const currentTimeline = snapshot.timeline;
-    const backupSnapshot = await prisma.timelineSnapshot.create({
+    const currentTimeline = snapshot.timelines;
+    const backupSnapshot = await prisma.timeline_snapshots.create({
       data: {
+        id: crypto.randomUUID(),
         timelineId: currentTimeline.id,
         version: currentTimeline.version,
-        tracks: toJsonValue(currentTimeline.tracks ?? []),
-        settings: toJsonValue(currentTimeline.settings ?? {}),
+        tracks: toJsonValue((currentTimeline.tracks ?? []) as any),
+        settings: toJsonValue((currentTimeline.settings ?? {}) as any),
         totalDuration: currentTimeline.totalDuration || 0,
         createdBy: session.user.id,
         description: `Auto-backup antes de restaurar v${snapshot.version}`,
@@ -81,11 +82,11 @@ export async function POST(request: NextRequest) {
     logger.info(`💾 Backup automático criado: ${backupSnapshot.id}`, { component: 'API: v1/timeline/multi-track/restore' });
 
     // Restore timeline from snapshot
-    const restoredTimeline = await prisma.timeline.update({
+    const restoredTimeline = await prisma.timelines.update({
       where: { id: snapshot.timelineId },
       data: {
-        tracks: toJsonValue(snapshot.tracks ?? []),
-        settings: toJsonValue(snapshot.settings ?? {}),
+        tracks: toJsonValue((snapshot.tracks ?? []) as any),
+        settings: toJsonValue((snapshot.settings ?? {}) as any),
         totalDuration: snapshot.totalDuration || 0,
         version: { increment: 1 },
         updatedAt: new Date(),
@@ -98,9 +99,9 @@ export async function POST(request: NextRequest) {
     const orgId = getOrgId(session.user) ?? undefined;
 
     // Track analytics
-    await AnalyticsTracker.trackTimelineEdit({
+    await AnalyticsTracker.track('timeline_edit', {
       userId: session.user.id,
-      projectId: snapshot.timeline.projectId,
+      projectId: snapshot.timelines.projectId,
       action: 'restore',
       trackCount: Array.isArray(snapshot.tracks) ? snapshot.tracks.length : 0,
       totalDuration: snapshot.totalDuration || 0,

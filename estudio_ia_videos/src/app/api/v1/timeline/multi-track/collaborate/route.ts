@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
 
     if (action === 'lock') {
       // Check if track is already locked by another user
-      const existingLock = await prisma.timelineTrackLock.findFirst({
+      const existingLock = await prisma.timeline_track_locks.findFirst({
         where: {
           projectId,
           trackId,
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Create or update lock
-      const lock = await prisma.timelineTrackLock.upsert({
+      const lock = await prisma.timeline_track_locks.upsert({
         where: {
           projectId_trackId_userId: {
             projectId,
@@ -89,6 +89,7 @@ export async function POST(request: NextRequest) {
           },
         },
         create: {
+          id: crypto.randomUUID(),
           projectId,
           trackId,
           userId: session.user.id,
@@ -113,7 +114,7 @@ export async function POST(request: NextRequest) {
 
     } else {
       // Unlock - remove lock
-      await prisma.timelineTrackLock.deleteMany({
+      await prisma.timeline_track_locks.deleteMany({
         where: {
           projectId,
           trackId,
@@ -168,10 +169,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Get all active locks
-    const locks = await prisma.timelineTrackLock.findMany({
+    const locks = await prisma.timeline_track_locks.findMany({
       where: { projectId },
       include: {
-        user: {
+        users: {
           select: {
             id: true,
             name: true,
@@ -183,7 +184,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Get active users (presence)
-    const activeUsers = await prisma.timelinePresence.findMany({
+    const activeUsers = await prisma.timeline_presence.findMany({
       where: {
         projectId,
         lastSeenAt: {
@@ -191,7 +192,7 @@ export async function GET(request: NextRequest) {
         },
       },
       include: {
-        user: {
+        users: {
           select: {
             id: true,
             name: true,
@@ -202,8 +203,8 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    interface LockRecord { id: string; trackId: string; userId: string; user: { name: string | null; avatarUrl?: string | null }; createdAt: Date }
-    interface PresenceRecord { userId: string; user: { name: string | null; avatarUrl?: string | null }; lastSeenAt: Date; currentTrackId?: string | null }
+    interface LockRecord { id: string; trackId: string; userId: string; users: { name: string | null; avatarUrl: string | null }; createdAt: Date }
+    interface PresenceRecord { userId: string; users: { name: string | null; avatarUrl: string | null }; lastSeenAt: Date; currentTrackId?: string | null }
     return NextResponse.json({
       success: true,
       data: {
@@ -211,14 +212,14 @@ export async function GET(request: NextRequest) {
           id: lock.id,
           trackId: lock.trackId,
           userId: lock.userId,
-          userName: lock.user.name || 'Unknown',
-          userImage: lock.user.avatarUrl,
+          userName: lock.users.name || 'Unknown',
+          userImage: lock.users.avatarUrl,
           lockedAt: lock.createdAt.toISOString(),
         })),
         activeUsers: activeUsers.map((presence: PresenceRecord) => ({
           userId: presence.userId,
-          userName: presence.user.name || 'Unknown',
-          userImage: presence.user.avatarUrl,
+          userName: presence.users.name || 'Unknown',
+          userImage: presence.users.avatarUrl,
           lastSeenAt: presence.lastSeenAt.toISOString(),
           currentTrackId: presence.currentTrackId || undefined,
         })),
@@ -259,7 +260,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Update or create presence
-    const presence = await prisma.timelinePresence.upsert({
+    const presence = await prisma.timeline_presence.upsert({
       where: {
         projectId_userId: {
           projectId,
@@ -267,6 +268,7 @@ export async function PUT(request: NextRequest) {
         },
       },
       create: {
+        id: crypto.randomUUID(),
         projectId,
         userId: session.user.id,
         currentTrackId: currentTrackId || null,

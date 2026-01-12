@@ -50,11 +50,30 @@ export class JobManager {
     }
   }
   
-  async createJob(userId: string, projectId: string): Promise<string> {
-    // Idempotency: Check for recent pending jobs (last 1 min) to prevent duplicates
+  async createJob(userId: string, projectId: string, idempotencyKey?: string): Promise<string> {
+    // Idempotency Strategy 1: If idempotency key provided, check for existing job
+    if (idempotencyKey) {
+      const existingByKey = await prisma.render_jobs.findUnique({
+        where: { idempotencyKey: idempotencyKey },
+        select: { id: true, status: true }
+      });
+
+      if (existingByKey) {
+        logger.info('Idempotent job creation - returning existing job', {
+          component: 'JobManager',
+          jobId: existingByKey.id,
+          status: existingByKey.status,
+          idempotencyKey
+        });
+        return existingByKey.id;
+      }
+    }
+
+    // Idempotency Strategy 2: Fallback to time-based check (legacy behavior)
+    // Check for recent pending jobs (last 1 min) to prevent duplicates
     const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
-    
-    const existing = await prisma.render_jobs.findFirst({
+
+    const existingByTime = await prisma.render_jobs.findFirst({
       where: {
         projectId: projectId,
         status: 'pending',
@@ -63,11 +82,14 @@ export class JobManager {
       select: { id: true }
     });
 
-    if (existing) {
-      logger.info(`[JobManager] Idempotency: Returning existing pending job ${existing.id} for project ${projectId}`, { component: 'JobManager' });
-      return existing.id;
+    if (existingByTime) {
+      logger.info(`Time-based idempotency: Returning existing pending job ${existingByTime.id} for project ${projectId}`, {
+        component: 'JobManager'
+      });
+      return existingByTime.id;
     }
 
+    // Create new job with idempotency key if provided
     const job = await prisma.render_jobs.create({
       data: {
         id: randomUUID(),
@@ -76,9 +98,17 @@ export class JobManager {
         status: 'pending',
         progress: 0,
         render_settings: {},
-        attempts: 0
+        attempts: 0,
+        idempotencyKey: idempotencyKey || null
       },
       select: { id: true }
+    });
+
+    logger.info('Created new render job', {
+      component: 'JobManager',
+      jobId: job.id,
+      projectId,
+      hasIdempotencyKey: !!idempotencyKey
     });
 
     return job.id;

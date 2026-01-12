@@ -66,7 +66,13 @@ export async function POST(request: NextRequest) {
     }
 
     if (!file.name.toLowerCase().endsWith('.pptx')) {
-      return NextResponse.json({ error: 'Formato inválido. Apenas .pptx' }, { status: 400 });
+      return NextResponse.json({ error: 'Formato inválido. Apenas arquivos .pptx são permitidos.' }, { status: 400 });
+    }
+
+    // HARDENING: File Size Limit (25MB)
+    const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
+    if (file.size > MAX_FILE_SIZE) {
+        return NextResponse.json({ error: 'Arquivo muito grande. O limite é 25MB.' }, { status: 400 });
     }
 
     // 2. Create Project in DB
@@ -96,42 +102,74 @@ export async function POST(request: NextRequest) {
     
     logger.info(`[PPTX API] Starting Advanced Parse for project: ${project.id}`, { component: 'API: pptx' });
     
-    // Parse with all features enabled
-    const parsedData = await parseCompletePPTX(fileBuffer, project.id, {
+    // HARDENING: Timeout Wrapper (60s)
+    const PARSE_TIMEOUT_MS = 60000;
+    const parsePromise = parseCompletePPTX(fileBuffer, project.id, {
       includeImages: true,
       includeNotes: true,
-      includeAnimations: false // Animations can be complex, keeping it simple for now
-    }) as CompletePPTXData;
+      includeAnimations: false
+    }) as Promise<CompletePPTXData>;
+
+    const timeoutPromise = new Promise<never>((_, reject) => 
+        setTimeout(() => reject(new Error('Tempo limite de processamento excedido (60s)')), PARSE_TIMEOUT_MS)
+    );
+
+    let parsedData: CompletePPTXData;
+    try {
+        parsedData = await Promise.race([parsePromise, timeoutPromise]);
+    } catch (parseErr) {
+        logger.error(`[PPTX API] Parse Timeout/Error for project ${project.id}`, parseErr as Error, { 
+            userId: user.id, projectId: project.id, filename: file.name 
+        });
+        // Update project status to error
+        await supabaseAdmin.from('projects').update({ status: 'error' }).eq('id', project.id);
+        throw new Error('Falha no processamento: O arquivo é muito complexo ou demorou muito para responder.');
+    }
 
     if (!parsedData.success) {
         logger.error('[PPTX API] Parse errors:', new Error(parsedData.errors.join(', ')), { component: 'API: pptx' });
         throw new Error(`PPTX Parse failed: ${parsedData.errors.join(', ')}`);
     }
 
-    // 4. Insert Slides
-    const slidesToInsert = parsedData.slides.map((slide: CompleteSlideData, index: number) => {
-        // Combine text content
-        const textContent = (slide.text.textBoxes || []).map((t) => t.text).join('\n');
-        
-        // Get primary image if available
-        const backgroundImage = slide.images.length > 0 ? slide.images[0].url : null;
-        
-        return {
-            projectId: project.id,
-            order_index: index,
-            title: `Slide ${slide.slideNumber}`,
-            content: textContent || `Slide ${slide.slideNumber}`, 
-            duration: Math.max(5, slide.duration.estimatedDuration), // Use estimated duration or min 5s
-            notes: slide.notes.notes || null,
-            background_url: backgroundImage, // Store image URL if available
-            layout: slide.layout.layout?.type || 'custom',
-            metadata: {
-                hasImages: slide.images.length > 0,
-                wordCount: slide.text.wordCount,
-                originalSlideNumber: slide.slideNumber
+    // HARDENING: Slide Sanity Check
+    const MAX_SLIDES = 80;
+    if (parsedData.slides.length > MAX_SLIDES) {
+        // Safe fail or truncation? Let's truncate and warn for now to avoid crashing good large files, 
+        // OR reject if strict. Prompt says: "Validate slide count".
+        // Let's reject to enforce quality/performance limits for MVP.
+        throw new Error(`O arquivo possui ${parsedData.slides.length} slides. O limite atual é ${MAX_SLIDES}.`);
+    }
+
+    // 4. Insert Slides (with Filter for empty)
+    const slidesToInsert = parsedData.slides
+        .map((slide: CompleteSlideData, index: number) => {
+            // Combine text content
+            const textContent = (slide.text.textBoxes || []).map((t) => t.text).join('\n').trim();
+            const backgroundImage = slide.images.length > 0 ? slide.images[0].url : null;
+
+            // HARDENING: Skip truly empty slides
+            if (!textContent && !backgroundImage) {
+                logger.warn(`[PPTX API] Skipping empty slide ${slide.slideNumber}`, { projectId: project.id });
+                return null;
             }
-        };
-    });
+            
+            return {
+                projectId: project.id,
+                order_index: index,
+                title: `Slide ${slide.slideNumber}`,
+                content: { text: textContent || `Slide ${slide.slideNumber}` }, 
+                durationSeconds: Math.max(5, slide.duration.estimatedDuration),
+                notes: slide.notes.notes || null,
+                background_image: backgroundImage,
+                layoutType: slide.layout.layout?.type || 'custom',
+                metadata: {
+                    hasImages: slide.images.length > 0,
+                    wordCount: slide.text.wordCount,
+                    originalSlideNumber: slide.slideNumber
+                }
+            };
+        })
+        .filter(Boolean); // Remove nulls
 
     if (slidesToInsert.length > 0) {
       const { error: slidesError } = await supabaseAdmin
@@ -159,14 +197,37 @@ export async function POST(request: NextRequest) {
       success: true,
       projectId: project.id,
       message: 'PPTX processado com sucesso',
-      slideCount: slidesToInsert.length
+      slideCount: slidesToInsert.length,
+      slides: slidesToInsert.map(s => ({
+          slideNumber: s.metadata.originalSlideNumber,
+          title: s.title,
+          thumbnailUrl: s.background_image || '',
+          duration: s.durationSeconds,
+          selected: true
+      }))
     });
 
   } catch (error) {
-    logger.error('[PPTX API] Upload error:', error instanceof Error ? error : new Error(String(error)), { component: 'API: pptx' });
+    const err = error instanceof Error ? error : new Error(String(error));
+    
+    logger.error('[PPTX API] Process Error:', err, { 
+        component: 'API: pptx',
+        userId: user?.id || 'unknown',
+        // We might not have project ID here if it failed early, captured in context if possible
+    });
+
+    // HARDENING: User-safe error
+    // Don't expose internal db/parsing errors
+    let userMessage = 'Erro ao processar arquivo PPTX.';
+    if (err.message.includes('Tempo limite')) userMessage = err.message;
+    if (err.message.includes('Arquivo muito grande')) userMessage = err.message;
+    if (err.message.includes('Formato inválido')) userMessage = err.message;
+    if (err.message.includes('limite atual é')) userMessage = err.message;
+    if (err.message.includes('PPTX Parse failed')) userMessage = 'O arquivo PPTX parece estar corrompido ou protegido.';
+
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Erro interno' },
-      { status: 500 }
+      { error: userMessage, details: process.env.NODE_ENV === 'development' ? err.message : undefined },
+      { status: err.message.includes('Arquivo muito grande') ? 413 : 500 }
     );
   }
 }

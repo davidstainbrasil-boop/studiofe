@@ -25,7 +25,7 @@ import {
   createBasicTemplateEngine,
   createHighPerformanceEngine,
   createDevelopmentEngine,
-} from '../../../lib/video/template-engine';
+} from '@lib/video/template-engine';
 
 describe('VideoTemplateEngine', () => {
   let engine: VideoTemplateEngine;

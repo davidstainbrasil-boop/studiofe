@@ -29,6 +29,7 @@ const navigationItems = [
     { href: "/dashboard/notifications", label: "Notifications", icon: Bell },
     { href: "/dashboard/render", label: "Render Pipeline", icon: Play },
     { href: "/dashboard/apis", label: "External APIs", icon: Zap },
+    { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ]
 
 export function PremiumSidebar() {
@@ -133,26 +134,66 @@ export function PremiumSidebar() {
             <div className="border-t border-white/10 p-4">
                 {isCollapsed ? (
                     <div className="flex justify-center">
-                        <Avatar className="h-8 w-8 ring-2 ring-white/10 transition-shadow hover:ring-primary/50">
-                            <AvatarImage src="/placeholder-avatar.jpg" />
-                            <AvatarFallback>U</AvatarFallback>
-                        </Avatar>
+                        <UserAvatar />
                     </div>
                 ) : (
                     <GlassCardComponent className="flex items-center space-x-3 border-none bg-white/5 p-3 hover:bg-white/10 transition-colors">
-                        <Avatar className="h-9 w-9 ring-2 ring-white/10">
-                            <AvatarImage src="/placeholder-avatar.jpg" />
-                            <AvatarFallback>U</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 overflow-hidden">
-                            <p className="truncate text-sm font-medium text-white">User Name</p>
-                            <p className="truncate text-xs text-muted-foreground">Pro Plan</p>
-                        </div>
-                        <Settings className="h-4 w-4 text-muted-foreground hover:text-white cursor-pointer" />
+                        <UserAvatar />
+                        <UserProfileInfo />
+                        <Link href="/dashboard/settings">
+                            <Settings className="h-4 w-4 text-muted-foreground hover:text-white cursor-pointer" />
+                        </Link>
                     </GlassCardComponent>
                 )}
             </div>
         </motion.div>
+    )
+}
+
+function UserAvatar() {
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+
+    React.useEffect(() => {
+        // Fetch avatar if needed, or rely on wrapper
+        // For now, placeholder is fine but we should try to get it
+    }, [])
+
+    return (
+        <Avatar className="h-8 w-8 ring-2 ring-white/10 transition-shadow hover:ring-primary/50">
+            <AvatarFallback>U</AvatarFallback>
+        </Avatar>
+    )
+}
+
+import { getBrowserClient } from '@lib/supabase/browser'
+
+function UserProfileInfo() {
+    const [user, setUser] = useState<{ name: string; email: string } | null>(null)
+
+    React.useEffect(() => {
+        const supabase = getBrowserClient()
+        supabase.auth.getUser().then(({ data: { user } }) => {
+            if (user) {
+                // Fetch profile name if stored in metadata or separate table
+                supabase.from('users').select('name').eq('id', user.id).single().then(({ data }) => {
+                    setUser({ name: data?.name || user.email?.split('@')[0] || 'User', email: user.email || '' })
+                })
+            }
+        })
+    }, [])
+
+    if (!user) return (
+        <div className="flex-1 overflow-hidden">
+            <div className="h-4 w-20 bg-white/10 animate-pulse rounded" />
+            <div className="h-3 w-16 bg-white/10 animate-pulse rounded mt-1" />
+        </div>
+    )
+
+    return (
+        <div className="flex-1 overflow-hidden">
+            <p className="truncate text-sm font-medium text-white">{user.name}</p>
+            <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+        </div>
     )
 }
 

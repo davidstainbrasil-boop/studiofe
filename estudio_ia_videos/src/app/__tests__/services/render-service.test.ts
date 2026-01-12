@@ -1,7 +1,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { RenderService } from '../../lib/services/render-service';
+import { RenderService } from '@lib/services/render-service';
 
 // Mocks
 jest.mock('fs');
@@ -19,7 +19,7 @@ jest.mock('@remotion/renderer', () => ({
   }),
   renderMedia: jest.fn().mockResolvedValue(undefined),
 }));
-jest.mock('../../lib/aws-s3-config', () => ({
+jest.mock('@lib/aws-s3-config', () => ({
   uploadFileToS3: jest.fn().mockResolvedValue({
     url: 'https://mock-s3-url.com/video.mp4',
     key: 'renders/video.mp4'

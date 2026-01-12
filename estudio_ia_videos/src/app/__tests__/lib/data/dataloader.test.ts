@@ -12,10 +12,10 @@ import {
   batchResolve,
   resolveRelation,
   defaultCacheKeyFn,
-} from '../../../lib/data/dataloader';
+} from '@lib/data/dataloader';
 
 // Mock logger
-jest.mock('../../../lib/logger', () => ({
+jest.mock('@lib/logger', () => ({
   logger: {
     debug: jest.fn(),
     error: jest.fn(),
@@ -25,7 +25,7 @@ jest.mock('../../../lib/logger', () => ({
 }));
 
 // Mock custom-metrics
-jest.mock('../../../lib/observability/custom-metrics', () => ({
+jest.mock('@lib/observability/custom-metrics', () => ({
   recordDbQuery: jest.fn(),
 }));
 

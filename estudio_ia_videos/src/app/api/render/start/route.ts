@@ -11,7 +11,8 @@ import { getSupabaseForRequest } from '@lib/supabase/server';
 import { addVideoJob } from '@lib/queue/render-queue';
 import { jobManager } from '@lib/render/job-manager';
 import { logger } from '@lib/logger';
-import { globalRateLimiter } from '@lib/rate-limit';
+import { rateLimit, getUserTier } from '@/middleware/rate-limiter';
+import { cachedQuery, CacheTier, invalidatePattern } from '@lib/cache/redis-cache';
 import crypto from 'crypto';
 // Local type definitions replacing missing module
 type QueueRenderConfig = any;
@@ -136,15 +137,14 @@ export async function POST(req: NextRequest) {
       userId = user.id;
     }
 
-    // Rate Limiting Check
-    // Limit: 5 requests per minute per user
-    const isRateLimited = await globalRateLimiter.check(5, userId);
-    if (isRateLimited) {
-      logger.warn('Rate limit exceeded', { userId, endpoint: '/api/render/start' });
-      return NextResponse.json(
-        { error: 'Muitas requisições. Tente novamente em 1 minuto.' },
-        { status: 429 }
-      );
+    // Redis-backed distributed rate limiting
+    // Tier-based limits: free=500/hr, basic=2000/hr, pro=5000/hr, enterprise=50000/hr
+    const tier = await getUserTier(userId as string);
+    const rateLimitResponse = await rateLimit(req, userId as string, tier);
+
+    if (rateLimitResponse) {
+      logger.warn('Rate limit exceeded', { userId, endpoint: '/api/render/start', tier });
+      return rateLimitResponse;
     }
 
     const body = await req.json();
@@ -164,11 +164,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Verifica se projeto existe e permissões (usando Prisma)
-    const project = await prisma.projects.findUnique({
-      where: { id: projectId },
-      select: { userId: true }
-    });
+    // Verifica se projeto existe e permissões (usando Redis cache)
+    // Cache project ownership for 5 minutes - reduces DB load
+    const project = await cachedQuery(
+      `project:${projectId}:owner`,
+      async () => {
+        return await prisma.projects.findUnique({
+          where: { id: projectId },
+          select: { userId: true }
+        });
+      },
+      CacheTier.SHORT // 5 minutes
+    );
 
     if (!project) {
       return NextResponse.json(
@@ -177,8 +184,26 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // For local dev, skip strict permission check
-    const hasPermission = project.userId === userId || true;
+    // Check ownership or collaborator status
+    let hasPermission = project.userId === userId;
+
+    // If not owner, check collaborators table (also cached)
+    if (!hasPermission) {
+      const collaborator = await cachedQuery(
+        `project:${projectId}:collaborator:${userId}`,
+        async () => {
+          return await prisma.project_collaborators.findFirst({
+            where: {
+              projectId: projectId,
+              userId: userId as string
+            }
+          });
+        },
+        CacheTier.SHORT // 5 minutes
+      );
+
+      if (collaborator) hasPermission = true;
+    }
 
     if (!hasPermission) {
       return NextResponse.json(
@@ -233,8 +258,15 @@ export async function POST(req: NextRequest) {
 
     logger.info('Iniciando renderização real', logContext);
 
+    // Extract idempotency key from header (optional)
+    const idempotencyKey = req.headers.get('Idempotency-Key') || undefined;
+
+    if (idempotencyKey) {
+      logger.info('Idempotency key provided', { idempotencyKey, projectId, userId });
+    }
+
     // 1. Create Job in Supabase (Critical for Worker Polling)
-    const dbJobId = await jobManager.createJob(userId as string, projectId);
+    const dbJobId = await jobManager.createJob(userId as string, projectId, idempotencyKey);
     logger.info('Job criado no Supabase', { ...logContext, jobId: dbJobId });
 
     // 2. Add to Queue (Redis/BullMQ) - Optional but good for scalability

@@ -7,7 +7,7 @@ import { POST as generateSpeechPOST, GET as generateSpeechGET } from '../avatars
 import { GET as monitoringGET, POST as monitoringPOST } from '../monitoring/route'
 
 // Mock RealTimeMonitor
-jest.mock('../../lib/monitoring/real-time-monitor', () => ({
+jest.mock('@lib/monitoring/real-time-monitor', () => ({
   realTimeMonitor: {
     getHealthStatus: jest.fn(() => ({ status: 'healthy', score: 100, issues: [] })),
     getMetrics: jest.fn(() => []),

@@ -61,10 +61,12 @@ export async function loginWithCookie(page: Page) {
   });
 
   // Evitar networkidle se houver polling
-  // Aguardar Dashboard OU Empty State
+  // Aguardar Dashboard OU Empty State OU Header
   const dashboardTitle = page.locator('text=Dashboard');
   const emptyStateTitle = page.locator('text=Bem-vindo ao seu Estúdio');
-  await expect(dashboardTitle.or(emptyStateTitle).first()).toBeVisible({ timeout: 15000 });
+  const realDashboardTitle = page.locator('h1:has-text("Estúdio IA de Vídeos")');
+  
+  await expect(dashboardTitle.or(emptyStateTitle).or(realDashboardTitle).first()).toBeVisible({ timeout: 15000 });
 }
 
 export async function mockSupabaseAuth(page: Page) {

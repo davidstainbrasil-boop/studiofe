@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get current timeline
-    const currentTimeline = await prisma.timeline.findUnique({
+    const currentTimeline = await prisma.timelines.findUnique({
       where: { projectId },
     });
 
@@ -70,14 +70,14 @@ export async function GET(request: NextRequest) {
     }
 
     // Get timeline snapshots (history)
-    const snapshots = await prisma.timelineSnapshot.findMany({
+    const snapshots = await prisma.timeline_snapshots.findMany({
       where: { timelineId: currentTimeline.id },
       orderBy: { createdAt: 'desc' },
       take: limit,
       skip: offset,
     });
 
-    const total = await prisma.timelineSnapshot.count({
+    const total = await prisma.timeline_snapshots.count({
       where: { timelineId: currentTimeline.id },
     });
 

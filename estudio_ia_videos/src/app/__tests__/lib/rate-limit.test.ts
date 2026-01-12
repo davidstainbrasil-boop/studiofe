@@ -3,7 +3,7 @@
  * Rate limiter with LRU cache for tracking request frequencies
  */
 
-import { RateLimiter, globalRateLimiter } from '../../lib/rate-limit'
+import { RateLimiter, globalRateLimiter } from '@lib/rate-limit'
 
 describe('Rate Limit Module', () => {
   describe('RateLimiter Class', () => {

@@ -1,4 +1,4 @@
-import { loadFlags } from '../../lib/flags';
+import { loadFlags } from '@lib/flags';
 
 describe('Feature flags', () => {
   test('defaults are false', () => {

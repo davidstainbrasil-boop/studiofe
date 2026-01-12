@@ -52,21 +52,31 @@ export function CreateProjectDialog({ trigger, open, onOpenChange }: CreateProje
                 return
             }
 
-            const { data, error } = await supabase
+            // Generate project ID client-side for mock compatibility
+            const projectId = crypto.randomUUID()
+            
+            const insertQuery = supabase
                 .from('projects')
                 .insert({
+                    id: projectId,
                     name,
                     type,
-                    userId: user.id,
+                    user_id: user.id,
                     status: 'draft',
-                    thumbnailUrl: '/placeholder-project.jpg',
+                    thumbnail_url: '/placeholder-project.jpg',
                     render_settings: {},
-                    updatedAt: new Date().toISOString()
+                    updated_at: new Date().toISOString()
                 })
-                .select('id, type')
-                .single()
+            
+            // Handle both real Supabase (with .select) and mock (without)
+            const hasSelect = typeof insertQuery.select === 'function'
+            const { error } = hasSelect 
+                ? await insertQuery.select('id,type').single()
+                : await insertQuery
 
             if (error) throw error
+            
+            const data = { id: projectId, type }
 
             toast.success('Projeto criado com sucesso!')
             setIsOpen?.(false)

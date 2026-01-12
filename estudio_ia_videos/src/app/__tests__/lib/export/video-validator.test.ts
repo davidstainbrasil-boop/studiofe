@@ -3,7 +3,7 @@
  * Sprint 50 - Advanced Features
  */
 
-import { VideoValidator, SUPPORTED_FORMATS } from '../../../lib/export/video-validator'
+import { VideoValidator, SUPPORTED_FORMATS } from '@lib/export/video-validator'
 import path from 'path'
 
 describe('VideoValidator - File Validation', () => {

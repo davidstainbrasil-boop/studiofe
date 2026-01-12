@@ -115,7 +115,7 @@ export default function PPTXUploadComponent({
       // Progress simulation with more granular steps
       const progressSteps = [10, 25, 40, 55, 70, 85];
       let stepIndex = 0;
-      
+
       const interval = setInterval(() => {
         if (stepIndex < progressSteps.length) {
           setProgress(progressSteps[stepIndex]);
@@ -135,12 +135,12 @@ export default function PPTXUploadComponent({
 
       if (!response.ok) {
         const errorData = await response.json();
-        
+
         // Tratamento especial para erros de autenticação
         if (response.status === 401) {
           throw new Error('Você precisa estar logado para fazer upload. Faça login e tente novamente.');
         }
-        
+
         throw new Error(errorData.error || errorData.message || 'Falha no upload');
       }
 
@@ -148,29 +148,29 @@ export default function PPTXUploadComponent({
       setStatus('processing');
 
       const result = await response.json();
-      
+
       setProgress(100);
       setStatus('success');
-      
+
       const processedResult: ProcessingResult = {
         projectId: result.projectId || result.data?.projectId,
         slidesCount: result.slidesCount || result.data?.slidesCount,
         estimatedDuration: result.estimatedDuration || result.data?.estimatedDuration,
         rawData: result
       };
-      
+
       setProcessingResult(processedResult);
-      
+
       // Chama callback se fornecido
       if (onProcessComplete) {
         onProcessComplete(processedResult);
       }
-      
+
       toast.success('Arquivo processado com sucesso!', {
         description: `${result.slidesCount || 0} slides extraídos`,
         action: (!disableAutoRedirect && result.projectId) ? {
           label: 'Abrir Editor',
-          onClick: () => router.push(`/editor/pptx?project=${result.projectId}`)
+          onClick: () => router.push(`/editor/pptx/${result.projectId}`)
         } : undefined
       });
 
@@ -203,7 +203,7 @@ export default function PPTXUploadComponent({
 
   const goToEditor = () => {
     if (processingResult?.projectId) {
-      router.push(`/editor/pptx?project=${processingResult.projectId}`);
+      router.push(`/editor/pptx/${processingResult.projectId}`);
     }
   };
 
@@ -246,7 +246,7 @@ export default function PPTXUploadComponent({
                   </p>
                 </div>
               </div>
-              
+
               {status !== 'uploading' && status !== 'processing' && status !== 'success' && (
                 <Button variant="ghost" size="icon" onClick={removeFile} title="Remover arquivo">
                   <X className="h-5 w-5 text-gray-400 hover:text-red-500 transition-colors" />
@@ -285,7 +285,7 @@ export default function PPTXUploadComponent({
                     )}
                   </div>
                 </div>
-                
+
                 {processingResult?.projectId && (
                   <div className="flex justify-center">
                     <Button onClick={goToEditor} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
@@ -312,15 +312,15 @@ export default function PPTXUploadComponent({
             {/* Action buttons */}
             {status !== 'success' && (
               <div className="flex justify-end gap-3">
-                <Button 
-                  variant="outline" 
-                  onClick={handleCancel} 
+                <Button
+                  variant="outline"
+                  onClick={handleCancel}
                   disabled={uploading || status === 'processing'}
                 >
                   Cancelar
                 </Button>
-                <Button 
-                  onClick={handleUpload} 
+                <Button
+                  onClick={handleUpload}
                   disabled={uploading || status === 'processing'}
                   className="bg-blue-600 hover:bg-blue-700 text-white min-w-[180px]"
                 >

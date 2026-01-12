@@ -1,5 +1,5 @@
 
-import { validateFFmpeg, getVideoInfo, renderVideo } from '../../../lib/video/renderer';
+import { validateFFmpeg, getVideoInfo, renderVideo } from '@lib/video/renderer';
 import ffmpeg from 'fluent-ffmpeg';
 
 jest.mock('fluent-ffmpeg');

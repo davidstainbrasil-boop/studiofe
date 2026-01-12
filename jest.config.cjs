@@ -11,16 +11,18 @@ module.exports = {
   testEnvironment: 'jsdom',
 
   moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/estudio_ia_videos/app/$1',
-    '^@lib/(.*)$': '<rootDir>/estudio_ia_videos/app/lib/$1',
-    '^@components/(.*)$': '<rootDir>/estudio_ia_videos/app/components/$1',
-    '^@hooks/(.*)$': '<rootDir>/estudio_ia_videos/app/hooks/$1',
-    '^@shared-lib/(.*)$': '<rootDir>/estudio_ia_videos/lib/$1',
-    '^@shared-components/(.*)$': '<rootDir>/estudio_ia_videos/components/$1',
+    '^@/api/(.*)$': '<rootDir>/estudio_ia_videos/src/app/api/$1',
+    '^@/(.*)$': '<rootDir>/estudio_ia_videos/src/$1',
+    '^@lib/(.*)$': '<rootDir>/estudio_ia_videos/src/lib/$1',
+    '^@components/(.*)$': '<rootDir>/estudio_ia_videos/src/components/$1',
+    '^@hooks/(.*)$': '<rootDir>/estudio_ia_videos/src/hooks/$1',
+    '^@shared-lib/(.*)$': '<rootDir>/estudio_ia_videos/src/lib/$1',
+    '^@shared-components/(.*)$': '<rootDir>/estudio_ia_videos/src/components/$1',
     '^dnd-core$': 'dnd-core/dist/cjs',
     '^react-dnd$': 'react-dnd/dist/cjs',
     '^react-dnd-html5-backend$': 'react-dnd-html5-backend/dist/cjs',
     '^@prisma/client$': '<rootDir>/estudio_ia_videos/node_modules/@prisma/client',
+    '^@/types/(.*)$': '<rootDir>/estudio_ia_videos/src/types/$1',
   },
 
   transform: {
@@ -51,8 +53,8 @@ module.exports = {
   ],
 
   testMatch: [
-    '<rootDir>/estudio_ia_videos/app/**/__tests__/**/*.test.{ts,tsx}',
-    '<rootDir>/estudio_ia_videos/app/tests/**/*.test.{ts,tsx}',
+    '<rootDir>/estudio_ia_videos/src/app/**/__tests__/**/*.test.{ts,tsx}',
+    '<rootDir>/estudio_ia_videos/src/app/tests/**/*.test.{ts,tsx}',
   ],
 
   testPathIgnorePatterns: [
@@ -67,7 +69,7 @@ module.exports = {
     'playwright',
   ],
   
-  setupFilesAfterEnv: ['<rootDir>/estudio_ia_videos/app/jest.setup.js'],
+  setupFilesAfterEnv: ['<rootDir>/estudio_ia_videos/src/app/jest.setup.js'],
   testTimeout: 120000,
   verbose: true,
   

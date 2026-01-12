@@ -20,7 +20,7 @@ import type {
   QueueConfig,
   QueueMetrics,
   JobProcessor,
-} from '../../../lib/queue/types'
+} from '@lib/queue/types'
 
 describe('Queue Types Module', () => {
   describe('JobStatus Type', () => {

@@ -150,15 +150,68 @@ class MockSupabaseClient {
 
   from(table: string) {
     return {
-      select: () => ({
-        eq: () => ({
-          single: async () => ({ data: null, error: null }),
-        }),
-      }),
-      insert: async () => ({ data: null, error: null }),
-      update: async () => ({ data: null, error: null }),
-      delete: async () => ({ data: null, error: null }),
+      select: (columns = '*') => {
+        // Return chainable builder
+        const builder = {
+          eq: () => builder,
+          neq: () => builder,
+          gt: () => builder,
+          lt: () => builder,
+          gte: () => builder,
+          lte: () => builder,
+          in: () => builder,
+          is: () => builder,
+          like: () => builder,
+          ilike: () => builder,
+          contains: () => builder,
+          range: () => builder,
+          order: () => builder,
+          limit: () => builder,
+          single: async () => ({ data: { id: 'mock-id', name: 'Mock Project', status: 'draft', metadata: {} }, error: null }),
+          maybeSingle: async () => ({ data: null, error: null }),
+          then: (resolve: any, reject: any) => {
+             // Default list response
+             resolve({ data: [], error: null, count: 0 });
+          }
+        };
+        return builder;
+      },
+      insert: (values: any) => {
+         const mockData = Array.isArray(values) ? values.map((v, i) => ({ ...v, id: `mock-id-${i}` })) : { ...values, id: 'mock-id-new' };
+         const builder = {
+            select: () => ({
+                single: async () => ({ data: mockData, error: null }),
+                then: (resolve: any) => resolve({ data: mockData, error: null })
+            }),
+            then: (resolve: any) => resolve({ data: mockData, error: null })
+         };
+         return builder;
+      },
+      update: (values: any) => {
+         const builder = {
+            eq: () => ({
+                select: () => ({
+                    single: async () => ({ data: { ...values, id: 'mock-id-updated' }, error: null })
+                }),
+                then: (resolve: any) => resolve({ data: { ...values }, error: null })
+            })
+         };
+         return builder;
+      },
+      delete: () => {
+         const builder = {
+             eq: () => ({
+                 then: (resolve: any) => resolve({ data: null, error: null })
+             })
+         };
+         return builder;
+      },
+      rpc: async () => ({ data: {}, error: null })
     };
+  }
+  
+  rpc(fn: string, args: any) {
+    return Promise.resolve({ data: {}, error: null });
   }
 }
 

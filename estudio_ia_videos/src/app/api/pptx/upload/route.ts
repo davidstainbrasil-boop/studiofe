@@ -9,6 +9,12 @@ import PPTXProcessorReal from '@lib/pptx/pptx-processor-real'
 import { notificationManager } from '@lib/notifications/notification-manager'
 import { logger } from '@lib/logger'
 import { randomUUID } from 'crypto'
+import {
+  createErrorResponse,
+  createQuotaError,
+  createValidationError,
+  wrapError
+} from '@lib/errors/error-responses'
 
 // Schema de validação para upload
 const uploadSchema = z.object({
@@ -88,8 +94,20 @@ export const POST = withRateLimit(RATE_LIMITS.UPLOAD, 'user')(async function POS
         )
       }
 
-      // For local dev, skip permission check
-      const hasPermission = project.userId === userId || true
+      // Check ownership or collaborator status
+      let hasPermission = project.userId === userId;
+
+      // If not owner, check collaborators table
+      if (!hasPermission) {
+        const collaborator = await prisma.project_collaborators.findFirst({
+          where: {
+            projectId: projectId,
+            userId: userId
+          }
+        });
+
+        if (collaborator) hasPermission = true;
+      }
 
       if (!hasPermission) {
         return NextResponse.json(
@@ -97,6 +115,28 @@ export const POST = withRateLimit(RATE_LIMITS.UPLOAD, 'user')(async function POS
           { status: 403 }
         )
       }
+    }
+
+    // QUOTA PRE-CHECK: Verificar se usuário tem espaço disponível
+    const { checkQuota } = await import('@lib/storage/quota-manager');
+    const quotaCheck = await checkQuota(userId, file.size);
+
+    if (!quotaCheck.allowed) {
+      logger.warn('Upload blocked by quota', {
+        userId,
+        fileSize: file.size,
+        currentUsage: quotaCheck.currentUsage,
+        limit: quotaCheck.limit
+      });
+
+      return NextResponse.json({
+        error: quotaCheck.reason || 'Storage quota exceeded',
+        quota: {
+          current: quotaCheck.currentUsage,
+          limit: quotaCheck.limit,
+          required: quotaCheck.requiredSpace
+        }
+      }, { status: 413 }); // 413 Payload Too Large
     }
 
     // Validar arquivo
@@ -126,10 +166,29 @@ export const POST = withRateLimit(RATE_LIMITS.UPLOAD, 'user')(async function POS
       await mkdir(uploadsDir, { recursive: true })
     }
 
-    // Salvar arquivo
-    const filePath = join(uploadsDir, filename)
+    // Ler arquivo para validação
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
+
+    // VALIDAÇÃO DE SEGURANÇA: Magic bytes, ZIP bomb, path traversal
+    const { validatePPTXFile } = await import('@lib/security/file-validator');
+    const validation = await validatePPTXFile(buffer);
+
+    if (!validation.valid) {
+      logger.warn('File validation failed', {
+        error: validation.error,
+        details: validation.details,
+        filename: file.name
+      });
+
+      return NextResponse.json({
+        error: validation.error || 'Arquivo inválido',
+        details: validation.details
+      }, { status: 400 });
+    }
+
+    // Salvar arquivo (validação passou)
+    const filePath = join(uploadsDir, filename)
     await writeFile(filePath, buffer)
 
     // Generate upload ID for local storage (no pptx_uploads table needed)
@@ -303,44 +362,49 @@ async function processPPTXAsync(uploadId: string, filePath: string, projectId: s
       }
     })
 
-    // Gerar thumbnail do primeiro slide
+    // Gerar thumbnail do primeiro slide (FORA da transação - operação de I/O)
     const previewUrl = await PPTXProcessorReal.generateThumbnail(buffer, projectId)
 
-    // Inserir slides no banco usando Prisma
-    for (let idx = 0; idx < extraction.slides.length; idx++) {
-      const slide = extraction.slides[idx]
-      await prisma.slides.create({
+    // TRANSAÇÃO ATÔMICA: Inserir slides + atualizar projeto
+    // Se qualquer operação falhar, todas são revertidas (rollback automático)
+    await prisma.$transaction(async (tx) => {
+      // 1. Inserir todos os slides atomicamente
+      for (let idx = 0; idx < extraction.slides.length; idx++) {
+        const slide = extraction.slides[idx]
+        await tx.slides.create({
+          data: {
+            id: randomUUID(),
+            projectId: projectId,
+            slideOrder: slide.slideNumber,
+            orderIndex: idx,
+            title: slide.title || `Slide ${slide.slideNumber}`,
+            content: {
+              text: slide.content,
+              shapes: slide.shapes,
+              textBlocks: slide.textBlocks,
+              images: slide.images,
+            },
+            notes: slide.notes || '',
+            durationSeconds: slide.duration || 5,
+          }
+        })
+      }
+
+      // 2. Atualizar projeto com informações do processamento
+      await tx.projects.update({
+        where: { id: projectId },
         data: {
-          id: randomUUID(),
-          projectId: projectId,
-          slideOrder: slide.slideNumber,
-          orderIndex: idx,
-          title: slide.title || `Slide ${slide.slideNumber}`,
-          content: {
-            text: slide.content,
-            shapes: slide.shapes,
-            textBlocks: slide.textBlocks,
-            images: slide.images,
-          },
-          notes: slide.notes || '',
-          durationSeconds: slide.duration || 5,
+          status: 'completed',
+          totalSlides: extraction.slides.length,
+          slidesData: extraction.slides as object,
+          thumbnailUrl: previewUrl,
+          pptxFileSize: file.size, // 📊 Track file size for quota
+          processingLog: {
+            completedAt: new Date().toISOString(),
+            slideCount: extraction.slides.length
+          }
         }
       })
-    }
-
-    // Atualizar projeto com informações do processamento
-    await prisma.projects.update({
-      where: { id: projectId },
-      data: {
-        status: 'completed',
-        totalSlides: extraction.slides.length,
-        slidesData: extraction.slides as object,
-        thumbnailUrl: previewUrl,
-        processingLog: {
-          completedAt: new Date().toISOString(),
-          slideCount: extraction.slides.length
-        }
-      }
     })
 
     // Notificação: upload completo
@@ -368,16 +432,25 @@ async function processPPTXAsync(uploadId: string, filePath: string, projectId: s
     logger.error('Erro no processamento de PPTX:', error instanceof Error ? error : new Error(String(error)), { component: 'API: pptx/upload' })
 
     // Marcar projeto como falha
-    await prisma.projects.update({
-      where: { id: projectId },
-      data: {
-        status: 'error',
-        processingLog: {
-          error: error instanceof Error ? error.message : 'Erro desconhecido',
-          failed_at: new Date().toISOString()
+    try {
+      await prisma.projects.update({
+        where: { id: projectId },
+        data: {
+          status: 'error',
+          processingLog: {
+            error: error instanceof Error ? error.message : 'Erro desconhecido',
+            failed_at: new Date().toISOString()
+          }
         }
-      }
-    }).catch(() => {})
+      })
+    } catch (updateError) {
+      // Log but don't throw - this is cleanup after main error
+      logger.error('Failed to mark project as error', updateError instanceof Error ? updateError : new Error(String(updateError)), {
+        component: 'API: pptx/upload',
+        projectId,
+        originalError: error instanceof Error ? error.message : String(error)
+      })
+    }
 
     // Notificação: erro
     notificationManager.sendNotification({
