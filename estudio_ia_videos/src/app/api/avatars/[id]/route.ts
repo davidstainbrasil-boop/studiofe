@@ -33,7 +33,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = getSupabaseForRequest(request)
+    const supabase = getSupabaseForRequest(request) as any
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
     if (authError || !user) {
@@ -59,7 +59,7 @@ export async function GET(
         )
       `)
       .eq('id', avatarId)
-      .single()
+      .single() as any
 
     if (error || !avatarData) {
       return NextResponse.json(
@@ -111,7 +111,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = getSupabaseForRequest(request)
+    const supabase = getSupabaseForRequest(request) as any
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
     if (authError || !user) {
@@ -138,7 +138,7 @@ export async function PUT(
         )
       `)
       .eq('id', avatarId)
-      .single()
+      .single() as any
 
     if (!avatarData) {
       return NextResponse.json(
@@ -173,7 +173,7 @@ export async function PUT(
         .eq("project_id", avatar.projectId ?? '')
         .eq('name', validatedData.name)
         .neq('id', avatarId)
-        .single()
+        .single() as any
 
       if (existingAvatarConflict) {
         return NextResponse.json(
@@ -283,7 +283,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = getSupabaseForRequest(request)
+    const supabase = getSupabaseForRequest(request) as any
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
     if (authError || !user) {
@@ -306,7 +306,7 @@ export async function DELETE(
         )
       `)
       .eq('id', avatarId)
-      .single()
+      .single() as any
 
     if (!avatarDataDel) {
       return NextResponse.json(
@@ -338,7 +338,7 @@ export async function DELETE(
     const { count: usedCount } = await supabase
       .from('render_jobs')
       .select('id', { count: 'exact', head: true })
-      .eq("project_id", avatarDel.projectId ?? '')
+      .eq("project_id", avatarDel.projectId ?? '') as any
 
     // Skip timeline check for now since table not typed
     // In production, this would check timeline_elements

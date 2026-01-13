@@ -212,6 +212,16 @@ describe('Cache utilities', () => {
   });
 
   describe('@cached decorator', () => {
+    let cachedService: TestService;
+
+    afterAll(() => {
+      // Destruir a instância TaggedCache criada pelo decorador cached()
+      // para evitar vazamento de setInterval
+      if (cachedService && (cachedService as any).__cacheInstance) {
+        (cachedService as any).__cacheInstance.destroy();
+      }
+    });
+
     it('should cache method results', () => {
       class TestService {
         private callCount = 0;
@@ -228,7 +238,7 @@ describe('Cache utilities', () => {
       }
 
       // Aplicar cache manualmente
-      const service = new TestService();
+      cachedService = new TestService();
       const cachedMethod = cached({ ttl: 1, tags: ['test'] })(
         TestService.prototype, 
         'expensiveOperation', 
@@ -240,13 +250,13 @@ describe('Cache utilities', () => {
         }
       );
       
-      service.expensiveOperation = cachedMethod.value.bind(service);
+      cachedService.expensiveOperation = cachedMethod.value.bind(cachedService);
       
-      const result1 = service.expensiveOperation('test');
-      const result2 = service.expensiveOperation('test');
+      const result1 = cachedService.expensiveOperation('test');
+      const result2 = cachedService.expensiveOperation('test');
       
       expect(result1).toBe(result2);
-      expect(service.getCallCount()).toBe(1); // Só chamou uma vez
+      expect(cachedService.getCallCount()).toBe(1); // Só chamou uma vez
     });
 
     it('should not cache different inputs', () => {

@@ -79,7 +79,7 @@ const fetcher = async (url: string) => {
 
 export function useMetrics(period: 'day' | 'week' | 'month' | 'quarter' = 'month') {
   const { data, error, mutate, isLoading } = useSWR<Metrics>(
-    `/api/metrics?period=${period}`,
+    `/api/metrics?period=${period}&format=json`,
     fetcher,
     { 
       refreshInterval: 0, // 🚨 EMERGENCY: Disabled auto-refresh to prevent loops

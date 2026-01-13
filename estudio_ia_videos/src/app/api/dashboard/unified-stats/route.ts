@@ -20,7 +20,7 @@ interface DashboardStats {
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createClient()
+    const supabase = createClient() as any
     
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
     const { count: totalProjects, error: projectsError } = await supabase
       .from('projects')
       .select('*', { count: 'exact', head: true })
-      .eq('user_id', user.id)
+      .eq('user_id', user.id) as any
 
     if (projectsError) throw projectsError
 
@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
         .from('render_jobs')
         .select('*', { count: 'exact', head: true })
         .in('project_id', projectIds)
-        .in('status', ['queued', 'processing'])
+        .in('status', ['queued', 'processing']) as any
 
       if (activeError) throw activeError
       activeRenders = activeCount || 0
@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
         .select('*', { count: 'exact', head: true })
         .in('project_id', projectIds)
         .eq('status', 'completed')
-        .gte('completed_at', startOfDay.toISOString())
+        .gte('completed_at', startOfDay.toISOString()) as any
 
       if (completedError) throw completedError
       completedToday = completedCount || 0
@@ -127,7 +127,7 @@ export async function GET(request: NextRequest) {
       .from('analytics_events')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', user.id)
-      .in('event_type', ['project_view', 'project_viewed'])
+      .in('event_type', ['project_view', 'project_viewed']) as any
 
     if (viewsError) throw viewsError
 

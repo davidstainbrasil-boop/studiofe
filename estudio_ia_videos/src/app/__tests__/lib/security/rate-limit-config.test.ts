@@ -5,17 +5,19 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-// Mock do logger antes de outros imports
-const mockLogger = {
-  warn: jest.fn(),
-  debug: jest.fn(),
-  error: jest.fn(),
-  info: jest.fn(),
-};
-
 jest.mock('@/lib/logger', () => ({
-  logger: mockLogger,
-  Logger: jest.fn().mockImplementation(() => mockLogger),
+  logger: {
+    warn: jest.fn(),
+    debug: jest.fn(),
+    error: jest.fn(),
+    info: jest.fn(),
+  },
+  Logger: jest.fn().mockImplementation(() => ({
+    warn: jest.fn(),
+    debug: jest.fn(),
+    error: jest.fn(),
+    info: jest.fn(),
+  })),
 }));
 
 // Mock do rate-limiter

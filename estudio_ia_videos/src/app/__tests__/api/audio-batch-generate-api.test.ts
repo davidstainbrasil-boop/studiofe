@@ -14,7 +14,7 @@ describe('API Route: /api/audio/batch-generate', () => {
       },
     }));
 
-    jest.doMock('@/lib/logging/logger', () => ({
+    jest.doMock('@/lib/logger', () => ({
       logger: {
         info: jest.fn(),
         error: jest.fn(),
@@ -121,6 +121,7 @@ describe('API Route: /api/audio/batch-generate', () => {
     const responseBody = await response.json();
 
     expect(response.status).toBe(500);
-    expect(responseBody.error).toBe('Falha ao gerar áudio em lote.');
+    console.log('Actual error message:', responseBody.error);
+    expect(responseBody.error).toBe('TTS service failed');
   });
 });

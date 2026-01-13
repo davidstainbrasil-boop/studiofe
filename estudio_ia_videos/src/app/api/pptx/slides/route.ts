@@ -21,7 +21,7 @@ const updateSlideSchema = slideSchema.partial().omit({ upload_id: true })
 // GET - Listar slides de um upload
 export async function GET(request: NextRequest) {
   try {
-    const supabase = getSupabaseForRequest(request)
+    const supabase = getSupabaseForRequest(request) as any
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
     if (authError || !user) {
@@ -118,7 +118,7 @@ export async function GET(request: NextRequest) {
 // POST - Criar novo slide
 export async function POST(request: NextRequest) {
   try {
-    const supabase = getSupabaseForRequest(request)
+    const supabase = getSupabaseForRequest(request) as any
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
     if (authError || !user) {
@@ -254,7 +254,7 @@ export async function POST(request: NextRequest) {
 // PUT - Reordenar slides
 export async function PUT(request: NextRequest) {
   try {
-    const supabase = getSupabaseForRequest(request)
+    const supabase = getSupabaseForRequest(request) as any
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
     if (authError || !user) {

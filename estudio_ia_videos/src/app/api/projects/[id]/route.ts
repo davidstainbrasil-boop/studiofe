@@ -26,8 +26,8 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = getSupabaseForRequest(request)
-    const { data: { user } } = await supabase.auth.getUser()
+    const supabase = getSupabaseForRequest(request) as any
+    const { data: { user } } = await supabase.auth.getUser() as any
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -37,7 +37,7 @@ export async function GET(
       .from('projects')
       .select('*, timeline:timelines(*)')
       .eq('id', params.id)
-      .single()
+      .single() as any
     
     if (error || !project) {
       return NextResponse.json({
@@ -192,7 +192,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = getSupabaseForRequest(request)
+    const supabase = getSupabaseForRequest(request) as any
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
@@ -317,7 +317,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = getSupabaseForRequest(request)
+    const supabase = getSupabaseForRequest(request) as any
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {

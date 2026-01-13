@@ -61,7 +61,7 @@ export interface EventTypeBreakdown {
 // ==========================================
 
 export async function getOverallMetrics(userId: string, dateRange: { startDate: Date; endDate: Date }): Promise<AnalyticsMetrics> {
-  const supabase = createClient();
+  const supabase = createClient() as any;
   
   const { count: renderCount } = await supabase
     .from('render_jobs')
@@ -95,7 +95,7 @@ export async function getDailyStats(userId: string, days: number): Promise<Daily
 }
 
 export async function getProjectStats(userId: string, limit: number): Promise<ProjectStats[]> {
-  const supabase = createClient();
+  const supabase = createClient() as any;
   
   const { data: projects } = await supabase
     .from('projects')
@@ -115,7 +115,7 @@ export async function getProjectStats(userId: string, limit: number): Promise<Pr
 }
 
 export async function getRenderStats(userId: string, dateRange: { startDate: Date; endDate: Date }): Promise<RenderStats> {
-  const supabase = createClient();
+  const supabase = createClient() as any;
   
   const { data: jobs } = await supabase
     .from('render_jobs')

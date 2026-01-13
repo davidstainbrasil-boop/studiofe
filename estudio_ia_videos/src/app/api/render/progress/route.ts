@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     return new Response('Job ID é obrigatório', { status: 400 });
   }
 
-  const supabase = getSupabaseForRequest(request);
+  const supabase = getSupabaseForRequest(request) as any;
   const { data: { user }, error: authError } = await supabase.auth.getUser();
 
   if (authError || !user) {

@@ -36,18 +36,18 @@ jest.mock('@supabase/supabase-js', () => ({
   }))
 }))
 
+interface QueryBuilder {
+  select: (fields?: string) => QueryBuilder;
+  eq: (field: string, value: unknown) => QueryBuilder;
+  single: () => Promise<{ data: { role: string } | null; error: null }>;
+  order: (field: string, options?: unknown) => QueryBuilder;
+  limit: (count: number) => QueryBuilder;
+  gte: (field: string, value: unknown) => Promise<{ data: unknown[] }>;
+}
+
 jest.mock('@/lib/supabase', () => ({
   supabase: {
     from: jest.fn(() => {
-      interface QueryBuilder {
-        select: (fields?: string) => QueryBuilder;
-        eq: (field: string, value: unknown) => QueryBuilder;
-        single: () => Promise<{ data: { role: string } | null; error: null }>;
-        order: (field: string, options?: unknown) => QueryBuilder;
-        limit: (count: number) => QueryBuilder;
-        gte: (field: string, value: unknown) => Promise<{ data: unknown[] }>;
-      }
-      
       const queryBuilder: QueryBuilder = {
         select: jest.fn(() => queryBuilder),
         eq: jest.fn(() => queryBuilder),

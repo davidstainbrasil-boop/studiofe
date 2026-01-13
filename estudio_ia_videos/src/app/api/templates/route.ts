@@ -105,7 +105,7 @@ interface ProjectMetadata {
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = getSupabaseForRequest(request);
+    const supabase = getSupabaseForRequest(request) as any;
     const { data: { user } } = await supabase.auth.getUser();
 
     const { searchParams } = new URL(request.url);
@@ -117,7 +117,7 @@ export async function GET(request: NextRequest) {
     // 1. Fetch System Templates (NR Templates)
     let systemTemplatesQuery = supabaseAdmin
       .from('nr_templates')
-      .select('*');
+      .select('*') as any;
 
     if (category) {
       systemTemplatesQuery = systemTemplatesQuery.eq("nrNumber", category);
