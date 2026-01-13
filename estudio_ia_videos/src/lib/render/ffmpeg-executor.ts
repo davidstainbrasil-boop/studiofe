@@ -78,15 +78,16 @@ export class FFmpegExecutor {
         throw new Error('inputFramesDir é obrigatório');
       }
 
-      await this.validateInputs(options);
-
-      // Construir comando FFmpeg
-      const args = await this.buildFFmpegCommand(options);
+      const tempOutputPath = `${options.outputPath}.tmp.mp4`;
+      const args = await this.buildFFmpegCommand(options, tempOutputPath);
 
       logger.info(`🎬 Executando FFmpeg: ${this.ffmpegPath} ${args.join(' ')}`, { component: 'FFmpegExecutor' });
 
       // Executar FFmpeg
       const result = await this.executeFFmpeg(args, options, onProgress);
+
+      // Renomear para o caminho final
+      await fs.rename(tempOutputPath, options.outputPath);
 
       // Obter estatísticas do arquivo gerado
       const stats = await fs.stat(options.outputPath);
@@ -102,6 +103,15 @@ export class FFmpegExecutor {
 
     } catch (error) {
       logger.error('❌ Erro ao renderizar vídeo:', error instanceof Error ? error : new Error(String(error)), { component: 'FFmpegExecutor' });
+      
+      // Tenta limpar o arquivo temporário se ele existir
+      const tempOutputPath = `${options.outputPath}.tmp.mp4`;
+      try {
+        await fs.unlink(tempOutputPath);
+      } catch (cleanupError) {
+        // Ignora erros de limpeza
+      }
+
       return {
         success: false,
         outputPath: options.outputPath,
@@ -115,7 +125,7 @@ export class FFmpegExecutor {
   /**
    * Constrói argumentos do comando FFmpeg
    */
-  private async buildFFmpegCommand(options: FFmpegOptions): Promise<string[]> {
+  private async buildFFmpegCommand(options: FFmpegOptions, outputPath: string): Promise<string[]> {
     const args: string[] = [];
 
     // Input de frames
@@ -195,7 +205,7 @@ export class FFmpegExecutor {
 
     // Output
     args.push('-y'); // Sobrescrever arquivo existente
-    args.push(options.outputPath);
+    args.push(outputPath);
 
     return args;
   }

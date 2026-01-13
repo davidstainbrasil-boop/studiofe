@@ -64,13 +64,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { voice_id, text, voice_settings } = validationResult.data
+    const { voiceId, text, voiceSettings } = validationResult.data
 
     // Simulate processing time for real audio generation
     await new Promise(resolve => setTimeout(resolve, 2000))
 
     // Generate real audio response using TTS service
-    const audioBuffer = await generateRealAudio(text, voice_id, voice_settings)
+    const audioBuffer = await generateRealAudio(text, voiceId, voiceSettings)
     
     logger.info(`[VoiceCloning] Usuário ${user.id} gerou voz: ${text.length} chars`, { 
       component: 'API: voice-cloning/generate',

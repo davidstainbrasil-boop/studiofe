@@ -37,7 +37,7 @@ export async function GET(
       .from('projects')
       .select('*, timeline:timelines(*)')
       .eq('id', params.id)
-      .single() as { data: { role: string } | null }
+      .single()
     
     if (error || !project) {
       return NextResponse.json({
@@ -55,7 +55,7 @@ export async function GET(
         .select("userId")
         .eq("project_id", params.id)
         .eq("userId", user.id)
-        .single() as { data: { role: string } | null }
+        .single()
       
       if (collaborator) hasPermission = true
     }
@@ -219,7 +219,7 @@ export async function PUT(
       .from('projects')
       .select("owner_id")
       .eq('id', params.id)
-      .single() as { data: { role: string } | null }
+      .single()
 
     if (!project) {
       return NextResponse.json({
@@ -232,16 +232,15 @@ export async function PUT(
     let hasPermission = project.owner_id === user.id
 
     if (!hasPermission) {
-      type CollaboratorPermissions = { can_edit?: boolean; can_view?: boolean; can_delete?: boolean };
-      const { data: collaborator } = await supabase
+      const { data: collaboratorData } = await supabase
         .from('collaborators')
         .select('role')
         .eq("project_id", params.id)
         .eq("userId", user.id)
-        .single() as { data: { role: string } | null }
+        .single()
       
-      const permissions = collaborator?.role as CollaboratorPermissions | null;
-      if (permissions?.can_edit) {
+      const collaborator = collaboratorData as { role: string } | null;
+      if (collaborator?.role && ['editor', 'owner'].includes(collaborator.role)) {
         hasPermission = true
       }
     }
@@ -273,7 +272,7 @@ export async function PUT(
             .from('projects')
             .select("render_settings")
             .eq('id', params.id)
-            .single() as { data: { role: string } | null }
+            .single()
         
         const currentSettings = (typeof currentProject?.render_settings === 'object' && currentProject?.render_settings !== null)  
           ? (currentProject as any).render_settings as Record<string, unknown>
@@ -286,7 +285,7 @@ export async function PUT(
       .update(updateData)
       .eq('id', params.id)
       .select()
-      .single() as { data: { role: string } | null }
+      .single()
 
     if (error) throw error
 

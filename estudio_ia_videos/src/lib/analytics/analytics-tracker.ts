@@ -92,6 +92,8 @@ export class AnalyticsTracker {
     action: string;
     trackType?: string;
     trackId?: string;
+    trackCount?: number;
+    totalDuration?: number;
     details?: Record<string, unknown>;
   }): Promise<void> {
     await Analytics.trackEvent('timeline_edit', {
@@ -100,6 +102,8 @@ export class AnalyticsTracker {
       action: params.action,
       track_type: params.trackType,
       track_id: params.trackId,
+      track_count: params.trackCount,
+      total_duration: params.totalDuration,
       ...params.details,
     });
   }

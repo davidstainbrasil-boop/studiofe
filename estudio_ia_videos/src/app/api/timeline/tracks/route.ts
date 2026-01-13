@@ -173,14 +173,15 @@ export async function POST(request: NextRequest) {
     let hasPermission = project.userId === user.id
 
     if (!hasPermission) {
-      const { data: collaborator } = await supabase
+      const { data: collaboratorData } = await supabase
         .from('collaborators')
         .select('role')
         .eq("projectId", validatedData.projectId)
         .eq("userId", user.id)
-        .single() as { data: { role: string } | null }
+        .single()
       
       // Check if role allows editing (editor or owner)
+      const collaborator = collaboratorData as { role: string } | null;
       if (collaborator?.role && ['editor', 'owner'].includes(collaborator.role)) {
         hasPermission = true;
       }
@@ -342,14 +343,15 @@ export async function PUT(request: NextRequest) {
     let hasPermission = project.userId === user.id
 
     if (!hasPermission) {
-      const { data: collaborator } = await supabase
+      const { data: collaboratorData } = await supabase
         .from('collaborators')
         .select('role')
         .eq("projectId", projectId)
         .eq("userId", user.id)
-        .single() as { data: { role: string } | null }
+        .single()
       
       // Check if role allows editing (editor or owner)
+      const collaborator = collaboratorData as { role: string } | null;
       if (collaborator?.role && ['editor', 'owner'].includes(collaborator.role)) {
         hasPermission = true;
       }

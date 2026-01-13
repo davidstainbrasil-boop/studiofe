@@ -60,9 +60,9 @@ export class VideoRenderWorker extends EventEmitter {
   private videoUploader: VideoUploader;
   private tempDir: string;
 
-  constructor() {
+  constructor(ffmpegExecutor?: FFmpegExecutor) {
     super();
-    this.ffmpegExecutor = new FFmpegExecutor();
+    this.ffmpegExecutor = ffmpegExecutor || new FFmpegExecutor();
     this.videoUploader = new VideoUploader();
     this.tempDir = path.join(process.cwd(), 'temp', 'render');
     this.ensureTempDir();

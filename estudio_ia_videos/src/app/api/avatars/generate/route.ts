@@ -42,11 +42,11 @@ interface AvatarConfig {
 }
 
 interface VoiceConfig {
-  provider?: string
-  voiceId: string
-  language: string
-  speed: number
-  pitch: number
+  provider?: 'elevenlabs' | 'azure' | 'google'
+  voiceId?: string
+  language?: string
+  speed?: number
+  pitch?: number
 }
 
 // Interface para metadata do projeto com avatar

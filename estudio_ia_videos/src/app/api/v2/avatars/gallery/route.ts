@@ -21,25 +21,25 @@ interface AvatarModel {
   type: string;
   gender?: string;
   quality: string;
-  thumbnail_url?: string;
-  model_url?: string;
-  preview_video_url?: string;
+  thumbnailUrl?: string;
+  modelUrl?: string;
+  previewVideoUrl?: string;
   audio2faceCompatible: boolean;
   realTimeLipsync: boolean;
   rayTracingSupport: boolean;
-  lipsync_accuracy?: number;
-  model_file_path?: string;
-  texture_files?: unknown;
-  rig_file_path?: string;
-  animation_sets?: unknown;
-  blend_shapes_file?: string;
-  supported_languages?: string[];
+  lipsyncAccuracy?: number;
+  modelFilePath?: string;
+  textureFiles?: unknown;
+  rigFilePath?: string;
+  animationSets?: unknown;
+  blendShapesFile?: string;
+  supportedLanguages?: string[];
   isActive: boolean;
-  usage_count?: number;
-  avatar_stats?: unknown;
+  usageCount?: number;
+  avatarStats?: unknown;
   rating?: number;
-  created_at?: Date;
-  updated_at?: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 // Interface para categoria/qualidade filtros
@@ -310,7 +310,7 @@ export async function POST(request: NextRequest) {
         // Verificar se o avatar existe usando Prisma
         const avatarData = await prisma.avatar_models.findFirst({
           where: { id: avatarId, isActive: true },
-          select: { id: true, name: true, audio2FaceCompatible: true }
+          select: { id: true, name: true, audio2faceCompatible: true }
         })
 
         if (!avatarData) {

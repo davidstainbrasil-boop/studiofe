@@ -38,6 +38,7 @@ describe('RenderService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockProcessRenderJob.mockReset(); // Redefine a implementação do mock
     (prisma.render_jobs.create as jest.Mock).mockResolvedValue({});
     (prisma.render_jobs.update as jest.Mock).mockResolvedValue({});
   });

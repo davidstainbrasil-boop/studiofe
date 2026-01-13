@@ -20,7 +20,7 @@ export async function GET(
       .from('render_jobs')
       .select('*, project:projects(user_id)')
       .eq('id', jobId)
-      .single() as { data: { role: string } | null }
+      .single()
 
     if (error || !job) {
       return NextResponse.json({ error: 'Job not found' }, { status: 404 })
@@ -37,7 +37,7 @@ export async function GET(
         .select("userId")
         .eq("projectId", job.projectId)
         .eq("userId", user.id)
-        .single() as { data: { role: string } | null }
+        .single()
       
       if (collaborator) hasPermission = true
     }
@@ -77,7 +77,7 @@ export async function DELETE(
       .from('render_jobs')
       .select("projectId")
       .eq('id', jobId)
-      .single() as { data: { role: string } | null }
+      .single()
 
     if (jobError || !job) {
       return NextResponse.json({ error: 'Job not found' }, { status: 404 })
@@ -87,7 +87,7 @@ export async function DELETE(
       .from('projects')
       .select("userId")
       .eq('id', job.projectId)
-      .single() as { data: { role: string } | null }
+      .single()
 
     if (projectError || !project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 })
@@ -96,15 +96,15 @@ export async function DELETE(
     let hasPermission = project.userId === user.id
 
     if (!hasPermission) {
-      const { data: collaborator } = await supabase
+      const { data: collaboratorData } = await supabase
         .from('collaborators')
         .select('role')
         .eq("projectId", job.projectId)
         .eq("userId", user.id)
-        .single() as { data: { role: string } | null }
+        .single()
       
-      const permissions = collaborator?.role as { can_edit?: boolean } | null
-      if (permissions?.can_edit) {
+      const collaborator = collaboratorData as { role: string } | null;
+      if (collaborator?.role && ['editor', 'owner'].includes(collaborator.role)) {
         hasPermission = true
       }
     }

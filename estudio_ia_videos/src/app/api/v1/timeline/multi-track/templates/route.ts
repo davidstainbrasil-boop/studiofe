@@ -171,7 +171,7 @@ export async function GET(request: NextRequest) {
     }
 
     // List templates
-    const where: import('@prisma/client').Prisma.TimelineTemplateWhereInput = {
+    const where: Record<string, unknown> = {
       OR: [
         { isPublic: true },
         { createdBy: session.user.id },
@@ -192,7 +192,7 @@ export async function GET(request: NextRequest) {
     const templates = await prisma.timeline_templates.findMany({
       where,
       include: {
-        creator: {
+        users: {
           select: {
             id: true,
             name: true,
@@ -319,14 +319,14 @@ export async function PUT(request: NextRequest) {
       create: {
         id: crypto.randomUUID(),
         projectId,
-        tracks: toJsonValue(template.tracks ?? []),
-        settings: toJsonValue(template.settings ?? {}),
+        tracks: toJsonValue((template.tracks ?? []) as unknown[]),
+        settings: toJsonValue((template.settings ?? {}) as Record<string, unknown>),
         totalDuration: template.totalDuration,
         version: 1,
       },
       update: {
-        tracks: toJsonValue(template.tracks ?? []),
-        settings: toJsonValue(template.settings ?? {}),
+        tracks: toJsonValue((template.tracks ?? []) as unknown[]),
+        settings: toJsonValue((template.settings ?? {}) as Record<string, unknown>),
         totalDuration: template.totalDuration,
         version: { increment: 1 },
         updatedAt: new Date(),

@@ -51,19 +51,15 @@ export async function POST(req: NextRequest) {
       where: { projectId }
     })
 
-    // Cria nova versão
-    const version = await prisma.project_versions.create({
-      data: {
-        projectId,
-        userId: getUserId(session.user),
-        name,
-        description,
-        versionNumber: versionCount + 1,
-        projectData: projectData || {}
-      }
-    })
+    // Cria nova versão - usando UncheckedCreate
+    const userId = getUserId(session.user);
+    const version = await prisma.$queryRaw`
+      INSERT INTO project_versions (id, project_id, created_by, user_id, name, description, version_number, project_data, created_at)
+      VALUES (gen_random_uuid(), ${projectId}, ${userId}, ${userId}, ${name}, ${description}, ${String(versionCount + 1)}, ${JSON.stringify(projectData || {})}::jsonb, NOW())
+      RETURNING *
+    ` as unknown[];
 
-    return NextResponse.json({ version })
+    return NextResponse.json({ version: version[0] })
 
   } catch (error) {
     logger.error('Error creating version', error instanceof Error ? error : new Error(String(error)), { component: 'API: versions' })
@@ -95,7 +91,7 @@ export async function GET(req: NextRequest) {
     const versions = await prisma.project_versions.findMany({
       where: { projectId },
       include: {
-        user: {
+        users_project_versions_created_byTousers: {
           select: {
             name: true,
             email: true

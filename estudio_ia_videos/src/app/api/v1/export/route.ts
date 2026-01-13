@@ -99,7 +99,7 @@ interface SlidesDataJson {
     // Trigger render in background (Fire & Forget)
     // In a production serverless env, this might be killed. 
     // For this MVP/VPS setup, it should persist long enough or we should use a queue.
-    RenderService.renderVideo(projectId, slidesForRender)
+    RenderService.renderVideo(projectId, slidesForRender, user.id)
       .then(async (result) => {
         logger.info(`Render success for ${projectId}`, { component: 'API: v1/export' });
         await prisma.projects.update({
