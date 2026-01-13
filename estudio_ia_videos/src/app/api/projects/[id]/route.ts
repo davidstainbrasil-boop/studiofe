@@ -51,7 +51,7 @@ export async function GET(
 
     if (!hasPermission) {
       const { data: collaborator } = await supabase
-        .from('project_collaborators')
+        .from('collaborators')
         .select("userId")
         .eq("project_id", params.id)
         .eq("userId", user.id)
@@ -234,7 +234,7 @@ export async function PUT(
     if (!hasPermission) {
       type CollaboratorPermissions = { can_edit?: boolean; can_view?: boolean; can_delete?: boolean };
       const { data: collaborator } = await supabase
-        .from('project_collaborators')
+        .from('collaborators')
         .select('permissions')
         .eq("project_id", params.id)
         .eq("userId", user.id)

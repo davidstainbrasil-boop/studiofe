@@ -22,7 +22,7 @@ import {
 } from '@/types/export.types'
 import { VideoFilterType } from '@/lib/export/video-filters'
 import { AudioEnhancementType } from '@/lib/export/audio-processor'
-import { WatermarkType, WatermarkPosition } from '@/types/watermark.types'
+import { WatermarkType, WatermarkPosition } from '@/lib/video/watermark-processor'
 
 describe('RenderingPipeline - Integration Validation', () => {
   describe('Pipeline Stages', () => {

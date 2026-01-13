@@ -48,7 +48,7 @@ export class CommentsService {
         parentId: parentId || null,
       },
       include: {
-        user: {
+        users: {
           select: {
             name: true,
             email: true,
@@ -57,7 +57,7 @@ export class CommentsService {
         },
         replies: {
           include: {
-            user: {
+            users: {
               select: {
                 name: true,
                 email: true,
@@ -76,7 +76,7 @@ export class CommentsService {
     const comment = await prisma.project_comments.findUnique({
       where: { id: commentId },
       include: {
-        user: {
+        users: {
           select: {
             name: true,
             email: true,
@@ -85,7 +85,7 @@ export class CommentsService {
         },
         replies: {
           include: {
-            user: {
+            users: {
               select: {
                 name: true,
                 email: true,
@@ -101,7 +101,7 @@ export class CommentsService {
   }
   
   async list(filters: Partial<Pick<Comment, 'projectId' | 'slideId' | 'userId'>>): Promise<Comment[]> {
-    const where: Prisma.ProjectCommentWhereInput = {};
+    const where: Prisma.project_commentsWhereInput = {};
     if (filters.projectId) where.projectId = filters.projectId;
     if (filters.userId) where.userId = filters.userId;
     // slideId is not directly in schema, maybe stored in position or content? 
@@ -113,7 +113,7 @@ export class CommentsService {
         parentId: null // Only fetch root comments
       },
       include: {
-        user: {
+        users: {
           select: {
             name: true,
             email: true,
@@ -122,7 +122,7 @@ export class CommentsService {
         },
         replies: {
           include: {
-            user: {
+            users: {
               select: {
                 name: true,
                 email: true,
@@ -148,7 +148,7 @@ export class CommentsService {
           // position: updates.position ? JSON.stringify(updates.position) : undefined
         },
         include: {
-          user: {
+          users: {
             select: {
               name: true,
               email: true,
@@ -157,7 +157,7 @@ export class CommentsService {
           },
           replies: {
             include: {
-              user: {
+              users: {
                 select: {
                   name: true,
                   email: true,
@@ -233,7 +233,7 @@ export class CommentsService {
         parentId: input.commentId
       },
       include: {
-        user: {
+        users: {
           select: {
             name: true,
             email: true,
@@ -249,7 +249,7 @@ export class CommentsService {
   async searchUsersForMention(options: { projectId: string; query: string; limit: number }): Promise<{ id: string; name: string; avatar?: string }[]> {
     const { query, limit } = options;
     
-    const users = await prisma.user.findMany({
+    const users = await prisma.users.findMany({
       where: {
         name: { contains: query, mode: 'insensitive' }
       },

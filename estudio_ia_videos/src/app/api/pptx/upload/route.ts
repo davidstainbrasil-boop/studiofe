@@ -99,7 +99,7 @@ export const POST = withRateLimit(RATE_LIMITS.UPLOAD, 'user')(async function POS
 
       // If not owner, check collaborators table
       if (!hasPermission) {
-        const collaborator = await prisma.project_collaborators.findFirst({
+        const collaborator = await prisma.collaborators.findFirst({
           where: {
             projectId: projectId,
             userId: userId
@@ -398,7 +398,6 @@ async function processPPTXAsync(uploadId: string, filePath: string, projectId: s
           totalSlides: extraction.slides.length,
           slidesData: extraction.slides as object,
           thumbnailUrl: previewUrl,
-          pptxFileSize: file.size, // 📊 Track file size for quota
           processingLog: {
             completedAt: new Date().toISOString(),
             slideCount: extraction.slides.length

@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
       // Total render jobs in last 24 hours
       prisma.render_jobs.count({
         where: {
-          created_at: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+          createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
         }
       }),
 
@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
       prisma.render_jobs.count({
         where: {
           status: 'failed',
-          created_at: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+          createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
         }
       }),
 
@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
       prisma.render_jobs.count({
         where: {
           status: 'completed',
-          created_at: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+          createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
         }
       }),
 
@@ -71,13 +71,13 @@ export async function GET(req: NextRequest) {
       // Recent activity (last 10 renders)
       prisma.render_jobs.findMany({
         take: 10,
-        orderBy: { created_at: 'desc' },
+        orderBy: { createdAt: 'desc' },
         select: {
           id: true,
           status: true,
           progress: true,
-          created_at: true,
-          completed_at: true,
+          createdAt: true,
+          completedAt: true,
           projectId: true,
         }
       })

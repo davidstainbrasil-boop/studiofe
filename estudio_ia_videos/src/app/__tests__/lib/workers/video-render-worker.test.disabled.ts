@@ -73,7 +73,7 @@ describe('VideoRenderWorker', () => {
       watermark: null,
     });
 
-    const mockWatermarkProcessor = WatermarkProcessor as jest.MockedClass<typeof WatermarkProcessor>;
+    const mockWatermarkProcessor = WatermarkProcessor as jest..MockedClass<typeof WatermarkProcessor>;
 
     await (worker as any).renderVideo(mockJobData, '/tmp/frames', null, '/tmp/output.mp4', 300);
 

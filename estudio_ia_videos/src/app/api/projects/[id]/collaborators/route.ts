@@ -64,7 +64,7 @@ export async function GET(
 
     // Check if user is collaborator
     const { data: collaboratorRecord } = await supabase
-      .from('project_collaborators')
+      .from('collaborators')
       .select('id')
       .eq("projectId", projectId)
       .eq("userId", user.id)
@@ -81,7 +81,7 @@ export async function GET(
 
     // Buscar colaboradores
     const { data: collaboratorsData, error } = await supabase
-      .from('project_collaborators')
+      .from('collaborators')
       .select(`
         id,
         user_id,
@@ -221,7 +221,7 @@ export async function POST(
 
     // Verificar se já é colaborador
     const { data: existingCollaborator } = await supabase
-      .from('project_collaborators')
+      .from('collaborators')
       .select('id')
       .eq("projectId", projectId)
       .eq("userId", targetUser.id)
@@ -236,7 +236,7 @@ export async function POST(
 
     // Adicionar colaborador
     const { error: insertError } = await supabase
-      .from('project_collaborators')
+      .from('collaborators')
       .insert({
         projectId: projectId,
         userId: targetUser.id,
@@ -357,7 +357,7 @@ export async function DELETE(
 
     // Remover colaborador
     const { error } = await supabase
-      .from('project_collaborators')
+      .from('collaborators')
       .delete()
       .eq("projectId", projectId)
       .eq("userId", collaboratorId)

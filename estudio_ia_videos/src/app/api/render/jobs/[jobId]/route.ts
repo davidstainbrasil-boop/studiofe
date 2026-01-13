@@ -33,7 +33,7 @@ export async function GET(
 
     if (!hasPermission) {
       const { data: collaborator } = await supabase
-        .from('project_collaborators')
+        .from('collaborators')
         .select("userId")
         .eq("projectId", job.projectId)
         .eq("userId", user.id)
@@ -97,7 +97,7 @@ export async function DELETE(
 
     if (!hasPermission) {
       const { data: collaborator } = await supabase
-        .from('project_collaborators')
+        .from('collaborators')
         .select('permissions')
         .eq("projectId", job.projectId)
         .eq("userId", user.id)

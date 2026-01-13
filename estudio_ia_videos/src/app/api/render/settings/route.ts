@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
         .insert({
           user_id: user.id,
           settings: defaultSettings,
-          created_at: new Date().toISOString(),
+          createdAt: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
         .select()
@@ -147,7 +147,7 @@ export async function PATCH(request: NextRequest) {
         .insert({
           user_id: user.id,
           settings: updatedSettings,
-          created_at: new Date().toISOString(),
+          createdAt: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
         .select()

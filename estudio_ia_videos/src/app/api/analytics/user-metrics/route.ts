@@ -152,7 +152,7 @@ async function getCollaborationStats(userId: string) {
 
     // ProjectCollaborator table is missing in Prisma schema, use raw query
     const collaborations = await prisma.$queryRaw<CollaboratorQueryResult[]>`
-      SELECT project_id, role FROM project_collaborators WHERE user_id = ${userId}::uuid
+      SELECT project_id, role FROM collaborators WHERE user_id = ${userId}::uuid
     `;
     const collaborationsList = collaborations;
 
@@ -160,7 +160,7 @@ async function getCollaborationStats(userId: string) {
     const sharedProjects = await prisma.$queryRaw<SharedProjectQueryResult[]>`
       SELECT DISTINCT p.id
       FROM projects p
-      JOIN project_collaborators pc ON p.id = pc.projectId
+      JOIN collaborators pc ON p.id = pc.projectId
       WHERE p.userId = ${userId}::uuid
     `;
     const sharedProjectsList = sharedProjects;

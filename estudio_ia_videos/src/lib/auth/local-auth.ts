@@ -51,7 +51,7 @@ export async function registerUser(
 ): Promise<AuthResult> {
   try {
     // Verificar se email já existe
-    const existingUser = await prisma.user.findUnique({
+    const existingUser = await prisma.users.findUnique({
       where: { email },
     });
 
@@ -63,7 +63,7 @@ export async function registerUser(
     const passwordHash = await hash(password, 12);
 
     // Criar usuário com todos os campos
-    const user = await prisma.user.create({
+    const user = await prisma.users.create({
       data: {
         email,
         passwordHash,
@@ -117,7 +117,7 @@ export async function loginUser(
 ): Promise<AuthResult> {
   try {
     // Buscar usuário com passwordHash
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { email },
       select: {
         id: true,
@@ -147,7 +147,7 @@ export async function loginUser(
     }
 
     // Atualizar último login e contador
-    await prisma.user.update({
+    await prisma.users.update({
       where: { id: user.id },
       data: {
         lastLogin: new Date(),
@@ -217,7 +217,7 @@ export async function getUserFromToken(token: string): Promise<User | null> {
   if (!payload) return null;
 
   try {
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { id: payload.userId },
       select: {
         id: true,
@@ -268,13 +268,13 @@ export async function getCurrentUser(): Promise<User | null> {
 export async function ensureDefaultUsers(): Promise<void> {
   try {
     // Admin
-    const adminExists = await prisma.user.findUnique({
+    const adminExists = await prisma.users.findUnique({
       where: { email: 'admin@mvpvideos.com' },
     });
 
     if (!adminExists) {
       const passwordHash = await hash('Admin@2025!', 12);
-      await prisma.user.create({
+      await prisma.users.create({
         data: {
           email: 'admin@mvpvideos.com',
           passwordHash,
@@ -289,13 +289,13 @@ export async function ensureDefaultUsers(): Promise<void> {
     }
 
     // Demo
-    const demoExists = await prisma.user.findUnique({
+    const demoExists = await prisma.users.findUnique({
       where: { email: 'demo@mvpvideos.com' },
     });
 
     if (!demoExists) {
       const passwordHash = await hash('Demo@2025!', 12);
-      await prisma.user.create({
+      await prisma.users.create({
         data: {
           email: 'demo@mvpvideos.com',
           passwordHash,

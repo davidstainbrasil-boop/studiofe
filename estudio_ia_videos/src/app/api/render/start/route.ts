@@ -192,7 +192,7 @@ export async function POST(req: NextRequest) {
       const collaborator = await cachedQuery(
         `project:${projectId}:collaborator:${userId}`,
         async () => {
-          return await prisma.project_collaborators.findFirst({
+          return await prisma.collaborators.findFirst({
             where: {
               projectId: projectId,
               userId: userId as string

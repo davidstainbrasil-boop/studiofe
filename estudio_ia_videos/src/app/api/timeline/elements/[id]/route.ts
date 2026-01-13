@@ -282,7 +282,7 @@ export async function PUT(
               transitions: element.transitions
             }
           } as any,
-          created_at: new Date().toISOString()
+          createdAt: new Date().toISOString()
         })
     }
 

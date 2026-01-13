@@ -70,13 +70,13 @@ export async function cleanOldCompletedJobs(
     const oldJobs = await prisma.render_jobs.findMany({
       where: {
         status: 'completed',
-        completed_at: { lt: cutoffDate }
+        completedAt: { lt: cutoffDate }
       },
       select: {
         id: true,
-        output_url: true,
+        outputUrl: true,
         outputSize: true,
-        completed_at: true
+        completedAt: true
       }
     });
 
@@ -89,9 +89,9 @@ export async function cleanOldCompletedJobs(
         if (dryRun) {
           logger.info('DRY RUN: Would delete job', {
             jobId: job.id,
-            outputUrl: job.output_url,
+            outputUrl: job.outputUrl,
             size: job.outputSize,
-            completedAt: job.completed_at
+            completedAt: job.completedAt
           });
           deleted++;
           freedSpace += job.outputSize || 0;
@@ -99,8 +99,8 @@ export async function cleanOldCompletedJobs(
         }
 
         // Delete physical file if it exists locally
-        if (job.output_url) {
-          const filePath = extractLocalPath(job.output_url);
+        if (job.outputUrl) {
+          const filePath = extractLocalPath(job.outputUrl);
           if (filePath && existsSync(filePath)) {
             await fs.unlink(filePath);
             logger.debug('Deleted render output file', {
@@ -191,7 +191,7 @@ export async function cleanFailedJobs(
       },
       select: {
         id: true,
-        error_message: true,
+        errorMessage: true,
         updatedAt: true
       }
     });
@@ -205,7 +205,7 @@ export async function cleanFailedJobs(
         if (dryRun) {
           logger.info('DRY RUN: Would delete failed job', {
             jobId: job.id,
-            error: job.error_message,
+            error: job.errorMessage,
             updatedAt: job.updatedAt
           });
           deleted++;

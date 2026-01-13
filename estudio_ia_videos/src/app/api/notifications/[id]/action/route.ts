@@ -214,7 +214,7 @@ export async function POST(
             success: actionResult.success,
             timestamp: new Date().toISOString()
           } as any,
-          created_at: new Date().toISOString()
+          createdAt: new Date().toISOString()
         })
     } catch (analyticsError) {
       logger.warn('Failed to log notification action', { component: 'API: notifications/[id]/action' })

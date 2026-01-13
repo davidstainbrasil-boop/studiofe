@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     logger.info(`📋 Criando template "${name}" do projeto ${projectId}...`, { component: 'API: v1/timeline/multi-track/templates' })
 
     // Get timeline from project
-    const timeline = await prisma.timeline.findUnique({
+    const timeline = await prisma.timelines.findUnique({
       where: { projectId },
     });
 
@@ -299,7 +299,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Verify project access
-    const project = await prisma.project.findFirst({
+    const project = await prisma.projects.findFirst({
       where: {
         id: projectId,
         userId: session.user.id,
@@ -314,7 +314,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Apply template to timeline
-    const timeline = await prisma.timeline.upsert({
+    const timeline = await prisma.timelines.upsert({
       where: { projectId },
       create: {
         id: crypto.randomUUID(),

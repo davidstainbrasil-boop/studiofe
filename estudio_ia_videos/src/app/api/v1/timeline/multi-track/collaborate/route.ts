@@ -13,7 +13,7 @@ import { logger } from '@lib/logger';
 /**
  * POST - Lock/Unlock track for editing
  */
-export async function POST(request: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
+    const body = await req.json();
     const { projectId, trackId, action } = body;
 
     if (!projectId || !trackId || !action) {
@@ -33,16 +33,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!['lock', 'unlock'].includes(action)) {
-      return NextResponse.json(
-        { success: false, message: 'action deve ser "lock" ou "unlock"' },
-        { status: 400 }
-      );
-    }
-
-    logger.info(`🔒 ${action.toUpperCase()} track ${trackId} no projeto ${projectId}...`, { component: 'API: v1/timeline/multi-track/collaborate' });
-
-    // Verify project access
     const project = await prisma.projects.findFirst({
       where: {
         id: projectId,
@@ -52,69 +42,46 @@ export async function POST(request: NextRequest) {
 
     if (!project) {
       return NextResponse.json(
-        { success: false, message: 'Projeto não encontrado' },
+        { success: false, message: 'Projeto não encontrado ou sem permissão' },
         { status: 404 }
       );
     }
 
     if (action === 'lock') {
-      // Check if track is already locked by another user
-      const existingLock = await prisma.timeline_track_locks.findFirst({
+      const existingLock = await prisma.timelineTrackLock.findFirst({
         where: {
           projectId,
           trackId,
-          userId: { not: session.user.id },
         },
       });
 
-      if (existingLock) {
+      if (existingLock && existingLock.userId !== session.user.id) {
         return NextResponse.json(
-          { 
-            success: false, 
-            message: 'Track já está bloqueada por outro usuário',
-            lockedBy: existingLock.userId,
-            lockedAt: existingLock.createdAt,
-          },
+          { success: false, message: 'Track já está bloqueada por outro usuário' },
           { status: 409 }
         );
       }
 
-      // Create or update lock
-      const lock = await prisma.timeline_track_locks.upsert({
+      const lock = await prisma.timelineTrackLock.upsert({
         where: {
-          projectId_trackId_userId: {
+          projectId_trackId: {
             projectId,
             trackId,
-            userId: session.user.id,
           },
         },
+        update: {
+          userId: session.user.id,
+        },
         create: {
-          id: crypto.randomUUID(),
           projectId,
           trackId,
           userId: session.user.id,
         },
-        update: {
-          updatedAt: new Date(),
-        },
       });
 
-      logger.info(`✅ Track bloqueada: ${lock.id}`, { component: 'API: v1/timeline/multi-track/collaborate' });
-
-      return NextResponse.json({
-        success: true,
-        data: {
-          id: lock.id,
-          trackId: lock.trackId,
-          userId: lock.userId,
-          lockedAt: lock.createdAt.toISOString(),
-        },
-        message: 'Track bloqueada com sucesso',
-      });
-
-    } else {
-      // Unlock - remove lock
-      await prisma.timeline_track_locks.deleteMany({
+      return NextResponse.json({ success: true, data: lock });
+    } else if (action === 'unlock') {
+      await prisma.timelineTrackLock.deleteMany({
         where: {
           projectId,
           trackId,
@@ -122,24 +89,17 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      logger.info(`✅ Track desbloqueada: ${trackId}`, { component: 'API: v1/timeline/multi-track/collaborate' });
-
-      return NextResponse.json({
-        success: true,
-        data: {
-          trackId,
-          userId: session.user.id,
-          unlockedAt: new Date().toISOString(),
-        },
-        message: 'Track desbloqueada com sucesso',
-      });
+      return NextResponse.json({ success: true });
+    } else {
+      return NextResponse.json(
+        { success: false, message: 'Ação inválida' },
+        { status: 400 }
+      );
     }
-
-  } catch (error: unknown) {
-    logger.error('❌ Erro ao gerenciar lock:', error instanceof Error ? error : new Error(String(error)), { component: 'API: v1/timeline/multi-track/collaborate' });
-    const message = error instanceof Error ? error.message : String(error);
+  } catch (error) {
+    logger.error('Erro na rota de colaboração:', error);
     return NextResponse.json(
-      { success: false, message: 'Erro ao processar lock', error: message },
+      { success: false, message: 'Erro interno do servidor' },
       { status: 500 }
     );
   }

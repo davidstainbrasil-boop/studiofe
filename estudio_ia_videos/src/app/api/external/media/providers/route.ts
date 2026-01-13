@@ -160,7 +160,7 @@ export async function GET(request: NextRequest) {
         enabled: provider.enabled,
         config: provider.config,
         pricing: provider.pricing,
-        created_at: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString()
       }))
 
@@ -257,7 +257,7 @@ export async function POST(request: NextRequest) {
         enabled: providerData.enabled,
         config: providerData.config || {},
         pricing: providerData.pricing || {},
-        created_at: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })
       .select()
@@ -281,7 +281,7 @@ export async function POST(request: NextRequest) {
               timestamp: new Date().toISOString()
             }
           } as any,
-          created_at: new Date().toISOString()
+          createdAt: new Date().toISOString()
         })
     } catch (analyticsError) {
       logger.warn('Failed to log media provider creation', { component: 'API: external/media/providers' })

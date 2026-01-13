@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import ffmpeg from 'fluent-ffmpeg';
 import { promises as fs } from 'fs';
-import { WatermarkPosition } from '../../types/watermark.types';
+import { WatermarkPosition } from './watermark-processor';
 
 export { WatermarkPosition };
 
@@ -124,20 +124,33 @@ export default class VideoWatermarker extends EventEmitter {
              }
           } else {
              switch(config.position) {
-               case WatermarkPosition.TOP_LEFT: x = `${margin}`; y = `${margin}`; break;
-               case WatermarkPosition.TOP_CENTER: x = `(W-tw)/2`; y = `${margin}`; break;
-               case WatermarkPosition.TOP_RIGHT: x = `W-tw-${margin}`; y = `${margin}`; break;
-               case WatermarkPosition.CENTER_LEFT: x = `${margin}`; y = `(H-th)/2`; break;
-               case WatermarkPosition.CENTER: x = `(W-tw)/2`; y = `(H-th)/2`; break;
-               case WatermarkPosition.CENTER_RIGHT: x = `W-tw-${margin}`; y = `(H-th)/2`; break;
-               case WatermarkPosition.BOTTOM_LEFT: x = `${margin}`; y = `H-th-${margin}`; break;
-               case WatermarkPosition.BOTTOM_CENTER: x = `(W-tw)/2`; y = `H-th-${margin}`; break;
-               case WatermarkPosition.BOTTOM_RIGHT: x = `W-tw-${margin}`; y = `H-th-${margin}`; break;
-               case 'bottom-right': x = `W-tw-${margin}`; y = `H-th-${margin}`; break;
-               case 'top-right': x = `W-tw-${margin}`; y = `${margin}`; break;
-               case 'top-center': x = `(W-tw)/2`; y = `${margin}`; break;
-               case 'bottom-left': x = `${margin}`; y = `H-th-${margin}`; break;
-               case 'center': x = `(W-tw)/2`; y = `(H-th)/2`; break;
+               case WatermarkPosition.TOP_LEFT:
+               case 'top-left':
+                 x = `${margin}`; y = `${margin}`; break;
+               case WatermarkPosition.TOP_CENTER:
+               case 'top-center':
+                 x = `(W-tw)/2`; y = `${margin}`; break;
+               case WatermarkPosition.TOP_RIGHT:
+               case 'top-right':
+                 x = `W-tw-${margin}`; y = `${margin}`; break;
+               case WatermarkPosition.CENTER_LEFT:
+               case 'center-left':
+                 x = `${margin}`; y = `(H-th)/2`; break;
+               case WatermarkPosition.CENTER:
+               case 'center':
+                 x = `(W-tw)/2`; y = `(H-th)/2`; break;
+               case WatermarkPosition.CENTER_RIGHT:
+               case 'center-right':
+                 x = `W-tw-${margin}`; y = `(H-th)/2`; break;
+               case WatermarkPosition.BOTTOM_LEFT:
+               case 'bottom-left':
+                 x = `${margin}`; y = `H-th-${margin}`; break;
+               case WatermarkPosition.BOTTOM_CENTER:
+               case 'bottom-center':
+                 x = `(W-tw)/2`; y = `H-th-${margin}`; break;
+               case WatermarkPosition.BOTTOM_RIGHT:
+               case 'bottom-right':
+                 x = `W-tw-${margin}`; y = `H-th-${margin}`; break;
              }
           }
 
@@ -173,19 +186,33 @@ export default class VideoWatermarker extends EventEmitter {
              }
           } else {
              switch(config.position) {
-               case WatermarkPosition.TOP_LEFT: x = `${margin}`; y = `${margin}`; break;
-               case WatermarkPosition.TOP_CENTER: x = `(W-w)/2`; y = `${margin}`; break;
-               case WatermarkPosition.TOP_RIGHT: x = `W-w-${margin}`; y = `${margin}`; break;
-               case WatermarkPosition.CENTER_LEFT: x = `${margin}`; y = `(H-h)/2`; break;
-               case WatermarkPosition.CENTER: x = `(W-w)/2`; y = `(H-h)/2`; break;
-               case WatermarkPosition.CENTER_RIGHT: x = `W-w-${margin}`; y = `(H-h)/2`; break;
-               case WatermarkPosition.BOTTOM_LEFT: x = `${margin}`; y = `H-h-${margin}`; break;
-               case WatermarkPosition.BOTTOM_CENTER: x = `(W-w)/2`; y = `H-h-${margin}`; break;
-               case WatermarkPosition.BOTTOM_RIGHT: x = `W-w-${margin}`; y = `H-h-${margin}`; break;
-               case 'bottom-right': x = `W-w-${margin}`; y = `H-h-${margin}`; break;
-               case 'top-right': x = `W-w-${margin}`; y = `${margin}`; break;
-               case 'bottom-left': x = `${margin}`; y = `H-h-${margin}`; break;
-               case 'center': x = `(W-w)/2`; y = `(H-h)/2`; break;
+               case WatermarkPosition.TOP_LEFT:
+               case 'top-left':
+                 x = `${margin}`; y = `${margin}`; break;
+               case WatermarkPosition.TOP_CENTER:
+               case 'top-center':
+                 x = `(W-w)/2`; y = `${margin}`; break;
+               case WatermarkPosition.TOP_RIGHT:
+               case 'top-right':
+                 x = `W-w-${margin}`; y = `${margin}`; break;
+               case WatermarkPosition.CENTER_LEFT:
+               case 'center-left':
+                 x = `${margin}`; y = `(H-h)/2`; break;
+               case WatermarkPosition.CENTER:
+               case 'center':
+                 x = `(W-w)/2`; y = `(H-h)/2`; break;
+               case WatermarkPosition.CENTER_RIGHT:
+               case 'center-right':
+                 x = `W-w-${margin}`; y = `(H-h)/2`; break;
+               case WatermarkPosition.BOTTOM_LEFT:
+               case 'bottom-left':
+                 x = `${margin}`; y = `H-h-${margin}`; break;
+               case WatermarkPosition.BOTTOM_CENTER:
+               case 'bottom-center':
+                 x = `(W-w)/2`; y = `H-h-${margin}`; break;
+               case WatermarkPosition.BOTTOM_RIGHT:
+               case 'bottom-right':
+                 x = `W-w-${margin}`; y = `H-h-${margin}`; break;
              }
           }
 

@@ -27,7 +27,7 @@ type RenderJobRow = Omit<BasicRenderJob, "renderSettings"> & {
 
 type RenderJobWithProject = {
   id: string
-  created_at: string
+  createdAt: string
   started_at: string | null
   completed_at: string | null
   status: string

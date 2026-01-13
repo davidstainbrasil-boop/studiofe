@@ -1,4 +1,4 @@
-import { WatermarkConfig } from '@types/watermark.types';
+import { WatermarkConfig } from '../video/video-watermarker';
 
 export class WatermarkRenderer {
   applyWatermark(

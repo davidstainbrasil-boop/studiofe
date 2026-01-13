@@ -93,13 +93,13 @@ export class DataExporter {
           orderBy: { createdAt: 'desc' }
         }) as Record<string, unknown>[];
       case 'projects':
-        return await prisma.project.findMany({
+        return await prisma.projects.findMany({
           where,
           take: limit,
           orderBy: { createdAt: 'desc' }
         }) as Record<string, unknown>[];
       case 'users':
-         return await prisma.user.findMany({
+         return await prisma.users.findMany({
              where,
              take: limit,
              orderBy: { createdAt: 'desc' }

@@ -89,7 +89,7 @@ interface RenderJob {
   user_id: string;
   progress: number;
   attempts?: number;
-  created_at: string;
+  createdAt: string;
   started_at?: string;
   completed_at?: string;
   error_message?: string;

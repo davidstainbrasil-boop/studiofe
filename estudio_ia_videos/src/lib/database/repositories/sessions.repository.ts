@@ -25,7 +25,7 @@ export class SessionsRepository {
    * Cria uma nova sessão
    */
   async create(data: CreateSessionData) {
-    return prisma.session.create({
+    return prisma.sessions.create({
       data: {
         userId: data.userId,
         token: data.token,
@@ -34,7 +34,7 @@ export class SessionsRepository {
         expiresAt: data.expiresAt,
       },
       include: {
-        user: {
+        users: {
           select: {
             id: true,
             email: true,
@@ -51,10 +51,10 @@ export class SessionsRepository {
    * Busca uma sessão por token
    */
   async findByToken(token: string) {
-    return prisma.session.findUnique({
+    return prisma.sessions.findUnique({
       where: { token },
       include: {
-        user: {
+        users: {
           select: {
             id: true,
             email: true,
@@ -72,7 +72,7 @@ export class SessionsRepository {
    * Busca sessões por usuário
    */
   async findByUserId(userId: string, filters?: SessionFilters) {
-    const where: Prisma.SessionWhereInput = {
+    const where: Prisma.sessionsWhereInput = {
       userId,
     };
 
@@ -84,11 +84,11 @@ export class SessionsRepository {
       }
     }
 
-    return prisma.session.findMany({
+    return prisma.sessions.findMany({
       where,
       orderBy: { createdAt: 'desc' },
       include: {
-        user: {
+        users: {
           select: {
             id: true,
             email: true,
@@ -113,7 +113,7 @@ export class SessionsRepository {
    * Deleta uma sessão por token
    */
   async deleteByToken(token: string) {
-    return prisma.session.delete({
+    return prisma.sessions.delete({
       where: { token },
     });
   }
@@ -122,7 +122,7 @@ export class SessionsRepository {
    * Deleta todas as sessões de um usuário
    */
   async deleteByUserId(userId: string) {
-    return prisma.session.deleteMany({
+    return prisma.sessions.deleteMany({
       where: { userId },
     });
   }
@@ -131,7 +131,7 @@ export class SessionsRepository {
    * Deleta sessões expiradas
    */
   async deleteExpired() {
-    return prisma.session.deleteMany({
+    return prisma.sessions.deleteMany({
       where: {
         expiresAt: {
           lt: new Date(),
@@ -144,7 +144,7 @@ export class SessionsRepository {
    * Atualiza a data de expiração de uma sessão
    */
   async updateExpiration(token: string, expiresAt: Date) {
-    return prisma.session.update({
+    return prisma.sessions.update({
       where: { token },
       data: { expiresAt },
     });
@@ -154,7 +154,7 @@ export class SessionsRepository {
    * Conta sessões ativas de um usuário
    */
   async countActiveByUserId(userId: string): Promise<number> {
-    return prisma.session.count({
+    return prisma.sessions.count({
       where: {
         userId,
         expiresAt: {

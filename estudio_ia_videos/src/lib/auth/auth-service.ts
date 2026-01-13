@@ -90,7 +90,7 @@ export class AuthService {
 
     // Enrich with DB data
     try {
-       const dbUser = await prisma.user.findUnique({ where: { id: data.user.id } });
+       const dbUser = await prisma.users.findUnique({ where: { id: data.user.id } });
        if (dbUser) {
            user.role = dbUser.role || user.role;
            // user.permissions = ... // Fetch permissions if needed
@@ -105,7 +105,7 @@ export class AuthService {
     return {
       accessToken: data.session.access_token,
       refreshToken: data.session.refresh_token,
-      expiresAt: (data.session.expiresAt || (Date.now() / 1000) + 3600) * 1000,
+      expiresAt: (data.session.expires_at || (Date.now() / 1000) + 3600) * 1000,
       user
     };
   }
@@ -151,7 +151,7 @@ export class AuthService {
   async verifyPermission(userId: string, resource: string, action: string): Promise<boolean> {
     // Real implementation: Check RBAC in database
     try {
-      const user = await prisma.user.findUnique({
+      const user = await prisma.users.findUnique({
         where: { id: userId },
         select: { role: true }
       });
@@ -174,7 +174,7 @@ export class AuthService {
   
   async isAdmin(userId: string): Promise<boolean> {
     try {
-      const user = await prisma.user.findUnique({
+      const user = await prisma.users.findUnique({
         where: { id: userId },
         select: { role: true }
       });

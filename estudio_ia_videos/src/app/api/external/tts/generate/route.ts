@@ -328,7 +328,7 @@ export async function POST(request: NextRequest) {
             duration: result.duration,
             fileSize: result.size
           },
-          created_at: new Date().toISOString()
+          createdAt: new Date().toISOString()
         })
     } catch (usageLogError) {
       logger.warn('Failed to log TTS usage:', { component: 'API: external/tts/generate' })
@@ -353,7 +353,7 @@ export async function POST(request: NextRequest) {
               timestamp: new Date().toISOString()
             }
           } as any,
-          created_at: new Date().toISOString()
+          createdAt: new Date().toISOString()
         })
     } catch (analyticsError) {
       logger.warn('Failed to log TTS generation:', { component: 'API: external/tts/generate' })

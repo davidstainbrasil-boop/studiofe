@@ -43,7 +43,7 @@ export class StorageFilesRepository {
         isPublic: data.isPublic || false,
       },
       include: {
-        user: {
+        users: {
           select: {
             id: true,
             email: true,
@@ -61,7 +61,7 @@ export class StorageFilesRepository {
     return prisma.storage_files.findUnique({
       where: { id },
       include: {
-        user: {
+        users: {
           select: {
             id: true,
             email: true,
@@ -84,7 +84,7 @@ export class StorageFilesRepository {
         },
       },
       include: {
-        user: {
+        users: {
           select: {
             id: true,
             email: true,
@@ -101,9 +101,9 @@ export class StorageFilesRepository {
   async findMany(filters?: StorageFileFilters, options?: {
     limit?: number;
     offset?: number;
-    orderBy?: Prisma.StorageFileOrderByWithRelationInput;
+    orderBy?: Prisma.storage_filesOrderByWithRelationInput;
   }) {
-    const where: Prisma.StorageFileWhereInput = {};
+    const where: Prisma.storage_filesWhereInput = {};
 
     if (filters?.userId) where.userId = filters.userId;
     if (filters?.bucket) where.bucket = filters.bucket;
@@ -116,7 +116,7 @@ export class StorageFilesRepository {
       skip: options?.offset,
       orderBy: options?.orderBy || { createdAt: 'desc' },
       include: {
-        user: {
+        users: {
           select: {
             id: true,
             email: true,
@@ -189,7 +189,7 @@ export class StorageFilesRepository {
    * Conta arquivos por tipo MIME
    */
   async countByMimeType(userId?: string) {
-    const where: Prisma.StorageFileWhereInput = {};
+    const where: Prisma.storage_filesWhereInput = {};
     if (userId) where.userId = userId;
 
     return prisma.storage_files.groupBy({

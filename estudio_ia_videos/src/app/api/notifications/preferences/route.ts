@@ -94,7 +94,7 @@ export async function GET(request: NextRequest) {
         .insert({
           user_id: session.user.id,
           ...defaultPreferences,
-          created_at: new Date().toISOString(),
+          createdAt: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
         .select()
@@ -163,7 +163,7 @@ export async function PATCH(request: NextRequest) {
           user_id: session.user.id,
           ...defaultPreferences,
           ...validatedData,
-          created_at: new Date().toISOString(),
+          createdAt: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
         .select()
@@ -222,7 +222,7 @@ export async function PATCH(request: NextRequest) {
             changes: Object.keys(validatedData),
             timestamp: new Date().toISOString()
           } as any,
-          created_at: new Date().toISOString()
+          createdAt: new Date().toISOString()
         })
     } catch (analyticsError) {
       logger.warn('Failed to log preference change:', { component: 'API: notifications/preferences' })
@@ -276,7 +276,7 @@ export async function DELETE(request: NextRequest) {
       .upsert({
         user_id: session.user.id,
         ...defaultPreferences,
-        created_at: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })
       .select()
@@ -294,7 +294,7 @@ export async function DELETE(request: NextRequest) {
           event_data: {
             timestamp: new Date().toISOString()
           } as any,
-          created_at: new Date().toISOString()
+          createdAt: new Date().toISOString()
         })
     } catch (analyticsError) {
       logger.warn('Failed to log preference reset:', { component: 'API: notifications/preferences' })

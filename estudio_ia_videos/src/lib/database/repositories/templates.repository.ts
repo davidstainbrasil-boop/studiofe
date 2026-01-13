@@ -43,7 +43,7 @@ export class TemplatesRepository {
         createdBy: data.createdBy,
       },
       include: {
-        creator: {
+        users: {
           select: {
             id: true,
             email: true,
@@ -61,7 +61,7 @@ export class TemplatesRepository {
     return prisma.templates.findUnique({
       where: { id },
       include: {
-        creator: {
+        users: {
           select: {
             id: true,
             email: true,
@@ -78,9 +78,9 @@ export class TemplatesRepository {
   async findMany(filters?: TemplateFilters, options?: {
     limit?: number;
     offset?: number;
-    orderBy?: Prisma.TemplateOrderByWithRelationInput;
+    orderBy?: Prisma.templatesOrderByWithRelationInput;
   }) {
-    const where: Prisma.TemplateWhereInput = {};
+    const where: Prisma.templatesWhereInput = {};
 
     if (filters?.category) where.category = filters.category;
     if (filters?.isPublic !== undefined) where.isPublic = filters.isPublic;
@@ -98,7 +98,7 @@ export class TemplatesRepository {
       skip: options?.offset,
       orderBy: options?.orderBy || { usageCount: 'desc' },
       include: {
-        creator: {
+        users: {
           select: {
             id: true,
             email: true,
@@ -120,7 +120,7 @@ export class TemplatesRepository {
       take: limit,
       orderBy: { usageCount: 'desc' },
       include: {
-        creator: {
+        users: {
           select: {
             id: true,
             email: true,
@@ -191,7 +191,7 @@ export class TemplatesRepository {
       take: limit,
       orderBy: { usageCount: 'desc' },
       include: {
-        creator: {
+        users: {
           select: {
             id: true,
             email: true,

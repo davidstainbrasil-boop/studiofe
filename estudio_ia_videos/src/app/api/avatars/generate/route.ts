@@ -71,7 +71,7 @@ interface AvatarData {
   script: string
   voice?: VoiceConfig
   status: string
-  created_at: string
+  createdAt: string
   generated_at?: string
   video_url?: string
   thumbnail_url?: string
@@ -112,7 +112,7 @@ class Avatar3DGenerator {
         script,
         voice: voiceConfig,
         status: 'generating',
-        created_at: new Date().toISOString()
+        createdAt: new Date().toISOString()
       }
 
       // Simular processo de geração

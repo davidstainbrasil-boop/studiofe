@@ -10,7 +10,8 @@
  */
 
 import { watermarkRenderer } from '@/lib/export/watermark-renderer'
-import * as WatermarkTypes from '@/types/watermark.types'
+import { WatermarkPosition, WatermarkType, WatermarkAnimation } from '@/lib/video/watermark-processor'
+import { ImageWatermarkConfig, TextWatermarkConfig } from '@/lib/video/video-watermarker'
 
 // Mock FFmpeg não é necessário pois não vamos testar execução real
 // Apenas validaremos que os métodos são chamados corretamente
@@ -22,10 +23,10 @@ describe('WatermarkRenderer - API Validation', () => {
 
   describe('Image Watermark - Method Signature', () => {
     it('deve aceitar watermark de imagem com todos os parâmetros obrigatórios', () => {
-      const config: WatermarkTypes.ImageWatermarkConfig = {
-        type: WatermarkTypes.WatermarkType.IMAGE,
+      const config: ImageWatermarkConfig = {
+        type: WatermarkType.IMAGE,
         imageUrl: mockWatermarkPath,
-        position: WatermarkTypes.WatermarkPosition.TOP_RIGHT,
+        position: WatermarkPosition.TOP_RIGHT,
         opacity: 0.8,
         width: 200,
         height: 'auto',
@@ -39,10 +40,10 @@ describe('WatermarkRenderer - API Validation', () => {
     })
 
     it('deve aceitar watermark com posição customizada', () => {
-      const config: WatermarkTypes.ImageWatermarkConfig = {
-        type: WatermarkTypes.WatermarkType.IMAGE,
+      const config: ImageWatermarkConfig = {
+        type: WatermarkType.IMAGE,
         imageUrl: mockWatermarkPath,
-        position: WatermarkTypes.WatermarkPosition.CUSTOM,
+        position: WatermarkPosition.CUSTOM,
         customPosition: {
           x: 50,
           y: 50,
@@ -60,31 +61,31 @@ describe('WatermarkRenderer - API Validation', () => {
     })
 
     it('deve aceitar watermark com animação', () => {
-      const config: WatermarkTypes.ImageWatermarkConfig = {
-        type: WatermarkTypes.WatermarkType.IMAGE,
+      const config: ImageWatermarkConfig = {
+        type: WatermarkType.IMAGE,
         imageUrl: mockWatermarkPath,
-        position: WatermarkTypes.WatermarkPosition.BOTTOM_RIGHT,
+        position: WatermarkPosition.BOTTOM_RIGHT,
         opacity: 0.7,
         width: 'auto',
         height: 100,
         maintainAspectRatio: true,
         padding: { top: 20, right: 20, bottom: 20, left: 20 },
         animation: {
-          type: WatermarkTypes.WatermarkAnimation.FADE_IN,
+          type: WatermarkAnimation.FADE_IN,
           duration: 2,
           delay: 0,
         },
       }
 
       expect(config.animation).toBeDefined()
-      expect(config.animation?.type).toBe(WatermarkTypes.WatermarkAnimation.FADE_IN)
+      expect(config.animation?.type).toBe(WatermarkAnimation.FADE_IN)
     })
   })
 
   describe('Text Watermark - Method Signature', () => {
     it('deve aceitar watermark de texto com estilo completo', () => {
-      const config: WatermarkTypes.TextWatermarkConfig = {
-        type: WatermarkTypes.WatermarkType.TEXT,
+      const config: TextWatermarkConfig = {
+        type: WatermarkType.TEXT,
         text: 'Copyright © 2025',
         style: {
           fontFamily: 'Arial',
@@ -102,18 +103,18 @@ describe('WatermarkRenderer - API Validation', () => {
             color: '#000000',
           },
         },
-        position: WatermarkTypes.WatermarkPosition.BOTTOM_CENTER,
+        position: WatermarkPosition.BOTTOM_CENTER,
         opacity: 0.9,
         padding: { top: 0, right: 0, bottom: 30, left: 0 },
       }
 
-      expect(config.type).toBe(WatermarkTypes.WatermarkType.TEXT)
+      expect(config.type).toBe(WatermarkType.TEXT)
       expect(config.style.fontFamily).toBe('Arial')
     })
 
     it('deve aceitar texto com background', () => {
-      const config: WatermarkTypes.TextWatermarkConfig = {
-        type: WatermarkTypes.WatermarkType.TEXT,
+      const config: TextWatermarkConfig = {
+        type: WatermarkType.TEXT,
         text: 'WATERMARK',
         style: {
           fontFamily: 'Impact',
@@ -126,7 +127,7 @@ describe('WatermarkRenderer - API Validation', () => {
             borderRadius: 5,
           },
         },
-        position: WatermarkTypes.WatermarkPosition.CENTER,
+        position: WatermarkPosition.CENTER,
         opacity: 0.8,
         padding: { top: 0, right: 0, bottom: 0, left: 0 },
       }
@@ -138,21 +139,21 @@ describe('WatermarkRenderer - API Validation', () => {
 
   describe('Position Calculations', () => {
     const positions = [
-      WatermarkTypes.WatermarkPosition.TOP_LEFT,
-      WatermarkTypes.WatermarkPosition.TOP_CENTER,
-      WatermarkTypes.WatermarkPosition.TOP_RIGHT,
-      WatermarkTypes.WatermarkPosition.CENTER_LEFT,
-      WatermarkTypes.WatermarkPosition.CENTER,
-      WatermarkTypes.WatermarkPosition.CENTER_RIGHT,
-      WatermarkTypes.WatermarkPosition.BOTTOM_LEFT,
-      WatermarkTypes.WatermarkPosition.BOTTOM_CENTER,
-      WatermarkTypes.WatermarkPosition.BOTTOM_RIGHT,
+      WatermarkPosition.TOP_LEFT,
+      WatermarkPosition.TOP_CENTER,
+      WatermarkPosition.TOP_RIGHT,
+      WatermarkPosition.CENTER_LEFT,
+      WatermarkPosition.CENTER,
+      WatermarkPosition.CENTER_RIGHT,
+      WatermarkPosition.BOTTOM_LEFT,
+      WatermarkPosition.BOTTOM_CENTER,
+      WatermarkPosition.BOTTOM_RIGHT,
     ]
 
     positions.forEach((position) => {
       it(`deve aceitar posição ${position}`, () => {
-        const config: WatermarkTypes.ImageWatermarkConfig = {
-          type: WatermarkTypes.WatermarkType.IMAGE,
+        const config: ImageWatermarkConfig = {
+          type: WatermarkType.IMAGE,
           imageUrl: mockWatermarkPath,
           position,
           opacity: 1.0,
@@ -169,20 +170,20 @@ describe('WatermarkRenderer - API Validation', () => {
 
   describe('Animation Types', () => {
     const animations = [
-      WatermarkTypes.WatermarkAnimation.NONE,
-      WatermarkTypes.WatermarkAnimation.FADE_IN,
-      WatermarkTypes.WatermarkAnimation.FADE_OUT,
-      WatermarkTypes.WatermarkAnimation.SLIDE_IN,
-      WatermarkTypes.WatermarkAnimation.ZOOM_IN,
-      WatermarkTypes.WatermarkAnimation.PULSE,
+      WatermarkAnimation.NONE,
+      WatermarkAnimation.FADE_IN,
+      WatermarkAnimation.FADE_OUT,
+      WatermarkAnimation.SLIDE_IN,
+      WatermarkAnimation.ZOOM_IN,
+      WatermarkAnimation.PULSE,
     ]
 
     animations.forEach((animationType) => {
       it(`deve aceitar animação ${animationType}`, () => {
-        const config: WatermarkTypes.ImageWatermarkConfig = {
-          type: WatermarkTypes.WatermarkType.IMAGE,
+        const config: ImageWatermarkConfig = {
+          type: WatermarkType.IMAGE,
           imageUrl: mockWatermarkPath,
-          position: WatermarkTypes.WatermarkPosition.CENTER,
+          position: WatermarkPosition.CENTER,
           opacity: 1.0,
           width: 200,
           height: 200,
@@ -205,10 +206,10 @@ describe('WatermarkRenderer - API Validation', () => {
 
     opacityValues.forEach((opacity) => {
       it(`deve aceitar opacidade ${opacity}`, () => {
-        const config: WatermarkTypes.ImageWatermarkConfig = {
-          type: WatermarkTypes.WatermarkType.IMAGE,
+        const config: ImageWatermarkConfig = {
+          type: WatermarkType.IMAGE,
           imageUrl: mockWatermarkPath,
-          position: WatermarkTypes.WatermarkPosition.TOP_LEFT,
+          position: WatermarkPosition.TOP_LEFT,
           opacity,
           width: 100,
           height: 100,
@@ -224,10 +225,10 @@ describe('WatermarkRenderer - API Validation', () => {
   describe('Padding Configuration', () => {
     it('deve aceitar padding uniforme', () => {
       const padding = { top: 20, right: 20, bottom: 20, left: 20 }
-      const config: WatermarkTypes.ImageWatermarkConfig = {
-        type: WatermarkTypes.WatermarkType.IMAGE,
+      const config: ImageWatermarkConfig = {
+        type: WatermarkType.IMAGE,
         imageUrl: mockWatermarkPath,
-        position: WatermarkTypes.WatermarkPosition.CENTER,
+        position: WatermarkPosition.CENTER,
         opacity: 1.0,
         width: 100,
         height: 100,
@@ -240,10 +241,10 @@ describe('WatermarkRenderer - API Validation', () => {
 
     it('deve aceitar padding assimétrico', () => {
       const padding = { top: 10, right: 20, bottom: 30, left: 40 }
-      const config: WatermarkTypes.ImageWatermarkConfig = {
-        type: WatermarkTypes.WatermarkType.IMAGE,
+      const config: ImageWatermarkConfig = {
+        type: WatermarkType.IMAGE,
         imageUrl: mockWatermarkPath,
-        position: WatermarkTypes.WatermarkPosition.BOTTOM_RIGHT,
+        position: WatermarkPosition.BOTTOM_RIGHT,
         opacity: 0.8,
         width: 150,
         height: 150,
@@ -260,10 +261,10 @@ describe('WatermarkRenderer - API Validation', () => {
 
   describe('Size Configuration', () => {
     it('deve aceitar width e height numéricos', () => {
-      const config: WatermarkTypes.ImageWatermarkConfig = {
-        type: WatermarkTypes.WatermarkType.IMAGE,
+      const config: ImageWatermarkConfig = {
+        type: WatermarkType.IMAGE,
         imageUrl: mockWatermarkPath,
-        position: WatermarkTypes.WatermarkPosition.CENTER,
+        position: WatermarkPosition.CENTER,
         opacity: 1.0,
         width: 300,
         height: 200,
@@ -276,10 +277,10 @@ describe('WatermarkRenderer - API Validation', () => {
     })
 
     it('deve aceitar "auto" para dimensões', () => {
-      const config: WatermarkTypes.ImageWatermarkConfig = {
-        type: WatermarkTypes.WatermarkType.IMAGE,
+      const config: ImageWatermarkConfig = {
+        type: WatermarkType.IMAGE,
         imageUrl: mockWatermarkPath,
-        position: WatermarkTypes.WatermarkPosition.CENTER,
+        position: WatermarkPosition.CENTER,
         opacity: 1.0,
         width: 'auto',
         height: 'auto',
@@ -292,10 +293,10 @@ describe('WatermarkRenderer - API Validation', () => {
     })
 
     it('deve aceitar mix de auto e numérico', () => {
-      const config: WatermarkTypes.ImageWatermarkConfig = {
-        type: WatermarkTypes.WatermarkType.IMAGE,
+      const config: ImageWatermarkConfig = {
+        type: WatermarkType.IMAGE,
         imageUrl: mockWatermarkPath,
-        position: WatermarkTypes.WatermarkPosition.CENTER,
+        position: WatermarkPosition.CENTER,
         opacity: 1.0,
         width: 250,
         height: 'auto',

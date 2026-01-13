@@ -14,12 +14,13 @@ import type { CompletePPTXData, CompleteSlideData } from '@lib/pptx/parsers/adva
  * POST - Upload e parse de arquivo PPTX
  */
 export async function POST(request: NextRequest) {
+  let user: { id: string } | null = null;
+  
   try {
     // 1. Auth Check
     const authHeader = request.headers.get('authorization') || request.headers.get('Authorization')
     
     let supabase;
-    let user;
 
     if (authHeader) {
         // Create a clean client and set session manually
@@ -174,7 +175,7 @@ export async function POST(request: NextRequest) {
     if (slidesToInsert.length > 0) {
       const { error: slidesError } = await supabaseAdmin
         .from('slides')
-        .insert(slidesToInsert);
+        .insert(slidesToInsert as Record<string, unknown>[]);
 
       if (slidesError) {
         logger.error('Failed to insert slides:', new Error(slidesError.message), { component: 'API: pptx' });

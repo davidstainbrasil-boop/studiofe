@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
     let hasPermission = projectData.user_id === user.id;
     if (!hasPermission) {
         const { data: collaborator } = await supabase
-            .from('project_collaborators')
+            .from('collaborators')
             .select('role')
             .eq("project_id", projectId)
             .eq("user_id", user.id)
@@ -330,7 +330,7 @@ export async function GET(request: NextRequest) {
     let hasPermission = project.userId === user.id;
     if (!hasPermission) {
         const { data: collaborator } = await supabase
-            .from('project_collaborators')
+            .from('collaborators')
             .select('role')
             .eq("project_id", projectId)
             .eq("user_id", user.id)
@@ -429,7 +429,7 @@ export async function DELETE(request: NextRequest) {
     let hasPermission = projectData.user_id === user.id;
     if (!hasPermission) {
         const { data: collaborator } = await supabase
-            .from('project_collaborators')
+            .from('collaborators')
             .select('role')
             .eq("project_id", projectId)
             .eq("user_id", user.id)
@@ -522,7 +522,7 @@ export async function PATCH(request: NextRequest) {
     let hasPermission = projectData.user_id === user.id;
     if (!hasPermission) {
         const { data: collaborator } = await supabase
-            .from('project_collaborators')
+            .from('collaborators')
             .select('role')
             .eq("project_id", projectId)
             .eq("user_id", user.id)

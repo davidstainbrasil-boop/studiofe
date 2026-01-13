@@ -37,7 +37,7 @@ interface SyncJob {
   confidence_avg?: number;
   visemes_count?: number;
   phonemes_count?: number;
-  created_at: string;
+  createdAt: string;
   completed_at?: string;
   error_message?: string;
 }
@@ -210,7 +210,7 @@ export async function GET(request: NextRequest) {
             job_id: job.job_id,
             status: job.status,
             progress: job.progress || 100,
-            created_at: job.created_at,
+            createdAt: job.created_at,
             completed_at: job.completed_at,
             metadata: {
               audio_duration: job.audio_duration,

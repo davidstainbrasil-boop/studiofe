@@ -49,7 +49,7 @@ export const GET = withRateLimit(RATE_LIMITS.AUTH_API, 'user')(async function GE
 
     if (!hasPermission && project) {
       const { data: collaborator } = await supabase
-        .from('project_collaborators')
+        .from('collaborators')
         .select("userId")
         .eq("projectId", (upload as any).project_id)
         .eq("userId", user.id)
@@ -112,7 +112,7 @@ export const DELETE = withRateLimit(RATE_LIMITS.AUTH_STRICT, 'user')(async funct
 
     if (!hasPermission && project) {
       const { data: collaborator } = await supabase
-        .from('project_collaborators')
+        .from('collaborators')
         .select('permissions')
         .eq("projectId", (upload as any).project_id)
         .eq("userId", user.id)

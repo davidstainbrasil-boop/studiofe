@@ -409,7 +409,7 @@ export async function POST(request: NextRequest) {
             overall_score: results.overall_score,
             passed: results.passed
           },
-          created_at: new Date().toISOString()
+          createdAt: new Date().toISOString()
         } as any)
     } catch (usageLogError) {
       logger.warn('Failed to log compliance check usage', { component: 'API: external/compliance/check' })

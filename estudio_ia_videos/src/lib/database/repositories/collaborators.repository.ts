@@ -25,7 +25,7 @@ export class CollaboratorsRepository {
    * Adiciona um colaborador a um projeto
    */
   async create(data: CreateCollaboratorData) {
-    return prisma.collaborator.create({
+    return prisma.collaborators.create({
       data: {
         projectId: data.projectId,
         userId: data.userId,
@@ -33,7 +33,7 @@ export class CollaboratorsRepository {
         invitedBy: data.invitedBy,
       },
       include: {
-        user: {
+        users: {
           select: {
             id: true,
             email: true,
@@ -62,7 +62,7 @@ export class CollaboratorsRepository {
    * Busca um colaborador por ID
    */
   async findById(id: string) {
-    return prisma.collaborator.findUnique({
+    return prisma.collaborators.findUnique({
       where: { id },
       include: {
         user: true,
@@ -76,7 +76,7 @@ export class CollaboratorsRepository {
    * Busca colaborador por projeto e usuário
    */
   async findByProjectAndUser(projectId: string, userId: string) {
-    return prisma.collaborator.findUnique({
+    return prisma.collaborators.findUnique({
       where: {
         projectId_userId: {
           projectId,
@@ -94,7 +94,7 @@ export class CollaboratorsRepository {
    * Lista colaboradores com filtros
    */
   async findMany(filters?: CollaboratorFilters) {
-    const where: Prisma.CollaboratorWhereInput = {};
+    const where: Prisma.collaboratorsWhereInput = {};
 
     if (filters?.projectId) where.projectId = filters.projectId;
     if (filters?.userId) where.userId = filters.userId;
@@ -107,10 +107,10 @@ export class CollaboratorsRepository {
       }
     }
 
-    return prisma.collaborator.findMany({
+    return prisma.collaborators.findMany({
       where,
       include: {
-        user: {
+        users: {
           select: {
             id: true,
             email: true,
@@ -154,7 +154,7 @@ export class CollaboratorsRepository {
    * Aceita um convite de colaboração
    */
   async acceptInvite(projectId: string, userId: string) {
-    return prisma.collaborator.update({
+    return prisma.collaborators.update({
       where: {
         projectId_userId: {
           projectId,
@@ -171,7 +171,7 @@ export class CollaboratorsRepository {
    * Atualiza o papel de um colaborador
    */
   async updateRole(projectId: string, userId: string, role: CollaborationRole) {
-    return prisma.collaborator.update({
+    return prisma.collaborators.update({
       where: {
         projectId_userId: {
           projectId,
@@ -186,7 +186,7 @@ export class CollaboratorsRepository {
    * Remove um colaborador
    */
   async delete(projectId: string, userId: string) {
-    return prisma.collaborator.delete({
+    return prisma.collaborators.delete({
       where: {
         projectId_userId: {
           projectId,
@@ -200,7 +200,7 @@ export class CollaboratorsRepository {
    * Remove todos os colaboradores de um projeto
    */
   async deleteByProjectId(projectId: string) {
-    return prisma.collaborator.deleteMany({
+    return prisma.collaborators.deleteMany({
       where: { projectId },
     });
   }

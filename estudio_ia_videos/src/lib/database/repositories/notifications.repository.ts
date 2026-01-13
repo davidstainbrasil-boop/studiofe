@@ -34,7 +34,7 @@ export class NotificationsRepository {
         data: data.data || {},
       },
       include: {
-        user: {
+        users: {
           select: {
             id: true,
             email: true,
@@ -67,7 +67,7 @@ export class NotificationsRepository {
     return prisma.notifications.findUnique({
       where: { id },
       include: {
-        user: {
+        users: {
           select: {
             id: true,
             email: true,
@@ -84,9 +84,9 @@ export class NotificationsRepository {
   async findMany(filters?: NotificationFilters, options?: {
     limit?: number;
     offset?: number;
-    orderBy?: Prisma.NotificationOrderByWithRelationInput;
+    orderBy?: Prisma.notificationsOrderByWithRelationInput;
   }) {
-    const where: Prisma.NotificationWhereInput = {};
+    const where: Prisma.notificationsWhereInput = {};
 
     if (filters?.userId) where.userId = filters.userId;
     if (filters?.type) where.type = filters.type;
@@ -98,7 +98,7 @@ export class NotificationsRepository {
       skip: options?.offset,
       orderBy: options?.orderBy || { createdAt: 'desc' },
       include: {
-        user: {
+        users: {
           select: {
             id: true,
             email: true,
@@ -190,7 +190,7 @@ export class NotificationsRepository {
    * Conta notificações por tipo
    */
   async countByType(userId?: string) {
-    const where: Prisma.NotificationWhereInput = {};
+    const where: Prisma.notificationsWhereInput = {};
     if (userId) where.userId = userId;
 
     return prisma.notifications.groupBy({

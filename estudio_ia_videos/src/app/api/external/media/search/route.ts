@@ -392,7 +392,7 @@ export async function GET(request: NextRequest) {
             results_count: result.results.length,
             total_results: result.total
           },
-          created_at: new Date().toISOString()
+          createdAt: new Date().toISOString()
         })
     } catch (usageLogError) {
       logger.warn('Failed to log media search usage', { component: 'API: external/media/search' })
@@ -417,7 +417,7 @@ export async function GET(request: NextRequest) {
               timestamp: new Date().toISOString()
             }
           } as any,
-          created_at: new Date().toISOString()
+          createdAt: new Date().toISOString()
         })
     } catch (analyticsError) {
       logger.warn('Failed to log media search', { component: 'API: external/media/search' })

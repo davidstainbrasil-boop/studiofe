@@ -400,7 +400,7 @@ async function fetchReadyPlayerMeData(url: string) {
     thumbnail_url: `https://models.readyplayer.me/${avatarId}.png`,
     metadata: {
       id: avatarId,
-      created_at: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
       body_type: 'fullbody',
       outfit: 'casual',
       hair_color: '#8B4513',
