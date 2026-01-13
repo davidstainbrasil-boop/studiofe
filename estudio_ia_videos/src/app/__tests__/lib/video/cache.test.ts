@@ -3,8 +3,8 @@
  * Suite completa de testes para sistema de cache
  */
 
-import { RenderingCache } from '@lib/video/cache';
-import type { CacheOptions, CacheEntry } from '@lib/video/cache';
+import { RenderingCache } from '@/lib/video/cache';
+import type { CacheOptions, CacheEntry } from '@/lib/video/cache';
 import path from 'path';
 
 describe('RenderingCache', () => {

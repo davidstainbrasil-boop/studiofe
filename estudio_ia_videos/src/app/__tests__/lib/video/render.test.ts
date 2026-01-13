@@ -3,8 +3,8 @@
  * Cobertura completa de vídeo rendering
  */
 
-import { renderVideo, validateFFmpeg, getVideoInfo } from '@lib/video/renderer'
-import { createRenderQueue, addRenderJob, getJobStatus, cancelJob } from '@lib/queue/render-queue'
+import { renderVideo, validateFFmpeg, getVideoInfo } from '@/lib/video/renderer'
+import { createRenderQueue, addRenderJob, getJobStatus, cancelJob } from '@/lib/queue/render-queue'
 
 // Mock do FFmpeg
 jest.mock('fluent-ffmpeg', () => {

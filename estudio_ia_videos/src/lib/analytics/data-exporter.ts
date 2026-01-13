@@ -87,7 +87,7 @@ export class DataExporter {
 
     switch (dataType) {
       case 'events':
-        return await prisma.analyticsEvent.findMany({
+        return await prisma.analytics_events.findMany({
           where,
           take: limit,
           orderBy: { createdAt: 'desc' }

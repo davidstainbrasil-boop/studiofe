@@ -25,7 +25,7 @@ export interface SchedulerStats {
 export class ReportScheduler {
   
   async getScheduledReports(organizationId?: string): Promise<ScheduledReport[]> {
-    const reports = await prisma.analyticsEvent.findMany({
+    const reports = await prisma.analytics_events.findMany({
       where: {
         eventType: 'report_schedule',
         ...(organizationId && { 
@@ -58,7 +58,7 @@ export class ReportScheduler {
     const reports = await this.getScheduledReports();
     
     // Get execution logs
-    const executions = await prisma.analyticsEvent.findMany({
+    const executions = await prisma.analytics_events.findMany({
       where: {
         eventType: 'report_execution',
         createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } // Last 24h
@@ -67,7 +67,7 @@ export class ReportScheduler {
       take: 1
     });
 
-    const failedExecutions = await prisma.analyticsEvent.count({
+    const failedExecutions = await prisma.analytics_events.count({
       where: {
         eventType: 'report_execution',
         eventData: {
@@ -106,7 +106,7 @@ export class ReportScheduler {
           });
 
           // Log execution
-          await prisma.analyticsEvent.create({
+          await prisma.analytics_events.create({
             data: {
               eventType: 'report_execution',
               eventData: {
@@ -125,7 +125,7 @@ export class ReportScheduler {
         logger.error(`Failed to run report ${report.id}:`, error instanceof Error ? error : new Error(String(error)), { component: 'ReportScheduler' });
         errors++;
         
-        await prisma.analyticsEvent.create({
+        await prisma.analytics_events.create({
           data: {
             eventType: 'report_execution',
             eventData: {
@@ -149,7 +149,7 @@ export class ReportScheduler {
   }
 
   async deleteScheduledReport(reportId: string): Promise<void> {
-    await prisma.analyticsEvent.delete({
+    await prisma.analytics_events.delete({
       where: { id: reportId }
     });
   }
@@ -157,12 +157,12 @@ export class ReportScheduler {
   // Helper methods
 
   private async updateReportData(id: string, updates: Record<string, unknown>): Promise<void> {
-    const report = await prisma.analyticsEvent.findUnique({ where: { id } });
+    const report = await prisma.analytics_events.findUnique({ where: { id } });
     if (!report) return;
 
     const currentData = (report.eventData as Record<string, unknown>) || {};
     
-    await prisma.analyticsEvent.update({
+    await prisma.analytics_events.update({
       where: { id },
       data: {
         eventData: {

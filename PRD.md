@@ -654,7 +654,7 @@ pending → queued → processing → completed | failed | cancelled
 - [x] Corrigir erros de build para produção
 - [x] Preparar configuração de variáveis de ambiente
 - [x] Documentar processo de deploy (DEPLOY_GUIDE.md)
-- [ ] Deploy em staging (Vercel/AWS)
+- [x] Deploy em staging (Vercel/AWS)
 - [ ] Configurar variáveis de produção
 - [x] Aplicar migrations em staging
 - [ ] Executar E2E em staging

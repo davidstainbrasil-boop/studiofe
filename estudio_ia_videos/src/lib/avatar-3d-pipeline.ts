@@ -99,7 +99,7 @@ export const avatar3DPipeline = {
   ): Promise<AvatarRenderResult> => {
     try {
       // Create a real RenderJob in the database
-      const job = await prisma.renderJob.create({
+      const job = await prisma.render_jobs.create({
         data: {
           status: 'queued',
           renderSettings: JSON.parse(JSON.stringify({
@@ -127,7 +127,7 @@ export const avatar3DPipeline = {
 
   getRenderJobStatus: async (jobId: string): Promise<RenderJobStatus> => {
     try {
-      const job = await prisma.renderJob.findUnique({
+      const job = await prisma.render_jobs.findUnique({
         where: { id: jobId }
       });
 
@@ -191,10 +191,10 @@ export const avatar3DPipeline = {
     today.setHours(0, 0, 0, 0);
     
     const [activeJobs, queuedJobs, completedToday, allCompleted] = await Promise.all([
-      prisma.renderJob.count({ where: { status: 'processing' } }),
-      prisma.renderJob.count({ where: { status: 'queued' } }),
-      prisma.renderJob.count({ where: { status: 'completed', createdAt: { gte: today } } }),
-      prisma.renderJob.findMany({ 
+      prisma.render_jobs.count({ where: { status: 'processing' } }),
+      prisma.render_jobs.count({ where: { status: 'queued' } }),
+      prisma.render_jobs.count({ where: { status: 'completed', createdAt: { gte: today } } }),
+      prisma.render_jobs.findMany({ 
         where: { status: 'completed', durationMs: { not: null } },
         select: { durationMs: true },
         take: 100
@@ -205,8 +205,8 @@ export const avatar3DPipeline = {
       ? allCompleted.reduce((sum, job) => sum + (job.durationMs || 0), 0) / allCompleted.length 
       : 0;
     
-    const totalJobs = await prisma.renderJob.count();
-    const successfulJobs = await prisma.renderJob.count({ where: { status: 'completed' } });
+    const totalJobs = await prisma.render_jobs.count();
+    const successfulJobs = await prisma.render_jobs.count({ where: { status: 'completed' } });
     const successRate = totalJobs > 0 ? (successfulJobs / totalJobs) * 100 : 100;
     
     return {
@@ -245,11 +245,11 @@ export const avatar3DPipeline = {
 
   cancelRenderJob: async (jobId: string): Promise<boolean> => {
     try {
-      const job = await prisma.renderJob.findUnique({ where: { id: jobId } });
+      const job = await prisma.render_jobs.findUnique({ where: { id: jobId } });
       if (!job || ['completed', 'failed', 'cancelled'].includes(job.status || '')) {
         return false;
       }
-      await prisma.renderJob.update({
+      await prisma.render_jobs.update({
         where: { id: jobId },
         data: { status: 'cancelled' }
       });
@@ -263,7 +263,7 @@ export const avatar3DPipeline = {
   cleanupOldJobs: async (): Promise<void> => {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    await prisma.renderJob.deleteMany({
+    await prisma.render_jobs.deleteMany({
       where: {
         createdAt: { lt: thirtyDaysAgo },
         status: { in: ['completed', 'failed', 'cancelled'] }

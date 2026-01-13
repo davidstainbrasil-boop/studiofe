@@ -30,7 +30,7 @@ export class TemplatesRepository {
    * Cria um novo template
    */
   async create(data: CreateTemplateData) {
-    return prisma.template.create({
+    return prisma.templates.create({
       data: {
         name: data.name,
         description: data.description,
@@ -58,7 +58,7 @@ export class TemplatesRepository {
    * Busca um template por ID
    */
   async findById(id: string) {
-    return prisma.template.findUnique({
+    return prisma.templates.findUnique({
       where: { id },
       include: {
         creator: {
@@ -92,7 +92,7 @@ export class TemplatesRepository {
       ];
     }
 
-    return prisma.template.findMany({
+    return prisma.templates.findMany({
       where,
       take: options?.limit,
       skip: options?.offset,
@@ -113,7 +113,7 @@ export class TemplatesRepository {
    * Busca templates públicos
    */
   async findPublic(limit?: number) {
-    return prisma.template.findMany({
+    return prisma.templates.findMany({
       where: {
         isPublic: true,
       },
@@ -135,7 +135,7 @@ export class TemplatesRepository {
    * Incrementa o contador de uso
    */
   async incrementUsage(id: string) {
-    return prisma.template.update({
+    return prisma.templates.update({
       where: { id },
       data: {
         usageCount: {
@@ -149,7 +149,7 @@ export class TemplatesRepository {
    * Atualiza um template
    */
   async update(id: string, data: Partial<CreateTemplateData>) {
-    return prisma.template.update({
+    return prisma.templates.update({
       where: { id },
       data: {
         name: data.name,
@@ -168,7 +168,7 @@ export class TemplatesRepository {
    * Deleta um template
    */
   async delete(id: string) {
-    return prisma.template.delete({
+    return prisma.templates.delete({
       where: { id },
     });
   }
@@ -177,7 +177,7 @@ export class TemplatesRepository {
    * Conta templates por categoria
    */
   async countByCategory() {
-    return prisma.template.groupBy({
+    return prisma.templates.groupBy({
       by: ['category'],
       _count: true,
     });
@@ -187,7 +187,7 @@ export class TemplatesRepository {
    * Busca templates mais usados
    */
   async findMostUsed(limit: number = 10) {
-    return prisma.template.findMany({
+    return prisma.templates.findMany({
       take: limit,
       orderBy: { usageCount: 'desc' },
       include: {

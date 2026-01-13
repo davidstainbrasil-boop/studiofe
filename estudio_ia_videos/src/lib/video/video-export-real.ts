@@ -98,7 +98,7 @@ export async function exportProjectVideo(
   context?: ExportContext
 ): Promise<ExportProjectVideoResult> {
   try {
-    const project = await prisma.project.findUnique({
+    const project = await prisma.projects.findUnique({
       where: { id: projectId },
       select: { id: true, userId: true, totalSlides: true, duration: true, status: true }
     })
@@ -131,7 +131,7 @@ export async function exportProjectVideo(
     }
 
     await prisma.$transaction(async (tx) => {
-      await tx.videoExport.create({
+      await tx.video_exports.create({
         data: {
           id: jobId,
           projectId,
@@ -155,7 +155,7 @@ export async function exportProjectVideo(
         requestId
       }
 
-      await tx.processingQueue.create({
+      await tx.processing_queue.create({
         data: {
           id: randomUUID(),
           jobType: 'video_export',
@@ -203,7 +203,7 @@ export async function getExportJobStatus(
   jobId: string
 ): Promise<{ job?: VideoExportJob; error?: string }> {
   try {
-    const jobRecord = await prisma.videoExport.findUnique({ where: { id: jobId } })
+    const jobRecord = await prisma.video_exports.findUnique({ where: { id: jobId } })
 
     if (!jobRecord) {
       return { error: 'Job não encontrado' }

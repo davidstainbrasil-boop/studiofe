@@ -1,13 +1,13 @@
 /**
  * Tests for Video Render Worker
  */
-import { VideoRenderWorker } from '@lib/workers/video-render-worker';
-import { prisma } from '@lib/prisma';
-import WatermarkProcessor from '@lib/video/watermark-processor';
-import { FFmpegExecutor } from '@lib/video/ffmpeg-executor';
+import { VideoRenderWorker } from '@/lib/workers/video-render-worker';
+import { prisma } from '@/lib/prisma';
+import { watermarkProcessor } from '@/lib/video/watermark-processor';
+import { FFmpegExecutor } from '@/lib/video/ffmpeg-executor';
 
 // Mock dependencies
-jest.mock('@lib/prisma', () => ({
+jest.mock('@/lib/prisma', () => ({
   prisma: {
     videoJob: {
       findUnique: jest.fn(),
@@ -15,8 +15,8 @@ jest.mock('@lib/prisma', () => ({
   },
 }));
 
-jest.mock('@lib/video/watermark-processor');
-jest.mock('@lib/video/ffmpeg-executor');
+jest.mock('@/lib/video/watermark-processor');
+jest.mock('@/lib/video/ffmpeg-executor');
 
 describe('VideoRenderWorker', () => {
   let worker: VideoRenderWorker;

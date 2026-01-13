@@ -69,10 +69,10 @@ global.fetch = jest.fn(() => Promise.resolve({
 })) as any
 
 // Import classes AFTER mocks
-import { VideoRenderWorker } from '@lib/workers/video-render-worker'
-import { FrameGenerator } from '@lib/render/frame-generator'
-import { FFmpegExecutor } from '@lib/render/ffmpeg-executor'
-import { VideoUploader } from '@lib/storage/video-uploader'
+import { VideoRenderWorker } from '@/lib/workers/video-render-worker'
+import { FrameGenerator } from '@/lib/render/frame-generator'
+import { FFmpegExecutor } from '@/lib/render/ffmpeg-executor'
+import { VideoUploader } from '@/lib/storage/video-uploader'
 import { createClient } from '@supabase/supabase-js'
 
 describe('Video Render Pipeline Integration', () => {

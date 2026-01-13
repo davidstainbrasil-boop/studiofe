@@ -25,7 +25,7 @@ export class NotificationsRepository {
    * Cria uma nova notificação
    */
   async create(data: CreateNotificationData) {
-    return prisma.notification.create({
+    return prisma.notifications.create({
       data: {
         userId: data.userId,
         type: data.type,
@@ -49,7 +49,7 @@ export class NotificationsRepository {
    * Cria múltiplas notificações
    */
   async createMany(data: CreateNotificationData[]) {
-    return prisma.notification.createMany({
+    return prisma.notifications.createMany({
       data: data.map(item => ({
         userId: item.userId,
         type: item.type,
@@ -64,7 +64,7 @@ export class NotificationsRepository {
    * Busca uma notificação por ID
    */
   async findById(id: string) {
-    return prisma.notification.findUnique({
+    return prisma.notifications.findUnique({
       where: { id },
       include: {
         user: {
@@ -92,7 +92,7 @@ export class NotificationsRepository {
     if (filters?.type) where.type = filters.type;
     if (filters?.isRead !== undefined) where.isRead = filters.isRead;
 
-    return prisma.notification.findMany({
+    return prisma.notifications.findMany({
       where,
       take: options?.limit,
       skip: options?.offset,
@@ -123,7 +123,7 @@ export class NotificationsRepository {
    * Marca uma notificação como lida
    */
   async markAsRead(id: string) {
-    return prisma.notification.update({
+    return prisma.notifications.update({
       where: { id },
       data: {
         isRead: true,
@@ -136,7 +136,7 @@ export class NotificationsRepository {
    * Marca todas as notificações de um usuário como lidas
    */
   async markAllAsRead(userId: string) {
-    return prisma.notification.updateMany({
+    return prisma.notifications.updateMany({
       where: {
         userId,
         isRead: false,
@@ -152,7 +152,7 @@ export class NotificationsRepository {
    * Deleta uma notificação
    */
   async delete(id: string) {
-    return prisma.notification.delete({
+    return prisma.notifications.delete({
       where: { id },
     });
   }
@@ -164,7 +164,7 @@ export class NotificationsRepository {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - daysOld);
 
-    return prisma.notification.deleteMany({
+    return prisma.notifications.deleteMany({
       where: {
         isRead: true,
         readAt: {
@@ -178,7 +178,7 @@ export class NotificationsRepository {
    * Conta notificações não lidas de um usuário
    */
   async countUnreadByUserId(userId: string): Promise<number> {
-    return prisma.notification.count({
+    return prisma.notifications.count({
       where: {
         userId,
         isRead: false,
@@ -193,7 +193,7 @@ export class NotificationsRepository {
     const where: Prisma.NotificationWhereInput = {};
     if (userId) where.userId = userId;
 
-    return prisma.notification.groupBy({
+    return prisma.notifications.groupBy({
       by: ['type'],
       where,
       _count: true,

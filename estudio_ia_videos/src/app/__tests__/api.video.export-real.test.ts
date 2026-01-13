@@ -4,7 +4,7 @@
 // @jest-environment node
 /// <reference types="jest" />
 import { NextRequest } from 'next/server'
-import * as exportRoute from '@/api/v1/video/export-real/route'
+import * as exportRoute from '@/app/api/v1/video/export-real/route'
 
 jest.mock('@/lib/video/video-export-real', () => ({
   getExportJobStatus: jest.fn().mockResolvedValue({

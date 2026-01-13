@@ -1,4 +1,3 @@
-const { pathsToModuleNameMapper } = require('ts-jest');
 const path = require('path');
 
 // Caminho absoluto para babel.config.cjs
@@ -11,18 +10,26 @@ module.exports = {
   testEnvironment: 'jsdom',
 
   moduleNameMapper: {
+    // Handle aliases with slash
     '^@/api/(.*)$': '<rootDir>/estudio_ia_videos/src/app/api/$1',
+    '^@/lib/(.*)$': '<rootDir>/estudio_ia_videos/src/lib/$1',
+    '^@/components/(.*)$': '<rootDir>/estudio_ia_videos/src/components/$1',
+    '^@/hooks/(.*)$': '<rootDir>/estudio_ia_videos/src/hooks/$1',
+    '^@/types/(.*)$': '<rootDir>/estudio_ia_videos/src/types/$1',
     '^@/(.*)$': '<rootDir>/estudio_ia_videos/src/$1',
+
+    // Handle aliases without slash (due to inconsistent usage in codebase)
+    '^@api/(.*)$': '<rootDir>/estudio_ia_videos/src/app/api/$1',
     '^@lib/(.*)$': '<rootDir>/estudio_ia_videos/src/lib/$1',
     '^@components/(.*)$': '<rootDir>/estudio_ia_videos/src/components/$1',
     '^@hooks/(.*)$': '<rootDir>/estudio_ia_videos/src/hooks/$1',
-    '^@shared-lib/(.*)$': '<rootDir>/estudio_ia_videos/src/lib/$1',
-    '^@shared-components/(.*)$': '<rootDir>/estudio_ia_videos/src/components/$1',
+    '^@types/(.*)$': '<rootDir>/estudio_ia_videos/src/types/$1',
+
+    // Other mappings
     '^dnd-core$': 'dnd-core/dist/cjs',
     '^react-dnd$': 'react-dnd/dist/cjs',
     '^react-dnd-html5-backend$': 'react-dnd-html5-backend/dist/cjs',
     '^@prisma/client$': '<rootDir>/estudio_ia_videos/node_modules/@prisma/client',
-    '^@/types/(.*)$': '<rootDir>/estudio_ia_videos/src/types/$1',
   },
 
   transform: {

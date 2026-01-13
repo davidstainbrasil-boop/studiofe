@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     logger.info(`📋 Criando template "${name}" do projeto ${projectId}...`, { component: 'API: v1/timeline/multi-track/templates' })
 
     // Get timeline from project
-    const timeline = await prisma.timelines.findUnique({
+    const timeline = await prisma.timeline.findUnique({
       where: { projectId },
     });
 
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create template
-    const template = await prisma.timeline_templates.create({
+    const template = await prisma.timelineTemplate.create({
       data: {
         id: crypto.randomUUID(),
         name,
@@ -117,7 +117,7 @@ export async function GET(request: NextRequest) {
 
     // Get specific template
     if (templateId) {
-      const template = await prisma.timeline_templates.findUnique({
+      const template = await prisma.timelineTemplate.findUnique({
         where: { id: templateId },
         include: {
           creator: {
@@ -189,7 +189,7 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    const templates = await prisma.timeline_templates.findMany({
+    const templates = await prisma.timelineTemplate.findMany({
       where,
       include: {
         creator: {
@@ -208,7 +208,7 @@ export async function GET(request: NextRequest) {
       skip: offset,
     });
 
-    const total = await prisma.timeline_templates.count({ where });
+    const total = await prisma.timelineTemplate.count({ where });
 
     return NextResponse.json({
       success: true,
@@ -279,7 +279,7 @@ export async function PUT(request: NextRequest) {
     logger.info(`📋 Aplicando template ${templateId} ao projeto ${projectId}...`, { component: 'API: v1/timeline/multi-track/templates' })
 
     // Get template
-    const template = await prisma.timeline_templates.findUnique({
+    const template = await prisma.timelineTemplate.findUnique({
       where: { id: templateId },
     });
 
@@ -299,7 +299,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Verify project access
-    const project = await prisma.projects.findFirst({
+    const project = await prisma.project.findFirst({
       where: {
         id: projectId,
         userId: session.user.id,
@@ -314,7 +314,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Apply template to timeline
-    const timeline = await prisma.timelines.upsert({
+    const timeline = await prisma.timeline.upsert({
       where: { projectId },
       create: {
         id: crypto.randomUUID(),
@@ -334,7 +334,7 @@ export async function PUT(request: NextRequest) {
     });
 
     // Increment template usage count
-    await prisma.timeline_templates.update({
+    await prisma.timelineTemplate.update({
       where: { id: templateId },
       data: {
         usageCount: { increment: 1 },
@@ -391,7 +391,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Get template to check ownership
-    const template = await prisma.timeline_templates.findUnique({
+    const template = await prisma.timelineTemplate.findUnique({
       where: { id: templateId },
     });
 
@@ -410,7 +410,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Delete template
-    await prisma.timeline_templates.delete({
+    await prisma.timelineTemplate.delete({
       where: { id: templateId },
     });
 

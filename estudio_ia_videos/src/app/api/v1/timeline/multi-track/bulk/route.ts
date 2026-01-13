@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Verify project access
-    const project = await prisma.projects.findFirst({
+    const project = await prisma.project.findFirst({
       where: {
         id: projectId,
         userId: session.user.id,
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get timeline
-    const timeline = await prisma.timelines.findUnique({
+    const timeline = await prisma.timeline.findUnique({
       where: { projectId },
     });
 
@@ -277,7 +277,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Update timeline
-    const updatedTimeline = await prisma.timelines.update({
+    const updatedTimeline = await prisma.timeline.update({
       where: { projectId },
       data: {
         tracks: updatedTracks as unknown as Prisma.InputJsonValue,

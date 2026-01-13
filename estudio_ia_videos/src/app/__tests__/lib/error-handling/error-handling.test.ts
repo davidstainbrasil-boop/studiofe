@@ -19,7 +19,7 @@ import {
   getUserMessage,
   safeJsonParse,
   withRetry,
-} from '@lib/error-handling'
+} from '@/lib/error-handling'
 
 describe('Error Handling Module', () => {
   describe('AppError', () => {

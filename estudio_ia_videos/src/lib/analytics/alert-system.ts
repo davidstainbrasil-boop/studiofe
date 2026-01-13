@@ -65,12 +65,12 @@ export class AlertSystem {
   }
 
   async acknowledgeAlert(alertId: string, userId: string): Promise<void> {
-    const alert = await prisma.analyticsEvent.findUnique({ where: { id: alertId } });
+    const alert = await prisma.analytics_events.findUnique({ where: { id: alertId } });
     if (!alert) return;
 
     const currentData = (alert.eventData as Record<string, unknown>) || {};
     
-    await prisma.analyticsEvent.update({
+    await prisma.analytics_events.update({
       where: { id: alertId },
       data: {
         eventData: {
@@ -84,12 +84,12 @@ export class AlertSystem {
   }
 
   async resolveAlert(alertId: string, userId: string): Promise<void> {
-    const alert = await prisma.analyticsEvent.findUnique({ where: { id: alertId } });
+    const alert = await prisma.analytics_events.findUnique({ where: { id: alertId } });
     if (!alert) return;
 
     const currentData = (alert.eventData as Record<string, unknown>) || {};
     
-    await prisma.analyticsEvent.update({
+    await prisma.analytics_events.update({
       where: { id: alertId },
       data: {
         eventData: {
@@ -103,7 +103,7 @@ export class AlertSystem {
   }
 
   private async getActiveRules(organizationId?: string): Promise<AlertRule[]> {
-    const rules = await prisma.analyticsEvent.findMany({
+    const rules = await prisma.analytics_events.findMany({
       where: {
         eventType: 'alert_rule',
         eventData: {
@@ -141,7 +141,7 @@ export class AlertSystem {
     try {
       if (rule.condition.metric === 'error_rate') {
         // Count recent errors in analytics events
-        currentValue = await prisma.analyticsEvent.count({
+        currentValue = await prisma.analytics_events.count({
           where: {
             eventType: 'error',
             createdAt: { gte: timeWindowStart }
@@ -150,12 +150,12 @@ export class AlertSystem {
       } 
       else if (rule.condition.metric === 'job_failure_rate') {
         // Calculate failure rate of render jobs in the window
-        const totalJobs = await prisma.renderJob.count({
+        const totalJobs = await prisma.render_jobs.count({
           where: { createdAt: { gte: timeWindowStart } }
         });
         
         if (totalJobs > 0) {
-          const failedJobs = await prisma.renderJob.count({
+          const failedJobs = await prisma.render_jobs.count({
             where: { 
               status: 'failed',
               createdAt: { gte: timeWindowStart } 
@@ -166,7 +166,7 @@ export class AlertSystem {
       }
       else if (rule.condition.metric === 'avg_render_duration') {
         // Calculate average duration of completed jobs
-        const aggregations = await prisma.renderJob.aggregate({
+        const aggregations = await prisma.render_jobs.aggregate({
           _avg: { durationMs: true },
           where: {
             status: 'completed',
@@ -199,7 +199,7 @@ export class AlertSystem {
 
   private async createAlertFromRule(rule: AlertRule, value: number): Promise<Alert | null> {
     // Check cooldown
-    const lastAlert = await prisma.analyticsEvent.findFirst({
+    const lastAlert = await prisma.analytics_events.findFirst({
       where: {
         eventType: 'alert',
         eventData: {
@@ -231,7 +231,7 @@ export class AlertSystem {
       triggeredAt: new Date().toISOString()
     };
 
-    const alert = await prisma.analyticsEvent.create({
+    const alert = await prisma.analytics_events.create({
       data: {
         eventType: 'alert',
         eventData: alertData as Prisma.InputJsonValue

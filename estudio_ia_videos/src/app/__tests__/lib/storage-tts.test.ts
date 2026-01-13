@@ -1,6 +1,6 @@
-import { generateTTS } from '@lib/tts';
+import { generateTTS } from '@/lib/tts';
 
-jest.mock('@lib/storage', () => ({
+jest.mock('@/lib/storage', () => ({
   listFiles: jest.fn().mockResolvedValue([{ name: 'example.mp4', bucket: 'videos', size: 123 }]),
   uploadFile: jest.fn().mockResolvedValue({ name: 'upload.txt', bucket: 'assets', publicUrl: 'https://stub/upload.txt' }),
 }));

@@ -1,7 +1,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { RenderService } from '@lib/services/render-service';
+import { RenderService } from '@/lib/services/render-service';
 
 // Mocks
 jest.mock('fs');
@@ -19,13 +19,13 @@ jest.mock('@remotion/renderer', () => ({
   }),
   renderMedia: jest.fn().mockResolvedValue(undefined),
 }));
-jest.mock('@lib/aws-s3-config', () => ({
+jest.mock('@/lib/aws-s3-config', () => ({
   uploadFileToS3: jest.fn().mockResolvedValue({
     url: 'https://mock-s3-url.com/video.mp4',
     key: 'renders/video.mp4'
   }),
 }));
-jest.mock('../../lib/services/logger-service', () => ({
+jest.mock('@/lib/services/logger-service', () => ({
   logger: {
     info: jest.fn(),
     error: jest.fn(),
@@ -54,7 +54,7 @@ describe('RenderService', () => {
     expect(result).toEqual({
       success: true,
       videoUrl: 'https://mock-s3-url.com/video.mp4',
-      s3Key: expect.stringContaining('renders/')
+      s3Key: 'renders/video.mp4'
     });
 
     // Verify steps were called
@@ -67,7 +67,7 @@ describe('RenderService', () => {
       inputProps: { slides: mockSlides }
     }));
 
-    const { uploadFileToS3 } = require('../../lib/aws-s3-config');
+    const { uploadFileToS3 } = require('@/lib/aws-s3-config');
     expect(uploadFileToS3).toHaveBeenCalled();
   });
 
@@ -75,7 +75,8 @@ describe('RenderService', () => {
     const { renderMedia } = require('@remotion/renderer');
     renderMedia.mockRejectedValue(new Error('Render failed'));
 
-    await expect(RenderService.renderVideo(mockProjectId, mockSlides))
-      .rejects.toThrow('Render failed');
+    const result = await RenderService.renderVideo(mockProjectId, mockSlides);
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('Render failed');
   });
 });

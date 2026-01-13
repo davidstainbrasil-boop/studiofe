@@ -44,7 +44,7 @@ interface PrismaWebhookDelivery {
 export class WebhookManager {
   async listWebhooks(userId: string) {
     try {
-      return await prisma.webhook.findMany({
+      return await prisma.webhooks.findMany({
         where: { userId },
         orderBy: { createdAt: 'desc' }
       })
@@ -74,7 +74,7 @@ export class WebhookManager {
       // There is no metadata field in the CREATE TABLE statement.
       // I will proceed with creating the webhook with available fields.
       
-          const webhook = await prisma.webhook.create({
+          const webhook = await prisma.webhooks.create({
         data: {
           userId: config.userId,
           url: config.url,
@@ -93,7 +93,7 @@ export class WebhookManager {
 
   async deleteWebhook(id: string, userId: string) {
     try {
-      await prisma.webhook.deleteMany({
+      await prisma.webhooks.deleteMany({
         where: { id, userId }
       })
       return true
@@ -104,7 +104,7 @@ export class WebhookManager {
   }
 
   async getWebhook(id: string) {
-    return await prisma.webhook.findUnique({
+    return await prisma.webhooks.findUnique({
       where: { id }
     })
   }
@@ -132,7 +132,7 @@ export class WebhookManager {
       // Buscar logs de delivery das últimas 24 horas
       const oneDayAgo = new Date(Date.now() - 24 * 3600000)
       
-      const deliveries = await prisma.webhookDelivery.findMany({
+      const deliveries = await prisma.webhook_deliveries.findMany({
         where: {
           webhookId,
           createdAt: { gte: oneDayAgo },
@@ -230,7 +230,7 @@ class WebhookTrigger {
       // For simplicity and compatibility, I'll fetch active webhooks and filter in JS.
       
       // Note: In a real high-scale system, this should be optimized.
-      const webhooks = await prisma.webhook.findMany({
+      const webhooks = await prisma.webhooks.findMany({
         where: { active: true }
       })
 
@@ -246,7 +246,7 @@ class WebhookTrigger {
       const deliveryPromises = matchingWebhooks.map(async (webhook) => {
         try {
           // Create delivery record
-          const delivery = await prisma.webhookDelivery.create({
+          const delivery = await prisma.webhook_deliveries.create({
             data: {
               webhookId: webhook.id,
               event,
@@ -302,7 +302,7 @@ class WebhookTrigger {
       const duration = Date.now() - startTime
       const responseBody = await response.text()
 
-      await prisma.webhookDelivery.update({
+      await prisma.webhook_deliveries.update({
         where: { id: delivery.id },
         data: {
           status: response.ok ? 'completed' : 'failed',
@@ -315,7 +315,7 @@ class WebhookTrigger {
       })
 
       // Update webhook stats
-      await prisma.webhook.update({
+      await prisma.webhooks.update({
         where: { id: webhook.id },
         data: {
           totalDeliveries: { increment: 1 },
@@ -330,7 +330,7 @@ class WebhookTrigger {
       const duration = Date.now() - startTime
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       
-      await prisma.webhookDelivery.update({
+      await prisma.webhook_deliveries.update({
         where: { id: delivery.id },
         data: {
           status: 'failed',
@@ -341,7 +341,7 @@ class WebhookTrigger {
         }
       })
       
-      await prisma.webhook.update({
+      await prisma.webhooks.update({
         where: { id: webhook.id },
         data: {
           totalDeliveries: { increment: 1 },

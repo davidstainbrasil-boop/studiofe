@@ -8,7 +8,7 @@ import {
   createCacheNamespace,
   generateCacheControl,
   cachePresets,
-} from '@lib/cache'
+} from '@/lib/cache'
 
 describe('Cache Module', () => {
   describe('MemoryCache', () => {

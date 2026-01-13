@@ -11,7 +11,7 @@ import {
   type TemplateSize,
   type LibraryFilter,
   type LibraryTemplate,
-} from '@lib/video/template-library';
+} from '@/lib/video/template-library';
 
 describe('Template Library System', () => {
   let library: VideoTemplateLibrary;

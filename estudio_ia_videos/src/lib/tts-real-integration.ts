@@ -376,7 +376,7 @@ export async function generateProjectTTS(projectId: string, voice: VoiceConfig):
   }
 
   try {
-    const project = await prisma.project.findUnique({
+    const project = await prisma.projects.findUnique({
       where: { id: projectId },
       include: {
         slides: {
@@ -436,7 +436,7 @@ export async function generateProjectTTS(projectId: string, voice: VoiceConfig):
 
         const currentAudioConfig = (slide.audioConfig as Record<string, unknown>) || {}
 
-        await prisma.slide.update({
+        await prisma.slides.update({
           where: { id: slide.id },
           data: {
             audioConfig: {
@@ -483,7 +483,7 @@ export async function generateProjectTTS(projectId: string, voice: VoiceConfig):
       voiceId: voice.voiceId,
     }
 
-    await prisma.project.update({
+    await prisma.projects.update({
       where: { id: projectId },
       data: {
         settings: {

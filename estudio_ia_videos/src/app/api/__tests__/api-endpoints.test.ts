@@ -7,7 +7,7 @@ import { POST as generateSpeechPOST, GET as generateSpeechGET } from '../avatars
 import { GET as monitoringGET, POST as monitoringPOST } from '../monitoring/route'
 
 // Mock RealTimeMonitor
-jest.mock('@lib/monitoring/real-time-monitor', () => ({
+jest.mock('@/lib/monitoring/real-time-monitor', () => ({
   realTimeMonitor: {
     getHealthStatus: jest.fn(() => ({ status: 'healthy', score: 100, issues: [] })),
     getMetrics: jest.fn(() => []),
@@ -36,7 +36,7 @@ jest.mock('@supabase/supabase-js', () => ({
   }))
 }))
 
-jest.mock('../../lib/supabase', () => ({
+jest.mock('@/lib/supabase', () => ({
   supabase: {
     from: jest.fn(() => {
       interface QueryBuilder {
@@ -103,9 +103,9 @@ jest.mock('next/server', () => {
 const { NextRequest } = require('next/server');
 
 // Mock dos serviços
-jest.mock('../../lib/avatar-3d-pipeline')
-jest.mock('../../lib/tts/tts-service')
-jest.mock('../../lib/services/monitoring-service')
+jest.mock('@/lib/avatar-3d-pipeline')
+jest.mock('@/lib/tts/tts-service')
+jest.mock('@/lib/services/monitoring-service')
 
 describe('API Endpoints Tests', () => {
   describe('/api/avatars/generate-speech', () => {

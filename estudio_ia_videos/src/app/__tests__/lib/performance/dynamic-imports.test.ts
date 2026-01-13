@@ -10,7 +10,7 @@ import {
   clearComponentCache,
   getComponentCacheStats,
   dynamicComponents
-} from '@lib/performance/dynamic-imports';
+} from '@/lib/performance/dynamic-imports';
 
 // Mock React para evitar problemas com JSX
 jest.mock('react', () => ({
@@ -19,7 +19,7 @@ jest.mock('react', () => ({
 }));
 
 // Mock do logger
-jest.mock('@lib/logger', () => ({
+jest.mock('@/lib/logger', () => ({
   logger: {
     debug: jest.fn(),
     warn: jest.fn(),

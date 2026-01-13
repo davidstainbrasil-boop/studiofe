@@ -375,7 +375,7 @@ export function cached<T extends (...args: unknown[]) => unknown>(
   } = {}
 ) {
   return function(
-    target: Record<string, unknown>,
+    target: object,
     propertyKey: string,
     descriptor?: PropertyDescriptor
   ) {

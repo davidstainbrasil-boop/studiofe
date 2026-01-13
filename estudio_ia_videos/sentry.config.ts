@@ -20,16 +20,17 @@ Sentry.init({
   replaysSessionSampleRate: 0.01, // 1% of sessions
   replaysOnErrorSampleRate: 1.0,  // 100% of errors
 
-  // Integrations
+  // Trace propagation targets (moved outside of integration)
+  tracePropagationTargets: [
+    'localhost',
+    'cursostecno.com.br',
+    /^\//
+  ],
+
+  // Integrations - using new Sentry v8+ API
   integrations: [
-    new Sentry.BrowserTracing({
-      tracePropagationTargets: [
-        'localhost',
-        'cursostecno.com.br',
-        /^\//
-      ],
-    }),
-    new Sentry.Replay({
+    Sentry.browserTracingIntegration(),
+    Sentry.replayIntegration({
       maskAllText: true,      // Privacy: mask all text
       blockAllMedia: true,    // Privacy: block all media
     }),

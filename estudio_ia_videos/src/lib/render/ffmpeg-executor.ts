@@ -20,6 +20,7 @@ export interface FFmpegOptions {
   fps?: number;
   width?: number;
   height?: number;
+  resolution?: '480p' | '720p' | '1080p' | '4k'; // convenience shorthand
   codec?: 'h264' | 'h265' | 'vp8' | 'vp9';
   quality?: 'low' | 'medium' | 'high' | 'ultra';
   preset?: 'ultrafast' | 'superfast' | 'veryfast' | 'faster' | 'fast' | 'medium' | 'slow' | 'slower' | 'veryslow';

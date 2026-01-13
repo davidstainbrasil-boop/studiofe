@@ -17,7 +17,7 @@ import VideoEffects, {
   ColorFilter,
   TransitionType,
   SpecialEffect
-} from '@lib/video/video-effects';
+} from '@/lib/video/video-effects';
 import ffmpeg from 'fluent-ffmpeg';
 import { promises as fs } from 'fs';
 

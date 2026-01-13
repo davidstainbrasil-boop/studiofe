@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { LoadingState, ErrorState, EmptyState, AsyncBoundary } from '../../components/ui/feedback';
+import { LoadingState, ErrorState, EmptyState, AsyncBoundary } from '@/components/ui/feedback';
 
 describe('UI Feedback components', () => {
   test('LoadingState renders label', () => {

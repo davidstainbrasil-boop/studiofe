@@ -16,10 +16,12 @@ import VideoWatermarker, {
   WatermarkResult,
   TextWatermark,
   ImageWatermark
-} from '@lib/video/video-watermarker';
+} from '@/lib/video/video-watermarker';
+
+import { WatermarkPosition } from '@/lib/video/watermark-processor';
+
 import ffmpeg from 'fluent-ffmpeg';
 import { promises as fs } from 'fs';
-import { WatermarkPosition } from '@/types/watermark.types';
 
 // ==================== MOCKS ====================
 
@@ -282,16 +284,16 @@ describe('VideoWatermarker', () => {
 
   describe('Watermark Positions', () => {
     test.each([
-      [WatermarkPosition.TOP_LEFT, '10', '10'],
-      [WatermarkPosition.TOP_CENTER, '(W-tw)/2', '10'],
-      [WatermarkPosition.TOP_RIGHT, 'W-tw-10', '10'],
-      [WatermarkPosition.CENTER_LEFT, '10', '(H-th)/2'],
-      [WatermarkPosition.CENTER, '(W-tw)/2', '(H-th)/2'],
-      [WatermarkPosition.CENTER_RIGHT, 'W-tw-10', '(H-th)/2'],
-      [WatermarkPosition.BOTTOM_LEFT, '10', 'H-th-10'],
-      [WatermarkPosition.BOTTOM_CENTER, '(W-tw)/2', 'H-th-10'],
-      [WatermarkPosition.BOTTOM_RIGHT, 'W-tw-10', 'H-th-10']
-    ] satisfies Array<[WatermarkPosition, string, string]>)('should position watermark at %s', async (position, expectedX, expectedY) => {
+      ['top-left', '10', '10'],
+      ['top-center', '(W-tw)/2', '10'],
+      ['top-right', 'W-tw-10', '10'],
+      ['center-left', '10', '(H-th)/2'],
+      ['center', '(W-tw)/2', '(H-th)/2'],
+      ['center-right', 'W-tw-10', '(H-th)/2'],
+      ['bottom-left', '10', 'H-th-10'],
+      ['bottom-center', '(W-tw)/2', 'H-th-10'],
+      ['bottom-right', 'W-tw-10', 'H-th-10']
+    ])('should position watermark at %s', async (position, expectedX, expectedY) => {
       const watermarker = new VideoWatermarker();
 
       mockFfmpeg.save.mockImplementation((outputPath: string) => {

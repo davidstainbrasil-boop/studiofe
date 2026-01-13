@@ -20,7 +20,7 @@ export async function POST(req: Request, context: z.infer<typeof RouteContextSch
   try {
     const watermarkSettings = WatermarkSettingsSchema.parse(requestBody);
 
-    const job = await prisma.render_jobs.findUnique({
+    const job = await prisma.renderJob.findUnique({
       where: { id: jobId },
     });
 
@@ -34,7 +34,7 @@ export async function POST(req: Request, context: z.infer<typeof RouteContextSch
       watermark: watermarkSettings,
     };
 
-    await prisma.render_jobs.update({
+    await prisma.renderJob.update({
       where: { id: jobId },
       data: {
         settings: updatedSettings,

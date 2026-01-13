@@ -30,7 +30,7 @@ export class StorageFilesRepository {
    * Cria um novo registro de arquivo
    */
   async create(data: CreateStorageFileData) {
-    return prisma.storageFile.create({
+    return prisma.storage_files.create({
       data: {
         userId: data.userId,
         bucket: data.bucket || 'uploads',
@@ -58,7 +58,7 @@ export class StorageFilesRepository {
    * Busca um arquivo por ID
    */
   async findById(id: string) {
-    return prisma.storageFile.findUnique({
+    return prisma.storage_files.findUnique({
       where: { id },
       include: {
         user: {
@@ -76,7 +76,7 @@ export class StorageFilesRepository {
    * Busca um arquivo por bucket e path
    */
   async findByPath(bucket: string, filePath: string) {
-    return prisma.storageFile.findUnique({
+    return prisma.storage_files.findUnique({
       where: {
         bucket_filePath: {
           bucket,
@@ -110,7 +110,7 @@ export class StorageFilesRepository {
     if (filters?.mimeType) where.mimeType = filters.mimeType;
     if (filters?.isPublic !== undefined) where.isPublic = filters.isPublic;
 
-    return prisma.storageFile.findMany({
+    return prisma.storage_files.findMany({
       where,
       take: options?.limit,
       skip: options?.offset,
@@ -131,7 +131,7 @@ export class StorageFilesRepository {
    * Incrementa o contador de downloads
    */
   async incrementDownload(id: string) {
-    return prisma.storageFile.update({
+    return prisma.storage_files.update({
       where: { id },
       data: {
         downloadCount: {
@@ -145,7 +145,7 @@ export class StorageFilesRepository {
    * Atualiza metadados de um arquivo
    */
   async updateMetadata(id: string, metadata: Record<string, unknown>) {
-    return prisma.storageFile.update({
+    return prisma.storage_files.update({
       where: { id },
       data: {
         metadata,
@@ -157,7 +157,7 @@ export class StorageFilesRepository {
    * Deleta um arquivo
    */
   async delete(id: string) {
-    return prisma.storageFile.delete({
+    return prisma.storage_files.delete({
       where: { id },
     });
   }
@@ -166,7 +166,7 @@ export class StorageFilesRepository {
    * Deleta arquivos por usuário
    */
   async deleteByUserId(userId: string) {
-    return prisma.storageFile.deleteMany({
+    return prisma.storage_files.deleteMany({
       where: { userId },
     });
   }
@@ -175,7 +175,7 @@ export class StorageFilesRepository {
    * Calcula o tamanho total de armazenamento de um usuário
    */
   async getTotalSizeByUserId(userId: string): Promise<bigint> {
-    const result = await prisma.storageFile.aggregate({
+    const result = await prisma.storage_files.aggregate({
       where: { userId },
       _sum: {
         fileSize: true,
@@ -192,7 +192,7 @@ export class StorageFilesRepository {
     const where: Prisma.StorageFileWhereInput = {};
     if (userId) where.userId = userId;
 
-    return prisma.storageFile.groupBy({
+    return prisma.storage_files.groupBy({
       by: ['mimeType'],
       where: {
         ...where,

@@ -97,7 +97,7 @@ export class JobManager {
         userId: userId,
         status: 'pending',
         progress: 0,
-        render_settings: {},
+        renderSettings: {},
         attempts: 0,
         idempotencyKey: idempotencyKey || null
       },
@@ -128,10 +128,10 @@ export class JobManager {
       status: data.status as RenderJob['status'],
       progress: data.progress || 0,
       createdAt: data.createdAt || new Date(),
-      startedAt: data.started_at || undefined,
-      completedAt: data.completed_at || undefined,
-      outputUrl: data.output_url || undefined,
-      error: data.error_message || undefined
+      startedAt: data.startedAt || undefined,
+      completedAt: data.completedAt || undefined,
+      outputUrl: data.outputUrl || undefined,
+      error: data.errorMessage || undefined
     };
   }
   
@@ -151,7 +151,7 @@ export class JobManager {
         where: { id: jobId },
         data: {
           status: 'processing',
-          started_at: new Date(),
+          startedAt: new Date(),
           progress: 0
         }
       });
@@ -177,8 +177,8 @@ export class JobManager {
         data: {
           status: 'completed',
           progress: 100,
-          completed_at: new Date(),
-          output_url: outputUrl
+          completedAt: new Date(),
+          outputUrl: outputUrl
         }
       });
 
@@ -203,8 +203,8 @@ export class JobManager {
         where: { id: jobId },
         data: {
           status: 'failed',
-          completed_at: new Date(),
-          error_message: errorMessage
+          completedAt: new Date(),
+          errorMessage: errorMessage
         }
       });
 
@@ -237,10 +237,10 @@ export class JobManager {
         status: row.status as RenderJob['status'],
         progress: row.progress || 0,
         createdAt: row.createdAt || new Date(),
-        startedAt: row.started_at || undefined,
-        completedAt: row.completed_at || undefined,
-        outputUrl: row.output_url || undefined,
-        error: row.error_message || undefined
+        startedAt: row.startedAt || undefined,
+        completedAt: row.completedAt || undefined,
+        outputUrl: row.outputUrl || undefined,
+        error: row.errorMessage || undefined
       }));
     } catch (error) {
       logger.error('Failed to list jobs:', error instanceof Error ? error : new Error(String(error)), { component: 'JobManager' });

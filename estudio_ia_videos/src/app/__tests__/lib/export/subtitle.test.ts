@@ -9,7 +9,7 @@
  * - Geração de legendas
  */
 
-import { SubtitleParser } from '@lib/export/subtitle-parser'
+import { SubtitleParser } from '@/lib/export/subtitle-parser'
 import { SubtitleFormat, type SubtitleFile } from '@/types/subtitle.types'
 
 describe('SubtitleParser - Static Methods', () => {

@@ -1,6 +1,6 @@
 // @jest-environment node
 import { NextRequest } from 'next/server'
-import { GET } from '@/api/projects/[id]/route'
+import { GET } from '@/app/api/projects/[id]/route'
 import { createClient } from '@lib/supabase/server'
 
 // Mock Supabase

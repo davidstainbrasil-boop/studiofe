@@ -39,7 +39,7 @@ export class CommentsService {
   async create(input: CreateCommentInput): Promise<Comment> {
     const { userId, projectId, content, position, parentId } = input;
     
-    const comment = await prisma.projectComment.create({
+    const comment = await prisma.project_comments.create({
       data: {
         userId,
         projectId,
@@ -73,7 +73,7 @@ export class CommentsService {
   }
   
   async get(commentId: string): Promise<Comment | null> {
-    const comment = await prisma.projectComment.findUnique({
+    const comment = await prisma.project_comments.findUnique({
       where: { id: commentId },
       include: {
         user: {
@@ -107,7 +107,7 @@ export class CommentsService {
     // slideId is not directly in schema, maybe stored in position or content? 
     // For now ignoring slideId filter if not in schema, or assuming it's part of position logic which is complex to query.
     
-    const comments = await prisma.projectComment.findMany({
+    const comments = await prisma.project_comments.findMany({
       where: {
         ...where,
         parentId: null // Only fetch root comments
@@ -140,7 +140,7 @@ export class CommentsService {
   
   async update(commentId: string, updates: Partial<Comment>): Promise<Comment | null> {
     try {
-      const comment = await prisma.projectComment.update({
+      const comment = await prisma.project_comments.update({
         where: { id: commentId },
         data: {
           content: updates.content,
@@ -176,7 +176,7 @@ export class CommentsService {
   
   async delete(commentId: string): Promise<boolean> {
     try {
-      await prisma.projectComment.delete({
+      await prisma.project_comments.delete({
         where: { id: commentId }
       });
       return true;
@@ -187,7 +187,7 @@ export class CommentsService {
   
   async resolve(commentId: string): Promise<boolean> {
     try {
-      await prisma.projectComment.update({
+      await prisma.project_comments.update({
         where: { id: commentId },
         data: { resolved: true }
       });
@@ -205,7 +205,7 @@ export class CommentsService {
   
   async reopenComment(input: { commentId: string; userId: string }): Promise<boolean> {
     try {
-      await prisma.projectComment.update({
+      await prisma.project_comments.update({
         where: { id: input.commentId },
         data: { resolved: false }
       });
@@ -222,10 +222,10 @@ export class CommentsService {
   }
 
   async replyToComment(input: { commentId: string; userId: string; content: string }): Promise<Comment | null> {
-    const parent = await prisma.projectComment.findUnique({ where: { id: input.commentId } });
+    const parent = await prisma.project_comments.findUnique({ where: { id: input.commentId } });
     if (!parent) return null;
 
-    const reply = await prisma.projectComment.create({
+    const reply = await prisma.project_comments.create({
       data: {
         projectId: parent.projectId,
         userId: input.userId,
@@ -269,8 +269,8 @@ export class CommentsService {
   }
 
   async getCommentStats(projectId: string): Promise<{ total: number; resolved: number; open: number }> {
-    const total = await prisma.projectComment.count({ where: { projectId } });
-    const resolved = await prisma.projectComment.count({ where: { projectId, resolved: true } });
+    const total = await prisma.project_comments.count({ where: { projectId } });
+    const resolved = await prisma.project_comments.count({ where: { projectId, resolved: true } });
     
     return {
       total,
@@ -280,7 +280,7 @@ export class CommentsService {
   }
 
   async deleteComment(input: { commentId: string; userId: string }): Promise<boolean> {
-    const comment = await prisma.projectComment.findUnique({ where: { id: input.commentId } });
+    const comment = await prisma.project_comments.findUnique({ where: { id: input.commentId } });
     if (!comment) return false;
     if (comment.userId !== input.userId) return false; 
     

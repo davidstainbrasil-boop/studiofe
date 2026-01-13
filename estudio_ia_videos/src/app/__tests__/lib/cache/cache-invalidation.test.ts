@@ -9,7 +9,7 @@ import {
   DEFAULT_CACHE_CONFIG,
   createCacheKey,
   cached
-} from '@lib/cache/cache-invalidation';
+} from '@/lib/cache/cache-invalidation';
 
 describe('TaggedCache', () => {
   let cache: TaggedCache;

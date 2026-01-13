@@ -152,7 +152,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Verify project access
-    const project = await prisma.projects.findFirst({
+    const project = await prisma.project.findFirst({
       where: {
         id: projectId,
         userId: session.user.id,
@@ -166,7 +166,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const timeline = await prisma.timelines.findUnique({
+    const timeline = await prisma.timeline.findUnique({
       where: { projectId },
     });
 
@@ -242,8 +242,8 @@ async function getTimelineSummary(timeline: TimelineData, projectId: string): Pr
   );
 
   // Get snapshot count
-  const snapshotCount = await prisma.timeline_snapshots.count({
-    where: { timelines: { projectId: projectId } },
+  const snapshotCount = await prisma.timelineSnapshot.count({
+    where: { timeline: { projectId: projectId } },
   });
 
   return {
@@ -272,7 +272,7 @@ async function getTimelineSummary(timeline: TimelineData, projectId: string): Pr
  */
 async function getUsageStats(projectId: string): Promise<UsageStats> {
   // Get timeline history
-  const timeline = await prisma.timelines.findUnique({
+  const timeline = await prisma.timeline.findUnique({
     where: { projectId },
   });
 
@@ -286,7 +286,7 @@ async function getUsageStats(projectId: string): Promise<UsageStats> {
     };
   }
 
-  const snapshots = await prisma.timeline_snapshots.findMany({
+  const snapshots = await prisma.timelineSnapshot.findMany({
     where: { timelineId: timeline.id },
     orderBy: { createdAt: 'desc' },
     take: 50,
@@ -407,7 +407,7 @@ async function getPerformanceMetrics(timeline: TimelineData): Promise<Performanc
  * Editing Patterns Analysis
  */
 async function getEditingPatterns(projectId: string): Promise<EditingPatterns> {
-  const timeline = await prisma.timelines.findUnique({
+  const timeline = await prisma.timeline.findUnique({
     where: { projectId },
   });
 
@@ -430,7 +430,7 @@ async function getEditingPatterns(projectId: string): Promise<EditingPatterns> {
     };
   }
 
-  const snapshots = await prisma.timeline_snapshots.findMany({
+  const snapshots = await prisma.timelineSnapshot.findMany({
     where: { timelineId: timeline.id },
     orderBy: { createdAt: 'asc' },
     take: 100,

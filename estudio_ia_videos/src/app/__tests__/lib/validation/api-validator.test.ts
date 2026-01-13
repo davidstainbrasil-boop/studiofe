@@ -15,10 +15,10 @@ import {
   SafeString,
   SafeUrl,
   createValidationError,
-} from '@lib/validation/api-validator';
+} from '@/lib/validation/api-validator';
 
 // Mock logger
-jest.mock('@lib/logger', () => ({
+jest.mock('@/lib/logger', () => ({
   Logger: jest.fn().mockImplementation(() => ({
     warn: jest.fn(),
     error: jest.fn(),

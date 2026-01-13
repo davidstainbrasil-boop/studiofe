@@ -3,8 +3,8 @@
  * Advanced subtitle system with SRT/VTT/ASS support
  */
 
-import { SubtitleManager, createBasicSubtitleManager, createCourseSubtitleManager, createMultiLanguageSubtitleManager, createAccessibleSubtitleManager } from '@lib/video/subtitle-manager';
-import type { SubtitleEntry, SubtitleStyle, SubtitleTrack, ValidationResult } from '@lib/video/subtitle-manager';
+import { SubtitleManager, createBasicSubtitleManager, createCourseSubtitleManager, createMultiLanguageSubtitleManager, createAccessibleSubtitleManager } from '@/lib/video/subtitle-manager';
+import type { SubtitleEntry, SubtitleStyle, SubtitleTrack, ValidationResult } from '@/lib/video/subtitle-manager';
 import * as fs from 'fs/promises';
 import ffmpeg from 'fluent-ffmpeg';
 

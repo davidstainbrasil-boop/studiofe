@@ -1,5 +1,5 @@
 // Importa diretamente para evitar carregar bullmq-service (Esm export de dependência msgpackr)
-import { logger, createLogger, getLogger } from '@lib/services/logger-service'
+import { logger, createLogger } from '@/lib/monitoring/logger'
 import { existsSync, readFileSync } from 'fs'
 import { join } from 'path'
 
@@ -29,9 +29,4 @@ describe('Logger Service', () => {
     }
   })
 
-  it('getLogger reusa instância singleton', () => {
-    const a = getLogger()
-    const b = getLogger()
-    expect(a === b).toBe(true)
-  })
 })

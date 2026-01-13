@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseForRequest } from '@lib/supabase/server';
+import { getSupabaseForRequest } from '@/lib/supabase/server';
 import { AnalyticsTracker } from '@lib/analytics/analytics-tracker';
 import { logger } from '@lib/logger';
 import { toJsonValue } from '@lib/prisma-helpers';

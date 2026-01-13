@@ -1,10 +1,10 @@
-import { computeBasicStats, computePerformanceMetrics, computeErrorAnalysis, computeQueueStats, computeErrorCategories, normalizeErrorMessage, BasicRenderJob } from '@lib/analytics/render-core'
+import { computeBasicStats, computePerformanceMetrics, computeErrorAnalysis, computeQueueStats, computeErrorCategories, normalizeErrorMessage, BasicRenderJob } from '@/lib/analytics/render-core'
 
 function makeJob(partial: Partial<BasicRenderJob>): BasicRenderJob {
   return {
     id: partial.id || crypto.randomUUID(),
     status: partial.status || 'pending',
-    created_at: partial.created_at || new Date().toISOString(),
+    createdAt: partial.createdAt || new Date().toISOString(),
     started_at: partial.started_at ?? null,
     completed_at: partial.completed_at ?? null,
     error_message: partial.error_message ?? null,
