@@ -660,10 +660,10 @@ pending → queued → processing → completed | failed | cancelled
 - [x] Executar E2E em staging
 - [x] Performance testing (Lighthouse, K6) (Skipped - Environment Issues)
 - [x] Security audit (OWASP ZAP)
-- [ ] Deploy em produção
-- [ ] Configurar CDN
-- [ ] Configurar backups automáticos
-- [ ] Monitoramento 24/7 (Sentry, DataDog)
+- [x] Deploy em produção
+- [x] Configurar CDN
+- [x] Configurar backups automáticos
+- [x] Monitoramento 24/7 (Sentry, DataDog)
 - [ ] Go-Live com primeiros 100 usuários
 
 ---
