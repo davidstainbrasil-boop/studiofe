@@ -7,8 +7,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { rateLimit } from '@lib/utils/rate-limit';
-import { logger } from '@lib/utils/logger';
+import { rateLimit } from '../../../lib/utils/rate-limit';
+import { logger } from '@/lib/logger';
 import { z } from 'zod';
 
 // ===========================================

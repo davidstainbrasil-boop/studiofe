@@ -255,9 +255,9 @@ export async function GET(request: NextRequest) {
 
     interface RenderJobRecord {
       id: string; avatarModelId: string; userId: string; status: string;
-      progress?: number; createdAt: string; completed_at?: string;
+      progress?: number; createdAt: string; completedAt?: string;
       output_video_url?: string; output_thumbnail_url?: string;
-      error_message?: string; lipsync_accuracy?: number; audio2face_enabled?: boolean;
+      errorMessage?: string; lipsyncAccuracy?: number; audio2face_enabled?: boolean;
       avatar_models?: { id: string; name: string; displayName: string; category: string };
       quality?: string; resolution?: string; ray_tracing_enabled?: boolean;
       real_time_lipsync?: boolean; language?: string;
@@ -291,7 +291,7 @@ export async function GET(request: NextRequest) {
             quality: job.quality,
             resolution: job.resolution,
             rayTracing: job.ray_tracing_enabled,
-            realTimeLipSync: job.realTimeLipsync,
+            realTimeLipSync: job.real_time_lipsync,
             language: job.language
           }
         })),

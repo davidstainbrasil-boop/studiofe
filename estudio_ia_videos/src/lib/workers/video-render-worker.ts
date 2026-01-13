@@ -183,26 +183,33 @@ export class VideoRenderWorker extends EventEmitter {
   private async generateFrames(jobData: RenderJobData, framesDir: string): Promise<number> {
     await fs.mkdir(framesDir, { recursive: true });
 
-    const frameGenerator = await import('@/lib/render/frame-generator');
-    const totalFrames = await frameGenerator.generateFramesFromSlides(
+    // Corrigido: Instanciar FrameGenerator e chamar o método
+    const { FrameGenerator } = await import('@/lib/render/frame-generator');
+    const generator = new FrameGenerator({
+      width: jobData.config.resolution.width,
+      height: jobData.config.resolution.height,
+      fps: jobData.config.fps,
+    });
+
+    const result = await generator.generateFrames(
       jobData.slides,
       framesDir,
-      {
-        resolution: jobData.config.resolution,
-        fps: jobData.config.fps,
-        transitionsEnabled: jobData.config.transitionsEnabled,
-        onProgress: (progress) => {
-          this.emitProgress({
-            jobId: jobData.id,
-            stage: 'frames',
-            progress: 15 + (progress * 0.25), // 15-40%
-            message: `Gerando frames... ${Math.round(progress)}%`
-          });
-        }
+      (current, total) => {
+        const progress = (current / total) * 100;
+        this.emitProgress({
+          jobId: jobData.id,
+          stage: 'frames',
+          progress: 15 + (progress * 0.25), // Mapeia para o intervalo 15-40%
+          message: `Gerando frames... ${Math.round(progress)}%`
+        });
       }
     );
 
-    return totalFrames;
+    if (!result.success) {
+      throw new Error('Falha ao gerar frames');
+    }
+
+    return result.totalFrames;
   }
 
   /**
@@ -295,22 +302,52 @@ export class VideoRenderWorker extends EventEmitter {
   ): Promise<void> {
     const tempOutputPath = `${outputPath}.tmp.mp4`;
 
-    await this.ffmpegExecutor.renderFromFrames({
-      // ... (configurações do ffmpegExecutor)
+    const ffmpegOptions: FFmpegOptions = {
+      inputFramesDir: framesDir,
+      inputFramesPattern: 'frame_%06d.png', // Assumindo o padrão do gerador
+      audioPath: audioPath,
       outputPath: tempOutputPath,
-      // ...
-    }, (progress) => {
-      // ... (lógica de progresso)
+      fps: jobData.config.fps,
+      width: jobData.config.resolution.width,
+      height: jobData.config.resolution.height,
+      codec: jobData.config.codec,
+      quality: jobData.config.quality,
+      preset: 'ultrafast', // Usar preset rápido para testes e workers
+    };
+
+    logger.info('🎥 Iniciando renderização com FFmpeg', {
+      component: 'VideoRenderWorker',
+      jobId: jobData.id,
+      options: ffmpegOptions,
     });
 
-    const job = await prisma.videoJob.findUnique({
+    await this.ffmpegExecutor.renderFromFrames(ffmpegOptions, (progress) => {
+      this.emitProgress({
+        jobId: jobData.id,
+        stage: 'encoding',
+        progress: 60 + (progress.progress * 0.3), // 60-90%
+        message: `Codificando... ${Math.round(progress.progress)}%`,
+        currentFrame: progress.frame,
+        totalFrames: progress.totalFrames,
+        fps: progress.fps,
+      });
+    });
+
+    logger.info('✅ Renderização FFmpeg concluída, iniciando pós-processamento.', {
+      component: 'VideoRenderWorker',
+      jobId: jobData.id,
+      tempPath: tempOutputPath,
+      finalPath: outputPath,
+    });
+
+    const job = await prisma.render_jobs.findUnique({
       where: { id: jobData.id },
     });
 
     if (job && job.watermark) {
-      this.emitProgress({
+      await this.emitProgress({
         jobId: jobData.id,
-        stage: 'watermarking',
+        stage: 'encoding', // 'watermarking' não é um stage válido
         progress: 95,
         message: 'Aplicando marca d\'água...',
       });

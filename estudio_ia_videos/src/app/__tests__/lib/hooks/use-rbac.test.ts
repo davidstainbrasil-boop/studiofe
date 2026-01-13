@@ -40,7 +40,7 @@ describe('RBAC Hooks', () => {
       expect(result.current.hasPermission).toBe(true)
       expect(result.current.error).toBeNull()
       expect(mockSupabase.rpc).toHaveBeenCalledWith('user_has_permission', {
-        user_id: 'user-123',
+        userId: 'user-123',
         permission_name: 'videos.edit'
       })
     })

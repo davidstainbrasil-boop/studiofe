@@ -15,12 +15,12 @@ async function main() {
     // Create default system settings
     console.log('📄 Creating default system settings...')
     
-    const existingSettings = await prisma.systemSettings.findUnique({
+    const existingSettings = await prisma.system_settings.findUnique({
       where: { key: 'theme_config' }
     })
 
     if (!existingSettings) {
-      await prisma.systemSettings.create({
+      await prisma.system_settings.create({
         data: {
           key: 'theme_config',
           value: {
@@ -45,12 +45,12 @@ async function main() {
     // Create admin user if using email/password auth
     console.log('👤 Checking for admin user...')
     
-    const adminUser = await prisma.user.findUnique({
+    const adminUser = await prisma.users.findUnique({
       where: { email: 'admin@estudio.ai' }
     })
 
     if (!adminUser) {
-      await prisma.user.create({
+      await prisma.users.create({
         data: {
           email: 'admin@estudio.ai',
           name: 'Administrador',

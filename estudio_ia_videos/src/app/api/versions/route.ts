@@ -47,12 +47,12 @@ export async function POST(req: NextRequest) {
     }
 
     // Conta versões existentes para incrementar
-    const versionCount = await prisma.projectVersion.count({
+    const versionCount = await prisma.project_versions.count({
       where: { projectId }
     })
 
     // Cria nova versão
-    const version = await prisma.projectVersion.create({
+    const version = await prisma.project_versions.create({
       data: {
         projectId,
         userId: getUserId(session.user),
@@ -92,7 +92,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Busca versões
-    const versions = await prisma.projectVersion.findMany({
+    const versions = await prisma.project_versions.findMany({
       where: { projectId },
       include: {
         user: {

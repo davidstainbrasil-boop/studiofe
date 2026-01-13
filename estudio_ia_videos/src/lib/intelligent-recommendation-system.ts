@@ -44,7 +44,7 @@ export class IntelligentRecommendationSystem {
       });
 
       // 2. Recommend recent courses (if any)
-      const courses = await prisma.course.findMany({
+      const courses = await prisma.courses.findMany({
         take: 3,
         orderBy: { createdAt: 'desc' }
       });
@@ -74,7 +74,7 @@ export class IntelligentRecommendationSystem {
   ): Promise<void> {
     // Log interaction to analytics events for future training
     try {
-      await prisma.analyticsEvent.create({
+      await prisma.analytics_events.create({
         data: {
           userId,
           eventType: 'recommendation_interaction',

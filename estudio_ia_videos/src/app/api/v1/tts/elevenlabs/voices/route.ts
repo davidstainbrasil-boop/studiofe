@@ -55,7 +55,7 @@ export async function GET() {
       accent: voice.labels?.accent || 'unknown',
       language: voice.labels?.language || 'en',
       useCase: voice.labels?.['use case'] || 'general',
-      previewUrl: voice.previewUrl,
+      previewUrl: voice.preview_url,
       samples: 0
     })) || []
 

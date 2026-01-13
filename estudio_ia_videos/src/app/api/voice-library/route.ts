@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     if (language) where.language = language
 
     // Fetch voices from database
-    const voices = await prisma.voiceModel.findMany({
+    const voices = await prisma.voice_models.findMany({
       where,
       orderBy: { createdAt: 'desc' }
     })
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create voice model in database
-    const voiceModel = await prisma.voiceModel.create({
+    const voiceModel = await prisma.voice_models.create({
       data: {
         name,
         type,
@@ -168,7 +168,7 @@ export async function PUT(request: NextRequest) {
     if (metadata) updateData.metadata = metadata
     updateData.updatedAt = new Date()
 
-    const voiceModel = await prisma.voiceModel.update({
+    const voiceModel = await prisma.voice_models.update({
       where: { id },
       data: updateData
     })
@@ -203,7 +203,7 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    await prisma.voiceModel.delete({
+    await prisma.voice_models.delete({
       where: { id }
     })
 

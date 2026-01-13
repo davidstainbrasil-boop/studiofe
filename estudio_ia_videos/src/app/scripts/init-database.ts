@@ -84,7 +84,7 @@ async function main() {
     console.log('✅ System configurations skipped (model not available)')
 
     // Create demo user for testing
-    const demoUser = await prisma.user.upsert({
+    const demoUser = await prisma.users.upsert({
       where: { email: 'demo@estudio-ia.com' },
       update: {},
       create: {
@@ -196,7 +196,7 @@ async function main() {
       resolution: '1080p'
     };
 
-    const sampleProject = await prisma.project.upsert({
+    const sampleProject = await prisma.projects.upsert({
       where: { id: 'demo-project-nr12' },
       update: {},
       create: {

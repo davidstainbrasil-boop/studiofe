@@ -5,7 +5,7 @@ export async function updateVideoJobWatermark(
   watermarkText: string
 ): Promise<void> {
   try {
-    await prisma.videoJob.update({
+    await prisma.render_jobs.update({
       where: {
         id: jobId,
       },

@@ -95,7 +95,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
     // Atualizar webhook via prisma direto (webhookManager não tem update)
     const { prisma } = await import('@/lib/prisma')
-    const updated = await prisma.webhook.update({
+    const updated = await prisma.webhooks.update({
       where: { id },
       data: {
         active: data.active ?? webhook.active,

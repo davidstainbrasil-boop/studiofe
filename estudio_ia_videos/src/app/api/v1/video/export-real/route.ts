@@ -85,8 +85,8 @@ export async function GET(request: NextRequest) {
         if (statusFilter && ['queued','processing','completed','error'].includes(statusFilter)) {
           where.status = statusFilter
         }
-        const total = await prisma.videoExport.count({ where })
-        const jobs = await prisma.videoExport.findMany({
+        const total = await prisma.video_exports.count({ where })
+        const jobs = await prisma.video_exports.findMany({
           where,
           orderBy: { createdAt: 'desc' },
           take: limit,

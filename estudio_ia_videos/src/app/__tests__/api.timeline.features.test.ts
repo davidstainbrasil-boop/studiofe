@@ -44,11 +44,11 @@ jest.mock('@/lib/prisma', () => {
 
   return {
     prisma: {
-      project: {
+      projects: {
         findUnique: jest.fn().mockResolvedValue({ id: 'p1', userId: 'u1' }),
         findFirst: jest.fn().mockResolvedValue({ id: 'p1', userId: 'u1' })
       },
-      timeline: {
+      timelines: {
         findUnique: jest.fn().mockResolvedValue(mockTimeline),
         update: jest.fn().mockImplementation(async ({ data }: any) => ({
           ...mockTimeline,
@@ -68,14 +68,25 @@ jest.mock('@/lib/prisma', () => {
           createdAt: new Date()
         })),
         deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
-        findMany: jest.fn().mockResolvedValue([])
+        findMany: jest.fn().mockResolvedValue([{
+          id: 'lock1',
+          trackId: 'track1',
+          userId: 'u1',
+          users: { name: 'User 1', avatarUrl: null },
+          createdAt: new Date()
+        }])
       },
       timelinePresence: {
         upsert: jest.fn().mockImplementation(async ({ create }: any) => ({
           ...create,
           lastSeenAt: new Date()
         })),
-        findMany: jest.fn().mockResolvedValue([])
+        findMany: jest.fn().mockResolvedValue([{
+          userId: 'u1',
+          users: { name: 'User 1', avatarUrl: null },
+          lastSeenAt: new Date(),
+          currentTrackId: 'track1'
+        }])
       },
       timelineTemplate: {
         create: jest.fn().mockImplementation(async ({ data }: any) => ({
@@ -104,7 +115,7 @@ jest.mock('@/lib/prisma', () => {
         update: jest.fn().mockResolvedValue({}),
         delete: jest.fn().mockResolvedValue({})
       },
-      timelineSnapshot: {
+      timelineSnapshots: {
         count: jest.fn().mockResolvedValue(5),
         findMany: jest.fn().mockResolvedValue([])
       }

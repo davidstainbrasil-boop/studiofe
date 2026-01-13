@@ -2,8 +2,8 @@ const nextConfig = {
   async rewrites() {
     return [
       {
-        source: '/:path*',
-        destination: '/estudio_ia_videos/:path*',
+        source: '/((?!_next|api|favicon.ico).*)',
+        destination: '/estudio_ia_videos/$1',
       },
     ];
   },

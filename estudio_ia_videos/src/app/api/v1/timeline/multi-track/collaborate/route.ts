@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === 'lock') {
-      const existingLock = await prisma.timelineTrackLock.findFirst({
+      const existingLock = await prisma.timeline_track_locks.findFirst({
         where: {
           projectId,
           trackId,
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      const lock = await prisma.timelineTrackLock.upsert({
+      const lock = await prisma.timeline_track_locks.upsert({
         where: {
           projectId_trackId: {
             projectId,
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json({ success: true, data: lock });
     } else if (action === 'unlock') {
-      await prisma.timelineTrackLock.deleteMany({
+      await prisma.timeline_track_locks.deleteMany({
         where: {
           projectId,
           trackId,
@@ -98,10 +98,10 @@ export async function POST(req: NextRequest) {
     }
   } catch (error) {
     logger.error('Erro na rota de colaboração:', error);
-    return NextResponse.json(
-      { success: false, message: 'Erro interno do servidor' },
-      { status: 500 }
-    );
+      return NextResponse.json(
+        { success: false, message: 'Erro interno do servidor' },
+        { status: 500 }
+      );
   }
 }
 

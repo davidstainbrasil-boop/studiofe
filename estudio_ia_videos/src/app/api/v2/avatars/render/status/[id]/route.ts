@@ -56,7 +56,7 @@ export async function GET(
     }
 
     // Buscar informações do avatar do Prisma
-    const avatarData = await prisma.avatarModel.findUnique({
+    const avatarData = await prisma.avatar_models.findUnique({
       where: { id: job.avatarId },
       select: {
         id: true,

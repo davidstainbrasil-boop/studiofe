@@ -102,7 +102,7 @@ function formatDbJob(job: RenderJob) {
     data: { projectId: job.project_id, userId: job.user_id },
     progress: job.progress,
     attemptsMade: job.attempts || 0,
-    timestamp: new Date(job.created_at).getTime(),
+    timestamp: new Date(job.createdAt).getTime(),
     processedOn: job.started_at ? new Date(job.started_at).getTime() : undefined,
     finishedOn: job.completed_at ? new Date(job.completed_at).getTime() : undefined,
     failedReason: job.error_message,

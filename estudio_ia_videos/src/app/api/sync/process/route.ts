@@ -210,7 +210,7 @@ export async function GET(request: NextRequest) {
             job_id: job.job_id,
             status: job.status,
             progress: job.progress || 100,
-            createdAt: job.created_at,
+            createdAt: job.createdAt,
             completed_at: job.completed_at,
             metadata: {
               audio_duration: job.audio_duration,

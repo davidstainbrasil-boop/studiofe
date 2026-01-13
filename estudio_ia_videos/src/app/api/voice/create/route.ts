@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
 
     // Salva no banco
     // Note: VoiceClone model must be present in schema.prisma and prisma generate run
-    const voiceClone = await prisma.voiceClone.create({
+    const voiceClone = await prisma.voice_clones.create({
       data: {
         userId: getUserId(session.user),
         name,

@@ -248,10 +248,10 @@ export async function POST(request: NextRequest) {
           thumbnailUrl: avatarData.thumbnailUrl ?? undefined,
           modelUrl: avatarData.modelUrl ?? undefined,
           previewVideoUrl: avatarData.previewVideoUrl ?? undefined,
-          audio2faceCompatible: avatarData.audio2FaceCompatible,
-          realTimeLipsync: avatarData.realTimeLipSync,
+          audio2faceCompatible: avatarData.audio2faceCompatible,
+          realTimeLipsync: avatarData.realTimeLipsync,
           rayTracingSupport: avatarData.rayTracingSupport,
-          lipsyncAccuracy: avatarData.lipSyncAccuracy ?? undefined,
+          lipsyncAccuracy: avatarData.lipsyncAccuracy ?? undefined,
           modelFilePath: avatarData.modelFilePath ?? undefined,
           textureFiles: avatarData.textureFiles ?? undefined,
           rigFilePath: avatarData.rigFilePath ?? undefined,
@@ -346,7 +346,7 @@ export async function POST(request: NextRequest) {
               avatar: {
                 id: avatarData.id,
                 name: avatarData.name,
-                audio2FaceCompatible: avatarData.audio2FaceCompatible
+                audio2FaceCompatible: avatarData.audio2faceCompatible
               }
             }
           })
