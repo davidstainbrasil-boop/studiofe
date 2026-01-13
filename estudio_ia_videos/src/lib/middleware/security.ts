@@ -448,6 +448,5 @@ export function securityMiddleware() {
 }
 
 export {
-    SECURITY_CONFIG,
-    generateSecurityHeaders
+    SECURITY_CONFIG
 };

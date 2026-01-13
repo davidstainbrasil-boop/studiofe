@@ -156,12 +156,13 @@ export async function POST(request: NextRequest) {
     if (!hasPermission) {
       const { data: collaborator } = await supabase
         .from('collaborators')
-        .select('permissions')
-        .eq("projectId", (upload as any).project_id)
+        .select('role')
+        .eq("projectId", (upload as unknown as { project_id: string }).project_id)
         .eq("userId", user.id)
         .single()
       
-      if (collaborator?.permissions?.includes('can_edit')) {
+      // editor and owner roles can edit
+      if (collaborator?.role && ['editor', 'owner'].includes(collaborator.role as string)) {
         hasPermission = true
       }
     }
@@ -291,18 +292,19 @@ export async function PUT(request: NextRequest) {
       )
     }
 
-    const project = (upload as any).projects as Record<string, unknown>
-    let hasPermission = (project as any).user_id === user.id
+    const project = (upload as unknown as { projects: Record<string, unknown> }).projects
+    let hasPermission = (project as unknown as { user_id: string }).user_id === user.id
 
     if (!hasPermission) {
       const { data: collaborator } = await supabase
         .from('collaborators')
-        .select('permissions')
-        .eq("projectId", (upload as any).project_id)
+        .select('role')
+        .eq("projectId", (upload as unknown as { project_id: string }).project_id)
         .eq("userId", user.id)
         .single()
       
-      if (collaborator?.permissions?.includes('can_edit')) {
+      // editor and owner roles can edit
+      if (collaborator?.role && ['editor', 'owner'].includes(collaborator.role as string)) {
         hasPermission = true
       }
     }

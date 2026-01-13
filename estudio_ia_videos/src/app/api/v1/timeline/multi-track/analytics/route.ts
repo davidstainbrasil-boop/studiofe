@@ -243,7 +243,7 @@ async function getTimelineSummary(timeline: TimelineData, projectId: string): Pr
 
   // Get snapshot count
   const snapshotCount = await prisma.timeline_snapshots.count({
-    where: { timeline: { projectId: projectId } },
+    where: { timelines: { projectId: projectId } },
   });
 
   return {

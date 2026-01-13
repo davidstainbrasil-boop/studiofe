@@ -32,11 +32,11 @@ const AvatarConfigSchema = z.object({
   }).optional()
 })
 
-// Interface para configuração do avatar
+// Interface para configuração do avatar (compatível com output do schema Zod)
 interface AvatarConfig {
-  model: string
-  gender?: string
-  style?: string
+  model: 'default' | 'professional' | 'casual' | 'custom'
+  gender?: 'male' | 'female'
+  style?: 'realistic' | 'cartoon' | 'professional'
   clothing?: string
   background?: string
 }
@@ -262,10 +262,18 @@ export async function POST(request: NextRequest) {
     // Atualizar workflow para "processing"
     await workflowManager.updateWorkflowStep(validatedData.project_id, 'avatar', 'processing')
 
-    // Gerar avatar
+    // Gerar avatar - type assertion needed because Zod output type is slightly different
+    const avatarConfig: AvatarConfig = {
+      model: validatedData.avatarConfig.model,
+      gender: validatedData.avatarConfig.gender,
+      style: validatedData.avatarConfig.style,
+      clothing: validatedData.avatarConfig.clothing,
+      background: validatedData.avatarConfig.background,
+    }
+
     const avatarResult = await avatar3DGenerator.generateAvatar(
       validatedData.project_id,
-      validatedData.avatarConfig,
+      avatarConfig,
       validatedData.script,
       validatedData.voice
     )

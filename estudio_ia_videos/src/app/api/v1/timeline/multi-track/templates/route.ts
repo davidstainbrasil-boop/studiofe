@@ -57,8 +57,8 @@ export async function POST(request: NextRequest) {
         category: category || 'custom',
         isPublic: isPublic || false,
         createdBy: session.user.id,
-        tracks: toJsonValue(timeline.tracks ?? []),
-        settings: toJsonValue(timeline.settings ?? {}),
+        tracks: timeline.tracks ?? [],
+        settings: timeline.settings ?? {},
         totalDuration: timeline.totalDuration,
         metadata: {
           originalProjectId: projectId,
@@ -120,7 +120,7 @@ export async function GET(request: NextRequest) {
       const template = await prisma.timeline_templates.findUnique({
         where: { id: templateId },
         include: {
-          creator: {
+          users: {
             select: {
               id: true,
               name: true,
@@ -160,9 +160,9 @@ export async function GET(request: NextRequest) {
           totalDuration: template.totalDuration,
           metadata: template.metadata,
           creator: {
-            id: template.creator.id,
-            name: template.creator.name,
-            image: template.creator.avatarUrl,
+            id: template.users.id,
+            name: template.users.name,
+            image: template.users.avatarUrl,
           },
           createdAt: template.createdAt.toISOString(),
           usageCount: template.usageCount,

@@ -175,17 +175,14 @@ export async function POST(request: NextRequest) {
     if (!hasPermission) {
       const { data: collaborator } = await supabase
         .from('collaborators')
-        .select('permissions')
+        .select('role')
         .eq("projectId", validatedData.projectId)
         .eq("userId", user.id)
-        .single()
+        .single() as { data: { role: string } | null }
       
-      // Check if permissions array contains 'write' or 'edit'
-      if (collaborator && collaborator.permissions) {
-        const perms = collaborator.permissions as string[];
-        if (perms.includes('write') || perms.includes('edit')) {
-          hasPermission = true;
-        }
+      // Check if role allows editing (editor or owner)
+      if (collaborator?.role && ['editor', 'owner'].includes(collaborator.role)) {
+        hasPermission = true;
       }
     }
 
@@ -347,17 +344,14 @@ export async function PUT(request: NextRequest) {
     if (!hasPermission) {
       const { data: collaborator } = await supabase
         .from('collaborators')
-        .select('permissions')
+        .select('role')
         .eq("projectId", projectId)
         .eq("userId", user.id)
-        .single()
+        .single() as { data: { role: string } | null }
       
-      // Check if permissions array contains 'write' or 'edit'
-      if (collaborator && collaborator.permissions) {
-        const perms = collaborator.permissions as string[];
-        if (perms.includes('write') || perms.includes('edit')) {
-          hasPermission = true;
-        }
+      // Check if role allows editing (editor or owner)
+      if (collaborator?.role && ['editor', 'owner'].includes(collaborator.role)) {
+        hasPermission = true;
       }
     }
 

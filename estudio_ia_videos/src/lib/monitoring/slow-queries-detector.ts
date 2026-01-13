@@ -35,7 +35,8 @@ export async function detectSlowQueries(thresholdMs: number = 1000): Promise<num
         await prisma.$executeRaw`CREATE EXTENSION IF NOT EXISTS pg_stat_statements`
         logger.info('Extensão pg_stat_statements habilitada', { component: 'SlowQueriesDetector' })
       } catch (error) {
-        logger.warn('Não foi possível habilitar pg_stat_statements', error as Error, {
+        logger.warn('Não foi possível habilitar pg_stat_statements', {
+          error: error as Error,
           component: 'SlowQueriesDetector',
           message: 'pg_stat_statements pode não estar disponível ou requer privilégios de superusuário'
         })
@@ -88,7 +89,8 @@ export async function detectSlowQueries(thresholdMs: number = 1000): Promise<num
 
       // Registrar alerta se houver muitas queries lentas
       if (slowQueries.length >= 5) {
-        logger.warn(`Detectadas ${slowQueries.length} queries lentas`, new Error('Slow queries detected'), {
+        logger.warn(`Detectadas ${slowQueries.length} queries lentas`, {
+          error: new Error('Slow queries detected'),
           component: 'SlowQueriesDetector',
           count: slowQueries.length,
           threshold: thresholdMs

@@ -68,7 +68,7 @@ export async function GET(
         timeline_elements:timeline_elements(*)
       `)
       .eq('id', trackId)
-      .single()
+      .single() as { data: { role: string } | null }
 
     if (error) {
       if (error.code === 'PGRST116') {
@@ -96,7 +96,7 @@ export async function GET(
         .select("userId")
         .eq("projectId", track.projectId)
         .eq("userId", user.id)
-        .single()
+        .single() as { data: { role: string } | null }
       
       if (collaborator) hasPermission = true
     }
@@ -150,7 +150,7 @@ export async function PUT(
         project:projects(user_id)
       `)
       .eq('id', trackId)
-      .single()
+      .single() as { data: { role: string } | null }
 
     if (!existingTrackData) {
       return NextResponse.json(
@@ -168,15 +168,15 @@ export async function PUT(
     if (!hasPermission) {
       const { data: collaborator } = await supabase
         .from('collaborators')
-        .select('permissions')
+        .select('role')
         .eq("projectId", existingTrack.projectId)
         .eq("userId", user.id)
-        .single()
+        .single() as { data: { role: string } | null }
       
       // Check if permissions array contains 'write' or 'edit'
-      if (collaborator && collaborator.permissions) {
-        const perms = collaborator.permissions as string[];
-        if (perms.includes('write') || perms.includes('edit')) {
+      if (collaborator && collaborator.role) {
+        // role is an enum string, not array
+        if (['editor', 'owner'].includes(collaborator.role)) {
           hasPermission = true;
         }
       }
@@ -195,7 +195,7 @@ export async function PUT(
       .update(validatedData as Record<string, unknown>)
       .eq('id', trackId)
       .select()
-      .single()
+      .single() as { data: { role: string } | null }
 
     if (error) {
       logger.error('Erro ao atualizar track:', new Error(error.message), { component: 'API: timeline/tracks/[id]' })
@@ -274,7 +274,7 @@ export async function DELETE(
         project:projects(user_id)
       `)
       .eq('id', trackId)
-      .single()
+      .single() as { data: { role: string } | null }
 
     if (!existingTrackData) {
       return NextResponse.json(
@@ -292,15 +292,15 @@ export async function DELETE(
     if (!hasPermission) {
       const { data: collaborator } = await supabase
         .from('collaborators')
-        .select('permissions')
+        .select('role')
         .eq("projectId", existingTrack.projectId)
         .eq("userId", user.id)
-        .single()
+        .single() as { data: { role: string } | null }
       
       // Check if permissions array contains 'write' or 'edit'
-      if (collaborator && collaborator.permissions) {
-        const perms = collaborator.permissions as string[];
-        if (perms.includes('write') || perms.includes('edit')) {
+      if (collaborator && collaborator.role) {
+        // role is an enum string, not array
+        if (['editor', 'owner'].includes(collaborator.role)) {
           hasPermission = true;
         }
       }

@@ -10,6 +10,45 @@
 import fs from 'fs/promises'
 import path from 'path'
 import { existsSync } from 'fs'
+import { EventEmitter } from 'events';
+
+// Mock child_process para simular FFmpeg
+jest.mock('child_process', () => {
+  const original = jest.requireActual('child_process');
+  const EventEmitter = require('events');
+
+  return {
+    ...original,
+    spawn: jest.fn((command, args) => {
+      const mockProcess = new EventEmitter();
+      (mockProcess as any).stderr = new EventEmitter();
+
+      if (command.includes('ffmpeg')) {
+        // O último argumento para o ffmpeg é sempre o arquivo de saída.
+        // No caso do worker, é o arquivo .tmp.mp4.
+        const outputPath = args[args.length - 1];
+        
+        // Garante que o diretório de saída exista antes de escrever o arquivo.
+        const outputDir = path.dirname(outputPath);
+        fs.mkdir(outputDir, { recursive: true }).then(() => {
+            // Simula a criação do arquivo de saída pelo FFmpeg com algum conteúdo.
+            return fs.writeFile(outputPath, 'dummy video content for testing');
+        }).then(() => {
+          setTimeout(() => {
+            // Simula o progresso para o teste de 'track encoding progress'.
+            (mockProcess as any).stderr.emit('data', 'frame= 10 fps= 30');
+            mockProcess.emit('close', 0); // Sinaliza sucesso
+          }, 50);
+        });
+      } else {
+        // Para outros comandos, apenas simula um processo bem-sucedido.
+        setTimeout(() => mockProcess.emit('close', 0), 50);
+      }
+
+      return mockProcess;
+    }),
+  };
+});
 
 // Mock Supabase
 const mockUpload = jest.fn().mockResolvedValue({ data: { path: 'videos/test.mp4' }, error: null })
@@ -70,7 +109,19 @@ global.fetch = jest.fn(() => Promise.resolve({
 
 // Import classes AFTER mocks
 import { VideoRenderWorker } from '@/lib/workers/video-render-worker'
-import { FrameGenerator } from '@/lib/render/frame-generator'
+import { FrameGenerator } from '@/lib/render/frame-generator';
+
+jest.mock('@/lib/prisma', () => ({
+  prisma: {
+    render_jobs: {
+      findUnique: jest.fn().mockResolvedValue({ id: 'job-123', status: 'processing' }),
+      update: jest.fn().mockResolvedValue({}),
+    },
+    videos: {
+      create: jest.fn().mockResolvedValue({ id: 'video-123' }),
+    },
+  },
+}));
 import { FFmpegExecutor } from '@/lib/render/ffmpeg-executor'
 import { VideoUploader } from '@/lib/storage/video-uploader'
 import { createClient } from '@supabase/supabase-js'

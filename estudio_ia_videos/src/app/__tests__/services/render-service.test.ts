@@ -1,82 +1,94 @@
-
-import fs from 'fs';
-import path from 'path';
 import { RenderService } from '@/lib/services/render-service';
+import { getVideoRenderWorker } from '@lib/workers/video-render-worker';
+import { prisma } from '@lib/prisma';
+import { v4 as uuidv4 } from 'uuid';
 
 // Mocks
-jest.mock('fs');
-jest.mock('path');
-jest.mock('@remotion/bundler', () => ({
-  bundle: jest.fn().mockResolvedValue('/mock/bundle/path'),
+const mockProcessRenderJob = jest.fn();
+jest.mock('@/lib/workers/video-render-worker', () => ({
+  getVideoRenderWorker: jest.fn(() => ({
+    processRenderJob: mockProcessRenderJob,
+  })),
 }));
-jest.mock('@remotion/renderer', () => ({
-  selectComposition: jest.fn().mockResolvedValue({
-    durationInFrames: 300,
-    width: 1920,
-    height: 1080,
-    fps: 30,
-    id: 'MyVideo'
-  }),
-  renderMedia: jest.fn().mockResolvedValue(undefined),
+
+jest.mock('@/lib/prisma', () => ({
+  prisma: {
+    render_jobs: {
+      create: jest.fn(),
+      update: jest.fn(),
+    },
+  },
 }));
-jest.mock('@/lib/aws-s3-config', () => ({
-  uploadFileToS3: jest.fn().mockResolvedValue({
-    url: 'https://mock-s3-url.com/video.mp4',
-    key: 'renders/video.mp4'
-  }),
+
+jest.mock('uuid', () => ({
+  v4: jest.fn(() => 'mock-job-id-123'),
 }));
-jest.mock('@/lib/services/logger-service', () => ({
+
+jest.mock('@/lib/logger', () => ({
   logger: {
     info: jest.fn(),
     error: jest.fn(),
-    warn: jest.fn(),
   },
 }));
 
 describe('RenderService', () => {
   const mockProjectId = 'test-project-123';
-  const mockSlides = [{ id: '1', content: 'Test' }];
+  const mockSlides = [{ id: '1', type: 'text', content: 'Test' }];
+  const mockUserId = 'user-abc-789';
 
   beforeEach(() => {
     jest.clearAllMocks();
-    // Mock fs.existsSync to return true for directory checks
-    jest.mocked(fs.existsSync).mockReturnValue(true);
-    // Mock fs.readFileSync to return a buffer
-    jest.mocked(fs.readFileSync).mockReturnValue(Buffer.from('fake-video-data'));
-    // Mock path.join to behave somewhat realistically or just return joined strings
-    jest.mocked(path.join).mockImplementation((...args) => args.join('/'));
-    jest.mocked(path.dirname).mockReturnValue('/mock/dir');
+    (prisma.render_jobs.create as jest.Mock).mockResolvedValue({});
+    (prisma.render_jobs.update as jest.Mock).mockResolvedValue({});
   });
 
-  it('should successfully render a video and upload to S3', async () => {
-    const result = await RenderService.renderVideo(mockProjectId, mockSlides);
+  it('should successfully queue a render job and return a mocked success', async () => {
+    mockProcessRenderJob.mockResolvedValue('https://mock-worker-url.com/video.mp4');
+
+    const result = await RenderService.renderVideo(mockProjectId, mockSlides, mockUserId);
+
+    expect(uuidv4).toHaveBeenCalled();
+    expect(prisma.render_jobs.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        id: 'mock-job-id-123',
+        project_id: mockProjectId,
+        user_id: mockUserId,
+        status: 'queued',
+      }),
+    });
+
+    expect(mockProcessRenderJob).toHaveBeenCalledWith(expect.objectContaining({
+      id: 'mock-job-id-123',
+      projectId: mockProjectId,
+    }));
+    
+    expect(prisma.render_jobs.update).toHaveBeenCalledWith({
+        where: { id: 'mock-job-id-123' },
+        data: { status: 'completed', output_url: 'https://mock-worker-url.com/video.mp4' },
+    });
 
     expect(result).toEqual({
       success: true,
-      videoUrl: 'https://mock-s3-url.com/video.mp4',
-      s3Key: 'renders/video.mp4'
+      videoUrl: 'https://mock-worker-url.com/video.mp4',
+      s3Key: 'renders/mock-job-id-123/output.mp4',
     });
-
-    // Verify steps were called
-    const { bundle } = require('@remotion/bundler');
-    expect(bundle).toHaveBeenCalled();
-
-    const { renderMedia } = require('@remotion/renderer');
-    expect(renderMedia).toHaveBeenCalledWith(expect.objectContaining({
-      codec: 'h264',
-      inputProps: { slides: mockSlides }
-    }));
-
-    const { uploadFileToS3 } = require('@/lib/aws-s3-config');
-    expect(uploadFileToS3).toHaveBeenCalled();
   });
 
-  it('should handle render errors gracefully', async () => {
-    const { renderMedia } = require('@remotion/renderer');
-    renderMedia.mockRejectedValue(new Error('Render failed'));
+  it('should handle render errors gracefully and update job status', async () => {
+    mockProcessRenderJob.mockRejectedValue(new Error('Worker failed'));
 
-    const result = await RenderService.renderVideo(mockProjectId, mockSlides);
+    const result = await RenderService.renderVideo(mockProjectId, mockSlides, mockUserId);
+    
     expect(result.success).toBe(false);
-    expect(result.error).toBe('Render failed');
+    expect(result.error).toBe('Worker failed');
+
+    // Check that the initial creation happened
+    expect(prisma.render_jobs.create).toHaveBeenCalled();
+    
+    // Check that the update to 'failed' status happened
+    expect(prisma.render_jobs.update).toHaveBeenCalledWith({
+        where: { id: 'mock-job-id-123' },
+        data: { status: 'failed', error_message: 'Worker failed' },
+    });
   });
 });

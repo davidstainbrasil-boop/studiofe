@@ -252,14 +252,14 @@ export async function POST(request: NextRequest) {
     // Salvar dados do canvas
     const result = await canvasEditor.saveCanvasData(
       validatedData.projectId,
-      validatedData.canvas,
-      validatedData.timeline
+      validatedData.canvas as CanvasData,
+      validatedData.timeline as TimelineItem[]
     )
 
     // Gerar configuração de vídeo
     const videoConfig = await canvasEditor.generateVideoConfig(
-      validatedData.canvas,
-      validatedData.timeline
+      validatedData.canvas as CanvasData,
+      validatedData.timeline as TimelineItem[]
     )
 
     // Atualizar workflow

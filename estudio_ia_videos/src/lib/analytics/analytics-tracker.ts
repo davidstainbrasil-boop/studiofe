@@ -85,4 +85,22 @@ export class AnalyticsTracker {
       successRate: 92,
     };
   }
+
+  static async trackTimelineEdit(params: {
+    userId: string;
+    projectId: string;
+    action: string;
+    trackType?: string;
+    trackId?: string;
+    details?: Record<string, unknown>;
+  }): Promise<void> {
+    await Analytics.trackEvent('timeline_edit', {
+      user_id: params.userId,
+      project_id: params.projectId,
+      action: params.action,
+      track_type: params.trackType,
+      track_id: params.trackId,
+      ...params.details,
+    });
+  }
 }

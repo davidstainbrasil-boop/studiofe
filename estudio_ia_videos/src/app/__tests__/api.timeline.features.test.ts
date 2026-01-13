@@ -60,7 +60,7 @@ jest.mock('@/lib/prisma', () => {
           ...(update || create)
         }))
       },
-      timelineTrackLock: {
+      timeline_track_locks: {
         findFirst: jest.fn().mockResolvedValue(null),
         upsert: jest.fn().mockImplementation(async ({ create }: any) => ({
           id: 'lock1',
@@ -76,7 +76,7 @@ jest.mock('@/lib/prisma', () => {
           createdAt: new Date()
         }])
       },
-      timelinePresence: {
+      timeline_presence: {
         upsert: jest.fn().mockImplementation(async ({ create }: any) => ({
           ...create,
           lastSeenAt: new Date()
@@ -88,7 +88,7 @@ jest.mock('@/lib/prisma', () => {
           currentTrackId: 'track1'
         }])
       },
-      timelineTemplate: {
+      timeline_templates: {
         create: jest.fn().mockImplementation(async ({ data }: any) => ({
           id: 'tpl1',
           ...data,
@@ -107,7 +107,8 @@ jest.mock('@/lib/prisma', () => {
             metadata: {},
             usageCount: 5,
             createdAt: new Date(),
-            creator: { id: 'u1', name: 'User 1', image: null }
+            creator: { id: 'u1', name: 'User 1', image: null },
+            users: { id: 'u1', name: 'User 1', avatarUrl: null }
           } : null
         ),
         findMany: jest.fn().mockResolvedValue([]),
@@ -115,9 +116,13 @@ jest.mock('@/lib/prisma', () => {
         update: jest.fn().mockResolvedValue({}),
         delete: jest.fn().mockResolvedValue({})
       },
-      timelineSnapshots: {
+      timeline_snapshots: {
         count: jest.fn().mockResolvedValue(5),
         findMany: jest.fn().mockResolvedValue([])
+      },
+      render_jobs: {
+        findUnique: jest.fn().mockResolvedValue({ id: 'job-123', status: 'completed' }),
+        update: jest.fn().mockResolvedValue({}),
       }
     }
   };
@@ -161,7 +166,7 @@ describe('Timeline Advanced Features', () => {
 
     it('retorna 409 se track já está bloqueada', async () => {
       const { prisma } = require('@/lib/prisma')
-      prisma.timelineTrackLock.findFirst.mockResolvedValueOnce({
+      prisma.timeline_track_locks.findFirst.mockResolvedValueOnce({
         id: 'lock1',
         userId: 'u2',
         createdAt: new Date()

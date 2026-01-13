@@ -27,7 +27,7 @@ export const GET = withRateLimit(RATE_LIMITS.AUTH_API, 'user')(async function GE
       .from('pptx_uploads')
       .select('*')
       .eq('id', uploadId)
-      .single()
+      .single() as { data: { role: string } | null }
 
     if (error) {
       logger.error('Erro ao buscar upload', error instanceof Error ? error : new Error(String(error)), { component: 'API: pptx/upload/[id]' })
@@ -43,7 +43,7 @@ export const GET = withRateLimit(RATE_LIMITS.AUTH_API, 'user')(async function GE
       .from('projects')
       .select('user_id, is_public')
       .eq('id', (upload as any).project_id)
-      .single()
+      .single() as { data: { role: string } | null }
 
     let hasPermission = project && ((project as any).user_id === user.id || (project as any).is_public)
 
@@ -53,7 +53,7 @@ export const GET = withRateLimit(RATE_LIMITS.AUTH_API, 'user')(async function GE
         .select("userId")
         .eq("projectId", (upload as any).project_id)
         .eq("userId", user.id)
-        .single()
+        .single() as { data: { role: string } | null }
       
       if (collaborator) hasPermission = true
     }
@@ -95,7 +95,7 @@ export const DELETE = withRateLimit(RATE_LIMITS.AUTH_STRICT, 'user')(async funct
       .from('pptx_uploads')
       .select('*')
       .eq('id', uploadId)
-      .single()
+      .single() as { data: { role: string } | null }
 
     if (!upload) {
       return NextResponse.json({ error: 'Upload não encontrado' }, { status: 404 })
@@ -106,19 +106,19 @@ export const DELETE = withRateLimit(RATE_LIMITS.AUTH_STRICT, 'user')(async funct
       .from('projects')
       .select('user_id, is_public')
       .eq('id', (upload as any).project_id)
-      .single()
+      .single() as { data: { role: string } | null }
 
     let hasPermission = project && ((project as any).user_id === user.id || (project as any).is_public)
 
     if (!hasPermission && project) {
       const { data: collaborator } = await supabase
         .from('collaborators')
-        .select('permissions')
+        .select('role')
         .eq("projectId", (upload as any).project_id)
         .eq("userId", user.id)
-        .single()
+        .single() as { data: { role: string } | null }
       
-      if (collaborator && (collaborator.permissions as { can_edit?: boolean })?.can_edit) {
+      if (collaborator && (collaborator.role as { can_edit?: boolean })?.can_edit) {
         hasPermission = true
       }
     }

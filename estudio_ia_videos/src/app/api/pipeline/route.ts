@@ -95,17 +95,35 @@ export async function POST(request: NextRequest) {
     }
 
     // Criar job no pipeline
+    const pipelineInput: PipelineInput = {
+      text: validatedInput.text,
+      render_settings: {
+        width: validatedInput.renderSettings.width,
+        height: validatedInput.renderSettings.height,
+        fps: validatedInput.renderSettings.fps,
+        quality: validatedInput.renderSettings.quality,
+        format: validatedInput.renderSettings.format,
+        duration_limit: validatedInput.renderSettings.duration_limit
+      },
+      avatar_config: {
+        modelUrl: validatedInput.avatarConfig.modelUrl,
+        animations: validatedInput.avatarConfig.animations,
+        materials: validatedInput.avatarConfig.materials,
+        lighting: validatedInput.avatarConfig.lighting,
+        camera: validatedInput.avatarConfig.camera,
+        environment: validatedInput.avatarConfig.environment
+      },
+      voice_config: {
+        engine: validatedInput.voice_config.engine,
+        voice_id: validatedInput.voice_config.voiceId,
+        settings: validatedInput.voice_config.settings
+      },
+      options: validatedInput.options
+    }
+
     const jobId = await integratedPipeline.createJob(
       user.id,
-      {
-        ...validatedInput,
-        render_settings: validatedInput.renderSettings,
-        avatar_config: validatedInput.avatarConfig,
-        voice_config: {
-            ...validatedInput.voice_config,
-            voice_id: validatedInput.voice_config.voiceId
-        }
-      },
+      pipelineInput,
       priority
     )
 

@@ -37,7 +37,7 @@ export async function GET(
       .from('projects')
       .select('*, timeline:timelines(*)')
       .eq('id', params.id)
-      .single()
+      .single() as { data: { role: string } | null }
     
     if (error || !project) {
       return NextResponse.json({
@@ -55,7 +55,7 @@ export async function GET(
         .select("userId")
         .eq("project_id", params.id)
         .eq("userId", user.id)
-        .single()
+        .single() as { data: { role: string } | null }
       
       if (collaborator) hasPermission = true
     }
@@ -219,7 +219,7 @@ export async function PUT(
       .from('projects')
       .select("owner_id")
       .eq('id', params.id)
-      .single()
+      .single() as { data: { role: string } | null }
 
     if (!project) {
       return NextResponse.json({
@@ -235,12 +235,12 @@ export async function PUT(
       type CollaboratorPermissions = { can_edit?: boolean; can_view?: boolean; can_delete?: boolean };
       const { data: collaborator } = await supabase
         .from('collaborators')
-        .select('permissions')
+        .select('role')
         .eq("project_id", params.id)
         .eq("userId", user.id)
-        .single()
+        .single() as { data: { role: string } | null }
       
-      const permissions = collaborator?.permissions as CollaboratorPermissions | null;
+      const permissions = collaborator?.role as CollaboratorPermissions | null;
       if (permissions?.can_edit) {
         hasPermission = true
       }
@@ -273,7 +273,7 @@ export async function PUT(
             .from('projects')
             .select("render_settings")
             .eq('id', params.id)
-            .single()
+            .single() as { data: { role: string } | null }
         
         const currentSettings = (typeof currentProject?.render_settings === 'object' && currentProject?.render_settings !== null)  
           ? (currentProject as any).render_settings as Record<string, unknown>
@@ -286,7 +286,7 @@ export async function PUT(
       .update(updateData)
       .eq('id', params.id)
       .select()
-      .single()
+      .single() as { data: { role: string } | null }
 
     if (error) throw error
 

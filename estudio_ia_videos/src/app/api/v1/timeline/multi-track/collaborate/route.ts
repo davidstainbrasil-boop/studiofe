@@ -64,15 +64,17 @@ export async function POST(req: NextRequest) {
 
       const lock = await prisma.timeline_track_locks.upsert({
         where: {
-          projectId_trackId: {
+          projectId_trackId_userId: {
             projectId,
             trackId,
+            userId: session.user.id,
           },
         },
         update: {
-          userId: session.user.id,
+          updatedAt: new Date(),
         },
         create: {
+          id: `lock_${projectId}_${trackId}_${Date.now()}`,
           projectId,
           trackId,
           userId: session.user.id,

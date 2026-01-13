@@ -375,14 +375,31 @@ export async function POST(request: NextRequest) {
     await workflowManager.updateWorkflowStep(validatedData.projectId, 'export', 'processing')
 
     // Iniciar exportação
+    const exportConfig: ExportConfig = validatedData.exportConfig 
+      ? {
+          format: validatedData.exportConfig.format ?? 'mp4',
+          quality: validatedData.exportConfig.quality ?? '1080p',
+          compression: validatedData.exportConfig.compression ?? 'medium',
+          includeSubtitles: validatedData.exportConfig.includeSubtitles ?? false,
+          watermark: validatedData.exportConfig.watermark 
+            ? {
+                enabled: validatedData.exportConfig.watermark.enabled ?? false,
+                text: validatedData.exportConfig.watermark.text,
+                position: validatedData.exportConfig.watermark.position
+              }
+            : undefined,
+          metadata: validatedData.exportConfig.metadata
+        }
+      : {
+          format: 'mp4',
+          quality: '1080p',
+          compression: 'medium',
+          includeSubtitles: false
+        }
+    
     const exportJob = await exportSystem.startExport(
       validatedData.projectId,
-      validatedData.exportConfig || {
-        format: 'mp4',
-        quality: '1080p',
-        compression: 'medium',
-        includeSubtitles: false
-      }
+      exportConfig
     )
 
     return NextResponse.json({
