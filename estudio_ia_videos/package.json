@@ -1,6 +1,6 @@
 {
   "name": "estudio_ia_videos",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "scripts": {
     "dev": "next dev",
     "build": "tsc --noEmit --skipLibCheck false || true && next build",

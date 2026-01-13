@@ -1,3 +1,7 @@
+
+> mvp-video-tecnico-cursos-v7@1.0.0 audit:any
+> tsx scripts/audit-any.ts
+
 {
   "generatedAt": "2026-01-13T13:24:36.781Z",
   "totalFilesScanned": 1732,

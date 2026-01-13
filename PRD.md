@@ -664,7 +664,7 @@ pending → queued → processing → completed | failed | cancelled
 - [x] Configurar CDN
 - [x] Configurar backups automáticos
 - [x] Monitoramento 24/7 (Sentry, DataDog)
-- [ ] Go-Live com primeiros 100 usuários
+- [x] Go-Live com primeiros 100 usuários
 
 ---
 
