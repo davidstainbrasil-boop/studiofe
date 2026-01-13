@@ -3,6 +3,9 @@ import { z } from 'zod'
 import { prisma } from '@lib/prisma'
 import { logger } from '@lib/logger';
 import { randomUUID } from 'crypto';
+import { cachedQuery, CacheTier } from '@lib/cache/redis-cache';
+import { rateLimit, getUserTier } from '@/middleware/rate-limiter';
+import { getSupabaseForRequest } from '@lib/supabase/server';
 
 // Schema de validação para projetos
 const ProjectSchema = z.object({
@@ -27,13 +30,27 @@ const ProjectSchema = z.object({
 // GET - Listar projetos (usando Prisma para banco local)
 export async function GET(request: NextRequest) {
   try {
+    // Apply rate limiting
+    const supabase = getSupabaseForRequest(request);
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (user) {
+      const tier = await getUserTier(user.id);
+      const rateLimitResponse = await rateLimit(request, user.id, tier);
+
+      if (rateLimitResponse) {
+        logger.warn('Projects list rate limit exceeded', { userId: user.id, tier });
+        return rateLimitResponse;
+      }
+    }
+
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
     const status = searchParams.get('status')
     const type = searchParams.get('type')
     const search = searchParams.get('search')
-    const userId = searchParams.get("userId") // For dev/testing
+    const userId = searchParams.get("userId") || user?.id // Use auth user if available
 
     // Build where clause
     interface WhereClause {
@@ -43,33 +60,42 @@ export async function GET(request: NextRequest) {
       name?: { contains: string; mode: 'insensitive' }
     }
     const whereClause: WhereClause = {}
-    
+
     if (userId) {
       whereClause.userId = userId
     }
-    
+
     if (status) {
       whereClause.status = status
     }
-    
+
     if (type && ['pptx', 'template-nr', 'talking-photo', 'custom', 'ai-generated'].includes(type)) {
       whereClause.type = type
     }
-    
+
     if (search) {
       whereClause.name = { contains: search, mode: 'insensitive' }
     }
 
-    // Get projects and count using Prisma
-    const [projects, count] = await Promise.all([
-      prisma.projects.findMany({
-        where: whereClause as any,
-        orderBy: { updatedAt: 'desc' },
-        skip: (page - 1) * limit,
-        take: limit,
-      }),
-      prisma.projects.count({ where: whereClause as any })
-    ])
+    // Create cache key from query parameters
+    const cacheKey = `projects:list:${userId}:${page}:${limit}:${status || 'all'}:${type || 'all'}:${search || 'none'}`;
+
+    // Get projects and count using Prisma with caching (5 min TTL)
+    const [projects, count] = await cachedQuery(
+      cacheKey,
+      async () => {
+        return await Promise.all([
+          prisma.projects.findMany({
+            where: whereClause as any,
+            orderBy: { updatedAt: 'desc' },
+            skip: (page - 1) * limit,
+            take: limit,
+          }),
+          prisma.projects.count({ where: whereClause as any })
+        ]);
+      },
+      CacheTier.SHORT // 5 minutes cache
+    )
 
     const response = {
       success: true,

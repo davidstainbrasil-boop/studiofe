@@ -1,117 +1,89 @@
-import { PPTXParser } from './pptx-parser';
-import { Slide, ParsedPPTXData } from '@lib/definitions';
 
-export interface PPTXValidationResult {
-  valid: boolean;
-  isValid: boolean;
-  error?: string;
-  slideCount?: number;
-  warnings: string[];
+import { SupabaseClient, createClient } from '@supabase/supabase-js';
+import { Database } from '@/types/supabase';
+import { logger } from '@/lib/monitoring/logger';
+import { parseOffice } from 'officeparser';
+
+// Tipos de entrada e saída
+export interface PptxProcessOptions {
+  storagePath: string;
 }
 
-export interface PPTXProcessResult {
-  success: boolean;
-  slides: Partial<Slide>[];
-  error?: string;
-  assets: {
-    images: Record<string, unknown>[];
-  };
-  timeline: {
-    totalDuration: number;
-  };
-  extractionStats?: Record<string, unknown>;
+export interface PptxProcessResult {
+  slideCount: number;
+  content: any; // O AST retornado pelo officeparser
 }
 
-export interface ProcessingProgress {
-  stage: string;
-  progress: number;
-  message: string;
-}
+/**
+ * Processa um arquivo .pptx armazenado no Supabase Storage para extrair seu conteúdo.
+ */
+export class PptxProcessor {
+  private supabase: SupabaseClient<Database>;
 
-export class PPTXProcessor {
-  private parser: PPTXParser;
-
-  constructor() {
-    this.parser = new PPTXParser();
+  constructor(supabaseClient?: SupabaseClient<Database>) {
+    this.supabase = supabaseClient || createClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
   }
 
-  async parse(buffer: Buffer): Promise<ParsedPPTXData> {
-    return this.parser.parsePPTX(buffer);
+  /**
+   * Orquestra o download e o parsing do arquivo .pptx.
+   * @param options - Opções contendo o caminho do arquivo no storage.
+   * @returns O conteúdo estruturado do arquivo.
+   */
+  async process(options: PptxProcessOptions): Promise<PptxProcessResult> {
+    const { storagePath } = options;
+    logger.info(`Iniciando processamento do arquivo PPTX: ${storagePath}`);
+
+    // 1. Baixar o arquivo do Supabase Storage
+    const fileBuffer = await this.downloadFile(storagePath);
+
+    // 2. Fazer o parsing do buffer do arquivo
+    const content = await this.parsePptx(fileBuffer);
+
+    logger.info(`Arquivo PPTX processado com sucesso: ${storagePath}`);
+
+    return {
+      slideCount: content.slides.length, // Exemplo, a estrutura real do AST precisa ser verificada
+      content: content,
+    };
   }
 
-  async process(options: { file: File }): Promise<{ slides: Partial<Slide>[] }> {
-    const { file } = options;
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const parsedData = await this.parser.parsePPTX(buffer);
-    return { slides: parsedData.slides };
-  }
+  /**
+   * Baixa um arquivo do bucket 'uploads' do Supabase Storage.
+   * @param storagePath - O caminho do arquivo no storage.
+   * @returns Um Buffer com o conteúdo do arquivo.
+   */
+  private async downloadFile(storagePath: string): Promise<Buffer> {
+    logger.info(`Baixando arquivo de: ${storagePath}`);
+    const { data, error } = await this.supabase.storage
+      .from('uploads')
+      .download(storagePath);
 
-  static async validatePPTXFile(buffer: Buffer): Promise<PPTXValidationResult> {
-    try {
-      // Verificar magic bytes do PPTX (ZIP)
-      if (buffer.length < 4) {
-        return { valid: false, isValid: false, error: 'File too small', warnings: [] };
-      }
-      
-      // PPTX files are ZIP archives - check for PK signature
-      const isPKSignature = buffer[0] === 0x50 && buffer[1] === 0x4B;
-      if (!isPKSignature) {
-        return { valid: false, isValid: false, error: 'Invalid PPTX file format', warnings: [] };
-      }
-      
-      return { valid: true, isValid: true, warnings: [] };
-    } catch (error) {
-      return { 
-        valid: false, 
-        isValid: false,
-        error: error instanceof Error ? error.message : 'Validation failed',
-        warnings: []
-      };
+    if (error) {
+      logger.error(`Falha ao baixar o arquivo ${storagePath}`, error);
+      throw new Error(`Não foi possível encontrar ou baixar o arquivo do storage: ${storagePath}`);
     }
+
+    const arrayBuffer = await data.arrayBuffer();
+    return Buffer.from(arrayBuffer);
   }
 
-  static async processFile(
-    buffer: Buffer, 
-    projectId?: string, 
-    options?: Record<string, unknown>, 
-    onProgress?: (progress: ProcessingProgress) => void
-  ): Promise<PPTXProcessResult> {
+  /**
+   * Usa o officeparser para extrair o conteúdo de um buffer de arquivo .pptx.
+   * @param fileBuffer - O buffer do arquivo.
+   * @returns O AST (Abstract Syntax Tree) do conteúdo do arquivo.
+   */
+  private async parsePptx(fileBuffer: Buffer): Promise<any> {
     try {
-      if (onProgress) onProgress({ stage: 'init', progress: 0, message: 'Starting processing' });
-      
-      const processor = new PPTXProcessor();
-      const result = await processor.parse(buffer);
-      
-      if (onProgress) onProgress({ stage: 'parsing', progress: 50, message: 'Parsed PPTX structure' });
-
-      const slides = result.slides || [];
-      const totalDuration = slides.reduce((acc, slide) => acc + (slide.duration || 5000), 0);
-
-      if (onProgress) onProgress({ stage: 'completed', progress: 100, message: 'Processing completed' });
-
-      return {
-        success: true,
-        slides: slides,
-        assets: {
-          images: [] // TODO: Populate with actual images if available
-        },
-        timeline: {
-          totalDuration
-        },
-        extractionStats: {
-          slideCount: slides.length,
-          duration: totalDuration
-        }
-      };
+      logger.info('Iniciando o parsing do buffer do arquivo PPTX.');
+      const ast = await parseOffice(fileBuffer);
+      logger.info('Parsing do PPTX concluído.');
+      return ast;
     } catch (error) {
-      return {
-        success: false,
-        slides: [],
-        error: error instanceof Error ? error.message : 'Processing failed',
-        assets: { images: [] },
-        timeline: { totalDuration: 0 }
-      };
+      logger.error('Erro durante o parsing do arquivo PPTX', error instanceof Error ? error : new Error(String(error)));
+      throw new Error('Falha ao fazer o parsing do conteúdo do arquivo .pptx.');
     }
   }
 }
-

@@ -1,14 +1,18 @@
-import { getVideoRenderWorker, RenderJobData } from '@lib/workers/video-render-worker';
+import { VideoRenderWorker, RenderJobData } from '@lib/workers/video-render-worker';
 import { logger } from '@/lib/logger';
 import { Slide } from '@lib/types';
 import { prisma } from '@lib/prisma';
 import { v4 as uuidv4 } from 'uuid';
 
 export const RenderService = {
-  async renderVideo(projectId: string, slides: Slide[], userId: string): Promise<{ success: boolean; videoUrl?: string; s3Key?: string; error?: string }> {
+  async renderVideo(
+    projectId: string, 
+    slides: Slide[], 
+    userId: string,
+    worker: VideoRenderWorker // Injeção de dependência
+  ): Promise<{ success: boolean; videoUrl?: string; s3Key?: string; error?: string }> {
     logger.info(`Starting video render for project: ${projectId}`);
     
-    const worker = getVideoRenderWorker();
     const jobId = uuidv4();
 
     // Mock config for now, should be passed from the client

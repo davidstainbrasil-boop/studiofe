@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
             .eq("user_id", user.id)
             .single();
         
-        if (collaborator && ['owner', 'editor'].includes((collaborator as ProjectCollaborator).role)) {
+        if (collaborator && ['owner', 'editor'].includes((collaborator as unknown as ProjectCollaborator).role)) {
             hasPermission = true;
         }
     }
@@ -336,7 +336,7 @@ export async function GET(request: NextRequest) {
             .eq("user_id", user.id)
             .single();
         
-        if (collaborator && ['owner', 'editor'].includes((collaborator as ProjectCollaborator).role)) {
+        if (collaborator && ['owner', 'editor'].includes((collaborator as unknown as ProjectCollaborator).role)) {
             hasPermission = true;
         }
     }
@@ -435,7 +435,7 @@ export async function DELETE(request: NextRequest) {
             .eq("user_id", user.id)
             .single();
         
-        if (collaborator && ['owner', 'editor'].includes((collaborator as ProjectCollaborator).role)) {
+        if (collaborator && ['owner', 'editor'].includes((collaborator as unknown as ProjectCollaborator).role)) {
             hasPermission = true;
         }
     }
@@ -528,7 +528,7 @@ export async function PATCH(request: NextRequest) {
             .eq("user_id", user.id)
             .single();
         
-        if (collaborator && ['owner', 'editor'].includes((collaborator as ProjectCollaborator).role)) {
+        if (collaborator && ['owner', 'editor'].includes((collaborator as unknown as ProjectCollaborator).role)) {
             hasPermission = true;
         }
     }

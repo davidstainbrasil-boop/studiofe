@@ -7,11 +7,30 @@ import { NextRequest, NextResponse } from 'next/server'
 import { generateProjectTTS, ttsIntegration } from '@lib/tts-real-integration'
 import { prisma } from '@lib/prisma'
 import { logger } from '@lib/logger'
+import { rateLimit, getUserTier } from '@/middleware/rate-limiter'
+import { getSupabaseForRequest } from '@lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {
+    // Get authenticated user
+    const supabase = getSupabaseForRequest(request);
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
+    }
+
+    // Apply rate limiting (TTS generation is API-cost-intensive)
+    const tier = await getUserTier(user.id);
+    const rateLimitResponse = await rateLimit(request, user.id, tier);
+
+    if (rateLimitResponse) {
+      logger.warn('TTS generation rate limit exceeded', { userId: user.id, tier });
+      return rateLimitResponse;
+    }
+
     const body = await request.json()
     const { projectId, voice, action = 'generate' } = body
 
@@ -172,7 +191,7 @@ export async function GET(request: NextRequest) {
         success: true,
         project: {
           id: project.id,
-          name: project.title,
+          name: project.name,
           hasProjectAudio: !!metadata.audioUrl,
           projectAudioUrl: metadata.audioUrl,
           ttsProvider: metadata.ttsProvider,

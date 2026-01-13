@@ -143,25 +143,25 @@ export async function GET(request: NextRequest) {
             audio2FaceCompatible: avatar.audio2faceCompatible,
             realTimeLipSync: avatar.realTimeLipsync,
             rayTracing: avatar.rayTracingSupport,
-            lipSyncAccuracy: avatar.lipsync_accuracy || 95
+            lipSyncAccuracy: avatar.lipsyncAccuracy || 95
           },
           preview: {
-            thumbnail: avatar.thumbnail_url || `/api/v2/avatars/${avatar.id}/thumbnail.jpg`,
-            model3D: avatar.model_url || `/api/v2/avatars/${avatar.id}/preview.gltf`,
-            animation: avatar.preview_video_url || `/api/v2/avatars/${avatar.id}/idle.mp4`
+            thumbnail: avatar.thumbnailUrl || `/api/v2/avatars/${avatar.id}/thumbnail.jpg`,
+            model3D: avatar.modelUrl || `/api/v2/avatars/${avatar.id}/preview.gltf`,
+            animation: avatar.previewVideoUrl || `/api/v2/avatars/${avatar.id}/idle.mp4`
           },
           assets: {
-            modelFile: avatar.model_file_path,
-            textureFiles: avatar.texture_files,
-            rigFile: avatar.rig_file_path,
-            animationSets: avatar.animation_sets,
-            blendShapes: avatar.blend_shapes_file
+            modelFile: avatar.modelFilePath,
+            textureFiles: avatar.textureFiles,
+            rigFile: avatar.rigFilePath,
+            animationSets: avatar.animationSets,
+            blendShapes: avatar.blendShapesFile
           },
-          supportedLanguages: avatar.supported_languages || ['pt-BR'],
-          usageCount: avatar.usage_count || 0,
+          supportedLanguages: avatar.supportedLanguages || ['pt-BR'],
+          usageCount: avatar.usageCount || 0,
           rating: avatar.rating || 5.0,
-          createdAt: avatar.created_at,
-          updatedAt: avatar.updated_at
+          createdAt: avatar.createdAt,
+          updatedAt: avatar.updatedAt
         })),
         pagination: {
           page,
@@ -274,22 +274,22 @@ export async function POST(request: NextRequest) {
               displayName: avatar.displayName,
               description: avatar.description,
               preview: {
-                thumbnail: avatar.thumbnail_url || `/api/v2/avatars/${avatar.id}/thumbnail.jpg`,
-                model3D: avatar.model_url || `/api/v2/avatars/${avatar.id}/preview.gltf`,
-                animation: avatar.preview_video_url || `/api/v2/avatars/${avatar.id}/idle.mp4`
+                thumbnail: avatar.thumbnailUrl || `/api/v2/avatars/${avatar.id}/thumbnail.jpg`,
+                model3D: avatar.modelUrl || `/api/v2/avatars/${avatar.id}/preview.gltf`,
+                animation: avatar.previewVideoUrl || `/api/v2/avatars/${avatar.id}/idle.mp4`
               },
               features: {
                 audio2FaceCompatible: avatar.audio2faceCompatible,
                 realTimeLipSync: avatar.realTimeLipsync,
                 rayTracing: avatar.rayTracingSupport,
-                lipSyncAccuracy: avatar.lipsync_accuracy || 95
+                lipSyncAccuracy: avatar.lipsyncAccuracy || 95
               },
               assets: {
-                modelFile: avatar.model_file_path,
-                textureFiles: avatar.texture_files,
-                rigFile: avatar.rig_file_path,
-                animationSets: avatar.animation_sets,
-                blendShapes: avatar.blend_shapes_file
+                modelFile: avatar.modelFilePath,
+                textureFiles: avatar.textureFiles,
+                rigFile: avatar.rigFilePath,
+                animationSets: avatar.animationSets,
+                blendShapes: avatar.blendShapesFile
               }
             }
           }

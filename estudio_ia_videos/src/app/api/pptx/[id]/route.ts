@@ -130,20 +130,14 @@ export async function PUT(
     // Validar dados
     const validatedData = updateSchema.parse(body)
 
-    // Verificar se upload existe e permissões
+    // Verificar se upload existe
     const { data: uploadData } = await supabase
       .from('pptx_uploads')
-      .select(`
-        *,
-        projects:project_id (
-          owner_id,
-          collaborators
-        )
-      `)
+      .select('*')
       .eq('id', uploadId)
       .single()
 
-    const upload = uploadData as PptxUploadWithProject | null
+    const upload = uploadData as unknown as { id: string; project_id: string | null; status: string; [key: string]: unknown } | null
 
     if (!upload) {
       return NextResponse.json(
@@ -152,9 +146,33 @@ export async function PUT(
       )
     }
 
-    const project = (upload as any).projects
-    const hasPermission = project?.owner_id === user.id || 
-                         project?.collaborators?.includes(user.id)
+    // Verificar permissões via projeto
+    let hasPermission = false
+    if (upload.project_id) {
+      const { data: project } = await supabase
+        .from('projects')
+        .select('user_id')
+        .eq('id', upload.project_id)
+        .single()
+      
+      if (project && (project as unknown as { user_id: string }).user_id === user.id) {
+        hasPermission = true
+      }
+      
+      if (!hasPermission) {
+        const { data: collaboratorData } = await supabase
+          .from('collaborators')
+          .select('role')
+          .eq('project_id', upload.project_id)
+          .eq('user_id', user.id)
+          .single()
+        
+        const collaborator = collaboratorData as unknown as { role: string } | null
+        if (collaborator?.role && ['editor', 'owner'].includes(collaborator.role)) {
+          hasPermission = true
+        }
+      }
+    }
 
     if (!hasPermission) {
       return NextResponse.json(

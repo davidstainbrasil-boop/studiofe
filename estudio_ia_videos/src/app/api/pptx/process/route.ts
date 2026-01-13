@@ -1,34 +1,34 @@
-/**
- * DEPRECATED: PPTX Process Endpoint (PROTOTYPE)
- *
- * Este endpoint era um protótipo que retornava dados mock/hardcoded.
- * Foi desativado em favor da implementação real em /api/pptx/upload
- *
- * MIGRAÇÃO: Use POST /api/pptx/upload para processamento real de PPTX
- */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/monitoring/logger';
+import { PptxProcessor } from '@/lib/pptx/pptx-processor';
 
+/**
+ * Rota da API para processar um arquivo .pptx.
+ * Espera um corpo de requisição com a propriedade "storagePath".
+ */
 export async function POST(req: NextRequest) {
-  console.warn('[DEPRECATED] /api/pptx/process is a prototype endpoint that has been disabled.');
-  console.warn('[DEPRECATED] This endpoint returned mock/hardcoded slide data.');
-  console.warn('[MIGRATION] Please use POST /api/pptx/upload for real PPTX processing.');
+  logger.info('Recebida requisição para processar PPTX.');
 
-  return NextResponse.json({
-    error: 'Este endpoint é protótipo e foi desativado',
-    reason: 'Retornava dados mock/hardcoded (slides fake, URLs de TTS inventadas)',
-    migration: {
-      use: 'POST /api/pptx/upload',
-      description: 'Processamento real de PPTX com parsing verdadeiro'
-    },
-    deprecated_since: '2026-01-12',
-    removal_date: 'TBD'
-  }, { status: 501 }); // 501 Not Implemented
-}
+  try {
+    const body = await req.json();
+    const { storagePath } = body;
 
-export async function GET(req: NextRequest) {
-  return NextResponse.json({
-    error: 'Endpoint desativado',
-    migration: 'Use POST /api/pptx/upload'
-  }, { status: 501 });
+    if (!storagePath) {
+      logger.warn('Nenhum storagePath encontrado no corpo da requisição.');
+      return NextResponse.json({ error: 'A propriedade "storagePath" é obrigatória.' }, { status: 400 });
+    }
+
+    const processor = new PptxProcessor();
+    const result = await processor.process({ storagePath });
+
+    logger.info('Processamento de PPTX concluído com sucesso.', { storagePath });
+
+    return NextResponse.json(result);
+
+  } catch (error) {
+    logger.error('Erro ao manusear a requisição de processamento de PPTX.', error instanceof Error ? error : new Error(String(error)));
+    const message = error instanceof Error ? error.message : 'Erro interno no servidor.';
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }

@@ -117,6 +117,7 @@ export async function GET(req: Request) {
     const sinceIso = new Date(Date.now() - windowMs).toISOString()
 
     // Total de jobs (head=true para retornar apenas count)
+    // @ts-expect-error - Supabase query builder tem tipagem recursiva que causa TS2589
     let baseQuery = supabase
       .from('render_jobs')
       .select('*', { count: 'exact', head: true })
@@ -126,6 +127,7 @@ export async function GET(req: Request) {
       baseQuery = baseQuery.eq('status', queryParams.status)
     }
     if (queryParams.projectId) {
+      // @ts-expect-error - Supabase query builder tem tipagem recursiva que causa TS2589
       baseQuery = baseQuery.eq("project_id", queryParams.projectId)
     }
 
@@ -134,8 +136,8 @@ export async function GET(req: Request) {
     const total_jobs = totalQuery.count ?? 0
 
     // Buscar status (limit para evitar exaustão – segue padrão MAX_ROWS=5000 usado em analytics)
-    type SupabaseQueryBuilder = ReturnType<typeof supabase.from>
-    let statusQuery: SupabaseQueryBuilder = supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase query builder tem tipagem recursiva que causa TS2589
+    let statusQuery: any = supabase
       .from('render_jobs')
       .select('status')
       .eq("user_id", userId)
@@ -174,7 +176,8 @@ export async function GET(req: Request) {
     }
 
     // Throughput: completados nos últimos 60 minutos
-    let completedQueryBuilder: SupabaseQueryBuilder = supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase query builder tem tipagem recursiva que causa TS2589
+    let completedQueryBuilder: any = supabase
       .from('render_jobs')
       .select('id', { count: 'exact' })
       .eq("user_id", userId)
@@ -191,7 +194,8 @@ export async function GET(req: Request) {
     const jobs_per_min = Number(((jobs_completed_last_60m || 0) / 60).toFixed(3))
 
     // Duração média (ms) para completados recentes (limitado a 5000)
-    let durationQuery: SupabaseQueryBuilder = supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase query builder tem tipagem recursiva que causa TS2589
+    let durationQuery: any = supabase
       .from('render_jobs')
       .select("duration_ms")
       .eq("user_id", userId)

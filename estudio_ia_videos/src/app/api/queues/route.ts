@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
       .eq("user_id", user.id)
       .single();
 
-    const typedUserRole = userRole as UserRoleWithRole | null;
+    const typedUserRole = userRole as unknown as UserRoleWithRole | null;
     if (!typedUserRole || typedUserRole.role?.name !== 'admin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }

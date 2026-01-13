@@ -19,12 +19,17 @@ export async function GET(request: NextRequest) {
   try {
     // Testar se a URL externa é acessível
     if (url) {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 10000)
+      
       const imageResponse = await fetch(url, {
         headers: {
           'User-Agent': 'Mozilla/5.0 (compatible; NextJS-ImageOptimizer)',
         },
-        timeout: 10000
+        signal: controller.signal
       })
+      
+      clearTimeout(timeoutId)
       
       return NextResponse.json({
         status: 'ok',

@@ -162,7 +162,7 @@ export async function POST(request: NextRequest) {
         .single()
       
       // editor and owner roles can edit
-      const collaborator = collaboratorData as { role: string } | null;
+      const collaborator = collaboratorData as unknown as { role: string } | null;
       if (collaborator?.role && ['editor', 'owner'].includes(collaborator.role)) {
         hasPermission = true
       }
@@ -305,7 +305,7 @@ export async function PUT(request: NextRequest) {
         .single()
       
       // editor and owner roles can edit
-      const collaborator = collaboratorData as { role: string } | null;
+      const collaborator = collaboratorData as unknown as { role: string } | null;
       if (collaborator?.role && ['editor', 'owner'].includes(collaborator.role)) {
         hasPermission = true
       }

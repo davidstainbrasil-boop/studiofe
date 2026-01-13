@@ -253,7 +253,7 @@ export async function POST(
         await prisma.render_jobs.update({
           where: { id: jobId },
           data: {
-            status: 'queued',
+            status: 'queued' as const,
             progress: 0,
             errorMessage: null,
             completedAt: null,

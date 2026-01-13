@@ -10,13 +10,13 @@ import fs from 'fs/promises';
 import { EventEmitter } from 'events';
 import { FFmpegExecutor, FFmpegOptions } from '@lib/render/ffmpeg-executor';
 import { VideoUploader } from '@lib/storage/video-uploader';
-import type { PPTXSlideData } from '@lib/render/frame-generator';
+import { FrameGenerator, type PPTXSlideData } from '@lib/render/frame-generator';
 import { logger } from '@lib/logger';
 import WatermarkProcessor, {
   WatermarkPosition,
   WatermarkType,
 } from '../video/watermark-processor';
-import { prisma } from '../prisma';
+import { prisma as prismaClient, PrismaClient } from '../prisma';
 
 const execAsync = promisify(exec);
 
@@ -58,12 +58,21 @@ export class VideoRenderWorker extends EventEmitter {
   private currentJobId: string | null = null;
   private ffmpegExecutor: FFmpegExecutor;
   private videoUploader: VideoUploader;
+  private frameGenerator: FrameGenerator;
   private tempDir: string;
+  private prisma: PrismaClient;
 
-  constructor(ffmpegExecutor?: FFmpegExecutor) {
+  constructor(
+    ffmpegExecutor: FFmpegExecutor,
+    frameGenerator: FrameGenerator,
+    videoUploader: VideoUploader,
+    prisma: PrismaClient = prismaClient,
+  ) {
     super();
-    this.ffmpegExecutor = ffmpegExecutor || new FFmpegExecutor();
-    this.videoUploader = new VideoUploader();
+    this.ffmpegExecutor = ffmpegExecutor;
+    this.frameGenerator = frameGenerator;
+    this.videoUploader = videoUploader;
+    this.prisma = prisma;
     this.tempDir = path.join(process.cwd(), 'temp', 'render');
     this.ensureTempDir();
   }
@@ -146,6 +155,14 @@ export class VideoRenderWorker extends EventEmitter {
 
       const videoUrl = await this.uploadVideo(jobData, outputPath);
 
+      await this.prisma.render_jobs.update({
+        where: { id: jobData.id },
+        data: {
+          status: 'completed',
+          output_url: videoUrl,
+        },
+      });
+
       // 6. Cleanup
       await this.cleanup(jobDir);
 
@@ -183,15 +200,8 @@ export class VideoRenderWorker extends EventEmitter {
   private async generateFrames(jobData: RenderJobData, framesDir: string): Promise<number> {
     await fs.mkdir(framesDir, { recursive: true });
 
-    // Corrigido: Instanciar FrameGenerator e chamar o método
-    const { FrameGenerator } = await import('@/lib/render/frame-generator');
-    const generator = new FrameGenerator({
-      width: jobData.config.resolution.width,
-      height: jobData.config.resolution.height,
-      fps: jobData.config.fps,
-    });
-
-    const result = await generator.generateFrames(
+    // Usa a instância injetada
+    const result = await this.frameGenerator.generateFrames(
       jobData.slides,
       framesDir,
       (current, total) => {
@@ -340,7 +350,7 @@ export class VideoRenderWorker extends EventEmitter {
       finalPath: outputPath,
     });
 
-    const job = await prisma.render_jobs.findUnique({
+    const job = await this.prisma.render_jobs.findUnique({
       where: { id: jobData.id },
     });
 
@@ -459,12 +469,3 @@ export class VideoRenderWorker extends EventEmitter {
   }
 }
 
-// Singleton instance
-let workerInstance: VideoRenderWorker | null = null;
-
-export const getVideoRenderWorker = (): VideoRenderWorker => {
-  if (!workerInstance) {
-    workerInstance = new VideoRenderWorker();
-  }
-  return workerInstance;
-};

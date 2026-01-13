@@ -1,15 +1,13 @@
 import { RenderService } from '@/lib/services/render-service';
-import { getVideoRenderWorker } from '@lib/workers/video-render-worker';
+import { VideoRenderWorker } from '@lib/workers/video-render-worker';
 import { prisma } from '@lib/prisma';
 import { v4 as uuidv4 } from 'uuid';
 
 // Mocks
 const mockProcessRenderJob = jest.fn();
-jest.mock('@/lib/workers/video-render-worker', () => ({
-  getVideoRenderWorker: jest.fn(() => ({
-    processRenderJob: mockProcessRenderJob,
-  })),
-}));
+const mockWorker = {
+  processRenderJob: mockProcessRenderJob,
+} as unknown as VideoRenderWorker;
 
 jest.mock('@/lib/prisma', () => ({
   prisma: {
@@ -38,7 +36,7 @@ describe('RenderService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockProcessRenderJob.mockReset(); // Redefine a implementação do mock
+    mockProcessRenderJob.mockReset();
     (prisma.render_jobs.create as jest.Mock).mockResolvedValue({});
     (prisma.render_jobs.update as jest.Mock).mockResolvedValue({});
   });
@@ -46,7 +44,7 @@ describe('RenderService', () => {
   it('should successfully queue a render job and return a mocked success', async () => {
     mockProcessRenderJob.mockResolvedValue('https://mock-worker-url.com/video.mp4');
 
-    const result = await RenderService.renderVideo(mockProjectId, mockSlides, mockUserId);
+    const result = await RenderService.renderVideo(mockProjectId, mockSlides, mockUserId, mockWorker);
 
     expect(uuidv4).toHaveBeenCalled();
     expect(prisma.render_jobs.create).toHaveBeenCalledWith({
@@ -78,7 +76,7 @@ describe('RenderService', () => {
   it('should handle render errors gracefully and update job status', async () => {
     mockProcessRenderJob.mockRejectedValue(new Error('Worker failed'));
 
-    const result = await RenderService.renderVideo(mockProjectId, mockSlides, mockUserId);
+    const result = await RenderService.renderVideo(mockProjectId, mockSlides, mockUserId, mockWorker);
     
     expect(result.success).toBe(false);
     expect(result.error).toBe('Worker failed');

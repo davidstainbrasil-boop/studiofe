@@ -60,6 +60,14 @@ const REQUIRED_VARIABLES: EnvVariable[] = [
     sensitive: true,
   },
 
+  {
+    name: 'DATABASE_URL',
+    required: false,
+    description: 'PostgreSQL connection URL (Transaction Pooler)',
+    pattern: /^postgres(ql)?:\/\/.+/,
+    sensitive: true,
+  },
+
   // Redis (for BullMQ)
   {
     name: 'REDIS_URL',
@@ -112,6 +120,12 @@ const REQUIRED_VARIABLES: EnvVariable[] = [
 
 const PRODUCTION_ONLY_REQUIRED: string[] = [
   'SUPABASE_SERVICE_ROLE_KEY',
+  'DATABASE_URL',
+  'REDIS_URL',
+  'NEXTAUTH_SECRET',
+  'NEXTAUTH_URL',
+  'NEXT_PUBLIC_SUPABASE_URL',
+  'NEXT_PUBLIC_SUPABASE_ANON_KEY',
 ];
 
 // ============================================

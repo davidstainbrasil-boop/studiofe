@@ -174,7 +174,7 @@ export async function PUT(
         .single()
       
       // Check if permissions array contains 'write' or 'edit'
-      const collaborator = collaboratorData as { role: string } | null;
+      const collaborator = collaboratorData as unknown as { role: string } | null;
       if (collaborator && collaborator.role) {
         // role is an enum string, not array
         if (['editor', 'owner'].includes(collaborator.role)) {
@@ -299,7 +299,7 @@ export async function DELETE(
         .single()
       
       // Check if permissions array contains 'write' or 'edit'
-      const collaborator = collaboratorData as { role: string } | null;
+      const collaborator = collaboratorData as unknown as { role: string } | null;
       if (collaborator && collaborator.role) {
         // role is an enum string, not array
         if (['editor', 'owner'].includes(collaborator.role)) {

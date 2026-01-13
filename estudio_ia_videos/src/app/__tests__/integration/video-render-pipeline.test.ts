@@ -6,16 +6,27 @@ import { VideoUploader } from '@/lib/storage/video-uploader';
 
 // --- Mocks ---
 
-jest.mock('@/lib/render/ffmpeg-executor', () => {
+jest.mock('fs/promises', () => ({
+  ...jest.requireActual('fs/promises'),
+  rename: jest.fn().mockResolvedValue(undefined),
+  mkdir: jest.fn().mockResolvedValue(undefined),
+  rm: jest.fn().mockResolvedValue(undefined),
+  writeFile: jest.fn().mockResolvedValue(undefined),
+  unlink: jest.fn().mockResolvedValue(undefined),
+}));
+
+const mockRenderFromFrames = jest.fn().mockResolvedValue({
+  success: true,
+  outputPath: 'mock/output.mp4',
+  duration: 10,
+  fileSize: 1024,
+});
+
+jest.doMock('@/lib/render/ffmpeg-executor', () => {
   return {
     FFmpegExecutor: jest.fn().mockImplementation(() => {
       return {
-        renderFromFrames: jest.fn().mockResolvedValue({
-          success: true,
-          outputPath: 'mock/output.mp4',
-          duration: 10,
-          fileSize: 1024,
-        }),
+        renderFromFrames: mockRenderFromFrames,
       };
     }),
   };
@@ -46,11 +57,13 @@ jest.mock('@/lib/prisma', () => ({
 }));
 
 // Mock do Supabase Storage (VideoUploader)
+const mockUploadVideo = jest.fn().mockResolvedValue('https://mock-supabase-url.com/video.mp4');
+
 jest.mock('@/lib/storage/video-uploader', () => {
     return {
         VideoUploader: jest.fn().mockImplementation(() => {
             return {
-                uploadVideo: jest.fn().mockResolvedValue('https://mock-supabase-url.com/video.mp4'),
+                uploadVideo: mockUploadVideo,
             };
         }),
     };
@@ -60,15 +73,18 @@ jest.mock('@/lib/storage/video-uploader', () => {
 // --- Test Suite ---
 
 describe('Video Render Pipeline Integration', () => {
+  let worker: VideoRenderWorker;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    const mockFFmpegExecutor = new (require('@/lib/render/ffmpeg-executor').FFmpegExecutor)();
+    const mockFrameGenerator = new (require('@/lib/render/frame-generator').FrameGenerator)();
+    const mockVideoUploader = new (require('@/lib/storage/video-uploader').VideoUploader)();
+    worker = new VideoRenderWorker(mockFFmpegExecutor, mockFrameGenerator, mockVideoUploader);
   });
 
   describe('Full Pipeline', () => {
     it('should process complete render job', async () => {
-      const mockFFmpegExecutor = new FFmpegExecutor();
-      const worker = new VideoRenderWorker(mockFFmpegExecutor as any);
-
       const jobData = {
         id: 'job-123',
         projectId: 'project-123',
@@ -88,20 +104,10 @@ describe('Video Render Pipeline Integration', () => {
 
       const resultUrl = await worker.processRenderJob(jobData as any);
 
-      // 1. Verifica se o resultado é a URL mockada do uploader
       expect(resultUrl).toBe('https://mock-supabase-url.com/video.mp4');
-
-      // 2. Verifica se o diretório do job foi removido (comportamento do worker)
-      const jobDir = path.join(process.cwd(), 'temp', 'render', jobData.id);
-      // A verificação de remoção é complexa com mocks, então focamos nas chamadas
-      // A lógica de limpeza é testada unitariamente no worker se necessário.
-      // O importante é que o pipeline chame os componentes certos.
-
-      // 3. Verifica se o uploader foi chamado
-      const uploaderInstance = (VideoUploader as jest.Mock).mock.instances[0];
+      expect(mockRenderFromFrames).toHaveBeenCalledTimes(1);
+      const uploaderInstance = new (require('@/lib/storage/video-uploader').VideoUploader)();
       expect(uploaderInstance.uploadVideo).toHaveBeenCalled();
-      
-      // 4. Verifica se o Prisma foi atualizado
       const { prisma } = require('@/lib/prisma');
       expect(prisma.render_jobs.update).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -112,7 +118,6 @@ describe('Video Render Pipeline Integration', () => {
           },
         })
       );
-
     });
   });
 });

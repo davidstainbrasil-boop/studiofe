@@ -61,9 +61,8 @@ export class FFmpegExecutor {
   constructor(ffmpegPath: string = 'ffmpeg') {
     this.ffmpegPath = ffmpegPath;
     this.isWindows = process.platform === 'win32';
-  }
-
-  /**
+    this.logger = getLogger('ffmpeg-executor');
+  }/**
    * Renderiza vídeo a partir de frames individuais
    */
   async renderFromFrames(

@@ -239,7 +239,7 @@ export async function PUT(
         .eq("userId", user.id)
         .single()
       
-      const collaborator = collaboratorData as { role: string } | null;
+      const collaborator = collaboratorData as unknown as { role: string } | null;
       if (collaborator?.role && ['editor', 'owner'].includes(collaborator.role)) {
         hasPermission = true
       }
