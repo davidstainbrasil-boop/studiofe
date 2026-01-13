@@ -12,6 +12,7 @@ export async function GET(req: Request) {
     }
 
     // A função is_admin() deve ser definida no seu banco de dados Supabase.
+    // @ts-expect-error - is_admin RPC exists in database but not in generated types
     const { data: isAdminData, error: isAdminError } = await supabase.rpc('is_admin');
     
     if (isAdminError || !isAdminData) {

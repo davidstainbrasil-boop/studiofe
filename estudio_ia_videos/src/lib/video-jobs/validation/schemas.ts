@@ -30,8 +30,8 @@ const analyticsStatusEnum = z.enum(['all', 'completed', 'failed', 'processing', 
 // =============================
 
 export const SlideInputSchema = z.object({
-  title: z.string().min(1, 'Título é obrigatório'),
-  content: z.string().min(1, 'Conteúdo é obrigatório'),
+  title: z.string().min(1, 'Título é obrigatório').optional(),
+  content: z.string().min(1, 'Conteúdo é obrigatório').optional(),
   order_index: z.number().int().nonnegative(),
 });
 

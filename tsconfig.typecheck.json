@@ -1,22 +1,22 @@
 {
-  "extends": "./tsconfig.json",
+  "extends": "./estudio_ia_videos/tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": "./estudio_ia_videos",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@lib/*": ["./src/lib/*"],
+      "@components/*": ["./src/components/*"],
+      "@hooks/*": ["./src/hooks/*"],
+      "@/types/*": ["./src/types/*"]
+    }
+  },
   "include": [
-    "next-env.d.ts",
-    "estudio_ia_videos/app/api/v1/video-jobs/route.ts",
-    "estudio_ia_videos/app/api/v1/video-jobs/cancel/route.ts",
-    "estudio_ia_videos/app/api/v1/video-jobs/progress/route.ts",
-    "estudio_ia_videos/app/api/v1/video-jobs/requeue/route.ts"
+    "estudio_ia_videos/next-env.d.ts",
+    "estudio_ia_videos/src/app/api/v1/video-jobs/**/*.ts"
   ],
-  "files": ["estudio_ia_videos/app/api/v1/video-jobs/[id]/route.ts"],
   "exclude": [
     "node_modules",
     "**/__tests__/**",
-    "estudio_ia_videos/app/archive/**",
-    "estudio_ia_videos/app/api/**",
-    "!estudio_ia_videos/app/api/v1/video-jobs/route.ts",
-    "lib/**",
-    "scripts/**",
-    "app",
-    "app/**/*"
+    "estudio_ia_videos/src/app/archive/**"
   ]
 }

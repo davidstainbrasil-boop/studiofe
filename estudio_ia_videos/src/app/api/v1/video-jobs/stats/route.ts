@@ -120,13 +120,13 @@ export async function GET(req: Request) {
     let baseQuery = supabase
       .from('render_jobs')
       .select('*', { count: 'exact', head: true })
-      .eq("userId", userId)
+      .eq("user_id", userId)
 
     if (queryParams.status) {
       baseQuery = baseQuery.eq('status', queryParams.status)
     }
     if (queryParams.projectId) {
-      baseQuery = baseQuery.eq("projectId", queryParams.projectId)
+      baseQuery = baseQuery.eq("project_id", queryParams.projectId)
     }
 
     const totalQuery = await baseQuery
@@ -138,20 +138,20 @@ export async function GET(req: Request) {
     let statusQuery: SupabaseQueryBuilder = supabase
       .from('render_jobs')
       .select('status')
-      .eq("userId", userId)
+      .eq("user_id", userId)
       .limit(queryParams.limit)
 
     if (queryParams.status) {
       statusQuery = statusQuery.eq('status', queryParams.status)
     }
     if (queryParams.projectId) {
-      statusQuery = statusQuery.eq("projectId", queryParams.projectId)
+      statusQuery = statusQuery.eq("project_id", queryParams.projectId)
     }
 
     const { data: statusRows, error: statusErr } = await statusQuery
 
     if (statusErr) {
-      logger.warn('video-jobs-stats', 'fallback: status query error', { message: statusErr.message })
+      logger.warn(`video-jobs-stats: fallback - status query error: ${statusErr.message}`)
       if (fallbackEnabled && buildMockResponse) {
         return buildMockResponse()
       }
@@ -177,12 +177,12 @@ export async function GET(req: Request) {
     let completedQueryBuilder: SupabaseQueryBuilder = supabase
       .from('render_jobs')
       .select('id', { count: 'exact' })
-      .eq("userId", userId)
+      .eq("user_id", userId)
       .eq('status', 'completed')
-      .gte("completedAt", sinceIso)
+      .gte("completed_at", sinceIso)
 
     if (queryParams.projectId) {
-      completedQueryBuilder = completedQueryBuilder.eq("projectId", queryParams.projectId)
+      completedQueryBuilder = completedQueryBuilder.eq("project_id", queryParams.projectId)
     }
 
     const completedQuery = await completedQueryBuilder
@@ -193,26 +193,26 @@ export async function GET(req: Request) {
     // Duração média (ms) para completados recentes (limitado a 5000)
     let durationQuery: SupabaseQueryBuilder = supabase
       .from('render_jobs')
-      .select("durationMs")
-      .eq("userId", userId)
+      .select("duration_ms")
+      .eq("user_id", userId)
       .eq('status', 'completed')
       .limit(queryParams.limit)
 
     if (queryParams.projectId) {
-      durationQuery = durationQuery.eq("projectId", queryParams.projectId)
+      durationQuery = durationQuery.eq("project_id", queryParams.projectId)
     }
 
     const { data: durationRows, error: durationErr } = await durationQuery
 
     if (durationErr) {
-      logger.warn('video-jobs-stats', 'fallback: duration query error', { message: durationErr.message })
+      logger.warn(`video-jobs-stats: fallback - duration query error: ${durationErr.message}`)
       if (fallbackEnabled && buildMockResponse) {
         return buildMockResponse()
       }
       return NextResponse.json({ code: 'DB_ERROR', message: 'Falha ao obter métricas de duração', details: durationErr.message }, { status: 500 })
     }
 
-    const durations = (durationRows || []).map((r: { durationMs: number | null }) => (typeof r.durationMs === 'number' ? r.durationMs : null)).filter((v: number | null) => typeof v === 'number') as number[]
+    const durations = (durationRows || []).map((r: { duration_ms: number | null }) => (typeof r.duration_ms === 'number' ? r.duration_ms : null)).filter((v: number | null) => typeof v === 'number') as number[]
     const avg_duration_ms = durations.length ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length) : 0
 
     // Percentis (p50/p90/p95) sobre durations
@@ -261,7 +261,7 @@ export async function GET(req: Request) {
       headers: { 'content-type': 'application/json', 'X-Cache': 'MISS' }
     })
   } catch (err) {
-    logger.error('video-jobs-stats', 'unexpected-error', err as Error)
+    logger.error('video-jobs-stats: unexpected-error', err as Error)
     if (fallbackEnabled && buildMockResponse) {
       return buildMockResponse()
     }

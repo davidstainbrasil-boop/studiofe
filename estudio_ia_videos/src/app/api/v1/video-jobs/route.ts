@@ -78,7 +78,7 @@ export async function POST(req: Request) {
     const MAX_REQ = 30;
     const rl = checkRateLimit(`post:${userId}`, MAX_REQ, WINDOW_MS);
     if (process.env.DEBUG_RATE_LIMIT === 'true') {
-      logger.info('video-jobs', 'rate-limit-check', {
+      logger.info(`video-jobs: rate-limit-check`, {
         key: `post:${userId}`,
         result: rl,
         bucket: inspectRateLimit(`post:${userId}`),
@@ -93,7 +93,7 @@ export async function POST(req: Request) {
     }
 
     if (mockMode) {
-      const job = insertMockJob(userId, parsed.data);
+      const job = insertMockJob(userId, parsed.data as { projectId: string; slides: Array<{ order_index: number }>; quality?: string; tts_voice?: string });
       const durationMs = Date.now() - started;
       return NextResponse.json({ job, metrics: { validation_ms: durationMs } }, { status: 201 });
     }
@@ -104,19 +104,21 @@ export async function POST(req: Request) {
       throw new Error('Supabase client não inicializado');
     }
 
-    const { error: insertErr, data } = await supabase.from('render_jobs').insert({
-      userId: userId,
-      projectId: payload.projectId,
+    const insertPayload = {
+      user_id: userId,
+      project_id: payload.projectId,
       status: 'queued',
       progress: 0,
       attempts: 1,
-      renderSettings: { slides: payload.slides.length, quality: payload.quality, tts_voice: payload.tts_voice },
-    }).select('id,status,project_id,created_at,progress,render_settings,attempts,duration_ms').single();
+      render_settings: { slides: payload.slides.length, quality: payload.quality, tts_voice: payload.tts_voice },
+    };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: insertErr, data } = await (supabase.from('render_jobs').insert(insertPayload as any) as any).select('id,status,project_id,created_at,progress,render_settings,attempts,duration_ms').single();
 
     if (insertErr) {
       recordError('DB_ERROR');
       if (allowMockFallback()) {
-        const job = insertMockJob(userId, payload);
+        const job = insertMockJob(userId, payload as { projectId: string; slides: Array<{ order_index: number }>; quality?: string; tts_voice?: string });
         const durationMs = Date.now() - started;
         return NextResponse.json({ job, metadata: { fallback: 'mock' }, metrics: { validation_ms: durationMs } }, { status: 201 });
       }
@@ -125,11 +127,11 @@ export async function POST(req: Request) {
 
     const durationMs = Date.now() - started;
     const row = data as unknown as RenderJobRow;
-    const job = data ? { id: row.id, status: row.status, projectId: row.projectId, createdAt: row.createdAt, progress: row.progress, attempts: row.attempts, durationMs: row.durationMs ?? null, settings: row.renderSettings } : null;
+    const job = data ? { id: row.id, status: row.status, projectId: row.project_id, createdAt: row.created_at, progress: row.progress, attempts: row.attempts, durationMs: row.duration_ms ?? null, settings: row.render_settings } : null;
     return NextResponse.json({ job, metrics: { validation_ms: durationMs } }, { status: 201 });
   } catch (err) {
     recordError('UNEXPECTED');
-    logger.error('video-jobs', 'unexpected-error', err as Error);
+    logger.error('video-jobs: unexpected-error', err as Error);
     return NextResponse.json({ code: 'UNEXPECTED', message: 'Erro inesperado', details: (err as Error).message }, { status: 500 });
   }
 }
@@ -211,10 +213,11 @@ export async function GET(req: Request) {
       throw new Error('Parâmetros da listagem não foram inicializados');
     }
     const { limit: dbLimit, offset, status: statusFilter, projectId, sortBy, sortOrder } = queryParams;
-    const sortColumn = sortBy === "updatedAt" ? "updatedAt" : sortBy === 'status' ? 'status' : "createdAt";
-    let query = supabase.from('render_jobs')
+    const sortColumn = sortBy === "updatedAt" ? "updated_at" : sortBy === 'status' ? 'status' : "created_at";
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let query = (supabase.from('render_jobs') as any)
       .select('id,status,project_id,created_at,updated_at,progress,render_settings,attempts,duration_ms')
-      .eq("userId", userId)
+      .eq("user_id", userId)
       .order(sortColumn, { ascending: sortOrder === 'asc' })
       .range(offset, offset + dbLimit - 1);
 
@@ -222,7 +225,7 @@ export async function GET(req: Request) {
       query = query.eq('status', statusFilter);
     }
     if (projectId) {
-      query = query.eq("projectId", projectId);
+      query = query.eq("project_id", projectId);
     }
 
     const { data, error } = await query;
@@ -244,7 +247,7 @@ export async function GET(req: Request) {
     return new NextResponse(JSON.stringify(payload), { status: 200, headers: { 'content-type': 'application/json', 'X-Cache': 'MISS' } });
   } catch (err) {
     recordError('UNEXPECTED');
-    logger.error('video-jobs', 'list-unexpected-error', err as Error);
+    logger.error('video-jobs: list-unexpected-error', err as Error);
     if (fallbackEnabled && buildMockResponse) {
       return buildMockResponse();
     }

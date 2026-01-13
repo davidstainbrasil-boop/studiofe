@@ -32,7 +32,7 @@ export async function POST(req: Request) {
     }
     const { id: jobId, reason } = parsed.data
     if (reason) {
-      logger.info('video-jobs-cancel', 'cancel-reason', { jobId, userId: userData.user.id, reason })
+      logger.info(`video-jobs-cancel: cancel-reason`, { jobId, userId: userData.user.id, reason })
     }
 
     // Buscar job do usuário
@@ -57,7 +57,7 @@ export async function POST(req: Request) {
       render_settings?: unknown
     }
     const row = existing as unknown as RenderJobRow
-    if (row.userId && row.userId !== userData.user.id) {
+    if (row.user_id && row.user_id !== userData.user.id) {
       return NextResponse.json({ code: 'FORBIDDEN', message: 'Sem permissão para cancelar este job' }, { status: 403 })
     }
     if (!['queued', 'processing'].includes(row.status)) {
@@ -73,15 +73,15 @@ export async function POST(req: Request) {
 
     if (updateErr || !updated) {
       recordError('DB_ERROR');
-      logger.error('video-jobs-cancel', 'db-update-failed', updateErr as Error)
+      logger.error('video-jobs-cancel: db-update-failed', updateErr as Error)
       return NextResponse.json({ code: 'DB_ERROR', message: 'Falha ao cancelar job', details: updateErr?.message }, { status: 500 })
     }
   const updatedRow = updated as unknown as RenderJobRow
-  const jobResp = { id: updatedRow.id, status: updatedRow.status, projectId: updatedRow.projectId, createdAt: updatedRow.createdAt, progress: updatedRow.progress, attempts: updatedRow.attempts, durationMs: updatedRow.durationMs ?? null, settings: updatedRow.renderSettings }
+  const jobResp = { id: updatedRow.id, status: updatedRow.status, projectId: updatedRow.project_id, createdAt: updatedRow.created_at, progress: updatedRow.progress, attempts: updatedRow.attempts, durationMs: updatedRow.duration_ms ?? null, settings: updatedRow.render_settings }
   return NextResponse.json({ job: jobResp })
   } catch (err) {
     recordError('UNEXPECTED');
-    logger.error('video-jobs-cancel', 'unexpected-error', err as Error)
+    logger.error('video-jobs-cancel: unexpected-error', err as Error)
     return NextResponse.json({ code: 'UNEXPECTED', message: 'Erro inesperado', details: (err as Error).message }, { status: 500 })
   }
 }
