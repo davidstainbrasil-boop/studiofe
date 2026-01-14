@@ -5,30 +5,15 @@
  */
 
 // ===== PARSERS =====
-export { PPTXTextParser, extractTextFromSlide } from './text-parser';
+export { PPTXTextParser } from './text-parser';
 export { PPTXImageParser } from './image-parser';
 export { PPTXLayoutParser, detectSlideLayout } from './layout-parser';
-export { PPTXNotesParser, extractSpeakerNotes, extractAllSpeakerNotes } from './notes-parser';
+export { PPTXNotesParser } from './notes-parser';
 export { SlideDurationCalculator, calculateSlideDuration, calculatePresentationDuration } from './duration-calculator';
 export { PPTXAnimationParser, extractSlideAnimations, extractAllSlideAnimations } from './animation-parser';
 export { PPTXAdvancedParser, parseCompletePPTX, parseCompleteSlide } from './advanced-parser';
 export { PPTXThemeParser, extractPPTXTheme, themeToCSS } from './theme-parser';
-
-// ===== TIPOS: TEXT PARSER =====
-export type {
-  SlideTextBoxSummary,
-  SlideTextBoxPosition,
-  SlideTextFormatting,
-  SlideHyperlink,
-  SlideTextExtractionResult,
-} from './text-parser';
-
-// ===== TIPOS: IMAGE PARSER =====
-export type {
-  ImageExtractionOptions,
-  ExtractedImage,
-  ImageExtractionResult,
-} from './image-parser';
+export { UniversalElementParser, parseUniversalPresentation } from './element-parser';
 
 // ===== TIPOS: LAYOUT PARSER =====
 export type {
@@ -37,11 +22,6 @@ export type {
   SlideContentAnalysis,
   SlideLayoutDetectionResult,
 } from './layout-parser';
-
-// ===== TIPOS: NOTES PARSER =====
-export type {
-  SpeakerNotesResult,
-} from './notes-parser';
 
 // ===== TIPOS: DURATION CALCULATOR =====
 export type {
@@ -72,3 +52,16 @@ export type {
   PPTXTheme,
   ThemeExtractionResult,
 } from './theme-parser';
+
+// ===== TIPOS: ELEMENT PARSER (UNIVERSAL) =====
+export type {
+  ElementLayout,
+  TextStyle,
+  ShapeStyle,
+  UniversalSlideElement,
+  TextParagraph,
+  TextRun,
+  ElementAnimation,
+  UniversalSlide,
+  UniversalPresentationData,
+} from './element-parser';

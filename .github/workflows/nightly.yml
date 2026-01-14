@@ -118,7 +118,7 @@ jobs:
           name: nightly-playwright-report
           path: evidencias/fase-2/playwright-report
           if-no-files-found: warn
-      
+
       # E2E PPTX Pipeline Test (Real Infrastructure)
       - name: Install Playwright for E2E Pipeline
         if: matrix.suite == 'e2e-pptx-pipeline'
@@ -160,7 +160,7 @@ jobs:
         run: npm ci
       - name: Run alert check (non-fail)
         run: npx ts-node scripts/alerts/bullmq-alerts.ts || echo "alert script completed with issues"
-  
+
   synthetic-monitoring:
     name: Synthetic API Monitoring
     runs-on: ubuntu-latest

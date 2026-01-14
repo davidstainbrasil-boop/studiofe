@@ -81,6 +81,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     
     // Processa PPTX
     logger.info(`⚙️ Iniciando processamento com ID: ${processingId}`, { component: 'API: v1/pptx/upload' });
+    
     const result = await PPTXProcessorReal.extract(buffer);
     
     // Armazena resultado no cache
@@ -97,7 +98,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       success: result.success,
       message: result.success 
         ? `Arquivo processado com sucesso! ${result.slides.length} slides encontrados.`
-        : `Erro no processamento: ${result.error}`,
+        : `Erro no processamento: ${result.result?.error || result.error}`,
       data: {
         processingId,
         fileName: file.name,

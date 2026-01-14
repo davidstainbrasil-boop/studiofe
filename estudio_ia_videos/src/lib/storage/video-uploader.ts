@@ -64,15 +64,59 @@ export class VideoUploader {
   }
 
   /**
-   * Upload de vídeo para Supabase Storage
+   * Upload de vídeo para Supabase Storage with timeout, idempotency, and concurrency control
    */
   async uploadVideo(options: VideoUploadOptions): Promise<string> {
-    logger.info('Uploading video', { videoPath: options.videoPath, projectId: options.projectId, service: 'VideoUploader' });
+    const { withTimeout, PIPELINE_TIMEOUTS } = await import('../config/timeout-config');
+    const { withStorageConcurrency } = await import('../queue/concurrency-limiter');
+    const { withIdempotency, generateStorageIdempotencyKey } = await import('../middleware/idempotency-middleware');
+    
+    // Generate idempotency key for storage upload
+    const fileStats = await fs.stat(options.videoPath).catch(() => ({ size: 0 }));
+    const idempotencyKey = generateStorageIdempotencyKey(
+      options.jobId,
+      path.basename(options.videoPath),
+      fileStats.size
+    );
+    
+    logger.info('Uploading video with hardening', { 
+      videoPath: options.videoPath, 
+      projectId: options.projectId, 
+      idempotencyKey,
+      service: 'VideoUploader' 
+    });
 
+    // Apply concurrency control
+    return withStorageConcurrency(async () => {
+      // Apply idempotency
+      return withIdempotency(
+        idempotencyKey,
+        async () => {
+          // Apply timeout enforcement
+          return withTimeout(
+            this.uploadVideoInternal(options),
+            PIPELINE_TIMEOUTS.storageUpload,
+            `Video Upload for job ${options.jobId}`
+          );
+        }
+      );
+    });
+  }
+
+  /**
+   * Internal upload logic (extracted for wrapping)
+   */
+  private async uploadVideoInternal(options: VideoUploadOptions): Promise<string> {
     try {
-      // [DEV] Mock upload if configured (DEV ONLY)
-      if (process.env.MOCK_STORAGE === 'true' && process.env.NODE_ENV === 'development') {
-        logger.info('MOCK STORAGE: Upload vídeo simulado (DEV ONLY)', { videoPath: options.videoPath });
+      // Use local storage if configured OR if in mock/dev mode
+      const useLocalStorage = process.env.STORAGE_TYPE === 'local' || 
+                             (process.env.MOCK_STORAGE === 'true' && process.env.NODE_ENV === 'development');
+
+      if (useLocalStorage) {
+        const isMock = process.env.MOCK_STORAGE === 'true';
+        logger.info(isMock ? 'MOCK STORAGE: Upload vídeo simulado' : 'LOCAL STORAGE: Saving video locally', { 
+          videoPath: options.videoPath 
+        });
         
         // Copia para public/uploads/videos
         const extension = path.extname(options.videoPath);
@@ -82,9 +126,11 @@ export class VideoUploader {
         await fs.mkdir(path.dirname(targetPath), { recursive: true });
         await fs.copyFile(options.videoPath, targetPath);
         
-        const videoUrl = `http://localhost:3000/uploads/videos/${fileName}`;
+        // In production, use valid public URL
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+        const videoUrl = `${baseUrl}/uploads/videos/${fileName}`;
         
-        // 5. Gera thumbnail (mockada)
+        // 5. Gera thumbnail
         const thumbnailUrl = await this.generateAndUploadThumbnail(
           options.videoPath,
           options.userId,

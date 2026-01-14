@@ -71,7 +71,8 @@
       "Bash(pm2 info:*)",
       "Bash(jq:*)",
       "Bash(pm2 logs:*)",
-      "Bash(NODE_OPTIONS=\"--max-old-space-size=4096\" npm run build:*)"
+      "Bash(NODE_OPTIONS=\"--max-old-space-size=4096\" npm run build:*)",
+      "Bash(git log:*)"
     ],
     "deny": [],
     "ask": []

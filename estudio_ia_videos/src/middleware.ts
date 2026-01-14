@@ -65,7 +65,22 @@ export async function middleware(request: NextRequest) {
 
     // Refresh session if expired - required for Server Components
     // This updates the cookie if the session is refreshed
-    const { data: { session } } = await supabase.auth.getSession()
+    // Add timeout to prevent 502 errors from slow Supabase responses
+    let session = null;
+    try {
+      const sessionPromise = supabase.auth.getSession();
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Session timeout')), 5000)
+      );
+      const result = await Promise.race([sessionPromise, timeoutPromise]) as { data: { session: unknown } };
+      session = result.data?.session;
+    } catch (sessionError) {
+      // On timeout or error, continue without session (will redirect to login if protected route)
+      logger.warn('Session fetch timeout or error', {
+        scope: 'middleware',
+        error: sessionError instanceof Error ? sessionError.message : 'Unknown error'
+      });
+    }
 
     // 2. Basic Rate Limiting for API routes (in-memory, per-instance)
     // Note: Individual API routes use Redis-backed rate limiting for production-grade protection

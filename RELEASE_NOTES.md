@@ -1,39 +1,31 @@
-# 🚀 Release Notes - v1.0.0 (Go-Live)
+# Release Notes: Production Hardening (v7-hardening)
 
-**Date:** 2026-01-13
-**Version:** 1.0.0
-**Status:** PRODUCTION READY
+**Date**: 2026-01-14
+**Status**: Ready for Staging/Production
+**OpenSpec**: `harden-video-pipeline`
 
----
+## Key Features
+- **Definitive Timeouts**: Enforced limits for Render (30m), TTS (60s/slide), and Upload (10m).
+- **Idempotency**: Redis-backed idempotent retries for TTS and Storage operations (24h TTL).
+- **Concurrency Limits**: Semaphore-based limits (Render=2, TTS=5, Storage=3) to prevent overload.
+- **Local Storage Support**: Validated support for `STORAGE_TYPE=local` in production configuration.
 
-## 🌟 Highlights
-This release marks the **MVP 1.0.0** of the **Vídeos TécnicoCursos** platform. It allows safety instructors to generate compliant NR training videos from PPTX files in minutes using AI.
+## Configuration Changes
+- New Environment Variables:
+  - `ENABLE_TIMEOUT_ENFORCEMENT=true`
+  - `ENABLE_IDEMPOTENCY=true`
+  - `ENABLE_CONCURRENCY_LIMITS=true`
+  - `REDIS_URL` (Required)
+  - `TTS_CONCURRENCY`, `STORAGE_CONCURRENCY`
 
-## 📦 Key Features
-- **PPTX Import:** Full parsing of slides, text, images, and layouts.
-- **AI Editor:** Visual editor for fine-tuning video content.
-- **Render Engine:** Automated FFmpeg pipeline with H.264 export.
-- **Narrator AI:** ElevenLabs TTS integration.
-- **Avatars:** HeyGen integration with lip-sync.
-- **Security:** RBAC (Role-Based Access Control) and Row-Level Security (RLS).
-- **Compliance:** Built-in templates for NR-10, NR-12, NR-35.
+## Fixes
+- Resolved 500 errors in PPTX/Video upload when using Local Storage in production mode.
+- Fixed zombie process issues on port 3000 during deployment.
 
-## 🛠️ Infrastructure & Ops
-- **Docker Ready:** Full containerization support.
-- **CDN:** Optimized caching and security headers at the edge.
-- **Backups:** Automated daily PostgreSQL backups.
-- **Monitoring:** Sentry error tracking integrated.
-- **CI/CD:** Automated testing and deployment pipelines.
+## Known Issues
+- TypeScript build has ~846 suppressed errors (legacy codebase). Build succeeds with `skipLibCheck`.
+- E2E tests require strict environment synchronization (`.env.production` vs `.env.local`).
 
-## 🔒 Security Fixes (Pre-Launch)
-- **HOTFIX:** Removed hardcoded credentials from source control (`vercel.json`).
-- **Sanitization:** Cleared build artifacts and deep type instantiation errors.
-
-## 📋 Instructions for Go-Live
-1. **Database:** Ensure `DATABASE_URL` is set in GitHub Secrets for backups.
-2. **Environment:** Verify all `.env.production` variables in Vercel.
-3. **Admin:** Log in with the initial admin account to invite users.
-
----
-
-*Built with ❤️ by the Deepmind Advanced Agentic Coding Team.*
+## Rollback
+- Disable hardening features via env vars if instability occurs.
+- See `ROLLBACK_CHECKLIST.md` for details.

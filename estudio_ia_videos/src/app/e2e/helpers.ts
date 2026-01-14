@@ -26,36 +26,40 @@ export async function loginAsAdmin(page: Page) {
   await page.evaluate(() => {
     localStorage.setItem('hasSeenTour', 'true');
   });
-  
+
   // Preencher formulário
   await page.fill('input[name="email"]', TEST_USERS.admin.email);
   await page.fill('input[name="password"]', TEST_USERS.admin.password);
-  
+
   // Clicar em Entrar
   await page.click('button[type="submit"]');
-  
+
   // Aguardar redirecionamento para dashboard
   // Aumentar timeout pois o primeiro login pode ser lento (compilação)
   await page.waitForURL('**/dashboard', { timeout: 30000 });
-  
+
   // Verificar se carregou
   await page.waitForLoadState('networkidle');
   console.log(`✅ Logged in as: ${TEST_USERS.admin.email}`);
 }
 
 export async function loginWithCookie(page: Page) {
-  await page.context().addCookies([{
-    name: 'dev_bypass',
-    value: 'true',
-    domain: 'localhost',
-    path: '/'
-  }]);
-  
+  await page.context().addCookies([
+    {
+      name: 'dev_bypass',
+      value: 'true',
+      domain: 'localhost',
+      path: '/',
+    },
+  ]);
+
   // Prevent Welcome Tour
-  await page.route('** /api/user/tour', route => route.fulfill({ status: 200, body: JSON.stringify({ seen: true }) })); // Just in case
-  
+  await page.route('** /api/user/tour', (route) =>
+    route.fulfill({ status: 200, body: JSON.stringify({ seen: true }) }),
+  ); // Just in case
+
   await page.goto('/dashboard');
-  
+
   await page.evaluate(() => {
     localStorage.setItem('hasSeenTour', 'true');
   });
@@ -65,8 +69,10 @@ export async function loginWithCookie(page: Page) {
   const dashboardTitle = page.locator('text=Dashboard');
   const emptyStateTitle = page.locator('text=Bem-vindo ao seu Estúdio');
   const realDashboardTitle = page.locator('h1:has-text("Estúdio IA de Vídeos")');
-  
-  await expect(dashboardTitle.or(emptyStateTitle).or(realDashboardTitle).first()).toBeVisible({ timeout: 15000 });
+
+  await expect(dashboardTitle.or(emptyStateTitle).or(realDashboardTitle).first()).toBeVisible({
+    timeout: 15000,
+  });
 }
 
 export async function mockSupabaseAuth(page: Page) {
@@ -89,20 +95,20 @@ export async function mockSupabaseAuth(page: Page) {
       }),
     });
   });
-  
+
   // Mock sessão se necessário
   await page.route('**/auth/v1/session', async (route) => {
-     await route.fulfill({
+    await route.fulfill({
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({
-         access_token: 'mock-token',
-         token_type: 'bearer',
-         expires_in: 3600,
-         refresh_token: 'mock-refresh',
-         user: { id: 'test-user-id' }
-      })
-     });
+        access_token: 'mock-token',
+        token_type: 'bearer',
+        expires_in: 3600,
+        refresh_token: 'mock-refresh',
+        user: { id: 'test-user-id' },
+      }),
+    });
   });
 
   // Mock login (token grant)
@@ -115,12 +121,12 @@ export async function mockSupabaseAuth(page: Page) {
         token_type: 'bearer',
         expires_in: 3600,
         refresh_token: 'mock-refresh',
-        user: { 
+        user: {
           id: 'test-user-id',
           email: 'test@example.com',
-          role: 'authenticated'
-        }
-      })
+          role: 'authenticated',
+        },
+      }),
     });
   });
 }
@@ -133,13 +139,13 @@ export async function mockSupabaseProjectCreation(page: Page) {
         status: 201,
         contentType: 'application/json',
         body: JSON.stringify({
-           id: 'project-123-mock',
-           name: 'Mock Project',
-           type: 'pptx',
-           user_id: 'test-user-id',
-           status: 'draft',
-           created_at: new Date().toISOString()
-        })
+          id: 'project-123-mock',
+          name: 'Mock Project',
+          type: 'pptx',
+          user_id: 'test-user-id',
+          status: 'draft',
+          created_at: new Date().toISOString(),
+        }),
       });
     } else {
       await route.continue();
@@ -156,16 +162,20 @@ export async function mockSupabaseStorage(page: Page) {
         contentType: 'application/json',
         body: JSON.stringify({
           Key: 'uploads/mock-file.pptx',
-          Id: 'mock-file-id'
-        })
+          Id: 'mock-file-id',
+        }),
       });
     } else {
-       await route.continue();
+      await route.continue();
     }
   });
 }
 
-export async function login(page: Page, email: string = 'test@example.com', password: string = 'Test@12345') {
+export async function login(
+  page: Page,
+  email: string = 'test@example.com',
+  password: string = 'Test@12345',
+) {
   await page.goto('/login');
   await page.fill('input[type="email"]', email);
   await page.fill('input[type="password"]', password);
@@ -197,7 +207,11 @@ export async function navigateTo(page: Page, route: string) {
   await page.waitForLoadState('networkidle');
 }
 
-export async function waitForNavigation(page: Page, urlPattern: string | RegExp, timeout: number = 10000) {
+export async function waitForNavigation(
+  page: Page,
+  urlPattern: string | RegExp,
+  timeout: number = 10000,
+) {
   await page.waitForURL(urlPattern, { timeout });
 }
 
@@ -209,11 +223,11 @@ export async function uploadFile(page: Page, filePath: string) {
   await page.goto('/dashboard/upload');
   const fileInput = page.locator('input[type="file"]');
   await fileInput.setInputFiles(filePath);
-  
+
   // Aguardar upload
   await expect(page.locator('text=Upload em progresso')).toBeVisible();
   await expect(page.locator('text=Upload concluído')).toBeVisible({ timeout: 30000 });
-  
+
   // Retornar URL do projeto
   await page.waitForURL('**/dashboard/projects/*', { timeout: 10000 });
   return page.url();
@@ -230,7 +244,7 @@ export function getProjectIdFromUrl(url: string): string {
 
 export async function selectVoice(page: Page, voiceName?: string) {
   await page.click('button:has-text("Selecione uma voz")');
-  
+
   if (voiceName) {
     await page.click(`text=${voiceName} >> [role="option"]`);
   } else {
@@ -241,7 +255,7 @@ export async function selectVoice(page: Page, voiceName?: string) {
 export async function generateTTSForSlide(page: Page, slideNumber: number) {
   await page.click(`[data-testid="slide-${slideNumber}"]`);
   await page.click('button:has-text("Gerar Áudio")');
-  
+
   await expect(page.locator('text=Áudio gerado com sucesso')).toBeVisible({
     timeout: 30000,
   });
@@ -250,7 +264,7 @@ export async function generateTTSForSlide(page: Page, slideNumber: number) {
 export async function generateTTSForAllSlides(page: Page) {
   await page.click('button:has-text("Gerar para Todos os Slides")');
   await page.click('button:has-text("Confirmar")');
-  
+
   await expect(page.locator('text=Todos os áudios gerados')).toBeVisible({
     timeout: 120000,
   });
@@ -258,7 +272,9 @@ export async function generateTTSForAllSlides(page: Page) {
 
 export async function hasAudioForSlide(page: Page, slideNumber: number): Promise<boolean> {
   try {
-    await expect(page.locator(`audio[data-slide="${slideNumber}"]`)).toBeAttached({ timeout: 2000 });
+    await expect(page.locator(`audio[data-slide="${slideNumber}"]`)).toBeAttached({
+      timeout: 2000,
+    });
     return true;
   } catch {
     return false;
@@ -277,18 +293,18 @@ export async function configureRender(
     format?: 'mp4' | 'webm';
     transitions?: boolean;
     watermark?: boolean;
-  } = {}
+  } = {},
 ) {
   await page.click('button:has-text("Renderizar Vídeo")');
-  
+
   // Aguardar painel abrir
   await expect(page.locator('h2:has-text("Configuração de Vídeo")')).toBeVisible();
-  
+
   // Configurar resolução
   if (options.resolution) {
     await page.click(`label:has-text("${options.resolution}")`);
   }
-  
+
   // Configurar qualidade
   if (options.quality) {
     const qualityLabels = {
@@ -298,27 +314,27 @@ export async function configureRender(
     };
     await page.click(`label:has-text("${qualityLabels[options.quality]}")`);
   }
-  
+
   // Configurar formato
   if (options.format) {
     await page.click(`label:has-text("${options.format.toUpperCase()}")`);
   }
-  
+
   // Configurar transições
   if (options.transitions !== undefined) {
     const checkbox = page.locator('input[type="checkbox"][name="transitions"]');
     const isChecked = await checkbox.isChecked();
-    
+
     if ((options.transitions && !isChecked) || (!options.transitions && isChecked)) {
       await checkbox.click();
     }
   }
-  
+
   // Configurar watermark
   if (options.watermark !== undefined) {
     const checkbox = page.locator('input[type="checkbox"][name="watermark"]');
     const isChecked = await checkbox.isChecked();
-    
+
     if ((options.watermark && !isChecked) || (!options.watermark && isChecked)) {
       await checkbox.click();
     }
@@ -327,7 +343,7 @@ export async function configureRender(
 
 export async function startRender(page: Page) {
   await page.click('button:has-text("Iniciar Renderização")');
-  
+
   await expect(page.locator('text=Renderização iniciada')).toBeVisible();
   await expect(page.locator('h2:has-text("Renderizando Vídeo")')).toBeVisible({
     timeout: 5000,
@@ -341,7 +357,7 @@ export async function waitForRenderCompletion(page: Page, timeout: number = 3000
 export async function cancelRender(page: Page) {
   await page.click('button:has-text("Cancelar Renderização")');
   await page.click('button:has-text("Sim, Cancelar")');
-  
+
   await expect(page.locator('text=Renderização cancelada')).toBeVisible({
     timeout: 5000,
   });
@@ -408,7 +424,7 @@ export async function mockApiResponse(
   page: Page,
   endpoint: string,
   response: Record<string, unknown>,
-  status: number = 200
+  status: number = 200,
 ) {
   await page.route(`**${endpoint}`, (route) => {
     route.fulfill({
@@ -480,13 +496,16 @@ export async function hoverElement(page: Page, selector: string) {
 
 export async function getMetricValue(page: Page, metricName: string): Promise<string> {
   await page.goto('/dashboard/metrics');
-  const element = page.locator(`text=${metricName}`).locator('..').locator('[data-testid="metric-value"]');
-  return await element.textContent() || '0';
+  const element = page
+    .locator(`text=${metricName}`)
+    .locator('..')
+    .locator('[data-testid="metric-value"]');
+  return (await element.textContent()) || '0';
 }
 
 export async function verifyAnalytics(page: Page, expectedMetrics: Record<string, number>) {
   await page.goto('/dashboard/metrics');
-  
+
   for (const [metric, expectedValue] of Object.entries(expectedMetrics)) {
     const value = await getMetricValue(page, metric);
     const numericValue = parseInt(value.replace(/[^0-9]/g, ''));
@@ -508,16 +527,16 @@ export async function deleteProject(page: Page, projectId: string) {
   await page.click('button[aria-label="Menu do projeto"]');
   await page.click('text=Excluir Projeto');
   await page.click('button:has-text("Confirmar Exclusão")');
-  
+
   await expect(page.locator('text=Projeto excluído')).toBeVisible();
 }
 
 export async function getProjectList(page: Page): Promise<string[]> {
   await page.goto('/dashboard/projects');
-  
+
   const projectElements = page.locator('[data-testid^="project-"]');
   const count = await projectElements.count();
-  
+
   const projectIds: string[] = [];
   for (let i = 0; i < count; i++) {
     const id = await projectElements.nth(i).getAttribute('data-testid');
@@ -525,6 +544,6 @@ export async function getProjectList(page: Page): Promise<string[]> {
       projectIds.push(id.replace('project-', ''));
     }
   }
-  
+
   return projectIds;
 }

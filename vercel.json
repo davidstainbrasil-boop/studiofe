@@ -3,6 +3,36 @@
   "buildCommand": "cd estudio_ia_videos && npm run build",
   "devCommand": "cd estudio_ia_videos && npm run dev",
   "installCommand": "cd estudio_ia_videos && npm install",
-  "framework": null,
-  "outputDirectory": "estudio_ia_videos/.next"
+  "framework": "nextjs",
+  "outputDirectory": "estudio_ia_videos/.next",
+  "functions": {
+    "estudio_ia_videos/src/app/api/**/*.ts": {
+      "memory": 1024,
+      "maxDuration": 300
+    }
+  },
+  "headers": [
+    {
+      "source": "/_next/static/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        },
+        {
+          "key": "Content-Type",
+          "value": "application/javascript; charset=utf-8"
+        }
+      ]
+    },
+    {
+      "source": "/_next/static/chunks/(.*).js",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/javascript; charset=utf-8"
+        }
+      ]
+    }
+  ]
 }

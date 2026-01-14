@@ -19,6 +19,9 @@ export interface PptxUploadResult {
   fileType: string;
 }
 
+import * as fs from 'fs/promises';
+import * as path from 'path';
+
 export class PptxUploader {
   private supabase: SupabaseClient<Database>;
 
@@ -45,12 +48,24 @@ export class PptxUploader {
     const storagePath = `pptx/${userId}/${projectId}/${timestamp}-${file.name}`;
 
     // 3. Fazer upload
-    // [DEV] Mock upload if configured (DEV ONLY)
-    if (process.env.MOCK_STORAGE === 'true' && process.env.NODE_ENV === 'development') {
-      logger.info('MOCK STORAGE: Upload simulado (DEV ONLY)', { storagePath });
-      await new Promise(resolve => setTimeout(resolve, 500)); // Simula latência
+    // Use local storage if configured OR if in mock/dev mode
+    const useLocalStorage = process.env.STORAGE_TYPE === 'local' || 
+                           (process.env.MOCK_STORAGE === 'true' && process.env.NODE_ENV === 'development');
+
+    if (useLocalStorage) {
+      const isMock = process.env.MOCK_STORAGE === 'true';
+      logger.info(isMock ? 'MOCK STORAGE: Upload simulado' : 'LOCAL STORAGE: Saving PPTX locally', { storagePath });
+      
+      // Persist file locally to support subsequent pipeline steps
+      const fileName = `${projectId}_${timestamp}_${file.name}`;
+      const targetPath = path.join(process.cwd(), 'public', 'uploads', 'pptx', fileName);
+      
+      await fs.mkdir(path.dirname(targetPath), { recursive: true });
+      const buffer = Buffer.from(await file.arrayBuffer());
+      await fs.writeFile(targetPath, buffer);
+      
       return {
-        storagePath: storagePath,
+        storagePath: storagePath, // Keep logical path for DB consistency
         fileName: file.name,
         fileSize: file.size,
         fileType: file.type,

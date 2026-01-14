@@ -1,6 +1,6 @@
 /**
  * E2E Test Helpers for PPTX-to-Video Pipeline
- * 
+ *
  * Utilities for uploading PPTX, polling render jobs, validating database records,
  * and detecting placeholder/mock responses.
  */
@@ -27,7 +27,7 @@ const PLACEHOLDER_PATTERNS = [
  */
 export function isPlaceholderPath(value: string | null | undefined): boolean {
   if (!value) return true; // null/undefined is suspicious
-  return PLACEHOLDER_PATTERNS.some(pattern => pattern.test(value));
+  return PLACEHOLDER_PATTERNS.some((pattern) => pattern.test(value));
 }
 
 /**
@@ -36,7 +36,7 @@ export function isPlaceholderPath(value: string | null | undefined): boolean {
 export async function uploadPPTX(
   request: APIRequestContext,
   filePath: string,
-  fileName: string = 'test-presentation.pptx'
+  fileName: string = 'test-presentation.pptx',
 ): Promise<{
   success: boolean;
   processingId: string;
@@ -45,11 +45,11 @@ export async function uploadPPTX(
 }> {
   const fs = await import('fs');
   const path = await import('path');
-  
+
   const fileBuffer = fs.readFileSync(filePath);
   const formData = new FormData();
-  const blob = new Blob([fileBuffer], { 
-    type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' 
+  const blob = new Blob([fileBuffer], {
+    type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
   });
   formData.append('file', blob, fileName);
 
@@ -65,7 +65,7 @@ export async function uploadPPTX(
 
   expect(response.status()).toBe(200);
   const data = await response.json();
-  
+
   expect(data.success).toBe(true);
   expect(data.data?.processingId).toBeTruthy();
   expect(isPlaceholderPath(data.data?.processingId)).toBe(false);
@@ -85,7 +85,7 @@ export async function pollRenderJob(
   request: APIRequestContext,
   jobId: string,
   maxWaitMs: number = 180000, // 3 minutes
-  initialIntervalMs: number = 5000
+  initialIntervalMs: number = 5000,
 ): Promise<{
   status: string;
   outputUrl: string | null;
@@ -98,15 +98,15 @@ export async function pollRenderJob(
 
   while (Date.now() - startTime < maxWaitMs) {
     attempts++;
-    
+
     const response = await request.get(`/api/render/jobs/${jobId}`);
     expect(response.status()).toBe(200);
-    
+
     const data = await response.json();
     const job = data.job || data.data;
-    
+
     console.log(`[Poll ${attempts}] Job ${jobId} status: ${job.status}`);
-    
+
     if (job.status === 'completed') {
       return {
         status: job.status,
@@ -115,7 +115,7 @@ export async function pollRenderJob(
         job,
       };
     }
-    
+
     if (job.status === 'failed') {
       return {
         status: job.status,
@@ -124,9 +124,9 @@ export async function pollRenderJob(
         job,
       };
     }
-    
+
     // Exponential backoff (max 20s interval)
-    await new Promise(resolve => setTimeout(resolve, intervalMs));
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
     intervalMs = Math.min(intervalMs * 1.5, 20000);
   }
 
@@ -139,22 +139,18 @@ export async function pollRenderJob(
 export async function validateDatabaseRecord(
   table: string,
   id: string,
-  expectedFields: Record<string, any>
+  expectedFields: Record<string, any>,
 ): Promise<any> {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
-  
-  const { data, error } = await supabase
-    .from(table)
-    .select('*')
-    .eq('id', id)
-    .single();
+
+  const { data, error } = await supabase.from(table).select('*').eq('id', id).single();
 
   if (error) {
     throw new Error(`Failed to fetch ${table} record ${id}: ${error.message}`);
   }
 
   expect(data, `Record should exist in ${table}`).toBeTruthy();
-  
+
   // Validate expected fields
   for (const [field, expectedValue] of Object.entries(expectedFields)) {
     if (expectedValue !== undefined) {
@@ -169,20 +165,18 @@ export async function validateDatabaseRecord(
  * Validate video file exists in Supabase Storage and has size > 0
  */
 export async function validateStorageFile(
-  outputUrl: string
+  outputUrl: string,
 ): Promise<{ exists: boolean; size: number; path: string }> {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
-  
+
   // Parse storage path from output URL
   // Expected format: https://<project>.supabase.co/storage/v1/object/public/videos/<path>
   const storagePath = parseStoragePath(outputUrl);
-  
+
   console.log(`Validating storage file: ${storagePath}`);
-  
+
   // Use HEAD request to check existence and get Content-Length
-  const { data, error } = await supabase.storage
-    .from('videos')
-    .download(storagePath);
+  const { data, error } = await supabase.storage.from('videos').download(storagePath);
 
   if (error) {
     console.error(`Storage validation failed: ${error.message}`);
@@ -191,7 +185,7 @@ export async function validateStorageFile(
 
   const size = data?.size || 0;
   console.log(`Storage file exists: ${storagePath}, size: ${size} bytes`);
-  
+
   return { exists: true, size, path: storagePath };
 }
 
@@ -205,13 +199,13 @@ function parseStoragePath(outputUrl: string): string {
     const match = outputUrl.match(/\/storage\/v1\/object\/public\/[^/]+\/(.+)$/);
     return match ? match[1] : outputUrl;
   }
-  
+
   if (outputUrl.includes('/videos/')) {
     // Format: /videos/path/to/file.mp4
     const match = outputUrl.match(/\/videos\/(.+)$/);
     return match ? match[1] : outputUrl;
   }
-  
+
   // Assume it's already a path
   return outputUrl.replace(/^\//, '');
 }
@@ -222,10 +216,10 @@ function parseStoragePath(outputUrl: string): string {
 export async function cleanupTestData(
   uploadId?: string,
   jobId?: string,
-  projectId?: string
+  projectId?: string,
 ): Promise<void> {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
-  
+
   try {
     if (uploadId) {
       // Delete slides first (foreign key dependency)
@@ -233,12 +227,12 @@ export async function cleanupTestData(
       await supabase.from('pptx_uploads').delete().eq('id', uploadId);
       console.log(`Cleaned up PPTX upload: ${uploadId}`);
     }
-    
+
     if (jobId) {
       await supabase.from('render_jobs').delete().eq('id', jobId);
       console.log(`Cleaned up render job: ${jobId}`);
     }
-    
+
     if (projectId) {
       // Clean up project and related data
       await supabase.from('slides').delete().eq('projectId', projectId);
@@ -256,7 +250,7 @@ export async function cleanupTestData(
  */
 export async function getSlideCount(uploadId: string): Promise<number> {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
-  
+
   const { count, error } = await supabase
     .from('pptx_slides')
     .select('*', { count: 'exact', head: true })

@@ -221,45 +221,74 @@ async function generateTTSInternal(options: TTSOptions): Promise<TTSResult> {
 }
 
 /**
- * Synthesize text to audio file with retry and circuit breaker
+ * Synthesize text to audio file with retry, circuit breaker, timeout, and concurrency control
  */
 export const synthesizeToFile = async (options: TTSOptions): Promise<TTSResult> => {
-  // Wrap TTS generation with retry logic and circuit breaker
-  return retryTTS(
-    async () => {
-      return withCircuitBreaker(
-        'TTS_SERVICE',
-        async () => generateTTSInternal(options),
-        {
-          failureThreshold: 5,
-          successThreshold: 2,
-          timeout: 30000,
-          resetTimeout: 60000
-        },
-        // Fallback: Throw error if circuit is open (no fake URLs in production!)
-        async () => {
-          const error = new Error('TTS service unavailable - circuit breaker open');
-          logger.error('Circuit breaker open for TTS, no fallback available', error, {
-            text: options.text.substring(0, 50)
-          });
-          throw error;
-        }
-      );
-    },
-    {
-      maxAttempts: 3,
-      initialDelay: 2000,
-      maxDelay: 30000,
-      onRetry: (attempt, error, delay) => {
-        logger.warn('Retrying TTS generation', {
-          attempt,
-          error: error.message,
-          delay,
-          text: options.text.substring(0, 50)
-        });
-      }
-    }
+  const { withTimeout, PIPELINE_TIMEOUTS } = await import('../config/timeout-config');
+  const { withTTSConcurrency } = await import('../queue/concurrency-limiter');
+  const { withIdempotency, generateTTSIdempotencyKey } = await import('../middleware/idempotency-middleware');
+  
+  // Generate idempotency key for TTS operation
+  const projectId = options.metadata?.projectId as string || 'unknown';
+  const slideId = options.metadata?.slideId as string || randomUUID();
+  const idempotencyKey = generateTTSIdempotencyKey(
+    projectId,
+    slideId,
+    options.text,
+    options.voiceId || '',
+    options.speed || 1.0
   );
+  
+  // Apply concurrency control
+  return withTTSConcurrency(async () => {
+    // Apply idempotency
+    return withIdempotency(
+      idempotencyKey,
+      async () => {
+        // Apply timeout enforcement
+        return withTimeout(
+          // Wrap TTS generation with retry logic and circuit breaker
+          retryTTS(
+            async () => {
+              return withCircuitBreaker(
+                'TTS_SERVICE',
+                async () => generateTTSInternal(options),
+                {
+                  failureThreshold: 5,
+                  successThreshold: 2,
+                  timeout: 30000,
+                  resetTimeout: 60000
+                },
+                // Fallback: Throw error if circuit is open (no fake URLs in production!)
+                async () => {
+                  const error = new Error('TTS service unavailable - circuit breaker open');
+                  logger.error('Circuit breaker open for TTS, no fallback available', error, {
+                    text: options.text.substring(0, 50)
+                  });
+                  throw error;
+                }
+              );
+            },
+            {
+              maxAttempts: 3,
+              initialDelay: 2000,
+              maxDelay: 30000,
+              onRetry: (attempt, error, delay) => {
+                logger.warn('Retrying TTS generation', {
+                  attempt,
+                  error: error.message,
+                  delay,
+                  text: options.text.substring(0, 50)
+                });
+              }
+            }
+          ),
+          PIPELINE_TIMEOUTS.ttsPerSlide,
+          `TTS Generation for slide ${slideId}`
+        );
+      }
+    );
+  });
 };
 
 export const listVoices = async (): Promise<Array<{ id: string; name: string; language: string }>> => {

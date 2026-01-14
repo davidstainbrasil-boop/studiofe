@@ -1,6 +1,7 @@
 /**
  * Prisma Client Instance
  * Cliente Prisma singleton para acesso ao banco
+ * Optimized for serverless environments (Vercel)
  */
 
 import { PrismaClient } from '@prisma/client';
@@ -11,9 +12,19 @@ declare global {
   var prisma: PrismaClient | undefined;
 }
 
-export const prisma = global.prisma || new PrismaClient({
-  log: ['error', 'warn'], // Disabled query logs for cleaner output
-});
+// Serverless-optimized Prisma configuration
+const prismaClientSingleton = () => {
+  return new PrismaClient({
+    log: ['error', 'warn'],
+    datasources: {
+      db: {
+        url: process.env.DATABASE_URL,
+      },
+    },
+  });
+};
+
+export const prisma = global.prisma || prismaClientSingleton();
 
 // Apply cache invalidation middleware
 prisma.$use(cacheInvalidationMiddleware);
