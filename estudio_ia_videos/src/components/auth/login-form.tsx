@@ -136,14 +136,18 @@ export function LoginForm() {
         setError(null);
 
         try {
-            // [DEV] Bypass Real Auth
-            document.cookie = "dev_bypass=true; path=/";
+            // [HARDENED] Real Auth for Dev Credentials
+            const creds = DEV_CREDENTIALS[role];
 
-            // Wait a bit to simulate network
-            await new Promise(r => setTimeout(r, 500));
+            const { error: signInError } = await supabase.auth.signInWithPassword({
+                email: creds.email,
+                password: creds.password,
+            });
+
+            if (signInError) throw signInError;
 
             router.push(redirectUrl);
-            // router.refresh(); // Removing refresh to avoid race condition
+            router.refresh();
         } catch (err) {
             logger.error('Quick login error', err instanceof Error ? err : new Error(String(err)), { component: 'LoginForm', role });
             setError(`Falha no login ${role}.`);

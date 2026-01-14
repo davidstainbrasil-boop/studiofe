@@ -5,23 +5,22 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { DndProvider, useDrag, useDrop } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
 import { Button } from '@components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@components/ui/card'
-import { Input } from '@components/ui/input'
 import { Label } from '@components/ui/label'
+import { Input } from '@components/ui/input'
 import { Slider } from '@components/ui/slider'
 import { Badge } from '@components/ui/badge'
 import { Separator } from '@components/ui/separator'
-import { Progress } from '@components/ui/progress'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs'
+// import { Progress } from '@components/ui/progress' // Removed
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs' // Keeping Tabs for potential future use or remove if unused? It seems unused in the view.
 import { ScrollArea } from '@components/ui/scroll-area'
 import { Switch } from '@components/ui/switch'
-import { 
-  Play, 
-  Pause, 
-  Square, 
-  SkipBack, 
-  SkipForward, 
-  Volume2, 
+import {
+  Play,
+  Pause,
+  Square,
+  SkipBack,
+  SkipForward,
+  Volume2,
   VolumeX,
   Scissors,
   Copy,
@@ -60,6 +59,7 @@ import {
 import { cn } from '@lib/utils'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
+import { FlexibleElement } from '../editor/properties-panel'
 
 // Types
 interface TimelineTrack {
@@ -131,6 +131,12 @@ interface HistoryState {
   state: Partial<TimelineState>
 }
 
+// Phase 4: Selection Sync Interface
+interface ProfessionalTimelineEditorProps {
+  onSelectionChange?: (element: FlexibleElement | null) => void
+  selectedElement?: FlexibleElement | null
+}
+
 const previewQualityOptions: TimelineState['previewQuality'][] = ['low', 'medium', 'high']
 
 const isPreviewQuality = (value: string): value is TimelineState['previewQuality'] =>
@@ -184,29 +190,29 @@ const DraggableTimelineItem: React.FC<{
   const handleResizeStart = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
     setIsResizing(true)
-    
+
     const startX = e.clientX
     const startDuration = item.duration
-    
+
     const handleMouseMove = (e: MouseEvent) => {
       const deltaX = e.clientX - startX
       const deltaTime = deltaX / (PIXELS_PER_SECOND * zoom)
       let newDuration = startDuration + deltaTime
-      
+
       if (snapToGrid) {
         newDuration = Math.round(newDuration / gridSize) * gridSize
       }
-      
+
       newDuration = Math.max(0.1, newDuration)
       onResize(track.id, item.id, newDuration)
     }
-    
+
     const handleMouseUp = () => {
       setIsResizing(false)
       document.removeEventListener('mousemove', handleMouseMove)
       document.removeEventListener('mouseup', handleMouseUp)
     }
-    
+
     document.addEventListener('mousemove', handleMouseMove)
     document.addEventListener('mouseup', handleMouseUp)
   }, [item.duration, item.id, track.id, zoom, onResize, snapToGrid, gridSize])
@@ -245,7 +251,7 @@ const DraggableTimelineItem: React.FC<{
             <Sparkles className="w-3 h-3 text-yellow-400" />
           )}
         </div>
-        
+
         <div className="flex items-center justify-between">
           <div className="text-xs text-gray-200">
             {formatTime(item.duration)}
@@ -355,7 +361,10 @@ const DroppableTrack: React.FC<{
   )
 }
 
-export default function ProfessionalTimelineEditor() {
+export default function ProfessionalTimelineEditor({
+  onSelectionChange,
+  selectedElement
+}: ProfessionalTimelineEditorProps = {}) {
   const [timelineState, setTimelineState] = useState<TimelineState>({
     currentTime: 0,
     duration: 300,
@@ -375,10 +384,10 @@ export default function ProfessionalTimelineEditor() {
         locked: false,
         height: TRACK_HEIGHT,
         items: [
-          { 
-            id: 'v1', 
-            start: 0, 
-            duration: 120, 
+          {
+            id: 'v1',
+            start: 0,
+            duration: 120,
             content: 'Intro.mp4',
             keyframes: [
               { id: 'kf1', time: 0, properties: { opacity: 0 }, easing: 'ease-in' },
@@ -436,10 +445,10 @@ export default function ProfessionalTimelineEditor() {
         locked: false,
         height: TRACK_HEIGHT,
         items: [
-          { 
-            id: 'e1', 
-            start: 120, 
-            duration: 3, 
+          {
+            id: 'e1',
+            start: 120,
+            duration: 3,
             content: 'Fade In',
             effects: [
               { id: 'fx1', type: 'fade', parameters: { direction: 'in' }, enabled: true }
@@ -528,8 +537,8 @@ export default function ProfessionalTimelineEditor() {
   }, [timelineState.playing])
 
   const setCurrentTime = useCallback((time: number) => {
-    setTimelineState(prev => ({ 
-      ...prev, 
+    setTimelineState(prev => ({
+      ...prev,
       currentTime: Math.max(0, Math.min(time, prev.duration))
     }))
   }, [])
@@ -548,7 +557,7 @@ export default function ProfessionalTimelineEditor() {
   const toggleTrackVisibility = useCallback((trackId: string) => {
     setTimelineState(prev => ({
       ...prev,
-      tracks: prev.tracks.map(track => 
+      tracks: prev.tracks.map(track =>
         track.id === trackId ? { ...track, visible: !track.visible } : track
       )
     }))
@@ -558,7 +567,7 @@ export default function ProfessionalTimelineEditor() {
   const toggleTrackLock = useCallback((trackId: string) => {
     setTimelineState(prev => ({
       ...prev,
-      tracks: prev.tracks.map(track => 
+      tracks: prev.tracks.map(track =>
         track.id === trackId ? { ...track, locked: !track.locked } : track
       )
     }))
@@ -568,7 +577,7 @@ export default function ProfessionalTimelineEditor() {
   const updateTrackVolume = useCallback((trackId: string, volume: number) => {
     setTimelineState(prev => ({
       ...prev,
-      tracks: prev.tracks.map(track => 
+      tracks: prev.tracks.map(track =>
         track.id === trackId ? { ...track, volume } : track
       )
     }))
@@ -576,20 +585,104 @@ export default function ProfessionalTimelineEditor() {
 
   // Item management
   const selectItem = useCallback((itemId: string, multiSelect = false) => {
-    setTimelineState(prev => ({
-      ...prev,
-      selectedItems: multiSelect 
-        ? prev.selectedItems.includes(itemId)
-          ? prev.selectedItems.filter(id => id !== itemId)
-          : [...prev.selectedItems, itemId]
-        : [itemId]
-    }))
-  }, [])
+    setTimelineState(prev => {
+      // Find the item to get its details for sync
+      let selectedItem: TimelineItem | undefined
+      for (const track of prev.tracks) {
+        const found = track.items.find(i => i.id === itemId)
+        if (found) {
+          selectedItem = found
+          break
+        }
+      }
+
+      const newState = {
+        ...prev,
+        selectedItems: multiSelect
+          ? prev.selectedItems.includes(itemId)
+            ? prev.selectedItems.filter(id => id !== itemId)
+            : [...prev.selectedItems, itemId]
+          : [itemId]
+      }
+
+      // Phase 4: Sync selection to parent (Properties Panel)
+      if (onSelectionChange && !multiSelect && selectedItem) {
+        // Map TimelineItem to FlexibleElement
+        // Find track to get type
+        const track = prev.tracks.find(t => t.items.some(i => i.id === itemId))
+
+        onSelectionChange({
+          id: selectedItem.id,
+          name: selectedItem.content,
+          type: track?.type || 'unknown',
+          // Map timeline properties to FlexibleElement properties
+          // Using start/duration as custom props or mapping to specific fields if needed
+          content: selectedItem.content,
+          metadata: {
+            start: selectedItem.start,
+            duration: selectedItem.duration,
+            trackId: track?.id,
+            trackName: track?.name
+          },
+          // Dummy values for visual props since timeline items are abstract
+          visible: true,
+          locked: selectedItem.locked || false,
+          style: {
+            backgroundColor: track?.color || '#3B82F6'
+          }
+        })
+      } else if (onSelectionChange && !multiSelect && !selectedItem) {
+        onSelectionChange(null)
+      }
+
+      return newState
+    })
+  }, [onSelectionChange])
+
+  // Phase 4: Sync from Parent (Properties Panel -> Timeline)
+  // Listen for external selection changes
+  useEffect(() => {
+    if (selectedElement?.id) {
+      // Check if this element exists in our timeline
+      // This is a simple check. In a real integration, we might need shared IDs.
+      setTimelineState(prev => {
+        const exists = prev.tracks.some(t => t.items.some(i => i.id === selectedElement.id))
+        if (exists && !prev.selectedItems.includes(selectedElement.id)) {
+          return {
+            ...prev,
+            selectedItems: [selectedElement.id]
+          }
+        }
+        return prev
+      })
+
+      // Handle property updates from panel (e.g. name update)
+      if (selectedElement.name) {
+        setTimelineState(prev => ({
+          ...prev,
+          tracks: prev.tracks.map(t => ({
+            ...t,
+            items: t.items.map(i =>
+              i.id === selectedElement.id && i.content !== selectedElement.name
+                ? { ...i, content: selectedElement.name } // Map name back to content
+                : i
+            )
+          }))
+        }))
+      }
+    } else if (selectedElement === null) {
+      // Deselect if parent says so
+      setTimelineState(prev => {
+        if (prev.selectedItems.length > 0) return { ...prev, selectedItems: [] }
+        return prev
+      })
+    }
+  }, [selectedElement])
 
   const moveItem = useCallback((trackId: string, itemId: string, newStart: number) => {
     setTimelineState(prev => ({
       ...prev,
-      tracks: prev.tracks.map(track => 
+      tracks: prev.tracks.map(track =>
         track.id === trackId ? {
           ...track,
           items: track.items.map(item =>
@@ -604,7 +697,7 @@ export default function ProfessionalTimelineEditor() {
   const resizeItem = useCallback((trackId: string, itemId: string, newDuration: number) => {
     setTimelineState(prev => ({
       ...prev,
-      tracks: prev.tracks.map(track => 
+      tracks: prev.tracks.map(track =>
         track.id === trackId ? {
           ...track,
           items: track.items.map(item =>
@@ -697,7 +790,7 @@ export default function ProfessionalTimelineEditor() {
     a.download = `timeline-professional-${format(new Date(), 'yyyy-MM-dd-HH-mm-ss')}.json`
     a.click()
     URL.revokeObjectURL(url)
-    
+
     toast.success('Timeline exportada com sucesso!')
   }, [timelineState])
 
@@ -787,9 +880,9 @@ export default function ProfessionalTimelineEditor() {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="flex flex-col h-screen bg-gray-900 text-white">
+      <div className="flex flex-col h-full bg-[#151921] text-white">
         {/* Enhanced Toolbar */}
-        <div className="flex items-center justify-between p-4 bg-gray-800 border-b border-gray-700">
+        <div className="flex items-center justify-between p-2 bg-[#151921] border-b border-white/5">
           <div className="flex items-center gap-4">
             <h1 className="text-xl font-bold">Timeline Professional</h1>
             <Badge variant="secondary" className="bg-blue-600">v5.0 - FASE 5</Badge>
@@ -809,7 +902,7 @@ export default function ProfessionalTimelineEditor() {
             >
               <SkipBack className="w-4 h-4" />
             </Button>
-            
+
             <Button
               variant="ghost"
               size="icon"
@@ -818,7 +911,7 @@ export default function ProfessionalTimelineEditor() {
             >
               <Rewind className="w-4 h-4" />
             </Button>
-            
+
             <Button
               variant="ghost"
               size="icon"
@@ -827,7 +920,7 @@ export default function ProfessionalTimelineEditor() {
             >
               {timelineState.playing ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
             </Button>
-            
+
             <Button
               variant="ghost"
               size="icon"
@@ -870,7 +963,7 @@ export default function ProfessionalTimelineEditor() {
             <div className="text-sm font-mono bg-gray-700 px-3 py-1 rounded">
               {formatTime(timelineState.currentTime)} / {formatTime(timelineState.duration)}
             </div>
-            
+
             {/* Zoom Controls */}
             <div className="flex items-center gap-2">
               <Button
@@ -881,7 +974,7 @@ export default function ProfessionalTimelineEditor() {
               >
                 <ZoomOut className="w-4 h-4" />
               </Button>
-              
+
               <Slider
                 min={MIN_ZOOM}
                 max={MAX_ZOOM}
@@ -890,7 +983,7 @@ export default function ProfessionalTimelineEditor() {
                 onValueChange={([zoom]) => setZoom(zoom)}
                 className="w-20"
               />
-              
+
               <Button
                 variant="ghost"
                 size="icon"
@@ -899,7 +992,7 @@ export default function ProfessionalTimelineEditor() {
               >
                 <ZoomIn className="w-4 h-4" />
               </Button>
-              
+
               <span className="text-xs text-gray-400 min-w-[40px]">
                 {Math.round(timelineState.zoom * 100)}%
               </span>
@@ -918,7 +1011,7 @@ export default function ProfessionalTimelineEditor() {
               >
                 <RotateCcw className="w-4 h-4" />
               </Button>
-              
+
               <Button
                 variant="ghost"
                 size="icon"
@@ -955,18 +1048,18 @@ export default function ProfessionalTimelineEditor() {
             <div className="flex items-center gap-2">
               <Switch
                 checked={timelineState.snapToGrid}
-                onCheckedChange={(checked) => 
+                onCheckedChange={(checked) =>
                   setTimelineState(prev => ({ ...prev, snapToGrid: checked }))
                 }
               />
               <Label className="text-xs">Snap to Grid</Label>
             </div>
-            
+
             <div className="flex items-center gap-2">
               <Label className="text-xs">Grid</Label>
               <select
                 value={timelineState.gridSize}
-                onChange={(e) => 
+                onChange={(e) =>
                   setTimelineState(prev => ({ ...prev, gridSize: Number(e.target.value) }))
                 }
                 className="bg-gray-700 text-white text-xs rounded px-2 py-1"
@@ -982,7 +1075,7 @@ export default function ProfessionalTimelineEditor() {
               <Label className="text-xs">Preview</Label>
               <select
                 value={timelineState.previewQuality}
-                onChange={(e) => 
+                onChange={(e) =>
                   setTimelineState(prev => (
                     isPreviewQuality(e.target.value)
                       ? { ...prev, previewQuality: e.target.value }
@@ -1003,7 +1096,7 @@ export default function ProfessionalTimelineEditor() {
               <Target className="w-3 h-3 mr-1" />
               {timelineState.selectedItems.length} selecionados
             </Badge>
-            
+
             <Badge variant="outline" className="text-green-400 border-green-400">
               <Layers className="w-3 h-3 mr-1" />
               {timelineState.tracks.length} tracks
@@ -1022,7 +1115,7 @@ export default function ProfessionalTimelineEditor() {
                   Add Track
                 </Button>
               </div>
-              
+
               <div className="flex gap-2">
                 <Button size="sm" variant="outline" onClick={duplicateSelectedItems}>
                   <Copy className="w-4 h-4 mr-1" />
@@ -1038,14 +1131,14 @@ export default function ProfessionalTimelineEditor() {
             <ScrollArea className="flex-1">
               <div className="p-2">
                 {timelineState.tracks.map((track, index) => (
-                  <Card key={track.id} className="mb-2 bg-gray-700 border-gray-600">
-                    <CardContent className="p-3">
+                  <div key={track.id} className="mb-1 bg-white/5 border border-white/5 rounded-md">
+                    <div className="p-2">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
                           {getTrackIcon(track.type)}
                           <span className="text-sm font-medium">{track.name}</span>
                         </div>
-                        
+
                         <div className="flex items-center gap-1">
                           <Button
                             variant="ghost"
@@ -1055,7 +1148,7 @@ export default function ProfessionalTimelineEditor() {
                           >
                             {track.visible ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
                           </Button>
-                          
+
                           <Button
                             variant="ghost"
                             size="icon"
@@ -1067,13 +1160,13 @@ export default function ProfessionalTimelineEditor() {
                         </div>
                       </div>
 
-                      <div 
+                      <div
                         className="w-full h-2 rounded mb-2"
                         style={{ backgroundColor: track.color + '40' }}
                       >
-                        <div 
+                        <div
                           className="h-full rounded transition-all duration-300"
-                          style={{ 
+                          style={{
                             backgroundColor: track.color,
                             width: `${(track.items.reduce((acc, item) => acc + item.duration, 0) / timelineState.duration) * 100}%`
                           }}
@@ -1099,8 +1192,8 @@ export default function ProfessionalTimelineEditor() {
                           </span>
                         </div>
                       )}
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
                 ))}
               </div>
             </ScrollArea>
@@ -1138,10 +1231,10 @@ export default function ProfessionalTimelineEditor() {
 
             {/* Timeline Tracks */}
             <ScrollArea className="flex-1">
-              <div 
+              <div
                 ref={timelineRef}
                 className="relative bg-gray-900"
-                style={{ 
+                style={{
                   width: `${timelineState.duration * PIXELS_PER_SECOND * timelineState.zoom}px`,
                   minHeight: `${timelineState.tracks.length * TRACK_HEIGHT}px`
                 }}
@@ -1185,7 +1278,7 @@ export default function ProfessionalTimelineEditor() {
             <span>FPS: {timelineState.renderSettings.fps}</span>
             <span>Resolução: {timelineState.renderSettings.resolution}</span>
           </div>
-          
+
           <div className="flex items-center gap-6">
             <span>Zoom: {Math.round(timelineState.zoom * 100)}%</span>
             <span>Grid: {timelineState.gridSize}s</span>

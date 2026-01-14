@@ -56,14 +56,10 @@ test.describe('Authentication Flow', () => {
   test('should login successfully with valid credentials', async ({ page }) => {
     await page.goto('/login');
     
-    // Simular Login Rápido (Dev Mode) injetando o cookie diretamente
-    // Isso garante robustez no teste E2E, independente da visibilidade do botão
-    await page.context().addCookies([{
-      name: 'dev_bypass',
-      value: 'true',
-      domain: 'localhost',
-      path: '/'
-    }]);
+    // Real Login via UI
+    await page.fill('input[type="email"]', TEST_USER.email);
+    await page.fill('input[type="password"]', TEST_USER.password);
+    await page.click('button[type="submit"]');
 
     // Navegar para dashboard explicitamente (Middleware deve permitir)
     await page.goto('/dashboard');

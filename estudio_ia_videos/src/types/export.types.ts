@@ -4,7 +4,7 @@
  */
 
 import type { SubtitleStyle } from './subtitle.types'
-import type { WatermarkConfig } from './watermark.types'
+import type { WatermarkSettings as WatermarkConfig } from './watermark.types'
 import type { VideoFilterConfig } from '@lib/export/video-filters-types'
 import type { AudioEnhancementConfig } from '@lib/export/audio-processor'
 

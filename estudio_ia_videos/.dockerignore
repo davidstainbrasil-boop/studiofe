@@ -1,8 +1,40 @@
-node_modules
-.next
-.git
-.env
+# Development
+node_modules/
+.next/
+.vercel/
 .env.local
-logs
-tmp
-coverage
+.env.production
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Production
+build/
+dist/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Testing
+coverage/
+.jest/
+
+# Temp
+.tmp/
+tmp/
+
+# Uploads
+uploads/
+public/thumbnails/

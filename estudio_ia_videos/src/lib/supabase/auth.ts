@@ -133,7 +133,7 @@ export async function updateUserProfile(
     .from('users')
     .update({
       ...updates,
-      updatedAt: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     })
     .eq('id', userId)
     .select()
@@ -148,7 +148,7 @@ export async function updateUserProfile(
         .from('users')
         .update({
           ...rest,
-          updatedAt: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         })
         .eq('id', userId)
         .select()
@@ -176,8 +176,8 @@ export async function ensureUserProfile(userId: string, email: string) {
       id: userId,
       email,
       ...DEFAULT_PROFILE_VALUES,
-      createdAt: timestamp,
-      updatedAt: timestamp,
+      created_at: timestamp,
+      updated_at: timestamp,
     })
     .select()
     .single()
@@ -190,8 +190,8 @@ export async function ensureUserProfile(userId: string, email: string) {
         .insert({
           id: userId,
           email,
-          createdAt: timestamp,
-          updatedAt: timestamp,
+          created_at: timestamp,
+          updated_at: timestamp,
         })
         .select()
         .single()

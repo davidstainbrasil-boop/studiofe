@@ -11,12 +11,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // Mock data (replace with API later)
 const avatarModels = [
-    { id: '1', name: 'Ana Silva', type: 'Professional', gender: 'female', image: '/avatars/ana.jpg' },
-    { id: '2', name: 'Carlos Mendes', type: 'Corporate', gender: 'male', image: '/avatars/carlos.jpg' },
-    { id: '3', name: 'Julia Chen', type: 'Creative', gender: 'female', image: '/avatars/julia.jpg' },
-    { id: '4', name: 'Roberto Luz', type: 'Casual', gender: 'male', image: '/avatars/roberto.jpg' },
-    { id: '5', name: 'Sofia Costa', type: 'Medical', gender: 'female', image: '/avatars/sofia.jpg' },
-    { id: '6', name: 'Pedro Santos', type: 'Tech', gender: 'male', image: '/avatars/pedro.jpg' },
+    { id: '1', name: 'Ana Silva', type: 'Professional', gender: 'female', image: '/avatars/ana.svg' },
+    { id: '2', name: 'Carlos Mendes', type: 'Corporate', gender: 'male', image: '/avatars/carlos.svg' },
+    { id: '3', name: 'Julia Chen', type: 'Creative', gender: 'female', image: '/avatars/julia.svg' },
+    { id: '4', name: 'Roberto Luz', type: 'Casual', gender: 'male', image: '/avatars/roberto.svg' },
+    { id: '5', name: 'Sofia Costa', type: 'Medical', gender: 'female', image: '/avatars/sofia.svg' },
+    { id: '6', name: 'Pedro Santos', type: 'Tech', gender: 'male', image: '/avatars/pedro.svg' },
 ];
 
 interface Step3AvatarProps {
@@ -27,6 +27,7 @@ interface Step3AvatarProps {
 export function Step3Avatar({ onNext, initialValue }: Step3AvatarProps) {
     const [selectedId, setSelectedId] = useState(initialValue || '');
     const [category, setCategory] = useState('all');
+    const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
 
     const filteredAvatars = category === 'all'
         ? avatarModels
@@ -36,6 +37,10 @@ export function Step3Avatar({ onNext, initialValue }: Step3AvatarProps) {
         if (selectedId) {
             onNext({ avatarId: selectedId });
         }
+    };
+
+    const handleImageError = (id: string) => {
+        setImageErrors(prev => ({ ...prev, [id]: true }));
     };
 
     return (
@@ -72,10 +77,18 @@ export function Step3Avatar({ onNext, initialValue }: Step3AvatarProps) {
                                 onClick={() => setSelectedId(avatar.id)}
                             >
                                 <div className="aspect-[3/4] bg-slate-100 dark:bg-slate-800 relative overflow-hidden">
-                                    {/* Placeholder for real image */}
-                                    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-t from-slate-200 to-slate-100 dark:from-slate-800 dark:to-slate-700">
-                                        <User className="w-20 h-20 text-slate-300 dark:text-slate-600" />
-                                    </div>
+                                    {!imageErrors[avatar.id] ? (
+                                        <img 
+                                            src={avatar.image} 
+                                            alt={avatar.name}
+                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                            onError={() => handleImageError(avatar.id)}
+                                        />
+                                    ) : (
+                                        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-t from-slate-200 to-slate-100 dark:from-slate-800 dark:to-slate-700">
+                                            <User className="w-20 h-20 text-slate-300 dark:text-slate-600" />
+                                        </div>
+                                    )}
 
                                     {isSelected && (
                                         <div className="absolute inset-0 bg-violet-600/10 flex items-center justify-center animate-in fade-in">

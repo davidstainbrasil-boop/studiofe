@@ -1,4 +1,4 @@
-import { TimelineTrack, TimelineClip, TimelineState } from '@types/timeline';
+import { TimelineTrack, TimelineClip, TimelineState } from '@/types/timeline';
 
 export interface MagneticTimelineConfig {
   autoRipple: boolean;

@@ -4,28 +4,23 @@ import type { SlideInsert, SlideUpdate } from './types'
 import { logger } from '@lib/logger'
 
 type Slide = Database['public']['Tables']['slides']['Row']
-import { getSlidesByProject, mockSlides } from './mockStore'
+
 
 export async function listSlides(projectId: string): Promise<Slide[]> {
-  try {
-    const supabase = getServiceRoleClient()
-    const { data, error } = await supabase
-      .from('slides')
-      .select('*')
-      .eq("projectId", projectId)
-      .order('order_index', { ascending: true })
-      .returns<Slide[]>()
+  const supabase = getServiceRoleClient()
+  const { data, error } = await supabase
+    .from('slides')
+    .select('*')
+    .eq("projectId", projectId)
+    .order('order_index', { ascending: true })
+    .returns<Slide[]>()
 
-    if (error) {
-      logger.warn('Supabase slides error, using mock', { error: error.message, projectId, component: 'slides' })
-      return getSlidesByProject(projectId) as unknown as Slide[]
-    }
-
-    return data ?? []
-  } catch (err) {
-    logger.warn('Supabase not available, using mock slides', { projectId, component: 'slides' })
-    return getSlidesByProject(projectId) as unknown as Slide[]
+  if (error) {
+    logger.error('Supabase slides error', { error: error.message, projectId, component: 'slides' })
+    throw new Error(`Failed to list slides: ${error.message}`)
   }
+
+  return data ?? []
 }
 
 export async function upsertSlides(slides: SlideUpdate[]): Promise<void> {

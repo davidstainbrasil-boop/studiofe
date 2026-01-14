@@ -78,7 +78,7 @@ export class UnifiedWorkflowManager {
       data: {
         metadata: {
             ...currentMeta,
-            workflow: state
+            workflow: state as any
         },
         updatedAt: new Date()
       }
@@ -163,6 +163,10 @@ export class UnifiedWorkflowManager {
       logger.error('Workflow step failed', error instanceof Error ? error : new Error(String(error)), { projectId, step });
       throw error;
     }
+  }
+  
+  async updateWorkflowStep(projectId: string, step: WorkflowStep, status: UnifiedWorkflow['steps']['import']['status'], data?: StepData): Promise<void> {
+    return this.updateWorkflowStepInternal(projectId, step, status, data);
   }
 
   // -- Internal Logic --
@@ -273,7 +277,7 @@ export class UnifiedWorkflowManager {
   private async executeAvatar(projectId: string, data?: StepData): Promise<StepData> {
     // Real implementation: Validate avatar config exists in DB
     const slides = await prisma.slides.findMany({ where: { projectId } });
-    const hasAvatar = slides.some(s => s.avatar_config && Object.keys(s.avatar_config as object).length > 0);
+    const hasAvatar = slides.some(s => s.avatarConfig && Object.keys(s.avatarConfig as object).length > 0);
     
     // Check if we need to set default avatars
     if (!hasAvatar && data?.autoAssignAvatar) {
@@ -298,7 +302,7 @@ export class UnifiedWorkflowManager {
     const uploader = new VideoUploader();
 
     for (const slide of slides) {
-        const audioConfig = slide.audio_config as any;
+        const audioConfig = slide.audioConfig as any;
         // Generate if content exists AND (no audioUrl OR forceRegenerate)
         if (slide.content && (!audioConfig?.audioUrl || data?.forceRegenerate)) {
             
@@ -381,7 +385,7 @@ export class UnifiedWorkflowManager {
     // Real implementation: Check render job status
     const pendingJobs = await prisma.render_jobs.findMany({
         where: { projectId, status: 'completed' },
-        orderBy: { created_at: 'desc' },
+        orderBy: { createdAt: 'desc' },
         take: 1
     });
     
@@ -390,6 +394,8 @@ export class UnifiedWorkflowManager {
     }
     
     const job = pendingJobs[0];
-    return { success: true, message: 'Export ready', url: job.output_url };
+    return { success: true, message: 'Export ready', url: job.outputUrl };
   }
 }
+
+export const workflowManager = new UnifiedWorkflowManager();

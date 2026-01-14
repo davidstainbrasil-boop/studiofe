@@ -76,6 +76,7 @@ export class WebhookManager {
       
           const webhook = await prisma.webhooks.create({
         data: {
+          id: randomUUID(),
           userId: config.userId,
           url: config.url,
           secret,
@@ -119,10 +120,12 @@ export class WebhookManager {
       // Tentar recuperar do cache Redis primeiro (cache de 5 minutos)
       const cacheKey = `webhook:${webhookId}:avg_response_time`
       try {
-        const redis = getRedisClient()
-        const cached = await redis.get(cacheKey)
-        if (cached) {
-          return parseInt(cached, 10)
+        const redis = await getRedisClient()
+        if (redis) {
+          const cached = await redis.get(cacheKey)
+          if (cached) {
+            return parseInt(cached, 10)
+          }
         }
       } catch (redisError) {
         // Redis não disponível, continuar com cálculo do banco
@@ -160,8 +163,10 @@ export class WebhookManager {
 
       // Armazenar métrica no Redis para cache (5 minutos)
       try {
-        const redis = getRedisClient()
-        await redis.setex(cacheKey, 300, avgTime.toString())
+        const redis = await getRedisClient()
+        if (redis) {
+          await redis.setex(cacheKey, 300, avgTime.toString())
+        }
       } catch (redisError) {
         // Redis não disponível, continuar sem cache
         logger.info('Não foi possível cachear avgResponseTime no Redis', { webhookId })
@@ -173,11 +178,13 @@ export class WebhookManager {
       
       // Tentar recuperar do cache em caso de erro
       try {
-        const redis = getRedisClient()
-        const cacheKey = `webhook:${webhookId}:avg_response_time`
-        const cached = await redis.get(cacheKey)
-        if (cached) {
-          return parseInt(cached, 10)
+        const redis = await getRedisClient()
+        if (redis) {
+          const cacheKey = `webhook:${webhookId}:avg_response_time`
+          const cached = await redis.get(cacheKey)
+          if (cached) {
+            return parseInt(cached, 10)
+          }
         }
       } catch {
         // Ignorar erro de cache
@@ -248,6 +255,7 @@ class WebhookTrigger {
           // Create delivery record
           const delivery = await prisma.webhook_deliveries.create({
             data: {
+              id: randomUUID(),
               webhookId: webhook.id,
               event,
               payload: payload as unknown as Prisma.InputJsonValue,

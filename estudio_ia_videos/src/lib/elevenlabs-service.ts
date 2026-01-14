@@ -84,23 +84,48 @@ export class ElevenLabsService {
 
   async generateSpeech(request: TTSRequest): Promise<ArrayBuffer> {
     // --- MOCK FALLBACK START ---
-    if (!this.apiKey || this.apiKey === '') {
+    if (process.env.NODE_ENV === 'development' && (!this.apiKey || this.apiKey === '')) {
       logger.info('ElevenLabs API Key não configurada, usando áudio de fallback.', { 
         component: 'ElevenLabsService',
         text: request.text.substring(0, 50) + '...'
       });
       
-      // Return a 1-second silent MP3 or sample buffer
-      // This is a minimal valid MP3 frame
-      const mockMp3 = Buffer.from([
-        0xFF, 0xFB, 0x90, 0xC4, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-      ]);
+      // Return a 1-second silent WAV
+      // WAV Header (44 bytes) + 1 second of silence at 44.1kHz 16-bit Mono (88200 bytes)
+      const sampleRate = 44100;
+      const numChannels = 1;
+      const bitsPerSample = 16;
+      const durationSeconds = 1;
+      const dataSize = sampleRate * numChannels * (bitsPerSample / 8) * durationSeconds;
+      const fileSize = 36 + dataSize;
+
+      const buffer = Buffer.alloc(44 + dataSize);
+      
+      // RIFF chunk descriptor
+      buffer.write('RIFF', 0);
+      buffer.writeUInt32LE(fileSize, 4);
+      buffer.write('WAVE', 8);
+      
+      // fmt sub-chunk
+      buffer.write('fmt ', 12);
+      buffer.writeUInt32LE(16, 16); // Subchunk1Size
+      buffer.writeUInt16LE(1, 20); // AudioFormat (1 = PCM)
+      buffer.writeUInt16LE(numChannels, 22);
+      buffer.writeUInt32LE(sampleRate, 24);
+      buffer.writeUInt32LE(sampleRate * numChannels * (bitsPerSample / 8), 28); // ByteRate
+      buffer.writeUInt16LE(numChannels * (bitsPerSample / 8), 32); // BlockAlign
+      buffer.writeUInt16LE(bitsPerSample, 34);
+      
+      // data sub-chunk
+      buffer.write('data', 36);
+      buffer.writeUInt32LE(dataSize, 40);
+      
+      // Silence is already 0s in Buffer.alloc
       
       // Simulate network delay for realistic UX
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise(resolve => setTimeout(resolve, 500));
       
-      return mockMp3.buffer as ArrayBuffer;
+      return buffer.buffer as ArrayBuffer;
     }
     // --- MOCK FALLBACK END ---
 

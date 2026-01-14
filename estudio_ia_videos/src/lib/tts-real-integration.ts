@@ -99,7 +99,7 @@ class RealTTSIntegration {
     const modelId = params.voice.modelId || DEFAULT_MODEL
     const audioBuffer = await generateTTSAudio(params.text.trim(), voiceId, modelId)
     const storagePath = params.destinationPath ?? this.buildStoragePath('elevenlabs')
-    const audioUrl = await this.uploadAudioBuffer(audioBuffer, storagePath)
+    const audioUrl = await this.uploadAudioBuffer(Buffer.from(audioBuffer), storagePath)
 
     return {
       audioUrl,
@@ -400,7 +400,7 @@ export async function generateProjectTTS(projectId: string, voice: VoiceConfig):
       return { success: false, error: 'Projeto não possui slides processados' }
     }
 
-    const slidesToProcess = project.slides.filter((slide) => (slide.content)?.trim())
+    const slidesToProcess = project.slides.filter((slide) => (slide.content as unknown as string)?.trim())
 
     if (!slidesToProcess.length) {
       return { success: false, error: 'Nenhum slide possui conteúdo para gerar TTS' }
@@ -410,7 +410,7 @@ export async function generateProjectTTS(projectId: string, voice: VoiceConfig):
     let totalDuration = 0
 
     for (const slide of slidesToProcess) {
-      const text = (slide.content || '').trim()
+      const text = ((slide.content as unknown as string) || '').trim()
       if (!text) {
         continue
       }
@@ -472,8 +472,8 @@ export async function generateProjectTTS(projectId: string, voice: VoiceConfig):
       ? audioTimeline[0]?.audioUrl || null
       : null
 
-    const currentSettings = (project.settings as Record<string, unknown>) || {}
-    const currentProcessingLog = (project.settings as { processingLog?: Record<string, unknown> })?.processingLog || {}
+    const currentSettings = (project.metadata as Record<string, unknown>) || {}
+    const currentProcessingLog = (project.metadata as { processingLog?: Record<string, unknown> })?.processingLog || {}
 
     const processingLog = {
       ...currentProcessingLog,
@@ -486,7 +486,7 @@ export async function generateProjectTTS(projectId: string, voice: VoiceConfig):
     await prisma.projects.update({
       where: { id: projectId },
       data: {
-        settings: {
+        metadata: {
           ...currentSettings,
           ttsProvider: voice.provider,
           voiceId: voice.voiceId,

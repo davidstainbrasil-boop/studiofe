@@ -1,5 +1,5 @@
 
-import { VideoTemplateLibrary, LibraryTemplate } from './video/template-library';
+import { VideoTemplateLibrary, LibraryTemplate } from './template-library';
 
 export interface RenderConfig {
   format: 'mp4' | 'webm';

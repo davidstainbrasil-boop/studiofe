@@ -35,7 +35,7 @@ export function initSentry() {
       
       // Integrations
       integrations: [
-        Sentry.httpIntegration(),
+        // Sentry.httpIntegration(),
       ],
       
       // Filtragem de eventos

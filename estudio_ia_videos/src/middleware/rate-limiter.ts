@@ -251,22 +251,30 @@ export async function getUserTier(userId?: string): Promise<RateLimitTier> {
     // Cache miss - query database
     const { prisma } = await import('@lib/prisma');
 
+    // Fix: Query subscriptions instead of non-existent subscriptionTier field
     const user = await prisma.users.findUnique({
       where: { id: userId },
-      select: { subscriptionTier: true },
+      include: {
+        subscriptions: {
+          where: { status: 'active' },
+          include: { subscription_plans: true },
+          take: 1
+        }
+      }
     });
 
     if (!user) return 'free';
 
     // Map subscription tier to rate limit tier
     const tierMap: Record<string, RateLimitTier> = {
-      FREE: 'free',
-      BASIC: 'basic',
-      PRO: 'pro',
-      ENTERPRISE: 'enterprise',
+      'Free': 'free',
+      'Basic': 'basic',
+      'Pro': 'pro',
+      'Enterprise': 'enterprise',
     };
 
-    const tier = tierMap[user.subscriptionTier || 'FREE'] || 'free';
+    const planName = user.subscriptions?.[0]?.subscription_plans?.name || 'Free';
+    const tier = tierMap[planName] || 'free';
 
     // Store in Redis cache (5 minutes)
     if (redis) {

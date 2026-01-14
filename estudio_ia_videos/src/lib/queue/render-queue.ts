@@ -3,7 +3,7 @@
  * Implementação real usando BullMQ + Redis para fila de renderização
  */
 
-import { Queue, QueueEvents } from 'bullmq';
+import { Queue, QueueEvents, Worker, type Job, type WorkerOptions } from 'bullmq';
 import Redis from 'ioredis';
 import { logger } from '@lib/logger';
 
@@ -36,11 +36,14 @@ connection.on('error', (error) => {
 export const videoQueue = new Queue(QUEUE_NAME, {
   connection,
   defaultJobOptions: {
+    // F2.5: Retry controlado - 3 tentativas com backoff exponencial
     attempts: 3,
     backoff: {
       type: 'exponential',
-      delay: 5000
+      delay: 5000 // 5s, 10s, 20s
     },
+    // F2.6: Timeout de 30 minutos por tentativa (render + upload)
+    timeout: 30 * 60 * 1000, // 30 min
     removeOnComplete: {
       count: 100, // Manter últimos 100 jobs completos
       age: 24 * 3600 // Remover após 24 horas
@@ -79,6 +82,27 @@ export function createRenderQueueEvents(queueName: string = 'default'): RenderQu
       await connection.quit();
     },
   };
+}
+
+/**
+ * Cria Worker BullMQ para processar jobs de renderização
+ */
+export function createRenderWorker<TPayload = unknown, TResult = unknown>(
+  processor: (job: Job<TPayload, TResult>) => Promise<TResult>,
+  options: WorkerOptions = {}
+) {
+  const worker = new Worker<TPayload, TResult>(QUEUE_NAME, processor, {
+    connection,
+    ...options,
+  });
+
+  worker.on('error', (error) => {
+    logger.error('Render worker error', error instanceof Error ? error : new Error(String(error)), {
+      service: 'RenderQueue',
+    });
+  });
+
+  return worker;
 }
 
 /**

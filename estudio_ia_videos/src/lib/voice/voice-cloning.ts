@@ -124,7 +124,7 @@ export class VoiceCloning {
 
       return result.audio;
     } catch (error) {
-      logger.error('Synthesis failed', error, { component: 'VoiceCloning' });
+      logger.error('Synthesis failed', error instanceof Error ? error : new Error(String(error)), { component: 'VoiceCloning' });
       throw error;
     }
   }
@@ -145,7 +145,7 @@ export class VoiceCloning {
         qualityScore: 1
       }));
     } catch (error) {
-      logger.error('Failed to list profiles', error, { component: 'VoiceCloning' });
+      logger.error('Failed to list profiles', error instanceof Error ? error : new Error(String(error)), { component: 'VoiceCloning' });
       return [];
     }
   }

@@ -33,37 +33,38 @@ console.log(chalk.bold('1. Verificando Arquivos do Processador\n'));
 
 const requiredFiles = [
   {
-    path: 'estudio_ia_videos/app/lib/pptx-processor.ts',
+    path: 'estudio_ia_videos/src/lib/pptx/pptx-processor.ts',
     name: 'Processador Principal'
   },
   {
-    path: 'estudio_ia_videos/app/lib/pptx/pptx-parser.ts',
+    path: 'estudio_ia_videos/src/lib/pptx/pptx-parser.ts',
     name: 'Parser Básico'
   },
   {
-    path: 'estudio_ia_videos/app/lib/pptx/parsers/text-parser.ts',
+    path: 'estudio_ia_videos/src/lib/pptx/parsers/text-parser.ts',
     name: 'Text Parser'
   },
   {
-    path: 'estudio_ia_videos/app/lib/pptx/parsers/image-parser.ts',
+    path: 'estudio_ia_videos/src/lib/pptx/parsers/image-parser.ts',
     name: 'Image Parser'
   },
   {
-    path: 'estudio_ia_videos/app/lib/pptx/parsers/notes-parser.ts',
+    path: 'estudio_ia_videos/src/lib/pptx/parsers/notes-parser.ts',
     name: 'Notes Parser'
   },
   {
-    path: 'estudio_ia_videos/app/lib/pptx/pptx-processor-advanced.ts',
+    path: 'estudio_ia_videos/src/lib/pptx/pptx-processor-advanced.ts',
     name: 'Processador Avançado'
   },
   {
-    path: 'estudio_ia_videos/app/lib/definitions.ts',
+    path: 'estudio_ia_videos/src/lib/definitions.ts',
     name: 'Definições de Tipos'
   }
 ];
 
 requiredFiles.forEach(({ path, name }) => {
   const fullPath = join(process.cwd(), path);
+  // console.log(`Checking: ${fullPath}`); // Removido log de debug
   const exists = existsSync(fullPath);
   
   results.push({
@@ -82,8 +83,8 @@ requiredFiles.forEach(({ path, name }) => {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 console.log(chalk.bold('\n2. Verificando Imports e Tipos\n'));
 
-const processorPath = join(process.cwd(), 'estudio_ia_videos/app/lib/pptx-processor.ts');
-const definitionsPath = join(process.cwd(), 'estudio_ia_videos/app/lib/definitions.ts');
+const processorPath = join(process.cwd(), 'estudio_ia_videos/src/lib/pptx/pptx-processor.ts');
+const definitionsPath = join(process.cwd(), 'estudio_ia_videos/src/lib/definitions.ts');
 
 try {
   const { readFileSync } = await import('fs');
@@ -96,7 +97,7 @@ try {
       { name: 'Import PPTXTextParser', pattern: /import.*PPTXTextParser.*from/ },
       { name: 'Import PPTXImageParser', pattern: /import.*PPTXImageParser.*from/ },
       { name: 'Import PPTXNotesParser', pattern: /import.*PPTXNotesParser.*from/ },
-      { name: 'Função enrichSlidesWithAdvancedData', pattern: /async function enrichSlidesWithAdvancedData/ },
+      { name: 'Função enrichSlidesWithAdvancedData', pattern: /async (function )?enrichSlidesWithAdvancedData/ },
       { name: 'Uso de zip.loadAsync', pattern: /await JSZip\.loadAsync/ }
     ];
     
@@ -153,8 +154,8 @@ try {
 console.log(chalk.bold('\n3. Verificando Testes\n'));
 
 const testFiles = [
-  'estudio_ia_videos/app/__tests__/lib/pptx/text-parser.test.ts',
-  'estudio_ia_videos/app/__tests__/post-audit-validation.test.ts'
+  'estudio_ia_videos/src/app/__tests__/lib/pptx/text-parser.test.ts',
+  'estudio_ia_videos/src/app/__tests__/post-audit-validation.test.ts'
 ];
 
 testFiles.forEach(testPath => {

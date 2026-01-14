@@ -13,17 +13,17 @@ import { Progress } from '@components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs';
 import { ScrollArea } from '@components/ui/scroll-area';
 import { Alert, AlertDescription } from '@components/ui/alert';
-import { 
-  Code2, 
-  Play, 
-  Eye, 
-  Download, 
-  Layers, 
-  Zap, 
-  Settings, 
-  FileCode, 
-  Cpu, 
-  CheckCircle, 
+import {
+  Code2,
+  Play,
+  Eye,
+  Download,
+  Layers,
+  Zap,
+  Settings,
+  FileCode,
+  Cpu,
+  CheckCircle,
   AlertTriangle,
   Loader2,
   Copy,
@@ -39,7 +39,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@hooks/use-toast';
 import { Label } from '@components/ui/label';
-import type { TimelineProject, TimelineElement } from '@types/advanced-editor';
+import type { TimelineProject, TimelineElement } from '@/types/advanced-editor';
 
 // Remotion Composition Types
 interface RemotionComposition {
@@ -72,7 +72,7 @@ interface RemotionComposerProps {
   onCompositionGenerated?: (composition: RemotionComposition, code: GeneratedCode[]) => void;
 }
 
-export default function RemotionComposer({ 
+export default function RemotionComposer({
   project,
   onCompositionGenerated
 }: RemotionComposerProps) {
@@ -151,7 +151,7 @@ export default function RemotionComposer({
   // Generate React component code for timeline element
   const generateElementComponent = useCallback((element: TimelineElement): string => {
     const props = convertElementToRemotionProps(element);
-    
+
     switch (element.type) {
       case 'text':
         return `
@@ -310,12 +310,12 @@ export const ${element.id}: React.FC<${element.id}Props> = ({
     const durationInFrames = Math.ceil(project.settings.duration * project.settings.fps);
 
     const imports = elements.map(el => `import { ${el.id} } from './components/${el.id}';`).join('\n');
-    
+
     const sequences = elements.map(el => {
       const startFrame = Math.floor(el.startTime * project.settings.fps);
       const elementDurationInFrames = Math.floor(el.duration * project.settings.fps);
       const props = convertElementToRemotionProps(el);
-      
+
       return `      <Sequence from={${startFrame}} durationInFrames={${elementDurationInFrames}}>
         <${el.id}
           {...${JSON.stringify(props, null, 10).replace(/"/g, '')}}
@@ -380,7 +380,7 @@ export const RemotionVideo: React.FC = () => {
       for (let i = 0; i < steps.length; i++) {
         await new Promise(resolve => setTimeout(resolve, 800));
         setGenerationProgress(((i + 1) / steps.length) * 100);
-        
+
         toast({
           title: "Gerando composição",
           description: steps[i]
@@ -490,7 +490,7 @@ export const RemotionVideo: React.FC = () => {
   // Project stats
   const projectStats = useMemo(() => {
     if (!project) return null;
-    
+
     return {
       elements: project.elements.length,
       duration: project.settings.duration,
@@ -513,13 +513,13 @@ export const RemotionVideo: React.FC = () => {
                 <p className="text-gray-400">Timeline to React Composition Converter</p>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-2">
               <Badge variant="secondary" className="bg-blue-500/20 text-blue-300">
                 <FileCode className="mr-1 h-3 w-3" />
                 React + TS
               </Badge>
-              
+
               {generatedComposition && (
                 <Badge variant="outline" className="border-green-500 text-green-400">
                   <CheckCircle className="mr-1 h-3 w-3" />
@@ -528,7 +528,7 @@ export const RemotionVideo: React.FC = () => {
               )}
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2">
             <Button
               onClick={generateComposition}
@@ -571,24 +571,24 @@ export const RemotionVideo: React.FC = () => {
                 <Eye className="h-4 w-4" />
                 Overview
               </TabsTrigger>
-              <TabsTrigger 
-                value="preview" 
+              <TabsTrigger
+                value="preview"
                 className="flex items-center gap-2"
                 disabled={!generatedComposition}
               >
                 <Play className="h-4 w-4" />
                 Preview
               </TabsTrigger>
-              <TabsTrigger 
-                value="code" 
+              <TabsTrigger
+                value="code"
                 className="flex items-center gap-2"
                 disabled={generatedCode.length === 0}
               >
                 <Code2 className="h-4 w-4" />
                 Código ({generatedCode.length})
               </TabsTrigger>
-              <TabsTrigger 
-                value="export" 
+              <TabsTrigger
+                value="export"
                 className="flex items-center gap-2"
                 disabled={!generatedComposition}
               >
@@ -668,14 +668,14 @@ export const RemotionVideo: React.FC = () => {
                             {element.type === 'video' && <Film className="h-4 w-4 text-purple-400" />}
                             {element.type === 'audio' && <Volume2 className="h-4 w-4 text-orange-400" />}
                             {element.type === 'shape' && <Square className="h-4 w-4 text-pink-400" />}
-                            
+
                             <div className="flex-1">
                               <p className="text-sm font-medium">{element.name}</p>
                               <p className="text-xs text-gray-400">
                                 {element.startTime}s - {element.startTime + element.duration}s
                               </p>
                             </div>
-                            
+
                             <Badge variant="secondary" className="text-xs">
                               {element.type}
                             </Badge>

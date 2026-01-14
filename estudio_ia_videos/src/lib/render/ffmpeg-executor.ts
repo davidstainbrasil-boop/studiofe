@@ -8,7 +8,7 @@ import { promisify } from 'util';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { EventEmitter } from 'events';
-import { logger } from '@lib/logger';
+import { Logger } from '@lib/logger';
 
 const execAsync = promisify(exec);
 
@@ -57,12 +57,15 @@ export interface FFmpegResult {
 export class FFmpegExecutor {
   private ffmpegPath: string;
   private isWindows: boolean;
+  private logger: Logger;
 
   constructor(ffmpegPath: string = 'ffmpeg') {
     this.ffmpegPath = ffmpegPath;
     this.isWindows = process.platform === 'win32';
-    this.logger = getLogger('ffmpeg-executor');
-  }/**
+    this.logger = new Logger('ffmpeg-executor');
+  }
+
+  /**
    * Renderiza vídeo a partir de frames individuais
    */
   async renderFromFrames(
@@ -80,7 +83,7 @@ export class FFmpegExecutor {
       const tempOutputPath = `${options.outputPath}.tmp.mp4`;
       const args = await this.buildFFmpegCommand(options, tempOutputPath);
 
-      logger.info(`🎬 Executando FFmpeg: ${this.ffmpegPath} ${args.join(' ')}`, { component: 'FFmpegExecutor' });
+      this.logger.info(`🎬 Executando FFmpeg: ${this.ffmpegPath} ${args.join(' ')}`, { component: 'FFmpegExecutor' });
 
       // Executar FFmpeg
       const result = await this.executeFFmpeg(args, options, onProgress);
@@ -101,7 +104,7 @@ export class FFmpegExecutor {
       };
 
     } catch (error) {
-      logger.error('❌ Erro ao renderizar vídeo:', error instanceof Error ? error : new Error(String(error)), { component: 'FFmpegExecutor' });
+      this.logger.error('❌ Erro ao renderizar vídeo:', error instanceof Error ? error : new Error(String(error)), { component: 'FFmpegExecutor' });
       
       // Tenta limpar o arquivo temporário se ele existir
       const tempOutputPath = `${options.outputPath}.tmp.mp4`;
@@ -272,14 +275,14 @@ export class FFmpegExecutor {
 
           // Log a cada 10 frames
           if (currentFrame % 10 === 0) {
-            logger.info(`Frame ${currentFrame}/${totalFrames} (${progressData.progress.toFixed(1)}%) - ${progressData.fps.toFixed(1)} fps`, { component: 'FFmpegExecutor' });
+            this.logger.info(`Frame ${currentFrame}/${totalFrames} (${progressData.progress.toFixed(1)}%) - ${progressData.fps.toFixed(1)} fps`, { component: 'FFmpegExecutor' });
           }
         }
       });
 
       ffmpeg.on('close', (code) => {
         if (code === 0) {
-          logger.info('FFmpeg concluído com sucesso', { component: 'FFmpegExecutor' });
+          this.logger.info('FFmpeg concluído com sucesso', { component: 'FFmpegExecutor' });
           resolve({
             stats: {
               totalFrames: currentFrame,
@@ -288,14 +291,14 @@ export class FFmpegExecutor {
             },
           });
         } else {
-          logger.error(`FFmpeg falhou com código: ${code}`, new Error(`Exit code ${code}`), { component: 'FFmpegExecutor' });
-          logger.error('FFmpeg Stderr', new Error(stderrData), { component: 'FFmpegExecutor' });
+          this.logger.error(`FFmpeg falhou com código: ${code}`, new Error(`Exit code ${code}`), { component: 'FFmpegExecutor' });
+          this.logger.error('FFmpeg Stderr', new Error(stderrData), { component: 'FFmpegExecutor' });
           reject(new Error(`FFmpeg falhou com código ${code}`));
         }
       });
 
       ffmpeg.on('error', (error) => {
-        logger.error('Erro ao executar FFmpeg', error instanceof Error ? error : new Error(String(error)), { component: 'FFmpegExecutor' });
+        this.logger.error('Erro ao executar FFmpeg', error instanceof Error ? error : new Error(String(error)), { component: 'FFmpegExecutor' });
         reject(error);
       });
     });

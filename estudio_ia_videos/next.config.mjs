@@ -23,11 +23,20 @@ const nextConfig = {
   },
   webpack: (config) => {
     config.externals = [...(config.externals || []), { canvas: "canvas" }];
+    // Ensure proper module resolution for static assets
+    config.resolve = {
+      ...config.resolve,
+      extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],
+    };
     return config;
   },
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },
+  // Ensure proper asset prefix for production
+  assetPrefix: process.env.NODE_ENV === 'production' && process.env.NEXT_PUBLIC_VERCEL_URL 
+    ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
+    : undefined,
   // Ensure static assets are served correctly with proper headers
   async headers() {
     return [

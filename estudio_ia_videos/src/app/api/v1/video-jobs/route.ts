@@ -2,7 +2,6 @@ export const runtime = 'nodejs';
 
 import { NextResponse } from 'next/server';
 
-import { shouldUseMockRenderJobs, getMockUserId, insertMockJob, listMockJobs } from '@lib/render-jobs/mock-store';
 import { logger } from '@lib/services';
 import { getSupabaseForRequest } from '@lib/services/server';
 import { checkRateLimit, inspectRateLimit } from '@lib/rate-limit';
@@ -42,8 +41,6 @@ function badRequest(issues: unknown) {
   return NextResponse.json({ code: 'VALIDATION_ERROR', message: 'Payload inválido', details: issues }, { status: 400 });
 }
 
-const allowMockFallback = () => process.env.ALLOW_RENDER_JOBS_FALLBACK !== 'false';
-
 export async function POST(req: Request) {
   const started = Date.now();
   let supabase: ReturnType<typeof getSupabaseForRequest> | null = null;
@@ -55,23 +52,16 @@ export async function POST(req: Request) {
     }
 
     const authHeader = (req.headers.get('authorization') ?? req.headers.get('Authorization') ?? '').trim();
-    const authToken = authHeader.toLowerCase().startsWith('bearer ')
-      ? authHeader.slice(7).trim()
-      : authHeader;
-    const hasAuth = authToken.length > 0;
-    const mockMode = shouldUseMockRenderJobs() || !hasAuth;
-
-    let userId: string;
-    if (mockMode) {
-      userId = getMockUserId(req);
-    } else {
-      supabase = getSupabaseForRequest(req);
-      const { data: userData, error: userErr } = await supabase.auth.getUser();
-      if (userErr || !userData.user) {
+    if (!authHeader) {
         return NextResponse.json({ code: 'UNAUTHORIZED', message: 'Usuário não autenticado' }, { status: 401 });
-      }
-      userId = userData.user.id;
     }
+
+    supabase = getSupabaseForRequest(req);
+    const { data: userData, error: userErr } = await supabase.auth.getUser();
+    if (userErr || !userData.user) {
+        return NextResponse.json({ code: 'UNAUTHORIZED', message: 'Usuário não autenticado' }, { status: 401 });
+    }
+    const userId = userData.user.id;
 
     // Rate limiting por usuário (janela fixa 60s)
     const WINDOW_MS = 60_000;
@@ -90,12 +80,6 @@ export async function POST(req: Request) {
         status: 429,
         headers: { 'content-type': 'application/json', 'Retry-After': String(rl.retryAfterSec) }
       });
-    }
-
-    if (mockMode) {
-      const job = insertMockJob(userId, parsed.data as { projectId: string; slides: Array<{ order_index: number }>; quality?: string; tts_voice?: string });
-      const durationMs = Date.now() - started;
-      return NextResponse.json({ job, metrics: { validation_ms: durationMs } }, { status: 201 });
     }
 
     const payload = parsed.data;
@@ -117,11 +101,6 @@ export async function POST(req: Request) {
 
     if (insertErr) {
       recordError('DB_ERROR');
-      if (allowMockFallback()) {
-        const job = insertMockJob(userId, payload as { projectId: string; slides: Array<{ order_index: number }>; quality?: string; tts_voice?: string });
-        const durationMs = Date.now() - started;
-        return NextResponse.json({ job, metadata: { fallback: 'mock' }, metrics: { validation_ms: durationMs } }, { status: 201 });
-      }
       return NextResponse.json({ code: 'DB_ERROR', message: 'Falha ao criar job', details: insertErr.message }, { status: 500 });
     }
 
@@ -137,29 +116,20 @@ export async function POST(req: Request) {
 }
 
 export async function GET(req: Request) {
-  const fallbackEnabled = allowMockFallback();
-  let buildMockResponse: (() => NextResponse) | null = null;
   let userId = '';
   let queryParams: VideoJobsQuery | null = null;
   try {
     const authHeader = (req.headers.get('authorization') ?? req.headers.get('Authorization') ?? '').trim();
-    const authToken = authHeader.toLowerCase().startsWith('bearer ')
-      ? authHeader.slice(7).trim()
-      : authHeader;
-    const hasAuth = authToken.length > 0;
-    const mockMode = shouldUseMockRenderJobs() || !hasAuth;
-
-    let supabase: ReturnType<typeof getSupabaseForRequest> | null = null;
-    if (mockMode) {
-      userId = getMockUserId(req);
-    } else {
-      supabase = getSupabaseForRequest(req);
-      const { data: userData, error: userErr } = await supabase.auth.getUser();
-      if (userErr || !userData.user) {
+    if (!authHeader) {
         return NextResponse.json({ code: 'UNAUTHORIZED', message: 'Usuário não autenticado' }, { status: 401 });
-      }
-      userId = userData.user.id;
     }
+
+    const supabase = getSupabaseForRequest(req);
+    const { data: userData, error: userErr } = await supabase.auth.getUser();
+    if (userErr || !userData.user) {
+        return NextResponse.json({ code: 'UNAUTHORIZED', message: 'Usuário não autenticado' }, { status: 401 });
+    }
+    userId = userData.user.id;
 
     const url = new URL(req.url);
     const params: Record<string, string> = {};
@@ -176,37 +146,13 @@ export async function GET(req: Request) {
     const globalAny = globalThis as unknown as GlobalWithCache;
     if (!globalAny.__vj_cache) globalAny.__vj_cache = new Map();
     const cacheKey = `list:${userId}:${queryParams.limit}:${queryParams.offset}:${queryParams.status || 'all'}:${queryParams.projectId || 'all'}:${queryParams.sortBy}:${queryParams.sortOrder}`;
-    const computeMockResponse = (cacheTag: 'MISS' | 'HIT' = 'MISS') => {
-      const jobs = listMockJobs(userId, {
-        limit: queryParams!.limit,
-        offset: queryParams!.offset,
-        status: queryParams!.status,
-        projectId: queryParams!.projectId,
-        sortBy: queryParams!.sortBy,
-        sortOrder: queryParams!.sortOrder,
-      });
-      const payload: VideoJobCachePayload = { jobs };
-      globalAny.__vj_cache?.set(cacheKey, { expiresAt: Date.now() + CACHE_TTL_MS, payload });
-      return new NextResponse(JSON.stringify(payload), {
-        status: 200,
-        headers: { 'content-type': 'application/json', 'X-Cache': cacheTag, 'X-Mock-Data': 'render-jobs' }
-      });
-    };
-    buildMockResponse = computeMockResponse;
+    
     const hit = globalAny.__vj_cache.get(cacheKey);
     if (hit && hit.expiresAt > Date.now()) {
       return new NextResponse(JSON.stringify(hit.payload), {
         status: 200,
         headers: { 'content-type': 'application/json', 'X-Cache': 'HIT' }
       });
-    }
-
-    if (mockMode) {
-      return computeMockResponse();
-    }
-
-    if (!supabase) {
-      throw new Error('Supabase client não inicializado');
     }
 
     if (!queryParams) {
@@ -231,9 +177,6 @@ export async function GET(req: Request) {
     const { data, error } = await query;
     if (error) {
       recordError('DB_ERROR');
-      if (fallbackEnabled && buildMockResponse) {
-        return buildMockResponse();
-      }
       return NextResponse.json({ code: 'DB_ERROR', message: 'Falha ao listar jobs', details: error.message }, { status: 500 });
     }
     // Normaliza render_settings -> settings
@@ -248,9 +191,6 @@ export async function GET(req: Request) {
   } catch (err) {
     recordError('UNEXPECTED');
     logger.error('video-jobs: list-unexpected-error', err as Error);
-    if (fallbackEnabled && buildMockResponse) {
-      return buildMockResponse();
-    }
     return NextResponse.json({ code: 'UNEXPECTED', message: 'Erro inesperado', details: (err as Error).message }, { status: 500 });
   }
 }

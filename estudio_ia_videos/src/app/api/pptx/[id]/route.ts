@@ -161,7 +161,7 @@ export async function PUT(
       
       if (!hasPermission) {
         const { data: collaboratorData } = await supabase
-          .from('collaborators')
+          .from('project_collaborators')
           .select('role')
           .eq('project_id', upload.project_id)
           .eq('user_id', user.id)

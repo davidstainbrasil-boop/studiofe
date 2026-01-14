@@ -1,14 +1,17 @@
 /**
  * Image Processor Real
- * Processamento avançado de imagens para vídeos
+ * Processamento avançado de imagens para vídeos usando sharp
  */
 
+import sharp from 'sharp';
+import { logger } from '@lib/logger';
+
 export interface ImageProcessOptions {
-  resize?: { width: number; height: number };
-  crop?: { x: number; y: number; width: number; height: number };
+  resize?: { width: number; height: number; fit?: 'cover' | 'contain' | 'fill' | 'inside' | 'outside' };
+  crop?: { left: number; top: number; width: number; height: number }; // sharp uses left/top
   filters?: Array<'blur' | 'sharpen' | 'grayscale' | 'sepia'>;
   quality?: number;
-  format?: 'jpeg' | 'png' | 'webp';
+  format?: 'jpeg' | 'png' | 'webp' | 'avif';
 }
 
 export interface ProcessedImage {
@@ -19,43 +22,86 @@ export interface ProcessedImage {
   size: number;
 }
 
-import { logger } from '@lib/logger';
-
 export class ImageProcessor {
   async process(inputBuffer: Buffer, options?: ImageProcessOptions): Promise<ProcessedImage> {
     logger.info('Processing image with options:', { component: 'ImageProcessor', options });
     
+    let pipeline = sharp(inputBuffer);
+
+    // Apply resize
+    if (options?.resize) {
+      pipeline = pipeline.resize({
+        width: options.resize.width,
+        height: options.resize.height,
+        fit: options.resize.fit || 'cover',
+      });
+    }
+
+    // Apply crop (Extract operation in sharp)
+    // Note: older interface used x,y, new sharp uses left,top. We map x->left, y->top if needed or rely on updated interface
+    if (options?.crop) {
+      pipeline = pipeline.extract({
+        left: options.crop.left,
+        top: options.crop.top,
+        width: options.crop.width,
+        height: options.crop.height
+      });
+    }
+
+    // Apply filters
+    if (options?.filters) {
+      for (const filter of options.filters) {
+        if (filter === 'blur') pipeline = pipeline.blur(5);
+        if (filter === 'sharpen') pipeline = pipeline.sharpen();
+        if (filter === 'grayscale') pipeline = pipeline.grayscale();
+        if (filter === 'sepia') {
+           // Sharp doesn't have direct sepia. Use modulations or tint. 
+           // Simple approximation: grayscale + tint (if supported) or just skip for now to avoid complexity
+           // pipeline = pipeline.tint('#704214'); // requires ensuring colorspace
+           pipeline = pipeline.modulate({ saturation: 0.5 }); // not exact sepia
+        }
+      }
+    }
+
+    // Format and Quality
+    const format = options?.format || 'jpeg';
+    const quality = options?.quality || 80;
+
+    if (format === 'jpeg') pipeline = pipeline.jpeg({ quality });
+    if (format === 'png') pipeline = pipeline.png({ quality });
+    if (format === 'webp') pipeline = pipeline.webp({ quality });
+    if (format === 'avif') pipeline = pipeline.avif({ quality });
+
+    const outputBuffer = await pipeline.toBuffer();
+    const metadata = await sharp(outputBuffer).metadata();
+
     return {
-      buffer: inputBuffer,
-      width: 1920,
-      height: 1080,
-      format: options?.format || 'jpeg',
-      size: inputBuffer.length,
+      buffer: outputBuffer,
+      width: metadata.width || 0,
+      height: metadata.height || 0,
+      format: metadata.format || format,
+      size: outputBuffer.length,
     };
   }
   
-  async resize(buffer: Buffer, width: number, height: number): Promise<Buffer> {
-    logger.info(`Resizing to: ${width}x${height}`, { component: 'ImageProcessor' });
-    return buffer;
-  }
-  
-  async crop(buffer: Buffer, x: number, y: number, width: number, height: number): Promise<Buffer> {
-    logger.info('Cropping:', { component: 'ImageProcessor', x, y, width, height });
-    return buffer;
-  }
-  
-  async applyFilter(buffer: Buffer, filter: string): Promise<Buffer> {
-    logger.info(`Applying filter: ${filter}`, { component: 'ImageProcessor' });
-    return buffer;
-  }
-
   async processBatchImages(files: File[], options?: ImageProcessOptions): Promise<ProcessedImage[]> {
     logger.info(`Processing batch of ${files.length} images`, { component: 'ImageProcessor' });
     const results: ProcessedImage[] = [];
     
     for (const file of files) {
       const buffer = Buffer.from(await file.arrayBuffer());
-      const processed = await this.process(buffer, options);
+      // Map old crop {x,y} to {left,top} if passed via options (handling potential legacy calls)
+      const safeOptions = { ...options };
+      if ((options as any)?.crop?.x !== undefined) {
+         safeOptions.crop = {
+             left: (options as any).crop.x,
+             top: (options as any).crop.y,
+             width: (options as any).crop.width,
+             height: (options as any).crop.height
+         };
+      }
+
+      const processed = await this.process(buffer, safeOptions);
       results.push(processed);
     }
     
@@ -69,17 +115,35 @@ export class ImageProcessor {
     format: string;
     sizes: { original: number; webp: number; jpeg: number };
   }> {
-    logger.info('Optimizing for web:', { component: 'ImageProcessor', options });
+    logger.info('Optimizing for web (Real)', { component: 'ImageProcessor', options });
     
+    const maxWidth = options?.maxWidth || 1200;
+    const quality = options?.quality || 80;
+
+    // 1. Generate WebP (Target)
+    const webpBuffer = await sharp(buffer)
+      .resize({ width: maxWidth, withoutEnlargement: true })
+      .webp({ quality })
+      .toBuffer();
+
+    const webpMeta = await sharp(webpBuffer).metadata();
+
+    // 2. Generate JPEG (Comparison)
+    const jpegBuffer = await sharp(buffer)
+      .resize({ width: maxWidth, withoutEnlargement: true })
+      .jpeg({ quality })
+      .toBuffer();
+
+    // Only return the efficient one (WebP) as the main buffer
     return {
-      buffer,
-      width: options?.maxWidth || 1200,
-      height: Math.round((options?.maxWidth || 1200) * 0.75),
+      buffer: webpBuffer,
+      width: webpMeta.width || 0,
+      height: webpMeta.height || 0,
       format: 'webp',
       sizes: {
         original: buffer.length,
-        webp: Math.round(buffer.length * 0.6), // Mock savings
-        jpeg: Math.round(buffer.length * 0.8)
+        webp: webpBuffer.length,
+        jpeg: jpegBuffer.length
       }
     };
   }
@@ -101,6 +165,8 @@ export const processProjectImages = async (
   logger.info(`Processing images for project: ${projectId}`, { component: 'ImageProcessor' });
   try {
     const processedImages = await imageProcessor.processBatchImages(files, options);
+    // TODO: Upload to S3/Storage here if meant to be persistent immediately
+    // For now we return the buffers as the API controller handles the response/upload logic or allows download
     return { 
       success: true, 
       processedImages 

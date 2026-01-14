@@ -83,11 +83,21 @@ try {
       });
     }
   } else {
-    envChecks.push({
-      name: 'Credenciais App',
-      status: 'fail',
-      message: 'Arquivo .env.local não encontrado em /app/'
-    });
+    // If not found in /app/, try direct path since we adjusted path definition
+    const directAppEnvPath = join(process.cwd(), 'estudio_ia_videos', '.env.local');
+    if (existsSync(directAppEnvPath)) {
+       envChecks.push({
+        name: 'Credenciais App',
+        status: 'pass',
+        message: 'Arquivo encontrado em estudio_ia_videos'
+      });
+    } else {
+      envChecks.push({
+        name: 'Credenciais App',
+        status: 'fail',
+        message: 'Arquivo .env.local não encontrado em estudio_ia_videos'
+      });
+    }
   }
 
 } catch (error) {
@@ -109,7 +119,7 @@ results.push({
 const jestChecks: ValidationResult['checks'] = [];
 
 try {
-  const jestConfigPath = join(process.cwd(), 'jest.config.cjs');
+  const jestConfigPath = join(process.cwd(), 'estudio_ia_videos', 'jest.config.cjs');
   
   if (existsSync(jestConfigPath)) {
     const content = readFileSync(jestConfigPath, 'utf-8');
@@ -202,8 +212,8 @@ const fileChecks: ValidationResult['checks'] = [];
 const criticalFiles = [
   { path: 'database-schema.sql', name: 'Database Schema' },
   { path: 'database-rls-policies.sql', name: 'RLS Policies' },
-  { path: 'estudio_ia_videos/app/lib/pptx-processor.ts', name: 'PPTX Processor' },
-  { path: 'estudio_ia_videos/app/lib/pptx/pptx-parser.ts', name: 'PPTX Parser' },
+  { path: 'estudio_ia_videos/src/lib/pptx/pptx-processor.ts', name: 'PPTX Processor' },
+  { path: 'estudio_ia_videos/src/lib/pptx/pptx-parser.ts', name: 'PPTX Parser' },
   { path: 'scripts/health-check.ts', name: 'Health Check Script' },
   { path: 'scripts/setup-supabase-auto.ts', name: 'Supabase Setup Script' }
 ];

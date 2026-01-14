@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@components/ui/card';
 import { Button } from '@components/ui/button';
 import { Badge } from '@components/ui/badge';
@@ -73,6 +73,22 @@ export default function EditorDashboard() {
   const [selectedTab, setSelectedTab] = useState('overview');
   const { projects, isLoading, total } = useProjects({ limit: 10 });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [stats, setStats] = useState({ renderHours: '--', collaborators: '--', aiEfficiency: '98%' });
+
+  useEffect(() => {
+    fetch('/api/dashboard/stats')
+      .then(res => res.json())
+      .then(data => {
+        if (data && !data.error) {
+          setStats({
+            renderHours: data.renderHours || '0',
+            collaborators: data.collaborators?.toString() || '0',
+            aiEfficiency: data.aiEfficiency ? `${data.aiEfficiency}%` : '98%'
+          });
+        }
+      })
+      .catch(err => console.error('Failed to fetch stats', err));
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
@@ -140,7 +156,7 @@ export default function EditorDashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Horas Renderizadas</p>
-                    <p className="text-3xl font-bold text-gray-900">--</p>
+                    <p className="text-3xl font-bold text-gray-900">{stats.renderHours}</p>
                   </div>
                   <div className="bg-green-100 p-3 rounded-lg">
                     <Clock className="w-6 h-6 text-green-600" />
@@ -160,7 +176,7 @@ export default function EditorDashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Colaboradores</p>
-                    <p className="text-3xl font-bold text-gray-900">--</p>
+                    <p className="text-3xl font-bold text-gray-900">{stats.collaborators}</p>
                   </div>
                   <div className="bg-purple-100 p-3 rounded-lg">
                     <Users className="w-6 h-6 text-purple-600" />
@@ -180,7 +196,7 @@ export default function EditorDashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Eficiência IA</p>
-                    <p className="text-3xl font-bold text-gray-900">98%</p>
+                    <p className="text-3xl font-bold text-gray-900">{stats.aiEfficiency}</p>
                   </div>
                   <div className="bg-yellow-100 p-3 rounded-lg">
                     <Zap className="w-6 h-6 text-yellow-600" />
@@ -243,7 +259,7 @@ export default function EditorDashboard() {
                           <Badge className={getStatusColor(project.status)}>
                             {getStatusText(project.status)}
                           </Badge>
-                          <Link href={`/editor/timeline/${project.id}`}>
+                          <Link href={`/studio/${project.id}`}>
                             <Button variant="ghost" size="sm">
                               <Play className="w-4 h-4" />
                             </Button>
@@ -326,7 +342,7 @@ export default function EditorDashboard() {
                           <span>{formatTimeAgo(project.updated_at)}</span>
                         </div>
                         <div className="mt-4 flex gap-2">
-                          <Link href={`/editor/timeline/${project.id}`} className="flex-1">
+                          <Link href={`/studio/${project.id}`} className="flex-1">
                             <Button size="sm" className="w-full">
                               <Play className="w-4 h-4 mr-1" />
                               Abrir

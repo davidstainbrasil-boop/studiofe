@@ -2,9 +2,9 @@ import { Job } from 'bullmq';
 import { createRenderWorker } from '@lib/queue/render-queue';
 import { videoRenderPipeline } from '@lib/video/video-render-pipeline';
 import { RenderTaskPayload, RenderTaskResult } from '@lib/queue/types';
-import { logger } from '@lib/services/logger-service-centralized';
+import { logger } from '@lib/logger';
 
-const workerHandler = async (job: Job<RenderTaskPayload, RenderTaskResult>) => {
+export const workerHandler = async (job: Job<RenderTaskPayload, RenderTaskResult>) => {
   const startTime = Date.now();
   const { projectId } = job.data;
   const jobId = job.id!;

@@ -2,7 +2,7 @@
 
 ## 1) Regras de importação (hard rules)
 
-1. ❌ **Proibido** em `estudio_ia_videos/app/**`:
+1. ❌ **Proibido** em `estudio_ia_videos/src/app/**`:
    1. Importar `../lib` (raiz do repo) por qualquer alias.
    2. Usar alias `~lib/*`.
 
@@ -19,8 +19,8 @@
 
 ### 2.1 Aliases canônicos (estudio)
 
-1. `@/*` → `estudio_ia_videos/app/*`
-2. `@lib/*` → `estudio_ia_videos/app/lib/*`
+1. `@/*` → `estudio_ia_videos/src/*`
+2. `@lib/*` → `estudio_ia_videos/src/lib/*`
 
 ### 2.2 Aliases de legado (somente se necessário)
 
@@ -33,13 +33,13 @@
 
 ## 3) Como criar um novo módulo (padrão)
 
-1. Criar pasta: `estudio_ia_videos/app/lib/<modulo>/`.
+1. Criar pasta: `estudio_ia_videos/src/lib/<modulo>/`.
 2. Subpastas mínimas:
    1. `validation/` (Zod + contratos)
    2. `handlers/` (parsers/compat)
    3. `services/` (use-cases)
    4. `infra/` (adapters, se existir)
-3. Rotas em `app/api/**` importam de `@lib/<modulo>/*`.
+3. Rotas em `src/app/api/**` importam de `@lib/<modulo>/*`.
 
 ---
 

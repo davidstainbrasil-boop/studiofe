@@ -21,10 +21,11 @@ export interface FabricImageWithId extends Fabric.Image {
 }
 
 // Canvas with extended context properties for GPU acceleration
-export interface FabricCanvasExtended extends Fabric.Canvas {
+// Canvas with extended context properties for GPU acceleration
+export type FabricCanvasExtended = Fabric.Canvas & {
   contextContainer?: CanvasRenderingContext2D;
   contextTop?: CanvasRenderingContext2D;
-}
+};
 
 // Fabric selection events
 export interface FabricSelectionEvent {

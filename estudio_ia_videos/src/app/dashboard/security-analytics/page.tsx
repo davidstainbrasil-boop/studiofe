@@ -283,7 +283,7 @@ export default function SecurityAnalyticsPage() {
                       labelLine={false}
                       label={({ name, percent }: { name: string; percent: number }) =>
                         `${name}: ${(percent * 100).toFixed(0)}%`
-                      }
+                      } as any
                       outerRadius={100}
                       fill="#8884d8"
                       dataKey="value"
@@ -408,7 +408,7 @@ export default function SecurityAnalyticsPage() {
                         labelLine={false}
                         label={({ name, percent }: { name: string; percent: number }) =>
                           `${name}: ${(percent * 100).toFixed(0)}%`
-                        }
+                        } as any
                         outerRadius={100}
                         fill="#8884d8"
                         dataKey="value"

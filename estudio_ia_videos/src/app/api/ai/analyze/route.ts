@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
         id: analysis.id,
         videoId: analysis.videoId,
         status: analysis.status,
-        progress: analysis.progress,
+        progress: 100, // Synchronous completion
         createdAt: analysis.createdAt,
       },
     });
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
     }
 
     const aiAnalysis = AIVideoAnalysisSystem.getInstance();
-    const analysis = aiAnalysis.getAnalysis(analysisId);
+    const analysis = await aiAnalysis.getAnalysis(analysisId);
 
     if (!analysis) {
       return NextResponse.json(

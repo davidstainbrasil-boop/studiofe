@@ -5,7 +5,7 @@
 
 'use client';
 
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@components/ui/card';
 import { Button } from '@components/ui/button';
@@ -65,38 +65,9 @@ import {
 import { TranscriptionService } from '../../lib/services/transcription-service'
 import { StockService, StockMedia } from '../../lib/services/stock-service'
 
-// Preview Track Interface
-interface PreviewTrack {
-  id: string;
-  name: string;
-  type: 'video' | 'audio' | 'text' | 'image' | 'shape' | 'avatar';
-  color: string;
-  visible: boolean;
-  locked: boolean;
-  clips: Array<{
-    id: string;
-    name: string;
-    startTime: number;
-    duration: number;
-    content: string | null;
-    effects: string[];
-  }>;
-}
-
-// Stub for missing component
-const UnifiedPreviewPlayer = ({ currentTime, tracks, isPlaying }: { currentTime: number, tracks: PreviewTrack[], isPlaying: boolean }) => (
-  <div className="w-full h-full flex items-center justify-center bg-black text-white">
-    <div className="text-center">
-      <p className="font-bold">Preview Player</p>
-      <p className="text-sm text-gray-400">{isPlaying ? 'Playing' : 'Paused'} • {currentTime.toFixed(1)}s</p>
-      <p className="text-xs text-gray-500">{tracks.length} tracks</p>
-    </div>
-  </div>
-);
-
 interface TimelineElement {
   id: string;
-  type: 'video' | 'audio' | 'image' | 'text' | 'shape';
+  type: 'video' | 'audio' | 'image' | 'text' | 'shape' | 'avatar' | 'avatar-3d';
   name: string;
   startTime: number;
   duration: number;
@@ -246,6 +217,291 @@ const initialProject: TimelineProject = {
   isPlaying: false,
   volume: 1,
   muted: false
+};
+
+interface PreviewClip {
+  id: string;
+  name: string;
+  type: TimelineElement['type'];
+  startTime: number;
+  duration: number;
+  content: string | null;
+  properties?: TimelineElement['properties'];
+  animation?: TimelineElement['animation'];
+  muted?: boolean;
+  volume?: number;
+}
+
+interface PreviewTrack {
+  id: string;
+  name: string;
+  type: 'video' | 'audio' | 'text' | 'image' | 'shape' | 'avatar' | 'avatar-3d';
+  color: string;
+  visible: boolean;
+  locked: boolean;
+  muted?: boolean;
+  volume?: number;
+  clips: PreviewClip[];
+}
+
+interface UnifiedPreviewPlayerProps {
+  currentTime: number;
+  duration: number;
+  tracks: PreviewTrack[];
+  isPlaying: boolean;
+  resolution: { width: number; height: number };
+  limitEnabled: boolean;
+  limitSeconds: number;
+}
+
+const UnifiedPreviewPlayer = ({
+  currentTime,
+  duration,
+  tracks,
+  isPlaying,
+  resolution,
+  limitEnabled,
+  limitSeconds
+}: UnifiedPreviewPlayerProps) => {
+  const audioRefs = useRef(new Map<string, HTMLAudioElement>());
+
+  const previewDuration = useMemo(() => {
+    if (!limitEnabled) return duration;
+    return Math.min(duration, limitSeconds);
+  }, [duration, limitEnabled, limitSeconds]);
+
+  const formatTimestamp = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const normalizeOpacity = (value?: number) => {
+    if (typeof value !== 'number') return 1;
+    if (value > 1) return Math.min(value / 100, 1);
+    return Math.max(0, value);
+  };
+
+  const resolveMediaSource = (content: string | null, properties?: TimelineElement['properties']) => {
+    const candidate = typeof content === 'string' ? content : '';
+    const fallback = typeof properties?.src === 'string' ? properties.src : '';
+    const source = candidate || fallback;
+    if (!source) return null;
+    if (source.startsWith('http://') || source.startsWith('https://') || source.startsWith('data:') || source.startsWith('blob:')) {
+      return source;
+    }
+    if (source.startsWith('/')) {
+      return source;
+    }
+    if (/\.(mp4|webm|mov|mp3|wav|png|jpe?g|gif|svg)$/i.test(source)) {
+      return source;
+    }
+    return null;
+  };
+
+  const getElementBaseStyle = (clip: PreviewClip) => {
+    const resWidth = resolution.width || 1920;
+    const resHeight = resolution.height || 1080;
+    const props = clip.properties;
+    const isText = clip.type === 'text';
+
+    const defaultWidth = isText ? resWidth * 0.75 : resWidth * 0.6;
+    const defaultHeight = isText ? resHeight * 0.2 : resHeight * 0.6;
+    const width = props?.width ?? defaultWidth;
+    const height = props?.height ?? defaultHeight;
+    const x = props?.x ?? (resWidth - width) / 2;
+    const y = props?.y ?? (resHeight - height) / 2;
+
+    return {
+      left: `${(x / resWidth) * 100}%`,
+      top: `${(y / resHeight) * 100}%`,
+      width: `${(width / resWidth) * 100}%`,
+      height: isText ? 'auto' : `${(height / resHeight) * 100}%`,
+    } as React.CSSProperties;
+  };
+
+  const getAnimationStyle = (clip: PreviewClip) => {
+    const animation = clip.animation;
+    const elapsed = currentTime - clip.startTime;
+    const durationSeconds = Math.max(0.01, Math.min(animation?.duration ?? clip.duration, clip.duration));
+    const baseOpacity = normalizeOpacity(clip.properties?.opacity);
+    const baseScale = typeof clip.properties?.scale === 'number' ? clip.properties.scale : 1;
+    const baseRotation = typeof clip.properties?.rotation === 'number' ? clip.properties.rotation : 0;
+
+    let opacity = baseOpacity;
+    let scale = baseScale;
+    let translateX = 0;
+    let translateY = 0;
+
+    if (animation && animation.type !== 'none') {
+      const progressIn = Math.min(Math.max(elapsed / durationSeconds, 0), 1);
+      const progressOut = Math.min(Math.max((clip.duration - elapsed) / durationSeconds, 0), 1);
+
+      switch (animation.type) {
+        case 'fade-in':
+          opacity = baseOpacity * progressIn;
+          break;
+        case 'fade-out':
+          opacity = baseOpacity * progressOut;
+          break;
+        case 'slide-in':
+          translateX = (1 - progressIn) * 24;
+          break;
+        case 'slide-out':
+          translateX = (1 - progressOut) * -24;
+          break;
+        case 'zoom-in':
+          scale = baseScale * (0.85 + 0.15 * progressIn);
+          break;
+        case 'zoom-out':
+          scale = baseScale * (0.85 + 0.15 * progressOut);
+          break;
+        default:
+          break;
+      }
+    }
+
+    const transform = `translate(${translateX}px, ${translateY}px) rotate(${baseRotation}deg) scale(${scale})`;
+
+    return { opacity, transform };
+  };
+
+  const audioClips = useMemo(() => {
+    return tracks.flatMap((track) =>
+      track.clips
+        .filter((clip) => clip.type === 'audio' || track.type === 'audio')
+        .map((clip) => ({
+          ...clip,
+          muted: track.muted || clip.muted,
+          volume: clip.volume ?? track.volume ?? 1,
+          src: resolveMediaSource(clip.content, clip.properties),
+        }))
+    );
+  }, [tracks]);
+
+  const activeVisualClips = useMemo(() => {
+    return tracks.flatMap((track, trackIndex) =>
+      track.clips
+        .filter((clip) => clip.type !== 'audio')
+        .map((clip) => ({ clip, track, trackIndex }))
+        .filter(({ clip }) => currentTime >= clip.startTime && currentTime < clip.startTime + clip.duration)
+        .filter(({ track }) => track.visible)
+    ).sort((a, b) => a.trackIndex - b.trackIndex);
+  }, [tracks, currentTime]);
+
+  useEffect(() => {
+    audioClips.forEach((clip) => {
+      if (!clip.src) return;
+      const audio = audioRefs.current.get(clip.id);
+      if (!audio) return;
+      const isActive = currentTime >= clip.startTime && currentTime < clip.startTime + clip.duration;
+      const shouldPlay = isPlaying && isActive && !clip.muted;
+
+      audio.volume = Math.min(Math.max(clip.volume ?? 1, 0), 1);
+
+      if (shouldPlay) {
+        const targetTime = Math.max(0, currentTime - clip.startTime);
+        if (Math.abs(audio.currentTime - targetTime) > 0.25) {
+          audio.currentTime = targetTime;
+        }
+        if (audio.paused) {
+          void audio.play().catch(() => undefined);
+        }
+      } else if (!audio.paused) {
+        audio.pause();
+      }
+    });
+  }, [audioClips, currentTime, isPlaying]);
+
+  return (
+    <div className="w-full h-full bg-black text-white relative overflow-hidden">
+      {activeVisualClips.length === 0 && (
+        <div className="absolute inset-0 flex items-center justify-center text-sm text-gray-500">
+          Nenhum elemento ativo no tempo atual
+        </div>
+      )}
+
+      {activeVisualClips.map(({ clip }) => {
+        const baseStyle = getElementBaseStyle(clip);
+        const animationStyle = getAnimationStyle(clip);
+        const textColor = clip.properties?.color ?? '#ffffff';
+        const fontSize = clip.properties?.fontSize ?? 32;
+        const fontFamily = clip.properties?.fontFamily ?? 'Arial';
+        const source = resolveMediaSource(clip.content, clip.properties);
+        const isAvatar = clip.type === 'avatar' || clip.type === 'avatar-3d';
+
+        return (
+          <div
+            key={clip.id}
+            className="absolute flex items-center justify-center"
+            style={{
+              ...baseStyle,
+              opacity: animationStyle.opacity,
+              transform: animationStyle.transform,
+            }}
+          >
+            {clip.type === 'text' && (
+              <div
+                className="text-center px-4 py-2"
+                style={{ color: textColor, fontSize, fontFamily }}
+              >
+                {clip.content || clip.name}
+              </div>
+            )}
+
+            {(clip.type === 'image' || clip.type === 'shape') && source && (
+              <img src={source} alt={clip.name} className="w-full h-full object-contain" />
+            )}
+
+            {clip.type === 'video' && source && (
+              <video src={source} className="w-full h-full object-contain" muted playsInline preload="metadata" />
+            )}
+
+            {(clip.type === 'image' || clip.type === 'shape' || clip.type === 'video') && !source && (
+              <div className="w-full h-full bg-white/10 border border-white/20 flex items-center justify-center text-xs uppercase tracking-widest text-white/60">
+                {clip.type}
+              </div>
+            )}
+
+            {isAvatar && (
+              <div className="w-full h-full rounded-full border border-pink-400/60 bg-pink-400/10 flex items-center justify-center text-xs uppercase tracking-widest text-pink-200">
+                Avatar
+              </div>
+            )}
+          </div>
+        );
+      })}
+
+      {audioClips.map((clip) =>
+        clip.src ? (
+          <audio
+            key={clip.id}
+            ref={(node) => {
+              if (node) {
+                audioRefs.current.set(clip.id, node);
+              } else {
+                audioRefs.current.delete(clip.id);
+              }
+            }}
+            src={clip.src}
+            preload="auto"
+          />
+        ) : null
+      )}
+
+      <div className="absolute bottom-3 right-3 bg-black/60 px-3 py-1 rounded text-xs">
+        {formatTimestamp(currentTime)} / {formatTimestamp(previewDuration)}
+      </div>
+      <div className="absolute top-3 left-3 bg-black/60 px-3 py-1 rounded text-xs">
+        {resolution.width}x{resolution.height}
+      </div>
+      {limitEnabled && (
+        <div className="absolute top-3 right-3 bg-purple-600/20 border border-purple-500/40 px-3 py-1 rounded text-xs text-purple-200">
+          Preview {Math.min(duration, limitSeconds)}s
+        </div>
+      )}
+    </div>
+  );
 };
 
 // Timeline Element Component with Drag Support

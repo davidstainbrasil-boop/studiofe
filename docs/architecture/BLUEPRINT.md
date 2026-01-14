@@ -1,7 +1,7 @@
 # Blueprint de Arquitetura — MVP Vídeos TécnicoCursos v7
 
 > **Fonte de verdade (app)**: `estudio_ia_videos/`  
-> **App Router (Next.js)**: `estudio_ia_videos/app/`  
+> **App Router (Next.js)**: `estudio_ia_videos/src/app/`  
 > **Objetivo**: modularizar por domínios, eliminar acoplamento com `../lib` (raiz) e tornar dependências previsíveis.
 
 ---
@@ -57,33 +57,16 @@
 
 ## 3) Estrutura de pastas recomendada (alvo)
 
-> Migração incremental: manter `estudio_ia_videos/app/lib/*` no curto prazo, mas evoluir para `estudio_ia_videos/src/*`.
+> Estrutura operacional atual: `estudio_ia_videos/src/*`.
 
 ```text
 estudio_ia_videos/
-  app/                 # Next.js App Router (routes + pages + api)
-  src/                 # Código de aplicação (fora de rotas)
-    modules/
-      pptx/
-      render/
-      video-jobs/
-      auth-rbac/
-      analytics/
-      storage/
-    infra/
-      supabase/
-      redis/
-      ffmpeg/
-      providers/
-    core/
-      config/
-      errors/
-      logger/
-      validation/
-    shared/
-      types/
-      utils/
-      constants/
+  src/
+    app/               # Next.js App Router (routes + pages + api)
+    lib/               # Lógica de negócio (domínios + services)
+    components/
+    hooks/
+    types/
   tests/
 ```
 
@@ -93,25 +76,25 @@ estudio_ia_videos/
 
 > Owner aqui é o “lugar canônico” do código do domínio. Rotas importam do owner; owners não importam rotas.
 
-1. **video-jobs** (`estudio_ia_videos/app/lib/video-jobs/*`)
+1. **video-jobs** (`estudio_ia_videos/src/lib/video-jobs/*`)
    1. Contratos Zod (query/body)
    2. Parsers/compat de payload
    3. Métricas simples (rate-limit hits, errors)
 
-2. **render** (`estudio_ia_videos/app/lib/render/*`)
+2. **render** (`estudio_ia_videos/src/lib/render/*`)
    1. Job manager
    2. Worker/BullMQ
    3. FFmpeg executor
 
-3. **pptx** (`estudio_ia_videos/app/lib/pptx/*`)
+3. **pptx** (`estudio_ia_videos/src/lib/pptx/*`)
    1. Upload + parser real (JSZip)
    2. Extrações e persistência
 
-4. **auth/rbac** (`estudio_ia_videos/app/lib/auth/*` e/ou `rbac.ts`)
+4. **auth/rbac** (`estudio_ia_videos/src/lib/auth/*` e/ou `rbac.ts`)
    1. Sessão
    2. Verificação de permissões
 
-5. **storage** (`estudio_ia_videos/app/lib/storage/*`)
+5. **storage** (`estudio_ia_videos/src/lib/storage/*`)
    1. Upload/list/remove
    2. Signed URLs
 
@@ -119,7 +102,7 @@ estudio_ia_videos/
 
 ## 5) Regras de dependência (enforcement)
 
-1. `app/api/**` pode importar de:
+1. `src/app/api/**` pode importar de:
    1. `@lib/**` (domínio + app services)
    2. `@/lib/**` (enquanto coexistir, mas **preferir** `@lib/**` para domínios bem definidos)
 
@@ -128,7 +111,7 @@ estudio_ia_videos/
       1. `@lib/<modulo>/**` (mesmo módulo)
       2. `@lib/shared/**` (quando existir)
       3. `@/lib/logger` / observability (se necessário)
-   2. Não pode importar de `app/api/**`.
+   2. Não pode importar de `src/app/api/**`.
 
 3. Client-side (`'use client'`):
    1. **Proibido** importar infra (Supabase server/service role, Redis, FFmpeg, filesystem).
@@ -138,12 +121,12 @@ estudio_ia_videos/
 ## 6) Checklist de validação final (arquitetura)
 
 1. **Imports proibidos**
-   1. Nenhum `../lib` a partir de `estudio_ia_videos/app/**`.
+   1. Nenhum `../lib` a partir de `estudio_ia_videos/src/app/**`.
    2. Nenhum `~lib/*`.
 
 2. **Aliases consistentes**
-   1. `@lib/*` aponta para `estudio_ia_videos/app/lib/*`.
-   2. `@/*` aponta para `estudio_ia_videos/app/*`.
+   1. `@lib/*` aponta para `estudio_ia_videos/src/lib/*`.
+   2. `@/*` aponta para `estudio_ia_videos/src/*`.
 
 3. **Gates**
    1. `npm run lint` passa.

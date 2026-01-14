@@ -1,0 +1,17 @@
+[
+  {
+    "id": "TC001",
+    "title": "pptx upload file validation and storage",
+    "description": "Test the /api/pptx/upload endpoint to verify that PPTX files are correctly validated for format and size, properly uploaded, and stored in Supabase Storage. Also verify error handling for invalid files and upload failures."
+  },
+  {
+    "id": "TC002",
+    "title": "start rendering job with valid project and slides",
+    "description": "Test the /api/render/start endpoint to ensure that a rendering job is successfully started when provided with a valid projectId, slides array, and configuration. Verify that the job is enqueued in BullMQ and returns a 200 response."
+  },
+  {
+    "id": "TC003",
+    "title": "start rendering job with invalid project id",
+    "description": "Test the /api/render/start endpoint with an invalid or non-existent projectId to verify that the API returns a 404 response indicating the project was not found."
+  }
+]

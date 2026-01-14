@@ -1,6 +1,6 @@
 // TODO: Fixar return type async function Promise<string>
 /**
- * E2E Test Helpers
+ * E2E Test Helpers (Updated for Real Auth)
  *
  * Funções auxiliares para testes E2E
  */

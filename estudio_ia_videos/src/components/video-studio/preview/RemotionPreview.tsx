@@ -43,7 +43,7 @@ export function RemotionPreview({
                 compositionHeight={compositionHeight}
                 style={{ width: '100%', height: '100%' }}
                 controls
-                currentFrame={Math.round(currentTime * 30)}
+                controls
             />
         </div>
     );

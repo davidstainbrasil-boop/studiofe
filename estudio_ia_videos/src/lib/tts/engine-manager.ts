@@ -1,8 +1,10 @@
 /**
  * TTS Engine Manager
  * Gerencia múltiplos engines de Text-to-Speech
+ * IMPLEMENTAÇÃO REAL - delega para tts-service.ts
  */
 import { logger } from '@lib/logger';
+import { synthesizeToFile, type TTSOptions as ServiceTTSOptions } from './tts-service';
 
 export interface TTSEngine {
   name: string;
@@ -69,8 +71,36 @@ export class EngineManager {
   
   async synthesize(text: string, engineName?: string, options?: TTSOptions): Promise<Buffer> {
     logger.info(`[TTS] Synthesizing with engine: ${engineName || 'default'}`, { component: 'EngineManager' });
-    // Placeholder - retornar buffer vazio
-    return Buffer.from([]);
+    
+    // Try registered engine first
+    if (engineName && this.engines.has(engineName)) {
+      const engine = this.engines.get(engineName)!;
+      try {
+        return await engine.synthesize(text, options);
+      } catch (error) {
+        logger.warn(`Engine ${engineName} failed, falling back to tts-service`, { error });
+      }
+    }
+    
+    // Fallback to tts-service.ts (REAL implementation)
+    const serviceOptions: ServiceTTSOptions = {
+      text,
+      voiceId: options?.voice,
+      speed: options?.speed,
+      pitch: options?.pitch,
+      language: options?.language,
+    };
+    
+    const result = await synthesizeToFile(serviceOptions);
+    
+    // Download audio to buffer (for compatibility with interface)
+    const response = await fetch(result.fileUrl);
+    if (!response.ok) {
+      throw new Error(`Failed to download audio: ${response.status}`);
+    }
+    
+    const arrayBuffer = await response.arrayBuffer();
+    return Buffer.from(arrayBuffer);
   }
   
   getAvailableEngines(): string[] {
@@ -79,6 +109,7 @@ export class EngineManager {
 
   /**
    * Generate speech with full options and result metadata
+   * REAL implementation using tts-service.ts
    */
   async generateSpeech(options: TTSGenerationOptions): Promise<TTSGenerationResult> {
     const startTime = Date.now();
@@ -86,15 +117,25 @@ export class EngineManager {
     
     logger.info(`[TTS] Generating speech for job ${jobId}`, { component: 'EngineManager' });
     
-    // Placeholder implementation
+    // Use REAL tts-service
+    const serviceOptions: ServiceTTSOptions = {
+      text: options.text,
+      voiceId: options.voice_id,
+      language: options.language,
+      speed: options.speed,
+      pitch: options.pitch,
+    };
+    
+    const result = await synthesizeToFile(serviceOptions);
+    
     return {
-      audio_url: `/api/tts/audio/${jobId}`,
-      duration: options.text.length * 0.05, // rough estimate
+      audio_url: result.fileUrl,
+      duration: result.duration,
       visemes: [],
       metadata: {
         job_id: jobId,
-        engine: options.engine || 'default',
-        voice_id: options.voice_id,
+        engine: result.provider || options.engine || 'default',
+        voice_id: result.voiceId,
         generation_time: Date.now() - startTime,
         cache_hit: false,
       },

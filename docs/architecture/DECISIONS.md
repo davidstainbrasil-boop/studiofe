@@ -45,6 +45,39 @@
 
 ---
 
+## DEC-004 — Adotar `src/app` e `src/lib` como base operacional
+
+1. **Contexto**
+   1. O código atual está em `estudio_ia_videos/src/*` (App Router em `src/app` e domínio em `src/lib`).
+   2. A documentação ainda referenciava `estudio_ia_videos/app/*`, gerando divergência operacional.
+
+2. **Decisão**
+   1. Tratar `estudio_ia_videos/src/app` como raiz do App Router.
+   2. Tratar `estudio_ia_videos/src/lib` como base dos módulos e serviços.
+   3. Atualizar documentação de arquitetura para refletir essa estrutura.
+
+3. **Consequências**
+   1. Aliases e regras de importação devem apontar para `src/*`.
+   2. A validação arquitetural passa a considerar `src/app/**` como escopo de rotas.
+
+---
+
+## DEC-005 — Expor parsers PPTX em `src/lib/pptx/*` via wrappers
+
+1. **Contexto**
+   1. Os parsers reais vivem em `estudio_ia_videos/src/lib/pptx/parsers/*`.
+   2. Referencias externas esperam imports em `@/lib/pptx/layout-parser` e `@/lib/pptx/notes-parser`.
+
+2. **Decisao**
+   1. Criar wrappers em `estudio_ia_videos/src/lib/pptx/layout-parser.ts` e `estudio_ia_videos/src/lib/pptx/notes-parser.ts`.
+   2. Reexportar classes e tipos dos parsers internos sem duplicar logica.
+
+3. **Consequencias**
+   1. Import paths canonicamente estaveis para consumidores externos.
+   2. Manter implementacao centralizada em `parsers/*`.
+
+---
+
 ## Observação operacional (Codacy/MCP)
 
 Durante esta sessão, o analisador automático falhou com `wsl --status` (indicando ambiente do MCP inconsistente com Linux). A organização segue, mas é recomendado corrigir o MCP para garantir análise contínua em CI/local.

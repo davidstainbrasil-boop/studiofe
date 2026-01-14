@@ -6,10 +6,11 @@
 import { WebSocketServer, WebSocket } from 'ws'
 import { createServer } from 'http'
 import { parse } from 'url'
-import { createRenderWorker, createRenderQueueEvents } from './lib/queue/render-queue'
-import type { RenderProgress } from './lib/video/renderer'
+import { createRenderWorker, createRenderQueueEvents } from '@lib/queue/render-queue'
+import type { RenderProgress } from '@lib/video/renderer'
 import type { Job } from 'bullmq'
-import type { RenderTaskPayload, RenderTaskResult } from './lib/queue/types'
+import type { RenderTaskPayload, RenderTaskResult } from '@lib/queue/types'
+import { logger } from '@lib/logger'
 
 interface ConnectedMessage {
   type: 'connected'
@@ -162,7 +163,7 @@ export function startWebSocketServer() {
       return
     }
 
-    console.log(`WebSocket connected for job: ${jobId}`)
+    logger.info('WebSocket connected for job', { jobId, scope: 'ws' })
 
     // Adicionar cliente ao mapa
     if (!connections.has(jobId)) {
@@ -188,7 +189,7 @@ export function startWebSocketServer() {
 
     // Disconnect
     ws.on('close', () => {
-      console.log(`WebSocket disconnected for job: ${jobId}`)
+      logger.info('WebSocket disconnected for job', { jobId, scope: 'ws' })
       connections.get(jobId)?.delete(ws)
       
       // Limpar set vazio
@@ -200,17 +201,17 @@ export function startWebSocketServer() {
     })
 
     ws.on('error', (error) => {
-      console.error(`WebSocket error for job ${jobId}:`, error)
+      logger.error('WebSocket error for job', error as Error, { jobId, scope: 'ws' })
     })
   })
 
   server.listen(PORT, () => {
-    console.log(`✅ WebSocket server running on port ${PORT}`)
+    logger.info('WebSocket server running', { port: PORT, scope: 'ws' })
   })
 
   // Graceful shutdown
   process.on('SIGTERM', async () => {
-    console.log('Shutting down WebSocket server...')
+    logger.info('Shutting down WebSocket server...', { scope: 'ws' })
     
     wss.clients.forEach((client) => {
       client.close()
@@ -220,7 +221,7 @@ export function startWebSocketServer() {
     await queueEvents.close()
     
     server.close(() => {
-      console.log('WebSocket server closed')
+      logger.info('WebSocket server closed', { scope: 'ws' })
       process.exit(0)
     })
   })

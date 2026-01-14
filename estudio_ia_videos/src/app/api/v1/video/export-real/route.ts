@@ -183,18 +183,45 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    // Em uma implementação real, cancelaria o processo FFmpeg
-    // Por enquanto, apenas marcamos como cancelado no banco
-    
+    // Verify job exists
+    const job = await prisma.video_exports.findUnique({
+        where: { id: jobId }
+    });
+
+    if (!job) {
+        return NextResponse.json({ error: 'Job não encontrado' }, { status: 404 });
+    }
+
     logger.info(`🛑 Cancelando job de exportação: ${jobId}`, { component: 'API: v1/video/export-real' })
 
-    // Aqui seria implementada a lógica de cancelamento real
-    // incluindo parar processos FFmpeg em andamento
+    // Update status to cancelled
+    await prisma.video_exports.update({
+        where: { id: jobId },
+        data: { 
+            status: 'cancelled',
+            errorMessage: 'Cancelado pelo usuário',
+            updatedAt: new Date()
+        }
+    });
+    
+    // Also try to update processing_queue if it exists (linked by jobId or jobData)
+    try {
+        await prisma.processing_queue.updateMany({
+             where: { 
+                 jobData: { path: ['videoExportId'], equals: jobId },
+                 status: { in: ['pending', 'processing', 'queued'] }
+             },
+             data: { status: 'cancelled' }
+        });
+    } catch (e) {
+        logger.warn('Failed to cancel related queue item', { jobId });
+    }
 
     return NextResponse.json({
       success: true,
-      message: `Job ${jobId} cancelado`,
-      jobId
+      message: `Job ${jobId} cancelado com sucesso`,
+      jobId,
+      status: 'cancelled'
     })
 
   } catch (error) {

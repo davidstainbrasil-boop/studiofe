@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { UploadManager } from '@lib/upload/upload-manager';
 import { NotificationManager } from '@lib/notifications/notification-manager';
 import { logger } from '@lib/logger';
+import { getSupabaseForRequest } from '@lib/supabase/server';
 
 export async function POST(request: NextRequest) {
   try {
@@ -65,6 +66,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Iniciar upload com configurações
+    const supabase = getSupabaseForRequest(request);
     const uploadManager = new UploadManager();
     const result = await uploadManager.uploadFile(file, '/api/storage/upload', {
       enableNotifications,
@@ -74,6 +76,7 @@ export async function POST(request: NextRequest) {
       maxRetries: 3,
       enableCompression: true,
       compressionQuality: 0.8,
+      supabaseClient: supabase,
       metadata: {
         originalName: file.name,
         uploadedBy: userId,

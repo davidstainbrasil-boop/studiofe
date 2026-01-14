@@ -2,16 +2,23 @@
 import { SupabaseClient, createClient } from '@supabase/supabase-js';
 import { Database } from '@/types/supabase';
 import { logger } from '@/lib/monitoring/logger';
-import { parseOffice } from 'officeparser';
+import JSZip from 'jszip';
+import { PPTXParser } from './pptx-parser';
+import { PPTXTextParser } from './parsers/text-parser';
+import { PPTXImageParser } from './parsers/image-parser';
+import { PPTXNotesParser } from './parsers/notes-parser';
+import { processAdvancedPPTX, AdvancedSlideData } from './pptx-processor-advanced';
 
 // Tipos de entrada e saída
 export interface PptxProcessOptions {
   storagePath: string;
+  extractImages?: boolean;
+  extractNotes?: boolean;
 }
 
 export interface PptxProcessResult {
   slideCount: number;
-  content: any; // O AST retornado pelo officeparser
+  content: AdvancedSlideData[];
 }
 
 /**
@@ -39,13 +46,13 @@ export class PptxProcessor {
     // 1. Baixar o arquivo do Supabase Storage
     const fileBuffer = await this.downloadFile(storagePath);
 
-    // 2. Fazer o parsing do buffer do arquivo
-    const content = await this.parsePptx(fileBuffer);
+    // 2. Fazer o parsing do buffer do arquivo usando processamento avançado
+    const content = await this.parsePptx(fileBuffer, options);
 
     logger.info(`Arquivo PPTX processado com sucesso: ${storagePath}`);
 
     return {
-      slideCount: content.slides.length, // Exemplo, a estrutura real do AST precisa ser verificada
+      slideCount: content.length,
       content: content,
     };
   }
@@ -71,19 +78,42 @@ export class PptxProcessor {
   }
 
   /**
-   * Usa o officeparser para extrair o conteúdo de um buffer de arquivo .pptx.
+   * Usa o parser avançado para extrair o conteúdo de um buffer de arquivo .pptx.
    * @param fileBuffer - O buffer do arquivo.
-   * @returns O AST (Abstract Syntax Tree) do conteúdo do arquivo.
+   * @param options - Opções de extração
+   * @returns Slides processados
    */
-  private async parsePptx(fileBuffer: Buffer): Promise<any> {
+  private async parsePptx(fileBuffer: Buffer, options: PptxProcessOptions): Promise<AdvancedSlideData[]> {
     try {
       logger.info('Iniciando o parsing do buffer do arquivo PPTX.');
-      const ast = await parseOffice(fileBuffer);
+      
+      // Use advanced processor
+      const slides = await processAdvancedPPTX(fileBuffer, {
+        extractImages: options.extractImages ?? true,
+        extractNotes: options.extractNotes ?? true,
+      });
+
+      // Optional: Enrich further if needed
+      await this.enrichSlidesWithAdvancedData(slides, fileBuffer);
+
       logger.info('Parsing do PPTX concluído.');
-      return ast;
+      return slides;
     } catch (error) {
       logger.error('Erro durante o parsing do arquivo PPTX', error instanceof Error ? error : new Error(String(error)));
       throw new Error('Falha ao fazer o parsing do conteúdo do arquivo .pptx.');
     }
   }
+
+  /**
+   * Função auxiliar para enriquecimento adicional (mantida para compatibilidade e extensão)
+   */
+  private async enrichSlidesWithAdvancedData(slides: AdvancedSlideData[], buffer: Buffer) {
+    const zip = await JSZip.loadAsync(buffer);
+    // Placeholder for any post-processing logic not covered by processAdvancedPPTX
+    // Example: uploading images to CDN, generating specific metadata
+    return slides;
+  }
 }
+
+// Export parsers for reuse if needed
+export { PPTXTextParser, PPTXImageParser, PPTXNotesParser };

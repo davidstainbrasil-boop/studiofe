@@ -5,11 +5,11 @@ import { useAdvancedEditor, EditorLayer, Keyframe, TimelineMarker } from '@hooks
 import { Button } from '@components/ui/button';
 import { Slider } from '@components/ui/slider';
 import { Badge } from '@components/ui/badge';
-import { 
-  Play, 
-  Pause, 
-  Square, 
-  SkipBack, 
+import {
+  Play,
+  Pause,
+  Square,
+  SkipBack,
   SkipForward,
   Volume2,
   VolumeX,
@@ -46,7 +46,7 @@ interface TimelineAdvancedProps {
 interface DragState {
   isDragging: boolean;
   dragType: 'layer' | 'keyframe' | 'marker' | 'playhead' | 'selection' | 'clip' | 'effect';
-  dragData: { id?: string; type?: string; [key: string]: unknown } | null;
+  dragData: any;
   startX: number;
   startTime: number;
   currentX: number;
@@ -66,7 +66,7 @@ export const TimelineAdvanced: React.FC<TimelineAdvancedProps> = ({
     startTime: 0,
     currentX: 0,
   });
-  
+
   const [selectedItems, setSelectedItems] = useState<{
     layers: string[];
     keyframes: string[];
@@ -82,7 +82,7 @@ export const TimelineAdvanced: React.FC<TimelineAdvancedProps> = ({
     x: number;
     y: number;
     type: string;
-    data: { id?: string; type?: string; [key: string]: unknown } | null;
+    data: any;
   }>({
     visible: false,
     x: 0,
@@ -149,7 +149,7 @@ export const TimelineAdvanced: React.FC<TimelineAdvancedProps> = ({
   }, []);
 
   // Mouse event handlers
-  const handleMouseDown = useCallback((e: React.MouseEvent, type: string, data: { id?: string; type?: string; [key: string]: unknown } | null) => {
+  const handleMouseDown = useCallback((e: React.MouseEvent, type: string, data: any) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -207,7 +207,7 @@ export const TimelineAdvanced: React.FC<TimelineAdvancedProps> = ({
           const layer = dragState.dragData as EditorLayer;
           const newStartTime = snapTime(Math.max(0, layer.metadata.startTime + deltaTime));
           const newEndTime = newStartTime + layer.metadata.duration;
-          
+
           if (newEndTime <= editor.timeline.duration) {
             editor.updateLayer(layer.id, {
               metadata: {
@@ -242,7 +242,7 @@ export const TimelineAdvanced: React.FC<TimelineAdvancedProps> = ({
     setDragState(prev => ({ ...prev, isDragging: false }));
   }, []);
 
-  const handleContextMenu = useCallback((e: React.MouseEvent, type: string, data: { id?: string; type?: string; [key: string]: unknown } | null) => {
+  const handleContextMenu = useCallback((e: React.MouseEvent, type: string, data: any) => {
     e.preventDefault();
     setContextMenu({
       visible: true,
@@ -262,7 +262,7 @@ export const TimelineAdvanced: React.FC<TimelineAdvancedProps> = ({
     const clickX = e.clientX - rect.left;
     const clickTime = pixelsToTime(clickX);
     const snappedTime = snapTime(Math.max(0, Math.min(clickTime, editor.timeline.duration)));
-    
+
     editor.setCurrentTime(snappedTime);
   }, [dragState.isDragging, pixelsToTime, snapTime, editor]);
 
@@ -324,7 +324,7 @@ export const TimelineAdvanced: React.FC<TimelineAdvancedProps> = ({
         {Array.from({ length: majorTicks + 1 }, (_, i) => {
           const time = i;
           const x = timeToPixels(time * 1000);
-          
+
           return (
             <div
               key={`major-${i}`}
@@ -342,7 +342,7 @@ export const TimelineAdvanced: React.FC<TimelineAdvancedProps> = ({
         {Array.from({ length: Math.floor(minorTicks) }, (_, i) => {
           const time = (i + 1) * 0.1;
           const x = timeToPixels(time * 1000);
-          
+
           if (i % 10 !== 9) { // Skip major tick positions
             return (
               <div
@@ -439,7 +439,7 @@ export const TimelineAdvanced: React.FC<TimelineAdvancedProps> = ({
             {layer.metadata.compliance.warnings.length > 0 && (
               <AlertTriangle className="w-3 h-3 text-yellow-500" />
             )}
-            
+
             {layer.metadata.compliance.safetyRating >= 90 && (
               <CheckCircle className="w-3 h-3 text-green-500" />
             )}
@@ -533,22 +533,22 @@ export const TimelineAdvanced: React.FC<TimelineAdvancedProps> = ({
     switch (contextMenu.type) {
       case 'layer':
         menuItems.push(
-          { label: 'Duplicar', action: () => editor.duplicateLayer(contextMenu.data.id) },
-          { label: 'Remover', action: () => editor.removeLayer(contextMenu.data.id) },
-          { label: 'Dividir', action: () => {} },
-          { label: 'Propriedades', action: () => {} },
+          { label: 'Duplicar', action: () => editor.duplicateLayer(contextMenu.data?.id) },
+          { label: 'Remover', action: () => editor.removeLayer(contextMenu.data?.id) },
+          { label: 'Dividir', action: () => { } },
+          { label: 'Propriedades', action: () => { } },
         );
         break;
       case 'keyframe':
         menuItems.push(
-          { label: 'Remover', action: () => editor.removeKeyframe(contextMenu.data.layerId, contextMenu.data.keyframe.id) },
-          { label: 'Editar', action: () => {} },
+          { label: 'Remover', action: () => editor.removeKeyframe(contextMenu.data?.layerId, contextMenu.data?.keyframe?.id) },
+          { label: 'Editar', action: () => { } },
         );
         break;
       case 'marker':
         menuItems.push(
-          { label: 'Editar', action: () => {} },
-          { label: 'Remover', action: () => editor.removeMarker(contextMenu.data.id) },
+          { label: 'Editar', action: () => { } },
+          { label: 'Remover', action: () => editor.removeMarker(contextMenu.data?.id) },
         );
         break;
     }
@@ -670,7 +670,7 @@ export const TimelineAdvanced: React.FC<TimelineAdvancedProps> = ({
       </div>
 
       {/* Timeline content */}
-      <div 
+      <div
         ref={timelineRef}
         className="relative overflow-auto"
         style={{ height: height - 48 }}
@@ -680,7 +680,7 @@ export const TimelineAdvanced: React.FC<TimelineAdvancedProps> = ({
         onClick={handleTimelineClick}
       >
         {renderTimeRuler()}
-        
+
         <div className="relative">
           {editor.layers.map((layer, index) => renderLayerTrack(layer, index))}
         </div>

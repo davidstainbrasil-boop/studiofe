@@ -44,7 +44,7 @@ export default defineConfig({
       NODE_ENV: 'test',
       E2E_TEST: 'true',
       PLAYWRIGHT_TEST: 'true',
-      DEV_BYPASS: 'true',
+      // DEV_BYPASS removed for security
       DISABLE_SUPABASE_REALTIME: 'true',
       DISABLE_SENTRY: 'true',
       DISABLE_ANALYTICS: 'true',

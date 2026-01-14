@@ -4,6 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import { randomUUID } from 'crypto'
 import { logger } from '@lib/logger'
 import { prisma } from '@lib/prisma'
 import { PPTXProcessor } from '@lib/pptx/pptx-processor'
@@ -12,6 +13,7 @@ import { getSupabaseForRequest } from '@lib/supabase/server'
 
 export async function POST(request: NextRequest) {
   try {
+    const startTime = Date.now();
     // Verify authentication
     const supabase = getSupabaseForRequest(request)
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -32,6 +34,32 @@ export async function POST(request: NextRequest) {
       )
     }
     
+    // Verify or create job record
+    let jobRecord = await prisma.processing_queue.findFirst({
+        where: { jobData: { path: ['jobId'], equals: jobId } }
+    });
+
+    if (!jobRecord) {
+        // Create initial record
+        jobRecord = await prisma.processing_queue.create({
+            data: {
+                id: randomUUID(),
+                jobType: 'pptx_process',
+                status: 'processing',
+                priority: 5,
+                progress: 0,
+                jobData: { jobId, s3Key, startedAt: new Date().toISOString() },
+                scheduledFor: new Date()
+            }
+        });
+    } else {
+        // Update existing
+        await prisma.processing_queue.update({
+             where: { id: jobRecord.id },
+             data: { status: 'processing', progress: 10, updatedAt: new Date() }
+        });
+    }
+    
     logger.info('🔄 Starting PPTX processing:', { component: 'API: v1/pptx/process-production', s3Key, jobId })
     
     // Download file from S3
@@ -41,6 +69,12 @@ export async function POST(request: NextRequest) {
     if (!downloadResult.success || !downloadResult.buffer) {
       throw new Error(`Failed to download file: ${downloadResult.error}`)
     }
+    
+    // Update progress
+    await prisma.processing_queue.update({
+        where: { id: jobRecord.id },
+        data: { progress: 30, currentStep: 'downloaded' }
+    });
     
     logger.info(`📦 File downloaded: ${downloadResult.buffer.length} bytes`, { component: 'API: v1/pptx/process-production' })
     
@@ -88,16 +122,42 @@ export async function POST(request: NextRequest) {
       }
     }
     
+    // Update DB with success
+    await prisma.processing_queue.update({
+        where: { id: jobRecord.id },
+        data: { 
+            status: 'completed', 
+            progress: 100, 
+            currentStep: 'finished',
+            jobData: { ...(jobRecord.jobData as object), result: processedData as any }
+        }
+    });
+    
     // Return processed data
     return NextResponse.json({
       success: true,
       data: processedData,
       message: 'Processamento concluído com sucesso',
-      processingTime: Date.now() - Date.now() // Placeholder for actual timing
+      processingTime: Date.now() - startTime
     })
     
   } catch (error) {
     logger.error('Processing API Error:', error instanceof Error ? error : new Error(String(error)), { component: 'API: v1/pptx/process-production' })
+    
+    // Try to update error status if jobId is available
+    try {
+        const { jobId } = await request.clone().json().catch(() => ({ jobId: null }));
+        if (jobId) {
+             const job = await prisma.processing_queue.findFirst({ where: { jobData: { path: ['jobId'], equals: jobId } } });
+             if (job) {
+                 await prisma.processing_queue.update({
+                     where: { id: job.id },
+                     data: { status: 'failed', errorMessage: error instanceof Error ? error.message : 'Unknown error' }
+                 });
+             }
+        }
+    } catch (e) { /* ignore */ }
+    
     return NextResponse.json(
       { 
         error: 'Erro durante o processamento',
@@ -121,12 +181,20 @@ export async function GET(request: NextRequest) {
   }
   
   try {
-    // In a real implementation, you would query the job status from database/cache
+    const jobRecord = await prisma.processing_queue.findFirst({
+        where: { jobData: { path: ['jobId'], equals: jobId } }
+    });
+
+    if (!jobRecord) {
+        return NextResponse.json({ success: false, error: 'Job not found' }, { status: 404 });
+    }
+
     return NextResponse.json({
       success: true,
-      status: 'completed',
-      progress: 100,
-      message: 'Processamento concluído'
+      status: jobRecord.status === 'failed' ? 'error' : jobRecord.status,
+      progress: jobRecord.progress,
+      message: jobRecord.status === 'completed' ? 'Processamento concluído' : 'Em andamento',
+      data: jobRecord.status === 'completed' ? (jobRecord.jobData as any).result : null
     })
     
   } catch (error) {

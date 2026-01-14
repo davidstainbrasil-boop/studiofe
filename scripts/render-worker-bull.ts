@@ -30,6 +30,7 @@ interface RenderTaskResult {
 
 // Configuration
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
+logger.info(`🔌 Connecting to Redis at: ${REDIS_URL}`);
 const QUEUE_NAME = process.env.RENDER_QUEUE_NAME || 'render-jobs';
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -225,7 +226,7 @@ const processJob = async (job: Job<RenderTaskPayload, RenderTaskResult>) => {
         const escapedProps = JSON.stringify(inputProps).replace(/"/g, '\\"');
         
         // Execute Remotion
-        const remotionCommand = `npx remotion render app/remotion/index.ts MyVideo "${outputFilePath}" --props="${escapedProps}"`;
+        const remotionCommand = `npx remotion render src/app/remotion/index.ts MyVideo "${outputFilePath}" --props="${escapedProps}"`;
         await execPromise(remotionCommand, { 
             cwd: path.join(process.cwd(), 'estudio_ia_videos'),
             maxBuffer: 1024 * 1024 * 10 

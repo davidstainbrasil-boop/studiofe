@@ -24,19 +24,7 @@ export async function GET(request: NextRequest) {
     
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     
-    // [DEV] Bypass check
-    const isDevBypass = request.cookies.get('dev_bypass')?.value === 'true'
-    if (isDevBypass && !user) {
-        // Return Mock Data for Dev Bypass
-        return NextResponse.json({
-            totalProjects: 5,
-            activeRenders: 1,
-            completedToday: 2,
-            totalViews: 1234,
-            avgRenderTime: 2,
-            systemHealth: 'healthy'
-        })
-    }
+
     
     if (authError || !user) {
       return NextResponse.json(
@@ -69,7 +57,7 @@ export async function GET(request: NextRequest) {
 
     if (userProjectsError) throw userProjectsError
 
-    const projectIds = userProjects?.map(p => p.id) ?? []
+    const projectIds = userProjects?.map((p: { id: string }) => p.id) ?? []
     
     let activeRenders = 0
     let completedToday = 0
@@ -111,7 +99,7 @@ export async function GET(request: NextRequest) {
       if (recentJobsError) throw recentJobsError
 
       if (recentJobs && recentJobs.length > 0) {
-        const totalDurationMs = recentJobs.reduce((acc, job) => {
+        const totalDurationMs = recentJobs.reduce((acc: number, job: any) => {
           if (!job.started_at || !job.completed_at) return acc
           const start = new Date(job.started_at).getTime()
           const end = new Date(job.completed_at).getTime()

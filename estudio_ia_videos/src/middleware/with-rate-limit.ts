@@ -17,7 +17,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit, getUserTier, RateLimitTier } from './rate-limiter';
-import { getSupabaseForRequest } from '@lib/supabase/browser';
+import { getSupabaseForRequest } from '@lib/supabase/server';
 
 export type RateLimitConfig = {
   /**

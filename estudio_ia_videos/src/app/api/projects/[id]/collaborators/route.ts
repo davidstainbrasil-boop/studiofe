@@ -6,7 +6,7 @@ import { logger } from '@lib/logger';
 interface CollaboratorRecord {
   userId: string;
   role: string;
-  createdAt: string;
+  joined_at?: string | null;
 }
 
 interface UserRecord {
@@ -64,7 +64,7 @@ export async function GET(
 
     // Check if user is collaborator
     const { data: collaboratorRecord } = await supabase
-      .from('collaborators')
+      .from('project_collaborators')
       .select('id')
       .eq("projectId", projectId)
       .eq("userId", user.id)
@@ -81,10 +81,10 @@ export async function GET(
 
     // Buscar colaboradores
     const { data: collaboratorsData, error } = await supabase
-      .from('collaborators')
+      .from('project_collaborators')
       .select(`
         id,
-        user_id,
+        userId,
         role,
         joined_at
       `)
@@ -98,8 +98,10 @@ export async function GET(
       )
     }
 
+    const collaboratorRecords = (collaboratorsData || []) as CollaboratorRecord[]
+
     // Buscar dados dos usuários colaboradores
-    const collaboratorUserIds = ((collaboratorsData as any) as CollaboratorRecord[] || []).map((c) => c.userId)
+    const collaboratorUserIds = collaboratorRecords.map((c) => c.userId)
     let usersMap: Record<string, UserRecord> = {}
     
     if (collaboratorUserIds.length > 0) {
@@ -140,7 +142,7 @@ export async function GET(
         joined_at: null
       }] : []),
       // Collaborators
-      ...(((collaboratorsData as any) as CollaboratorRecord[] || []).map((c) => {
+      ...collaboratorRecords.map((c) => {
         const userData = usersMap[c.userId] || {} as Partial<UserRecord>
         return {
           id: userData.id || c.userId,
@@ -148,9 +150,9 @@ export async function GET(
           name: userData.name || userData.email,
           avatar: userData.avatar_url,
           role: c.role || 'collaborator',
-          joined_at: (c as unknown as { joined_at?: string }).joined_at
+          joined_at: c.joined_at || null
         }
-      }) || [])
+      })
     ]
 
     return NextResponse.json({ collaborators: formattedCollaborators })
@@ -221,7 +223,7 @@ export async function POST(
 
     // Verificar se já é colaborador
     const { data: existingCollaborator } = await supabase
-      .from('collaborators')
+      .from('project_collaborators')
       .select('id')
       .eq("projectId", projectId)
       .eq("userId", targetUser.id)
@@ -236,7 +238,7 @@ export async function POST(
 
     // Adicionar colaborador
     const { error: insertError } = await supabase
-      .from('collaborators')
+      .from('project_collaborators')
       .insert({
         projectId: projectId,
         userId: targetUser.id,
@@ -356,14 +358,14 @@ export async function DELETE(
     }
 
     // Remover colaborador
-    const { error } = await supabase
-      .from('collaborators')
+    const { error: deleteError } = await supabase
+      .from('project_collaborators')
       .delete()
       .eq("projectId", projectId)
       .eq("userId", collaboratorId)
 
-    if (error) {
-      logger.error('Erro ao remover colaborador:', error instanceof Error ? error : new Error(String(error)), { component: 'API: projects/[id]/collaborators' })
+    if (deleteError) {
+      logger.error('Erro ao remover colaborador:', deleteError instanceof Error ? deleteError : new Error(String(deleteError)), { component: 'API: projects/[id]/collaborators' })
       return NextResponse.json(
         { error: 'Erro ao remover colaborador' },
         { status: 500 }

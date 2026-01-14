@@ -1,0 +1,99 @@
+========================================
+Security Audit Report
+Date: Tue Jan 13 19:31:49 UTC 2026
+========================================
+
+1. NPM AUDIT
+========================================
+# npm audit report
+
+@smithy/config-resolver  <4.4.0
+AWS SDK for JavaScript v3 adopted defense in depth enhancement for region parameter value - https://github.com/advisories/GHSA-6475-r3vj-m8vf
+fix available via `npm audit fix`
+node_modules/@smithy/config-resolver
+
+next  0.9.9 - 14.2.34
+Severity: critical
+Next.js Server-Side Request Forgery in Server Actions - https://github.com/advisories/GHSA-fr5h-rqp8-mj6g
+Next.js Cache Poisoning - https://github.com/advisories/GHSA-gp8f-8m3g-qvj9
+Denial of Service condition in Next.js image optimization - https://github.com/advisories/GHSA-g77x-44xx-532m
+Next.js Allows a Denial of Service (DoS) with Server Actions - https://github.com/advisories/GHSA-7m27-7ghc-44w9
+Information exposure in Next.js dev server due to lack of origin verification - https://github.com/advisories/GHSA-3h52-269p-cp9r
+Next.js Affected by Cache Key Confusion for Image Optimization API Routes - https://github.com/advisories/GHSA-g5qg-72qw-gw5v
+Next.js authorization bypass vulnerability - https://github.com/advisories/GHSA-7gfc-8cq8-jh5f
+Next.js Improper Middleware Redirect Handling Leads to SSRF - https://github.com/advisories/GHSA-4342-x723-ch2f
+Next.js Content Injection Vulnerability for Image Optimization - https://github.com/advisories/GHSA-xv57-4mr9-wg8v
+Next.js Race Condition to Cache Poisoning - https://github.com/advisories/GHSA-qpjv-v59x-3qc4
+Authorization Bypass in Next.js Middleware - https://github.com/advisories/GHSA-f82v-jwr5-mffw
+Next Vulnerable to Denial of Service with Server Components - https://github.com/advisories/GHSA-mwv6-3258-q52c
+Next has a Denial of Service with Server Components - Incomplete Fix Follow-Up - https://github.com/advisories/GHSA-5j59-xgg2-r9c4
+fix available via `npm audit fix --force`
+Will install next@14.2.35, which is outside the stated dependency range
+node_modules/next
+
+preact  10.28.0 - 10.28.1
+Severity: high
+Preact has JSON VNode Injection issue - https://github.com/advisories/GHSA-36hm-qxxp-pg3m
+fix available via `npm audit fix`
+node_modules/preact
+
+3 vulnerabilities (1 low, 1 high, 1 critical)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues, run:
+  npm audit fix --force
+
+2. SECRETS SCAN
+========================================
+Scanning for potential hardcoded secrets...
+./.vercel/.env.preview.local:20:VERCEL_OIDC_TOKEN="eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Im1yay00MzAyZWMxYjY3MGY0OGE5OGFkNjFkYWRlNGEyM2JlNyJ9.eyJpc3MiOiJodHRwczovL29pZGMudmVyY2VsLmNvbS90ZWNub2N1cnNvcyIsInN1YiI6Im93bmVyOnRlY25vY3Vyc29zOnByb2plY3Q6ZXN0dWRpb19pYV92aWRlb3M6ZW52aXJvbm1lbnQ6ZGV2ZWxvcG1lbnQiLCJzY29wZSI6Im93bmVyOnRlY25vY3Vyc29zOnByb2plY3Q6ZXN0dWRpb19pYV92aWRlb3M6ZW52aXJvbm1lbnQ6ZGV2ZWxvcG1lbnQiLCJhdWQiOiJodHRwczovL3ZlcmNlbC5jb20vdGVjbm9jdXJzb3MiLCJvd25lciI6InRlY25vY3Vyc29zIiwib3duZXJfaWQiOiJ0ZWFtXzRvT2trQjBKZ1Z0RDljbGpZdDBIclp6SyIsInByb2plY3QiOiJlc3R1ZGlvX2lhX3ZpZGVvcyIsInByb2plY3RfaWQiOiJwcmpfak0yYUdiZ2RWdjlrTDNNbDdOY0tLMkZRNlpYbCIsImVudmlyb25tZW50IjoiZGV2ZWxvcG1lbnQiLCJwbGFuIjoicHJvIiwidXNlcl9pZCI6IlR1ZWRiT3pQdVlsSTA2OVQ5TE9XbmhFNiIsIm5iZiI6MTc2NzY3NzM0MiwiaWF0IjoxNzY3Njc3MzQyLCJleHAiOjE3Njc3MjA1NDJ9.Dz9dnKThjwhWsYH_4vFC9wp7_MMjABhgILONwRAVeLzjNnlykdnCgHLvXpisiOdGkSTjWd3WswRdemddMYAZjpklHdWlVkYwLKHsR1IVT4Re5g2ENqYYkShH4LIg1wckR39B5wR25EVI-R2DHzSkU2lvyO7LKatzTus2JMYHofZ88MxjBEDYDZpW7B3Tq1xYzsZHrQu-1j3gIWqlyDfzJKxCRpwbBahU4zCysoWdK1EJ0RXt9SwhE1jbbMjI06fSJIOHeEZGoyp5g9YW6Uh-_LOJqSFuysti1pXbacDif4nY7SlNf8Doi0GSlc1YcZfMDBtiq-K90HSnpE3lIhx1uw"
+./.env.example:19:OPENAI_API_KEY="sk-your-openai-api-key-here"
+./.env.example:24:ELEVENLABS_API_KEY="your-elevenlabs-api-key-here"
+./.env.example:33:ENHANCEMENT_API_KEY="your-api-key-here"
+./.env.example:36:REPLICATE_API_KEY="your-replicate-api-key-here"
+./.env.example:43:SCENE_DETECTION_API_KEY="your-api-key-here"
+./.env.example:68:PEXELS_API_KEY="your-pexels-api-key-here"
+./.env.example:79:NEXTAUTH_SECRET="your-secret-key-here-generate-with-openssl"
+./.env.example:94:BULL_REDIS_PASSWORD=""
+./.env.example:103:SMTP_PASSWORD="your-app-password"
+./.env.production.template:22:REDIS_TOKEN="your-redis-token"
+./.env.production.template:40:NEXTAUTH_SECRET="your-secret-key-min-32-chars"
+./.env.production.template:46:OPENAI_API_KEY="sk-..."
+./.env.production.template:49:ELEVENLABS_API_KEY="..."
+./.env.production.template:52:HEYGEN_API_KEY="..."
+./.env.production.template:59:SENTRY_AUTH_TOKEN="..."
+./src/app/supabase/config.toml:109:auth_token = "env(SUPABASE_AUTH_TWILIO_AUTH_TOKEN)"
+./src/app/supabase/config.toml:119:secret = "env(SUPABASE_AUTH_CAPTCHA_SECRET)"
+./src/app/.env.local.template:51:ELEVENLABS_API_KEY="[YOUR-ELEVENLABS-KEY]"
+./src/app/.env.local.template:58:NEXTAUTH_SECRET="[GERE-UM-SECRET-ALEATORIO]"
+./src/app/__tests__/lib/rate-limit.test.disabled.ts:43:        const token = 'under-limit-token'
+./src/app/__tests__/lib/rate-limit.test.disabled.ts:55:        const token = 'at-limit-token'
+./src/app/__tests__/lib/rate-limit.test.disabled.ts:95:        const token = 'single-limit'
+./src/app/__tests__/lib/rate-limit.test.disabled.ts:106:        const token = 'high-limit'
+./src/app/__tests__/lib/rate-limit.test.disabled.ts:121:        const token = 'expiring-token'
+./src/app/__tests__/lib/rate-limit.test.disabled.ts:168:        const token = 'sliding-window-' + Date.now()
+./src/app/__tests__/lib/rate-limit.test.disabled.ts:215:      const token = 'performance-test'
+./src/app/__tests__/api/system-version-route.test.ts:94:    process.env.ELEVENLABS_API_KEY = 'test-key';
+./src/app/scripts/configure-supabase.ps1:122:# ELEVENLABS_API_KEY="your-elevenlabs-key"
+./src/app/scripts/configure-supabase.ps1:129:NEXTAUTH_SECRET="$(New-Guid)"
+./src/app/scripts/setup-supabase-manual.ps1:14:$password = "Tr1unf0@"
+./src/app/scripts/diagnose-supabase.ps1:14:$password = "Th@mires122"
+
+3. ENVIRONMENT FILES CHECK
+========================================
+⚠️  Warning: .env files found (ensure they're in .gitignore)
+-rw-r--r-- 1 root root  155 Jan 13 18:53 .env
+-rw-r--r-- 1 root root  969 Jan  4 00:35 .env.development
+-rw-r--r-- 1 root root 4218 Jan 13 13:17 .env.example
+-rw-r--r-- 1 root root 4410 Jan  7 14:11 .env.local
+-rw-r--r-- 1 root root 2532 Jan 13 17:59 .env.production.template
+-rw-r--r-- 1 root root  103 Jan 13 03:01 .env.staging
+-rw-r--r-- 1 root root  882 Jan  4 00:35 .env.test
+
+4. DEPENDENCY VULNERABILITIES
+========================================
+Need to install the following packages:
+  audit-ci@7.1.0
+Ok to proceed? (y) 

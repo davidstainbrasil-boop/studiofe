@@ -1,51 +1,41 @@
 import { getServiceRoleClient } from '../supabase'
 import type { CreateProjectInput, Project } from './types'
-import { getUserProjects, mockProjects } from './mockStore'
 import { Database } from '../supabase/database.types'
 import { SupabaseClient } from '@supabase/supabase-js'
 
 export async function listProjectsByOwner(ownerId: string): Promise<Project[]> {
-  try {
-    const supabase = getServiceRoleClient() as SupabaseClient<Database>
-    const { data, error } = await supabase
-      .from('projects')
-      .select('*')
-      .eq("userId", ownerId)
-      .order("createdAt", { ascending: false })
+  const supabase = getServiceRoleClient() as SupabaseClient<Database>
+  const { data, error } = await supabase
+    .from('projects')
+    .select('*')
+    .eq("userId", ownerId)
+    .order("createdAt", { ascending: false })
 
-    if (error) {
-      console.warn('Supabase projects error, using mock:', error.message)
-      return getUserProjects(ownerId) as unknown as Project[]
-    }
-
-    return (data ?? []) as unknown as Project[]
-  } catch (err) {
-    console.warn('Supabase not available, using mock projects')
-    return getUserProjects(ownerId) as unknown as Project[]
+  if (error) {
+    console.error('Supabase projects error:', error.message)
+    throw new Error(`Failed to list projects: ${error.message}`)
   }
+
+  return (data ?? []) as unknown as Project[]
 }
 
 export async function getProjectById(projectId: string): Promise<Project | null> {
-  try {
-    const supabase = getServiceRoleClient() as SupabaseClient<Database>
-    const { data, error } = await supabase
-      .from('projects')
-      .select('*')
-      .eq('id', projectId)
-      .single()
+  const supabase = getServiceRoleClient() as SupabaseClient<Database>
+  const { data, error } = await supabase
+    .from('projects')
+    .select('*')
+    .eq('id', projectId)
+    .single()
 
-    if (error && error.code !== 'PGRST116') {
-      console.warn('Supabase project error, using mock:', error.message)
-      const project = mockProjects.get(projectId)
-      return (project ?? null) as unknown as Project | null
+  if (error) {
+    if (error.code === 'PGRST116') {
+      return null
     }
-
-    return (data ?? null) as unknown as Project | null
-  } catch (err) {
-    console.warn('Supabase not available, using mock project')
-    const project = mockProjects.get(projectId)
-    return (project ?? null) as unknown as Project | null
+    console.error('Supabase project error:', error.message)
+    throw new Error(`Failed to get project: ${error.message}`)
   }
+
+  return (data ?? null) as unknown as Project | null
 }
 
 export async function createProject(input: CreateProjectInput): Promise<Project> {

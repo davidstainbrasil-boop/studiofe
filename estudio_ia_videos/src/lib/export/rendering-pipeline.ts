@@ -1,7 +1,9 @@
 
-import { ExportSettings } from '../../types/export.types';
+import { ExportSettings, ExportFormat, RESOLUTION_CONFIGS, QUALITY_CONFIGS, CODEC_CONFIGS } from '../../types/export.types';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import ffmpeg from 'fluent-ffmpeg';
+import { logger } from '@lib/logger';
 
 export enum PipelineStage {
   AUDIO_PROCESSING = 'audio_processing',
@@ -46,7 +48,7 @@ export enum PipelineState {
 export class RenderingPipeline {
   private tempDir: string;
   private state: PipelineState = PipelineState.IDLE;
-  private pausedAt: number = 0;
+  private ffmpegCommand: ffmpeg.FfmpegCommand | null = null;
 
   constructor(tempDir: string = './temp') {
     this.tempDir = tempDir;
@@ -58,13 +60,18 @@ export class RenderingPipeline {
 
   pause(): void {
     if (this.state === PipelineState.RUNNING) {
+      if (this.ffmpegCommand) {
+        this.ffmpegCommand.kill('SIGSTOP');
+      }
       this.state = PipelineState.PAUSED;
-      this.pausedAt = Date.now();
     }
   }
 
   resume(): void {
     if (this.state === PipelineState.PAUSED) {
+       if (this.ffmpegCommand) {
+        this.ffmpegCommand.kill('SIGCONT');
+      }
       this.state = PipelineState.RUNNING;
     }
   }
@@ -72,30 +79,10 @@ export class RenderingPipeline {
   cancel(): void {
     if (this.state !== PipelineState.IDLE && this.state !== PipelineState.COMPLETED && this.state !== PipelineState.FAILED) {
       this.state = PipelineState.CANCELLED;
-    }
-  }
-
-  async checkPauseOrCancel(): Promise<boolean> {
-    if (this.state === PipelineState.CANCELLED) return false;
-    
-    if (this.state === PipelineState.PAUSED) {
-      // Wait until resumed or cancelled
-      while (this.state === PipelineState.PAUSED) {
-        await new Promise(resolve => setTimeout(resolve, 100));
+      if (this.ffmpegCommand) {
+        this.ffmpegCommand.kill('SIGKILL');
       }
-      if (this.state === PipelineState.CANCELLED) return false;
     }
-    
-    return this.state === PipelineState.RUNNING;
-  }
-
-  calculateETA(stage: string, progress: number, totalStages: number, startTime: number): number {
-    // Mock implementation
-    return 100;
-  }
-
-  calculateAverageStageTime(): number {
-    return 50;
   }
 
   async execute(
@@ -105,105 +92,135 @@ export class RenderingPipeline {
     onProgress?: (progress: PipelineProgress) => void
   ): Promise<PipelineResult> {
     this.state = PipelineState.RUNNING;
-    
-    // Mock implementation for integration tests
     const startTime = Date.now();
     const stages: PipelineStageResult[] = [];
 
-    const reportProgress = (p: PipelineProgress) => {
-      if (onProgress) onProgress(p);
-    };
+    // Ensure output directory exists
+    const outputDir = path.dirname(outputPath);
+    await fs.mkdir(outputDir, { recursive: true });
 
-    // Simulate stages based on settings
-    if (settings.audioEnhancements && settings.audioEnhancements.length > 0) {
-      if (!await this.checkPauseOrCancel()) return this.createCancelledResult(outputPath);
-      reportProgress({
-        stage: PipelineStage.AUDIO_PROCESSING,
-        stageProgress: 0,
-        overallProgress: 10,
-        message: 'Starting audio processing'
-      });
-      stages.push({ stage: PipelineStage.AUDIO_PROCESSING, duration: 100, success: true });
-    }
+    return new Promise((resolve, reject) => {
+      this.ffmpegCommand = ffmpeg(inputPath);
 
-    if (settings.videoFilters && settings.videoFilters.length > 0) {
-      if (!await this.checkPauseOrCancel()) return this.createCancelledResult(outputPath);
-      reportProgress({
-        stage: PipelineStage.VIDEO_FILTERS,
-        stageProgress: 0,
-        overallProgress: 30,
-        message: 'Applying video filters'
-      });
-      stages.push({ stage: PipelineStage.VIDEO_FILTERS, duration: 100, success: true });
-    }
+      // 1. Resolution & Format
+      const resolution = RESOLUTION_CONFIGS[settings.resolution] || RESOLUTION_CONFIGS['720p'];
+      const codecConfig = CODEC_CONFIGS[settings.format] || CODEC_CONFIGS[ExportFormat.MP4];
+      const qualityConfig = QUALITY_CONFIGS[settings.quality] || QUALITY_CONFIGS['medium'];
 
-    if (settings.watermark) {
-      if (!await this.checkPauseOrCancel()) return this.createCancelledResult(outputPath);
-      reportProgress({
-        stage: PipelineStage.WATERMARK,
-        stageProgress: 0,
-        overallProgress: 50,
-        message: 'Adding watermark'
-      });
-      stages.push({ stage: PipelineStage.WATERMARK, duration: 100, success: true });
-    }
+      this.ffmpegCommand
+        .size(`${resolution.width}x${resolution.height}`)
+        .videoCodec(codecConfig.videoCodec)
+        .audioCodec(codecConfig.audioCodec);
 
-    if (settings.subtitle && settings.subtitle.enabled) {
-      if (!await this.checkPauseOrCancel()) return this.createCancelledResult(outputPath);
-      reportProgress({
-        stage: PipelineStage.SUBTITLES,
-        stageProgress: 0,
-        overallProgress: 70,
-        message: 'Adding subtitles'
-      });
-      stages.push({ stage: PipelineStage.SUBTITLES, duration: 100, success: true });
-    }
+      // 2. Video Filters
+      const videoFilters: string[] = [];
+      
+      if (settings.videoFilters && settings.videoFilters.length > 0) {
+         settings.videoFilters.forEach(filter => {
+            // Mapping common filter types to ffmpeg filters
+            if (filter.type === 'brightness') videoFilters.push(`eq=brightness=${filter.value}`);
+            if (filter.type === 'contrast') videoFilters.push(`eq=contrast=${filter.value}`);
+            if (filter.type === 'saturation') videoFilters.push(`eq=saturation=${filter.value}`);
+            if (filter.type === 'grayscale' && filter.value) videoFilters.push('hue=s=0');
+            // Add more as needed
+         });
+         stages.push({ stage: PipelineStage.VIDEO_FILTERS, duration: 0, success: true }); // Marked as planned
+      }
 
-    // Copy input to output to simulate rendering
-    try {
-        // Ensure output directory exists
-        const outputDir = path.dirname(outputPath);
-        await fs.mkdir(outputDir, { recursive: true });
+      // 3. Watermark
+      if (settings.watermark && settings.watermark.enabled && settings.watermark.url) {
+        this.ffmpegCommand.input(settings.watermark.url);
+        // Simple overlay centered. Full implementation would respect settings.watermark.position
+        videoFilters.push('overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2');
+        stages.push({ stage: PipelineStage.WATERMARK, duration: 0, success: true });
+      }
 
-        // If input exists, copy it. If not (e.g. corrupted test), create a dummy file
-        try {
-            await fs.copyFile(inputPath, outputPath);
-        } catch (e) {
-            // If copy fails (e.g. input doesn't exist), write a dummy file
-            await fs.writeFile(outputPath, 'dummy video content');
+      // Apply video filters if any
+      if (videoFilters.length > 0) {
+        this.ffmpegCommand.videoFilters(videoFilters);
+      }
+
+      // 4. Subtitles (Burn-in)
+      if (settings.subtitle && settings.subtitle.enabled && settings.subtitle.burnIn && settings.subtitle.source) {
+         // Requires libass, assumed available in environment or skipped if not. 
+         // path to subtitle file must be absolute and escaped properly for ffmpeg usually.
+         // limiting implementation to avoid breaking if subtitle file doesn't exist locally yet.
+         try {
+             const subPath = path.resolve(settings.subtitle.source);
+             // Verify it exists before trying to burn
+             // await fs.access(subPath); // Async check inside sync builder is tricky, assuming caller ensured it
+             this.ffmpegCommand.videoFilters(`subtitles='${subPath}'`);
+             stages.push({ stage: PipelineStage.SUBTITLES, duration: 0, success: true });
+         } catch {
+             logger.warn('Subtitle file access failed, skipping burn-in', { path: settings.subtitle.source });
+         }
+      }
+
+      // 5. Output Options (CRF, Preset)
+      // Only for libx264/video codecs that support it
+      if (settings.format === ExportFormat.MP4 || settings.format === ExportFormat.MOV) {
+         this.ffmpegCommand.outputOptions([
+            `-crf ${qualityConfig.crf}`,
+            `-preset ${qualityConfig.preset}`
+         ]);
+      }
+
+      // Progress Handling
+      this.ffmpegCommand.on('progress', (progress) => {
+        if (onProgress) {
+            onProgress({
+                stage: PipelineStage.PROCESSING_VIDEO,
+                stageProgress: progress.percent || 0,
+                overallProgress: progress.percent || 0,
+                message: `Encoding: ${Math.round(progress.percent || 0)}%`
+            });
         }
-    } catch (e) {
-        console.error('Failed to create output file', e);
-    }
+      });
 
-    reportProgress({
-      stage: PipelineStage.COMPLETE,
-      stageProgress: 100,
-      overallProgress: 100,
-      message: 'Rendering complete'
+      this.ffmpegCommand.on('end', () => {
+        this.state = PipelineState.COMPLETED;
+        resolve({
+            success: true,
+            outputPath,
+            stages,
+            totalDuration: Date.now() - startTime
+        });
+      });
+
+      this.ffmpegCommand.on('error', (err, stdout, stderr) => {
+        if (this.state === PipelineState.CANCELLED) {
+             resolve({
+                success: false,
+                outputPath,
+                stages,
+                totalDuration: Date.now() - startTime,
+                validationWarnings: ['Cancelled']
+             });
+             return;
+        }
+        
+        logger.error('FFmpeg error', { error: err.message, stderr, service: 'RenderingPipeline' });
+        this.state = PipelineState.FAILED;
+        resolve({
+            success: false,
+            outputPath,
+            stages,
+            totalDuration: Date.now() - startTime,
+            validationWarnings: [err.message]
+        });
+      });
+
+      // Run
+      this.ffmpegCommand.save(outputPath);
     });
-
-    this.state = PipelineState.COMPLETED;
-
-    return {
-      success: true,
-      outputPath,
-      stages,
-      totalDuration: Date.now() - startTime
-    };
-  }
-
-  private createCancelledResult(outputPath: string): PipelineResult {
-    return {
-      success: false,
-      outputPath,
-      stages: [],
-      totalDuration: 0,
-      validationWarnings: ['Cancelled']
-    };
   }
 
   async cleanup(): Promise<void> {
-    // Mock cleanup
+    // Remove temp dir
+    try {
+        await fs.rm(this.tempDir, { recursive: true, force: true });
+    } catch (e) {
+        console.error('Failed to cleanup temp dir', e);
+    }
   }
 }

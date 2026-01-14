@@ -1,0 +1,119 @@
+# =========================================================
+# GO-LIVE CHECKLIST — MVP Vídeos TécnicoCursos v7
+# Formato: [ ] Pendente | [x] Concluído
+# =========================================================
+
+
+# ========================
+# FASE 0 — CONGELAMENTO
+# ========================
+
+[ ] F0.1 Congelar novas features (somente correção)
+[ ] F0.2 Proibir mocks novos no código
+[ ] F0.3 Auditoria técnica validada (REAL vs MOCK)
+[ ] F0.4 Logs ativos em módulos críticos (render, tts, queue)
+
+# Gate:
+# ⛔ Não avança se houver feature nova ou mock ativo
+
+
+# =========================================
+# FASE 1 — PIPELINE MÍNIMO REAL (CRÍTICA)
+# =========================================
+
+# --- TTS REAL ---
+
+[x] F1.1 Substituir mock em lib/tts/tts-service.ts (linhas 46–47)
+[x] F1.2 Implementar engine real em lib/tts/engine-manager.ts (linhas 72, 89)
+[ ] F1.3 Bloquear ou implementar Azure mock (lib/tts/providers/azure.ts:33)
+[x] F1.4 Corrigir API /api/tts/generate (retornar apenas áudio real)
+[x] F1.5 Garantir que audioUrl retornado exista de fato
+
+# --- DEPENDÊNCIAS ---
+
+[x] F1.6 Validar FFmpeg no boot do worker (ffmpeg -version)
+[x] F1.7 Validar edge-tts ou ElevenLabs no boot do worker
+[x] F1.8 Falhar explicitamente se dependência não existir
+
+# Gate:
+# ⛔ Não avança sem gerar MP3 real e acessível
+
+
+# ======================================
+# FASE 2 — CONFIABILIDADE DE JOBS
+# ======================================
+
+[x] F2.1 Ajustar criação de job + enqueue com compensação
+[x] F2.2 Evitar job órfão no DB (pending eterno)
+[x] F2.3 Garantir rollback ou status failed_enqueue
+[x] F2.4 Implementar detector de job stuck (processing infinito)
+[x] F2.5 Garantir retry controlado em render
+[x] F2.6 Aplicar retry no upload final do vídeo
+[x] F2.7 Marcar job como failed_upload se upload falhar
+
+# Gate:
+# ⛔ Não avança se existir job infinito ou estado inconsistente
+
+
+# ======================================
+# FASE 3 — WORKER COMO SERVIÇO
+# ======================================
+
+[ ] F3.1 Configurar worker como serviço (PM2/systemd/Docker)
+[ ] F3.2 Habilitar auto-restart do worker
+[ ] F3.3 Criar healthcheck do worker
+[ ] F3.4 Garantir logs persistentes do worker
+[ ] F3.5 Testar reboot do servidor com jobs ativos
+
+# Gate:
+# ⛔ Não avança se worker precisar ser iniciado manualmente
+
+
+# ======================================
+# FASE 4 — SEGURANÇA E ARMADILHAS
+# ======================================
+
+[ ] F4.1 Remover bypass de auth via header x-user-id
+[ ] F4.2 Bloquear USE_MOCK_RENDER_JOBS fora de development
+[ ] F4.3 Garantir RBAC em APIs de render
+[ ] F4.4 Validar rate limit por rota crítica
+[ ] F4.5 Revisar ACL de storage (uploads / videos)
+
+# Gate:
+# ⛔ Não avança se staging/prod aceitar mock ou bypass
+
+
+# ======================================
+# FASE 5 — TESTE END-TO-END (OBRIGATÓRIO)
+# ======================================
+
+[ ] F5.1 Upload PPTX real (/api/pptx/upload)
+[ ] F5.2 Parsing completo do PPTX
+[ ] F5.3 Geração de áudio TTS real
+[ ] F5.4 Renderização completa com FFmpeg
+[ ] F5.5 Upload do vídeo final no storage
+[ ] F5.6 Download e playback do vídeo com áudio
+
+# Gate:
+# ⛔ Não avança se 1 vídeo real não for gerado sem intervenção
+
+
+# ======================================
+# FASE 6 — GO-LIVE CONTROLADO
+# ======================================
+
+[ ] F6.1 Limitar número de jobs simultâneos
+[ ] F6.2 Monitorar fila (Bull Board ou similar)
+[ ] F6.3 Monitorar tempo médio de render
+[ ] F6.4 Monitorar falhas por tipo (tts, render, upload)
+[ ] F6.5 Go-live com usuários reais (limitado)
+
+# Gate:
+# ✅ Sistema gera vídeos reais diariamente sem intervenção
+
+
+# =========================================================
+# STATUS FINAL
+# =========================================================
+
+[ ] GO-LIVE APROVADO

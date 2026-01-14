@@ -7,15 +7,13 @@ test.beforeEach(async ({ page }) => {
   page.on('pageerror', err => console.error(`[BROWSER ERROR] ${err.message}`));
   page.on('requestfailed', req => console.error(`[FAILED REQ] ${req.url()}: ${req.failure()?.errorText}`));
 
-  await mockSupabaseAuth(page);
-  
-  // Manual Login (Bypass Dashboard Check)
-  await page.context().addCookies([{
-    name: 'dev_bypass',
-    value: 'true',
-    domain: 'localhost',
-    path: '/'
-  }]);
+  // Real Login
+  // Note: Ensure admin@mvpvideo.test / senha123 exists in Supabase or modify helpers.ts
+  await page.goto('/login');
+  await page.fill('input[name="email"]', 'admin@mvpvideo.test');
+  await page.fill('input[name="password"]', 'senha123');
+  await page.click('button[type="submit"]');
+  await page.waitForURL('**/dashboard');
   
   // Mock Route for Tour (prevent popup)
   await page.route('**/api/user/tour', route => route.fulfill({ status: 200, body: JSON.stringify({ seen: true }) }));

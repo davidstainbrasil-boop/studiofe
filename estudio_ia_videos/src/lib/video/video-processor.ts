@@ -1,6 +1,11 @@
 import { videoRenderEngine, RenderOptions } from './video-render-engine';
 import type { Slide } from '@lib/types';
-import type { SlideData } from './ai-services';
+export interface SlideData {
+  id?: string;
+  content?: string;
+  duration?: number;
+  [key: string]: unknown;
+}
 
 export interface VideoScene {
   id: string;

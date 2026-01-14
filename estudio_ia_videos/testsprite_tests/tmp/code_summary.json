@@ -1,0 +1,89 @@
+{
+  "tech_stack": [
+    "Next.js 14",
+    "TypeScript",
+    "Prisma",
+    "PostgreSQL",
+    "Redis",
+    "BullMQ",
+    "Remotion",
+    "FFmpeg",
+    "Tailwind CSS"
+  ],
+  "features": [
+    {
+      "name": "Render Start API",
+      "description": "Starts a video rendering job using FFmpeg/Remotion via BullMQ",
+      "files": [
+        "src/app/api/render/start/route.ts",
+        "src/lib/queue/render-queue.ts",
+        "src/lib/render/job-manager.ts"
+      ],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "paths": {
+          "/api/render/start": {
+            "post": {
+              "summary": "Start rendering job",
+              "requestBody": {
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "object",
+                      "properties": {
+                        "projectId": { "type": "string" },
+                        "slides": { "type": "array" },
+                        "config": { "type": "object" }
+                      }
+                    }
+                  }
+                }
+              },
+              "responses": {
+                "200": { "description": "Job started" },
+                "404": { "description": "Project not found" },
+                "500": { "description": "Server error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "PPTX Upload API",
+      "description": "Uploads PPTX files for processing",
+      "files": [
+        "src/app/api/pptx/upload/route.ts",
+        "src/lib/storage/pptx-uploader.ts"
+      ],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "paths": {
+          "/api/pptx/upload": {
+            "post": {
+              "summary": "Upload PPTX file",
+              "requestBody": {
+                "content": {
+                  "multipart/form-data": {
+                    "schema": {
+                      "type": "object",
+                      "properties": {
+                        "file": { "type": "string", "format": "binary" },
+                        "projectId": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              },
+              "responses": {
+                "200": { "description": "File uploaded" },
+                "400": { "description": "Invalid file" },
+                "500": { "description": "Upload failed" }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

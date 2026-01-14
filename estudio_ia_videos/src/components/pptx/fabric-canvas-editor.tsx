@@ -8,39 +8,16 @@
  */
 
 import React, { useEffect, useRef, useState, useCallback } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@components/ui/card'
 import { Button } from '@components/ui/button'
-import { Separator } from '@components/ui/separator'
-import { Badge } from '@components/ui/badge'
 import { Slider } from '@components/ui/slider'
-import { Input } from '@components/ui/input'
-import { Label } from '@components/ui/label'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs'
 import { toast } from 'react-hot-toast'
-import { 
-  Square, 
-  Circle, 
-  Type, 
-  Image as ImageIcon,
-  Layers,
-  Grid,
-  RotateCcw,
-  RotateCw,
-  Copy,
-  Trash2,
-  Download,
-  MousePointer2,
-  Lock,
-  Unlock,
-  Eye,
-  EyeOff,
-  FileText,
-  Settings
-} from 'lucide-react'
+import { cn } from '@lib/utils'
+import { Square, Circle, Type, Image as ImageIcon, Trash2, MousePointer2 } from 'lucide-react'
 
 // Import do novo sistema Fabric singleton
 import { FabricManager, useFabric } from '@lib/fabric-singleton'
 import type * as Fabric from 'fabric'
+import { FlexibleElement } from '../editor/properties-panel'
 
 // Fabric.js reference
 let fabric: typeof Fabric | null = null
@@ -60,32 +37,38 @@ interface CanvasObject {
   fabricObject: Fabric.Object
 }
 
+// Main Component Props
 interface FabricCanvasEditorProps {
   width?: number
   height?: number
   onCanvasUpdate?: (data: Record<string, unknown>) => void
   initialData?: Record<string, unknown>
   projectName?: string
+  // Phase 4 - Selection Sync
+  onSelectionChange?: (element: FlexibleElement | null) => void
+  selectedElement?: FlexibleElement | null
 }
 
-export function FabricCanvasEditor({ 
-  width = 800, 
-  height = 600, 
+export function FabricCanvasEditor({
+  width = 800,
+  height = 600,
   onCanvasUpdate,
   initialData,
-  projectName = "Projeto Canvas"
+  projectName: _projectName = "Projeto Canvas",
+  onSelectionChange,
+  selectedElement
 }: FabricCanvasEditorProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const fabricCanvasRef = useRef<Fabric.Canvas | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  
+
   // State management
   const [selectedTool, setSelectedTool] = useState<string>('select')
   const [canvasObjects, setCanvasObjects] = useState<CanvasObject[]>([])
   const [selectedObjects, setSelectedObjects] = useState<string[]>([])
   const [zoom, setZoom] = useState<number[]>([100])
   const [snapToGrid, setSnapToGrid] = useState(false)
-  const [gridSize, setGridSize] = useState(20)
+  const [gridSize] = useState(20)
   const { fabric: fabricInstance } = useFabric()
   const fabricLoading = false
   const fabricError = null
@@ -109,7 +92,7 @@ export function FabricCanvasEditor({
   // Initialize Fabric.js canvas
   useEffect(() => {
     if (!fabricInstance || !canvasRef.current || fabricCanvasRef.current || !fabric) return
-    
+
     const canvas = new fabric.Canvas(canvasRef.current, {
       width,
       height,
@@ -117,7 +100,7 @@ export function FabricCanvasEditor({
       selection: true,
       preserveObjectStacking: true,
     })
-    
+
     fabricCanvasRef.current = canvas
 
     // Selection events
@@ -142,6 +125,151 @@ export function FabricCanvasEditor({
     }
   }, [width, height, initialData, fabricInstance])
 
+  // Phase 4: Bi-directional Sync - Update Fabric object when props change
+  useEffect(() => {
+    const canvas = fabricCanvasRef.current
+    if (!canvas || !selectedElement) return
+
+    const activeObject = canvas.getActiveObject() as ExtendedFabricObject
+
+    // Only update if we have a selected element and it matches the active object directly
+    // or if we find the object by ID (though usually it should be selected)
+    if (activeObject && activeObject.id === selectedElement.id) {
+      let needsRender = false
+
+      // Helper to update if changed
+      const updateIfChanged = (key: keyof Fabric.Object | string, value: any) => {
+        // @ts-ignore
+        if (activeObject.get(key) !== value && activeObject[key] !== value) {
+          // Special handling for some properties
+          if (key === 'fill' && typeof value === 'string') {
+            activeObject.set('fill', value)
+            needsRender = true
+          } else if (key === 'text' && 'text' in activeObject) {
+            (activeObject as any).set('text', value)
+            needsRender = true
+          } else {
+            // @ts-ignore
+            activeObject.set(key, value)
+            needsRender = true
+          }
+        }
+      }
+
+      // Sync properties
+      // Position & Size
+      if (selectedElement.x !== undefined && Math.abs(activeObject.left! - selectedElement.x) > 1) {
+        activeObject.set('left', selectedElement.x)
+        needsRender = true
+      }
+      if (selectedElement.y !== undefined && Math.abs(activeObject.top! - selectedElement.y) > 1) {
+        activeObject.set('top', selectedElement.y)
+        needsRender = true
+      }
+
+      // Scaling (approximate from width/height)
+      // Note: This is tricky because width/height in Fabric are static, scale changes
+      // simplified: we assume width/height in selectedElement includes scale
+      if (selectedElement.width !== undefined) {
+        const newScaleX = selectedElement.width / (activeObject.width || 1)
+        if (Math.abs((activeObject.scaleX || 1) - newScaleX) > 0.01) {
+          activeObject.set('scaleX', newScaleX)
+          needsRender = true
+        }
+      }
+      if (selectedElement.height !== undefined) {
+        const newScaleY = selectedElement.height / (activeObject.height || 1)
+        if (Math.abs((activeObject.scaleY || 1) - newScaleY) > 0.01) {
+          activeObject.set('scaleY', newScaleY)
+          needsRender = true
+        }
+      }
+
+      // Rotation
+      if (selectedElement.rotation !== undefined && Math.abs(activeObject.angle! - selectedElement.rotation) > 1) {
+        activeObject.set('angle', selectedElement.rotation)
+        needsRender = true
+      }
+
+      // Opacity
+      if (selectedElement.opacity !== undefined && Math.abs(activeObject.opacity! - selectedElement.opacity) > 0.01) {
+        activeObject.set('opacity', selectedElement.opacity)
+        needsRender = true
+      }
+
+      // Visibility & Lock
+      if (selectedElement.visible !== undefined && activeObject.visible !== selectedElement.visible) {
+        activeObject.set('visible', selectedElement.visible)
+        needsRender = true
+      }
+      if (selectedElement.locked !== undefined && activeObject.selectable === selectedElement.locked) {
+        // Locked means selectable = false
+        activeObject.set('selectable', !selectedElement.locked)
+        activeObject.set('evented', !selectedElement.locked)
+        needsRender = true
+      }
+
+      // Content (Text)
+      if (selectedElement.content !== undefined && 'text' in activeObject) {
+        if ((activeObject as any).text !== selectedElement.content) {
+          (activeObject as any).set('text', selectedElement.content)
+          needsRender = true
+        }
+      }
+
+      // Styles
+      if (selectedElement.style) {
+        if (selectedElement.style.backgroundColor && activeObject.fill !== selectedElement.style.backgroundColor) {
+          activeObject.set('fill', selectedElement.style.backgroundColor as string)
+          needsRender = true
+        }
+        if (selectedElement.style.color && (activeObject as any).fill !== selectedElement.style.color) { // For text
+          activeObject.set('fill', selectedElement.style.color as string)
+          needsRender = true
+        }
+        if (selectedElement.style.borderWidth !== undefined && activeObject.strokeWidth !== selectedElement.style.borderWidth) {
+          activeObject.set('strokeWidth', Number(selectedElement.style.borderWidth))
+          needsRender = true
+        }
+        if (selectedElement.style.borderColor && activeObject.stroke !== selectedElement.style.borderColor) {
+          activeObject.set('stroke', selectedElement.style.borderColor as string)
+          needsRender = true
+        }
+
+        // Font styles
+        if (selectedElement.style.fontSize !== undefined && (activeObject as any).fontSize !== selectedElement.style.fontSize) {
+          (activeObject as any).set('fontSize', Number(selectedElement.style.fontSize))
+          needsRender = true
+        }
+        if (selectedElement.style.fontWeight !== undefined && (activeObject as any).fontWeight !== selectedElement.style.fontWeight) {
+          (activeObject as any).set('fontWeight', selectedElement.style.fontWeight)
+          needsRender = true
+        }
+        if (selectedElement.style.fontStyle !== undefined && (activeObject as any).fontStyle !== selectedElement.style.fontStyle) {
+          (activeObject as any).set('fontStyle', selectedElement.style.fontStyle)
+          needsRender = true
+        }
+        if (selectedElement.style.textDecoration !== undefined) {
+          const isUnderline = selectedElement.style.textDecoration === 'underline';
+          if ((activeObject as any).underline !== isUnderline) {
+            (activeObject as any).set('underline', isUnderline)
+            needsRender = true
+          }
+        }
+        if (selectedElement.style.textAlign !== undefined && (activeObject as any).textAlign !== selectedElement.style.textAlign) {
+          (activeObject as any).set('textAlign', selectedElement.style.textAlign)
+          needsRender = true
+        }
+      }
+
+      if (needsRender) {
+        canvas.renderAll()
+        // We do NOT call updateObjectsList here to avoid circular updates 
+        // because updateObjectsList triggers onSelectionChange which updates selectedElement
+      }
+    }
+  }, [selectedElement])
+
   // Update objects list
   const updateObjectsList = (canvas: Fabric.Canvas) => {
     const objects = canvas.getObjects().map((obj: Fabric.Object, index: number) => {
@@ -156,7 +284,39 @@ export function FabricCanvasEditor({
       }
     })
     setCanvasObjects(objects)
-    
+
+    // Phase 4 - Selection Sync
+    if (onSelectionChange) {
+      const activeObject = canvas.getActiveObject() as ExtendedFabricObject
+      if (activeObject) {
+        onSelectionChange({
+          id: activeObject.id || 'unknown',
+          name: activeObject.name || activeObject.type || 'Element',
+          type: activeObject.type || 'object',
+          x: activeObject.left,
+          y: activeObject.top,
+          width: activeObject.width! * (activeObject.scaleX || 1),
+          height: activeObject.height! * (activeObject.scaleY || 1),
+          rotation: activeObject.angle,
+          opacity: activeObject.opacity,
+          visible: activeObject.visible,
+          locked: !activeObject.selectable,
+          style: {
+            backgroundColor: activeObject.fill as string,
+            borderColor: activeObject.stroke as string,
+            borderWidth: activeObject.strokeWidth,
+            color: (activeObject as any).fill as string,
+            fontSize: (activeObject as any).fontSize,
+            fontFamily: (activeObject as any).fontFamily,
+            fontWeight: (activeObject as any).fontWeight
+          },
+          content: (activeObject as any).text
+        })
+      } else {
+        onSelectionChange(null)
+      }
+    }
+
     if (onCanvasUpdate) {
       onCanvasUpdate(canvas.toJSON())
     }
@@ -239,12 +399,12 @@ export function FabricCanvasEditor({
       const imgUrl = e.target?.result as string
       fabric!.Image.fromURL(imgUrl).then((img: Fabric.Image) => {
         const canvas = fabricCanvasRef.current!
-        
+
         // Scale image to fit canvas
         const maxWidth = (canvas.width || 800) * 0.5
         const maxHeight = (canvas.height || 600) * 0.5
         const scale = Math.min(maxWidth / (img.width || 1), maxHeight / (img.height || 1))
-        
+
         img.set({
           left: 100,
           top: 100,
@@ -352,7 +512,7 @@ export function FabricCanvasEditor({
   // Handle tool selection
   const handleToolSelect = (toolId: string) => {
     setSelectedTool(toolId)
-    
+
     switch (toolId) {
       case 'rect':
         addRectangle()
@@ -383,239 +543,70 @@ export function FabricCanvasEditor({
   }
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Left Sidebar - Tools */}
-      <div className="w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
-        {/* Header */}
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Canvas Editor
-            </h2>
-            <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-              Production Ready
-            </Badge>
-          </div>
-          
-          <Input
-            value={projectName}
-            className="text-sm"
-            placeholder="Nome do projeto"
-            readOnly
-          />
-        </div>
+    <div className="flex h-full bg-[#0f1115] relative overflow-hidden">
 
-        {/* Tools Tabs */}
-        <Tabs defaultValue="tools" className="flex-1 flex flex-col">
-          <TabsList className="grid w-full grid-cols-3 mx-4 mt-4">
-            <TabsTrigger value="tools">Ferramentas</TabsTrigger>
-            <TabsTrigger value="layers">Layers</TabsTrigger>
-            <TabsTrigger value="export">Export</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="tools" className="flex-1 p-4 space-y-4">
-            {/* Tool Selection */}
-            <div>
-              <Label className="text-sm font-medium mb-2 block">Ferramentas</Label>
-              <div className="grid grid-cols-2 gap-2">
-                {tools.map((tool) => {
-                  const Icon = tool.icon
-                  return (
-                    <Button
-                      key={tool.id}
-                      variant={selectedTool === tool.id ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => handleToolSelect(tool.id)}
-                      className="flex items-center gap-2 text-xs"
-                    >
-                      <Icon className="h-4 w-4" />
-                      {tool.label}
-                    </Button>
-                  )
-                })}
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Canvas Controls */}
-            <div className="space-y-4">
-              <div>
-                <Label className="text-sm font-medium mb-2 block">Zoom ({zoom[0]}%)</Label>
-                <Slider
-                  value={zoom}
-                  onValueChange={handleZoomChange}
-                  min={10}
-                  max={500}
-                  step={10}
-                  className="w-full"
-                />
-                <div className="flex gap-2 mt-2">
-                  <Button size="sm" variant="outline" onClick={() => handleZoomChange([100])}>
-                    100%
-                  </Button>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="snapToGrid"
-                  checked={snapToGrid}
-                  onChange={(e) => setSnapToGrid(e.target.checked)}
-                  className="rounded"
-                />
-                <Label htmlFor="snapToGrid" className="text-sm">
-                  Snap to Grid
-                </Label>
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="layers" className="flex-1 p-4">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between mb-4">
-                <Label className="text-sm font-medium">Layers ({canvasObjects.length})</Label>
-              </div>
-
-              {canvasObjects.length === 0 ? (
-                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                  <Layers className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">Nenhum objeto no canvas</p>
-                </div>
-              ) : (
-                <div className="space-y-1 max-h-96 overflow-y-auto">
-                  {canvasObjects.map((obj, index) => (
-                    <Card key={obj.id} className="p-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className={`w-3 h-3 rounded ${
-                            obj.type === 'rect' ? 'bg-blue-500' :
-                            obj.type === 'circle' ? 'bg-green-500' :
-                            obj.type === 'text' ? 'bg-purple-500' :
-                            obj.type === 'image' ? 'bg-orange-500' :
-                            'bg-gray-500'
-                          }`} />
-                          <span className="text-xs font-medium truncate max-w-24">
-                            {obj.name}
-                          </span>
-                        </div>
-                        
-                        <div className="flex gap-1">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => toggleObjectVisibility(obj.id)}
-                            className="h-6 w-6 p-0"
-                          >
-                            {obj.visible ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => toggleObjectLock(obj.id)}
-                            className="h-6 w-6 p-0"
-                          >
-                            {obj.locked ? <Lock className="h-3 w-3" /> : <Unlock className="h-3 w-3" />}
-                          </Button>
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
+      {/* Floating Toolbar */}
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 bg-[#1c1f26] border border-white/5 p-1 rounded-xl shadow-2xl flex items-center gap-1">
+        {tools.map((tool) => {
+          const Icon = tool.icon
+          return (
+            <Button
+              key={tool.id}
+              variant={selectedTool === tool.id ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => handleToolSelect(tool.id)}
+              className={cn(
+                "h-9 w-9 p-0 rounded-lg",
+                selectedTool === tool.id ? "bg-blue-600 text-white hover:bg-blue-700" : "text-gray-400 hover:text-white hover:bg-white/5"
               )}
-            </div>
-          </TabsContent>
+              title={tool.label}
+            >
+              <Icon className="h-4 w-4" />
+            </Button>
+          )
+        })}
+        <div className="w-px h-6 bg-white/10 mx-1" />
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={deleteSelected}
+          disabled={selectedObjects.length === 0}
+          className="h-9 w-9 p-0 rounded-lg text-red-400 hover:text-red-300 hover:bg-red-500/10"
+          title="Excluir"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
 
-          <TabsContent value="export" className="flex-1 p-4">
-            <div className="space-y-4">
-              <Label className="text-sm font-medium">Exportar Canvas</Label>
-              
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => exportCanvas('png')}
-                  className="flex items-center gap-2"
-                >
-                  <Download className="h-4 w-4" />
-                  PNG
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => exportCanvas('jpg')}
-                  className="flex items-center gap-2"
-                >
-                  <Download className="h-4 w-4" />
-                  JPG
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => exportCanvas('json')}
-                  className="flex items-center gap-2"
-                >
-                  <FileText className="h-4 w-4" />
-                  JSON
-                </Button>
-              </div>
-
-              <Separator />
-
-              <div>
-                <Label className="text-sm font-medium mb-2 block">Canvas Info</Label>
-                <div className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
-                  <p>Tamanho: {width}×{height}px</p>
-                  <p>Objetos: {canvasObjects.length}</p>
-                  <p>Zoom: {zoom[0]}%</p>
-                  <p>Grade: {snapToGrid ? `${gridSize}px` : 'Desabilitada'}</p>
-                </div>
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
+      {/* Floating Zoom Controls */}
+      <div className="absolute bottom-4 left-4 z-20 bg-[#1c1f26] border border-white/5 p-2 rounded-xl shadow-2xl flex items-center gap-2">
+        <span className="text-xs text-gray-500 font-mono px-2">{Math.round(zoom[0])}%</span>
+        <Slider
+          value={zoom}
+          onValueChange={handleZoomChange}
+          min={10}
+          max={500}
+          step={10}
+          className="w-24"
+        />
       </div>
 
       {/* Main Canvas Area */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col relative">
         {/* Top Toolbar */}
-        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                variant="destructive"
-                onClick={deleteSelected}
-                disabled={selectedObjects.length === 0}
-                className="flex items-center gap-1"
-              >
-                <Trash2 className="h-4 w-4" />
-                Excluir
-              </Button>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="text-xs">
-                {selectedObjects.length} selecionado(s)
-              </Badge>
-              <Button size="sm" variant="outline" className="flex items-center gap-1">
-                <Settings className="h-4 w-4" />
-                Config
-              </Button>
-            </div>
-          </div>
-        </div>
+        {/* Top Toolbar - HIDDEN in new layout (moved to floating) */}
+        {/* <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4"> */}
 
         {/* Canvas Container */}
-        <div className="flex-1 overflow-auto bg-gray-100 dark:bg-gray-900 p-8">
+        {/* Canvas Container */}
+        <div className="flex-1 overflow-auto bg-[#0f1115] p-8 relative flex items-center justify-center">
           <div className="flex justify-center">
             <div className="relative bg-white shadow-lg">
               <canvas
                 ref={canvasRef}
-                className="border border-gray-300 dark:border-gray-600"
+                className="border border-white/5"
               />
-              
+
               {/* Grid overlay when enabled */}
               {snapToGrid && (
                 <div
@@ -632,22 +623,8 @@ export function FabricCanvasEditor({
             </div>
           </div>
         </div>
-
-        {/* Status Bar */}
-        <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-4 py-2">
-          <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
-            <div className="flex items-center gap-4">
-              <span>Canvas: {width}×{height}px</span>
-              <span>Zoom: {zoom[0]}%</span>
-              <span>Objetos: {canvasObjects.length}</span>
-            </div>
-            <div className="flex items-center gap-4">
-              <span>Tool: {tools.find(t => t.id === selectedTool)?.label}</span>
-              <span>Snap: {snapToGrid ? 'ON' : 'OFF'}</span>
-            </div>
-          </div>
-        </div>
       </div>
+
 
       {/* Hidden file input for image upload */}
       <input

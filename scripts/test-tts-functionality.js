@@ -17,7 +17,7 @@ const APP_ROOT = path.join(PROJECT_ROOT, 'estudio_ia_videos')
 dotenv.config({ path: path.join(APP_ROOT, '.env.local') })
 
 console.log('🎙️ INICIANDO TESTE DE FUNCIONALIDADE TTS')
-console.log('=' .repeat(60))
+console.log('='.repeat(60))
 
 // Função para verificar se um arquivo existe
 function fileExists(filePath) {
@@ -73,11 +73,11 @@ async function testTTSFunctionality() {
   }
 
   console.log('\n1️⃣ VERIFICANDO CREDENCIAIS TTS...')
-  
+
   // Verificar credenciais Azure
   const azureKey = process.env.AZURE_SPEECH_KEY
   const azureRegion = process.env.AZURE_SPEECH_REGION
-  
+
   if (azureKey && azureRegion) {
     results.credentials.details.push('✅ Credenciais Azure Speech configuradas')
     if (azureKey.length > 20 && azureRegion.length > 3) {
@@ -91,7 +91,7 @@ async function testTTSFunctionality() {
 
   // Verificar credenciais ElevenLabs
   const elevenLabsKey = process.env.ELEVENLABS_API_KEY
-  
+
   if (elevenLabsKey) {
     results.credentials.details.push('✅ Credenciais ElevenLabs configuradas')
     if (elevenLabsKey.length > 20) {
@@ -109,15 +109,15 @@ async function testTTSFunctionality() {
   }
 
   console.log('\n2️⃣ VERIFICANDO SERVIÇO TTS...')
-  
+
   // Verificar serviço TTS principal
-  const ttsServicePath = path.join(APP_ROOT, 'app', 'lib', 'tts-service.ts')
+  const ttsServicePath = path.join(APP_ROOT, 'src', 'lib', 'tts-service.ts')
   if (fileExists(ttsServicePath)) {
     const content = readFileContent(ttsServicePath)
     if (containsKeywords(content, ['TTSService', 'synthesizeSpeech', 'synthesizeToFile'])) {
       results.ttsService.status = '✅'
       results.ttsService.details.push('✅ Serviço TTS principal implementado')
-      
+
       // Verificar funcionalidades específicas
       if (content.includes('tryGoogleTTS')) {
         results.ttsService.details.push('✅ Integração Google TTS implementada')
@@ -136,12 +136,12 @@ async function testTTSFunctionality() {
   }
 
   console.log('\n3️⃣ VERIFICANDO INTEGRAÇÃO AZURE...')
-  
+
   // Verificar serviço Azure específico
   const azureServicePaths = [
-    path.join(APP_ROOT, 'app', 'lib', 'tts', 'azure-speech-service.ts'),
-    path.join(APP_ROOT, 'app', 'lib', 'azure-speech-service.ts'),
-    path.join(APP_ROOT, 'app', 'lib', 'enhanced-tts-service.ts') // Fallback to enhanced service
+    path.join(APP_ROOT, 'src', 'lib', 'tts', 'azure-speech-service.ts'),
+    path.join(APP_ROOT, 'src', 'lib', 'azure-speech-service.ts'),
+    path.join(APP_ROOT, 'src', 'lib', 'enhanced-tts-service.ts') // Fallback to enhanced service
   ]
 
   let azureServiceFound = false
@@ -188,12 +188,12 @@ async function testTTSFunctionality() {
   }
 
   console.log('\n4️⃣ VERIFICANDO INTEGRAÇÃO ELEVENLABS...')
-  
+
   // Verificar serviço ElevenLabs específico
   const elevenLabsServicePaths = [
-    path.join(APP_ROOT, 'app', 'lib', 'tts', 'elevenlabs.ts'),
-    path.join(APP_ROOT, 'app', 'lib', 'elevenlabs.ts'),
-    path.join(APP_ROOT, 'app', 'lib', 'elevenlabs-service.ts')
+    path.join(APP_ROOT, 'src', 'lib', 'tts', 'elevenlabs.ts'),
+    path.join(APP_ROOT, 'src', 'lib', 'elevenlabs.ts'),
+    path.join(APP_ROOT, 'src', 'lib', 'elevenlabs-service.ts')
   ]
 
   let elevenLabsServiceFound = false
@@ -227,10 +227,32 @@ async function testTTSFunctionality() {
       if (response.ok) {
         results.elevenLabsIntegration.details.push('✅ Conectividade ElevenLabs validada')
         if (response.data && response.data.voices) {
-          results.elevenLabsIntegration.details.push(`✅ ${response.data.voices.length} vozes disponíveis`)
+          results.elevenLabsIntegration.details.push(`✅ ${response.data.voices.length} vozes disponíveis (Endpoint Público)`)
         }
+
+        // Verify Auth specifically using User endpoint
+        try {
+          const userUrl = 'https://api.elevenlabs.io/v1/user'
+          const userResponse = await makeRequest(userUrl, {
+            method: 'GET',
+            headers: { 'xi-api-key': elevenLabsKey }
+          })
+
+          if (userResponse.ok) {
+            results.elevenLabsIntegration.details.push('✅ Autenticação ElevenLabs validada (User Profile)')
+            if (results.elevenLabsIntegration.status !== '✅') results.elevenLabsIntegration.status = '✅'
+          } else {
+            results.elevenLabsIntegration.details.push(`❌ Falha na autenticação ElevenLabs: ${userResponse.status}`)
+            results.elevenLabsIntegration.status = '❌'
+          }
+        } catch (e) {
+          results.elevenLabsIntegration.details.push(`❌ Erro na verificação de autenticação: ${e.message}`)
+          results.elevenLabsIntegration.status = '❌'
+        }
+
         if (results.elevenLabsIntegration.status !== '✅') {
-          results.elevenLabsIntegration.status = '✅'
+          // If auth failed, even if voices worked, overall status is fail
+          results.elevenLabsIntegration.status = '❌'
         }
       } else {
         results.elevenLabsIntegration.details.push(`⚠️ Erro na conectividade ElevenLabs: ${response.status}`)
@@ -241,12 +263,12 @@ async function testTTSFunctionality() {
   }
 
   console.log('\n5️⃣ VERIFICANDO API ENDPOINTS...')
-  
+
   // Verificar APIs TTS
   const ttsApiPaths = [
-    path.join(APP_ROOT, 'app', 'api', 'tts', 'generate', 'route.ts'),
-    path.join(APP_ROOT, 'app', 'api', 'v1', 'tts', 'voices', 'route.ts'),
-    path.join(APP_ROOT, 'app', 'api', 'tts', 'enhanced-generate', 'route.ts')
+    path.join(APP_ROOT, 'src', 'app', 'api', 'tts', 'generate', 'route.ts'),
+    path.join(APP_ROOT, 'src', 'app', 'api', 'v1', 'tts', 'voices', 'route.ts'),
+    path.join(APP_ROOT, 'src', 'app', 'api', 'tts', 'enhanced-generate', 'route.ts')
   ]
 
   let apiEndpointsFound = 0
@@ -268,9 +290,9 @@ async function testTTSFunctionality() {
   }
 
   // Gerar relatório final
-  console.log('\n' + '=' .repeat(60))
+  console.log('\n' + '='.repeat(60))
   console.log('📊 RELATÓRIO FINAL - FUNCIONALIDADE TTS')
-  console.log('=' .repeat(60))
+  console.log('='.repeat(60))
 
   let totalTests = 0
   let passedTests = 0
@@ -278,16 +300,16 @@ async function testTTSFunctionality() {
   for (const [category, result] of Object.entries(results)) {
     totalTests++
     if (result.status === '✅') passedTests++
-    
+
     console.log(`\n${category.toUpperCase().replace(/([A-Z])/g, ' $1').trim()}:`)
     console.log(`Status: ${result.status}`)
     result.details.forEach(detail => console.log(`  ${detail}`))
   }
 
   const successRate = Math.round((passedTests / totalTests) * 100)
-  console.log('\n' + '=' .repeat(60))
+  console.log('\n' + '='.repeat(60))
   console.log(`🎯 TAXA DE SUCESSO: ${successRate}% (${passedTests}/${totalTests})`)
-  
+
   if (successRate >= 80) {
     console.log('🎉 FUNCIONALIDADE TTS: OPERACIONAL')
   } else if (successRate >= 60) {
@@ -297,7 +319,7 @@ async function testTTSFunctionality() {
   }
 
   console.log('\n📋 PRÓXIMOS PASSOS RECOMENDADOS:')
-  
+
   if (results.credentials.status !== '✅') {
     console.log('• Configurar credenciais Azure Speech e/ou ElevenLabs no .env')
   }

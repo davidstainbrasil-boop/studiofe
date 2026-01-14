@@ -1,14 +1,7 @@
+
 import JSZip from 'jszip';
 import { XMLParser } from 'fast-xml-parser';
-import { PPTXNotesData, PPTXParagraph, PPTXRun, getString, ensureArray } from './types';
-
-export interface SpeakerNotesResult {
-  success: boolean;
-  notes?: string;
-  wordCount?: number;
-  estimatedDuration?: number; // em segundos (baseado em 150 WPM)
-  error?: string;
-}
+import { logger } from '@/lib/monitoring/logger';
 
 export class PPTXNotesParser {
   private xmlParser: XMLParser;
@@ -16,121 +9,93 @@ export class PPTXNotesParser {
   constructor() {
     this.xmlParser = new XMLParser({
       ignoreAttributes: false,
-      attributeNamePrefix: '@_',
+      attributeNamePrefix: '',
       parseAttributeValue: true,
       trimValues: true,
     });
   }
 
-  async extractNotes(zip: JSZip, slideNumber: number): Promise<SpeakerNotesResult> {
+  /**
+   * Extracts notes for a specific slide
+   * @param zip The JSZip instance
+   * @param slideNumber The 1-based slide index
+   */
+  public async extractNotes(zip: JSZip, slideNumber: number): Promise<string> {
     try {
-      const notesPath = `ppt/notesSlides/notesSlide${slideNumber}.xml`;
-      const notesFile = zip.file(notesPath);
+      // 1. Find the relationship to the notes slide
+      // ppt/slides/_rels/slideX.xml.rels -> points to ../notesSlides/notesSlideY.xml
+      const relsPath = `ppt/slides/_rels/slide${slideNumber}.xml.rels`;
+      const relsFile = zip.file(relsPath);
 
-      if (!notesFile) {
-        return {
-          success: true,
-          notes: '',
-          wordCount: 0,
-          estimatedDuration: 0,
-        };
+      if (!relsFile) return '';
+
+      const relsXml = await relsFile.async('string');
+      const relsDoc = this.xmlParser.parse(relsXml);
+      const relationships = this.toArray(relsDoc.Relationships?.Relationship);
+
+      const notesRel = relationships.find((rel: any) => 
+        rel.Type && rel.Type.endsWith('/notesSlide')
+      );
+
+      if (!notesRel || !notesRel.Target) return '';
+
+      // Resolve target path
+      let target = notesRel.Target as string;
+      if (target.startsWith('../')) {
+        target = target.replace('../', 'ppt/');
       }
+
+      // 2. Read the notes slide file
+      const notesFile = zip.file(target);
+      if (!notesFile) return '';
 
       const notesXml = await notesFile.async('string');
-      const notesData = this.xmlParser.parse(notesXml);
+      const notesDoc = this.xmlParser.parse(notesXml);
 
-      const notesText = this.extractTextFromNotes(notesData);
-      const wordCount = notesText ? notesText.split(/\s+/).length : 0;
-      
-      // Calcular duração estimada: 150 palavras por minuto
-      const estimatedDuration = wordCount > 0 ? Math.ceil((wordCount / 150) * 60) : 0;
+      // 3. Extract text from the notes slide
+      return this.extractTextFromNotes(notesDoc);
 
-      return {
-        success: true,
-        notes: notesText,
-        wordCount,
-        estimatedDuration,
-      };
     } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Erro desconhecido',
-      };
-    }
-  }
-
-  private extractTextFromNotes(notesData: PPTXNotesData): string {
-    try {
-      const texts: string[] = [];
-      const spTree = notesData?.['p:notes']?.['p:cSld']?.['p:spTree'];
-      
-      if (!spTree) return '';
-
-      // Processar shapes que contêm texto
-      const shapes = ensureArray(spTree['p:sp']);
-      
-      for (const shape of shapes) {
-        if (!shape?.['p:txBody']) continue;
-
-        const paragraphs = ensureArray<PPTXParagraph>(shape['p:txBody']['a:p']);
-        
-        for (const paragraph of paragraphs) {
-          if (!paragraph) continue;
-          
-          const runs = ensureArray<PPTXRun>(paragraph['a:r']);
-          
-          for (const run of runs) {
-            if (!run) continue;
-            
-            const text = getString(run['a:t']);
-            if (text) {
-              texts.push(text);
-            }
-          }
-        }
-      }
-
-      return texts.join(' ').trim();
-    } catch {
+      logger.warn(`Failed to extract notes for slide ${slideNumber}`, { error });
       return '';
     }
   }
 
-  /**
-   * Extrai notas de múltiplos slides de uma vez
-   */
-  async extractAllNotes(zip: JSZip): Promise<Map<number, SpeakerNotesResult>> {
-    const notesMap = new Map<number, SpeakerNotesResult>();
+  private extractTextFromNotes(doc: any): string {
+    const texts: string[] = [];
     
-    // Encontrar todos os arquivos de notes
-    const notesFiles = Object.keys(zip.files).filter(
-      (filename) => filename.match(/ppt\/notesSlides\/notesSlide\d+\.xml/)
-    );
+    // Notes are usually in p:notes -> p:cSld -> p:spTree -> p:sp -> p:txBody
+    // But structure can vary. We'll search for all text runs 'a:t' recursively or via known path.
+    
+    // Simplify: Look for spTree
+    const spTree = doc?.notes?.cSld?.spTree;
+    if (!spTree) return '';
 
-    for (const notesPath of notesFiles) {
-      const match = notesPath.match(/notesSlide(\d+)\.xml/);
-      if (match) {
-        const slideNumber = parseInt(match[1], 10);
-        const result = await this.extractNotes(zip, slideNumber);
-        notesMap.set(slideNumber, result);
+    const shapes = this.toArray(spTree.sp);
+    
+    for (const shape of shapes) {
+      // Check if it's a body text placeholder (usually type="body")
+      // But we can just grab all text
+      const textBody = shape.txBody;
+      if (!textBody) continue;
+
+      const paragraphs = this.toArray(textBody.p);
+      for (const p of paragraphs) {
+        const runs = this.toArray(p.r);
+        for (const r of runs) {
+          if (r.t) {
+            texts.push(String(r.t));
+          }
+        }
+        texts.push('\n'); // Paragraph break
       }
     }
 
-    return notesMap;
+    return texts.join('').trim();
   }
-}
 
-export async function extractSpeakerNotes(
-  zip: JSZip,
-  slideNumber: number
-): Promise<SpeakerNotesResult> {
-  const parser = new PPTXNotesParser();
-  return parser.extractNotes(zip, slideNumber);
-}
-
-export async function extractAllSpeakerNotes(
-  zip: JSZip
-): Promise<Map<number, SpeakerNotesResult>> {
-  const parser = new PPTXNotesParser();
-  return parser.extractAllNotes(zip);
+  private toArray(value: any): any[] {
+    if (!value) return [];
+    return Array.isArray(value) ? value : [value];
+  }
 }

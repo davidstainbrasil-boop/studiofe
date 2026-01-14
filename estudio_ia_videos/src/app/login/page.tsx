@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { Suspense } from 'react';
-import { LoginForm } from '@components/auth/login-form';
-import { Sparkles, Video, ShieldCheck, Loader2 } from 'lucide-react';
+import { EnhancedAuthForm } from '@components/auth/enhanced-auth-form';
+import { Sparkles, Video, ShieldCheck, Zap, Users, Loader2 } from 'lucide-react';
 
 export const metadata: Metadata = {
     title: 'Login | Estúdio IA de Vídeos',
@@ -74,9 +74,9 @@ export default function LoginPage() {
 
             {/* Right Column - Login Form */}
             <div className="lg:p-8">
-                <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
+                <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[450px]">
                     <Suspense fallback={<LoginFormFallback />}>
-                        <LoginForm />
+                        <EnhancedAuthForm mode="login" />
                     </Suspense>
                 </div>
             </div>

@@ -32,13 +32,19 @@ describe('API Route: /api/pptx/upload', () => {
 
   it('should return 400 if no file is provided', async () => {
     const formData = new FormData();
+    // Mock cookies with dev_bypass
     const request = {
       formData: async () => formData,
       headers: {
         get: (header: string) => {
           if (header === 'x-forwarded-for') return '127.0.0.1';
+          if (header === 'x-user-id') return '12b21f2e-8ac1-480c-af1e-542a7d9b185a';
           return null;
         },
+      },
+      cookies: {
+        get: (name: string) => ({ value: 'true' }),
+        getAll: () => [{ name: 'dev_bypass', value: 'true' }]
       },
     } as unknown as NextRequest;
 
@@ -73,8 +79,13 @@ describe('API Route: /api/pptx/upload', () => {
       headers: {
         get: (header: string) => {
           if (header === 'x-forwarded-for') return '127.0.0.1';
+          if (header === 'x-user-id') return '12b21f2e-8ac1-480c-af1e-542a7d9b185a';
           return null;
         },
+      },
+      cookies: {
+        get: (name: string) => ({ value: 'true' }),
+        getAll: () => [{ name: 'dev_bypass', value: 'true' }]
       },
     } as unknown as NextRequest;
 

@@ -5,6 +5,7 @@
  */
 
 import { PrismaClient } from '@prisma/client'
+import { randomUUID } from 'node:crypto'
 
 const prisma = new PrismaClient()
 
@@ -22,6 +23,7 @@ async function main() {
     if (!existingSettings) {
       await prisma.system_settings.create({
         data: {
+          id: randomUUID(),
           key: 'theme_config',
           value: {
             primaryColor: "#0066cc",
@@ -52,6 +54,7 @@ async function main() {
     if (!adminUser) {
       await prisma.users.create({
         data: {
+          id: randomUUID(),
           email: 'admin@estudio.ai',
           name: 'Administrador',
           role: 'admin'

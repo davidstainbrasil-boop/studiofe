@@ -277,19 +277,55 @@ export default class ThumbnailGenerator extends EventEmitter {
   }
 
   private async detectScenes(videoPath: string): Promise<SceneInfo[]> {
-    // Mock implementation for scene detection
-    // In a real scenario, we would use ffmpeg's scene detection filter
-    // ffmpeg -i input.mp4 -filter:v "select='gt(scene,0.4)',showinfo" -f null -
-    
-    const metadata = await this.getVideoMetadata(videoPath);
-    const duration = metadata.format.duration || 0;
-    
-    // Return some fake scenes
-    return [
-      { timestamp: duration * 0.1, sceneNumber: 1, confidence: 0.8 },
-      { timestamp: duration * 0.5, sceneNumber: 2, confidence: 0.9 },
-      { timestamp: duration * 0.8, sceneNumber: 3, confidence: 0.7 }
-    ];
+    return new Promise((resolve, reject) => {
+      const scenes: SceneInfo[] = [];
+      let sceneCount = 0;
+
+      // Usar filtro select para detectar mudanças de cena > 0.4
+      ffmpeg(videoPath)
+        .videoFilters("select='gt(scene,0.4)',showinfo")
+        .format('null')
+        .output('-')
+        .on('stderr', (line: string) => {
+          // Parsear saída do showinfo para capturar timestamps
+          // Exemplo: [Parsed_showinfo_1 @ 0x...] n:   0 pts:  12800 pts_time:0.1 ...
+          if (line.includes('Parsed_showinfo') && line.includes('pts_time:')) {
+            const match = line.match(/pts_time:([0-9.]+)/);
+            if (match && match[1]) {
+              const timestamp = parseFloat(match[1]);
+              // Debounce simples: evitar cenas muito próximas (ex: < 1s)
+              if (scenes.length === 0 || (timestamp - scenes[scenes.length - 1].timestamp > 1.0)) {
+                sceneCount++;
+                scenes.push({
+                  timestamp,
+                  sceneNumber: sceneCount,
+                  confidence: 0.8 // Valor estimado, já que ffmpeg filtered for > 0.4
+                });
+              }
+            }
+          }
+        })
+        .on('end', () => {
+             // Fallback se não encontrar cenas (ex: vídeo estático ou curto)
+            if (scenes.length === 0) {
+               this.getVideoMetadata(videoPath).then(meta => {
+                 const duration = meta.format.duration || 0;
+                 if (duration > 0) {
+                     scenes.push({ timestamp: duration * 0.1, sceneNumber: 1, confidence: 1.0 });
+                 }
+                 resolve(scenes);
+               }).catch(err => resolve(scenes)); // Resolve empty if metadata fails
+            } else {
+               resolve(scenes);
+            }
+        })
+        .on('error', (err) => {
+           console.error('Error detecting scenes:', err);
+           // Fallback gracioso em caso de erro no ffmpeg
+           resolve([]);
+        })
+        .run();
+    });
   }
 
   private async analyzeImageQuality(imagePath: string): Promise<ThumbnailQuality> {
@@ -318,7 +354,7 @@ export default class ThumbnailGenerator extends EventEmitter {
     
     const avgBrightness = totalBrightness / (data.length / 4);
     
-    // Simple contrast calculation (variance)
+    // Variance-based contrast calculation
     let sumSquaredDiff = 0;
     for (let i = 0; i < data.length; i += 4) {
       const brightness = (data[i] + data[i + 1] + data[i + 2]) / 3;
@@ -326,8 +362,10 @@ export default class ThumbnailGenerator extends EventEmitter {
     }
     const contrast = Math.sqrt(sumSquaredDiff / (data.length / 4)) / 255; // Normalize 0-1
 
-    // Mock sharpness and score
-    const sharpness = 0.8; 
+    // Estimativa básica de sharpness (real implementation would involve convolution matrices)
+    // Manter valor base seguro por enquanto, mas usando métricas reais de brilho/contraste
+    // para compor score final.
+    const sharpness = 0.5 + (contrast * 0.5); 
     const score = (avgBrightness / 255) * 0.3 + contrast * 0.4 + sharpness * 0.3;
 
     return {

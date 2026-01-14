@@ -166,18 +166,23 @@ export async function POST(req: NextRequest) {
 
     // Verifica se projeto existe e permissões (usando Redis cache)
     // Cache project ownership for 5 minutes - reduces DB load
+    logger.info('Searching project', { projectId });
     const project = await cachedQuery(
-      `project:${projectId}:owner`,
+      `project:${projectId}:owner:v2`,
       async () => {
-        return await prisma.projects.findUnique({
+        logger.info('Querying DB for project', { projectId });
+        const p = await prisma.projects.findUnique({
           where: { id: projectId },
           select: { userId: true }
         });
+        logger.info('DB Result', { p });
+        return p;
       },
       CacheTier.SHORT // 5 minutes
     );
 
     if (!project) {
+      logger.warn('Project not found', { projectId });
       return NextResponse.json(
         { error: 'Projeto não encontrado' },
         { status: 404 }
@@ -265,56 +270,84 @@ export async function POST(req: NextRequest) {
       logger.info('Idempotency key provided', { idempotencyKey, projectId, userId });
     }
 
-    // 1. Create Job in Supabase (Critical for Worker Polling)
-    const dbJobId = await jobManager.createJob(userId as string, projectId, idempotencyKey);
-    logger.info('Job criado no Supabase', { ...logContext, jobId: dbJobId });
+    // ========================================
+    // FASE 2 - TRANSAÇÃO ATÔMICA (F2.1-F2.3)
+    // ========================================
+    let dbJobId: string | null = null;
 
-    // 2. Add to Queue (Redis/BullMQ) - Optional but good for scalability
-    // We pass the DB Job ID so the worker can correlate if it uses the queue
-    // Convert local types to queue types
-    const queueSlides: QueueRenderSlide[] = validatedSlides.map((slide, idx) => ({
-      id: slide.id,
-      orderIndex: idx,
-      title: slide.title,
-      content: slide.content,
-      durationMs: (slide.duration || 5) * 1000,
-      transition: {
-        type: slide.transition === 'fade' ? 'fade' : 'none',
-        durationMs: (slide.transitionDuration || 0.5) * 1000
+    try {
+      // 1. Create Job in Supabase (Critical for Worker Polling)
+      dbJobId = await jobManager.createJob(userId as string, projectId, idempotencyKey);
+      logger.info('Job criado no Supabase', { ...logContext, jobId: dbJobId });
+
+      // 2. Add to Queue (Redis/BullMQ) - Atomic operation
+      // If this fails, we rollback the DB job (F2.3)
+      const queueSlides: QueueRenderSlide[] = validatedSlides.map((slide, idx) => ({
+        id: slide.id,
+        orderIndex: idx,
+        title: slide.title,
+        content: slide.content,
+        durationMs: (slide.duration || 5) * 1000,
+        transition: {
+          type: slide.transition === 'fade' ? 'fade' : 'none',
+          durationMs: (slide.transitionDuration || 0.5) * 1000
+        }
+      }));
+      
+      const queueConfig: QueueRenderConfig = {
+        width: renderConfig.width,
+        height: renderConfig.height,
+        fps: renderConfig.fps,
+        quality: renderConfig.quality,
+        format: renderConfig.format as 'mp4' | 'webm' | 'mov',
+        codec: renderConfig.codec,
+        bitrate: renderConfig.bitrate,
+        audioCodec: renderConfig.audioCodec,
+        audioBitrate: renderConfig.audioBitrate,
+        test: renderConfig.test
+      };
+
+      // F2.1: Enqueue com tratamento de erro
+      await addVideoJob({
+        jobId: dbJobId,
+        projectId,
+        slides: queueSlides,
+        config: queueConfig,
+        userId: userId as string
+      });
+
+      logger.info('Job enfileirado com sucesso', { ...logContext, jobId: dbJobId });
+
+      // Invalidate project cache
+      await invalidatePattern(`project:${projectId}:*`);
+
+      return NextResponse.json({
+        success: true,
+        jobId: dbJobId,
+        traceId,
+        projectId,
+        slidesCount: validatedSlides.length,
+        config: renderConfig,
+        message: 'Renderização real iniciada com sucesso',
+        statusUrl: `/api/render/status?jobId=${dbJobId}`
+      });
+
+    } catch (enqueueError) {
+      // F2.2 & F2.3: Rollback - Evitar job órfão no DB
+      if (dbJobId) {
+        logger.error('Falha ao enfileirar job - executando rollback', enqueueError as Error, {
+          ...logContext,
+          jobId: dbJobId
+        });
+
+        await jobManager.markAsFailedEnqueue(
+          dbJobId,
+          enqueueError instanceof Error ? enqueueError.message : 'Unknown enqueue error'
+        );
       }
-    }));
-    
-    const queueConfig: QueueRenderConfig = {
-      width: renderConfig.width,
-      height: renderConfig.height,
-      fps: renderConfig.fps,
-      quality: renderConfig.quality,
-      format: renderConfig.format as 'mp4' | 'webm' | 'mov',
-      codec: renderConfig.codec,
-      bitrate: renderConfig.bitrate,
-      audioCodec: renderConfig.audioCodec,
-      audioBitrate: renderConfig.audioBitrate,
-      test: renderConfig.test
-    };
 
-    await addVideoJob({
-      jobId: dbJobId,
-      projectId,
-      slides: queueSlides,
-      config: queueConfig,
-      userId: userId as string
-    });
-
-    return NextResponse.json({
-      success: true,
-      jobId: dbJobId,
-      traceId,
-      projectId,
-      slidesCount: validatedSlides.length,
-      config: renderConfig,
-      message: 'Renderização real iniciada com sucesso',
-      statusUrl: `/api/render/status?jobId=${dbJobId}`
-    });
+      throw enqueueError; // Re-throw para catch externo
+    }
 
   } catch (error) {
     // Parse projectId from request body if available

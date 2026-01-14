@@ -46,23 +46,46 @@ export interface BatchNarrationResult {
 
 export class AutoNarrationService {
   async generateForSlide(slideText: string, options?: NarrationOptions): Promise<NarrationResult> {
-    logger.info('[AutoNarration] Generating narration for slide', { component: 'AutoNarrationService' });
+    logger.info('[AutoNarration] Generating narration for slide (Real)', { component: 'AutoNarrationService' });
     
-    // TODO: Implement single slide generation if needed
-    return {
-      audioBuffer: Buffer.from([]),
-      duration: 0,
-      transcript: slideText,
-    };
+    try {
+      const voiceId = options?.voice || '21m00Tcm4TlvDq8ikWAM';
+      const audioBuffer = await generateTTSAudio(slideText, voiceId);
+      
+      // Calculate duration roughly as we don't parse the MP3 headers here
+      // For higher precision we would need 'mp3-duration' or similar lib
+      // Buffer length / bit rate estimate? 
+      // MP3 128kbps = 16KB/s approximately.
+      const durationSeconds = (audioBuffer.byteLength) / 16000; 
+
+      return {
+        audioBuffer: Buffer.from(audioBuffer),
+        duration: Math.round(durationSeconds * 1000),
+        transcript: slideText,
+      };
+    } catch (error) {
+       logger.error('Error generating slide narration', error);
+       throw error;
+    }
   }
   
   async generateForPresentation(slides: string[], options?: NarrationOptions): Promise<NarrationResult[]> {
-    logger.info('[AutoNarration] Generating narration for presentation', { component: 'AutoNarrationService' });
-    return slides.map(text => ({
-      audioBuffer: Buffer.from([]),
-      duration: 0,
-      transcript: text,
-    }));
+    logger.info('[AutoNarration] Generating narration for presentation (Real)', { component: 'AutoNarrationService', count: slides.length });
+    
+    // Use Promise.all with simple concurrency limit could be added if needed, but for now sequential or parallel
+    // Mapping all might hit rate limits if too many.
+    const results: NarrationResult[] = [];
+    
+    for (const text of slides) {
+        if (!text || !text.trim()) {
+            results.push({ audioBuffer: Buffer.from([]), duration: 0, transcript: '' });
+            continue;
+        }
+        const result = await this.generateForSlide(text, options);
+        results.push(result);
+    }
+    
+    return results;
   }
 
   /**

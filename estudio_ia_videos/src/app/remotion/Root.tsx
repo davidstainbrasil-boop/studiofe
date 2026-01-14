@@ -1,13 +1,13 @@
 import React from 'react';
 import { Composition } from 'remotion';
 import { MyComposition, MyCompositionProps } from './Composition';
-import { TimelineComposition } from './TimelineComposition';
+import { TimelineComposition, TimelineCompositionProps } from './TimelineComposition';
 
 export const RemotionRoot: React.FC = () => {
   return (
     <>
       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any -- Remotion Composition generic typing requires component cast */}
-      <Composition<MyCompositionProps>
+      <Composition<MyCompositionProps, Record<string, unknown>>
         id="MyVideo"
         component={MyComposition as React.ComponentType<MyCompositionProps>}
         durationInFrames={30 * 60} // Fallback duration
@@ -33,9 +33,9 @@ export const RemotionRoot: React.FC = () => {
           };
         }}
       />
-      <Composition
+      <Composition<TimelineCompositionProps, Record<string, unknown>>
         id="TimelineVideo"
-        component={TimelineComposition}
+        component={TimelineComposition as React.ComponentType<TimelineCompositionProps>}
         durationInFrames={30 * 60}
         fps={30}
         width={1920}
@@ -46,12 +46,16 @@ export const RemotionRoot: React.FC = () => {
         // Calculate total duration from tracks
         calculateMetadata={async ({ props }) => {
           let maxDuration = 0;
-          props.tracks.forEach(t => {
-            t.elements.forEach(e => {
-              const end = e.startTime + e.duration;
-              if (end > maxDuration) maxDuration = end;
+          if (props.tracks) {
+            props.tracks.forEach((t: any) => {
+              if (t.elements) {
+                t.elements.forEach((e: any) => {
+                  const end = e.startTime + e.duration;
+                  if (end > maxDuration) maxDuration = end;
+                });
+              }
             });
-          });
+          }
           return {
             durationInFrames: Math.max(30, Math.ceil(maxDuration * 30)), // At least 1 sec
             props

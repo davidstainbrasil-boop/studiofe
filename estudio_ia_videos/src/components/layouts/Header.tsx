@@ -16,7 +16,7 @@ import { cn } from '@lib/utils'
 import { Button } from '@components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@components/ui/avatar'
 import { Badge } from '@components/ui/badge'
-import { RenderNotifications } from '@/src/components/RenderNotifications'
+import { RenderNotifications } from '@components/RenderNotifications'
 import { createBrowserSupabaseClient } from '@lib/services'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 import {
@@ -26,7 +26,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@components/ui/dropdown-menu'
-import { 
+import {
   Menu,
   Search,
   Bell,
@@ -170,12 +170,12 @@ export default function Header({
   const subscriptionLabel =
     subscription === 'enterprise' ? 'Enterprise'
       : subscription === 'pro' ? 'Pro'
-      : 'Free'
+        : 'Free'
 
   return (
     <header className="sticky top-0 z-fixed bg-surface/80 backdrop-blur-md border-b border-border">
       <div className="flex items-center justify-between px-4 lg:px-6 h-16">
-        
+
         {/* Left Section */}
         <div className="flex items-center gap-4">
           {/* Mobile Menu Button */}
@@ -192,8 +192,8 @@ export default function Header({
           )}
 
           {/* Logo / Brand */}
-          <Link 
-            href="/" 
+          <Link
+            href="/"
             className="flex items-center gap-3 hover:opacity-80 transition-opacity"
           >
             <div className="w-8 h-8 rounded-lg bg-gradient-primary flex items-center justify-center shadow-primary-glow">
@@ -236,7 +236,7 @@ export default function Header({
 
         {/* Right Section */}
         <div className="flex items-center gap-2">
-          
+
           {/* Theme Toggle */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -264,8 +264,8 @@ export default function Header({
           </DropdownMenu>
 
           {/* Render Notifications */}
-          <RenderNotifications 
-            userId={user?.id ?? null} 
+          <RenderNotifications
+            userId={user?.id ?? null}
             className="flex-shrink-0"
           />
 
@@ -299,45 +299,45 @@ export default function Header({
                 </div>
               </div>
               <DropdownMenuSeparator />
-              
+
               <DropdownMenuItem asChild>
                 <Link href="/profile" className="flex items-center">
                   <UserIcon className="h-4 w-4 mr-2" />
                   Perfil
                 </Link>
               </DropdownMenuItem>
-              
+
               <DropdownMenuItem asChild>
                 <Link href="/settings" className="flex items-center">
                   <Settings className="h-4 w-4 mr-2" />
                   Configurações
                 </Link>
               </DropdownMenuItem>
-              
+
               <DropdownMenuItem asChild>
                 <Link href="/admin" className="flex items-center">
                   <Shield className="h-4 w-4 mr-2" />
                   Administração
                 </Link>
               </DropdownMenuItem>
-              
+
               <DropdownMenuSeparator />
-              
+
               <DropdownMenuItem onClick={onSearchClick}>
                 <Keyboard className="h-4 w-4 mr-2" />
                 Atalhos
                 <kbd className="ml-auto text-xs">⌘K</kbd>
               </DropdownMenuItem>
-              
+
               <DropdownMenuItem asChild>
                 <Link href="/help" className="flex items-center">
                   <HelpCircle className="h-4 w-4 mr-2" />
                   Ajuda
                 </Link>
               </DropdownMenuItem>
-              
+
               <DropdownMenuSeparator />
-              
+
               <DropdownMenuItem onClick={handleSignOut} className="text-danger">
                 <LogOut className="h-4 w-4 mr-2" />
                 Sair

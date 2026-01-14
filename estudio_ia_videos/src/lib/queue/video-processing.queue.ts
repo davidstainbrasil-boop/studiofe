@@ -10,6 +10,7 @@ import { subtitleService } from '../services/subtitle.service'
 import { sceneDetectionService } from '../services/scene-detection.service'
 import { fileUploadService } from '../services/file-upload.service'
 import { VideoUtils } from '../utils/video.utils'
+import { logger } from '../logger'
 
 // Redis connection
 const connection = new Redis({
@@ -123,7 +124,7 @@ const worker = new Worker<JobData, any, string>(
       return result
 
     } catch (error) {
-      console.error(`Job ${job.id} failed:`, error)
+      logger.error('Video processing job failed', error as Error, { jobId: job.id })
       throw error
     }
   },
@@ -181,15 +182,15 @@ async function processSceneExport(videoUrl: string, scenes: any[], selectedIds: 
 
 // Worker event handlers
 worker.on('completed', (job) => {
-  console.log(`Job ${job.id} completed successfully`)
+  logger.info('Video processing job completed', { jobId: job.id })
 })
 
 worker.on('failed', (job, err) => {
-  console.error(`Job ${job?.id} failed:`, err)
+  logger.error('Video processing job failed', err, { jobId: job?.id })
 })
 
 worker.on('progress', (job, progress) => {
-  console.log(`Job ${job.id} progress:`, progress)
+  logger.info('Video processing job progress', { jobId: job.id, progress })
 })
 
 // Queue helpers

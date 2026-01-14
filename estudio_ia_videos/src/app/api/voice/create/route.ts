@@ -43,6 +43,7 @@ export async function POST(req: NextRequest) {
     // Note: VoiceClone model must be present in schema.prisma and prisma generate run
     const voiceClone = await prisma.voice_clones.create({
       data: {
+        id: crypto.randomUUID(),
         userId: getUserId(session.user),
         name,
         description,

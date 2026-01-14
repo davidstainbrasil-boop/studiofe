@@ -63,6 +63,27 @@ class TTSProviderFactory {
     }
   }
 
+  private static async uploadAudio(audioBuffer: ArrayBuffer | Buffer, format: string, providerId: string): Promise<string> {
+    const fileName = `tts/${providerId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${format}`;
+    
+    const { error: uploadError } = await supabaseAdmin.storage
+        .from('assets')
+        .upload(fileName, audioBuffer, {
+            contentType: `audio/${format}`,
+            upsert: false
+        });
+
+    if (uploadError) {
+        throw new Error(`Failed to upload audio to storage: ${uploadError.message}`);
+    }
+
+    const { data: { publicUrl } } = supabaseAdmin.storage
+        .from('assets')
+        .getPublicUrl(fileName);
+        
+    return publicUrl;
+  }
+
   private static async generateAzureTTS(provider: TTSProvider, params: TTSParams) {
     // Azure TTS implementation
     const { api_key, region, endpoint } = provider.config
@@ -96,12 +117,11 @@ class TTSProviderFactory {
       throw new Error(`Azure TTS API error: ${response.statusText}`)
     }
 
-    const audioBuffer = await response.arrayBuffer()
-    
-    // In a real implementation, you would upload this to your storage service
-    // For now, we'll simulate the response
+    const audioBuffer = await response.arrayBuffer();
+    const audioUrl = await this.uploadAudio(audioBuffer, params.format, provider.provider_id);
+
     return {
-      audioUrl: `https://storage.example.com/tts/${Date.now()}.${params.format}`,
+      audioUrl,
       duration: Math.ceil(params.text.length / 10), // Rough estimate
       size: audioBuffer.byteLength
     }
@@ -142,12 +162,13 @@ class TTSProviderFactory {
     }
 
     const result = await response.json()
+    const audioBuffer = Buffer.from(result.audioContent, 'base64');
+    const audioUrl = await this.uploadAudio(audioBuffer, params.format, provider.provider_id);
     
-    // In a real implementation, you would decode and upload the base64 audio
     return {
-      audioUrl: `https://storage.example.com/tts/${Date.now()}.${params.format}`,
+      audioUrl,
       duration: Math.ceil(params.text.length / 10),
-      size: Math.ceil(result.audioContent.length * 0.75) // Base64 to binary size estimate
+      size: audioBuffer.byteLength
     }
   }
 
@@ -181,9 +202,10 @@ class TTSProviderFactory {
     }
 
     const audioBuffer = await response.arrayBuffer()
-    
+    const audioUrl = await this.uploadAudio(audioBuffer, params.format, provider.provider_id);
+
     return {
-      audioUrl: `https://storage.example.com/tts/${Date.now()}.${params.format}`,
+      audioUrl,
       duration: Math.ceil(params.text.length / 10),
       size: audioBuffer.byteLength
     }
@@ -223,9 +245,10 @@ class TTSProviderFactory {
     }
 
     const audioBuffer = await response.arrayBuffer()
-    
+    const audioUrl = await this.uploadAudio(audioBuffer, params.format, provider.provider_id);
+
     return {
-      audioUrl: `https://storage.example.com/tts/${Date.now()}.${params.format}`,
+      audioUrl,
       duration: Math.ceil(params.text.length / 10),
       size: audioBuffer.byteLength
     }

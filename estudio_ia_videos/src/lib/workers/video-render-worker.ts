@@ -1,471 +1,214 @@
 /**
- * 🎬 Video Render Worker - IMPLEMENTAÇÃO REAL
- * Worker completo para renderização de vídeos com FFmpeg
+ * Video Render Worker
+ * Worker para processar jobs de renderização de vídeo
  */
 
-import { exec } from 'child_process';
-import { promisify } from 'util';
+import { FrameGenerator, PPTXSlideData } from '@/lib/render/frame-generator';
+import { FFmpegExecutor } from '@/lib/render/ffmpeg-executor';
+import { VideoUploader } from '@/lib/storage/video-uploader';
+import { logger } from '@/lib/logger';
+import { prisma } from '@/lib/prisma';
 import path from 'path';
-import fs from 'fs/promises';
-import { EventEmitter } from 'events';
-import { FFmpegExecutor, FFmpegOptions } from '@lib/render/ffmpeg-executor';
-import { VideoUploader } from '@lib/storage/video-uploader';
-import { FrameGenerator, type PPTXSlideData } from '@lib/render/frame-generator';
-import { logger } from '@lib/logger';
-import WatermarkProcessor, {
-  WatermarkPosition,
-  WatermarkType,
-} from '../video/watermark-processor';
-import { prisma as prismaClient, PrismaClient } from '../prisma';
-
-const execAsync = promisify(exec);
+import os from 'os';
+import { promises as fs } from 'fs';
 
 export interface RenderJobData {
   id: string;
   projectId: string;
   userId: string;
-  slides: PPTXSlideData[];
+  slides: Array<{
+    id: string;
+    content: any;
+    duration?: number;
+  }>;
   config: {
     resolution: { width: number; height: number };
     fps: number;
-    quality: 'low' | 'medium' | 'high' | 'ultra';
-    codec: 'h264' | 'h265' | 'vp9';
-    format: 'mp4' | 'mov' | 'webm';
-    audioEnabled: boolean;
-    transitionsEnabled: boolean;
+    quality: string;
+    codec: string;
+    format: string;
+    audioEnabled?: boolean;
+    transitionsEnabled?: boolean;
   };
-  audioTracks?: {
-    slideIndex: number;
-    audioUrl: string;
-    duration: number;
-  }[];
 }
 
-export interface RenderProgress {
-  jobId: string;
-  stage: 'preparing' | 'frames' | 'audio' | 'encoding' | 'upload' | 'complete' | 'error';
-  progress: number;
-  currentFrame?: number;
-  totalFrames?: number;
-  fps?: number;
-  timeRemaining?: number;
-  message: string;
+export interface RenderResult {
+  success: boolean;
+  videoUrl?: string;
+  s3Key?: string;
   error?: string;
 }
 
-export class VideoRenderWorker extends EventEmitter {
-  private isProcessing = false;
-  private currentJobId: string | null = null;
+export class VideoRenderWorker {
+  private frameGenerator: FrameGenerator;
   private ffmpegExecutor: FFmpegExecutor;
   private videoUploader: VideoUploader;
-  private frameGenerator: FrameGenerator;
-  private tempDir: string;
-  private prisma: PrismaClient;
 
   constructor(
-    ffmpegExecutor: FFmpegExecutor,
-    frameGenerator: FrameGenerator,
-    videoUploader: VideoUploader,
-    prisma: PrismaClient = prismaClient,
+    frameGenerator?: FrameGenerator,
+    ffmpegExecutor?: FFmpegExecutor,
+    videoUploader?: VideoUploader
   ) {
-    super();
-    this.ffmpegExecutor = ffmpegExecutor;
-    this.frameGenerator = frameGenerator;
-    this.videoUploader = videoUploader;
-    this.prisma = prisma;
-    this.tempDir = path.join(process.cwd(), 'temp', 'render');
-    this.ensureTempDir();
+    this.frameGenerator = frameGenerator || new FrameGenerator();
+    this.ffmpegExecutor = ffmpegExecutor || new FFmpegExecutor();
+    this.videoUploader = videoUploader || new VideoUploader();
   }
 
-  private async ensureTempDir(): Promise<void> {
-    try {
-      await fs.mkdir(this.tempDir, { recursive: true });
-    } catch (error) {
-      logger.error('Failed to create temp directory:', error instanceof Error ? error : new Error(String(error)), { component: 'VideoRenderWorker' });
-    }
-  }
-
-  /**
-   * Processa um job de renderização completo
-   */
   async processRenderJob(jobData: RenderJobData): Promise<string> {
-    if (this.isProcessing) {
-      throw new Error('Worker is already processing a job');
-    }
-
-    this.isProcessing = true;
-    this.currentJobId = jobData.id;
+    const { id: jobId, projectId, userId, slides, config } = jobData;
 
     try {
-      logger.info(`🎬 Starting render job: ${jobData.id}`, { component: 'VideoRenderWorker' });
+      logger.info('Starting video render job', {
+        component: 'VideoRenderWorker',
+        jobId,
+        projectId,
+        slidesCount: slides.length
+      });
+
+      // 1. Generate frames from slides
+      await this.checkCancellation(jobId);
       
-      // 1. Preparar diretórios e arquivos
-      await this.emitProgress({
-        jobId: jobData.id,
-        stage: 'preparing',
-        progress: 5,
-        message: 'Preparando arquivos...'
+      const framesDir = path.join(os.tmpdir(), `render_${jobId}_frames`);
+      // Convert raw content to PPTXSlideData if structure matches, otherwise mock/default
+      const pptxSlides: PPTXSlideData[] = slides.map(s => {
+          // If content is already compliant or close to it
+          return s.content as PPTXSlideData; 
+      });
+      // Convert to Frame format
+      const renderableSlides = FrameGenerator.convertPPTXSlidesToFrames(pptxSlides);
+
+      const frames = await this.frameGenerator.generateFrames(renderableSlides, framesDir);
+      
+      logger.info('Frames generated', { 
+        component: 'VideoRenderWorker',
+        jobId, 
+        framesCount: frames.totalFrames 
       });
 
-      const jobDir = path.join(this.tempDir, jobData.id);
-      await fs.mkdir(jobDir, { recursive: true });
-
-      // 2. Gerar frames dos slides
-      await this.emitProgress({
-        jobId: jobData.id,
-        stage: 'frames',
-        progress: 15,
-        message: 'Gerando frames dos slides...'
+      // 2. Render video with FFmpeg
+      await this.checkCancellation(jobId);
+      
+      const outputVideoPath = path.join(os.tmpdir(), `render_${jobId}.mp4`);
+      
+      const renderResult = await this.ffmpegExecutor.renderFromFrames({
+          inputFramesDir: frames.framesDir,
+          outputPath: outputVideoPath,
+          fps: config.fps,
+          width: config.resolution.width,
+          height: config.resolution.height,
+          codec: config.codec as any,
+          resolution: '1080p' // dynamic based on width?
       });
 
-      const framesDir = path.join(jobDir, 'frames');
-      const totalFrames = await this.generateFrames(jobData, framesDir);
-
-      // 3. Processar áudio (se habilitado)
-      let audioPath: string | null = null;
-      if (jobData.config.audioEnabled && jobData.audioTracks?.length) {
-        await this.emitProgress({
-          jobId: jobData.id,
-          stage: 'audio',
-          progress: 40,
-          message: 'Processando áudio...'
-        });
-
-        audioPath = await this.processAudio(jobData, jobDir);
+      if (!renderResult.success || !renderResult.outputPath) {
+          throw new Error(`FFmpeg render failed: ${renderResult.error}`);
       }
 
-      // 4. Renderizar vídeo com FFmpeg
-      await this.emitProgress({
-        jobId: jobData.id,
-        stage: 'encoding',
-        progress: 60,
-        message: 'Encodando vídeo...'
+      const videoPath = renderResult.outputPath;
+      
+      logger.info('Video rendered with FFmpeg', {
+        component: 'VideoRenderWorker',
+        jobId,
+        videoPath
       });
 
-      const outputPath = path.join(jobDir, `output.${jobData.config.format}`);
-      await this.renderVideo(jobData, framesDir, audioPath, outputPath, totalFrames);
-
-      // 5. Upload para storage
-      await this.emitProgress({
-        jobId: jobData.id,
-        stage: 'upload',
-        progress: 90,
-        message: 'Fazendo upload...'
+      // 3. Upload to storage
+      await this.checkCancellation(jobId);
+      const videoResultUrl = await this.videoUploader.uploadVideo({
+        videoPath,
+        projectId,
+        userId,
+        jobId,
+        metadata: {
+            resolution: config.resolution,
+            fps: config.fps,
+            codec: config.codec,
+            format: config.format,
+            duration: renderResult.duration
+        }
+      });
+      
+      logger.info('Video uploaded to storage', {
+        component: 'VideoRenderWorker',
+        jobId,
+        videoUrl: videoResultUrl
       });
 
-      const videoUrl = await this.uploadVideo(jobData, outputPath);
+      // Clean up temp
+      try {
+          await fs.rm(framesDir, { recursive: true, force: true });
+          await fs.unlink(videoPath);
+      } catch (e) { /* ignore cleanup errors */ }
 
-      await this.prisma.render_jobs.update({
-        where: { id: jobData.id },
+      // 4. Update job status in database
+      await prisma.video_exports.update({
+        where: { id: jobId },
         data: {
           status: 'completed',
-          output_url: videoUrl,
-        },
+          videoUrl: videoResultUrl,
+          progress: 100,
+          updatedAt: new Date()
+        }
       });
 
-      // 6. Cleanup
-      await this.cleanup(jobDir);
-
-      await this.emitProgress({
-        jobId: jobData.id,
-        stage: 'complete',
-        progress: 100,
-        message: 'Renderização concluída!'
-      });
-
-      logger.info(`✅ Render job completed: ${jobData.id}`, { component: 'VideoRenderWorker' });
-      return videoUrl;
-
+      return videoResultUrl;
     } catch (error) {
-      logger.error(`❌ Render job failed: ${jobData.id}`, error instanceof Error ? error : new Error(String(error)), { component: 'VideoRenderWorker' });
+      const errorMessage = error instanceof Error ? error.message : String(error);
       
-      await this.emitProgress({
-        jobId: jobData.id,
-        stage: 'error',
-        progress: 0,
-        message: 'Erro na renderização',
-        error: error instanceof Error ? error.message : 'Unknown error'
+      // Don't overwrite cancelled status with failed
+      if (errorMessage === 'JOB_CANCELLED') {
+         logger.info('Job execution stopped due to cancellation', { jobId });
+         return '';
+      }
+
+      logger.error('Video render job failed', error instanceof Error ? error : new Error(errorMessage), {
+        component: 'VideoRenderWorker',
+        jobId,
+        projectId
+      });
+
+      // Update job status as failed
+      await prisma.video_exports.update({
+        where: { id: jobId },
+        data: {
+          status: 'failed',
+          errorMessage,
+          updatedAt: new Date()
+        }
+      }).catch(dbError => {
+        logger.error('Failed to update job status after error', 
+          dbError instanceof Error ? dbError : new Error(String(dbError)),
+          { component: 'VideoRenderWorker', jobId }
+        );
       });
 
       throw error;
-    } finally {
-      this.isProcessing = false;
-      this.currentJobId = null;
     }
   }
 
-  /**
-   * Gera frames individuais dos slides
-   */
-  private async generateFrames(jobData: RenderJobData, framesDir: string): Promise<number> {
-    await fs.mkdir(framesDir, { recursive: true });
+  private async checkCancellation(jobId: string): Promise<void> {
+    const job = await prisma.video_exports.findUnique({
+      where: { id: jobId },
+      select: { status: true }
+    });
 
-    // Usa a instância injetada
-    const result = await this.frameGenerator.generateFrames(
-      jobData.slides,
-      framesDir,
-      (current, total) => {
-        const progress = (current / total) * 100;
-        this.emitProgress({
-          jobId: jobData.id,
-          stage: 'frames',
-          progress: 15 + (progress * 0.25), // Mapeia para o intervalo 15-40%
-          message: `Gerando frames... ${Math.round(progress)}%`
-        });
-      }
-    );
-
-    if (!result.success) {
-      throw new Error('Falha ao gerar frames');
-    }
-
-    return result.totalFrames;
-  }
-
-  /**
-   * Processa e sincroniza áudio
-   */
-  private async processAudio(jobData: RenderJobData, jobDir: string): Promise<string> {
-    if (!jobData.audioTracks?.length) {
-      throw new Error('No audio tracks provided');
-    }
-
-    const audioDir = path.join(jobDir, 'audio');
-    await fs.mkdir(audioDir, { recursive: true });
-
-    // Download e processa cada track de áudio
-    const audioFiles: string[] = [];
-    for (let i = 0; i < jobData.audioTracks.length; i++) {
-      const track = jobData.audioTracks[i];
-      const audioFile = path.join(audioDir, `slide_${track.slideIndex}.wav`);
-      
-      // Download do áudio (assumindo que audioUrl é uma URL válida)
-      await this.downloadAudio(track.audioUrl, audioFile);
-      audioFiles.push(audioFile);
-    }
-
-    // Concatena todos os áudios em um arquivo final
-    const finalAudioPath = path.join(jobDir, 'final_audio.wav');
-    await this.concatenateAudio(audioFiles, finalAudioPath);
-
-    return finalAudioPath;
-  }
-
-  /**
-   * Download de arquivo de áudio
-   */
-  private async downloadAudio(url: string, outputPath: string): Promise<void> {
-    if (url.startsWith('http')) {
-      // Download via HTTP
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`Failed to download audio: ${response.statusText}`);
-      }
-      
-      const buffer = await response.arrayBuffer();
-      await fs.writeFile(outputPath, Buffer.from(buffer));
-    } else {
-      // Assume que é um caminho local ou Supabase Storage
-      throw new Error('Local audio files not supported yet');
+    if (job?.status === 'cancelled') {
+       throw new Error('JOB_CANCELLED');
     }
   }
 
-  /**
-   * Concatena múltiplos arquivos de áudio
-   */
-  private async concatenateAudio(audioFiles: string[], outputPath: string): Promise<void> {
-    if (audioFiles.length === 1) {
-      await fs.copyFile(audioFiles[0], outputPath);
-      return;
-    }
-
-    // Cria um arquivo de lista para FFmpeg
-    const listFile = outputPath.replace('.wav', '.txt');
-    const listContent = audioFiles.map(file => `file '${file}'`).join('\n');
-    await fs.writeFile(listFile, listContent);
-
-    // Concatena com FFmpeg
-    const command = [
-      'ffmpeg',
-      '-f', 'concat',
-      '-safe', '0',
-      '-i', listFile,
-      '-c', 'copy',
-      outputPath,
-      '-y'
-    ].join(' ');
-
-    await execAsync(command);
-    await fs.unlink(listFile); // Remove arquivo temporário
-  }
-
-  /**
-   * Renderiza vídeo final com FFmpeg
-   */
-
-  private async renderVideo(
-    jobData: RenderJobData,
-    framesDir: string,
-    audioPath: string | null,
-    outputPath: string,
-    totalFrames: number
-  ): Promise<void> {
-    const tempOutputPath = `${outputPath}.tmp.mp4`;
-
-    const ffmpegOptions: FFmpegOptions = {
-      inputFramesDir: framesDir,
-      inputFramesPattern: 'frame_%06d.png', // Assumindo o padrão do gerador
-      audioPath: audioPath,
-      outputPath: tempOutputPath,
-      fps: jobData.config.fps,
-      width: jobData.config.resolution.width,
-      height: jobData.config.resolution.height,
-      codec: jobData.config.codec,
-      quality: jobData.config.quality,
-      preset: 'ultrafast', // Usar preset rápido para testes e workers
-    };
-
-    logger.info('🎥 Iniciando renderização com FFmpeg', {
+  async cancelJob(jobId: string): Promise<void> {
+    logger.info('Cancelling render job', {
       component: 'VideoRenderWorker',
-      jobId: jobData.id,
-      options: ffmpegOptions,
+      jobId
     });
 
-    await this.ffmpegExecutor.renderFromFrames(ffmpegOptions, (progress) => {
-      this.emitProgress({
-        jobId: jobData.id,
-        stage: 'encoding',
-        progress: 60 + (progress.progress * 0.3), // 60-90%
-        message: `Codificando... ${Math.round(progress.progress)}%`,
-        currentFrame: progress.frame,
-        totalFrames: progress.totalFrames,
-        fps: progress.fps,
-      });
-    });
-
-    logger.info('✅ Renderização FFmpeg concluída, iniciando pós-processamento.', {
-      component: 'VideoRenderWorker',
-      jobId: jobData.id,
-      tempPath: tempOutputPath,
-      finalPath: outputPath,
-    });
-
-    const job = await this.prisma.render_jobs.findUnique({
-      where: { id: jobData.id },
-    });
-
-    if (job && job.watermark) {
-      await this.emitProgress({
-        jobId: jobData.id,
-        stage: 'encoding', // 'watermarking' não é um stage válido
-        progress: 95,
-        message: 'Aplicando marca d\'água...',
-      });
-
-      const watermarkProcessor = new WatermarkProcessor();
-      await watermarkProcessor.process(tempOutputPath, {
-        watermarks: [
-          {
-            type: WatermarkType.TEXT,
-            text: job.watermark,
-            position: WatermarkPosition.BOTTOM_RIGHT,
-            fontSize: 20,
-            fontColor: 'white',
-            margin: 10,
-          },
-        ],
-        outputPath: outputPath,
-      });
-      await fs.unlink(tempOutputPath);
-    } else {
-      await fs.rename(tempOutputPath, outputPath);
-    }
-  }
-// ... (restante do arquivo)
-
-
-  /**
-   * Upload do vídeo para storage
-   */
-  private async uploadVideo(jobData: RenderJobData, videoPath: string): Promise<string> {
-    const videoUrl = await this.videoUploader.uploadVideo({
-      videoPath,
-      projectId: jobData.projectId,
-      userId: jobData.userId,
-      jobId: jobData.id,
-      metadata: {
-        resolution: jobData.config.resolution,
-        fps: jobData.config.fps,
-        codec: jobData.config.codec,
-        format: jobData.config.format
+    await prisma.video_exports.update({
+      where: { id: jobId },
+      data: {
+        status: 'cancelled',
+        updatedAt: new Date()
       }
     });
-
-    return videoUrl;
-  }
-
-  /**
-   * Cleanup de arquivos temporários
-   */
-  private async cleanup(jobDir: string): Promise<void> {
-    try {
-      await fs.rm(jobDir, { recursive: true, force: true });
-      logger.info(`Cleaned up temp directory: ${jobDir}`, { component: 'VideoRenderWorker' });
-    } catch (error) {
-      logger.error('Failed to cleanup temp directory', error instanceof Error ? error : new Error(String(error)), { component: 'VideoRenderWorker' });
-    }
-  }
-
-  /**
-   * Emite progresso do job
-   */
-  private async emitProgress(progress: RenderProgress): Promise<void> {
-    this.emit('progress', progress);
-    
-    // Também persiste no banco via API
-    try {
-      await fetch('/api/render/progress', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(progress)
-      });
-    } catch (error) {
-      logger.error('Failed to persist progress', error instanceof Error ? error : new Error(String(error)), { component: 'VideoRenderWorker' });
-    }
-  }
-
-  /**
-   * Cancela job atual
-   */
-  async cancelCurrentJob(): Promise<void> {
-    if (!this.isProcessing || !this.currentJobId) {
-      return;
-    }
-
-    logger.info(`Cancelling job: ${this.currentJobId}`, { component: 'VideoRenderWorker' });
-    
-    // Kill processos FFmpeg se estiverem rodando
-    await (this.ffmpegExecutor as unknown as { killAllProcesses: () => Promise<void> }).killAllProcesses();
-
-    // Cleanup
-    const jobDir = path.join(this.tempDir, this.currentJobId);
-    await this.cleanup(jobDir);
-
-    this.isProcessing = false;
-    this.currentJobId = null;
-
-    this.emit('cancelled');
-  }
-
-  /**
-   * Status do worker
-   */
-  getStatus() {
-    return {
-      isProcessing: this.isProcessing,
-      currentJobId: this.currentJobId,
-      tempDir: this.tempDir
-    };
   }
 }
-

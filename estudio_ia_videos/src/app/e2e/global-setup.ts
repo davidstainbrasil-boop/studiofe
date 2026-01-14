@@ -10,7 +10,7 @@ async function globalSetup() {
   process.env.E2E_TEST = 'true';
   process.env.PLAYWRIGHT_TEST = 'true';
   process.env.NODE_ENV = 'test';
-  process.env.DEV_BYPASS = 'true';
+  // DEV_BYPASS removed for security
   process.env.DISABLE_SUPABASE_REALTIME = 'true';
   process.env.DISABLE_SENTRY = 'true';
   process.env.DISABLE_ANALYTICS = 'true';

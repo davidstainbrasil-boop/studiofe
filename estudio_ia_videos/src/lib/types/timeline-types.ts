@@ -48,6 +48,9 @@ export interface TimelineElement {
   visible?: boolean;
   locked?: boolean;
   muted?: boolean;
+  volume?: number;
+  fadeIn?: number;
+  fadeOut?: number;
 }
 
 export interface TimelineLayer {
@@ -55,6 +58,7 @@ export interface TimelineLayer {
   name: string;
   type: 'video' | 'audio' | 'overlay' | 'subtitle' | 'effect';
   elements: TimelineElement[];
+  items: TimelineElement[]; // Alias for elements, used in store
   visible: boolean;
   locked: boolean;
   isVisible?: boolean;

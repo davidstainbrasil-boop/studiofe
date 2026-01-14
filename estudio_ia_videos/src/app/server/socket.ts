@@ -6,7 +6,7 @@
 
 import { Server as SocketIOServer, Socket } from 'socket.io'
 import { Server as HTTPServer } from 'http'
-import { SocketUser, CursorMoveData, SelectionChangeData } from '../lib/websocket/types'
+import { SocketUser, CursorMoveData, SelectionChangeData } from '@lib/websocket/types'
 
 export function setupSocketIO(server: HTTPServer) {
   const io = new SocketIOServer(server, {

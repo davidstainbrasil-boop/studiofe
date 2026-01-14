@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
     const slidesToInsert = parsedData.slides
         .map((slide: CompleteSlideData, index: number) => {
             // Combine text content
-            const textContent = (slide.text.textBoxes || []).map((t) => t.text).join('\n').trim();
+            const textContent = (slide.text.textBoxes || []).map((t: any) => t.text).join('\n').trim();
             const backgroundImage = slide.images.length > 0 ? slide.images[0].url : null;
 
             // HARDENING: Skip truly empty slides
@@ -175,7 +175,7 @@ export async function POST(request: NextRequest) {
     if (slidesToInsert.length > 0) {
       const { error: slidesError } = await supabaseAdmin
         .from('slides')
-        .insert(slidesToInsert as Record<string, unknown>[]);
+        .insert(slidesToInsert as any[]);
 
       if (slidesError) {
         logger.error('Failed to insert slides:', new Error(slidesError.message), { component: 'API: pptx' });

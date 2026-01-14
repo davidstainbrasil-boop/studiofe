@@ -1,17 +1,16 @@
-
 /**
  * Hook: useAvatarGeneration
- * Hook React para geração de avatares 3D reais
+ * Hook React para geração de avatares 3D reais (API v2)
  * 
  * Features:
- * - Iniciar geração
- * - Polling automático de status
+ * - Iniciar geração (/api/v2/avatars/render)
+ * - Polling automático de status (/api/v2/avatars/render/status/[id])
  * - Gerenciamento de estado
  * - Error handling
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { logger } from '@lib/logger';
 
 // ============================================================================
@@ -20,19 +19,21 @@ import { logger } from '@lib/logger';
 
 interface AvatarJob {
   id: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
+  status: 'queued' | 'processing' | 'completed' | 'failed' | 'cancelled';
   progress: number;
-  outputUrl?: string;
+  output: {
+    videoUrl?: string;
+    thumbnailUrl?: string;
+  };
   error?: string;
-  createdAt: string;
-  updatedAt: string;
 }
 
 interface GenerateAvatarOptions {
   avatarId: string;
-  scriptText: string;
-  voiceId?: string;
-  voiceProvider?: 'azure' | 'elevenlabs' | 'openai';
+  animation: string; // 'idle', 'talking', etc
+  text?: string;
+  audioFile?: File;
+  voiceCloning?: boolean;
 }
 
 interface UseAvatarGenerationReturn {
@@ -41,13 +42,14 @@ interface UseAvatarGenerationReturn {
   isGenerating: boolean;
   error: string | null;
   reset: () => void;
+  onComplete?: (videoUrl: string) => void;
 }
 
 // ============================================================================
 // HOOK
 // ============================================================================
 
-export function useAvatarGeneration(): UseAvatarGenerationReturn {
+export function useAvatarGeneration(onSuccess?: (videoUrl: string) => void): UseAvatarGenerationReturn {
   const [job, setJob] = useState<AvatarJob | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -59,34 +61,46 @@ export function useAvatarGeneration(): UseAvatarGenerationReturn {
 
   const pollJobStatus = useCallback(async (jobId: string) => {
     try {
-      const response = await fetch(`/api/avatar-3d/status/${jobId}`);
+      const response = await fetch(`/api/v2/avatars/render/status/${jobId}`);
       
       if (!response.ok) {
         throw new Error('Erro ao verificar status do job');
       }
 
       const data = await response.json();
-      setJob(data.job);
+      const jobData = data.data.job;
+      const outputData = data.data.output;
+
+      setJob({
+          id: jobData.id,
+          status: jobData.status,
+          progress: jobData.progress,
+          output: outputData,
+          error: jobData.error
+      });
 
       // Se concluído ou falhou, parar polling
-      if (data.job.status === 'completed' || data.job.status === 'failed') {
+      if (jobData.status === 'completed' || jobData.status === 'failed' || jobData.status === 'cancelled') {
         if (pollingInterval) {
           clearInterval(pollingInterval);
           setPollingInterval(null);
         }
         setIsGenerating(false);
 
-        if (data.job.status === 'completed') {
-          toast.success('✅ Avatar gerado com sucesso!');
+        if (jobData.status === 'completed') {
+          toast.success('Avatar gerado com sucesso!');
+          if (outputData.videoUrl && onSuccess) {
+              onSuccess(outputData.videoUrl);
+          }
         } else {
-          toast.error(`❌ Erro ao gerar avatar: ${data.job.error}`);
-          setError(data.job.error || 'Erro desconhecido');
+          toast.error(`Erro ao gerar avatar: ${jobData.error || 'Falha no processamento'}`);
+          setError(jobData.error || 'Erro desconhecido');
         }
       }
     } catch (err) {
       logger.error('Erro ao fazer polling', err as Error, { component: 'useAvatarGeneration' });
     }
-  }, [pollingInterval]);
+  }, [pollingInterval, onSuccess]);
 
   // ==========================================================================
   // GENERATE AVATAR
@@ -94,49 +108,60 @@ export function useAvatarGeneration(): UseAvatarGenerationReturn {
 
   const generateAvatar = useCallback(async (options: GenerateAvatarOptions) => {
     try {
+      if (isGenerating) return;
+      
       setIsGenerating(true);
       setError(null);
       setJob(null);
 
-      toast.loading('Iniciando geração de avatar...', { id: 'avatar-gen' });
+      toast.loading('Iniciando pipeline de renderização...', { duration: 2000 });
+
+      // Preparar FormData
+      const formData = new FormData();
+      formData.append('avatarId', options.avatarId);
+      formData.append('animation', options.animation);
+      if (options.text) formData.append('text', options.text);
+      if (options.audioFile) formData.append('audioFile', options.audioFile);
+      if (options.voiceCloning) formData.append('voiceCloning', 'true');
 
       // 1. Iniciar geração
-      const response = await fetch('/api/avatar-3d/generate', {
+      const response = await fetch('/api/v2/avatars/render', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(options),
+        body: formData,
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.details || errorData.error || 'Erro ao gerar avatar');
+        throw new Error(errorData.error?.message || 'Erro ao iniciar renderização');
       }
 
       const data = await response.json();
-      setJob(data.job);
+      const jobId = data.data.jobId;
 
-      toast.success('Avatar em processamento...', { id: 'avatar-gen' });
+      setJob({
+          id: jobId,
+          status: 'queued',
+          progress: 0,
+          output: {}
+      });
+
+      toast.success('Job iniciado! Processando...', { duration: 2000 });
 
       // 2. Iniciar polling
       const interval = setInterval(() => {
-        pollJobStatus(data.job.id);
-      }, 3000); // Poll a cada 3 segundos
+        pollJobStatus(jobId);
+      }, 2000); // Poll a cada 2 segundos
 
       setPollingInterval(interval);
-
-      // Poll imediatamente uma vez
-      pollJobStatus(data.job.id);
 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
       logger.error('Erro ao gerar avatar', err as Error, { component: 'useAvatarGeneration' });
       setError(errorMessage);
       setIsGenerating(false);
-      toast.error(errorMessage, { id: 'avatar-gen' });
+      toast.error(errorMessage);
     }
-  }, [pollJobStatus]);
+  }, [pollJobStatus, isGenerating]);
 
   // ==========================================================================
   // RESET
@@ -163,10 +188,6 @@ export function useAvatarGeneration(): UseAvatarGenerationReturn {
       }
     };
   }, [pollingInterval]);
-
-  // ==========================================================================
-  // RETURN
-  // ==========================================================================
 
   return {
     generateAvatar,

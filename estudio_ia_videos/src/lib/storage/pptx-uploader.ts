@@ -45,6 +45,18 @@ export class PptxUploader {
     const storagePath = `pptx/${userId}/${projectId}/${timestamp}-${file.name}`;
 
     // 3. Fazer upload
+    // [DEV] Mock upload if configured (DEV ONLY)
+    if (process.env.MOCK_STORAGE === 'true' && process.env.NODE_ENV === 'development') {
+      logger.info('MOCK STORAGE: Upload simulado (DEV ONLY)', { storagePath });
+      await new Promise(resolve => setTimeout(resolve, 500)); // Simula latência
+      return {
+        storagePath: storagePath,
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type,
+      };
+    }
+
     const { data, error } = await this.supabase.storage
       .from('uploads') // Bucket 'uploads' para arquivos brutos
       .upload(storagePath, file);

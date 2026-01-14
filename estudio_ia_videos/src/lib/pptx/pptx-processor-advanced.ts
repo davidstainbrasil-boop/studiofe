@@ -1,23 +1,22 @@
+
 /**
  * PPTX Processor Advanced
  *
- * Integração futura dos parsers avançados:
- * - image-parser.ts: Extração de imagens do PPTX
- * - animation-parser.ts: Detecção de animações
- * - layout-parser.ts: Análise de layouts complexos
- * - notes-parser.ts: Extração de notas do apresentador
- *
- * TODO: Implementar quando necessário para features avançadas
+ * Integração dos parsers avançados para extração de conteúdo rico do PPTX.
  */
 
 import JSZip from 'jszip';
 import { Slide } from '@lib/definitions';
-import { logger } from '@lib/logger';
+import { logger } from '@/lib/monitoring/logger';
+import { PPTXImageParser } from './parsers/image-parser';
+import { PPTXNotesParser } from './parsers/notes-parser';
+import { PPTXParser } from './pptx-parser';
 
 export interface AdvancedPPTXOptions {
   extractImages?: boolean;
   extractAnimations?: boolean;
   extractLayouts?: boolean;
+  extractNotes?: boolean;
   generateThumbnails?: boolean;
 }
 
@@ -43,7 +42,7 @@ export interface AdvancedLayout {
 }
 
 /** Slide com dados avançados - usa tipos do Slide base como opcionais */
-export interface AdvancedSlideData extends Omit<Slide, 'layout'> {
+export interface AdvancedSlideData extends Partial<Slide> {
   /** Imagens com metadados de posicionamento */
   richImages?: RichImage[];
   /** Animações avançadas (sobrescreve base) */
@@ -52,6 +51,8 @@ export interface AdvancedSlideData extends Omit<Slide, 'layout'> {
   advancedLayout?: AdvancedLayout;
   /** Layout simples (do tipo original) */
   layout?: string;
+  /** Notas do apresentador */
+  notes?: string;
 }
 
 /**
@@ -63,18 +64,53 @@ export async function processAdvancedPPTX(
   buffer: Buffer,
   options: AdvancedPPTXOptions = {}
 ): Promise<AdvancedSlideData[]> {
-  const zip = await JSZip.loadAsync(buffer);
-  const slides: AdvancedSlideData[] = [];
+  try {
+    const zip = await JSZip.loadAsync(buffer);
+    const parser = new PPTXParser();
+    const baseData = await parser.parsePPTX(buffer);
+    
+    const enrichedSlides: AdvancedSlideData[] = [];
+    const imageParser = new PPTXImageParser();
+    const notesParser = new PPTXNotesParser();
 
-  // TODO: Implementar extração avançada
-  // 1. Usar image-parser para extrair imagens
-  // 2. Usar animation-parser para detectar animações
-  // 3. Usar layout-parser para analisar estrutura
-  // 4. Gerar thumbnails com canvas/sharp se solicitado
+    for (let i = 0; i < baseData.slides.length; i++) {
+      const baseSlide = baseData.slides[i];
+      const slideNumber = i + 1;
+      
+      const enrichedSlide: AdvancedSlideData = {
+        ...baseSlide,
+        richImages: [],
+        advancedAnimations: [],
+      };
 
-  logger.warn('processAdvancedPPTX: Implementação pendente. Retornando array vazio.', { component: 'PptxProcessorAdvanced' });
-  
-  return slides;
+      // 1. Extrair imagens
+      if (options.extractImages) {
+        const images = await imageParser.extractImages(zip, slideNumber);
+        enrichedSlide.richImages = images.map(url => ({
+          url,
+          width: 0, // TODO: Extrair dimensões reais
+          height: 0,
+          position: { x: 0, y: 0 }
+        }));
+        enrichedSlide.images = images; // Compatibilidade com tipo Slide base
+      }
+
+      // 2. Extrair notas
+      if (options.extractNotes) {
+        const notes = await notesParser.extractNotes(zip, slideNumber);
+        enrichedSlide.notes = notes;
+      }
+
+      // 3. TODO: Animações e Layouts (implementação futura)
+
+      enrichedSlides.push(enrichedSlide);
+    }
+
+    return enrichedSlides;
+  } catch (error) {
+    logger.error('Erro no processamento avançado do PPTX', { error });
+    return [];
+  }
 }
 
 /**
@@ -86,15 +122,8 @@ export async function extractSlideImages(
   zip: JSZip,
   slideNumber: number
 ): Promise<string[]> {
-  const images: string[] = [];
-  
-  // TODO: Implementar usando parsers/image-parser.ts
-  // 1. Ler ppt/slides/_rels/slide{N}.xml.rels
-  // 2. Identificar relacionamentos de imagens
-  // 3. Extrair arquivos de ppt/media/
-  // 4. Converter para base64 ou salvar em storage
-
-  return images;
+  const imageParser = new PPTXImageParser();
+  return imageParser.extractImages(zip, slideNumber);
 }
 
 /**
@@ -108,10 +137,6 @@ export async function generateSlideThumbnail(
   width: number = 320,
   height: number = 180
 ): Promise<string> {
-  // TODO: Implementar geração real de thumbnail
-  // Opção 1: Usar canvas (node-canvas)
-  // Opção 2: Usar sharp para manipulação de imagens
-  // Opção 3: Integrar com serviço externo (Cloudinary, etc.)
-  
+  // Placeholder implementation
   return `/api/placeholder/${width}x${height}`;
 }

@@ -280,19 +280,16 @@ export function getBrowserClient() {
 
   const allowMock = process.env.NODE_ENV !== 'production';
 
-  // Explicit E2E/mock mode (do not infer from hostname; localhost is a valid dev target)
-  const forceMockViaEnv = process.env.NEXT_PUBLIC_SUPABASE_FORCE_MOCK === 'true';
-  const forceMockViaCookie =
-    allowMock && typeof document !== 'undefined' && document.cookie.includes('dev_bypass=true');
-  const forceMock = forceMockViaEnv || forceMockViaCookie;
+  // Explicit E2E/mock mode (env var only, no cookies)
+  const forceMock = process.env.NEXT_PUBLIC_SUPABASE_FORCE_MOCK === 'true';
   
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   // Supabase must be configured in production.
   if (isSupabasePublicConfigMissingOrPlaceholder(supabaseUrl, supabaseKey)) {
-    if (allowMock) {
-      logger.info('[Supabase] Missing config; using mock client (dev/test only)', { service: 'BrowserClient' });
+    if (allowMock && process.env.NODE_ENV === 'development') {
+      logger.info('[Supabase] Missing config; using mock client (dev only)', { service: 'BrowserClient' });
       client = new MockSupabaseClient();
       return client;
     }
@@ -346,8 +343,8 @@ export function getBrowserClient() {
 
     connectionFailed = true;
 
-    if (allowMock) {
-      logger.warn('[Supabase] Using mock fallback (dev/test only)', { service: 'BrowserClient' });
+    if (allowMock && process.env.NODE_ENV === 'development') {
+      logger.warn('[Supabase] Using mock fallback (dev only)', { service: 'BrowserClient' });
       client = new MockSupabaseClient();
       return client;
     }

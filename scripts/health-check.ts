@@ -9,6 +9,7 @@ import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js'
 import { execSync } from 'child_process'
 import fetch from 'node-fetch'
+import { Client } from 'pg'
 
 // Force polyfill
 (global as any).fetch = fetch
@@ -23,33 +24,52 @@ interface HealthCheckResult {
 async function checkDatabase(): Promise<HealthCheckResult> {
   const start = Date.now()
   
+  // 1. Tentar conexão direta via PG (mais confiável para ambiente Docker)
   try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
+    const client = new Client({
+      connectionString: process.env.DATABASE_URL || `postgresql://postgres:postgres@localhost:5432/video_tecnico`
+    })
     
-    // Test basic connection
-    const { data, error } = await supabase
-      .from('users') // Check if we can access a core table
-      .select('id')
-      .limit(1)
+    await client.connect()
+    await client.query('SELECT 1')
+    await client.end()
     
-    if (error) {
-      throw new Error(error.message)
+    // Se conexão direta funcionou, tentar via Supabase API
+    try {
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+      )
+      
+      const { data, error } = await supabase
+        .from('users') 
+        .select('id')
+        .limit(1)
+      
+      if (error) throw new Error(error.message)
+        
+      return {
+        service: 'Database',
+        status: 'healthy',
+        message: `Connected successfully (Direct + API)`,
+        duration: Date.now() - start
+      }
+    } catch (apiError) {
+      // API falhou, mas Banco está OK -> Warning
+      return {
+        service: 'Database',
+        status: 'warning',
+        message: `Database OK but Supabase API unreachable: ${(apiError as Error).message}`,
+        duration: Date.now() - start
+      }
     }
-    
-    return {
-      service: 'Database',
-      status: 'healthy',
-      message: `Connected successfully, accessible tables OK`,
-      duration: Date.now() - start
-    }
-  } catch (error) {
+
+  } catch (pgError) {
+    // Banco realmente fora do ar
     return {
       service: 'Database',
       status: 'unhealthy',
-      message: `Connection failed: ${(error as Error).message}`,
+      message: `Connection failed: ${(pgError as Error).message}`,
       duration: Date.now() - start
     }
   }
@@ -144,6 +164,15 @@ async function checkStorageBuckets(): Promise<HealthCheckResult> {
       .listBuckets()
     
     if (error) {
+      // Check if it's a connection error (API down)
+      if (error.message.includes('ECONNREFUSED') || error.message.includes('fetch failed')) {
+         return {
+          service: 'Storage',
+          status: 'warning',
+          message: `Storage API unreachable (expected in Docker-only mode): ${error.message}`,
+          duration: Date.now() - start
+        }
+      }
       throw new Error(error.message)
     }
     

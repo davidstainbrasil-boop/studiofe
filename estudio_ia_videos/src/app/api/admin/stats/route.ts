@@ -47,15 +47,11 @@ export async function GET(_request: NextRequest) {
       getRenderJobSummary(last24h),
     ])
 
-    // Storage Stats: Sum of video_exports sizes
-    const { data: videoExportsSize } = await supabaseAdmin
-        .from('video_exports')
-        .select('file_size')
-        .not('file_size', 'is', null);
-
-    const usedStorageBytes = videoExportsSize?.reduce((acc, curr) => acc + (Number(curr.file_size) || 0), 0) || 0;
+    // Storage Stats: Fallback or calculate from render_jobs if possible.
+    // video_exports table does not exist in current schema.
+    const usedStorageBytes = 0; // Placeholder until storage metrics are re-implemented
     const totalStorageBytes = 500 * 1024 * 1024 * 1024; // 500GB Quota
-    const storageUtilization = (usedStorageBytes / totalStorageBytes) * 100;
+    const storageUtilization = 0;
 
     // Active Sessions: Distinct users with activity in last 1h
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
@@ -67,15 +63,15 @@ export async function GET(_request: NextRequest) {
         // Best approach for MVP stats: Count events in last hour.
         // Or if we need exact unique users:
         
-        const { data: events, error } = await supabaseAdmin
+         const { data: events, error } = await supabaseAdmin
             .from('analytics_events')
-            .select('user_id')
+            .select('userId') // Correct casing from Schema
             .gte('created_at', oneHourAgo);
             
         if (error) {
-            logger.warn('Failed to fetch active sessions', error, { component: 'API: admin/stats' });
+            logger.warn('Failed to fetch active sessions', { error });
         } else {
-             const uniqueUsers = new Set(events?.map(e => e.user_id).filter(Boolean));
+             const uniqueUsers = new Set(events?.map(e => e.userId).filter(Boolean));
              activeSessions = uniqueUsers.size;
         }
     } catch (e) {

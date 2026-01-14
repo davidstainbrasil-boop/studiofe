@@ -1,0 +1,30 @@
+[
+  {
+    "projectId": "2157a514-a71e-4fb5-9cf6-26d80601274f",
+    "testId": "52c3d6b9-273c-4925-848b-e50132e487d6",
+    "userId": "e44884c8-f0f1-705b-ceb4-b2ebc82bcb93",
+    "title": "TC001-get_dashboard_unified_stats",
+    "description": "Test the GET /api/dashboard/unified-stats endpoint to verify it returns the correct dashboard statistics with a 200 OK response.",
+    "code": "import requests\nfrom requests.auth import HTTPBasicAuth\n\ndef test_get_dashboard_unified_stats():\n    base_url = \"http://localhost:3000\"\n    endpoint = \"/api/dashboard/unified-stats\"\n    url = base_url + endpoint\n\n    headers = {\n        \"Cookie\": \"dev_bypass=true\"\n    }\n\n    auth = HTTPBasicAuth(\"admin@cursostecno.com.br\", \"Admin123456\")\n    timeout = 30\n\n    try:\n        response = requests.get(url, headers=headers, auth=auth, timeout=timeout)\n    except requests.RequestException as e:\n        assert False, f\"Request to {url} failed: {e}\"\n\n    assert response.status_code == 200, f\"Expected status code 200 but got {response.status_code}\"\n    # Optionally validate the response content type or keys if known\n    assert response.content, \"Response body is empty\"\n\ntest_get_dashboard_unified_stats()",
+    "testStatus": "PASSED",
+    "testError": "",
+    "testType": "BACKEND",
+    "createFrom": "mcp",
+    "created": "2026-01-14T00:51:52.977Z",
+    "modified": "2026-01-14T00:51:58.838Z"
+  },
+  {
+    "projectId": "2157a514-a71e-4fb5-9cf6-26d80601274f",
+    "testId": "d795c5d1-637b-4320-a93e-0c2a5f3a3b0b",
+    "userId": "e44884c8-f0f1-705b-ceb4-b2ebc82bcb93",
+    "title": "TC002-upload_presentation_pptx_file",
+    "description": "Test the POST /api/presentations/upload endpoint to ensure it accepts and processes PPTX file uploads correctly, returning a 200 OK response.",
+    "code": "import requests\nfrom requests.auth import HTTPBasicAuth\n\ndef test_upload_presentation_pptx_file():\n    base_url = \"http://localhost:3000\"\n    endpoint = \"/api/presentations/upload\"\n    url = f\"{base_url}{endpoint}\"\n\n    auth = HTTPBasicAuth('admin@cursostecno.com.br', 'Admin123456')\n    cookies = {'dev_bypass': 'true'}\n    headers = {}\n    timeout = 30\n\n    # Prepare a simple PPTX file content for upload\n    # Creating a minimal valid PPTX file with binary content\n    pptx_content = (\n        b\"PK\\x03\\x04\\x14\\x00\\x06\\x00\\x08\\x00\\x00\\x00!\\x00\\xb1\\x83\\x94\"\n        b\"\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\"\n        b\"[Content_Types].xml\"  # Just a placeholder content to simulate pptx\n    )\n    files = {\n        'file': ('test.pptx', pptx_content, 'application/vnd.openxmlformats-officedocument.presentationml.presentation')\n    }\n\n    try:\n        response = requests.post(\n            url,\n            auth=auth,\n            cookies=cookies,\n            headers=headers,\n            files=files,\n            timeout=timeout\n        )\n    except requests.RequestException as e:\n        assert False, f\"Request failed: {e}\"\n\n    assert response.status_code == 200, f\"Expected status code 200, got {response.status_code}.\"\n    # Additional checks can go here depending on response content if specified\n\ntest_upload_presentation_pptx_file()\n",
+    "testStatus": "FAILED",
+    "testError": "Traceback (most recent call last):\n  File \"/var/task/handler.py\", line 258, in run_with_retry\n    exec(code, exec_env)\n  File \"<string>\", line 40, in <module>\n  File \"<string>\", line 37, in test_upload_presentation_pptx_file\nAssertionError: Expected status code 200, got 500.\n",
+    "testType": "BACKEND",
+    "createFrom": "mcp",
+    "created": "2026-01-14T00:51:52.982Z",
+    "modified": "2026-01-14T00:52:16.655Z"
+  }
+]

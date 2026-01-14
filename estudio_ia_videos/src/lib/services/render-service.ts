@@ -37,10 +37,11 @@ export const RenderService = {
       await prisma.render_jobs.create({
         data: {
           id: jobId,
-          project_id: projectId,
-          user_id: userId,
-          status: 'queued',
-          config: jobData.config as any,
+          projectId: projectId,
+          userId: userId,
+          status: 'pending', // Schema uses 'pending' as default, JobStatus enum usually has pending/processing/completed/failed
+          renderSettings: jobData.config as any,
+          settings: jobData.config as any, // Populate both for compatibility if needed
         },
       });
 
@@ -52,7 +53,10 @@ export const RenderService = {
       // Here we simulate the final state for the test.
       await prisma.render_jobs.update({
         where: { id: jobId },
-        data: { status: 'completed', output_url: videoUrl },
+        data: { 
+          status: 'completed', // Check if this matches JobStatus enum
+          outputUrl: videoUrl 
+        },
       });
 
       return {
@@ -66,7 +70,7 @@ export const RenderService = {
       
       await prisma.render_jobs.update({
         where: { id: jobId },
-        data: { status: 'failed', error_message: error.message },
+        data: { status: 'failed', errorMessage: error.message },
       }).catch(e => logger.error('Failed to update failed job status', e));
 
       return {

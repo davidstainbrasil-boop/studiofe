@@ -56,6 +56,9 @@ export enum WatermarkType {
 export enum WatermarkPosition {
   TOP_LEFT = 'top-left',
   TOP_RIGHT = 'top-right',
+  TOP_CENTER = 'top-center',
+  CENTER_LEFT = 'center-left',
+  CENTER_RIGHT = 'center-right',
   BOTTOM_LEFT = 'bottom-left',
   BOTTOM_RIGHT = 'bottom-right',
   CENTER = 'center',

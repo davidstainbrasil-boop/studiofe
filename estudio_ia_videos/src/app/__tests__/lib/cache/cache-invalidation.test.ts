@@ -240,7 +240,7 @@ describe('Cache utilities', () => {
       // Aplicar cache manualmente
       cachedService = new TestService();
       const cachedMethod = cached({ ttl: 1, tags: ['test'] })(
-        TestService.prototype, 
+        TestService.prototype,
         'expensiveOperation', 
         {
           value: TestService.prototype.expensiveOperation,
@@ -275,7 +275,7 @@ describe('Cache utilities', () => {
 
       const service = new TestService();
       const cachedMethod = cached({ ttl: 1, tags: ['test'] })(
-        TestService.prototype, 
+        TestService.prototype,
         'expensiveOperation', 
         {
           value: TestService.prototype.expensiveOperation,

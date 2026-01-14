@@ -65,16 +65,41 @@ export class UploadManager {
   
   private activeUploads: Map<string, ActiveUpload> = new Map();
   
-  async upload(file: File | Buffer, options?: UploadOptions): Promise<UploadResult> {
+  async upload(file: File | (Buffer & { name?: string; type?: string }), options?: UploadOptions & { supabaseClient?: any, bucket?: string }): Promise<UploadResult> {
     logger.info('Processing file upload', { component: 'UploadManager' });
     
-    // Placeholder - retornar resultado fake
+    const client = options?.supabaseClient;
+    if (!client) {
+        throw new Error('Supabase Client required for real upload');
+    }
+
+    const bucket = options?.bucket || 'uploads';
+    const fileExt = file instanceof Buffer ? (file.name?.split('.').pop() || 'bin') : (file as File).name.split('.').pop();
+    const fileName = `${crypto.randomUUID()}.${fileExt}`;
+    const filePath = fileName; // Root of bucket or subfolder
+
+    const { data, error } = await client.storage
+        .from(bucket)
+        .upload(filePath, file, {
+            contentType: file instanceof Buffer ? (file.type || 'application/octet-stream') : file.type,
+            upsert: false
+        });
+
+    if (error) {
+        logger.error('Supabase Storage Upload Error', error, { component: 'UploadManager' });
+        throw error;
+    }
+
+    const { data: { publicUrl } } = client.storage
+        .from(bucket)
+        .getPublicUrl(filePath);
+
     return {
-      id: crypto.randomUUID(),
-      path: '/uploads/placeholder',
-      size: 0,
-      mimetype: 'application/octet-stream',
-      url: '/uploads/placeholder',
+      id: crypto.randomUUID(), // Or use data.path/id
+      path: data.path,
+      size: file instanceof Buffer ? file.length : (file as File).size,
+      mimetype: file instanceof Buffer ? (file.type || 'application/octet-stream') : (file as File).type,
+      url: publicUrl,
     };
   }
   
@@ -95,7 +120,7 @@ export class UploadManager {
   async uploadFile(
     file: File,
     endpoint: string,
-    options?: UploadFileOptions
+    options?: UploadFileOptions & { supabaseClient?: any }
   ): Promise<UploadResult> {
     const uploadId = crypto.randomUUID();
     
@@ -120,8 +145,10 @@ export class UploadManager {
     try {
       progress.status = 'uploading';
       
-      // Simular upload
-      const result = await this.upload(file);
+      // Upload Real
+      const result = await this.upload(file, { 
+          supabaseClient: options?.supabaseClient 
+      });
       
       progress.status = 'completed';
       progress.progress = 100;

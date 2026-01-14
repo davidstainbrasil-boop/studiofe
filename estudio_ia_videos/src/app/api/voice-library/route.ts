@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
         accent,
         sampleUrl,
         sampleDuration,
-        metadata,
+        metadata: metadata as any,
         trainingStatus: 'ready',
         trainingProgress: 100
       }

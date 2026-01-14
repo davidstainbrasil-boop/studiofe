@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createClient } from './lib/supabase/middleware'
+import { logger } from './lib/logger'
 
 // Simple in-memory rate limiter for Edge Runtime (basic DDoS protection)
 // For production-grade rate limiting, use Redis-backed limiter in API routes
@@ -21,9 +22,16 @@ function isSupabaseConfigured(): boolean {
 }
 
 export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+  const isApiRoute = pathname.startsWith('/api')
+  const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/register')
+  const isProtectedRoute = pathname.startsWith('/dashboard') ||
+                           pathname.startsWith('/editor') ||
+                           pathname.startsWith('/projects') ||
+                           pathname.startsWith('/create')
+
   try {
     // Early return for static assets - should never reach here due to matcher, but added as safety
-    const pathname = request.nextUrl.pathname;
     if (
       pathname.startsWith('/_next/static') ||
       pathname.startsWith('/_next/image') ||
@@ -36,22 +44,20 @@ export async function middleware(request: NextRequest) {
     // Check if Supabase is configured before attempting to create client
     if (!isSupabaseConfigured()) {
       if (!hasLoggedConfigError) {
-        console.warn(
-          '\n⚠️  Supabase not configured - running in anonymous mode.\n' +
-          '   Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local\n'
-        )
+        logger.warn('Supabase not configured - running in anonymous mode.', {
+          missingEnv: [
+            'NEXT_PUBLIC_SUPABASE_URL',
+            'NEXT_PUBLIC_SUPABASE_ANON_KEY'
+          ],
+          scope: 'middleware',
+        })
         hasLoggedConfigError = true
       }
       // Allow the request to proceed without auth
       return NextResponse.next()
     }
 
-    // [DEV/TEST ONLY] Bypass Auth with Cookie
-    // Never allow this in production.
-    if (process.env.NODE_ENV !== 'production' && request.cookies.get('dev_bypass')?.value === 'true') {
-      console.log('🛡️ Bypass Auth: Cookie found');
-      return NextResponse.next();
-    }
+    // [REMOVED] dev_bypass check for security hardening
 
     // 1. Initialize Supabase Client and refresh session
     // This uses @supabase/ssr to handle cookies correctly in the middleware context
@@ -84,16 +90,6 @@ export async function middleware(request: NextRequest) {
       }
     }
 
-    // 3. Auth Protection Logic
-    const isAuthRoute = request.nextUrl.pathname.startsWith('/login') || 
-                        request.nextUrl.pathname.startsWith('/register')
-    
-    // Protected routes requiring authentication
-    const isProtectedRoute = request.nextUrl.pathname.startsWith('/dashboard') ||
-                             request.nextUrl.pathname.startsWith('/editor') ||
-                             request.nextUrl.pathname.startsWith('/projects') ||
-                             request.nextUrl.pathname.startsWith('/create')
-
     // If user is logged in and tries to access auth routes, redirect to dashboard
     if (session && isAuthRoute) {
       return NextResponse.redirect(new URL('/dashboard', request.url))
@@ -108,7 +104,7 @@ export async function middleware(request: NextRequest) {
     }
 
     // 4. Add performance headers for API responses
-    if (request.nextUrl.pathname.startsWith('/api')) {
+    if (isApiRoute) {
       // Add cache headers for certain API endpoints
       const cacheableEndpoints = [
         '/api/nr/courses',
@@ -138,9 +134,20 @@ export async function middleware(request: NextRequest) {
 
     return response
   } catch (e) {
-    // If middleware fails, log error and allow request to proceed (fail open)
-    // This prevents the entire app from going down if Supabase is unreachable
-    console.error('Middleware error:', e)
+    const error = e instanceof Error ? e : new Error(String(e))
+    logger.error('Middleware error', error, { scope: 'middleware' })
+
+    if (isApiRoute) {
+      return new NextResponse(
+        JSON.stringify({ success: false, code: 'MIDDLEWARE_ERROR', message: 'Middleware failure' }),
+        { status: 503, headers: { 'content-type': 'application/json' } }
+      )
+    }
+
+    if (isProtectedRoute) {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+
     return NextResponse.next()
   }
 }

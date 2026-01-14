@@ -74,6 +74,7 @@ export function VideoPlayer({
         poster={poster}
         className="w-full h-full"
         playsInline
+        crossOrigin="anonymous"
       />
 
       {/* Overlay Controls */}

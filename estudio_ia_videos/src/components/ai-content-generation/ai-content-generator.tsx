@@ -1,7 +1,6 @@
-// TODO: Fixar tipos de tab states com enums apropriados
 'use client';
 
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback } from 'react';
 import { logger } from '@lib/logger';
 import { Card, CardContent, CardHeader, CardTitle } from "@components/ui/card";
 import { Button } from "@components/ui/button";
@@ -12,17 +11,41 @@ import { Input } from "@components/ui/input";
 import { Textarea } from "@components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select";
 import { 
-  Sparkles, Zap, Brain, Wand2, FileText,
-  Video, Image, Mic, Music, Download,
-  Play, Pause, Settings, RefreshCw,
-  Copy, Share2, Save, Eye, Target,
-  PenTool, Palette, Camera, VolumeX,
-  Clock, Users, Award, TrendingUp, BarChart3
+  Sparkles, Brain, Wand2, FileText,
+  Video, Image, Mic, Download,
+  RefreshCw, Eye, Target,
+  PenTool, Users, Award, TrendingUp, BarChart3, Settings
 } from 'lucide-react';
+
+import { toast } from 'sonner';
+
+// Enums for better type safety
+export enum GenerationType {
+  SCRIPT = 'script',
+  VIDEO = 'video',
+  IMAGE = 'image',
+  AUDIO = 'audio',
+  PRESENTATION = 'presentation',
+  QUIZ = 'quiz'
+}
+
+export enum GenerationStatus {
+  PENDING = 'pending',
+  GENERATING = 'generating',
+  COMPLETED = 'completed',
+  ERROR = 'error'
+}
+
+export enum TabType {
+  GENERATE = 'generate',
+  TEMPLATES = 'templates',
+  HISTORY = 'history',
+  ANALYTICS = 'analytics'
+}
 
 interface GenerationRequest {
   id: string;
-  type: 'script' | 'video' | 'image' | 'audio' | 'presentation' | 'quiz';
+  type: GenerationType;
   prompt: string;
   parameters: {
     duration?: number;
@@ -32,12 +55,20 @@ interface GenerationRequest {
     language?: string;
     format?: string;
   };
-  status: 'pending' | 'generating' | 'completed' | 'error';
+  status: GenerationStatus;
   progress: number;
   result?: {
     content?: string;
     url?: string;
     metadata?: Record<string, unknown>;
+    analysis?: {
+      quality: number;
+      engagement: number;
+      clarity: number;
+      compliance: number;
+      recommendations: string[];
+    };
+    images?: string[];
   };
   createdAt: string;
 }
@@ -46,7 +77,7 @@ interface AITemplate {
   id: string;
   name: string;
   category: 'safety' | 'training' | 'corporate' | 'educational';
-  type: 'script' | 'video' | 'presentation';
+  type: GenerationType;
   description: string;
   prompt: string;
   parameters: Record<string, unknown>;
@@ -55,25 +86,18 @@ interface AITemplate {
   rating: number;
 }
 
-interface ContentAnalysis {
-  quality: number;
-  engagement: number;
-  clarity: number;
-  compliance: number;
-  recommendations: string[];
-}
-
 const AIContentGenerator = () => {
-  const [activeTab, setActiveTab] = useState<'generate' | 'templates' | 'history' | 'analytics'>('generate');
-  const [generationType, setGenerationType] = useState<'script' | 'video' | 'image' | 'audio' | 'presentation' | 'quiz'>('script');
+  const [activeTab, setActiveTab] = useState<TabType>(TabType.GENERATE);
+  const [generationType, setGenerationType] = useState<GenerationType>(GenerationType.SCRIPT);
   const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
 
   const [generationHistory, setGenerationHistory] = useState<GenerationRequest[]>([
     {
       id: 'gen-1',
-      type: 'script',
+      type: GenerationType.SCRIPT,
       prompt: 'Criar roteiro para treinamento NR-10 sobre segurança elétrica',
       parameters: {
         duration: 10,
@@ -81,39 +105,39 @@ const AIContentGenerator = () => {
         audience: 'workers',
         language: 'pt-BR'
       },
-      status: 'completed',
+      status: GenerationStatus.COMPLETED,
       progress: 100,
       result: {
         content: 'Roteiro completo gerado com 15 seções sobre segurança elétrica...',
-        analysis: { quality: 94.5, engagement: 87.2, clarity: 91.8 }
+        analysis: { quality: 94.5, engagement: 87.2, clarity: 91.8, compliance: 98.0, recommendations: [] }
       },
       createdAt: '2024-09-26T14:30:00Z'
     },
     {
       id: 'gen-2',
-      type: 'image',
+      type: GenerationType.IMAGE,
       prompt: 'Gerar imagens ilustrativas para equipamentos de proteção individual',
       parameters: {
         style: 'technical',
         format: 'png'
       },
-      status: 'completed',
+      status: GenerationStatus.COMPLETED,
       progress: 100,
       result: {
         images: ['epi-1.png', 'epi-2.png', 'epi-3.png'],
-        analysis: { quality: 89.3, engagement: 82.1 }
+        analysis: { quality: 89.3, engagement: 82.1, clarity: 90.0, compliance: 95.0, recommendations: [] }
       },
       createdAt: '2024-09-26T13:15:00Z'
     },
     {
       id: 'gen-3',
-      type: 'quiz',
+      type: GenerationType.QUIZ,
       prompt: 'Criar questionário interativo sobre NR-33 Espaços Confinados',
       parameters: {
         duration: 5,
         audience: 'supervisors'
       },
-      status: 'generating',
+      status: GenerationStatus.GENERATING,
       progress: 65,
       createdAt: '2024-09-26T15:00:00Z'
     }
@@ -124,7 +148,7 @@ const AIContentGenerator = () => {
       id: 'template-1',
       name: 'Treinamento de Segurança NR',
       category: 'safety',
-      type: 'script',
+      type: GenerationType.SCRIPT,
       description: 'Template otimizado para criação de treinamentos de Normas Regulamentadoras',
       prompt: 'Criar treinamento completo sobre {nr_number} focando em {focus_area} para {target_audience}',
       parameters: {
@@ -140,7 +164,7 @@ const AIContentGenerator = () => {
       id: 'template-2',
       name: 'Apresentação Corporativa',
       category: 'corporate',
-      type: 'presentation',
+      type: GenerationType.PRESENTATION,
       description: 'Template para apresentações executivas com dados e métricas',
       prompt: 'Criar apresentação executiva sobre {topic} incluindo métricas e análises para {stakeholders}',
       parameters: {
@@ -156,7 +180,7 @@ const AIContentGenerator = () => {
       id: 'template-3',
       name: 'Conteúdo Educacional Interativo',
       category: 'educational',
-      type: 'video',
+      type: GenerationType.VIDEO,
       description: 'Template para vídeos educacionais com elementos interativos',
       prompt: 'Criar vídeo educacional sobre {subject} com elementos interativos para {age_group}',
       parameters: {
@@ -187,8 +211,9 @@ const AIContentGenerator = () => {
   const handleGenerate = useCallback(async () => {
     if (!prompt.trim()) return;
 
+    const tempId = `gen-${Date.now()}`;
     const newRequest: GenerationRequest = {
-      id: `gen-${Date.now()}`,
+      id: tempId,
       type: generationType,
       prompt,
       parameters: {
@@ -196,7 +221,7 @@ const AIContentGenerator = () => {
         audience: 'workers',
         language: 'pt-BR'
       },
-      status: 'generating',
+      status: GenerationStatus.GENERATING,
       progress: 0,
       createdAt: new Date().toISOString()
     };
@@ -204,45 +229,77 @@ const AIContentGenerator = () => {
     setGenerationHistory(prev => [newRequest, ...prev]);
     setIsGenerating(true);
 
-    // Simulate generation process
-    for (let i = 0; i <= 100; i += 5) {
-      await new Promise(resolve => setTimeout(resolve, 100));
-      setGenerationHistory(prev => prev.map(req =>
-        req.id === newRequest.id ? { ...req, progress: i } : req
-      ));
-    }
-
-    // Complete generation
-    setGenerationHistory(prev => prev.map(req =>
-      req.id === newRequest.id ? {
-        ...req,
-        status: 'completed' as const,
-        result: {
-          content: `Conteúdo gerado para: ${prompt}`,
-          analysis: {
-            quality: 85 + Math.random() * 15,
-            engagement: 80 + Math.random() * 20,
-            clarity: 85 + Math.random() * 15,
-            compliance: 90 + Math.random() * 10,
-            recommendations: [
-              'Adicionar mais exemplos práticos',
-              'Incluir checklist de verificação',
-              'Otimizar para mobile'
-            ]
+    try {
+      // Start progress simulation
+      const progressInterval = setInterval(() => {
+        setGenerationHistory(prev => prev.map(req => {
+          if (req.id === tempId && req.progress < 90) {
+            return { ...req, progress: req.progress + 5 };
           }
-        }
-      } : req
-    ));
+          return req;
+        }));
+      }, 500);
 
-    setIsGenerating(false);
-    setPrompt('');
+      // Call API
+      const response = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          prompt,
+          type: generationType,
+          parameters: newRequest.parameters
+        })
+      });
+
+      clearInterval(progressInterval);
+
+      if (!response.ok) {
+        throw new Error('Falha na geração');
+      }
+
+      const data = await response.json();
+
+      // Complete generation
+      setGenerationHistory(prev => prev.map(req =>
+        req.id === tempId ? {
+          ...req,
+          id: data.id, // Update ID from server
+          status: GenerationStatus.COMPLETED,
+          progress: 100,
+          result: {
+            content: data.content,
+            analysis: data.analysis,
+            metadata: data.metadata
+          }
+        } : req
+      ));
+
+      toast.success('Conteúdo gerado com sucesso!');
+      setPrompt('');
+
+    } catch (error) {
+      console.error('Generation error:', error);
+      toast.error('Erro ao gerar conteúdo. Tente novamente.');
+      
+      setGenerationHistory(prev => prev.map(req =>
+        req.id === tempId ? {
+          ...req,
+          status: GenerationStatus.ERROR,
+          progress: 0
+        } : req
+      ));
+    } finally {
+      setIsGenerating(false);
+    }
   }, [prompt, generationType]);
 
   const handleUseTemplate = useCallback((template: AITemplate) => {
     setSelectedTemplate(template.id);
     setGenerationType(template.type);
     setPrompt(template.prompt);
-    setActiveTab('generate');
+    setActiveTab(TabType.GENERATE);
   }, []);
 
   const handleRegenerateContent = useCallback((requestId: string) => {
@@ -253,23 +310,23 @@ const AIContentGenerator = () => {
     logger.debug(`✨ Otimizando conteúdo com IA: ${requestId}`, { component: 'AIContentGenerator', requestId });
   }, []);
 
-  const getTypeIcon = (type: GenerationRequest['type']) => {
+  const getTypeIcon = (type: GenerationType) => {
     switch (type) {
-      case 'script': return <FileText className="w-4 h-4" />;
-      case 'video': return <Video className="w-4 h-4" />;
-      case 'image': return <Image className="w-4 h-4" />;
-      case 'audio': return <Mic className="w-4 h-4" />;
-      case 'presentation': return <PenTool className="w-4 h-4" />;
-      case 'quiz': return <Target className="w-4 h-4" />;
+      case GenerationType.SCRIPT: return <FileText className="w-4 h-4" />;
+      case GenerationType.VIDEO: return <Video className="w-4 h-4" />;
+      case GenerationType.IMAGE: return <Image className="w-4 h-4" />;
+      case GenerationType.AUDIO: return <Mic className="w-4 h-4" />;
+      case GenerationType.PRESENTATION: return <PenTool className="w-4 h-4" />;
+      case GenerationType.QUIZ: return <Target className="w-4 h-4" />;
       default: return <Sparkles className="w-4 h-4" />;
     }
   };
 
-  const getStatusColor = (status: GenerationRequest['status']) => {
+  const getStatusColor = (status: GenerationStatus) => {
     switch (status) {
-      case 'completed': return 'text-green-400 bg-green-900/20';
-      case 'generating': return 'text-yellow-400 bg-yellow-900/20';
-      case 'error': return 'text-red-400 bg-red-900/20';
+      case GenerationStatus.COMPLETED: return 'text-green-400 bg-green-900/20';
+      case GenerationStatus.GENERATING: return 'text-yellow-400 bg-yellow-900/20';
+      case GenerationStatus.ERROR: return 'text-red-400 bg-red-900/20';
       default: return 'text-gray-400 bg-gray-900/20';
     }
   };
@@ -307,15 +364,15 @@ const AIContentGenerator = () => {
 
       {/* Main Content */}
       <div className="flex-1 overflow-hidden">
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'generate' | 'templates' | 'history' | 'analytics')} className="h-full flex flex-col">
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabType)} className="h-full flex flex-col">
           <TabsList className="w-full">
-            <TabsTrigger value="generate" className="flex-1">Gerar Conteúdo</TabsTrigger>
-            <TabsTrigger value="templates" className="flex-1">Templates IA</TabsTrigger>
-            <TabsTrigger value="history" className="flex-1">Histórico</TabsTrigger>
-            <TabsTrigger value="analytics" className="flex-1">Analytics</TabsTrigger>
+            <TabsTrigger value={TabType.GENERATE} className="flex-1">Gerar Conteúdo</TabsTrigger>
+            <TabsTrigger value={TabType.TEMPLATES} className="flex-1">Templates IA</TabsTrigger>
+            <TabsTrigger value={TabType.HISTORY} className="flex-1">Histórico</TabsTrigger>
+            <TabsTrigger value={TabType.ANALYTICS} className="flex-1">Analytics</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="generate" className="flex-1 p-4 overflow-y-auto">
+          <TabsContent value={TabType.GENERATE} className="flex-1 p-4 overflow-y-auto">
             <div className="space-y-6">
               {/* Generation Form */}
               <Card className="bg-gray-800 border-gray-700">
@@ -329,17 +386,17 @@ const AIContentGenerator = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="text-sm font-medium mb-2 block">Tipo de Conteúdo</label>
-                      <Select value={generationType} onValueChange={(value) => setGenerationType(value as 'script' | 'video' | 'image' | 'audio' | 'presentation' | 'quiz')}>
+                      <Select value={generationType} onValueChange={(value) => setGenerationType(value as GenerationType)}>
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="script">📝 Roteiro</SelectItem>
-                          <SelectItem value="video">🎥 Vídeo</SelectItem>
-                          <SelectItem value="image">🖼️ Imagem</SelectItem>
-                          <SelectItem value="audio">🎵 Áudio</SelectItem>
-                          <SelectItem value="presentation">📊 Apresentação</SelectItem>
-                          <SelectItem value="quiz">❓ Quiz</SelectItem>
+                          <SelectItem value={GenerationType.SCRIPT}>📝 Roteiro</SelectItem>
+                          <SelectItem value={GenerationType.VIDEO}>🎥 Vídeo</SelectItem>
+                          <SelectItem value={GenerationType.IMAGE}>🖼️ Imagem</SelectItem>
+                          <SelectItem value={GenerationType.AUDIO}>🎵 Áudio</SelectItem>
+                          <SelectItem value={GenerationType.PRESENTATION}>📊 Apresentação</SelectItem>
+                          <SelectItem value={GenerationType.QUIZ}>❓ Quiz</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -459,7 +516,7 @@ const AIContentGenerator = () => {
             </div>
           </TabsContent>
           
-          <TabsContent value="templates" className="flex-1 p-4 overflow-y-auto">
+          <TabsContent value={TabType.TEMPLATES} className="flex-1 p-4 overflow-y-auto">
             <div className="space-y-4">
               {aiTemplates.map((template) => (
                 <Card key={template.id} className="bg-gray-800 border-gray-700">
@@ -514,7 +571,7 @@ const AIContentGenerator = () => {
             </div>
           </TabsContent>
           
-          <TabsContent value="history" className="flex-1 p-4 overflow-y-auto">
+          <TabsContent value={TabType.HISTORY} className="flex-1 p-4 overflow-y-auto">
             <div className="space-y-3">
               {generationHistory.map((request) => (
                 <Card key={request.id} className="bg-gray-800 border-gray-700">
@@ -536,7 +593,7 @@ const AIContentGenerator = () => {
                       
                       <p className="text-sm text-gray-300">{request.prompt}</p>
                       
-                      {request.status === 'generating' && (
+                      {request.status === GenerationStatus.GENERATING && (
                         <div className="space-y-2">
                           <div className="flex justify-between text-xs">
                             <span>Gerando...</span>
@@ -546,7 +603,7 @@ const AIContentGenerator = () => {
                         </div>
                       )}
                       
-                      {request.status === 'completed' && request.result && (
+                      {request.status === GenerationStatus.COMPLETED && request.result && (
                         <div className="space-y-3">
                           <div className="grid grid-cols-4 gap-3 text-xs">
                             {request.result.analysis && (
@@ -616,7 +673,7 @@ const AIContentGenerator = () => {
             </div>
           </TabsContent>
           
-          <TabsContent value="analytics" className="flex-1 p-4 overflow-y-auto">
+          <TabsContent value={TabType.ANALYTICS} className="flex-1 p-4 overflow-y-auto">
             <div className="space-y-6">
               {/* Stats Overview */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
