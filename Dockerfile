@@ -4,13 +4,12 @@ FROM node:20-bullseye
 # Install system dependencies
 # - Python 3 & Pip (for edge-tts)
 # - FFmpeg (for video processing)
-# - Chrome dependencies (for Remotion/Puppeteer)
 # - Fonts (Critical for video rendering text correctly)
+# REMOVED: chromium (installed via Playwright/Puppeteer instead to avoid apt errors)
 RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
     ffmpeg \
-    chromium \
     libnss3 \
     libatk1.0-0 \
     libatk-bridge2.0-0 \
@@ -20,7 +19,7 @@ RUN apt-get update && apt-get install -y \
     libxcomposite1 \
     libxdamage1 \
     libxfixes3 \
-    librandr2 \
+    libxrandr2 \
     libgbm1 \
     libasound2 \
     fonts-liberation \
@@ -30,7 +29,7 @@ RUN apt-get update && apt-get install -y \
 
 # Install edge-tts globally via pip
 # Using --break-system-packages because we are in a container
-RUN pip3 install edge-tts --break-system-packages
+RUN pip3 install edge-tts
 
 # Set working directory
 WORKDIR /app
@@ -38,8 +37,12 @@ WORKDIR /app
 # Copy root package files
 COPY package.json package-lock.json* ./
 
-# Install root dependencies and clean cache
-RUN npm install && npm cache clean --force
+# Install root dependencies (including Playwright) and clean cache
+RUN npm install --legacy-peer-deps && npm cache clean --force
+
+# Install Playwright browsers and dependencies
+# This replaces the apt-get chromium installation
+RUN npx playwright install chromium --with-deps
 
 # Create directory for the Next.js app
 WORKDIR /app/estudio_ia_videos
@@ -48,7 +51,8 @@ WORKDIR /app/estudio_ia_videos
 COPY estudio_ia_videos/package.json estudio_ia_videos/package-lock.json* ./
 
 # Install Next.js app dependencies
-# We use --legacy-peer-deps to avoid potential conflicts, similar to local dev
+# We use --legacy-peer-deps to avoid potential conflicts
+# Note: Puppeteer will download its own Chromium here since we removed PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
 RUN npm install --legacy-peer-deps && npm cache clean --force
 
 # Return to root to copy the rest of the project
@@ -65,10 +69,10 @@ RUN mkdir -p estudio_ia_videos/public/tts-audio \
     && chmod -R 777 estudio_ia_videos/public \
     && chmod -R 777 logs
 
-# Set environment variables for Puppeteer/Remotion to find Chromium
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium \
-    EDGE_TTS_PATH=edge-tts
+# Set environment variables
+# EDGE_TTS_PATH for edge-tts
+# Removed PUPPETEER_EXECUTABLE_PATH and PUPPETEER_SKIP_CHROMIUM_DOWNLOAD to let libraries manage browsers
+ENV EDGE_TTS_PATH=edge-tts
 
 # Default command to run the worker
 CMD ["node", "scripts/render-worker.js"]
