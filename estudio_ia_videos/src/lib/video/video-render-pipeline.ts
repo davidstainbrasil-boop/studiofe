@@ -5,15 +5,16 @@
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { logger } from '@lib/logger';
-import path from 'path';
-import fs from 'fs/promises';
+import { prisma } from '@lib/prisma';
+import * as path from 'path';
+import * as fs from 'fs/promises';
 import { jobManager } from '@lib/render/job-manager';
 import { elevenLabsService } from '@lib/elevenlabs-service';
-import { spawn } from 'child_process';
-import os from 'os';
+import * as child_process from 'child_process';
+import * as os from 'os';
 import { avatarEngine } from '@lib/avatar-engine';
-import { HeyGenAvatarOptions } from './engines/heygen-avatar-engine';
-import { Timeline } from './types/timeline-types';
+import { HeyGenAvatarOptions } from '../engines/heygen-avatar-engine';
+import { Timeline } from '../types/timeline-types';
 
 export interface PipelineStage {
   name: string;
@@ -43,10 +44,10 @@ interface DatabaseSlide {
   duration: number;
   background_color: string | null;
   background_image: string | null;
-  avatar_config: Record<string, unknown>;
-  audio_config: AudioConfig;
-  createdAt: string;
-  updatedAt: string;
+  avatar_config: Record<string, unknown> | null;
+  audio_config: AudioConfig | null;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // ========================================
@@ -79,25 +80,8 @@ export class VideoRenderPipeline {
     return { ready: true };
   }
 
-  async renderSlides(slides: DatabaseSlide[], timeline: Timeline): Promise<string[]> {
-    logger.debug('Rendering slides', { slidesCount: slides.length, service: 'VideoRenderPipeline' });
-    // Note: Full slide rendering is handled by createSlideVideo in the main execute() method
-    // This method returns mock paths for the simplified pipeline interface
-    return slides.map((_, i) => `slide_${i}.mp4`);
-  }
-
-  async composeTimeline(renderedSlides: string[], timeline: Timeline): Promise<{ composed: boolean; duration: number }> {
-    logger.debug('Composing timeline', { slidesCount: renderedSlides.length, duration: timeline.duration, service: 'VideoRenderPipeline' });
-    // Note: Timeline composition is handled by concatVideos() in the main execute() method
-    return { composed: true, duration: timeline.duration };
-  }
-
-  async encodeVideo(composedVideo: unknown, settings: RenderPipelineOptions): Promise<string> {
-    logger.debug('Encoding video', { settings, service: 'VideoRenderPipeline' });
-    // Note: Video encoding is handled by FFmpeg in the main execute() method
-    // This method returns a mock path for the simplified pipeline interface
-    return `/tmp/output_${Date.now()}.mp4`;
-  }
+  // NOTE: Previous mock methods (renderSlides, composeTimeline, encodeVideo) removed.
+  // Use execute() for the full real rendering pipeline.
 
   async execute(options: RenderPipelineOptions): Promise<string> {
     logger.info('Starting render pipeline', { projectId: options.projectId, jobId: options.jobId, service: 'VideoRenderPipeline' });
@@ -108,17 +92,29 @@ export class VideoRenderPipeline {
 
       // 1. Fetch Project & Slides
       await jobManager.updateProgress(jobId, 5);
-      const { data: slides, error: slidesError } = await this.supabase
-        .from('slides')
-        .select('*')
-        .eq("projectId", projectId)
-        .order('order_index', { ascending: true });
+      const slidesData = await prisma.slides.findMany({
+        where: { projectId: projectId },
+        orderBy: { orderIndex: 'asc' }
+      });
 
-      if (slidesError || !slides || slides.length === 0) {
+      if (!slidesData || slidesData.length === 0) {
         throw new Error('No slides found for project');
       }
 
-      const typedSlides = slides as DatabaseSlide[];
+      const typedSlides: DatabaseSlide[] = slidesData.map(s => ({
+        id: s.id,
+        projectId: s.projectId,
+        order_index: s.orderIndex,
+        title: s.title,
+        content: typeof s.content === 'string' ? s.content : JSON.stringify(s.content), // content is Json? in prisma
+        duration: s.duration || s.durationSeconds || 5, // fallback
+        background_color: s.backgroundColor,
+        background_image: s.backgroundImage,
+        avatar_config: s.avatarConfig as Record<string, unknown>,
+        audio_config: s.audioConfig as AudioConfig,
+        createdAt: s.createdAt,
+        updatedAt: s.updatedAt
+      }));
       const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'render-'));
       const slideVideos: string[] = [];
 
@@ -186,8 +182,16 @@ export class VideoRenderPipeline {
       return publicUrl;
 
     } catch (error) {
-      logger.error('Pipeline error', error instanceof Error ? error : new Error(String(error)), { projectId: options.projectId, jobId: options.jobId, service: 'VideoRenderPipeline' });
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
+      if (errorMessage === 'JOB_CANCELLED') {
+        logger.info('Job cancelled by user', { jobId, projectId });
+        // Cleanup temp dir
+        try { await fs.rm(path.join(os.tmpdir(), `render-${jobId}`), { recursive: true, force: true }); } catch (e) {} // best effort
+        return ''; // Return empty string or handle as specific result
+      }
+
+      logger.error('Pipeline error', error instanceof Error ? error : new Error(String(error)), { projectId: options.projectId, jobId: options.jobId, service: 'VideoRenderPipeline' });
       await jobManager.failJob(jobId, errorMessage);
       throw error;
     }
@@ -311,17 +315,33 @@ export class VideoRenderPipeline {
 
   private runFFmpeg(args: string[]): Promise<void> {
     return new Promise((resolve, reject) => {
-      const ffmpeg = spawn('ffmpeg', args);
+      const ffmpegCmd = 'ffmpeg';
+      logger.debug(`[FFmpeg] Spawning: ${ffmpegCmd} ${args.join(' ')}`, { service: 'VideoRenderPipeline' });
       
-      ffmpeg.on('close', (code) => {
-        if (code === 0) resolve();
-        else reject(new Error(`FFmpeg exited with code ${code}`));
+      const ffmpeg = child_process.spawn(ffmpegCmd, args);
+      
+      let stderrLog = '';
+
+      ffmpeg.stderr.on('data', (data) => {
+        const msg = data.toString();
+        stderrLog += msg;
+        // logger.debug(`[FFmpeg Stderr] ${msg}`); 
       });
 
-      ffmpeg.on('error', (err) => reject(err));
-      
-      // Optional: Log stderr for debug
-      // ffmpeg.stderr.on('data', d => logger.info(d.toString(), { component: 'VideoRenderPipeline' }));
+      ffmpeg.on('close', (code) => {
+        if (code === 0) {
+          logger.info('[FFmpeg] Process completed successfully', { service: 'VideoRenderPipeline' });
+          resolve();
+        } else {
+          logger.error(`[FFmpeg] Process failed with code ${code}`, new Error(stderrLog.slice(-2000)), { service: 'VideoRenderPipeline' });
+          reject(new Error(`FFmpeg exited with code ${code}`));
+        }
+      });
+
+      ffmpeg.on('error', (err) => {
+        logger.error('[FFmpeg] Process spawn error', err, { service: 'VideoRenderPipeline' });
+        reject(err);
+      });
     });
   }
   

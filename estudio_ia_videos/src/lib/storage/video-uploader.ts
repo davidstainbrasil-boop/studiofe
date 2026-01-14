@@ -4,8 +4,8 @@
  */
 
 import { logger } from '@lib/logger';
-import fs from 'fs/promises';
-import path from 'path';
+import * as fs from 'fs/promises';
+import * as path from 'path';
 import { createCanvas, loadImage } from 'canvas';
 import { FileObject } from '@supabase/storage-js';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
@@ -70,6 +70,39 @@ export class VideoUploader {
     logger.info('Uploading video', { videoPath: options.videoPath, projectId: options.projectId, service: 'VideoUploader' });
 
     try {
+      // [DEV] Mock upload if configured (DEV ONLY)
+      if (process.env.MOCK_STORAGE === 'true' && process.env.NODE_ENV === 'development') {
+        logger.info('MOCK STORAGE: Upload vídeo simulado (DEV ONLY)', { videoPath: options.videoPath });
+        
+        // Copia para public/uploads/videos
+        const extension = path.extname(options.videoPath);
+        const fileName = `${options.projectId}_${options.jobId}_${Date.now()}${extension}`;
+        const targetPath = path.join(process.cwd(), 'public', 'uploads', 'videos', fileName);
+        
+        await fs.mkdir(path.dirname(targetPath), { recursive: true });
+        await fs.copyFile(options.videoPath, targetPath);
+        
+        const videoUrl = `http://localhost:3000/uploads/videos/${fileName}`;
+        
+        // 5. Gera thumbnail (mockada)
+        const thumbnailUrl = await this.generateAndUploadThumbnail(
+          options.videoPath,
+          options.userId,
+          options.jobId
+        );
+
+        // 6. Atualiza tabela render_jobs
+        await this.updateRenderJobRecord(options.jobId, {
+          videoUrl,
+          thumbnailUrl,
+          fileSize: (await fs.stat(options.videoPath)).size,
+          status: 'completed',
+          completedAt: new Date().toISOString()
+        });
+
+        return videoUrl;
+      }
+
       // 1. Lê o arquivo de vídeo
       const videoBuffer = await fs.readFile(options.videoPath);
       const fileSize = videoBuffer.length;
@@ -175,6 +208,19 @@ export class VideoUploader {
               const thumbnailBuffer = await fs.readFile(thumbnailPath);
               const thumbnailFileName = `thumb_${jobId}_${Date.now()}.png`;
               const thumbnailStoragePath = `thumbnails/${userId}/${thumbnailFileName}`;
+
+              // [DEV] Mock thumbnail upload (DEV ONLY)
+              if (process.env.MOCK_STORAGE === 'true' && process.env.NODE_ENV === 'development') {
+                 const targetThumbPath = path.join(process.cwd(), 'public', 'uploads', 'thumbnails', thumbnailFileName);
+                 await fs.mkdir(path.dirname(targetThumbPath), { recursive: true });
+                 await fs.writeFile(targetThumbPath, thumbnailBuffer);
+                 
+                 const thumbUrl = `http://localhost:3000/uploads/thumbnails/${thumbnailFileName}`;
+                 await fs.unlink(thumbnailPath).catch(() => {});
+                 logger.info('MOCK STORAGE: Thumbnail gerada (DEV ONLY)', { thumbUrl });
+                 resolve(thumbUrl);
+                 return;
+              }
 
               const { data, error } = await this.supabase.storage
                 .from('thumbnails')
@@ -286,13 +332,16 @@ export class VideoUploader {
     logger.info('Uploading video in chunks', { totalChunks, fileSize, service: 'VideoUploader' });
 
     // Para upload com progresso, usaríamos a API multipart do Supabase
-    // Por simplicidade, vamos usar upload direto com callback simulado
-    if (onProgress) {
-      // Simula progresso
+    // Por simplicidade, vamos usar upload direto.
+    // Simula progresso APENAS em desenvolvimento para UX feedback visual
+    if (onProgress && process.env.NODE_ENV === 'development') {
       for (let i = 0; i <= 100; i += 10) {
         onProgress(i);
         await new Promise(resolve => setTimeout(resolve, 100));
       }
+    } else if (onProgress) {
+        // In production, we might just signal 0 and 100 or use real progress if available
+        onProgress(10); // STARTED
     }
 
     return this.uploadVideo(options);

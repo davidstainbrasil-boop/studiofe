@@ -43,27 +43,52 @@ export async function GET(_request: NextRequest) {
     ] = await Promise.all([
       supabaseAdmin.from('users').select('*', { count: 'exact', head: true }).then(r => r.count || 0),
       supabaseAdmin.from('projects').select('*', { count: 'exact', head: true }).then(r => r.count || 0),
-      supabaseAdmin.from('projects').select('*', { count: 'exact', head: true }).gte("updatedAt", last24h.toISOString()).then(r => r.count || 0),
+      supabaseAdmin.from('projects').select('*', { count: 'exact', head: true }).gte("updated_at", last24h.toISOString()).then(r => r.count || 0),
       getRenderJobSummary(last24h),
     ])
 
-    // Placeholder for storage stats as we don't have a file_uploads table
-    const usedStorage = 0
-    const totalStorageBytes = BigInt(500) * BigInt(1024) * BigInt(1024) * BigInt(1024) // 500GB default quota
+    // Storage Stats: Sum of video_exports sizes
+    const { data: videoExportsSize } = await supabaseAdmin
+        .from('video_exports')
+        .select('file_size')
+        .not('file_size', 'is', null);
 
-    const usedStorageNumber = 0
-    const storageUtilization = 0
+    const usedStorageBytes = videoExportsSize?.reduce((acc, curr) => acc + (Number(curr.file_size) || 0), 0) || 0;
+    const totalStorageBytes = 500 * 1024 * 1024 * 1024; // 500GB Quota
+    const storageUtilization = (usedStorageBytes / totalStorageBytes) * 100;
 
-    // Placeholder for active sessions
-    const activeSessions = 0
+    // Active Sessions: Distinct users with activity in last 1h
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    
+    let activeSessions = 0;
+    try {
+        // Since we can't do count(distinct(userId)) easily via supabaseAdmin simple query builders without rpc? 
+        // We can do a range query and loose distinct check if volume is low, OR use a flag in users table if we had it.
+        // Best approach for MVP stats: Count events in last hour.
+        // Or if we need exact unique users:
+        
+        const { data: events, error } = await supabaseAdmin
+            .from('analytics_events')
+            .select('user_id')
+            .gte('created_at', oneHourAgo);
+            
+        if (error) {
+            logger.warn('Failed to fetch active sessions', error, { component: 'API: admin/stats' });
+        } else {
+             const uniqueUsers = new Set(events?.map(e => e.user_id).filter(Boolean));
+             activeSessions = uniqueUsers.size;
+        }
+    } catch (e) {
+        logger.error('Active sessions query failed', e instanceof Error ? e : new Error(String(e)), { component: 'API: admin/stats' });
+    }
 
     return NextResponse.json({
       totalUsers,
       activeSessions,
       totalProjects,
       projectsLast24h,
-      usedStorage: usedStorageNumber,
-      usedStorageBytes: usedStorage.toString(),
+      usedStorage: usedStorageBytes,
+      usedStorageBytes: usedStorageBytes.toString(),
       totalStorageBytes: totalStorageBytes.toString(),
       storageUtilization,
       renderJobs: renderSummary,
@@ -80,8 +105,8 @@ async function getRenderJobSummary(since: Date) {
   const [total, processing, failed, completed] = await Promise.all([
     supabaseAdmin.from('render_jobs').select('*', { count: 'exact', head: true }).then(r => r.count || 0),
     supabaseAdmin.from('render_jobs').select('*', { count: 'exact', head: true }).in('status', ['pending', 'processing', 'queued']).then(r => r.count || 0),
-    supabaseAdmin.from('render_jobs').select('*', { count: 'exact', head: true }).eq('status', 'failed').gte("updatedAt", since.toISOString()).then(r => r.count || 0),
-    supabaseAdmin.from('render_jobs').select('*', { count: 'exact', head: true }).eq('status', 'completed').gte("updatedAt", since.toISOString()).then(r => r.count || 0),
+    supabaseAdmin.from('render_jobs').select('*', { count: 'exact', head: true }).eq('status', 'failed').gte("updated_at", since.toISOString()).then(r => r.count || 0),
+    supabaseAdmin.from('render_jobs').select('*', { count: 'exact', head: true }).eq('status', 'completed').gte("updated_at", since.toISOString()).then(r => r.count || 0),
   ])
 
   return {
