@@ -2,7 +2,7 @@ import { withSentryConfig } from '@sentry/nextjs';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
+  // output: 'standalone',
   reactStrictMode: true,
   swcMinify: true,
   typescript: {
@@ -33,10 +33,8 @@ const nextConfig = {
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },
-  // Ensure proper asset prefix for production
-  assetPrefix: process.env.NODE_ENV === 'production' && process.env.NEXT_PUBLIC_VERCEL_URL 
-    ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
-    : undefined,
+  // Asset prefix removed to allow standard Vercel relative path resolution
+  // This fixes the issue where implicit Vercel URLs didn't match the custom domain
   // Ensure static assets are served correctly with proper headers
   async headers() {
     return [

@@ -1,0 +1,3 @@
+- [x] Remove `assetPrefix` from `estudio_ia_videos/next.config.mjs` <!-- id: 0 -->
+- [x] Verify `package.json` build scripts are standard <!-- id: 1 -->
+- [ ] **ACTION REQUIRED**: User must redeploy to Vercel to apply changes <!-- id: 2 -->
