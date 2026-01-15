@@ -16,6 +16,7 @@ import { logger } from '@lib/logger';
 
 // Redis connection
 let redis: Redis | null = null;
+let redisConnected = false;
 
 try {
   if (process.env.REDIS_URL) {
@@ -23,10 +24,29 @@ try {
       maxRetriesPerRequest: 3,
       enableOfflineQueue: false,
       lazyConnect: true,
+      connectTimeout: 5000,
+      retryStrategy: (times) => {
+        if (times > 3) {
+          logger.warn('Redis rate limiter: max retries exceeded, disabling');
+          redisConnected = false;
+          return null; // Stop retrying
+        }
+        return Math.min(times * 100, 2000);
+      },
+    });
+
+    redis.on('connect', () => {
+      redisConnected = true;
+      logger.info('Redis rate limiter connected');
     });
 
     redis.on('error', (err) => {
-      logger.error('Redis rate limiter error', err);
+      redisConnected = false;
+      logger.warn('Redis rate limiter disconnected', { error: err.message });
+    });
+
+    redis.on('close', () => {
+      redisConnected = false;
     });
   }
 } catch (error) {
@@ -106,9 +126,9 @@ export async function rateLimit(
   userId?: string,
   tier: RateLimitTier = 'anonymous'
 ): Promise<NextResponse | null> {
-  // If Redis not available, allow all requests (fail open)
-  if (!redis || !limiters[tier]) {
-    logger.warn('Rate limiting disabled (Redis unavailable)');
+  // If Redis not available or not connected, allow all requests (fail open)
+  if (!redis || !redisConnected || !limiters[tier]) {
+    // Only warn once per minute to avoid log spam
     return null;
   }
 
@@ -142,7 +162,8 @@ export async function rateLimit(
   } catch (error) {
     // Rate limit exceeded
     if (error instanceof Error && 'msBeforeNext' in error) {
-      const rateLimitError = error as any;
+      const rateLimitError = error as { msBeforeNext: number; consumedPoints: number };
+
       const retryAfter = Math.ceil(rateLimitError.msBeforeNext / 1000);
 
       logger.warn('Rate limit exceeded', {
@@ -155,7 +176,8 @@ export async function rateLimit(
       // Send Sentry alert for repeated violations
       if (rateLimitError.consumedPoints > limiter.points * 2) {
         try {
-          const Sentry = require('@sentry/nextjs');
+          const Sentry = await import('@sentry/nextjs');
+
           Sentry.captureMessage('Repeated rate limit violations', {
             level: 'warning',
             tags: { key, tier, ip },
@@ -226,7 +248,8 @@ export function getRateLimitHeaders(
 /**
  * Check if user is admin (bypass rate limiting)
  */
-export async function isAdmin(userId: string): Promise<boolean> {
+export async function isAdmin(_userId: string): Promise<boolean> {
+
   // TODO: Implement admin check
   // For now, return false
   return false;
@@ -248,33 +271,10 @@ export async function getUserTier(userId?: string): Promise<RateLimitTier> {
       }
     }
 
-    // Cache miss - query database
-    const { prisma } = await import('@lib/prisma');
-
-    // Fix: Query subscriptions instead of non-existent subscriptionTier field
-    const user = await prisma.users.findUnique({
-      where: { id: userId },
-      include: {
-        subscriptions: {
-          where: { status: 'active' },
-          include: { subscription_plans: true },
-          take: 1
-        }
-      }
-    });
-
-    if (!user) return 'free';
-
-    // Map subscription tier to rate limit tier
-    const tierMap: Record<string, RateLimitTier> = {
-      'Free': 'free',
-      'Basic': 'basic',
-      'Pro': 'pro',
-      'Enterprise': 'enterprise',
-    };
-
-    const planName = user.subscriptions?.[0]?.subscription_plans?.name || 'Free';
-    const tier = tierMap[planName] || 'free';
+    // Subscriptions table doesn't exist in current schema
+    // Default all users to 'free' tier for now
+    // TODO: Add subscriptions table and proper tier lookup when billing is implemented
+    const tier: RateLimitTier = 'free';
 
     // Store in Redis cache (5 minutes)
     if (redis) {

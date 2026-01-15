@@ -42,8 +42,8 @@ test.describe('Production Critical Flow', () => {
 
     await expect(emailInput, 'Email input should be visible').toBeVisible();
 
-    await emailInput.fill('admin@cursostecno.com.br');
-    await passwordInput.fill('Admin123456');
+    await emailInput.fill('admin@estudio.ai');
+    await passwordInput.fill('Tr1unf0@');
     await submitButton.click();
 
     // Expect redirect to dashboard
@@ -56,8 +56,8 @@ test.describe('Production Critical Flow', () => {
     // but since tests run in isolation context by default in PW unless configured otherwise, we re-do login.
 
     await page.goto('/login');
-    await page.locator('input[type="email"]').fill('admin@cursostecno.com.br');
-    await page.locator('input[type="password"]').fill('Admin123456');
+    await page.locator('input[type="email"]').fill('admin@estudio.ai');
+    await page.locator('input[type="password"]').fill('Tr1unf0@');
     await page.locator('button[type="submit"]').click();
     await page.waitForURL(/.*dashboard/);
 

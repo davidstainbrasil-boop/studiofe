@@ -1,0 +1,55 @@
+[dotenv@17.2.3] injecting env (57) from .env.local -- tip: ⚙️  write to custom object with { processEnv: myObject }
+🔒 Setting up E2E URL isolation...
+✅ E2E environment configured
+   - External requests will be blocked
+   - Only localhost URLs allowed
+⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+
+Running 1 test using 1 worker
+
+[1A[2K[dotenv@17.2.3] injecting env (0) from .env.local -- tip: 🔑 add access controls to secrets: https://dotenvx.com/ops
+
+[1A[2K⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+
+[1A[2K[1/1] [chromium] › src/app/e2e/pptx-to-video-real.spec.ts:39:7 › E2E PPTX-to-Video Pipeline (Real Infrastructure) › Complete pipeline: Upload PPTX → Process Slides → Render Video → Validate Storage
+[1A[2K[chromium] › src/app/e2e/pptx-to-video-real.spec.ts:39:7 › E2E PPTX-to-Video Pipeline (Real Infrastructure) › Complete pipeline: Upload PPTX → Process Slides → Render Video → Validate Storage
+=== Starting E2E PPTX-to-Video Pipeline Test ===
+
+[1A[2K
+[Step 1] Uploading PPTX file...
+
+[1A[2K(node:4154041) ExperimentalWarning: buffer.File is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[1A[2K✓ PPTX uploaded successfully
+
+[1A[2K  - Processing ID: pptx_mkfeyuxc_uzb9za2scal
+
+[1A[2K  - Slide count: 3
+
+[1A[2K
+[Step 2] Validating PPTX upload in database...
+
+[1A[2KCleaned up PPTX upload: pptx_mkfeyuxc_uzb9za2scal
+
+[1A[2K  1) [chromium] › src/app/e2e/pptx-to-video-real.spec.ts:39:7 › E2E PPTX-to-Video Pipeline (Real Infrastructure) › Complete pipeline: Upload PPTX → Process Slides → Render Video → Validate Storage 
+
+    Error: Failed to fetch pptx_uploads record pptx_mkfeyuxc_uzb9za2scal: invalid input syntax for type uuid: "pptx_mkfeyuxc_uzb9za2scal"
+
+       at helpers/pptx-pipeline.helpers.ts:149
+
+      147 |
+      148 |   if (error) {
+    > 149 |     throw new Error(`Failed to fetch ${table} record ${id}: ${error.message}`);
+          |           ^
+      150 |   }
+      151 |
+      152 |   expect(data, `Record should exist in ${table}`).toBeTruthy();
+        at validateDatabaseRecord (/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/e2e/helpers/pptx-pipeline.helpers.ts:149:11)
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/e2e/pptx-to-video-real.spec.ts:67:26
+
+
+[1A[2K  1 failed
+    [chromium] › src/app/e2e/pptx-to-video-real.spec.ts:39:7 › E2E PPTX-to-Video Pipeline (Real Infrastructure) › Complete pipeline: Upload PPTX → Process Slides → Render Video → Validate Storage 
+
+[36m  Serving HTML report at http://localhost:40815. Press Ctrl+C to quit.[39m

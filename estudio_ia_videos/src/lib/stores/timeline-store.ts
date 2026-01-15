@@ -1,7 +1,7 @@
 
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
-import { logger } from '@lib/logger';
+import { logger } from '../logger';
 import { DragData, TimelineSelection, TimelineProject, TimelineElement, TimelineLayer, TimelineKeyframe } from '../types/timeline-types';
 
 // ========================================
@@ -57,6 +57,7 @@ export interface TimelineState {
   currentTime: number;
   duration: number;
   isPlaying: boolean;
+  isDirty: boolean;
   zoom: number;
   volume: number;
   canUndo: boolean;
@@ -72,6 +73,10 @@ export interface TimelineState {
   continuousFlowEnabled: boolean;
   projectId: string | null;
   lastSavedAt: Date | null;
+  history: {
+    past: any[];
+    future: any[];
+  };
 }
 
 export interface TimelineStore extends TimelineState {
@@ -115,13 +120,11 @@ export interface TimelineStore extends TimelineState {
   removeElement: (elementId: string) => void;
   duplicateElement: (elementId: string) => void;
   splitElement: (elementId: string, time: number) => void;
-  splitElement: (elementId: string, time: number) => void;
   toggleLayerLock: (layerId: string) => void;
   
   // Bulk Actions
   moveSelection: (delta: number) => void;
   removeSelected: () => void;
-  removeElementRipple: (elementId: string) => void;
   removeElementRipple: (elementId: string) => void;
   selectAll: () => void;
   
@@ -295,25 +298,30 @@ export const useTimelineStore = create<TimelineStore>()(
              updatedAt: new Date(),
              duration: 300,
              fps: 30,
-             width: 1920,
-             height: 1080,
+             currentTime: 0,
+             zoomLevel: 1,
+             resolution: {
+                 width: 1920,
+                 height: 1080
+             },
              layers: []
           };
       }
-      
-      let layer = state.project.layers.find(l => l.id === element.layerId);
-      if (!layer) {
-         // Auto-create layer if missing (simplified for PR4)
-         layer = {
-            id: element.layerId,
-            name: `Layer ${state.project.layers.length + 1}`,
-            visible: true,
-            locked: false,
-            items: [],
-            type: element.type === 'audio' ? 'audio' : 'video' // Simple inference
-         };
-         state.project.layers.push(layer);
-      }
+            let layer = state.project.layers.find(l => l.id === element.layerId);
+       if (!layer) {
+          // Auto-create layer if missing (simplified for PR4)
+          const newLayer: TimelineLayer = {
+             id: element.layerId || crypto.randomUUID(),
+             name: `Layer ${state.project.layers.length + 1}`,
+             visible: true,
+             locked: false,
+             items: [],
+             elements: [],
+             type: element.type === 'audio' ? 'audio' : 'video' // Simple inference
+          };
+          state.project.layers.push(newLayer);
+          layer = state.project.layers[state.project.layers.length - 1];
+       }
       
       layer.items.push(element);
       state.isDirty = true;
@@ -354,7 +362,10 @@ export const useTimelineStore = create<TimelineStore>()(
             targetLayer.items.push(element);
             state.isDirty = true;
         } else {
-            logger.error('Element not found in source layer during move', { elementId, sourceLayerId: sourceLayer.id });
+            logger.error('Element not found in source layer during move', undefined, { 
+                elementId, 
+                sourceLayerId: sourceLayer.id 
+            });
         }
     }),
 
@@ -372,7 +383,10 @@ export const useTimelineStore = create<TimelineStore>()(
             const element = layer.items.find(e => e.id === elementId);
             if (element) {
                 if (layer.isLocked) {
-                    logger.warn('Cannot update element in a locked layer', { elementId, layerId: layer.id });
+                    logger.warn('Cannot update element in a locked layer', { 
+                        elementId, 
+                        layerId: layer.id 
+                    });
                     return; // Block update
                 }
                 Object.assign(element, updates);

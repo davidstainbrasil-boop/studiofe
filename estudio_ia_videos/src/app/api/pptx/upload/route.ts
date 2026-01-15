@@ -7,7 +7,7 @@ import { getSupabaseForRequest } from '@lib/supabase/server';
 
 export async function POST(req: NextRequest) {
   logger.info('PPTX upload request received');
-  logger.info('Cookies:', req.cookies.getAll());
+  logger.info('Cookies:', { cookies: req.cookies.getAll() });
 
   try {
     // Get authenticated user
@@ -56,7 +56,10 @@ export async function POST(req: NextRequest) {
 
     logger.info('File uploaded successfully via service', { result, userId: user.id });
 
-    return NextResponse.json(result);
+    return NextResponse.json({
+        ...result,
+        projectId
+    });
 
   } catch (error) {
     logger.error('Error handling PPTX upload', error instanceof Error ? error : new Error(String(error)));

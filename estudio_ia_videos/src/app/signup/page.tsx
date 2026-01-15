@@ -64,7 +64,15 @@ export default function SignupPage() {
             }
 
             console.log('[SIGNUP] Success! Data:', data);
-            // Always show success for deterministic behavior
+
+            // UX Improvement: Check if session was created immediately (Email Confirm disabled)
+            if (data.session) {
+                console.log('[SIGNUP] Auto-login successful, redirecting to dashboard...');
+                router.push('/dashboard');
+                return;
+            }
+
+            // Otherwise show success message for email verification
             setSuccess(true);
         } catch (err) {
             console.error('Signup error:', err);

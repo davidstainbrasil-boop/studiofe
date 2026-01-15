@@ -86,6 +86,7 @@ export async function pollRenderJob(
   jobId: string,
   maxWaitMs: number = 180000, // 3 minutes
   initialIntervalMs: number = 5000,
+  userId?: string
 ): Promise<{
   status: string;
   outputUrl: string | null;
@@ -99,7 +100,9 @@ export async function pollRenderJob(
   while (Date.now() - startTime < maxWaitMs) {
     attempts++;
 
-    const response = await request.get(`/api/render/jobs/${jobId}`);
+    const response = await request.get(`/api/render/jobs/${jobId}`, {
+      headers: userId ? { 'x-user-id': userId } : {}
+    });
     expect(response.status()).toBe(200);
 
     const data = await response.json();
@@ -261,4 +264,47 @@ export async function getSlideCount(uploadId: string): Promise<number> {
   }
 
   return count || 0;
+}
+
+/**
+ * Get a valid user ID from public.users (linked to auth.users)
+ */
+export async function getValidUserId(): Promise<string> {
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+  
+  // List users from public table
+  const { data: users, error } = await supabase.from('users').select('id').limit(1);
+  
+  if (error) {
+    throw new Error(`Failed to list users from public.users: ${error.message}`);
+  }
+  
+  if (!users || users.length === 0) {
+     // If no users in public table, we can't easily creating one without auth admin which failed.
+     // Fallback to a known ID if available or throw clear error
+    throw new Error('No users found in public.users table. Cannot run real pipeline test without a seed user.');
+  }
+  
+  return users[0].id;
+}
+
+/**
+ * Create a test project in the database
+ */
+export async function createTestProject(userId: string, projectId: string): Promise<void> {
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+  
+  const { error } = await supabase.from('projects').insert({
+    id: projectId,
+    user_id: userId,
+    name: 'E2E Test Project',
+    type: 'pptx',
+    status: 'draft',
+    metadata: {}
+  });
+  
+  if (error) {
+    throw new Error(`Failed to create test project: ${error.message}`);
+  }
+  console.log(`Created test project: ${projectId} for user ${userId}`);
 }

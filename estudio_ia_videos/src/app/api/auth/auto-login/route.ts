@@ -30,10 +30,22 @@ const TEST_CREDENTIALS = {
 type Role = keyof typeof TEST_CREDENTIALS;
 
 export async function GET(request: NextRequest) {
-  // Bloquear em produção
+  // Bloquear em produção SEMPRE (defesa em profundidade)
   if (process.env.NODE_ENV === 'production') {
+    logger.warn('Tentativa de acesso à rota /api/auth/auto-login em produção', {
+      component: 'API: auth/auto-login',
+      env: process.env.NODE_ENV,
+    });
     return NextResponse.json(
       { error: 'Esta rota está desabilitada em produção' },
+      { status: 403 }
+    );
+  }
+
+  // Opcional: flag extra para só funcionar quando explicitamente habilitada em dev
+  if (process.env.NEXT_PUBLIC_ENABLE_AUTO_LOGIN !== 'true') {
+    return NextResponse.json(
+      { error: 'Auto-login desabilitado neste ambiente' },
       { status: 403 }
     );
   }

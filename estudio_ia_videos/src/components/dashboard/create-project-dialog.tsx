@@ -54,7 +54,7 @@ export function CreateProjectDialog({ trigger, open, onOpenChange }: CreateProje
 
             // Generate project ID client-side for mock compatibility
             const projectId = crypto.randomUUID()
-            
+
             const insertQuery = supabase
                 .from('projects')
                 .insert({
@@ -67,15 +67,15 @@ export function CreateProjectDialog({ trigger, open, onOpenChange }: CreateProje
                     render_settings: {},
                     updated_at: new Date().toISOString()
                 })
-            
+
             // Handle both real Supabase (with .select) and mock (without)
             const hasSelect = typeof insertQuery.select === 'function'
-            const { error } = hasSelect 
+            const { error } = hasSelect
                 ? await insertQuery.select('id,type').single()
                 : await insertQuery
 
             if (error) throw error
-            
+
             const data = { id: projectId, type }
 
             toast.success('Projeto criado com sucesso!')
@@ -83,13 +83,13 @@ export function CreateProjectDialog({ trigger, open, onOpenChange }: CreateProje
             setName('')
 
             if (type === 'pptx') {
-                router.push(`/editor/pptx/${data.id}`)
+                router.push(`/studio/${data.id}`)
             } else if (type === 'talking-photo') {
-                router.push(`/editor/avatars/${data.id}`)
+                router.push(`/studio/${data.id}`)
             } else if (type === 'ai-generated') {
-                router.push(`/editor/ai-script/${data.id}`)
+                router.push(`/studio/${data.id}`)
             } else {
-                router.push(`/editor/timeline/${data.id}`)
+                router.push(`/studio/${data.id}`)
             }
 
             router.refresh()
@@ -143,8 +143,13 @@ export function CreateProjectDialog({ trigger, open, onOpenChange }: CreateProje
                         <Label htmlFor="name">Nome do Projeto</Label>
                         <Input
                             id="name"
+                            name="projectName"
+                            autoComplete="off"
                             value={name}
-                            onChange={(e) => setName(e.target.value)}
+                            onChange={(e) => {
+                                console.log('[CreateProjectDialog] Input Change:', e.target.value);
+                                setName(e.target.value);
+                            }}
                             placeholder="Ex: Treinamento de Segurança"
                             className="text-lg"
                         />

@@ -114,6 +114,52 @@ export async function transaction<T>(
 }
 
 // ============================================
+// WHITELIST DE TABELAS SEGURAS
+// ============================================
+
+/**
+ * Lista de tabelas permitidas para operações dinâmicas
+ * Previne SQL injection através de validação de nome de tabela
+ */
+const ALLOWED_TABLES = new Set([
+  'users',
+  'projects',
+  'slides',
+  'render_jobs',
+  'pptx_uploads',
+  'pptx_slides',
+  'analytics_events',
+  'nr_templates',
+  'nr_modules',
+  'courses',
+  'videos',
+  'user_progress',
+  'timelines',
+  'project_history',
+  'project_versions',
+  'avatar_models',
+  'notifications',
+  'comments',
+  'collaborations',
+] as const);
+
+/**
+ * Valida se o nome da tabela é seguro
+ * @throws Error se a tabela não estiver na whitelist
+ */
+function validateTableName(table: string): void {
+  // Remove schema prefix se presente (ex: "public.users" -> "users")
+  const tableName = table.includes('.') ? table.split('.').pop()! : table;
+  
+  if (!ALLOWED_TABLES.has(tableName as typeof ALLOWED_TABLES extends Set<infer T> ? T : never)) {
+    throw new Error(
+      `Tabela "${tableName}" não está na whitelist de tabelas permitidas. ` +
+      `Tabelas permitidas: ${Array.from(ALLOWED_TABLES).join(', ')}`
+    );
+  }
+}
+
+// ============================================
 // HELPERS PARA OPERAÇÕES COMUNS
 // ============================================
 
@@ -124,6 +170,8 @@ export async function insert<T = unknown>(
   table: string,
   data: RecordData
 ): Promise<T> {
+  validateTableName(table);
+  
   const columns = Object.keys(data);
   const values = Object.values(data);
   const placeholders = columns.map((_, i) => `$${i + 1}`).join(', ');
@@ -147,6 +195,8 @@ export async function update<T = unknown>(
   where: string,
   whereParams: QueryParams
 ): Promise<T[]> {
+  validateTableName(table);
+  
   const columns = Object.keys(data);
   const values = Object.values(data);
   const setClause = columns.map((col, i) => `${col} = $${i + 1}`).join(', ');
@@ -173,6 +223,8 @@ export async function remove(
   where: string,
   whereParams: QueryParams
 ): Promise<number> {
+  validateTableName(table);
+  
   const sql = `DELETE FROM ${table} WHERE ${where}`;
   const result = await query(sql, whereParams);
   return result.rowCount || 0;
@@ -180,16 +232,19 @@ export async function remove(
 
 /**
  * Busca por ID
+ * @throws Error se a tabela não estiver na whitelist
  */
 export async function findById<T = unknown>(
   table: string,
   id: string
 ): Promise<T | null> {
+  validateTableName(table);
   return queryOne<T>(`SELECT * FROM ${table} WHERE id = $1`, [id]);
 }
 
 /**
  * Busca todos com filtros opcionais
+ * @throws Error se a tabela não estiver na whitelist
  */
 export async function findAll<T = Record<string, unknown>>(
   table: string,
@@ -201,6 +256,8 @@ export async function findAll<T = Record<string, unknown>>(
     offset?: number;
   }
 ): Promise<T[]> {
+  validateTableName(table);
+  
   let sql = `SELECT * FROM ${table}`;
   const params: (string | number | boolean | null)[] = options?.params || [];
   
@@ -225,12 +282,15 @@ export async function findAll<T = Record<string, unknown>>(
 
 /**
  * Conta registros
+ * @throws Error se a tabela não estiver na whitelist
  */
 export async function count(
   table: string,
   where?: string,
   params?: QueryParams
 ): Promise<number> {
+  validateTableName(table);
+  
   let sql = `SELECT COUNT(*) as count FROM ${table}`;
   if (where) {
     sql += ` WHERE ${where}`;
@@ -241,12 +301,15 @@ export async function count(
 
 /**
  * Verifica se existe
+ * @throws Error se a tabela não estiver na whitelist
  */
 export async function exists(
   table: string,
   where: string,
   params: QueryParams
 ): Promise<boolean> {
+  validateTableName(table);
+  
   const sql = `SELECT EXISTS(SELECT 1 FROM ${table} WHERE ${where}) as exists`;
   const result = await queryOne<{ exists: boolean }>(sql, params);
   return result?.exists || false;

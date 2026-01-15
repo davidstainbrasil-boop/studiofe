@@ -1,0 +1,43 @@
+[dotenv@17.2.3] injecting env (57) from .env.local -- tip: 🔄 add secrets lifecycle management: https://dotenvx.com/ops
+🔒 Setting up E2E URL isolation...
+✅ E2E environment configured
+   - External requests will be blocked
+   - Only localhost URLs allowed
+⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+
+Running 1 test using 1 worker
+
+[1A[2K[dotenv@17.2.3] injecting env (0) from .env.local -- tip: ✅ audit secrets and track compliance: https://dotenvx.com/ops
+
+[1A[2K⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+
+[1A[2K[1/1] [chromium] › src/app/e2e/pptx-to-video-real.spec.ts:42:7 › E2E PPTX-to-Video Pipeline (Real Infrastructure) › Complete pipeline: Upload PPTX → Process Slides → Render Video → Validate Storage
+[1A[2K[chromium] › src/app/e2e/pptx-to-video-real.spec.ts:42:7 › E2E PPTX-to-Video Pipeline (Real Infrastructure) › Complete pipeline: Upload PPTX → Process Slides → Render Video → Validate Storage
+=== Starting E2E PPTX-to-Video Pipeline Test ===
+
+[1A[2K
+[Step 0] Setting up test user and project...
+
+[1A[2KCleaned up project: e2e-test-project-1768480242224
+
+[1A[2K  1) [chromium] › src/app/e2e/pptx-to-video-real.spec.ts:42:7 › E2E PPTX-to-Video Pipeline (Real Infrastructure) › Complete pipeline: Upload PPTX → Process Slides → Render Video → Validate Storage 
+
+    Error: Failed to create test project: invalid input syntax for type uuid: "e2e-test-project-1768480242224"
+
+       at helpers/pptx-pipeline.helpers.ts:304
+
+      302 |   
+      303 |   if (error) {
+    > 304 |     throw new Error(`Failed to create test project: ${error.message}`);
+          |           ^
+      305 |   }
+      306 |   console.log(`Created test project: ${projectId} for user ${userId}`);
+      307 | }
+        at createTestProject (/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/e2e/helpers/pptx-pipeline.helpers.ts:304:11)
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/e2e/pptx-to-video-real.spec.ts:53:5
+
+
+[1A[2K  1 failed
+    [chromium] › src/app/e2e/pptx-to-video-real.spec.ts:42:7 › E2E PPTX-to-Video Pipeline (Real Infrastructure) › Complete pipeline: Upload PPTX → Process Slides → Render Video → Validate Storage 
+
+[36m  Serving HTML report at http://localhost:36573. Press Ctrl+C to quit.[39m

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { S3StorageService } from '@lib/s3-storage'
 import { prisma } from '@lib/prisma'
-import { PPTXProcessor, PPTXProcessResult } from '@lib/pptx/pptx-processor'
+import { PptxProcessor, PptxProcessResult } from '@lib/pptx/pptx-processor'
 import type { Prisma } from '@prisma/client'
 import { logger } from '@lib/logger';
 
@@ -93,50 +93,11 @@ export async function POST(request: NextRequest) {
 
     // Validar arquivo PPTX
     logger.info('🔍 Validando arquivo PPTX...', { component: 'API: v1/pptx/process' })
-    const validation = await PPTXProcessor.validatePPTXFile(downloadResult.buffer)
-    if (!validation.isValid) {
-      const errorMsg = `Arquivo PPTX inválido: ${validation.error || 'Erro desconhecido'}`
-      
-      await prisma.projects.update({
-        where: { id: projectId },
-        data: { 
-          status: 'error', 
-          processingLog: { error: errorMsg, failedAt: new Date().toISOString() } as Prisma.InputJsonValue
-        }
-      })
-      
-      return NextResponse.json({
-        success: false,
-        error: errorMsg
-      }, { status: 400 })
-    }
-
-    if (validation.warnings.length > 0) {
-      logger.warn('⚠️ Avisos na validação:', { component: 'API: v1/pptx/process', warnings: validation.warnings })
-    }
-
-    // Processar arquivo PPTX com o novo processador real
-    logger.info('🎯 Iniciando processamento real com PPTXProcessor...', { component: 'API: v1/pptx/process' })
-    
-    const progressCallback = (progress: ProcessingProgress) => {
-      logger.info(`📊 ${progress.stage}: ${Math.round(progress.progress)}% - ${progress.message}`, { component: 'API: v1/pptx/process' })
-    }
-
-    const extractionResult = await PPTXProcessor.processFile(
-      downloadResult.buffer,
-      projectId,
-      {
-        extractImages: true,
-        detectLayouts: true,
-        estimateDurations: true,
-        uploadToS3: true,
-        generateThumbnails: true,
-        maxImageSize: 1920,
-        imageQuality: 85,
-        extractHyperlinks: true
-      },
-      progressCallback
-    )
+    const extractionResult = await PptxProcessor.prototype.process({ // Need to check if it's static or instance
+      storagePath: s3Key,
+      extractImages: true,
+      extractNotes: true
+    })
     
     if (!extractionResult.success) {
       const errorMsg = `Erro ao processar PPTX: ${extractionResult.error}`

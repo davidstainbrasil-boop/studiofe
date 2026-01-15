@@ -1,0 +1,84 @@
+[dotenv@17.2.3] injecting env (57) from .env.local -- tip: 🔄 add secrets lifecycle management: https://dotenvx.com/ops
+🔒 Setting up E2E URL isolation...
+✅ E2E environment configured
+   - External requests will be blocked
+   - Only localhost URLs allowed
+⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+
+Running 1 test using 1 worker
+
+[1A[2K[dotenv@17.2.3] injecting env (0) from .env.local -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+
+[1A[2K⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+
+[1A[2K[1/1] [chromium] › src/app/e2e/pptx-to-video-real.spec.ts:44:7 › E2E PPTX-to-Video Pipeline (Real Infrastructure) › Complete pipeline: Upload PPTX → Process Slides → Render Video → Validate Storage
+[1A[2K[chromium] › src/app/e2e/pptx-to-video-real.spec.ts:44:7 › E2E PPTX-to-Video Pipeline (Real Infrastructure) › Complete pipeline: Upload PPTX → Process Slides → Render Video → Validate Storage
+=== Starting E2E PPTX-to-Video Pipeline Test ===
+
+[1A[2K
+[Step 0] Setting up test user and project...
+
+[1A[2KCreated test project: 9eb369c5-1168-4368-b99a-ba58aafb009e for user ffffffff-ffff-ffff-ffff-ffffffffffff
+
+[1A[2K✓ Test user ID: ffffffff-ffff-ffff-ffff-ffffffffffff
+
+[1A[2K✓ Test project created: 9eb369c5-1168-4368-b99a-ba58aafb009e
+
+[1A[2K
+[Step 1] Uploading PPTX file...
+
+[1A[2K(node:4182910) ExperimentalWarning: buffer.File is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[1A[2K✓ PPTX uploaded successfully
+
+[1A[2K  - Processing ID: d9d37938-f131-4657-accc-235ae38f765e
+
+[1A[2K  - Slide count: 3
+
+[1A[2K
+[Step 2] Validating PPTX upload in database...
+
+[1A[2K✓ PPTX upload record validated
+
+[1A[2K  - Status: completed
+
+[1A[2K  - Slides in DB: 3
+
+[1A[2K
+[Step 3] Validating individual slides in database...
+
+[1A[2K✓ Found 3 slides in pptx_slides table
+
+[1A[2K
+[Step 4] Initiating video render job...
+
+[1A[2KRender failed with status 500: {"error":"Erro ao iniciar render","details":"Cannot read properties of undefined (reading 'findFirst')"}
+
+[1A[2KCleaned up PPTX upload: d9d37938-f131-4657-accc-235ae38f765e
+
+[1A[2KCleaned up project: 9eb369c5-1168-4368-b99a-ba58aafb009e
+
+[1A[2K  1) [chromium] › src/app/e2e/pptx-to-video-real.spec.ts:44:7 › E2E PPTX-to-Video Pipeline (Real Infrastructure) › Complete pipeline: Upload PPTX → Process Slides → Render Video → Validate Storage 
+
+    Error: Render start request should succeed
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m200[39m
+    Received: [31m500[39m
+
+      137 |     }
+      138 |
+    > 139 |     expect(renderResponse.status(), 'Render start request should succeed').toBe(200);
+          |                                                                            ^
+      140 |     const renderData = await renderResponse.json();
+      141 |
+      142 |     jobId = renderData.jobId || renderData.data?.jobId || renderData.id;
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/e2e/pptx-to-video-real.spec.ts:139:76
+
+
+[1A[2K  1 failed
+    [chromium] › src/app/e2e/pptx-to-video-real.spec.ts:44:7 › E2E PPTX-to-Video Pipeline (Real Infrastructure) › Complete pipeline: Upload PPTX → Process Slides → Render Video → Validate Storage 
+
+[36m  Serving HTML report at http://localhost:32811. Press Ctrl+C to quit.[39m

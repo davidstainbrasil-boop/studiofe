@@ -47,7 +47,8 @@ export async function GET(
       }, { status: 404 })
     }
 
-    let hasPermission = (project.owner_id || project.userId) === user.id || project.is_public
+    let hasPermission = (project.user_id || project.userId) === user.id || project.is_public
+
 
     if (!hasPermission) {
       const { data: collaborator } = await supabase
@@ -68,96 +69,104 @@ export async function GET(
     // If project is PPTX import and no timeline exists, generate one from slides
     // Cast to any to get around strict type checks for adapter logic
     const projectAny = project as any;
-    
-    if ((projectAny.type === 'pptx' || projectAny.type === 'pptx_import') && (!projectAny.timeline || projectAny.timeline.length === 0)) {
-       const { data: slides } = await supabase
-           .from('slides')
-           .select('*')
-           .eq("project_id", params.id)
-           .order('order_index');
-       
-       if (slides && slides.length > 0) {
-           // Convert to Timeline Structure
-           const elements: any[] = [];
-           const imageElements: any[] = [];
-           let currentTime = 0;
+    const isPptxProject = projectAny.type === 'pptx' || projectAny.type === 'pptx_import';
+    let pptxSlides: any[] = [];
 
-           slides.forEach((slide: any, index: number) => {
-               const duration = slide.durationSeconds || 5;
-               const slideContent = typeof slide.content === 'object' ? slide.content?.text : slide.content;
-               
-               // 1. Text Element
-               elements.push({
-                   id: `text-${slide.id}`,
-                   type: 'text',
-                   name: `Slide ${index + 1} Text`,
-                   startTime: currentTime,
-                   duration: duration,
-                   content: (slideContent || 'Texto do slide').substring(0, 100),
-                   properties: {
-                       fontSize: 40,
-                       color: '#ffffff',
-                       x: 100, y: 100,
-                       width: 800
-                   },
-                   locked: false, visible: true
-               });
+    if (isPptxProject) {
+      const { data: slides, error: slidesError } = await supabase
+        .from('slides')
+        .select('*')
+        .eq("project_id", params.id)
+        .order('order_index');
 
-               // 2. Image Element (if any)
-               const imgUrl = slide.background_image || slide.backgroundImage;
+      if (slidesError) {
+        logger.warn('Erro ao carregar slides do projeto PPTX', { error: slidesError, projectId: params.id });
+      } else if (slides) {
+        pptxSlides = slides;
+        projectAny.slides = slides;
+      }
+    }
 
-               if (imgUrl) {
-                   imageElements.push({
-                        id: `img-${slide.id}`,
-                        type: 'image',
-                        name: `Slide ${index + 1} Image`,
-                        startTime: currentTime,
-                        duration: duration,
-                        content: imgUrl,
-                        properties: {
-                            x: 0, y: 0, // Fill screen
-                            width: 1920, height: 1080,
-                            opacity: 1
-                        },
-                        locked: false, visible: true
-                   });
-               }
+    if (isPptxProject && (!projectAny.timeline || projectAny.timeline.length === 0) && pptxSlides.length > 0) {
+      // Convert to Timeline Structure
+      const elements: any[] = [];
+      const imageElements: any[] = [];
+      let currentTime = 0;
 
-               currentTime += duration;
-           });
+      pptxSlides.forEach((slide: any, index: number) => {
+        const duration = slide.durationSeconds || 5;
+        const slideContent = typeof slide.content === 'object' ? slide.content?.text : slide.content;
 
-           const tracks = [];
+        // 1. Text Element
+        elements.push({
+          id: `text-${slide.id}`,
+          type: 'text',
+          name: `Slide ${index + 1} Text`,
+          startTime: currentTime,
+          duration: duration,
+          content: (slideContent || 'Texto do slide').substring(0, 100),
+          properties: {
+            fontSize: 40,
+            color: '#ffffff',
+            x: 100, y: 100,
+            width: 800
+          },
+          locked: false, visible: true
+        });
 
-           if (imageElements.length > 0) {
-               tracks.push({
-                   id: 'track-images',
-                   name: 'Imagens Slides',
-                   type: 'video',
-                   elements: imageElements,
-                   height: 100, color: '#10B981',
-                   visible: true, locked: false, muted: false, volume: 1
-               });
-           }
+        // 2. Image Element (if any)
+        const imgUrl = slide.background_image || slide.backgroundImage;
 
-           tracks.push({
-                id: 'track-text',
-                name: 'Texto Slides',
-                type: 'video', // Using video track for visual elements
-                elements: elements,
-                height: 100, color: '#3B82F6',
-                visible: true, locked: false, muted: false, volume: 1
-            });
+        if (imgUrl) {
+          imageElements.push({
+            id: `img-${slide.id}`,
+            type: 'image',
+            name: `Slide ${index + 1} Image`,
+            startTime: currentTime,
+            duration: duration,
+            content: imgUrl,
+            properties: {
+              x: 0, y: 0, // Fill screen
+              width: 1920, height: 1080,
+              opacity: 1
+            },
+            locked: false, visible: true
+          });
+        }
 
+        currentTime += duration;
+      });
 
-           // Mock a timeline object attached to project for the frontend
-           projectAny.timeline = [{
-             id: 'virtual-timeline',
-             projectId: project.id,
-             tracks: tracks,
-             totalDuration: currentTime,
-             settings: projectAny.settings || { resolution: { width: 1920, height: 1080 }, fps: 30 }
-           }];
-       }
+      const tracks = [];
+
+      if (imageElements.length > 0) {
+        tracks.push({
+          id: 'track-images',
+          name: 'Imagens Slides',
+          type: 'video',
+          elements: imageElements,
+          height: 100, color: '#10B981',
+          visible: true, locked: false, muted: false, volume: 1
+        });
+      }
+
+      tracks.push({
+        id: 'track-text',
+        name: 'Texto Slides',
+        type: 'video', // Using video track for visual elements
+        elements: elements,
+        height: 100, color: '#3B82F6',
+        visible: true, locked: false, muted: false, volume: 1
+      });
+
+      // Mock a timeline object attached to project for the frontend
+      projectAny.timeline = [{
+        id: 'virtual-timeline',
+        projectId: project.id,
+        tracks: tracks,
+        totalDuration: currentTime,
+        settings: projectAny.settings || { resolution: { width: 1920, height: 1080 }, fps: 30 }
+      }];
     }
 
 
@@ -217,7 +226,8 @@ export async function PUT(
     // Verificar permissões
     const { data: project } = await supabase
       .from('projects')
-      .select("owner_id")
+      .select("user_id")
+
       .eq('id', params.id)
       .single()
 
@@ -229,7 +239,8 @@ export async function PUT(
       }, { status: 404 })
     }
 
-    let hasPermission = project.owner_id === user.id
+    let hasPermission = (project.user_id || project.userId) === user.id
+
 
     if (!hasPermission) {
       const { data: collaboratorData } = await supabase
@@ -328,7 +339,8 @@ export async function DELETE(
       .from('projects')
       .delete()
       .eq('id', params.id)
-      .eq("owner_id", user.id)
+      .eq("user_id", user.id)
+
 
     if (error) throw error
 

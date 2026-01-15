@@ -11,7 +11,9 @@ import {
     Settings,
     ChevronLeft,
     LucideIcon,
-    Sparkles
+    Sparkles,
+    Download,
+    User
 } from 'lucide-react'
 import {
     Tooltip,
@@ -24,6 +26,7 @@ interface StudioSidebarProps {
     activeTab: string
     onTabChange: (tab: string) => void
     disabled?: boolean
+    expandedContent?: React.ReactNode
 }
 
 interface SidebarItem {
@@ -31,15 +34,17 @@ interface SidebarItem {
     label: string
     icon: LucideIcon
     disabled?: boolean
+    description?: string
 }
 
 const SIDEBAR_ITEMS: SidebarItem[] = [
-    { id: 'upload', label: 'Uploads', icon: Upload },
-    { id: 'slides', label: 'Slides', icon: Layout },
-    { id: 'text', label: 'Texto', icon: Type },
-    { id: 'media', label: 'Mídia', icon: ImageIcon },
-    { id: 'audio', label: 'Áudio', icon: Music },
-    { id: 'ai', label: 'IA Voice', icon: Sparkles },
+    { id: 'upload', label: 'Upload', icon: Upload, description: 'Importar arquivos PPTX' },
+    { id: 'slides', label: 'Cenas', icon: Layout, description: 'Gerenciar cenas do video' },
+    { id: 'media', label: 'Midia', icon: ImageIcon, description: 'Biblioteca de imagens e videos' },
+    { id: 'ai', label: 'Avatar IA', icon: User, description: 'Avatares hiper-realistas' },
+    { id: 'audio', label: 'Audio', icon: Music, description: 'Musica e efeitos sonoros' },
+    { id: 'tts', label: 'Narracao', icon: Sparkles, description: 'Voz com IA (TTS)' },
+    { id: 'export', label: 'Exportar', icon: Download, description: 'Renderizar video final' },
 ]
 
 export function StudioSidebar({ activeTab, onTabChange, disabled }: StudioSidebarProps) {
@@ -61,6 +66,7 @@ export function StudioSidebar({ activeTab, onTabChange, disabled }: StudioSideba
                                     <Button
                                         variant="ghost"
                                         size="icon"
+                                        aria-label={item.label}
                                         disabled={disabled || item.disabled}
                                         onClick={() => onTabChange(item.id)}
                                         className={cn(
@@ -88,31 +94,88 @@ export function StudioSidebar({ activeTab, onTabChange, disabled }: StudioSideba
                     </div>
                 </div>
 
-                {/* Expanded Panel (Drawer) - Visible on larger screens or when active */}
+                {/* Expanded Panel - Hidden on small screens, visible on lg+ */}
                 <div className={cn(
                     "flex-1 bg-[#151921] h-full transition-all duration-300 overflow-hidden hidden lg:block",
                     "border-r border-white/5"
                 )}>
                     <div className="h-full flex flex-col">
                         <div className="p-4 border-b border-white/5 flex items-center justify-between">
-                            <h2 className="text-sm font-semibold text-white tracking-wide uppercase">
-                                {SIDEBAR_ITEMS.find(i => i.id === activeTab)?.label || 'Ferramentas'}
-                            </h2>
+                            <div>
+                                <h2 className="text-sm font-semibold text-white tracking-wide">
+                                    {SIDEBAR_ITEMS.find(i => i.id === activeTab)?.label || 'Ferramentas'}
+                                </h2>
+                                <p className="text-[10px] text-gray-500 mt-0.5">
+                                    {SIDEBAR_ITEMS.find(i => i.id === activeTab)?.description || ''}
+                                </p>
+                            </div>
                         </div>
 
-                        <ScrollArea className="flex-1 p-4">
-                            {/* Content for each tab would go here */}
-                            {activeTab === 'upload' && (
-                                <div className="text-xs text-gray-500 text-center mt-10">
-                                    Gerencie seus arquivos PPTX e mídias aqui.
-                                </div>
-                            )}
-                            {activeTab === 'slides' && (
-                                <div className="text-xs text-gray-500 text-center mt-10">
-                                    Visualização rápida dos slides do projeto.
-                                </div>
-                            )}
-                            {/* ... other empty states ... */}
+                        <ScrollArea className="flex-1">
+                            {/* Tab-specific content - Placeholder instructions */}
+                            <div className="p-4">
+                                {activeTab === 'upload' && (
+                                    <div className="text-center py-8">
+                                        <Upload className="w-10 h-10 text-gray-600 mx-auto mb-3" />
+                                        <p className="text-xs text-gray-500">
+                                            Arraste arquivos PPTX para o canvas<br />
+                                            ou use o botao de upload
+                                        </p>
+                                    </div>
+                                )}
+                                {activeTab === 'slides' && (
+                                    <div className="text-center py-8">
+                                        <Layout className="w-10 h-10 text-gray-600 mx-auto mb-3" />
+                                        <p className="text-xs text-gray-500">
+                                            Gerencie suas cenas no painel lateral direito
+                                        </p>
+                                    </div>
+                                )}
+                                {activeTab === 'media' && (
+                                    <div className="text-center py-8">
+                                        <ImageIcon className="w-10 h-10 text-gray-600 mx-auto mb-3" />
+                                        <p className="text-xs text-gray-500">
+                                            Arraste imagens e videos para o canvas
+                                        </p>
+                                    </div>
+                                )}
+                                {activeTab === 'ai' && (
+                                    <div className="text-center py-8">
+                                        <User className="w-10 h-10 text-purple-600 mx-auto mb-3" />
+                                        <p className="text-xs text-gray-500">
+                                            Selecione um avatar IA no painel lateral<br />
+                                            e arraste para o canvas
+                                        </p>
+                                    </div>
+                                )}
+                                {activeTab === 'audio' && (
+                                    <div className="text-center py-8">
+                                        <Music className="w-10 h-10 text-gray-600 mx-auto mb-3" />
+                                        <p className="text-xs text-gray-500">
+                                            Adicione musica de fundo<br />
+                                            e efeitos sonoros
+                                        </p>
+                                    </div>
+                                )}
+                                {activeTab === 'tts' && (
+                                    <div className="text-center py-8">
+                                        <Sparkles className="w-10 h-10 text-purple-600 mx-auto mb-3" />
+                                        <p className="text-xs text-gray-500">
+                                            Configure vozes com IA<br />
+                                            no painel lateral direito
+                                        </p>
+                                    </div>
+                                )}
+                                {activeTab === 'export' && (
+                                    <div className="text-center py-8">
+                                        <Download className="w-10 h-10 text-green-600 mx-auto mb-3" />
+                                        <p className="text-xs text-gray-500">
+                                            Exporte seu video em Full HD<br />
+                                            com narracao e avatares IA
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
                         </ScrollArea>
                     </div>
                 </div>

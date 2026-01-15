@@ -60,6 +60,7 @@ import { cn } from '@lib/utils'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 import { FlexibleElement } from '../editor/properties-panel'
+import { AudioWaveform } from './audio-waveform'
 
 // Types
 interface TimelineTrack {
@@ -133,6 +134,9 @@ interface HistoryState {
 
 // Phase 4: Selection Sync Interface
 interface ProfessionalTimelineEditorProps {
+  initialData?: any
+  readOnly?: boolean
+  onUpdate?: (data: any) => void
   onSelectionChange?: (element: FlexibleElement | null) => void
   selectedElement?: FlexibleElement | null
 }
@@ -242,9 +246,19 @@ const DraggableTimelineItem: React.FC<{
       }}
       onMouseDown={handleMouseDown}
     >
-      <div className="h-full flex flex-col justify-between p-2 relative">
-        <div className="flex items-center justify-between">
-          <div className="text-xs font-semibold text-white truncate">
+      <div className="h-full flex flex-col justify-between p-2 relative overflow-hidden">
+        {track.type === 'audio' && (
+          <div className="absolute inset-0 z-0">
+            <AudioWaveform
+              item={item}
+              color={track.color}
+              height={TRACK_HEIGHT - 16}
+              width={Math.max(item.duration * PIXELS_PER_SECOND * zoom, 60)}
+            />
+          </div>
+        )}
+        <div className="flex items-center justify-between relative z-10">
+          <div className="text-xs font-semibold text-white truncate drop-shadow-md">
             {item.content}
           </div>
           {item.keyframes && item.keyframes.length > 0 && (
@@ -362,6 +376,9 @@ const DroppableTrack: React.FC<{
 }
 
 export default function ProfessionalTimelineEditor({
+  initialData,
+  readOnly = false,
+  onUpdate,
   onSelectionChange,
   selectedElement
 }: ProfessionalTimelineEditorProps = {}) {
@@ -583,59 +600,69 @@ export default function ProfessionalTimelineEditor({
     }))
   }, [])
 
-  // Item management
   const selectItem = useCallback((itemId: string, multiSelect = false) => {
+    // 1. Handle Side Effect (Parent Sync) if needed
+    if (onSelectionChange && !multiSelect) {
+      // We need to find the item in the current state to get its details
+      const state = timelineRef.current ? timelineState : null // Current state access might be tricky inside callback if we rely on stale closures.
+      // Actually, we can use the functional update pattern just for state, 
+      // but for side effect, we ideally need the current state. 
+      // Since 'selectItem' is useCallback dependent on onSelectionChange, 
+      // we should add timelineState to dependency or use a ref for current state if performance is concern.
+      // For now, let's just peek at tracks from the setter or use the state from closure if available.
+    }
+
     setTimelineState(prev => {
-      // Find the item to get its details for sync
+      // Find the item to get its details for sync INSIDE the setter to ensure we have latest state
       let selectedItem: TimelineItem | undefined
+      let selectedTrack: TimelineTrack | undefined
+
       for (const track of prev.tracks) {
         const found = track.items.find(i => i.id === itemId)
         if (found) {
           selectedItem = found
+          selectedTrack = track
           break
         }
       }
 
-      const newState = {
-        ...prev,
-        selectedItems: multiSelect
-          ? prev.selectedItems.includes(itemId)
-            ? prev.selectedItems.filter(id => id !== itemId)
-            : [...prev.selectedItems, itemId]
-          : [itemId]
+      // Propagate to parent (Canvas Sync) - We do this here to ensure we have the item from latest state
+      // Note: Invoking callback from render/setter is generally discouraged but safe if callback doesn't trigger re-render of THIS component immediately 
+      // or if we accept it's a specific event handler. 
+      // A better way is useEffect monitoring selectedItems, but that might be async.
+      // Let's stick to immediate call for responsiveness, but wrap in timeout to avoid update-during-render if paranoid,
+      // but here we are in an event handler (onClick), so it should be fine.
+      if (onSelectionChange && !multiSelect) {
+        if (selectedItem) {
+          onSelectionChange({
+            id: selectedItem.id,
+            name: selectedItem.content,
+            type: selectedTrack?.type || 'unknown',
+            content: selectedItem.content,
+            metadata: {
+              start: selectedItem.start,
+              duration: selectedItem.duration,
+              trackId: selectedTrack?.id,
+              trackName: selectedTrack?.name
+            },
+            visible: true,
+            locked: selectedItem.locked || false,
+            style: {
+              backgroundColor: selectedTrack?.color || '#3B82F6'
+            }
+          })
+        } else {
+          // onSelectionChange(null) // Only if we want to clear when clicking "nothing" which isn't this case (this is selectItem)
+        }
       }
 
-      // Phase 4: Sync selection to parent (Properties Panel)
-      if (onSelectionChange && !multiSelect && selectedItem) {
-        // Map TimelineItem to FlexibleElement
-        // Find track to get type
-        const track = prev.tracks.find(t => t.items.some(i => i.id === itemId))
+      const newSelection = multiSelect
+        ? prev.selectedItems.includes(itemId)
+          ? prev.selectedItems.filter(id => id !== itemId)
+          : [...prev.selectedItems, itemId]
+        : [itemId]
 
-        onSelectionChange({
-          id: selectedItem.id,
-          name: selectedItem.content,
-          type: track?.type || 'unknown',
-          // Map timeline properties to FlexibleElement properties
-          // Using start/duration as custom props or mapping to specific fields if needed
-          content: selectedItem.content,
-          metadata: {
-            start: selectedItem.start,
-            duration: selectedItem.duration,
-            trackId: track?.id,
-            trackName: track?.name
-          },
-          // Dummy values for visual props since timeline items are abstract
-          visible: true,
-          locked: selectedItem.locked || false,
-          style: {
-            backgroundColor: track?.color || '#3B82F6'
-          }
-        })
-      } else if (onSelectionChange && !multiSelect && !selectedItem) {
-        onSelectionChange(null)
-      }
-
-      return newState
+      return { ...prev, selectedItems: newSelection }
     })
   }, [onSelectionChange])
 

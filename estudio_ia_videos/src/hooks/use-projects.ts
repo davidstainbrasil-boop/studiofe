@@ -281,7 +281,8 @@ export function useProjects(filters?: ProjectFilters, options?: {
           type: projectData.type,
           description: projectData.description,
           user_id: user.id,
-          owner_id: user.id, // Ensure owner_id is set for RLS
+          // owner_id removed: column does not exist in production DB
+
           status: 'draft',
           metadata: defaultMetadata as unknown as Json,
           current_version: '1.0.0',

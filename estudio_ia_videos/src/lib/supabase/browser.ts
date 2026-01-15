@@ -1,5 +1,5 @@
 import { createBrowserClient } from '@supabase/ssr';
-import { logger } from '@lib/logger';
+import { logger } from '../logger';
 
 function isLikelyPlaceholderSupabaseValue(value: string): boolean {
   const v = value.toLowerCase();

@@ -7,963 +7,908 @@ datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_DATABASE_URL")
-  schemas   = ["public", "auth"]
+  schemas   = ["auth", "public"]
 }
 
 model analytics_events {
-  id            String   @id
-  userId        String?  @map("user_id")
-  eventType     String   @map("event_type")
-  eventCategory String?  @map("event_category")
-  eventData     Json?    @default("{}") @map("event_data")
-  resourceType  String?  @map("resource_type")
-  resourceId    String?  @map("resource_id")
-  ipAddress     String?  @map("ip_address")
-  userAgent     String?  @map("user_agent")
-  sessionId     String?  @map("session_id")
-  createdAt     DateTime @default(now()) @map("created_at")
-  users         users?   @relation(fields: [userId], references: [id])
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String?   @map("user_id") @db.Uuid
+  eventType String    @map("event_type") @db.VarChar(100)
+  eventData Json?     @default("{}") @map("event_data")
+  sessionId String?   @map("session_id") @db.VarChar(255)
+  ipAddress String?   @map("ip_address") @db.VarChar(50)
+  userAgent String?   @map("user_agent")
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  users     users?    @relation(fields: [userId], references: [id], onUpdate: NoAction)
 
-  @@index([createdAt])
-  @@index([eventType, eventCategory])
-  @@index([eventType])
-  @@index([resourceType, resourceId])
-  @@index([userId])
-  @@schema("public")
-}
-
-model api_keys {
-  id          String    @id
-  userId      String    @map("user_id")
-  name        String
-  keyHash     String    @unique @map("key_hash")
-  keyPrefix   String    @map("key_prefix")
-  permissions Json      @default("[\"read\"]")
-  rateLimit   Int       @default(1000) @map("rate_limit")
-  isActive    Boolean   @default(true) @map("is_active")
-  lastUsedAt  DateTime? @map("last_used_at")
-  expiresAt   DateTime? @map("expires_at")
-  createdAt   DateTime  @default(now()) @map("created_at")
-  users       users     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([isActive, expiresAt])
-  @@index([keyPrefix])
-  @@index([userId])
-  @@schema("public")
-}
-
-model audit_logs {
-  id           String   @id
-  userId       String?  @map("user_id")
-  action       String
-  resourceType String?  @map("resource_type")
-  resourceId   String?  @map("resource_id")
-  oldValues    Json?    @map("old_values")
-  newValues    Json?    @map("new_values")
-  ipAddress    String?  @map("ip_address")
-  userAgent    String?  @map("user_agent")
-  createdAt    DateTime @default(now()) @map("created_at")
-  users        users?   @relation(fields: [userId], references: [id])
-
-  @@index([action])
-  @@index([createdAt])
-  @@index([resourceType, resourceId])
-  @@index([userId])
-  @@schema("public")
-}
-
-model avatar_models {
-  id                   String         @id
-  name                 String
-  displayName          String?        @map("display_name")
-  description          String?
-  category             String?
-  gender               String?
-  quality              String?
-  thumbnailUrl         String?        @map("thumbnail_url")
-  modelUrl             String?        @map("model_url")
-  previewVideoUrl      String?        @map("preview_video_url")
-  isActive             Boolean        @default(true) @map("is_active")
-  audio2faceCompatible Boolean        @default(false) @map("audio2face_compatible")
-  realTimeLipsync      Boolean        @default(false) @map("real_time_lipsync")
-  rayTracingSupport    Boolean        @default(false) @map("ray_tracing_support")
-  lipsyncAccuracy      Int?           @default(90) @map("lipsync_accuracy")
-  modelFilePath        String?        @map("model_file_path")
-  textureFiles         Json?          @map("texture_files")
-  rigFilePath          String?        @map("rig_file_path")
-  animationSets        Json?          @map("animation_sets")
-  blendShapesFile      String?        @map("blend_shapes_file")
-  supportedLanguages   String[]       @map("supported_languages")
-  usageCount           Int            @default(0) @map("usage_count")
-  rating               Float?         @default(5.0)
-  createdAt            DateTime       @default(now()) @map("created_at")
-  updatedAt            DateTime       @default(now()) @map("updated_at")
-  avatar_stats         avatar_stats[]
-  render_jobs          render_jobs[]
-  @@schema("public")
-}
-
-model avatar_stats {
-  id            String        @id
-  avatarModelId String        @map("avatar_model_id")
-  totalRenders  Int           @default(0) @map("total_renders")
-  avgRenderTime Int?          @map("avg_render_time")
-  lastUsedAt    DateTime      @default(now()) @map("last_used_at")
-  avatar_models avatar_models @relation(fields: [avatarModelId], references: [id], onDelete: Cascade)
-  @@schema("public")
-}
-
-model certificates {
-  id                    String                 @id
-  projectId             String                 @map("project_id")
-  userId                String                 @map("user_id")
-  nrRecordId            String?                @map("nr_record_id")
-  studentName           String                 @map("student_name")
-  courseName            String                 @map("course_name")
-  code                  String                 @unique
-  issuedAt              DateTime               @default(now()) @map("issued_at")
-  validUntil            DateTime?              @map("valid_until")
-  certificateUrl        String?                @map("certificate_url")
-  metadata              Json?                  @default("{}")
-  createdAt             DateTime               @default(now()) @map("created_at")
-  updatedAt             DateTime               @default(now()) @map("updated_at")
-  nr_compliance_records nr_compliance_records? @relation(fields: [nrRecordId], references: [id])
-  projects              projects               @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  users                 users                  @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([code])
-  @@index([projectId])
-  @@index([userId])
-  @@schema("public")
-}
-
-model collaborators {
-  id                                    String            @id
-  projectId                             String            @map("project_id")
-  userId                                String            @map("user_id")
-  role                                  CollaborationRole @default(viewer)
-  invitedBy                             String?           @map("invited_by")
-  acceptedAt                            DateTime?         @map("accepted_at")
-  createdAt                             DateTime          @default(now()) @map("created_at")
-  users_collaborators_invited_byTousers users?            @relation("collaborators_invited_byTousers", fields: [invitedBy], references: [id])
-  projects                              projects          @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  users_collaborators_user_idTousers    users             @relation("collaborators_user_idTousers", fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([projectId, userId])
-  @@index([projectId])
-  @@index([userId])
+  @@index([createdAt], map: "idx_analytics_events_created_at")
+  @@index([eventType], map: "idx_analytics_events_event_type")
+  @@index([userId], map: "idx_analytics_user_id")
   @@schema("public")
 }
 
 model courses {
-  id           String   @id
-  title        String
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title        String    @db.VarChar(500)
   description  String?
-  thumbnailUrl String?  @map("thumbnail_url")
-  authorId     String?  @map("author_id")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @default(now()) @map("updated_at")
-  users        users?   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  thumbnailUrl String?   @map("thumbnail_url")
+  authorId     String?   @map("author_id") @db.Uuid
+  createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
+  users        users?    @relation(fields: [authorId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   videos       videos[]
 
-  @@index([authorId])
-  @@schema("public")
-}
-
-model generated_videos {
-  id           String   @id
-  projectId    String   @map("project_id")
-  projectName  String   @map("project_name")
-  videoUrl     String   @map("video_url")
-  thumbnailUrl String?  @map("thumbnail_url")
-  duration     Int      @default(0)
-  slideCount   Int      @default(0) @map("slide_count")
-  fileSize     Int?     @map("file_size")
-  status       String   @default("completed")
-  metadata     Json?    @default("{}")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @default(now()) @map("updated_at")
-  @@schema("public")
-}
-
-model notifications {
-  id        String    @id
-  userId    String    @map("user_id")
-  type      String
-  title     String
-  message   String?
-  data      Json?     @default("{}")
-  isRead    Boolean   @default(false) @map("is_read")
-  readAt    DateTime? @map("read_at")
-  createdAt DateTime  @default(now()) @map("created_at")
-  users     users     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([createdAt])
-  @@index([userId])
-  @@index([userId, isRead])
-  @@schema("public")
-}
-
-model nr_compliance_records {
-  id                String         @id
-  projectId         String         @map("project_id")
-  nr                String
-  nrName            String         @map("nr_name")
-  status            String
-  score             Float
-  finalScore        Float          @map("final_score")
-  requirementsMet   Int            @map("requirements_met")
-  requirementsTotal Int            @map("requirements_total")
-  validatedAt       DateTime       @default(now()) @map("validated_at")
-  validatedBy       String         @map("validated_by")
-  recommendations   Json?
-  criticalPoints    Json?          @map("critical_points")
-  aiAnalysis        Json?          @map("ai_analysis")
-  aiScore           Float?         @map("ai_score")
-  confidence        Float?
-  createdAt         DateTime       @default(now()) @map("created_at")
-  updatedAt         DateTime       @default(now()) @map("updated_at")
-  certificates      certificates[]
-  projects          projects       @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  @@index([projectId])
+  @@index([authorId], map: "idx_courses_author_id")
   @@schema("public")
 }
 
 model nr_courses {
-  id              String          @id
-  code            String          @unique
-  name            String
-  description     String?
-  category        String?
-  durationMinutes Int?            @map("duration_minutes")
-  difficultyLevel String          @default("intermediate") @map("difficulty_level")
-  thumbnailUrl    String?         @map("thumbnail_url")
-  isActive        Boolean         @default(true) @map("is_active")
-  metadata        Json?           @default("{}")
-  createdAt       DateTime        @default(now()) @map("created_at")
-  updatedAt       DateTime        @default(now()) @map("updated_at")
-  courseCode      String?         @unique @map("course_code")
-  title           String?
-  modulesCount    Int?            @default(0) @map("modules_count")
-  status          String?         @default("active")
-  duration        Int?
-  nr_modules      nr_modules[]
-  user_progress   user_progress[]
+  id           String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  courseCode   String       @unique @map("course_code") @db.VarChar(10)
+  title        String       @db.VarChar(500)
+  description  String?
+  thumbnailUrl String?      @map("thumbnail_url")
+  duration     Int?
+  modulesCount Int?         @default(0) @map("modules_count")
+  status       String?      @default("active") @db.VarChar(50)
+  metadata     Json?        @default("{}")
+  createdAt    DateTime?    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime?    @default(now()) @map("updated_at") @db.Timestamptz(6)
+  nr_modules   nr_modules[]
 
-  @@index([code])
-  @@index([isActive])
   @@schema("public")
 }
 
 model nr_modules {
-  id              String          @id
-  courseId        String          @map("course_id")
-  moduleOrder     Int             @map("module_order")
-  title           String
-  description     String?
-  content         Json?           @default("{}")
-  videoUrl        String?         @map("video_url")
-  durationMinutes Int?            @map("duration_minutes")
-  isActive        Boolean         @default(true) @map("is_active")
-  createdAt       DateTime        @default(now()) @map("created_at")
-  updatedAt       DateTime        @default(now()) @map("updated_at")
-  orderIndex      Int?            @map("order_index")
-  thumbnailUrl    String?         @map("thumbnail_url")
-  duration        Int?
-  nr_courses      nr_courses      @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  user_progress   user_progress[]
+  id           String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  courseId     String?     @map("course_id") @db.Uuid
+  orderIndex   Int         @map("order_index")
+  title        String      @db.VarChar(500)
+  description  String?
+  thumbnailUrl String?     @map("thumbnail_url")
+  videoUrl     String?     @map("video_url")
+  duration     Int?
+  content      Json?       @default("{}")
+  createdAt    DateTime?   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime?   @default(now()) @map("updated_at") @db.Timestamptz(6)
+  nr_courses   nr_courses? @relation(fields: [courseId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@unique([courseId, moduleOrder])
-  @@index([courseId])
+  @@index([courseId], map: "idx_nr_modules_course_id")
+  @@index([orderIndex], map: "idx_nr_modules_order_index")
   @@schema("public")
 }
 
 model nr_templates {
-  id              String   @id
-  nrNumber        String   @unique @map("nr_number")
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nrNumber        String    @unique @map("nr_number") @db.VarChar(10)
   title           String
   description     String?
-  slideCount      Int      @default(5) @map("slide_count")
-  durationSeconds Int      @default(300) @map("duration_seconds")
-  templateConfig  Json?    @default("{}") @map("template_config")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @default(now()) @map("updated_at")
-  @@schema("public")
-}
+  slideCount      Int       @default(5) @map("slide_count")
+  durationSeconds Int       @default(300) @map("duration_seconds")
+  templateConfig  Json?     @default("{}") @map("template_config")
+  createdAt       DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
 
-model processing_queue {
-  id           String   @id
-  jobType      String   @map("job_type")
-  jobData      Json     @map("job_data")
-  status       String   @default("pending")
-  priority     Int      @default(0)
-  scheduledFor DateTime @default(now()) @map("scheduled_for")
-  progress     Int      @default(0)
-  currentStep  String?  @map("current_step")
-  maxAttempts  Int      @default(3)
-  attempts     Int      @default(0)
-  errorMessage String?  @map("error_message")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @default(now()) @map("updated_at")
-
-  @@index([jobType])
-  @@index([priority])
-  @@index([scheduledFor])
-  @@index([status])
+  @@index([createdAt(sort: Desc)], map: "idx_nr_templates_created_at")
+  @@index([nrNumber], map: "idx_nr_templates_nr_number")
   @@schema("public")
 }
 
 model project_comments {
-  id                     String             @id
-  projectId              String             @map("project_id")
-  userId                 String             @map("user_id")
+  id                     String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projectId              String             @map("project_id") @db.Uuid
+  userId                 String             @map("user_id") @db.Uuid
+  parentId               String?            @map("parent_id") @db.Uuid
   content                String
-  position               Json?
-  parentId               String?            @map("parent_id")
-  resolved               Boolean            @default(false)
-  createdAt              DateTime           @default(now()) @map("created_at")
-  updatedAt              DateTime           @default(now()) @map("updated_at")
-  project_comments       project_comments?  @relation("project_commentsToproject_comments", fields: [parentId], references: [id], onDelete: Cascade)
+  metadata               Json?              @default("{\"position\": null, \"resolved\": false, \"element_id\": null}")
+  createdAt              DateTime?          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime?          @default(now()) @map("updated_at") @db.Timestamptz(6)
+  project_comments       project_comments?  @relation("project_commentsToproject_comments", fields: [parentId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   other_project_comments project_comments[] @relation("project_commentsToproject_comments")
-  projects               projects           @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  users                  users              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projects               projects           @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users                  auth_users         @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@index([parentId])
-  @@index([projectId])
-  @@index([userId])
+  @@index([parentId], map: "idx_project_comments_parent_id")
+  @@index([projectId], map: "idx_project_comments_project_id")
+  @@index([userId], map: "idx_project_comments_user_id")
   @@schema("public")
 }
 
 model project_versions {
-  id                                       String    @id
-  projectId                                String    @map("project_id")
-  versionNumber                            String    @map("version_number")
-  name                                     String
+  id                                       String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projectId                                String     @map("project_id") @db.Uuid
+  versionNumber                            String     @map("version_number") @db.VarChar(20)
+  name                                     String     @db.VarChar(255)
   description                              String?
-  changesSummary                           String?   @map("changes_summary")
-  createdBy                                String    @map("created_by")
-  metadata                                 Json?     @default("{}")
-  createdAt                                DateTime  @default(now()) @map("created_at")
-  userId                                   String?   @map("user_id")
-  projectData                              Json?     @default("{}") @map("project_data")
-  updatedAt                                DateTime? @map("updated_at")
-  users_project_versions_created_byTousers users     @relation("project_versions_created_byTousers", fields: [createdBy], references: [id], onDelete: Cascade)
-  projects                                 projects  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  users_project_versions_user_idTousers    users?    @relation("project_versions_user_idTousers", fields: [userId], references: [id], onDelete: Cascade)
+  changesSummary                           String?    @map("changes_summary")
+  createdBy                                String     @map("created_by") @db.Uuid
+  metadata                                 Json?      @default("{}")
+  createdAt                                DateTime?  @default(now()) @map("created_at") @db.Timestamptz(6)
+  users_project_versions_created_byTousers auth_users @relation("project_versions_created_byTousers", fields: [createdBy], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  projects                                 projects   @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([projectId, versionNumber])
-  @@index([createdBy])
-  @@index([projectId])
+  @@index([createdAt], map: "idx_project_versions_created_at")
+  @@index([projectId], map: "idx_project_versions_project_id")
   @@schema("public")
 }
 
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
 model projects {
-  id                    String                  @id
-  userId                String                  @map("user_id")
-  name                  String
-  type                  ProjectType             @default(custom)
-  status                ProjectStatus           @default(draft)
+  id                    String                  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name                  String                  @db.VarChar(255)
+  type                  project_type            @default(custom)
+  status                project_status?         @default(draft)
   description           String?
-  metadata              Json?                   @default("{}")
-  currentVersion        String                  @default("1.0.0") @map("current_version")
-  isTemplate            Boolean                 @default(false) @map("is_template")
-  isPublic              Boolean                 @default(false) @map("is_public")
-  collaborationEnabled  Boolean                 @default(false) @map("collaboration_enabled")
+  userId                String                  @map("user_id") @db.Uuid
+  metadata              Json?                   @default("{\"tags\": [], \"category\": \"general\", \"priority\": \"medium\", \"custom_fields\": {}}")
+  currentVersion        String?                 @default("1.0.0") @map("current_version") @db.VarChar(20)
+  isTemplate            Boolean?                @default(false) @map("is_template")
+  isPublic              Boolean?                @default(false) @map("is_public")
+  collaborationEnabled  Boolean?                @default(false) @map("collaboration_enabled")
   renderSettings        Json?                   @default("{}") @map("render_settings")
   thumbnailUrl          String?                 @map("thumbnail_url")
   previewUrl            String?                 @map("preview_url")
-  lastAccessedAt        DateTime                @default(now()) @map("last_accessed_at")
-  createdAt             DateTime                @default(now()) @map("created_at")
-  updatedAt             DateTime                @default(now()) @map("updated_at")
-  slidesData            Json?                   @map("slides_data")
-  totalSlides           Int?                    @default(0) @map("total_slides")
-  duration              Int?                    @default(0)
-  autoNarration         Boolean?                @default(false) @map("auto_narration")
-  pptxUrl               String?                 @map("pptx_url")
-  originalFileName      String?                 @map("original_file_name")
-  processingLog         Json?                   @map("processing_log")
-  certificates          certificates[]
-  collaborators         collaborators[]
-  nr_compliance_records nr_compliance_records[]
+  createdAt             DateTime?               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime?               @default(now()) @map("updated_at") @db.Timestamptz(6)
+  lastAccessedAt        DateTime?               @default(now()) @map("last_accessed_at") @db.Timestamptz(6)
+  pptx_uploads          pptx_uploads[]
+  project_analytics     project_analytics[]
+  project_collaborators project_collaborators[]
   project_comments      project_comments[]
+  project_history       project_history[]
   project_versions      project_versions[]
-  users                 users                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  users                 auth_users              @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   render_jobs           render_jobs[]
   slides                slides[]
-  timeline_presence     timeline_presence[]
-  timeline_track_locks  timeline_track_locks[]
   timelines             timelines?
-  tts_jobs              tts_jobs[]
-  video_exports         video_exports[]
-  video_projects        video_projects[]
 
-  @@index([isPublic])
-  @@index([status])
-  @@index([type])
-  @@index([userId])
+  @@index([createdAt], map: "idx_projects_created_at")
+  @@index([isPublic], map: "idx_projects_is_public")
+  @@index([isTemplate], map: "idx_projects_is_template")
+  @@index([lastAccessedAt], map: "idx_projects_last_accessed")
+  @@index([status], map: "idx_projects_status")
+  @@index([type], map: "idx_projects_type")
+  @@index([updatedAt], map: "idx_projects_updated_at")
+  @@index([userId], map: "idx_projects_user_id")
+  @@index([userId, status], map: "idx_projects_user_id_status")
   @@schema("public")
 }
 
 model render_jobs {
-  id                String          @id
-  videoProjectId    String?         @map("video_project_id")
-  projectId         String?         @map("project_id")
-  userId            String          @map("user_id")
-  status            JobStatus       @default(pending)
-  priority          PriorityLevel   @default(medium)
-  quality           video_quality   @default(p1080)
-  progress          Int             @default(0)
-  settings          Json?           @default("{}")
-  outputUrl         String?         @map("output_url")
-  errorMessage      String?         @map("error_message")
-  startedAt         DateTime?       @map("started_at")
-  completedAt       DateTime?       @map("completed_at")
-  estimatedDuration Int?            @map("estimated_duration")
-  actualDuration    Int?            @map("actual_duration")
-  workerId          String?         @map("worker_id")
-  retryCount        Int             @default(0) @map("retry_count")
-  maxRetries        Int             @default(3) @map("max_retries")
-  createdAt         DateTime        @default(now()) @map("created_at")
-  updatedAt         DateTime        @default(now()) @map("updated_at")
-  renderSettings    Json?           @default("{}") @map("render_settings")
-  attempts          Int?            @default(1)
-  durationMs        Int?            @map("duration_ms")
-  thumbnailUrl      String?         @map("thumbnail_url")
-  avatarModelId     String?         @map("avatar_model_id")
-  idempotencyKey    String?         @unique @map("idempotency_key")
-  avatar_models     avatar_models?  @relation(fields: [avatarModelId], references: [id])
-  projects          projects?       @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  users             users           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  video_projects    video_projects? @relation(fields: [videoProjectId], references: [id], onDelete: Cascade)
+  id                String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId         String?        @map("project_id") @db.Uuid
+  status            JobStatus?     @default(pending)
+  progress          Int?           @default(0)
+  outputUrl         String?        @map("output_url")
+  errorMessage      String?        @map("error_message")
+  renderSettings    Json?          @default("{}") @map("render_settings")
+  attempts          Int?           @default(1)
+  durationMs        Int?           @map("duration_ms")
+  startedAt         DateTime?      @map("started_at") @db.Timestamptz(6)
+  completedAt       DateTime?      @map("completed_at") @db.Timestamptz(6)
+  createdAt         DateTime?      @default(now()) @map("created_at") @db.Timestamptz(6)
+  userId            String?        @map("user_id") @db.Uuid
+  priority          PriorityLevel? @default(medium)
+  quality           video_quality? @default(p1080)
+  thumbnailUrl      String?        @map("thumbnail_url")
+  avatarModelId     String?        @map("avatar_model_id") @db.Uuid
+  videoProjectId    String?        @map("video_project_id") @db.Uuid
+  settings          Json?          @default("{}")
+  estimatedDuration Int?           @map("estimated_duration")
+  actualDuration    Int?           @map("actual_duration")
+  workerId          String?        @map("worker_id")
+  retryCount        Int?           @default(0) @map("retry_count")
+  maxRetries        Int?           @default(3) @map("max_retries")
+  updatedAt         DateTime?      @default(now()) @map("updated_at") @db.Timestamptz(6)
+  idempotencyKey    String?        @unique @map("idempotency_key")
+  projects          projects?      @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users             users?         @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@index([projectId])
-  @@index([status])
-  @@index([status, priority, createdAt])
-  @@index([userId])
-  @@index([idempotencyKey])
-  @@schema("public")
-}
-
-
-
-
-model sessions {
-  id        String   @id
-  userId    String   @map("user_id")
-  token     String   @unique
-  ipAddress String?  @map("ip_address")
-  userAgent String?  @map("user_agent")
-  expiresAt DateTime @map("expires_at")
-  createdAt DateTime @default(now()) @map("created_at")
-  users     users    @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([expiresAt])
-  @@index([token])
-  @@index([userId])
+  @@index([createdAt], map: "idx_render_jobs_created_at")
+  @@index([idempotencyKey], map: "idx_render_jobs_idempotency_key")
+  @@index([projectId], map: "idx_render_jobs_project_id")
+  @@index([projectId, status], map: "idx_render_jobs_project_id_status")
+  @@index([status], map: "idx_render_jobs_status")
+  @@index([status, createdAt(sort: Desc)], map: "idx_render_jobs_status_created")
+  @@index([userId, status], map: "idx_render_jobs_user_id_status")
   @@schema("public")
 }
 
 model slides {
-  id                 String     @id
-  projectId          String     @map("project_id")
-  slideOrder         Int        @default(0) @map("slide_order")
-  orderIndex         Int        @default(0) @map("order_index")
-  title              String?
-  content            Json?      @default("{}")
-  layoutType         String     @default("blank") @map("layout_type")
-  background         Json?      @default("{\"type\": \"color\", \"value\": \"#ffffff\"}")
-  notes              String?
-  durationSeconds    Int        @default(5) @map("duration_seconds")
-  transitionType     String     @default("none") @map("transition_type")
-  transitionDuration Int        @default(500) @map("transition_duration")
-  audioUrl           String?    @map("audio_url")
-  audioScript        String?    @map("audio_script")
-  ttsSettings        Json?      @default("{}") @map("tts_settings")
-  createdAt          DateTime   @default(now()) @map("created_at")
-  updatedAt          DateTime   @default(now()) @map("updated_at")
-  backgroundColor    String?    @map("background_color")
-  backgroundImage    String?    @map("background_image")
-  avatarConfig       Json?      @default("{}") @map("avatar_config")
-  audioConfig        Json?      @default("{}") @map("audio_config")
-  duration           Int?       @default(5)
-  projects           projects   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  tts_jobs           tts_jobs[]
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId       String?   @map("project_id") @db.Uuid
+  orderIndex      Int       @map("order_index")
+  title           String?   @db.VarChar(500)
+  content         String?
+  duration        Int?      @default(5)
+  backgroundColor String?   @map("background_color") @db.VarChar(50)
+  backgroundImage String?   @map("background_image")
+  avatarConfig    Json?     @default("{}") @map("avatar_config")
+  audioConfig     Json?     @default("{}") @map("audio_config")
+  createdAt       DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
+  projects        projects? @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@index([projectId])
-  @@index([projectId, slideOrder])
-  @@schema("public")
-}
-
-model storage_files {
-  id            String   @id
-  userId        String   @map("user_id")
-  bucket        String   @default("uploads")
-  filePath      String   @map("file_path")
-  originalName  String   @map("original_name")
-  mimeType      String?  @map("mime_type")
-  fileSize      BigInt?  @map("file_size")
-  checksum      String?
-  metadata      Json?    @default("{}")
-  isPublic      Boolean  @default(false) @map("is_public")
-  downloadCount Int      @default(0) @map("download_count")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @default(now()) @map("updated_at")
-  users         users    @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([bucket, filePath])
-  @@index([bucket])
-  @@index([isPublic])
-  @@index([userId])
-  @@schema("public")
-}
-
-model system_settings {
-  id        String   @id
-  key       String   @unique
-  value     Json
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @default(now()) @map("updated_at")
-  @@schema("public")
-}
-
-model templates {
-  id           String   @id
-  name         String
-  description  String?
-  category     String   @default("general")
-  thumbnailUrl String?  @map("thumbnail_url")
-  previewUrl   String?  @map("preview_url")
-  templateData Json     @map("template_data")
-  isPremium    Boolean  @default(false) @map("is_premium")
-  isPublic     Boolean  @default(true) @map("is_public")
-  usageCount   Int      @default(0) @map("usage_count")
-  createdBy    String?  @map("created_by")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @default(now()) @map("updated_at")
-  users        users?   @relation(fields: [createdBy], references: [id])
-
-  @@index([category])
-  @@index([createdBy])
-  @@index([isPublic])
-  @@schema("public")
-}
-
-model timeline_presence {
-  id             String   @id
-  projectId      String   @map("project_id")
-  userId         String   @map("user_id")
-  currentTrackId String?  @map("current_track_id")
-  lastSeenAt     DateTime @default(now()) @map("last_seen_at")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @default(now()) @map("updated_at")
-  projects       projects @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  users          users    @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([projectId, userId])
-  @@index([projectId])
-  @@index([userId])
-  @@schema("public")
-}
-
-model timeline_snapshots {
-  id            String    @id
-  timelineId    String    @map("timeline_id")
-  version       Int
-  tracks        Json?     @default("[]")
-  settings      Json?     @default("{}")
-  totalDuration Int?      @default(0) @map("total_duration")
-  description   String?
-  createdBy     String?   @map("created_by")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  users         users?    @relation(fields: [createdBy], references: [id])
-  timelines     timelines @relation(fields: [timelineId], references: [id], onDelete: Cascade)
-
-  @@index([timelineId])
-  @@schema("public")
-}
-
-model timeline_templates {
-  id            String   @id
-  name          String
-  description   String?
-  category      String   @default("custom")
-  isPublic      Boolean  @default(false) @map("is_public")
-  tracks        Json?    @default("[]")
-  settings      Json?    @default("{}")
-  totalDuration Int?     @default(0) @map("total_duration")
-  metadata      Json?    @default("{}")
-  usageCount    Int      @default(0) @map("usage_count")
-  createdBy     String   @map("created_by")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @default(now()) @map("updated_at")
-  users         users    @relation(fields: [createdBy], references: [id], onDelete: Cascade)
-
-  @@index([category])
-  @@index([createdBy])
-  @@index([isPublic])
-  @@schema("public")
-}
-
-model timeline_track_locks {
-  id        String   @id
-  projectId String   @map("project_id")
-  trackId   String   @map("track_id")
-  userId    String   @map("user_id")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @default(now()) @map("updated_at")
-  projects  projects @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  users     users    @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([projectId, trackId, userId])
-  @@index([projectId])
-  @@index([userId])
+  @@index([orderIndex], map: "idx_slides_order_index")
+  @@index([projectId], map: "idx_slides_project_id")
+  @@index([projectId, orderIndex], map: "idx_slides_project_id_order")
   @@schema("public")
 }
 
 model timelines {
-  id                 String               @id
-  projectId          String               @unique @map("project_id")
-  tracks             Json?                @default("[]")
-  totalDuration      Int?                 @default(0) @map("total_duration")
-  version            Int                  @default(1)
-  settings           Json?                @default("{}")
-  createdAt          DateTime             @default(now()) @map("created_at")
-  updatedAt          DateTime             @default(now()) @map("updated_at")
-  timeline_snapshots timeline_snapshots[]
-  projects           projects             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId     String?   @unique @map("project_id") @db.Uuid
+  tracks        Json?     @default("[]")
+  settings      Json?     @default("{}")
+  totalDuration Int?      @default(0) @map("total_duration")
+  version       Int?      @default(1)
+  createdAt     DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
+  projects      projects? @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@schema("public")
-}
-
-model tts_jobs {
-  id              String      @id
-  userId          String      @map("user_id")
-  projectId       String?     @map("project_id")
-  slideId         String?     @map("slide_id")
-  textContent     String      @map("text_content")
-  provider        TtsProvider @default(edge_tts)
-  voiceId         String?     @map("voice_id")
-  voiceSettings   Json?       @default("{}") @map("voice_settings")
-  status          JobStatus   @default(pending)
-  outputUrl       String?     @map("output_url")
-  durationSeconds Decimal?    @map("duration_seconds") @db.Decimal(10, 2)
-  errorMessage    String?     @map("error_message")
-  createdAt       DateTime    @default(now()) @map("created_at")
-  updatedAt       DateTime    @default(now()) @map("updated_at")
-  projects        projects?   @relation(fields: [projectId], references: [id])
-  slides          slides?     @relation(fields: [slideId], references: [id])
-  users           users       @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([projectId])
-  @@index([slideId])
-  @@index([status])
-  @@index([userId])
+  @@index([projectId], map: "idx_timelines_project_id")
+  @@index([updatedAt(sort: Desc)], map: "idx_timelines_updated_at")
   @@schema("public")
 }
 
 model user_progress {
-  id                 String      @id
-  userId             String      @map("user_id")
-  courseId           String?     @map("course_id")
-  moduleId           String?     @map("module_id")
-  progressPercent    Int         @default(0) @map("progress_percent")
-  completedAt        DateTime?   @map("completed_at")
-  lastAccessedAt     DateTime    @default(now()) @map("last_accessed_at")
-  metadata           Json?       @default("{}")
-  createdAt          DateTime    @default(now()) @map("created_at")
-  updatedAt          DateTime    @default(now()) @map("updated_at")
-  videoId            String?     @map("video_id")
-  progressPercentage Int?        @default(0) @map("progress_percentage")
-  completed          Boolean?    @default(false)
-  lastWatchedAt      DateTime?   @map("last_watched_at")
-  nr_courses         nr_courses? @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  nr_modules         nr_modules? @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  users              users       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  videos             videos?     @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId             String?   @map("user_id") @db.Uuid
+  videoId            String?   @map("video_id") @db.Uuid
+  progressPercentage Int?      @default(0) @map("progress_percentage")
+  completed          Boolean?  @default(false)
+  lastWatchedAt      DateTime? @default(now()) @map("last_watched_at") @db.Timestamptz(6)
+  createdAt          DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
+  users              users?    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  videos             videos?   @relation(fields: [videoId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@unique([userId, courseId, moduleId])
-  @@index([courseId])
-  @@index([moduleId])
-  @@index([userId])
-  @@schema("public")
-}
-
-model user_preferences {
-  id                String   @id
-  userId            String   @unique @map("user_id")
-  theme             String   @default("light")
-  language          String   @default("en")
-  notifications     Json     @default("{\"email\": true, \"push\": true}")
-  defaultQuality    String   @default("1080p") @map("default_quality")
-  lastProjectId     String?  @map("last_project_id")
-  showTutorials     Boolean  @default(true) @map("show_tutorials")
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @default(now()) @map("updated_at")
-  users             users    @relation("UserPreferences", fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
+  @@unique([userId, videoId])
+  @@index([completed], map: "idx_user_progress_completed")
+  @@index([userId], map: "idx_user_progress_user_id")
+  @@index([videoId], map: "idx_user_progress_video_id")
   @@schema("public")
 }
 
 model users {
-  id                                                  String                 @id
-  email                                               String                 @unique
-  passwordHash                                        String?                @map("password_hash")
-  name                                                String?
-  avatarUrl                                           String?                @map("avatar_url")
-  role                                                UserRole?              @default(user)
-  isActive                                            Boolean                @default(true) @map("is_active")
-  isVerified                                          Boolean                @default(false) @map("is_verified")
-  verificationToken                                   String?                @map("verification_token")
-  resetToken                                          String?                @map("reset_token")
-  resetTokenExpires                                   DateTime?              @map("reset_token_expires")
-  lastLogin                                           DateTime?              @map("last_login")
-  loginCount                                          Int                    @default(0) @map("login_count")
-  createdAt                                           DateTime               @default(now()) @map("created_at")
-  updatedAt                                           DateTime               @default(now()) @map("updated_at")
-  metadata                                            Json?                  @default("{}")
-  analytics_events                                    analytics_events[]
-  api_keys                                            api_keys[]
-  audit_logs                                          audit_logs[]
-  certificates                                        certificates[]
-  collaborators_collaborators_invited_byTousers       collaborators[]        @relation("collaborators_invited_byTousers")
-  collaborators_collaborators_user_idTousers          collaborators[]        @relation("collaborators_user_idTousers")
-  courses                                             courses[]
-  notifications                                       notifications[]
-  project_comments                                    project_comments[]
-  project_versions_project_versions_created_byTousers project_versions[]     @relation("project_versions_created_byTousers")
-  project_versions_project_versions_user_idTousers    project_versions[]     @relation("project_versions_user_idTousers")
-  projects                                            projects[]
-  render_jobs                                         render_jobs[]
-  sessions                                            sessions[]
-  storage_files                                       storage_files[]
-  templates                                           templates[]
-  timeline_presence                                   timeline_presence[]
-  timeline_snapshots                                  timeline_snapshots[]
-  timeline_templates                                  timeline_templates[]
-  timeline_track_locks                                timeline_track_locks[]
-  tts_jobs                                            tts_jobs[]
-  user_preferences                                    user_preferences?      @relation("UserPreferences")
-  user_progress                                       user_progress[]
-  video_exports                                       video_exports[]
-  video_projects                                      video_projects[]
-  subscriptions                                       subscriptions[]
+  id               String             @id @db.Uuid
+  email            String             @unique @db.VarChar(255)
+  name             String?            @db.VarChar(255)
+  avatarUrl        String?            @map("avatar_url")
+  role             String?            @default("user") @db.VarChar(50)
+  createdAt        DateTime?          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime?          @default(now()) @map("updated_at") @db.Timestamptz(6)
+  metadata         Json?              @default("{}")
+  analytics_events analytics_events[]
+  courses          courses[]
+  project_history  project_history[]
+  render_jobs      render_jobs[]
+  user_progress    user_progress[]
+  users            auth_users         @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@index([email])
-  @@index([role])
-  @@schema("public")
-}
-
-model video_exports {
-  id            String   @id
-  projectId     String   @map("project_id")
-  userId        String?  @map("user_id")
-  format        String   @default("mp4")
-  quality       String   @default("hd")
-  resolution    String?
-  fps           Int      @default(30)
-  status        String   @default("queued")
-  progress      Int      @default(0)
-  processingLog Json?    @map("processing_log")
-  videoUrl      String?  @map("video_url")
-  fileUrl       String?  @map("file_url")
-  fileName      String?  @map("file_name")
-  fileSize      BigInt?  @map("file_size")
-  duration      Int?
-  errorMessage  String?  @map("error_message")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @default(now()) @map("updated_at")
-  projects      projects @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  users         users?   @relation(fields: [userId], references: [id])
-
-  @@index([projectId])
-  @@index([userId])
-  @@schema("public")
-}
-
-model video_projects {
-  id              String        @id
-  projectId       String?       @map("project_id")
-  userId          String        @map("user_id")
-  name            String
-  description     String?
-  settings        Json?         @default("{}")
-  timelineData    Json?         @default("{\"tracks\": [], \"duration\": 0}") @map("timeline_data")
-  status          ProjectStatus @default(draft)
-  outputUrl       String?       @map("output_url")
-  thumbnailUrl    String?       @map("thumbnail_url")
-  durationSeconds Int?          @map("duration_seconds")
-  fileSizeBytes   BigInt?       @map("file_size_bytes")
-  createdAt       DateTime      @default(now()) @map("created_at")
-  updatedAt       DateTime      @default(now()) @map("updated_at")
-  render_jobs     render_jobs[]
-  projects        projects?     @relation(fields: [projectId], references: [id])
-  users           users         @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([projectId])
-  @@index([status])
-  @@index([userId])
+  @@index([email], map: "idx_users_email")
   @@schema("public")
 }
 
 model videos {
-  id            String          @id
-  title         String
+  id            String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title         String          @db.VarChar(500)
   description   String?
   videoUrl      String          @map("video_url")
   thumbnailUrl  String?         @map("thumbnail_url")
   duration      Int?
-  courseId      String?         @map("course_id")
+  courseId      String?         @map("course_id") @db.Uuid
   orderIndex    Int?            @default(0) @map("order_index")
-  createdAt     DateTime        @default(now()) @map("created_at")
-  updatedAt     DateTime        @default(now()) @map("updated_at")
+  createdAt     DateTime?       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime?       @default(now()) @map("updated_at") @db.Timestamptz(6)
   user_progress user_progress[]
-  courses       courses?        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courses       courses?        @relation(fields: [courseId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@index([courseId])
+  @@index([courseId], map: "idx_videos_course_id")
+  @@index([orderIndex], map: "idx_videos_order_index")
   @@schema("public")
 }
 
-model voice_clones {
-  id             String   @id
-  userId         String   @map("user_id")
-  name           String
-  description    String?
-  provider       String   @default("elevenlabs")
-  voiceId        String   @map("voice_id")
-  sampleCount    Int      @default(0) @map("sample_count")
-  trainingStatus String?  @map("training_status")
-  qualityScore   Float?   @map("quality_score")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @default(now()) @map("updated_at")
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model audit_log_entries {
+  instance_id String?   @db.Uuid
+  id          String    @id @db.Uuid
+  payload     Json?     @db.Json
+  created_at  DateTime? @db.Timestamptz(6)
+  ip_address  String    @default("") @db.VarChar(64)
 
-  @@index([userId])
+  @@index([instance_id], map: "audit_logs_instance_id_idx")
+  @@schema("auth")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model flow_state {
+  id                     String                @id @db.Uuid
+  user_id                String?               @db.Uuid
+  auth_code              String
+  code_challenge_method  code_challenge_method
+  code_challenge         String
+  provider_type          String
+  provider_access_token  String?
+  provider_refresh_token String?
+  created_at             DateTime?             @db.Timestamptz(6)
+  updated_at             DateTime?             @db.Timestamptz(6)
+  authentication_method  String
+  auth_code_issued_at    DateTime?             @db.Timestamptz(6)
+  saml_relay_states      saml_relay_states[]
+
+  @@index([created_at(sort: Desc)])
+  @@index([auth_code], map: "idx_auth_code")
+  @@index([user_id, authentication_method], map: "idx_user_id_auth_method")
+  @@schema("auth")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model identities {
+  provider_id     String
+  user_id         String     @db.Uuid
+  identity_data   Json
+  provider        String
+  last_sign_in_at DateTime?  @db.Timestamptz(6)
+  created_at      DateTime?  @db.Timestamptz(6)
+  updated_at      DateTime?  @db.Timestamptz(6)
+  email           String?    @default(dbgenerated("lower((identity_data ->> 'email'::text))"))
+  id              String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  users           auth_users @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([provider_id, provider], map: "identities_provider_id_provider_unique")
+  @@index([email])
+  @@index([user_id])
+  @@schema("auth")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model instances {
+  id              String    @id @db.Uuid
+  uuid            String?   @db.Uuid
+  raw_base_config String?
+  created_at      DateTime? @db.Timestamptz(6)
+  updated_at      DateTime? @db.Timestamptz(6)
+
+  @@schema("auth")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model mfa_amr_claims {
+  session_id            String   @db.Uuid
+  created_at            DateTime @db.Timestamptz(6)
+  updated_at            DateTime @db.Timestamptz(6)
+  authentication_method String
+  id                    String   @id(map: "amr_id_pk") @db.Uuid
+  sessions              sessions @relation(fields: [session_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([session_id, authentication_method], map: "mfa_amr_claims_session_id_authentication_method_pkey")
+  @@schema("auth")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model mfa_challenges {
+  id                     String      @id @db.Uuid
+  factor_id              String      @db.Uuid
+  created_at             DateTime    @db.Timestamptz(6)
+  verified_at            DateTime?   @db.Timestamptz(6)
+  ip_address             String      @db.Inet
+  otp_code               String?
+  web_authn_session_data Json?
+  mfa_factors            mfa_factors @relation(fields: [factor_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "mfa_challenges_auth_factor_id_fkey")
+
+  @@index([created_at(sort: Desc)], map: "mfa_challenge_created_at_idx")
+  @@schema("auth")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model mfa_factors {
+  id                           String           @id @db.Uuid
+  user_id                      String           @db.Uuid
+  friendly_name                String?
+  factor_type                  factor_type
+  status                       factor_status
+  created_at                   DateTime         @db.Timestamptz(6)
+  updated_at                   DateTime         @db.Timestamptz(6)
+  secret                       String?
+  phone                        String?
+  last_challenged_at           DateTime?        @unique @db.Timestamptz(6)
+  web_authn_credential         Json?
+  web_authn_aaguid             String?          @db.Uuid
+  last_webauthn_challenge_data Json?
+  mfa_challenges               mfa_challenges[]
+  users                        auth_users       @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([user_id, phone], map: "unique_phone_factor_per_user")
+  @@index([user_id, created_at], map: "factor_id_created_at_idx")
+  @@index([user_id])
+  @@schema("auth")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model oauth_authorizations {
+  id                    String                     @id @db.Uuid
+  authorization_id      String                     @unique
+  client_id             String                     @db.Uuid
+  user_id               String?                    @db.Uuid
+  redirect_uri          String
+  scope                 String
+  state                 String?
+  resource              String?
+  code_challenge        String?
+  code_challenge_method code_challenge_method?
+  response_type         oauth_response_type        @default(code)
+  status                oauth_authorization_status @default(pending)
+  authorization_code    String?                    @unique
+  created_at            DateTime                   @default(now()) @db.Timestamptz(6)
+  expires_at            DateTime                   @default(dbgenerated("(now() + '00:03:00'::interval)")) @db.Timestamptz(6)
+  approved_at           DateTime?                  @db.Timestamptz(6)
+  nonce                 String?
+  oauth_clients         oauth_clients              @relation(fields: [client_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users                 auth_users?                @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@schema("auth")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model oauth_client_states {
+  id            String   @id @db.Uuid
+  provider_type String
+  code_verifier String?
+  created_at    DateTime @db.Timestamptz(6)
+
+  @@index([created_at], map: "idx_oauth_client_states_created_at")
+  @@schema("auth")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model oauth_clients {
+  id                   String                  @id @db.Uuid
+  client_secret_hash   String?
+  registration_type    oauth_registration_type
+  redirect_uris        String
+  grant_types          String
+  client_name          String?
+  client_uri           String?
+  logo_uri             String?
+  created_at           DateTime                @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime                @default(now()) @db.Timestamptz(6)
+  deleted_at           DateTime?               @db.Timestamptz(6)
+  client_type          oauth_client_type       @default(confidential)
+  oauth_authorizations oauth_authorizations[]
+  oauth_consents       oauth_consents[]
+  sessions             sessions[]
+
+  @@index([deleted_at])
+  @@schema("auth")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model oauth_consents {
+  id            String        @id @db.Uuid
+  user_id       String        @db.Uuid
+  client_id     String        @db.Uuid
+  scopes        String
+  granted_at    DateTime      @default(now()) @db.Timestamptz(6)
+  revoked_at    DateTime?     @db.Timestamptz(6)
+  oauth_clients oauth_clients @relation(fields: [client_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users         auth_users    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([user_id, client_id], map: "oauth_consents_user_client_unique")
+  @@index([user_id, granted_at(sort: Desc)], map: "oauth_consents_user_order_idx")
+  @@schema("auth")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model one_time_tokens {
+  id         String              @id @db.Uuid
+  user_id    String              @db.Uuid
+  token_type one_time_token_type
+  token_hash String
+  relates_to String
+  created_at DateTime            @default(now()) @db.Timestamp(6)
+  updated_at DateTime            @default(now()) @db.Timestamp(6)
+  users      auth_users          @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([user_id, token_type])
+  @@index([relates_to], map: "one_time_tokens_relates_to_hash_idx", type: Hash)
+  @@index([token_hash], map: "one_time_tokens_token_hash_hash_idx", type: Hash)
+  @@schema("auth")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model refresh_tokens {
+  instance_id String?   @db.Uuid
+  id          BigInt    @id @default(autoincrement())
+  token       String?   @unique(map: "refresh_tokens_token_unique") @db.VarChar(255)
+  user_id     String?   @db.VarChar(255)
+  revoked     Boolean?
+  created_at  DateTime? @db.Timestamptz(6)
+  updated_at  DateTime? @db.Timestamptz(6)
+  parent      String?   @db.VarChar(255)
+  session_id  String?   @db.Uuid
+  sessions    sessions? @relation(fields: [session_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([instance_id])
+  @@index([instance_id, user_id])
+  @@index([parent])
+  @@index([session_id, revoked])
+  @@index([updated_at(sort: Desc)])
+  @@schema("auth")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model saml_providers {
+  id                String        @id @db.Uuid
+  sso_provider_id   String        @db.Uuid
+  entity_id         String        @unique
+  metadata_xml      String
+  metadata_url      String?
+  attribute_mapping Json?
+  created_at        DateTime?     @db.Timestamptz(6)
+  updated_at        DateTime?     @db.Timestamptz(6)
+  name_id_format    String?
+  sso_providers     sso_providers @relation(fields: [sso_provider_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([sso_provider_id])
+  @@schema("auth")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model saml_relay_states {
+  id              String        @id @db.Uuid
+  sso_provider_id String        @db.Uuid
+  request_id      String
+  for_email       String?
+  redirect_to     String?
+  created_at      DateTime?     @db.Timestamptz(6)
+  updated_at      DateTime?     @db.Timestamptz(6)
+  flow_state_id   String?       @db.Uuid
+  flow_state      flow_state?   @relation(fields: [flow_state_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  sso_providers   sso_providers @relation(fields: [sso_provider_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([created_at(sort: Desc)])
+  @@index([for_email])
+  @@index([sso_provider_id])
+  @@schema("auth")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model schema_migrations {
+  version String @id @db.VarChar(255)
+
+  @@schema("auth")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model sessions {
+  id                     String           @id @db.Uuid
+  user_id                String           @db.Uuid
+  created_at             DateTime?        @db.Timestamptz(6)
+  updated_at             DateTime?        @db.Timestamptz(6)
+  factor_id              String?          @db.Uuid
+  aal                    aal_level?
+  not_after              DateTime?        @db.Timestamptz(6)
+  refreshed_at           DateTime?        @db.Timestamp(6)
+  user_agent             String?
+  ip                     String?          @db.Inet
+  tag                    String?
+  oauth_client_id        String?          @db.Uuid
+  refresh_token_hmac_key String?
+  refresh_token_counter  BigInt?
+  scopes                 String?
+  mfa_amr_claims         mfa_amr_claims[]
+  refresh_tokens         refresh_tokens[]
+  oauth_clients          oauth_clients?   @relation(fields: [oauth_client_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users                  auth_users       @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([not_after(sort: Desc)])
+  @@index([oauth_client_id])
+  @@index([user_id])
+  @@index([user_id, created_at], map: "user_id_created_at_idx")
+  @@schema("auth")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model sso_domains {
+  id              String        @id @db.Uuid
+  sso_provider_id String        @db.Uuid
+  domain          String
+  created_at      DateTime?     @db.Timestamptz(6)
+  updated_at      DateTime?     @db.Timestamptz(6)
+  sso_providers   sso_providers @relation(fields: [sso_provider_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([sso_provider_id])
+  @@schema("auth")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model sso_providers {
+  id                String              @id @db.Uuid
+  resource_id       String?
+  created_at        DateTime?           @db.Timestamptz(6)
+  updated_at        DateTime?           @db.Timestamptz(6)
+  disabled          Boolean?
+  saml_providers    saml_providers[]
+  saml_relay_states saml_relay_states[]
+  sso_domains       sso_domains[]
+
+  @@index([resource_id], map: "sso_providers_resource_id_pattern_idx")
+  @@schema("auth")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model auth_users {
+  instance_id                                                   String?                 @db.Uuid
+  id                                                            String                  @id @db.Uuid
+  aud                                                           String?                 @db.VarChar(255)
+  role                                                          String?                 @db.VarChar(255)
+  email                                                         String?                 @db.VarChar(255)
+  encrypted_password                                            String?                 @db.VarChar(255)
+  email_confirmed_at                                            DateTime?               @db.Timestamptz(6)
+  invited_at                                                    DateTime?               @db.Timestamptz(6)
+  confirmation_token                                            String?                 @db.VarChar(255)
+  confirmation_sent_at                                          DateTime?               @db.Timestamptz(6)
+  recovery_token                                                String?                 @db.VarChar(255)
+  recovery_sent_at                                              DateTime?               @db.Timestamptz(6)
+  email_change_token_new                                        String?                 @db.VarChar(255)
+  email_change                                                  String?                 @db.VarChar(255)
+  email_change_sent_at                                          DateTime?               @db.Timestamptz(6)
+  last_sign_in_at                                               DateTime?               @db.Timestamptz(6)
+  raw_app_meta_data                                             Json?
+  raw_user_meta_data                                            Json?
+  is_super_admin                                                Boolean?
+  created_at                                                    DateTime?               @db.Timestamptz(6)
+  updated_at                                                    DateTime?               @db.Timestamptz(6)
+  phone                                                         String?                 @unique
+  phone_confirmed_at                                            DateTime?               @db.Timestamptz(6)
+  phone_change                                                  String?                 @default("")
+  phone_change_token                                            String?                 @default("") @db.VarChar(255)
+  phone_change_sent_at                                          DateTime?               @db.Timestamptz(6)
+  confirmed_at                                                  DateTime?               @default(dbgenerated("LEAST(email_confirmed_at, phone_confirmed_at)")) @db.Timestamptz(6)
+  email_change_token_current                                    String?                 @default("") @db.VarChar(255)
+  email_change_confirm_status                                   Int?                    @default(0) @db.SmallInt
+  banned_until                                                  DateTime?               @db.Timestamptz(6)
+  reauthentication_token                                        String?                 @default("") @db.VarChar(255)
+  reauthentication_sent_at                                      DateTime?               @db.Timestamptz(6)
+  is_sso_user                                                   Boolean                 @default(false)
+  deleted_at                                                    DateTime?               @db.Timestamptz(6)
+  is_anonymous                                                  Boolean                 @default(false)
+  identities                                                    identities[]
+  mfa_factors                                                   mfa_factors[]
+  oauth_authorizations                                          oauth_authorizations[]
+  oauth_consents                                                oauth_consents[]
+  one_time_tokens                                               one_time_tokens[]
+  sessions                                                      sessions[]
+  project_analytics                                             project_analytics[]
+  project_collaborators_project_collaborators_invited_byTousers project_collaborators[] @relation("project_collaborators_invited_byTousers")
+  project_collaborators_project_collaborators_user_idTousers    project_collaborators[] @relation("project_collaborators_user_idTousers")
+  project_comments                                              project_comments[]
+  project_tags                                                  project_tags[]
+  project_versions_project_versions_created_byTousers           project_versions[]      @relation("project_versions_created_byTousers")
+  projects                                                      projects[]
+  user_render_settings                                          user_render_settings?
+  user_roles_user_roles_assigned_byTousers                      user_roles[]            @relation("user_roles_assigned_byTousers")
+  user_roles_user_roles_user_idTousers                          user_roles[]            @relation("user_roles_user_idTousers")
+  users                                                         users?
+
+  @@index([instance_id])
+  @@index([is_anonymous])
+  @@map("users")
+  @@schema("auth")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model permissions {
+  id               String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name             String             @unique @db.VarChar(100)
+  description      String?
+  resource         String             @db.VarChar(50)
+  action           String             @db.VarChar(50)
+  created_at       DateTime?          @default(now()) @db.Timestamptz(6)
+  role_permissions role_permissions[]
+
+  @@index([resource, action], map: "idx_permissions_resource_action")
   @@schema("public")
 }
 
-model voice_models {
-  id               String   @id
-  userId           String   @map("user_id")
-  name             String
-  type             String   @default("custom")
-  voiceId          String   @map("voice_id")
-  quality          Float    @default(0.9)
-  language         String   @default("pt-BR")
-  gender           String   @default("neutral")
-  age              String   @default("adult")
-  accent           String   @default("neutral")
-  sampleUrl        String?  @map("sample_url")
-  sampleDuration   Int      @default(0) @map("sample_duration")
-  trainingStatus   String   @default("ready") @map("training_status")
-  trainingProgress Int      @default(100) @map("training_progress")
-  metadata         Json?    @default("{}")
-  createdAt        DateTime @default(now()) @map("created_at")
-  updatedAt        DateTime @default(now()) @map("updated_at")
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model pptx_slides {
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  upload_id       String?       @db.Uuid
+  slide_number    Int
+  title           String?
+  content         String?
+  duration        Int?          @default(5)
+  transition_type String?       @default("none") @db.VarChar(50)
+  thumbnail_url   String?
+  notes           String?
+  properties      Json?         @default("{}")
+  created_at      DateTime?     @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime?     @default(now()) @db.Timestamptz(6)
+  pptx_uploads    pptx_uploads? @relation(fields: [upload_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@index([language])
-  @@index([type])
-  @@index([userId])
+  @@index([upload_id], map: "idx_pptx_slides_upload_id")
   @@schema("public")
 }
 
-model webhook_deliveries {
-  id           String    @id
-  webhookId    String    @map("webhook_id")
-  event        String
-  payload      Json
-  url          String
-  status       String
-  scheduledFor DateTime  @default(now()) @map("scheduled_for")
-  deliveredAt  DateTime? @map("delivered_at")
-  responseCode Int?      @map("response_code")
-  responseBody String?   @map("response_body")
-  responseTime Int?      @map("response_time")
-  attempts     Int       @default(0)
-  error        String?
-  nextRetryAt  DateTime? @map("next_retry_at")
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @default(now()) @map("updated_at")
-  webhooks     webhooks  @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model pptx_uploads {
+  id                String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  project_id        String?       @db.Uuid
+  original_filename String?
+  status            String?       @default("pending") @db.VarChar(50)
+  slide_count       Int?          @default(0)
+  created_at        DateTime?     @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime?     @default(now()) @db.Timestamptz(6)
+  pptx_slides       pptx_slides[]
+  projects          projects?     @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@index([status])
-  @@index([webhookId])
+  @@index([project_id], map: "idx_pptx_uploads_project_id")
   @@schema("public")
 }
 
-model webhooks {
-  id                   String               @id
-  userId               String               @map("user_id")
-  url                  String
-  secret               String
-  events               Json
-  active               Boolean              @default(true)
-  createdAt            DateTime             @default(now()) @map("created_at")
-  updatedAt            DateTime             @default(now()) @map("updated_at")
-  lastDeliveryAt       DateTime?            @map("last_delivery_at")
-  totalDeliveries      Int                  @default(0) @map("total_deliveries")
-  successfulDeliveries Int                  @default(0) @map("successful_deliveries")
-  failedDeliveries     Int                  @default(0) @map("failed_deliveries")
-  retryInterval        Int                  @default(60) @map("retry_interval")
-  webhook_deliveries   webhook_deliveries[]
+model project_analytics {
+  id         String               @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  project_id String               @db.Uuid
+  user_id    String               @db.Uuid
+  event_type analytics_event_type
+  metadata   Json?                @default("{}")
+  ip_address String?              @db.Inet
+  user_agent String?
+  created_at DateTime?            @default(now()) @db.Timestamptz(6)
+  projects   projects             @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users      auth_users           @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@index([userId])
+  @@index([created_at], map: "idx_project_analytics_created_at")
+  @@index([event_type], map: "idx_project_analytics_event_type")
+  @@index([project_id], map: "idx_project_analytics_project_id")
+  @@index([user_id], map: "idx_project_analytics_user_id")
   @@schema("public")
 }
 
-model subscriptions {
-  id                   String    @id
-  userId               String    @unique @map("user_id")
-  planId               String    @map("plan_id")
-  status               String
-  startDate            DateTime  @map("start_date")
-  endDate              DateTime? @map("end_date")
-  trialStartDate       DateTime? @map("trial_start_date")
-  trialEndDate         DateTime? @map("trial_end_date")
-  cancellationReason   String?   @map("cancellation_reason")
-  autoRenew            Boolean   @default(true) @map("auto_renew")
-  paymentGateway       String?   @map("payment_gateway")
-  paymentGatewaySubId  String?   @unique @map("payment_gateway_sub_id")
-  createdAt            DateTime  @default(now()) @map("created_at")
-  updatedAt            DateTime  @default(now()) @map("updated_at")
-  users                users     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  subscription_plans   subscription_plans @relation(fields: [planId], references: [id])
+model project_categories {
+  id                       String               @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name                     String               @unique @db.VarChar(100)
+  description              String?
+  icon                     String?              @db.VarChar(50)
+  color                    String?              @default("#6B7280") @db.VarChar(7)
+  parent_id                String?              @db.Uuid
+  created_at               DateTime?            @default(now()) @db.Timestamptz(6)
+  project_categories       project_categories?  @relation("project_categoriesToproject_categories", fields: [parent_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  other_project_categories project_categories[] @relation("project_categoriesToproject_categories")
 
-  @@index([planId])
-  @@index([status])
-  @@index([userId])
   @@schema("public")
 }
 
-model subscription_plans {
-  id                 String          @id
-  name               String
-  description        String?
-  price              Float
-  currency           String
-  billingCycle       String          @map("billing_cycle")
-  features           Json
-  isActive           Boolean         @default(true) @map("is_active")
-  trialDays          Int             @default(0) @map("trial_days")
-  createdAt          DateTime        @default(now()) @map("created_at")
-  updatedAt          DateTime        @default(now()) @map("updated_at")
-  stripePriceId      String?         @unique @map("stripe_price_id")
-  maxVideoProjects   Int?            @map("max_video_projects")
-  maxStorageGb       Int?            @map("max_storage_gb")
-  maxTeamMembers     Int?            @map("max_team_members")
-  supportLevel       String?         @map("support_level")
-  subscriptions      subscriptions[]
+model project_collaborators {
+  id                                            String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  project_id                                    String              @db.Uuid
+  user_id                                       String              @db.Uuid
+  role                                          collaboration_role? @default(viewer)
+  permissions                                   Json?               @default("{\"can_edit\": false, \"can_share\": false, \"can_export\": false, \"can_comment\": true}")
+  invited_by                                    String?             @db.Uuid
+  invited_at                                    DateTime?           @default(now()) @db.Timestamptz(6)
+  accepted_at                                   DateTime?           @db.Timestamptz(6)
+  users_project_collaborators_invited_byTousers auth_users?         @relation("project_collaborators_invited_byTousers", fields: [invited_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  projects                                      projects            @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users_project_collaborators_user_idTousers    auth_users          @relation("project_collaborators_user_idTousers", fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@index([isActive])
+  @@unique([project_id, user_id])
+  @@index([project_id], map: "idx_project_collaborators_project_id")
+  @@index([user_id], map: "idx_project_collaborators_user_id")
   @@schema("public")
 }
 
-enum CollaborationRole {
-  owner
-  editor
-  viewer
-  reviewer
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model project_history {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  project_id  String?   @db.Uuid
+  user_id     String?   @db.Uuid
+  action      String    @db.VarChar(50)
+  entity_type String?   @db.VarChar(50)
+  entity_id   String?   @db.Uuid
+  description String?
+  changes     Json?     @default("{}")
+  created_at  DateTime? @default(now()) @db.Timestamptz(6)
+  projects    projects? @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users       users?    @relation(fields: [user_id], references: [id], onUpdate: NoAction)
 
+  @@index([project_id], map: "idx_project_history_project_id")
+  @@index([user_id], map: "idx_project_history_user_id")
+  @@schema("public")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model project_tags {
+  id          String      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name        String      @unique @db.VarChar(50)
+  color       String?     @default("#6B7280") @db.VarChar(7)
+  description String?
+  created_by  String?     @db.Uuid
+  created_at  DateTime?   @default(now()) @db.Timestamptz(6)
+  users       auth_users? @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model role_permissions {
+  role_id       String      @db.Uuid
+  permission_id String      @db.Uuid
+  permissions   permissions @relation(fields: [permission_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  roles         roles       @relation(fields: [role_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([role_id, permission_id])
+  @@index([role_id], map: "idx_role_permissions_role_id")
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model roles {
+  id               String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name             String             @unique @db.VarChar(50)
+  description      String?
+  created_at       DateTime?          @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime?          @default(now()) @db.Timestamptz(6)
+  role_permissions role_permissions[]
+  user_roles       user_roles[]
+
+  @@schema("public")
+}
+
+model user_render_settings {
+  id         String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id    String     @unique @db.Uuid
+  settings   Json       @default("{\"auto_retry\": true, \"max_retries\": 3, \"notifications\": {\"on_failure\": true, \"on_completion\": true, \"on_queue_position\": false}, \"priority_boost\": false, \"quality_preset\": \"standard\", \"resource_limits\": {\"max_duration\": 3600, \"max_cpu_usage\": 80, \"max_memory_usage\": 70}}")
+  created_at DateTime   @default(now()) @db.Timestamptz(6)
+  updated_at DateTime   @default(now()) @db.Timestamptz(6)
+  users      auth_users @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([user_id], map: "idx_user_render_settings_user_id")
+  @@schema("public")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model user_roles {
+  user_id                             String      @db.Uuid
+  role_id                             String      @db.Uuid
+  assigned_at                         DateTime?   @default(now()) @db.Timestamptz(6)
+  assigned_by                         String?     @db.Uuid
+  users_user_roles_assigned_byTousers auth_users? @relation("user_roles_assigned_byTousers", fields: [assigned_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  roles                               roles       @relation(fields: [role_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users_user_roles_user_idTousers     auth_users  @relation("user_roles_user_idTousers", fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([user_id, role_id])
+  @@index([role_id], map: "idx_user_roles_role_id")
+  @@index([user_id], map: "idx_user_roles_user_id")
   @@schema("public")
 }
 
@@ -973,6 +918,7 @@ enum JobStatus {
   completed
   failed
   cancelled
+  queued
 
   @@schema("public")
 }
@@ -986,9 +932,121 @@ enum PriorityLevel {
   @@schema("public")
 }
 
-enum ProjectStatus {
+enum video_quality {
+  p360
+  p480
+  p720
+  p1080
+  p1440
+  p2160
+
+  @@schema("public")
+}
+
+enum aal_level {
+  aal1
+  aal2
+  aal3
+
+  @@schema("auth")
+}
+
+enum code_challenge_method {
+  s256
+  plain
+
+  @@schema("auth")
+}
+
+enum factor_status {
+  unverified
+  verified
+
+  @@schema("auth")
+}
+
+enum factor_type {
+  totp
+  webauthn
+  phone
+
+  @@schema("auth")
+}
+
+enum oauth_authorization_status {
+  pending
+  approved
+  denied
+  expired
+
+  @@schema("auth")
+}
+
+enum oauth_client_type {
+  public
+  confidential
+
+  @@schema("auth")
+}
+
+enum oauth_registration_type {
+  dynamic
+  manual
+
+  @@schema("auth")
+}
+
+enum oauth_response_type {
+  code
+
+  @@schema("auth")
+}
+
+enum one_time_token_type {
+  confirmation_token
+  reauthentication_token
+  recovery_token
+  email_change_token_new
+  email_change_token_current
+  phone_change_token
+
+  @@schema("auth")
+}
+
+enum analytics_event_type {
+  project_created
+  project_updated
+  project_deleted
+  project_viewed
+  project_shared
+  project_duplicated
+  version_created
+  collaboration_added
+
+  @@schema("public")
+}
+
+enum collaboration_role {
+  owner
+  editor
+  viewer
+  reviewer
+
+  @@schema("public")
+}
+
+enum priority_level {
+  low
+  medium
+  high
+  urgent
+
+  @@schema("public")
+}
+
+enum project_status {
   draft
-  in_progress
+  in_progress @map("in-progress")
   review
   completed
   archived
@@ -997,40 +1055,12 @@ enum ProjectStatus {
   @@schema("public")
 }
 
-enum ProjectType {
+enum project_type {
   pptx
-  template_nr
-  talking_photo
+  template_nr   @map("template-nr")
+  talking_photo @map("talking-photo")
   custom
-  ai_generated
-
-  @@schema("public")
-}
-
-enum TtsProvider {
-  elevenlabs
-  azure
-  google
-  openai
-  edge_tts
-
-  @@schema("public")
-}
-
-enum UserRole {
-  admin
-  manager
-  editor
-  viewer
-  user
-
-  @@schema("public")
-}
-
-enum video_quality {
-  p720
-  p1080
-  p4k
+  ai_generated  @map("ai-generated")
 
   @@schema("public")
 }

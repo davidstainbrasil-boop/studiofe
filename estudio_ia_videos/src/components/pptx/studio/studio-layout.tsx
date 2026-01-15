@@ -68,6 +68,22 @@ export function StudioLayout({
                         </motion.div>
                     )}
                 </AnimatePresence>
+
+                {/* Global Status Bar (Phase 5) */}
+                <div className="h-6 bg-[#0a0c10] border-t border-white/5 flex items-center justify-between px-3 text-[10px] text-gray-500 select-none z-50">
+                    <div className="flex items-center gap-3">
+                        <span className="flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                            Online
+                        </span>
+                        <span>v3.0.0 (Unified)</span>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <span className="hover:text-white cursor-pointer transition-colors">Auto-save: ON</span>
+                        <span className="hover:text-white cursor-pointer transition-colors">Rendering Engine: Ready</span>
+                        <span suppressHydrationWarning>{new Date().toLocaleDateString('pt-BR')}</span>
+                    </div>
+                </div>
             </main>
         </div>
     )

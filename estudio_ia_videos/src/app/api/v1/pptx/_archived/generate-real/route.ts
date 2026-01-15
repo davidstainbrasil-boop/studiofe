@@ -5,7 +5,11 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { generateRealPptxFromProject, RealPptxGenerator, PptxGenerationOptions, GeneratorSlide } from '@lib/pptx-real-generator'
+    const generator = new PPTXRealGenerator()
+    const result = await generator.generate(generatorSlides, {
+      title: options.title || 'Apresentação Customizada',
+      author: 'Estúdio IA de Vídeos'
+    })
 import { prisma } from '@lib/prisma'
 import { logger } from '@lib/logger'
 

@@ -1,34 +1,23 @@
 'use client'
 
 /**
- * Professional PPTX Studio - Complete Workflow V3
- * Integration of Upload + Canvas + Timeline + TTS + Export with real data loading
+ * Professional PPTX Studio - Complete Workflow V4
+ * Integration of Upload + Scene Editor + Timeline + TTS + Export with real data loading
+ * Now with drag-and-drop scene editing, media library, and auto-fit canvas
  */
 
-import React, { useState, useEffect } from 'react'
-// import { Card, CardContent, CardHeader, CardTitle } from '@components/ui/card' // Removed
+import React, { useState, useEffect, useCallback } from 'react'
 import { Button } from '@components/ui/button'
-// import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs' // Removed
 import { Badge } from '@components/ui/badge'
-// import { Separator } from '@components/ui/separator' // Removed
-import { toast } from 'react-hot-toast'
+import { toast } from 'sonner'
 import { motion } from 'framer-motion'
 import {
   Upload,
-  Palette,
   Film,
-  Volume2,
   Download,
   Settings,
-  Play,
-  // FileText,
   Zap,
-  // Users,
-  // ArrowRight,
   Loader2,
-  // Database,
-  // CheckCircle,
-  // AlertCircle
 } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
 import { Logger } from '@lib/logger'
@@ -37,10 +26,12 @@ const logger = new Logger('PPTXStudio')
 
 // Import components
 import PPTXUploadComponent, { ProcessingResult } from './PPTXUploadComponent'
-import { FabricCanvasEditor } from './fabric-canvas-editor'
+import { SceneCanvasEditor, SceneData, SceneElement } from './scene-canvas-editor'
 import ProfessionalTimelineEditor from '../timeline/professional-timeline-editor'
 import { StudioLayout } from './studio/studio-layout'
 import { StudioSidebar } from './studio/studio-sidebar'
+import { MediaLibraryPanel } from './media-library-panel'
+import { SlidesPanel } from './slides-panel'
 import { ElevenLabsVoiceSelector } from '../tts/elevenlabs-voice-selector'
 import { ScrollArea } from '@components/ui/scroll-area'
 import { PropertiesPanel, FlexibleElement } from '../editor/properties-panel'
@@ -109,6 +100,13 @@ export function ProfessionalPPTXStudio({ projectId: propProjectId }: Professiona
   // Selection State (Phase 4)
   const [selectedElement, setSelectedElement] = useState<FlexibleElement | null>(null)
 
+  // Scene Management State (Phase 5 - Drag & Drop)
+  const [scenes, setScenes] = useState<SceneData[]>([])
+  const [selectedSceneId, setSelectedSceneId] = useState<string | null>(null)
+
+  // Get current scene
+  const currentScene = scenes.find(s => s.id === selectedSceneId) || null
+
   const handleSelectionChange = (element: FlexibleElement | null) => {
     logger.info('Selection changed', { elementId: element?.id })
     setSelectedElement(element)
@@ -120,6 +118,74 @@ export function ProfessionalPPTXStudio({ projectId: propProjectId }: Professiona
       setSelectedElement({ ...selectedElement, ...updates })
     }
   }
+
+  // Scene management handlers
+  const handleSceneUpdate = useCallback((updatedScene: SceneData) => {
+    setScenes(prev => prev.map(s => s.id === updatedScene.id ? updatedScene : s))
+    addLog(`Cena "${updatedScene.name}" atualizada`)
+  }, [])
+
+  const handleSceneSelect = useCallback((sceneId: string) => {
+    setSelectedSceneId(sceneId)
+    setSelectedElement(null) // Clear element selection when changing scenes
+    addLog(`Cena selecionada: ${sceneId}`)
+  }, [])
+
+  const handleSceneAdd = useCallback(() => {
+    const newScene: SceneData = {
+      id: `scene-${Date.now()}`,
+      name: `Cena ${scenes.length + 1}`,
+      duration: 5,
+      backgroundColor: '#1f2937',
+      elements: []
+    }
+    setScenes(prev => [...prev, newScene])
+    setSelectedSceneId(newScene.id)
+    toast.success('Nova cena adicionada!')
+    addLog(`Nova cena criada: ${newScene.name}`)
+  }, [scenes.length])
+
+  const handleSceneDelete = useCallback((sceneId: string) => {
+    setScenes(prev => {
+      const newScenes = prev.filter(s => s.id !== sceneId)
+      // Select another scene if deleting the selected one
+      if (selectedSceneId === sceneId && newScenes.length > 0) {
+        setSelectedSceneId(newScenes[0].id)
+      } else if (newScenes.length === 0) {
+        setSelectedSceneId(null)
+      }
+      return newScenes
+    })
+    toast.success('Cena removida!')
+  }, [selectedSceneId])
+
+  const handleSceneDuplicate = useCallback((sceneId: string) => {
+    const sceneToDuplicate = scenes.find(s => s.id === sceneId)
+    if (!sceneToDuplicate) return
+
+    const duplicatedScene: SceneData = {
+      ...sceneToDuplicate,
+      id: `scene-${Date.now()}`,
+      name: `${sceneToDuplicate.name} (copia)`,
+      elements: sceneToDuplicate.elements.map(el => ({
+        ...el,
+        id: `${el.id}-copy-${Date.now()}`
+      }))
+    }
+
+    const originalIndex = scenes.findIndex(s => s.id === sceneId)
+    setScenes(prev => {
+      const newScenes = [...prev]
+      newScenes.splice(originalIndex + 1, 0, duplicatedScene)
+      return newScenes
+    })
+    setSelectedSceneId(duplicatedScene.id)
+    toast.success('Cena duplicada!')
+  }, [scenes])
+
+  const handleScenesReorder = useCallback((reorderedScenes: SceneData[]) => {
+    setScenes(reorderedScenes)
+  }, [])
 
   const addLog = (message: string) => {
     logger.info(message)
@@ -178,7 +244,7 @@ export function ProfessionalPPTXStudio({ projectId: propProjectId }: Professiona
 
       if (project.status === 'COMPLETED' && project.slidesData) {
         initialStep = 'edit'
-        initialTab = 'edit'
+        initialTab = 'slides'
         addLog('📝 Projeto completo - iniciando no editor')
       } else if (project.status === 'PROCESSING') {
         initialStep = 'upload'
@@ -206,6 +272,54 @@ export function ProfessionalPPTXStudio({ projectId: propProjectId }: Professiona
       })
 
       setActiveTab(initialTab)
+
+      // Convert project slides to scenes for the new editor
+      if (project.slides && Array.isArray(project.slides) && project.slides.length > 0) {
+        const convertedScenes: SceneData[] = project.slides.map((slide: any, index: number) => ({
+          id: slide.id || `scene-${index}`,
+          name: slide.title || `Cena ${index + 1}`,
+          duration: slide.duration || 5,
+          backgroundColor: slide.background_color || '#1f2937',
+          backgroundImage: slide.background_image,
+          thumbnail: slide.thumbnail,
+          elements: (slide.elements || []).map((el: any) => ({
+            id: el.id || `el-${Date.now()}-${Math.random()}`,
+            type: el.type || 'shape',
+            name: el.name || 'Elemento',
+            x: el.x || 0,
+            y: el.y || 0,
+            width: el.width || 100,
+            height: el.height || 100,
+            rotation: el.rotation || 0,
+            opacity: el.opacity || 1,
+            visible: el.visible !== false,
+            locked: el.locked || false,
+            zIndex: el.zIndex || 0,
+            sourceUrl: el.sourceUrl,
+            content: el.content,
+            style: el.style || {}
+          }))
+        }))
+        setScenes(convertedScenes)
+        if (convertedScenes.length > 0) {
+          setSelectedSceneId(convertedScenes[0].id)
+        }
+        addLog(`${convertedScenes.length} cenas carregadas do projeto`)
+      } else if (project.totalSlides > 0) {
+        // Create empty scenes based on total slides count
+        const emptyScenes: SceneData[] = Array.from({ length: project.totalSlides }, (_, i) => ({
+          id: `scene-${i}`,
+          name: `Cena ${i + 1}`,
+          duration: Math.ceil(project.duration / project.totalSlides) || 5,
+          backgroundColor: '#1f2937',
+          elements: []
+        }))
+        setScenes(emptyScenes)
+        if (emptyScenes.length > 0) {
+          setSelectedSceneId(emptyScenes[0].id)
+        }
+        addLog(`${emptyScenes.length} cenas vazias criadas`)
+      }
 
       if (project.status === 'COMPLETED') {
         toast.success('✅ Projeto carregado - dados disponíveis para edição!')
@@ -350,67 +464,40 @@ export function ProfessionalPPTXStudio({ projectId: propProjectId }: Professiona
     }
   }
 
-  return (
-    <StudioLayout
-      sidebar={
-        <StudioSidebar
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          disabled={!projectState.data.uploadResult}
-        />
-      }
-      bottomPanel={
-        projectState.data.uploadResult ? (
-          <div className="h-full flex flex-col">
-            <div className="flex items-center justify-between px-4 py-2 border-b border-white/10 bg-[#151921]">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-gray-400">Timeline</span>
-                <span className="text-xs text-gray-600">|</span>
-                <span className="text-xs text-gray-400">{projectState.project?.duration}s</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button size="sm" variant="ghost" className="h-6 w-6 p-0 hover:bg-white/10">
-                  <Settings className="w-3 h-3 text-gray-400" />
-                </Button>
-              </div>
-            </div>
-            <div className="flex-1 overflow-hidden relative">
-              <ProfessionalTimelineEditor
-                onSelectionChange={handleSelectionChange}
-                selectedElement={selectedElement}
-              />
-            </div>
-          </div>
-        ) : (
-          <div className="h-full flex items-center justify-center text-gray-500 text-sm">
-            Timeline indisponível. Faça upload de um PPTX primeiro.
-          </div>
-        )
-      }
-      rightPanel={
-        // Highlight: Integration of Properties Panel (Phase 4)
-        selectedElement ? (
-          <PropertiesPanel
-            selectedElement={selectedElement}
-            onUpdateElement={handleElementUpdate}
-            onDeleteElement={(id) => logger.info('Delete element', { id })}
-            onDuplicateElement={(id) => logger.info('Duplicate element', { id })}
+  // Render sidebar content based on active tab
+  const renderSidebarContent = () => {
+    switch (activeTab) {
+      case 'slides':
+        return (
+          <SlidesPanel
+            slides={scenes}
+            selectedSlideId={selectedSceneId || undefined}
+            onSlideSelect={handleSceneSelect}
+            onSlideAdd={handleSceneAdd}
+            onSlideDelete={handleSceneDelete}
+            onSlideDuplicate={handleSceneDuplicate}
+            onSlidesReorder={handleScenesReorder}
           />
-        ) : activeTab === 'tts' && projectState.data.uploadResult ? (
+        )
+      case 'media':
+        return <MediaLibraryPanel />
+      case 'tts':
+      case 'ai':
+        return (
           <div className="h-full flex flex-col p-4">
-            <h3 className="text-sm font-semibold text-white mb-4">Configuração de Voz (TTS)</h3>
+            <h3 className="text-sm font-semibold text-white mb-4">Configuracao de Voz (TTS)</h3>
             <ScrollArea className="flex-1 -mx-4 px-4">
               <div className="space-y-6">
                 <div className="p-3 rounded-lg bg-white/5 border border-white/10">
                   <h4 className="text-xs font-medium text-gray-400 mb-2">Resumo do Projeto</h4>
                   <div className="space-y-1">
                     <div className="flex justify-between text-xs">
-                      <span className="text-gray-500">Slides</span>
-                      <span className="text-white">{projectState.project?.totalSlides || 0}</span>
+                      <span className="text-gray-500">Cenas</span>
+                      <span className="text-white">{scenes.length || projectState.project?.totalSlides || 0}</span>
                     </div>
                     <div className="flex justify-between text-xs">
-                      <span className="text-gray-500">Duração</span>
-                      <span className="text-white">{projectState.project?.duration || 0}s</span>
+                      <span className="text-gray-500">Duracao</span>
+                      <span className="text-white">{projectState.project?.duration || scenes.reduce((acc, s) => acc + s.duration, 0)}s</span>
                     </div>
                   </div>
                 </div>
@@ -430,16 +517,18 @@ export function ProfessionalPPTXStudio({ projectId: propProjectId }: Professiona
                   ) : (
                     <>
                       <Zap className="mr-2 h-4 w-4" />
-                      Gerar Narração (All)
+                      Gerar Narracao (All)
                     </>
                   )}
                 </Button>
               </div>
             </ScrollArea>
           </div>
-        ) : activeTab === 'export' ? (
+        )
+      case 'export':
+        return (
           <div className="h-full flex flex-col p-4">
-            <h3 className="text-sm font-semibold text-white mb-4">Exportar Vídeo</h3>
+            <h3 className="text-sm font-semibold text-white mb-4">Exportar Video</h3>
             <div className="flex-1 flex flex-col gap-4">
               <div className="p-4 rounded-lg bg-white/5 border border-white/10 text-center">
                 <Film className="w-8 h-8 text-blue-500 mx-auto mb-2" />
@@ -449,9 +538,9 @@ export function ProfessionalPPTXStudio({ projectId: propProjectId }: Professiona
 
               <Button
                 onClick={handleExport}
-                disabled={isExporting}
+                disabled={isExporting || scenes.length === 0}
                 size="lg"
-                className="w-full mt-auto bg-green-600 hover:bg-green-500 text-white"
+                className="w-full mt-auto bg-green-600 hover:bg-green-500 text-white disabled:opacity-50"
               >
                 {isExporting ? (
                   <>
@@ -461,13 +550,73 @@ export function ProfessionalPPTXStudio({ projectId: propProjectId }: Professiona
                 ) : (
                   <>
                     <Download className="h-5 w-5 mr-2" />
-                    Exportar Vídeo Final
+                    Exportar Video Final
                   </>
                 )}
               </Button>
             </div>
           </div>
-        ) : null
+        )
+      default:
+        return null
+    }
+  }
+
+  return (
+    <StudioLayout
+      sidebar={
+        <StudioSidebar
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          disabled={!projectState.data.uploadResult && scenes.length === 0}
+        />
+      }
+      bottomPanel={
+        projectState.data.uploadResult || scenes.length > 0 ? (
+          <div className="h-full flex flex-col">
+            <div className="flex items-center justify-between px-4 py-2 border-b border-white/10 bg-[#151921]">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-gray-400">Timeline</span>
+                <span className="text-xs text-gray-600">|</span>
+                <span className="text-xs text-gray-400">
+                  {scenes.reduce((acc, s) => acc + s.duration, 0) || projectState.project?.duration || 0}s
+                </span>
+                <Badge className="text-[10px] h-4 bg-blue-600/20 text-blue-400 border-0 ml-2">
+                  {scenes.length} cenas
+                </Badge>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="ghost" className="h-6 w-6 p-0 hover:bg-white/10">
+                  <Settings className="w-3 h-3 text-gray-400" />
+                </Button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-hidden relative">
+              <ProfessionalTimelineEditor
+                onSelectionChange={handleSelectionChange}
+                selectedElement={selectedElement}
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="h-full flex items-center justify-center text-gray-500 text-sm">
+            Timeline indisponivel. Adicione cenas ou faca upload de um PPTX.
+          </div>
+        )
+      }
+      rightPanel={
+        // Properties Panel - Show when element is selected, or show sidebar content
+        selectedElement ? (
+          <PropertiesPanel
+            selectedElement={selectedElement}
+            onUpdateElement={handleElementUpdate}
+            onDeleteElement={(id) => {
+              logger.info('Delete element', { id })
+              setSelectedElement(null)
+            }}
+            onDuplicateElement={(id) => logger.info('Duplicate element', { id })}
+          />
+        ) : renderSidebarContent()
       }
     >
       {/* Main Canvas Area Content */}
@@ -519,10 +668,17 @@ export function ProfessionalPPTXStudio({ projectId: propProjectId }: Professiona
           {/* Top Bar inside Canvas */}
           <div className="h-12 border-b border-white/5 bg-[#151921] flex items-center justify-between px-4">
             <div className="flex items-center gap-2">
-              <h2 className="text-sm font-medium text-white">{projectState.project?.name || 'Sem Título'}</h2>
+              <h2 className="text-sm font-medium text-white">
+                {currentScene?.name || projectState.project?.name || 'Sem Titulo'}
+              </h2>
               {projectState.project?.status && (
                 <Badge variant="outline" className="text-[10px] h-5 border-white/10 text-gray-400">
                   {projectState.project.status}
+                </Badge>
+              )}
+              {scenes.length > 0 && (
+                <Badge className="text-[10px] h-5 bg-blue-600/20 text-blue-400 border-0">
+                  Cena {scenes.findIndex(s => s.id === selectedSceneId) + 1} de {scenes.length}
                 </Badge>
               )}
             </div>
@@ -531,27 +687,36 @@ export function ProfessionalPPTXStudio({ projectId: propProjectId }: Professiona
             </div>
           </div>
 
-          {/* The Actual Canvas */}
+          {/* Scene Canvas Editor */}
           <div className="flex-1 bg-[#0f1115] relative overflow-hidden">
-            {projectState.data.canvasData || projectState.project?.slidesData ? (
-              <FabricCanvasEditor
-                width={1280} // Explicit full HD ratio
+            {currentScene ? (
+              <SceneCanvasEditor
+                width={1280}
                 height={720}
-                projectName={projectState.project?.name}
-                initialData={projectState.data.canvasData}
-                onCanvasUpdate={(data) => {
-                  setProjectState(prev => ({
-                    ...prev,
-                    data: { ...prev.data, canvasData: data }
-                  }))
-                }}
-                // Phase 4 Connection
+                sceneData={currentScene}
+                onSceneUpdate={handleSceneUpdate}
                 onSelectionChange={handleSelectionChange}
                 selectedElement={selectedElement}
               />
+            ) : scenes.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-gray-500 gap-4">
+                <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center">
+                  <Film className="w-8 h-8 text-gray-600" />
+                </div>
+                <p className="text-sm">Nenhuma cena disponivel</p>
+                <p className="text-xs text-gray-600 max-w-xs text-center">
+                  Faca upload de um PPTX ou adicione uma nova cena para comecar a editar
+                </p>
+                <Button
+                  onClick={handleSceneAdd}
+                  className="mt-2 bg-blue-600 hover:bg-blue-700"
+                >
+                  Criar Nova Cena
+                </Button>
+              </div>
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-gray-500">
-                <p>Selecione um slide para editar</p>
+                <p>Selecione uma cena na lista lateral</p>
               </div>
             )}
           </div>

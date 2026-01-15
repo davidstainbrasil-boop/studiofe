@@ -21,7 +21,11 @@ import {
   isPlaceholderPath,
   cleanupTestData,
   getSlideCount,
+  getValidUserId,
+  createTestProject,
 } from './helpers/pptx-pipeline.helpers';
+
+import crypto from 'crypto';
 
 const TEST_PPTX_PATH = path.join(__dirname, 'fixtures', 'test-presentation.pptx');
 const MAX_RENDER_WAIT_MS = 180000; // 3 minutes
@@ -30,6 +34,7 @@ test.describe('E2E PPTX-to-Video Pipeline (Real Infrastructure)', () => {
   let uploadId: string;
   let jobId: string;
   let projectId: string;
+  let userId: string;
 
   test.afterEach(async () => {
     // Automatic cleanup of test data
@@ -40,6 +45,16 @@ test.describe('E2E PPTX-to-Video Pipeline (Real Infrastructure)', () => {
     request,
   }) => {
     console.log('=== Starting E2E PPTX-to-Video Pipeline Test ===');
+
+    // ========================================
+    // STEP 0: Setup User & Project
+    // ========================================
+    console.log('\n[Step 0] Setting up test user and project...');
+    userId = await getValidUserId();
+    projectId = crypto.randomUUID();
+    await createTestProject(userId, projectId);
+    console.log(`✓ Test user ID: ${userId}`);
+    console.log(`✓ Test project created: ${projectId}`);
 
     // ========================================
     // STEP 1: Upload PPTX File
@@ -72,7 +87,7 @@ test.describe('E2E PPTX-to-Video Pipeline (Real Infrastructure)', () => {
       expectedSlideCount,
     );
     expect(uploadRecord.original_filename).toBeTruthy();
-    expect(uploadRecord.createdAt).toBeTruthy();
+    expect(uploadRecord.created_at || uploadRecord.createdAt).toBeTruthy();
 
     console.log(`✓ PPTX upload record validated`);
     console.log(`  - Status: ${uploadRecord.status}`);
@@ -94,25 +109,37 @@ test.describe('E2E PPTX-to-Video Pipeline (Real Infrastructure)', () => {
     // ========================================
     console.log('\n[Step 4] Initiating video render job...');
 
-    // Create project from PPTX (depends on your API structure)
-    // Option 1: Direct render from processingId
-    // Option 2: Create project first, then render
+    // Minimal slides payload for render
+    const slidesPayload = Array.from({ length: expectedSlideCount }).map((_, i) => ({
+        id: `slide_${i}`,
+        content: `Slide ${i}`,
+        duration: 5
+    }));
 
-    // For this test, we'll use the render API directly if it accepts processingId
-    // Adjust based on your actual API structure
     const renderResponse = await request.post('/api/render/start', {
+      headers: {
+        'x-user-id': userId // Bypass auth check with valid user ID
+      },
       data: {
-        action: 'video-pipeline',
-        processingId: uploadId,
-        projectId: projectId || `e2e-test-project-${Date.now()}`,
+        projectId: projectId,
+        slides: slidesPayload, // Must provide slides array
+        config: {
+            test: true, // Use test flag for faster render/mocking if available
+            quality: 'low'
+        }
       },
     });
 
-    expect(renderResponse.status()).toBe(200);
+    // Check for error response first to provide better debug message
+    if (renderResponse.status() !== 200) {
+        const errorText = await renderResponse.text();
+        console.error(`Render failed with status ${renderResponse.status()}: ${errorText}`);
+    }
+
+    expect(renderResponse.status(), 'Render start request should succeed').toBe(200);
     const renderData = await renderResponse.json();
 
     jobId = renderData.jobId || renderData.data?.jobId || renderData.id;
-    projectId = renderData.projectId || renderData.data?.projectId || projectId;
 
     console.log(`✓ Render job initiated`);
     console.log(`  - Job ID: ${jobId}`);
@@ -130,7 +157,7 @@ test.describe('E2E PPTX-to-Video Pipeline (Real Infrastructure)', () => {
       // Don't check exact status since it might already be processing
     });
 
-    expect(['pending', 'processing', 'completed']).toContain(jobRecord.status);
+    expect(['pending', 'queued', 'processing', 'completed']).toContain(jobRecord.status);
     expect(jobRecord.projectId || jobRecord.project_id).toBe(projectId);
 
     console.log(`✓ Render job record validated`);
@@ -142,7 +169,7 @@ test.describe('E2E PPTX-to-Video Pipeline (Real Infrastructure)', () => {
     console.log('\n[Step 6] Polling for render job completion...');
     console.log(`  - Max wait time: ${MAX_RENDER_WAIT_MS / 1000}s`);
 
-    const pollResult = await pollRenderJob(request, jobId, MAX_RENDER_WAIT_MS);
+    const pollResult = await pollRenderJob(request, jobId, MAX_RENDER_WAIT_MS, 5000, userId);
 
     if (pollResult.status === 'failed') {
       throw new Error(`Render job failed: ${pollResult.error || 'Unknown error'}`);

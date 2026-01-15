@@ -100,6 +100,8 @@ export interface TimelineMarker {
 export interface TimelineProject {
   id: string;
   name: string;
+  createdAt?: Date;
+  updatedAt?: Date;
   duration: number;
   layers: TimelineLayer[];
   tracks?: TimelineTrack[];

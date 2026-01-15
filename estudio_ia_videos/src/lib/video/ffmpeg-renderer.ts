@@ -9,6 +9,7 @@ import { writeFile, mkdir, readFile, unlink } from 'fs/promises';
 import { existsSync } from 'fs';
 import { join } from 'path';
 import { randomUUID } from 'crypto';
+import { PIPELINE_TIMEOUTS } from '../config/timeout-config';
 
 const execAsync = promisify(exec);
 
@@ -218,7 +219,7 @@ export async function renderVideo(
     ffmpegCmd += `-movflags +faststart '${outputPath}'`;
 
     console.log(`[Render] Executando FFmpeg...`);
-    await execAsync(ffmpegCmd, { timeout: 300000 }); // 5 min timeout
+    await execAsync(ffmpegCmd, { timeout: PIPELINE_TIMEOUTS.slideComposition }); // Centralized timeout
 
     // 5. Verificar resultado
     if (!existsSync(outputPath)) {

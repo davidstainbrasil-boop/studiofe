@@ -28,13 +28,10 @@ export class JobManager {
 
   private async getJobContext(jobId: string): Promise<{ projectId: string, userId: string } | null> {
     try {
-      const job = await prisma.video_exports.findUnique({
+      const job = await prisma.render_jobs.findUnique({
         where: { id: jobId },
         select: {
           projectId: true,
-          users: {
-            select: { id: true } // userId might be nullable in schema but we need it
-          },
           userId: true
         }
       });
@@ -43,7 +40,7 @@ export class JobManager {
 
       return {
         projectId: job.projectId,
-        userId: job.userId || job.users?.id || ''
+        userId: job.userId || ''
       };
     } catch (error) {
       logger.error('Error fetching job context:', error instanceof Error ? error : new Error(String(error)), { component: 'JobManager' });
@@ -52,11 +49,25 @@ export class JobManager {
   }
   
   async createJob(userId: string, projectId: string, idempotencyKey?: string): Promise<string> {
-    // Note: Idempotency logic simplified for video_exports as it doesn't have idempotencyKey field yet
-    // fallback to time-based check
+    // Check for idempotency key first (if provided)
+    if (idempotencyKey) {
+      const existingByKey = await prisma.render_jobs.findUnique({
+        where: { idempotencyKey: idempotencyKey },
+        select: { id: true }
+      });
+
+      if (existingByKey) {
+        logger.info(`Idempotency: Returning existing job ${existingByKey.id} for key ${idempotencyKey}`, {
+          component: 'JobManager'
+        });
+        return existingByKey.id;
+      }
+    }
+
+    // Fallback to time-based check
     const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
 
-    const existingByTime = await prisma.video_exports.findFirst({
+    const existingByTime = await prisma.render_jobs.findFirst({
       where: {
         projectId: projectId,
         status: 'queued',
@@ -73,15 +84,15 @@ export class JobManager {
     }
 
     // Create new job
-    const job = await prisma.video_exports.create({
+    const job = await prisma.render_jobs.create({
       data: {
         id: randomUUID(),
         projectId: projectId,
         userId: userId,
         status: 'queued',
         progress: 0,
-        processingLog: {},
-        format: 'mp4'
+        renderSettings: {},
+        idempotencyKey: idempotencyKey || null
       },
       select: { id: true }
     });
@@ -97,7 +108,7 @@ export class JobManager {
 
   async markAsFailedEnqueue(jobId: string, error: string): Promise<void> {
     try {
-      await prisma.video_exports.update({
+      await prisma.render_jobs.update({
         where: { id: jobId },
         data: {
           status: 'failed',
@@ -120,7 +131,7 @@ export class JobManager {
   }
   
   async getJob(jobId: string): Promise<RenderJob | null> {
-    const data = await prisma.video_exports.findUnique({
+    const data = await prisma.render_jobs.findUnique({
       where: { id: jobId }
     });
 
@@ -133,16 +144,16 @@ export class JobManager {
       status: data.status as RenderJob['status'],
       progress: data.progress || 0,
       createdAt: data.createdAt || new Date(),
-      startedAt: undefined, // video_exports doesnt have startedAt column
-      completedAt: data.status === 'completed' ? data.updatedAt : undefined, 
-      outputUrl: data.videoUrl || undefined,
+      startedAt: data.startedAt || undefined,
+      completedAt: data.completedAt || undefined, 
+      outputUrl: data.outputUrl || undefined,
       error: data.errorMessage || undefined
     };
   }
   
   async updateProgress(jobId: string, progress: number): Promise<void> {
     // Check if cancelled before updating
-    const current = await prisma.video_exports.findUnique({ 
+    const current = await prisma.render_jobs.findUnique({ 
         where: { id: jobId },
         select: { status: true }
     });
@@ -151,7 +162,7 @@ export class JobManager {
         throw new Error('JOB_CANCELLED');
     }
 
-    await prisma.video_exports.update({
+    await prisma.render_jobs.update({
       where: { id: jobId },
       data: {
         progress: Math.min(100, Math.max(0, progress)),
@@ -163,11 +174,12 @@ export class JobManager {
 
   async startJob(jobId: string): Promise<void> {
     try {
-      await prisma.video_exports.update({
+      await prisma.render_jobs.update({
         where: { id: jobId },
         data: {
           status: 'processing',
           progress: 0,
+          startedAt: new Date(),
           updatedAt: new Date()
         }
       });
@@ -190,7 +202,7 @@ export class JobManager {
   
   async markAsFailedUpload(jobId: string, error: string): Promise<void> {
     try {
-      await prisma.video_exports.update({
+      await prisma.render_jobs.update({
         where: { id: jobId },
         data: {
           status: 'failed',
@@ -206,14 +218,14 @@ export class JobManager {
 
   async completeJob(jobId: string, outputUrl: string): Promise<void> {
     try {
-      await prisma.video_exports.update({
+      await prisma.render_jobs.update({
         where: { id: jobId },
         data: {
           status: 'completed',
           progress: 100,
+          completedAt: new Date(),
           updatedAt: new Date(),
-          videoUrl: outputUrl,
-          fileUrl: outputUrl // Set both for compatibility
+          outputUrl: outputUrl
         }
       });
 
@@ -234,7 +246,7 @@ export class JobManager {
   
   async failJob(jobId: string, errorMessage: string): Promise<void> {
     try {
-      await prisma.video_exports.update({
+      await prisma.render_jobs.update({
         where: { id: jobId },
         data: {
           status: 'failed',
@@ -264,7 +276,7 @@ export class JobManager {
 
   async removeJob(jobId: string): Promise<void> {
     try {
-      await prisma.video_exports.delete({
+      await prisma.render_jobs.delete({
         where: { id: jobId }
       });
     } catch (error) {

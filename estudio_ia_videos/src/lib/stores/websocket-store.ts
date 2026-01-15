@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { createClient } from '@lib/supabase/client';
+import { createClient } from '../supabase/client';
 import { RealtimeChannel } from '@supabase/supabase-js';
 
 interface RenderProgress {

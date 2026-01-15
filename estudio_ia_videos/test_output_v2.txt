@@ -1,0 +1,54 @@
+[dotenv@17.2.3] injecting env (57) from .env.local -- tip: ⚙️  override existing env vars with { override: true }
+🔒 Setting up E2E URL isolation...
+✅ E2E environment configured
+   - External requests will be blocked
+   - Only localhost URLs allowed
+⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+
+Running 1 test using 1 worker
+
+[1A[2K[dotenv@17.2.3] injecting env (0) from .env.local -- tip: ✅ audit secrets and track compliance: https://dotenvx.com/ops
+
+[1A[2K⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+
+[1A[2K[1/1] [chromium] › src/app/e2e/pptx-to-video-real.spec.ts:39:7 › E2E PPTX-to-Video Pipeline (Real Infrastructure) › Complete pipeline: Upload PPTX → Process Slides → Render Video → Validate Storage
+[1A[2K[chromium] › src/app/e2e/pptx-to-video-real.spec.ts:39:7 › E2E PPTX-to-Video Pipeline (Real Infrastructure) › Complete pipeline: Upload PPTX → Process Slides → Render Video → Validate Storage
+=== Starting E2E PPTX-to-Video Pipeline Test ===
+
+[1A[2K
+[Step 1] Uploading PPTX file...
+
+[1A[2K(node:4163174) ExperimentalWarning: buffer.File is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[1A[2K✓ PPTX uploaded successfully
+
+[1A[2K  - Processing ID: 84dd0b3f-7464-4eb5-838c-2bbd32d2644e
+
+[1A[2K  - Slide count: 3
+
+[1A[2K
+[Step 2] Validating PPTX upload in database...
+
+[1A[2KCleaned up PPTX upload: 84dd0b3f-7464-4eb5-838c-2bbd32d2644e
+
+[1A[2K  1) [chromium] › src/app/e2e/pptx-to-video-real.spec.ts:39:7 › E2E PPTX-to-Video Pipeline (Real Infrastructure) › Complete pipeline: Upload PPTX → Process Slides → Render Video → Validate Storage 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeTruthy[2m()[22m
+
+    Received: [31mundefined[39m
+
+      73 |     );
+      74 |     expect(uploadRecord.original_filename).toBeTruthy();
+    > 75 |     expect(uploadRecord.createdAt).toBeTruthy();
+         |                                    ^
+      76 |
+      77 |     console.log(`✓ PPTX upload record validated`);
+      78 |     console.log(`  - Status: ${uploadRecord.status}`);
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/e2e/pptx-to-video-real.spec.ts:75:36
+
+
+[1A[2K  1 failed
+    [chromium] › src/app/e2e/pptx-to-video-real.spec.ts:39:7 › E2E PPTX-to-Video Pipeline (Real Infrastructure) › Complete pipeline: Upload PPTX → Process Slides → Render Video → Validate Storage 
+
+[36m  Serving HTML report at http://localhost:40813. Press Ctrl+C to quit.[39m

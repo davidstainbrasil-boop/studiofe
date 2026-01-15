@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
-import { createClient } from '@lib/supabase/client';
-import { logger } from '@lib/logger';
+import { createClient } from '../supabase/client';
+import { logger } from '../logger';
 
 // Types
 interface Slide {
