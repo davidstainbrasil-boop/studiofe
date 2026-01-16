@@ -4,6 +4,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { logger } from '@/lib/logger'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { UnifiedProject } from '@/lib/stores/unified-project-store'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
@@ -131,6 +132,7 @@ export default function DashboardReal() {
         }
       } catch (error) {
         logger.error('Erro ao carregar sessão do usuário', error instanceof Error ? error : new Error(String(error)), { component: 'DashboardReal' })
+        router.push('/login?reason=auth_error')
       }
     }
 
@@ -536,77 +538,82 @@ export default function DashboardReal() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               {/* PPTX Studio Enhanced - HUB PRINCIPAL */}
-              <Button
-                variant="outline"
-                className="p-6 h-auto flex-col gap-3 hover:bg-purple-50 hover:border-purple-200 border-purple-300 shadow-md relative"
-                onClick={() => router.push('/pptx-studio-enhanced')}
-              >
-                <Badge className="absolute -top-2 -right-2 bg-purple-600 text-white text-xs animate-pulse">
-                  HUB
-                </Badge>
-                <Brain className="w-8 h-8 text-purple-600" />
-                <div className="text-center">
-                  <p className="font-medium">PPTX Studio Enhanced</p>
-                  <p className="text-xs text-gray-500">Hub completo IA + Editor</p>
-                </div>
-                <div className="text-xs text-green-600 font-medium">✓ 100% Funcional</div>
-              </Button>
+              <Link href="/pptx-studio-enhanced" className="contents">
+                <Button
+                  variant="outline"
+                  className="p-6 h-auto flex-col gap-3 hover:bg-purple-50 hover:border-purple-200 border-purple-300 shadow-md relative"
+                >
+                  <Badge className="absolute -top-2 -right-2 bg-purple-600 text-white text-xs animate-pulse">
+                    HUB
+                  </Badge>
+                  <Brain className="w-8 h-8 text-purple-600" />
+                  <div className="text-center">
+                    <p className="font-medium">PPTX Studio Enhanced</p>
+                    <p className="text-xs text-gray-500">Hub completo IA + Editor</p>
+                  </div>
+                  <div className="text-xs text-green-600 font-medium">✓ 100% Funcional</div>
+                </Button>
+              </Link>
 
               {/* Talking Photo Pro */}
-              <Button
-                variant="outline"
-                className="p-6 h-auto flex-col gap-3 hover:bg-blue-50 hover:border-blue-200 border-blue-300 shadow-md"
-                onClick={() => router.push('/talking-photo-pro')}
-              >
-                <Heart className="w-8 h-8 text-blue-600" />
-                <div className="text-center">
-                  <p className="font-medium">Talking Photo PRO</p>
-                  <p className="text-xs text-gray-500">Avatares + TTS Brasil</p>
-                </div>
-                <div className="text-xs text-green-600 font-medium">✓ Produção</div>
-              </Button>
+              <Link href="/talking-photo-pro" className="contents">
+                <Button
+                  variant="outline"
+                  className="p-6 h-auto flex-col gap-3 hover:bg-blue-50 hover:border-blue-200 border-blue-300 shadow-md"
+                >
+                  <Heart className="w-8 h-8 text-blue-600" />
+                  <div className="text-center">
+                    <p className="font-medium">Talking Photo PRO</p>
+                    <p className="text-xs text-gray-500">Avatares + TTS Brasil</p>
+                  </div>
+                  <div className="text-xs text-green-600 font-medium">✓ Produção</div>
+                </Button>
+              </Link>
 
               {/* PPTX Upload Real */}
-              <Button
-                variant="outline"
-                className="p-6 h-auto flex-col gap-3 hover:bg-emerald-50 hover:border-emerald-200 border-emerald-300 shadow-md"
-                onClick={() => router.push('/pptx-upload-real')}
-              >
-                <Upload className="w-8 h-8 text-emerald-600" />
-                <div className="text-center">
-                  <p className="font-medium">Upload PPTX Real</p>
-                  <p className="text-xs text-gray-500">Processamento IA real</p>
-                </div>
-                <div className="text-xs text-green-600 font-medium">✓ Pipeline Real</div>
-              </Button>
+              <Link href="/pptx-upload-real" className="contents">
+                <Button
+                  variant="outline"
+                  className="p-6 h-auto flex-col gap-3 hover:bg-emerald-50 hover:border-emerald-200 border-emerald-300 shadow-md"
+                >
+                  <Upload className="w-8 h-8 text-emerald-600" />
+                  <div className="text-center">
+                    <p className="font-medium">Upload PPTX Real</p>
+                    <p className="text-xs text-gray-500">Processamento IA real</p>
+                  </div>
+                  <div className="text-xs text-green-600 font-medium">✓ Pipeline Real</div>
+                </Button>
+              </Link>
 
               {/* PPTX Editor Real */}
-              <Button
-                variant="outline"
-                className="p-6 h-auto flex-col gap-3 hover:bg-orange-50 hover:border-orange-200 border-orange-300 shadow-md"
-                onClick={() => router.push('/pptx-editor-real')}
-              >
-                <Play className="w-8 h-8 text-orange-600" />
-                <div className="text-center">
-                  <p className="font-medium">Editor PPTX Real</p>
-                  <p className="text-xs text-gray-500">Renderização + TTS</p>
-                </div>
-                <div className="text-xs text-green-600 font-medium">✓ Render Real</div>
-              </Button>
+              <Link href="/pptx-editor-real" className="contents">
+                <Button
+                  variant="outline"
+                  className="p-6 h-auto flex-col gap-3 hover:bg-orange-50 hover:border-orange-200 border-orange-300 shadow-md"
+                >
+                  <Play className="w-8 h-8 text-orange-600" />
+                  <div className="text-center">
+                    <p className="font-medium">Editor PPTX Real</p>
+                    <p className="text-xs text-gray-500">Renderização + TTS</p>
+                  </div>
+                  <div className="text-xs text-green-600 font-medium">✓ Render Real</div>
+                </Button>
+              </Link>
 
               {/* Professional Render Engine - SPRINT 5 */}
-              <Button
-                variant="outline"
-                className="p-6 h-auto flex-col gap-3 hover:bg-purple-50 hover:border-purple-200 border-purple-300 shadow-md bg-purple-25"
-                onClick={() => router.push('/render-engine')}
-              >
-                <Film className="w-8 h-8 text-purple-600" />
-                <div className="text-center">
-                  <p className="font-medium">Render Engine</p>
-                  <p className="text-xs text-gray-500">FFmpeg + Cinema Quality</p>
-                </div>
-                <div className="text-xs text-green-600 font-medium">✓ Sprint 5 NEW</div>
-              </Button>
+              <Link href="/render-engine" className="contents">
+                <Button
+                  variant="outline"
+                  className="p-6 h-auto flex-col gap-3 hover:bg-purple-50 hover:border-purple-200 border-purple-300 shadow-md bg-purple-25"
+                >
+                  <Film className="w-8 h-8 text-purple-600" />
+                  <div className="text-center">
+                    <p className="font-medium">Render Engine</p>
+                    <p className="text-xs text-gray-500">FFmpeg + Cinema Quality</p>
+                  </div>
+                  <div className="text-xs text-green-600 font-medium">✓ Sprint 5 NEW</div>
+                </Button>
+              </Link>
 
               {/* Dashboard Real */}
               <Button

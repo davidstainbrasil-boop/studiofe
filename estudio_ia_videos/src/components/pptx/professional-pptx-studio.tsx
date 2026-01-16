@@ -708,6 +708,14 @@ export function ProfessionalPPTXStudio({ projectId: propProjectId }: Professiona
                   Faca upload de um PPTX ou adicione uma nova cena para comecar a editar
                 </p>
                 <Button
+                  onClick={() => setActiveTab('upload')}
+                  variant="outline"
+                  className="mt-2 mr-2 border-dashed border-gray-600 hover:border-gray-500 text-gray-400 hover:text-white"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Fazer Upload PPTX
+                </Button>
+                <Button
                   onClick={handleSceneAdd}
                   className="mt-2 bg-blue-600 hover:bg-blue-700"
                 >
