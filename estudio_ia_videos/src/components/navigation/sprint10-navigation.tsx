@@ -217,7 +217,7 @@ export default function Sprint10Navigation() {
             </Button>
           </Link>
           
-          <Link href="/gamification">
+          <Link href="/interactive-elements">
             <Button variant="outline" size="sm" className="flex items-center space-x-2">
               <Trophy className="h-4 w-4" />
               <span>Ver Ranking</span>
@@ -238,7 +238,7 @@ export default function Sprint10Navigation() {
             </Button>
           </Link>
           
-          <Link href="/behavioral-analytics">
+          <Link href="/dashboard/analytics">
             <Button variant="outline" size="sm" className="flex items-center space-x-2">
               <Eye className="h-4 w-4" />
               <span>Ver Heatmap</span>

@@ -9,7 +9,8 @@ async function globalSetup() {
   // Set environment variables
   process.env.E2E_TEST = 'true';
   process.env.PLAYWRIGHT_TEST = 'true';
-  process.env.NODE_ENV = 'test';
+  // NODE_ENV is read-only, skip setting it
+  // process.env.NODE_ENV = 'test';
   // DEV_BYPASS removed for security
   process.env.DISABLE_SUPABASE_REALTIME = 'true';
   process.env.DISABLE_SENTRY = 'true';

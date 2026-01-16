@@ -10,6 +10,7 @@ import { avatar3DPipeline } from '@lib/avatar-3d-pipeline'
 import { Logger } from '@lib/logger'
 import { createClient } from '@supabase/supabase-js'
 import { prisma } from '@lib/prisma'
+import { getRequiredEnv } from '@lib/env'
 
 const logger = new Logger('AvatarRenderAPI')
 
@@ -48,8 +49,8 @@ export async function POST(request: NextRequest) {
 
     const token = authHeader.substring(7)
     const supabaseClient = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      getRequiredEnv('NEXT_PUBLIC_SUPABASE_URL'),
+      getRequiredEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY'),
       { global: { headers: { Authorization: `Bearer ${token}` } } }
     )
 
@@ -134,8 +135,8 @@ export async function GET(request: NextRequest) {
     }
     const token = authHeader.substring(7)
     const supabaseClient = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      getRequiredEnv('NEXT_PUBLIC_SUPABASE_URL'),
+      getRequiredEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY'),
       { global: { headers: { Authorization: `Bearer ${token}` } } }
     )
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser()

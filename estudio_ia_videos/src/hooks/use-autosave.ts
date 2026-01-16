@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useTimelineStore } from '@lib/stores/timeline-store';
 import { logger } from '@lib/logger';
 
-type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
+type SaveStatus = 'idle' | 'saving' | 'saved' | 'error' | 'retrying';
 
 interface AutosaveOptions {
   debounceMs?: number;
@@ -24,15 +24,19 @@ export function useAutosave(options: AutosaveOptions = {}) {
   
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastSnapshotRef = useRef<string>('');
+  
+  // Retry configuration
+  const MAX_RETRIES = 3;
+  const INITIAL_RETRY_DELAY = 1000;
 
-  // Manual save function
-  const saveNow = async () => {
+  // Manual save function with improved retry logic
+  const saveNow = async (retryCount = 0) => {
     if (!project) {
       logger.warn('No project to save', { component: 'useAutosave' });
       return;
     }
 
-    setStatus('saving');
+    setStatus(retryCount > 0 ? 'retrying' : 'saving');
     setError(null);
 
     try {
@@ -51,8 +55,8 @@ export function useAutosave(options: AutosaveOptions = {}) {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Falha ao salvar');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Falha ao salvar: ${response.status}`);
       }
 
       const result = await response.json();
@@ -68,15 +72,27 @@ export function useAutosave(options: AutosaveOptions = {}) {
       }
 
       setStatus('saved');
-      logger.info('Project saved', { projectId: result.projectId });
+      logger.info('Project saved', { projectId: result.projectId, version: result.version });
 
       // Reset to idle after 2 seconds
       setTimeout(() => setStatus('idle'), 2000);
 
     } catch (err) {
-      logger.error('Save error', err as Error);
-      setError(err instanceof Error ? err.message : 'Erro desconhecido');
-      setStatus('error');
+      const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
+      logger.error('Save error', err as Error, { retryCount });
+
+      if (retryCount < MAX_RETRIES) {
+        // Exponential backoff
+        const delay = INITIAL_RETRY_DELAY * Math.pow(2, retryCount);
+        logger.info(`Retrying save in ${delay}ms...`, { retryCount: retryCount + 1 });
+        
+        setTimeout(() => {
+          saveNow(retryCount + 1);
+        }, delay);
+      } else {
+        setError(errorMessage);
+        setStatus('error');
+      }
     }
   };
 

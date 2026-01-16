@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { getRequiredEnv } from '@lib/env';
 import { logger } from '@lib/logger';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabaseUrl = getRequiredEnv('NEXT_PUBLIC_SUPABASE_URL');
+const supabaseServiceKey = getRequiredEnv('SUPABASE_SERVICE_ROLE_KEY');
 
 export async function GET(request: NextRequest) {
   try {

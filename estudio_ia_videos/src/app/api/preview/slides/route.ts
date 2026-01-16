@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { logger } from '@lib/logger';
 
 const slideSchema = z.object({
   id: z.string().optional(),
@@ -65,7 +66,9 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('[Preview API] Erro:', error);
+    logger.error('Erro na API de preview', error instanceof Error ? error : new Error(String(error)), {
+      component: 'API: preview/slides'
+    });
     return NextResponse.json(
       { success: false, error: 'Erro interno' },
       { status: 500 }

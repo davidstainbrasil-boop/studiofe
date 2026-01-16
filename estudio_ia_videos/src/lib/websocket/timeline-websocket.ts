@@ -27,20 +27,56 @@ export function initializeWebSocket(server: HTTPServer) {
   // Store user data: socketId -> { userId, userName, ... }
   const socketData = new Map<string, SocketUser>()
 
-  io.on('connection', (socket: Socket) => {
-    logger.info('✓ Socket conectado', { component: 'TimelineWebsocket', socketId: socket.id });
-    
-    // Extract user data from auth handshake if available
-    const authData = socket.handshake.auth
-    if (authData.userId) {
+    // Auth Middleware
+  io.use(async (socket, next) => {
+    try {
+      const token = socket.handshake.auth.token;
+      
+      if (!token) {
+        logger.warn('Connection attempt without token', { socketId: socket.id });
+        return next(new Error('Authentication required'));
+      }
+
+      // Verify JWT using local secret (fastest for WS)
+      // Note: In strict mode we might want to use supabase.auth.getUser() but that adds latency
+      const { verifyJWT } = await import('@lib/auth/jwt');
+      const decoded = verifyJWT(token);
+
+      if (!decoded || !decoded.sub) {
+        logger.warn('Invalid token', { socketId: socket.id });
+        return next(new Error('Invalid token'));
+      }
+
+      // Popula dados do socket com informações verificadas
+      const userId = decoded.sub;
+      const userMetadata = decoded.user_metadata || {};
+      const userName = userMetadata.full_name || userMetadata.name || userMetadata.email || `User ${userId.slice(0,4)}`;
+      const userImage = userMetadata.avatar_url || userMetadata.picture;
+
+      socket.data.userId = userId;
+      socket.data.userName = userName;
+      socket.data.userImage = userImage;
+
+      // Persiste no map local para acesso rápido
       socketData.set(socket.id, {
-        userId: authData.userId,
-        userName: authData.userName
-      })
-      // Also set in socket.data for easy access
-      socket.data.userId = authData.userId
-      socket.data.userName = authData.userName
+        userId,
+        userName,
+        userImage
+      });
+
+      next();
+    } catch (error) {
+      logger.error('Socket auth error', error as Error);
+      next(new Error('Authentication failed'));
     }
+  });
+
+  io.on('connection', (socket: Socket) => {
+    logger.info('✓ Socket conectado', { 
+      component: 'TimelineWebsocket', 
+      socketId: socket.id,
+      userId: socket.data.userId 
+    });
 
     socket.on(TimelineEvent.JOIN_PROJECT, ({ projectId, userName, userImage }: JoinProjectPayload) => {
       socket.join(`project:${projectId}`)

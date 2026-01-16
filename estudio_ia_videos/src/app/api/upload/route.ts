@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(bytes);
     await writeFile(filePath, buffer);
 
-    console.log(`[Upload] Arquivo salvo: ${filePath}`);
+    logger.info('Arquivo salvo', { component: 'API: upload', filePath });
 
     // Processar PPTX
     let slidesData: Array<{
@@ -103,10 +103,13 @@ export async function POST(request: NextRequest) {
         
         // Gerar thumbnail
         thumbnailUrl = await PPTXProcessorReal.generateThumbnail(buffer, projectId);
-        console.log(`[Upload] ${slidesData.length} slides extraídos`);
+        logger.info('Slides extraídos', { component: 'API: upload', slideCount: slidesData.length });
       }
     } catch (processingError) {
-      console.warn('[Upload] Erro no processamento, usando fallback:', processingError);
+      logger.warn('Erro no processamento, usando fallback', {
+        component: 'API: upload',
+        error: processingError instanceof Error ? processingError.message : String(processingError)
+      });
       // Fallback: criar slide básico
       slidesData = [{
         slideNumber: 1,

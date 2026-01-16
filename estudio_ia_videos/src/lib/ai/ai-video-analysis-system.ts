@@ -68,7 +68,13 @@ export class AIVideoAnalysisSystem {
         });
 
         // Cleanup
-        await fs.unlink(framePath).catch(() => {});
+        await fs.unlink(framePath).catch((error) => {
+          logger.debug('Temp frame file already deleted', {
+            component: 'AIVideoAnalysisSystem',
+            framePath,
+            error: error instanceof Error ? error.message : String(error)
+          });
+        });
 
         // Persist result
         const { prisma } = require('@lib/prisma');

@@ -5,6 +5,7 @@
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { logger } from '@lib/logger';
+import { getRequiredEnv } from '@lib/env';
 
 export interface StorageUploadOptions {
   bucket: string;
@@ -23,19 +24,22 @@ export class StorageSystemReal {
   private supabase: SupabaseClient;
 
   constructor() {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!; // Use Service Role for full access
-    
-    if (!supabaseUrl || !supabaseKey) {
-      logger.warn('⚠️ Supabase credentials not found in StorageSystemReal', { component: 'StorageSystemReal' });
+    try {
+      const supabaseUrl = getRequiredEnv('NEXT_PUBLIC_SUPABASE_URL');
+      const supabaseKey = getRequiredEnv('SUPABASE_SERVICE_ROLE_KEY'); // Use Service Role for full access
+      
+      this.supabase = createClient(supabaseUrl, supabaseKey, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      });
+    } catch (error) {
+      logger.error('Failed to initialize StorageSystemReal', error instanceof Error ? error : new Error(String(error)), {
+        component: 'StorageSystemReal'
+      });
+      throw error;
     }
-    
-    this.supabase = createClient(supabaseUrl, supabaseKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
-    });
   }
 
   async upload(options: StorageUploadOptions): Promise<string> {

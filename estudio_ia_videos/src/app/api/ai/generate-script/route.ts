@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AIScriptGeneratorService } from '@lib/ai/script-generator.service';
+import { logger } from '@lib/logger';
 
 export async function POST(req: NextRequest) {
   try {
@@ -29,7 +30,9 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (error) {
-    console.error('AI Generator Error:', error);
+    logger.error('Erro na geração de roteiro AI', error instanceof Error ? error : new Error(String(error)), {
+      component: 'API: ai/generate-script'
+    });
     return NextResponse.json(
       { success: false, error: 'Falha na geração do roteiro' },
       { status: 500 }

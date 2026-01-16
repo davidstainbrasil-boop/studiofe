@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import crypto from 'crypto';
 import fs from 'fs/promises';
 import path from 'path';
+import { requireAdmin } from '@lib/auth/admin-middleware';
+import { getRequiredEnv, getOptionalEnv } from '@lib/env';
+import { logger } from '@lib/logger';
 
-const ENCRYPTION_KEY = process.env.CREDENTIALS_ENCRYPTION_KEY || 'mvp-encryption-key-2024-secure';
+const ENCRYPTION_KEY = getOptionalEnv('CREDENTIALS_ENCRYPTION_KEY', 'mvp-encryption-key-2024-secure');
 const ENV_FILE = '.env.production';
 
 function encrypt(text: string): string {
@@ -17,12 +19,6 @@ function encrypt(text: string): string {
   return iv.toString('hex') + ':' + encrypted;
 }
 
-async function verifyAdmin(): Promise<boolean> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('admin_token')?.value;
-  return !!token;
-}
-
 interface EnvVariable {
   key: string;
   value: string;
@@ -31,9 +27,8 @@ interface EnvVariable {
 
 // GET - Obter variáveis de ambiente
 export async function GET(request: NextRequest) {
-  if (!await verifyAdmin()) {
-    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
-  }
+  const { isAdmin, response } = await requireAdmin(request);
+  if (!isAdmin) return response!;
 
   try {
     const envPath = path.join(process.cwd(), ENV_FILE);
@@ -97,7 +92,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ variables });
 
   } catch (error) {
-    console.error('[ADMIN ENV] Erro ao obter variáveis:', error);
+    logger.error('Erro ao obter variáveis de ambiente', error instanceof Error ? error : new Error(String(error)), {
+      component: 'API: admin/environment'
+    });
     return NextResponse.json(
       { error: 'Erro ao obter variáveis de ambiente' },
       { status: 500 }
@@ -107,9 +104,8 @@ export async function GET(request: NextRequest) {
 
 // POST - Salvar variáveis de ambiente
 export async function POST(request: NextRequest) {
-  if (!await verifyAdmin()) {
-    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
-  }
+  const { isAdmin, response } = await requireAdmin(request);
+  if (!isAdmin) return response!;
 
   try {
     const { variables } = await request.json() as { variables: EnvVariable[] };
@@ -138,7 +134,11 @@ export async function POST(request: NextRequest) {
     const envPath = path.join(process.cwd(), ENV_FILE);
     await fs.writeFile(envPath, header + content + '\n', 'utf8');
 
-    console.log(`[ADMIN ENV] Variáveis de ambiente salvas em ${new Date().toISOString()}`);
+    logger.info('Variáveis de ambiente salvas', {
+      component: 'API: admin/environment',
+      count: variables.length,
+      timestamp: new Date().toISOString()
+    });
 
     return NextResponse.json({
       success: true,
@@ -147,7 +147,9 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('[ADMIN ENV] Erro ao salvar variáveis:', error);
+    logger.error('Erro ao salvar variáveis de ambiente', error instanceof Error ? error : new Error(String(error)), {
+      component: 'API: admin/environment'
+    });
     return NextResponse.json(
       { error: 'Erro ao salvar variáveis de ambiente' },
       { status: 500 }

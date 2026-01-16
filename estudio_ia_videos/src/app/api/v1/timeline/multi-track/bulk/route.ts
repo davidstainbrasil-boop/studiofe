@@ -301,7 +301,7 @@ export async function POST(request: NextRequest) {
           id: updatedTimeline.id,
           version: updatedTimeline.version,
           tracksCount: updatedTracks.length,
-          updatedAt: updatedTimeline.updatedAt.toISOString(),
+          updatedAt: updatedTimeline.updatedAt?.toISOString() || new Date().toISOString(),
         },
       },
       message: `Operação ${operation} executada com sucesso`,

@@ -91,12 +91,20 @@ export async function GET(
     let hasPermission = project.userId === user.id || !!project.is_public
 
     if (!hasPermission) {
-      const { data: collaborator } = await supabase
-        .from('collaborators')
-        .select("userId")
-        .eq("projectId", track.projectId)
-        .eq("userId", user.id)
-        .single()
+      // TODO: Se tabela collaborators não existir no schema Supabase, usar outra abordagem
+      let collaborator = null;
+      try {
+        const result = await supabase
+          .from('collaborators' as any)
+          .select("userId")
+          .eq("projectId", track.projectId)
+          .eq("userId", user.id)
+          .single();
+        collaborator = result.data;
+      } catch {
+        // Tabela não existe ou erro de query
+        collaborator = null;
+      }
       
       if (collaborator) hasPermission = true
     }
@@ -167,7 +175,7 @@ export async function PUT(
 
     if (!hasPermission) {
       const { data: collaboratorData } = await supabase
-        .from('collaborators')
+        .from('collaborators' as any)
         .select('role')
         .eq("projectId", existingTrack.projectId)
         .eq("userId", user.id)
@@ -292,7 +300,7 @@ export async function DELETE(
 
     if (!hasPermission) {
       const { data: collaboratorData } = await supabase
-        .from('collaborators')
+        .from('collaborators' as any)
         .select('role')
         .eq("projectId", existingTrack.projectId)
         .eq("userId", user.id)

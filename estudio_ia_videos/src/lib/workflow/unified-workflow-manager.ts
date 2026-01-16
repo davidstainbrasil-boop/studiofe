@@ -353,7 +353,13 @@ export class UnifiedWorkflowManager {
                 
                 generatedCount++;
             } finally {
-                await fs.unlink(tempFile).catch(() => {});
+                await fs.unlink(tempFile).catch((error) => {
+                  logger.debug('Temp file already deleted during workflow cleanup', {
+                    component: 'UnifiedWorkflowManager',
+                    tempFile,
+                    error: error instanceof Error ? error.message : String(error)
+                  });
+                });
             }
         }
     }

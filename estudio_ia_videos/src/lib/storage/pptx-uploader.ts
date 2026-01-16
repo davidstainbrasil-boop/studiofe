@@ -2,6 +2,7 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/monitoring/logger';
 import { Database } from '@lib/supabase/database.types';
+import { getRequiredEnv } from '@lib/env';
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB
 const ALLOWED_FILE_TYPES = ['application/vnd.openxmlformats-officedocument.presentationml.presentation'];
@@ -27,8 +28,8 @@ export class PptxUploader {
 
   constructor(supabaseClient?: SupabaseClient<Database>) {
     this.supabase = supabaseClient || createClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+      getRequiredEnv('NEXT_PUBLIC_SUPABASE_URL'),
+      getRequiredEnv('SUPABASE_SERVICE_ROLE_KEY')
     );
   }
 

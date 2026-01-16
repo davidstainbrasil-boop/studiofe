@@ -19,7 +19,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ code: 'FORBIDDEN', message: 'Acesso negado. Recurso disponível apenas para administradores.' }, { status: 403 });
     }
 
-    const snapshot = getMetricsSnapshot()
+    const snapshot = await getMetricsSnapshot()
     return NextResponse.json(snapshot, { 
       status: 200,
       headers: {

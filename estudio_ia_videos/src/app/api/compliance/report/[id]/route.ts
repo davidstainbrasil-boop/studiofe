@@ -23,7 +23,10 @@ export async function GET(
     const recordId = params.id
 
     // Busca registro de compliance
-    const record = await prisma.nr_compliance_records.findUnique({
+    // TODO: Se nr_compliance_records não existir no schema Prisma, usar Supabase diretamente
+    let record;
+    try {
+      record = await (prisma as any).nr_compliance_records.findUnique({
       where: { id: recordId },
       include: {
         projects: {
@@ -34,7 +37,14 @@ export async function GET(
           }
         }
       }
-    })
+    });
+    } catch (dbError) {
+      logger.warn('Tabela nr_compliance_records não encontrada', {
+        component: 'API: compliance/report/[id]',
+        error: dbError instanceof Error ? dbError.message : String(dbError)
+      });
+      return NextResponse.json({ error: 'Registro não encontrado' }, { status: 404 });
+    }
 
     if (!record) {
       return NextResponse.json({ error: 'Registro não encontrado' }, { status: 404 })

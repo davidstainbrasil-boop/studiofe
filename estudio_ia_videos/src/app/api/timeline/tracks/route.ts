@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
 
     if (!hasPermission) {
       const { data: collaborator } = await supabase
-        .from('collaborators')
+        .from('collaborators' as any)
         .select("userId")
         .eq("projectId", projectId)
         .eq("userId", user.id)
@@ -174,7 +174,7 @@ export async function POST(request: NextRequest) {
 
     if (!hasPermission) {
       const { data: collaboratorData } = await supabase
-        .from('collaborators')
+        .from('collaborators' as any)
         .select('role')
         .eq("projectId", validatedData.projectId)
         .eq("userId", user.id)
@@ -344,7 +344,7 @@ export async function PUT(request: NextRequest) {
 
     if (!hasPermission) {
       const { data: collaboratorData } = await supabase
-        .from('collaborators')
+        .from('collaborators' as any)
         .select('role')
         .eq("projectId", projectId)
         .eq("userId", user.id)

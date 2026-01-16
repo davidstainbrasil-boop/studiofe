@@ -10,25 +10,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseForRequest } from '@lib/supabase/server';
 import { runCleanup, CleanupPolicy } from '@lib/cleanup/resource-cleaner';
 import { logger } from '@lib/logger';
+import { requireAdmin } from '@lib/auth/admin-middleware';
 
 /**
  * GET - Get cleanup configuration and last run info
  */
 export async function GET(req: NextRequest) {
   try {
-    // Auth check
-    const supabase = getSupabaseForRequest(req);
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Não autenticado' },
-        { status: 401 }
-      );
-    }
-
-    // TODO: Check if user is admin
-    // For now, allow all authenticated users to view status
+    // Require admin authentication
+    const { isAdmin, response } = await requireAdmin(req);
+    if (!isAdmin) return response!;
 
     return NextResponse.json({
       status: 'ready',
@@ -72,25 +63,14 @@ export async function POST(req: NextRequest) {
       authenticatedViaCron = true;
       logger.info('Cleanup triggered by cron job', { component: 'API: admin/cleanup' });
     } else {
-      // Check user authentication
+      // Check user authentication and admin status
+      const { isAdmin, response } = await requireAdmin(req);
+      if (!isAdmin) return response!;
+
+      // Get user ID for logging
       const supabase = getSupabaseForRequest(req);
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-      if (authError || !user) {
-        return NextResponse.json(
-          { error: 'Não autenticado' },
-          { status: 401 }
-        );
-      }
-
-      userId = user.id;
-
-      // TODO: Check if user is admin
-      // For now, log warning and continue
-      logger.warn('Cleanup triggered by user (admin check not implemented)', {
-        userId: userId,
-        component: 'API: admin/cleanup'
-      });
+      const { data: { user } } = await supabase.auth.getUser();
+      userId = user?.id;
     }
 
     // Parse options

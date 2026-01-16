@@ -527,7 +527,13 @@ export class AINarrator {
     try {
       const files = await fs.readdir(this.tempDir);
       await Promise.all(files.map(file => 
-        fs.unlink(path.join(this.tempDir, file)).catch(() => {})
+        fs.unlink(path.join(this.tempDir, file)).catch((error) => {
+          logger.debug('Temp file already deleted during cleanup', {
+            component: 'AINarrator',
+            file,
+            error: error instanceof Error ? error.message : String(error)
+          });
+        })
       ));
     } catch (error) {
       logger.warn('Failed to cleanup temp directory', { component: 'AINarrator', error: String(error) });

@@ -6,6 +6,7 @@
 import { readFile } from 'fs/promises';
 import { NextRequest, NextResponse } from 'next/server';
 import path from 'path';
+import { logger } from '@lib/logger';
 
 const SWAGGER_UI_HTML = `
 <!DOCTYPE html>
@@ -81,7 +82,9 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Error loading OpenAPI spec:', error);
+    logger.error('Erro ao carregar especificação OpenAPI', error instanceof Error ? error : new Error(String(error)), {
+      component: 'API: docs'
+    });
     return NextResponse.json({ error: 'Failed to load API documentation' }, { status: 500 });
   }
 }

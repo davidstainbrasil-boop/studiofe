@@ -4,6 +4,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+import { getRequiredEnv } from '@lib/env';
 
 export type EventType = string;
 export type MetricCategory = string;
@@ -110,8 +111,8 @@ export class AnalyticsMetricsSystem {
   private supabase;
 
   private constructor() {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+    const supabaseUrl = getRequiredEnv('NEXT_PUBLIC_SUPABASE_URL');
+    const supabaseKey = getRequiredEnv('SUPABASE_SERVICE_ROLE_KEY');
     this.supabase = createClient(supabaseUrl, supabaseKey);
   }
   

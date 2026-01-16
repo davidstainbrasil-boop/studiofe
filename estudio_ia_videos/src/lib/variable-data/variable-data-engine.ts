@@ -507,10 +507,22 @@ export class VariableDataEngine {
       try {
         for (const variation of job.variations) {
           if (variation.outputPath) {
-            await fs.unlink(variation.outputPath).catch(() => {});
+            await fs.unlink(variation.outputPath).catch((error) => {
+              logger.debug('Output file already deleted during cleanup', {
+                component: 'VariableDataEngine',
+                outputPath: variation.outputPath,
+                error: error instanceof Error ? error.message : String(error)
+              });
+            });
           }
           if (variation.metadata?.thumbnailPath) {
-            await fs.unlink(variation.metadata.thumbnailPath).catch(() => {});
+            await fs.unlink(variation.metadata.thumbnailPath).catch((error) => {
+              logger.debug('Thumbnail file already deleted during cleanup', {
+                component: 'VariableDataEngine',
+                thumbnailPath: variation.metadata?.thumbnailPath,
+                error: error instanceof Error ? error.message : String(error)
+              });
+            });
           }
         }
       } catch (error) {

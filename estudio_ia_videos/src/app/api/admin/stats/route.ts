@@ -40,18 +40,18 @@ export async function GET(_request: NextRequest) {
       totalProjects,
       projectsLast24h,
       renderSummary,
+      billingStats
     ] = await Promise.all([
       supabaseAdmin.from('users').select('*', { count: 'exact', head: true }).then(r => r.count || 0),
       supabaseAdmin.from('projects').select('*', { count: 'exact', head: true }).then(r => r.count || 0),
       supabaseAdmin.from('projects').select('*', { count: 'exact', head: true }).gte("updated_at", last24h.toISOString()).then(r => r.count || 0),
       getRenderJobSummary(last24h),
+      getBillingStats(),
     ])
 
-    // Storage Stats: Fallback or calculate from render_jobs if possible.
-    // video_exports table does not exist in current schema.
-    const usedStorageBytes = 0; // Placeholder until storage metrics are re-implemented
+    const usedStorageBytes = billingStats.totalStorageUsed; 
     const totalStorageBytes = 500 * 1024 * 1024 * 1024; // 500GB Quota
-    const storageUtilization = 0;
+    const storageUtilization = (usedStorageBytes / totalStorageBytes) * 100;
 
     // Active Sessions: Distinct users with activity in last 1h
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
@@ -88,6 +88,7 @@ export async function GET(_request: NextRequest) {
       totalStorageBytes: totalStorageBytes.toString(),
       storageUtilization,
       renderJobs: renderSummary,
+      plans: billingStats.plans,
       generatedAt: now.toISOString(),
     })
   } catch (error) {
@@ -95,6 +96,36 @@ export async function GET(_request: NextRequest) {
     , { component: 'API: admin/stats' })
     return NextResponse.json({ error: 'Failed to fetch stats' }, { status: 500 })
   }
+}
+
+
+// Helper for Prisma aggregations
+async function getBillingStats() {
+    const { prisma } = await import('@/lib/prisma');
+    
+    // Aggregations might need casting if types aren't fully generated yet
+    const usageAgg = await (prisma as any).user_usage.aggregate({
+        _sum: {
+            rendersCount: true,
+            storageUsedBytes: true
+        }
+    });
+
+    const userPlans = await prisma.users.groupBy({
+        by: ['plan_tier'] as any, // Cast to any to avoid Enum issues if not fully regenerated
+        _count: {
+            id: true
+        }
+    });
+
+    return {
+        totalRenders: usageAgg._sum.rendersCount || 0,
+        totalStorageUsed: usageAgg._sum.storageUsedBytes || 0,
+        plans: userPlans.reduce((acc: any, curr: any) => {
+            acc[curr.plan_tier || 'free'] = curr._count.id;
+            return acc;
+        }, {})
+    };
 }
 
 async function getRenderJobSummary(since: Date) {

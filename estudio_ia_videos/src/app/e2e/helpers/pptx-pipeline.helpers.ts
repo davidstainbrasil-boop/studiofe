@@ -220,6 +220,7 @@ export async function cleanupTestData(
   uploadId?: string,
   jobId?: string,
   projectId?: string,
+  avatarId?: string
 ): Promise<void> {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
@@ -242,6 +243,11 @@ export async function cleanupTestData(
       await supabase.from('timelines').delete().eq('projectId', projectId);
       await supabase.from('projects').delete().eq('id', projectId);
       console.log(`Cleaned up project: ${projectId}`);
+    }
+
+    if (avatarId) {
+        await supabase.from('avatar_models').delete().eq('id', avatarId);
+        console.log(`Cleaned up avatar: ${avatarId}`);
     }
   } catch (error) {
     console.error('Cleanup error (non-fatal):', error);
@@ -307,4 +313,48 @@ export async function createTestProject(userId: string, projectId: string): Prom
     throw new Error(`Failed to create test project: ${error.message}`);
   }
   console.log(`Created test project: ${projectId} for user ${userId}`);
+}
+
+/**
+ * Create a test avatar in the database
+ */
+export async function createTestAvatar(avatarId: string, userId?: string): Promise<void> {
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+  
+  const { error } = await supabase.from('avatar_models').insert({
+    id: avatarId,
+    name: 'Test Avatar',
+    display_name: 'Test Avatar', // match schema inference
+    category: 'ai', // This might fail if 'category' column doesn't exist in SQL. SQL has 'avatar_type'.
+    // SQL Schema: name, display_name, avatar_type, gender, model_file_url
+    avatar_type: 'realistic',
+    gender: 'neutral',
+    model_file_url: 'https://example.com/model.glb',
+    is_active: true,
+    created_by: userId // optional ref
+  });
+  
+  if (error) {
+       console.error(`Failed to create test avatar (attempt 1): ${error.message}`);
+       
+       // Fallback or retry with different structure if needed, but SQL seems clear.
+       // Note: 'category' was in my previous guess but SQL has 'avatar_type'.
+       // SQL does NOT have 'category' column. Remove it.
+       // SQL DOES have 'is_active'.
+       
+       const { error: error2 } = await supabase.from('avatar_models').insert({
+        id: avatarId,
+        name: 'Test Avatar',
+        display_name: 'Test Avatar',
+        avatar_type: 'realistic',
+        gender: 'neutral',
+        model_file_url: 'https://example.com/model.glb',
+        is_active: true
+       });
+       
+       if (error2) {
+           throw new Error(`Failed to create test avatar: ${error2.message}`);
+       }
+  }
+  console.log(`Created test avatar: ${avatarId}`);
 }

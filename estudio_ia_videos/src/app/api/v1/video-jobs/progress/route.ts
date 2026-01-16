@@ -32,7 +32,7 @@ export async function POST(req: Request) {
     }
 
     // Rate limiting por usuário para updates de progresso (120/min)
-    const rl = checkRateLimit(`progress:${userData.user.id}`, 120, 60_000)
+    const rl = await checkRateLimit(`progress:${userData.user.id}`, 120, 60_000)
     if (!rl.allowed) {
       recordRateLimitHit();
       return new NextResponse(JSON.stringify({ code: 'RATE_LIMITED', message: 'Muitas requisições de progresso. Tente novamente em breve.' }), { status: 429, headers: { 'content-type': 'application/json', 'Retry-After': String(rl.retryAfterSec) } })

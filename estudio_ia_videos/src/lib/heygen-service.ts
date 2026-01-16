@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { logger } from '@lib/logger';
+import { getRequiredEnv, getOptionalEnv } from '@lib/env';
 import { withRetry } from '@lib/error-handling';
 import { withCircuitBreaker } from '@lib/resilience/circuit-breaker';
 import type { HeyGenVoice, HeyGenGenerateVideoResponse } from '@types/external-apis';
@@ -53,10 +54,10 @@ export class HeyGenService {
   private supabase;
 
   constructor() {
-    this.apiKey = process.env.HEYGEN_API_KEY || '';
+    this.apiKey = getOptionalEnv('HEYGEN_API_KEY');
     
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+    const supabaseUrl = getRequiredEnv('NEXT_PUBLIC_SUPABASE_URL');
+    const supabaseKey = getRequiredEnv('SUPABASE_SERVICE_ROLE_KEY');
     this.supabase = createClient(supabaseUrl, supabaseKey);
   }
 

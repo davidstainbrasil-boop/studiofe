@@ -75,7 +75,10 @@ export async function POST(request: NextRequest) {
       errorDetails: null
     };
 
-    const job = await prisma.processing_queue.create({
+    // TODO: Se processing_queue não existir no schema Prisma, usar render_jobs ou outra tabela
+    let job;
+    try {
+      job = await (prisma as any).processing_queue.create({
       data: {
         id: crypto.randomUUID(),
         jobType: 'avatar-3d-render',
@@ -84,6 +87,22 @@ export async function POST(request: NextRequest) {
         jobData: jobData as any
       }
     });
+    } catch (dbError) {
+      logger.error('Tabela processing_queue não encontrada, usando fallback', dbError instanceof Error ? dbError : new Error(String(dbError)), {
+        component: 'API: avatars/local-render'
+      });
+      // Fallback: criar job usando render_jobs
+      job = await prisma.render_jobs.create({
+        data: {
+          id: crypto.randomUUID(),
+          projectId: 'temp-avatar-render',
+          userId: 'system',
+          status: 'queued',
+          progress: 0,
+          renderSettings: jobData as any
+        }
+      });
+    }
 
     // ETAPA 2: Gera áudio com TTS (async)
     // Inicia processamento em background
@@ -91,7 +110,7 @@ export async function POST(request: NextRequest) {
       .catch(error => {
         logger.error(`[Job ${job.id}] Erro no processamento`, error instanceof Error ? error : new Error(String(error)), { component: 'API: avatars/local-render' });
         // Atualiza job com erro
-        prisma.processing_queue.update({
+        ((prisma as any).processing_queue || prisma.render_jobs).update({
           where: { id: job.id },
           data: {
             status: 'failed',
@@ -133,9 +152,30 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const job = await prisma.processing_queue.findUnique({
+    // TODO: Se processing_queue não existir no schema Prisma, usar render_jobs
+    let job;
+    try {
+      job = await (prisma as any).processing_queue.findUnique({
       where: { id: jobId }
     });
+    } catch (dbError) {
+      // Fallback para render_jobs se processing_queue não existir
+      try {
+        job = await prisma.render_jobs.findUnique({
+          where: { id: jobId }
+        });
+        if (job) {
+          // Adaptar estrutura de render_jobs para processing_queue
+          job = {
+            ...job,
+            jobData: job.renderSettings || {},
+            errorMessage: job.errorMessage || null
+          } as any;
+        }
+      } catch {
+        job = null;
+      }
+    }
 
     if (!job) {
       return NextResponse.json(
@@ -183,20 +223,54 @@ async function processAvatarRendering(
   const s3 = new S3UploadEngine();
   const renderer = new LocalAvatarRenderer();
 
+  // Helper para atualizar job com fallback
+  const updateJob = async (data: any) => {
+    try {
+      await (prisma as any).processing_queue.update({
+        where: { id: jobId },
+        data
+      });
+    } catch {
+      // Fallback para render_jobs
+      await prisma.render_jobs.update({
+        where: { id: jobId },
+        data: {
+          status: data.status,
+          progress: data.progress,
+          renderSettings: data.jobData || {},
+          errorMessage: data.errorMessage || null
+        }
+      });
+    }
+  };
+
+  // Helper para buscar job com fallback
+  const getJob = async () => {
+    try {
+      return await (prisma as any).processing_queue.findUnique({ where: { id: jobId } });
+    } catch {
+      const job = await prisma.render_jobs.findUnique({ where: { id: jobId } });
+      if (job) {
+        return {
+          ...job,
+          jobData: job.renderSettings || {}
+        } as any;
+      }
+      return null;
+    }
+  };
+
   try {
     // Recuperar job atual para manter dados
-    const currentJob = await prisma.processing_queue.findUnique({ where: { id: jobId } });
+    const currentJob = await getJob();
     let currentData: AvatarJobData = (currentJob?.jobData ?? {}) as AvatarJobData;
 
     // ETAPA 1: Gerar áudio TTS
     currentData = { ...currentData, currentStage: 'audio' };
-    await prisma.processing_queue.update({
-      where: { id: jobId },
-      data: {
-        status: 'processing',
-        progress: 10,
-        jobData: currentData as any
-      }
+    await updateJob({
+      status: 'processing',
+      progress: 10,
+      jobData: currentData as any
     });
 
     const ttsResult = await new EnhancedTTSService().synthesize({
@@ -219,22 +293,16 @@ async function processAvatarRendering(
       estimatedTime: Math.ceil(duration / 100)
     };
 
-    await prisma.processing_queue.update({
-      where: { id: jobId },
-      data: {
-        progress: 25,
-        jobData: currentData as any
-      }
+    await updateJob({
+      progress: 25,
+      jobData: currentData as any
     });
 
     // ETAPA 2: Processar lip sync e animação
     currentData = { ...currentData, currentStage: 'lipsync' };
-    await prisma.processing_queue.update({
-      where: { id: jobId },
-      data: {
-        progress: 40,
-        jobData: currentData as any
-      }
+    await updateJob({
+      progress: 40,
+      jobData: currentData as any
     });
 
     // Mock LipSync
@@ -242,12 +310,9 @@ async function processAvatarRendering(
 
     // ETAPA 3: Renderizar vídeo
     currentData = { ...currentData, currentStage: 'rendering' };
-    await prisma.processing_queue.update({
-      where: { id: jobId },
-      data: {
-        progress: 60,
-        jobData: currentData as any
-      }
+    await updateJob({
+      progress: 60,
+      jobData: currentData as any
     });
 
     // Use renderSequence
@@ -259,12 +324,9 @@ async function processAvatarRendering(
 
     // ETAPA 4: Upload para S3
     currentData = { ...currentData, currentStage: 'encoding' };
-    await prisma.processing_queue.update({
-      where: { id: jobId },
-      data: {
-        progress: 85,
-        jobData: currentData as any
-      }
+    await updateJob({
+      progress: 85,
+      jobData: currentData as any
     });
 
     const uploadResult = await s3.upload({
@@ -285,13 +347,10 @@ async function processAvatarRendering(
       fileSize: uploadResult.size
     };
 
-    await prisma.processing_queue.update({
-      where: { id: jobId },
-      data: {
-        status: 'completed',
-        progress: 100,
-        jobData: currentData as any
-      }
+    await updateJob({
+      status: 'completed',
+      progress: 100,
+      jobData: currentData as any
     });
 
     logger.info(`[Job ${jobId}] ✅ Renderização concluída com sucesso`, { component: 'API: avatars/local-render' });

@@ -13,24 +13,60 @@ import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
 import { logger } from '@lib/logger';
 import { prisma } from '@lib/db';
+import { requireAuth, unauthorizedResponse } from '@lib/api/auth-middleware';
 
 const rateLimiterPost = createRateLimiter(rateLimitPresets.render);
 export async function POST(request: NextRequest) {
   return rateLimiterPost(request, async (request: NextRequest) => {
   try {
-    const formData = await request.formData()
-    
-    const avatarId = formData.get('avatarId') as string
-    const animation = formData.get('animation') as string
-    const text = formData.get('text') as string
-    const audioFile = formData.get('audioFile') as File
-    const resolution = formData.get('resolution') as '4K' | '8K' || '4K'
-    const quality = formData.get('quality') as 'cinematic' | 'hyperreal' || 'hyperreal'
-    const language = formData.get('language') as 'pt-BR' | 'en-US' | 'es-ES' || 'pt-BR'
-    const rayTracing = formData.get('rayTracing') === 'true'
-    const realTimeLipSync = formData.get('realTimeLipSync') === 'true'
-    const audio2FaceEnabled = formData.get('audio2FaceEnabled') !== 'false'
-    const voiceCloning = formData.get('voiceCloning') === 'true'
+    // Authenticate user
+    const auth = await requireAuth(request);
+    if (!auth) {
+      return unauthorizedResponse('Authentication required for avatar rendering');
+    }
+    const userId = auth.user.id;
+
+    logger.info(`Request Content-Type: ${request.headers.get('content-type')}`, { component: 'API: v2/avatars/render' });
+    const contentType = request.headers.get('content-type') || '';
+    let avatarId: string;
+    let animation: string;
+    let text: string;
+    let audioFile: File | null = null;
+    let resolution: string;
+    let quality: string;
+    let language: string;
+    let rayTracing: boolean;
+    let realTimeLipSync: boolean;
+    let audio2FaceEnabled: boolean;
+    let voiceCloning: boolean;
+
+    if (contentType.includes('application/json')) {
+        const json = await request.json();
+        avatarId = json.avatarId;
+        animation = json.animation;
+        text = json.text;
+        // audioFile not supported in JSON mode unless base64, skipping for now
+        resolution = json.resolution || '4K';
+        quality = json.quality || 'hyperreal';
+        language = json.language || 'pt-BR';
+        rayTracing = json.rayTracing === true; // JSON booleans
+        realTimeLipSync = json.realTimeLipSync === true;
+        audio2FaceEnabled = json.audio2FaceEnabled !== false;
+        voiceCloning = json.voiceCloning === true;
+    } else {
+        const formData = await request.formData();
+        avatarId = formData.get('avatarId') as string;
+        animation = formData.get('animation') as string;
+        text = formData.get('text') as string;
+        audioFile = formData.get('audioFile') as File;
+        resolution = (formData.get('resolution') as string) || '4K';
+        quality = (formData.get('quality') as string) || 'hyperreal';
+        language = (formData.get('language') as string) || 'pt-BR';
+        rayTracing = formData.get('rayTracing') === 'true';
+        realTimeLipSync = formData.get('realTimeLipSync') === 'true';
+        audio2FaceEnabled = formData.get('audio2FaceEnabled') !== 'false';
+        voiceCloning = formData.get('voiceCloning') === 'true';
+    }
 
     logger.info('🎬 API v2: Iniciando renderização hiper-realista...', { component: 'API: v2/avatars/render' })
     logger.info(`🎭 Avatar: ${avatarId}`, { component: 'API: v2/avatars/render' })
@@ -55,7 +91,7 @@ export async function POST(request: NextRequest) {
       .from('avatar_models' as never) as ReturnType<typeof supabaseClient.from>)
       .select('*')
       .eq('id', avatarId)
-      .eq("isActive", true)
+      .eq("is_active", true)
       .single()
 
     if (avatarError || !avatar) {
@@ -111,9 +147,169 @@ export async function POST(request: NextRequest) {
       language
     }
 
-    // Iniciar renderização usando o novo pipeline
+    // --- HEYGEN INTEGRATION START ---
+    // Check if using HeyGen Avatar (starts with hg_ or mock-avatar)
+    if (avatarId.startsWith('hg_') || avatarId.startsWith('mock-avatar')) {
+       try {
+         const { heyGenService } = await import('@lib/heygen-service');
+         
+         // 1. Upload audio if needed (HeyGen needs URL, not raw file usually, or we upload to them)
+         // heyGenService.generateVideo takes { video_inputs: ... }
+         // We need to upload the audio to Supabase first to get a URL to pass to HeyGen
+         // OR HeyGen allows uploading asset via API? 
+         // For now, let's assume we need a public URL for the audio.
+         
+         let audioUrl = '';
+         if (audioFile) {
+            const audioBuffer = await audioFile.arrayBuffer();
+            const fileName = `temp_heygen_${Date.now()}.mp3`;
+            const { data, error } = await supabaseClient.storage
+                .from('assets')
+                .upload(fileName, audioBuffer, { contentType: 'audio/mpeg', upsert: true });
+            
+            if (error) throw new Error('Failed to upload temp audio for HeyGen');
+            
+            const { data: urlData } = supabaseClient.storage.from('assets').getPublicUrl(fileName);
+            audioUrl = urlData.publicUrl;
+         }
+
+         const externalVideoId = await heyGenService.generateVideo({
+            video_inputs: [{
+                character: {
+                    type: 'avatar',
+                    avatar_id: avatarId,
+                    avatar_style: 'normal'
+                },
+                voice: audioUrl ? {
+                    type: 'audio',
+                    audio_url: audioUrl
+                } : {
+                    type: 'text',
+                    input_text: text,
+                    voice_id: '131a436c47064f708210df6628ef8fdd' // default en voice
+                },
+                background: {
+                    type: 'color',
+                    value: '#000000' // green screen or alpha? HeyGen alpha uses 'alpha' type usually, but 'color' is safe
+                }
+            }],
+            dimension: { width: 1920, height: 1080 }
+         });
+
+         // Create Job in DB
+         const job = await prisma.render_jobs.create({
+            data: {
+                status: 'processing', // HeyGen is async
+                renderSettings: JSON.parse(JSON.stringify({
+                    type: 'heygen_avatar_render',
+                    provider: 'heygen',
+                    externalId: externalVideoId,
+                    text,
+                    options: renderOptions,
+                    userId: userId // Authenticated user
+                })),
+                userId: userId, // Authenticated user
+                progress: 0
+            }
+         });
+
+         return NextResponse.json({
+            success: true,
+            data: {
+                jobId: job.id,
+                status: 'processing',
+                avatar: { id: avatarId, name: 'HeyGen Avatar', category: 'ai' },
+                render: { ...renderOptions, provider: 'heygen' },
+                output: { 
+                    statusUrl: `/api/v2/avatars/render/status/${job.id}`
+                }
+            }
+         });
+
+       } catch (heyGenError) {
+         logger.error('HeyGen Generation Failed', heyGenError instanceof Error ? heyGenError : new Error(String(heyGenError)));
+         return NextResponse.json({ success: false, error: { message: 'HeyGen failure', code: 'HEYGEN_ERROR' } }, { status: 500 });
+       }
+    }
+    // --- HEYGEN INTEGRATION END ---
+
+    // --- D-ID INTEGRATION START ---
+    if (avatarId.startsWith('did_')) {
+       try {
+         const { DIDServiceReal } = await import('@lib/services/avatar/did-service-real');
+         const didService = new DIDServiceReal();
+
+         // Upload audio if needed (D-ID prefers URL or text)
+         let audioUrl = '';
+         if (audioFile) {
+            const audioBuffer = await audioFile.arrayBuffer();
+            const fileName = `temp_did_${Date.now()}.mp3`;
+            const { data, error } = await supabaseClient.storage
+                .from('assets')
+                .upload(fileName, audioBuffer, { contentType: 'audio/mpeg', upsert: true });
+            
+            if (error) throw new Error('Failed to upload temp audio for D-ID');
+            
+            const { data: urlData } = supabaseClient.storage.from('assets').getPublicUrl(fileName);
+            audioUrl = urlData.publicUrl;
+         }
+
+         // Look up source image for this D-ID avatar
+         const { data: avatarRecord } = await (supabaseClient
+            .from('avatar_models' as never) as ReturnType<typeof supabaseClient.from>)
+            .select('imageUrl')
+            .eq('id', avatarId)
+            .single();
+         
+         const sourceUrl = (avatarRecord as any)?.imageUrl || 'https://placehold.co/512x512.png'; // Fallback or Error
+
+         const talkId = await didService.createTalk({
+             sourceImage: sourceUrl,
+             text: !audioUrl ? text : undefined,
+             audioUrl: audioUrl || undefined,
+             voice: language === 'pt-BR' ? 'pt-BR-FranciscaNeural' : 'en-US-JennyNeural' // Simple default mapping
+         });
+
+         // Create Job in DB
+         const job = await prisma.render_jobs.create({
+            data: {
+                status: 'processing',
+                renderSettings: JSON.parse(JSON.stringify({
+                    type: 'did_avatar_render',
+                    provider: 'did',
+                    externalId: talkId,
+                    text,
+                    options: renderOptions,
+                    userId: userId
+                })),
+                userId: userId,
+                progress: 0
+            }
+         });
+
+         return NextResponse.json({
+            success: true,
+            data: {
+                jobId: job.id,
+                status: 'processing',
+                avatar: { id: avatarId, name: 'D-ID Avatar', category: 'ai' },
+                render: { ...renderOptions, provider: 'did' },
+                output: { 
+                    statusUrl: `/api/v2/avatars/render/status/${job.id}`
+                }
+            }
+         });
+
+       } catch (didError) {
+         logger.error('D-ID Generation Failed', didError instanceof Error ? didError : new Error(String(didError)));
+         return NextResponse.json({ success: false, error: { message: 'D-ID failure', code: 'DID_ERROR' } }, { status: 500 });
+       }
+    }
+    // --- D-ID INTEGRATION END ---
+
+    // Iniciar renderização usando o novo pipeline (Internal/UE5)
     const renderResult = await avatar3DPipeline.renderHyperRealisticAvatar(
-      'user-temp', // TODO: Obter userId real da autenticação
+      userId, // Authenticated user
       text || '',
       voiceProfileId,
       {
@@ -167,7 +363,7 @@ export async function POST(request: NextRequest) {
         metadata: {
           startTime: renderResult.startTime ? new Date(renderResult.startTime).toISOString() : new Date().toISOString(),
           version: '2.0.0',
-          userId: 'user-temp', // TODO: Obter userId real
+          userId: userId, // Authenticated user
           audioFile: audioFile ? audioFile.name : null,
           textLength: text?.length || 0
         }

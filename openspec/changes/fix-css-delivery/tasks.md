@@ -1,0 +1,4 @@
+- [x] Diagnose `cursostecno.com.br` DNS/Hosting setup (VPS Proxy confirmed) <!-- id: 0 -->
+- [x] Verify content-type headers for CSS assets via browser/curl (Confirmed text/css) <!-- id: 1 -->
+- [x] Implement fix (Rebuild local VPS instance to remove assetPrefix) <!-- id: 2 -->
+- [x] Validate visual loading on custom domain (Confirmed via Screenshot) <!-- id: 3 -->

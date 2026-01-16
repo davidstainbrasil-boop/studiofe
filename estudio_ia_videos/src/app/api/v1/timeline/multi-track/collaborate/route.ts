@@ -99,7 +99,9 @@ export async function POST(req: NextRequest) {
       );
     }
   } catch (error) {
-    logger.error('Erro na rota de colaboração:', error);
+    logger.error('Erro na rota de colaboração:', error instanceof Error ? error : new Error(String(error)), {
+      component: 'API: v1/timeline/multi-track/collaborate'
+    });
       return NextResponse.json(
         { success: false, message: 'Erro interno do servidor' },
         { status: 500 }

@@ -1,17 +1,16 @@
 
-
 'use client'
 
 /**
-* 🚨 DASHBOARD ULTRA SIMPLIFICADO - Sem hooks complexos, sem loops
-*/
+ * 🎯 DASHBOARD REAL - Connected to Database
+ */
 
 import { useEffect, useMemo, useState } from 'react'
 import { logger } from '@lib/logger'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
 import { Button } from './ui/button'
 import { Badge } from './ui/badge'
-import { 
+import {
   Plus,
   FileVideo,
   Clock,
@@ -49,73 +48,31 @@ import {
 import { createBrowserSupabaseClient } from '@lib/services'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 
-const MOCK_PROJECTS = [
-  {
-    id: '1',
-    name: 'NR-12 Segurança em Máquinas',
-    description: 'Treinamento sobre operação segura de equipamentos',
-    status: 'completed' as const,
-    duration: 180,
-    slidesCount: 15,
-    totalSlides: 15,
-    thumbnailUrl: 'https://i.imgur.com/nr12-seguranca.jpg',
-    videoUrl: 'https://example.com/video1.mp4',
-    views: 124,
-    downloads: 34,
-    createdAt: '2024-09-20T10:30:00Z',
-    updatedAt: '2024-09-20T14:30:00Z'
-  },
-  {
-    id: '2',
-    name: 'NR-35 Trabalho em Altura',
-    description: 'Procedimentos de segurança para trabalhos elevados',
-    status: 'processing' as const,
-    duration: 240,
-    slidesCount: 20,
-    totalSlides: 25,
-    thumbnailUrl: 'https://i.imgur.com/nr35-altura.jpg',
-    videoUrl: null,
-    views: 45,
-    downloads: 8,
-    createdAt: '2024-09-20T08:15:00Z',
-    updatedAt: '2024-09-20T12:45:00Z'
-  },
-  {
-    id: '3',
-    name: 'NR-10 Segurança Elétrica',
-    description: 'Prevenção de acidentes em instalações elétricas',
-    status: 'draft' as const,
-    duration: 0,
-    slidesCount: 0,
-    totalSlides: 18,
-    thumbnailUrl: 'https://i.imgur.com/nr10-eletrica.jpg',
-    videoUrl: null,
-    views: 0,
-    downloads: 0,
-    createdAt: '2024-09-20T09:00:00Z',
-    updatedAt: '2024-09-20T09:00:00Z'
-  }
-]
+interface Project {
+  id: string
+  name: string
+  description?: string
+  status: 'draft' | 'processing' | 'completed' | 'error' | 'archived'
+  type: string
+  userId: string
+  createdAt: string
+  updatedAt: string
+}
 
-const MOCK_METRICS = {
+interface Metrics {
   overview: {
-    totalProjects: 15,
-    completedProjects: 8,
-    processingProjects: 3,
-    totalDuration: 2850,
-    totalViews: 1247,
-    totalDownloads: 342,
-    avgProcessingTime: 12
-  },
-  projectStatus: [
-    { status: 'completed', count: 8 },
-    { status: 'processing', count: 3 },
-    { status: 'draft', count: 4 }
-  ],
+    totalProjects: number
+    completedProjects: number
+    processingProjects: number
+    totalDuration: number
+    totalViews: number
+    totalDownloads: number
+    avgProcessingTime: number
+  }
   performance: {
-    avgProcessingTime: 12,
-    successRate: 94,
-    cacheHitRate: 87
+    avgProcessingTime: number
+    successRate: number
+    cacheHitRate: number
   }
 }
 
@@ -127,7 +84,7 @@ function StatusBadge({ status }: { status: string }) {
     error: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
     archived: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'
   }
-  
+
   const labels = {
     completed: 'Concluído',
     processing: 'Processando',
@@ -135,7 +92,7 @@ function StatusBadge({ status }: { status: string }) {
     error: 'Erro',
     archived: 'Arquivado'
   }
-  
+
   return (
     <Badge className={variants[status as keyof typeof variants] || variants.draft}>
       {labels[status as keyof typeof labels] || status}
@@ -148,6 +105,9 @@ export default function DashboardSimplified() {
   const [user, setUser] = useState<SupabaseUser | null>(null)
   const [signingOut, setSigningOut] = useState(false)
   const [activeFilter, setActiveFilter] = useState('all')
+  const [projects, setProjects] = useState<Project[]>([])
+  const [metrics, setMetrics] = useState<Metrics | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let isMounted = true
@@ -157,8 +117,44 @@ export default function DashboardSimplified() {
         const { data } = await supabase.auth.getUser()
         if (!isMounted) return
         setUser(data.user ?? null)
+
+        if (data.user) {
+          // Fetch projects
+          const projectsRes = await fetch(`/api/projects?userId=${data.user.id}&limit=100`)
+          const projectsData = await projectsRes.json()
+
+          if (projectsData.success && isMounted) {
+            setProjects(projectsData.data)
+          }
+
+          // Fetch metrics  
+          const metricsRes = await fetch(`/api/admin/stats`)
+          const metricsData = await metricsRes.json()
+
+          if (metricsData.success && isMounted) {
+            setMetrics({
+              overview: {
+                totalProjects: metricsData.data.totalProjects || 0,
+                completedProjects: metricsData.data.completedProjects || 0,
+                processingProjects: metricsData.data.processingProjects || 0,
+                totalDuration: metricsData.data.totalDuration || 0,
+                totalViews: metricsData.data.totalViews || 0,
+                totalDownloads: metricsData.data.totalDownloads || 0,
+                avgProcessingTime: metricsData.data.avgProcessingTime || 0
+              },
+              performance: {
+                avgProcessingTime: metricsData.data.avgProcessingTime || 0,
+                successRate: metricsData.data.successRate || 0,
+                cacheHitRate: metricsData.data.cacheHitRate || 0
+              }
+            })
+          }
+
+          setLoading(false)
+        }
       } catch (error) {
-        logger.error('Erro ao carregar sessão do usuário', error instanceof Error ? error : new Error(String(error)), { component: 'DashboardSimplified' })
+        logger.error('Erro ao carregar dados do dashboard', error instanceof Error ? error : new Error(String(error)), { component: 'DashboardSimplified' })
+        setLoading(false)
       }
     }
 
@@ -174,8 +170,8 @@ export default function DashboardSimplified() {
       listener?.subscription.unsubscribe()
     }
   }, [supabase])
-  
-  const filteredProjects = MOCK_PROJECTS.filter(project => 
+
+  const filteredProjects = projects.filter(project =>
     activeFilter === 'all' || project.status === activeFilter
   )
 
@@ -224,17 +220,17 @@ export default function DashboardSimplified() {
                   Estúdio IA
                 </h1>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Dashboard Simplificado - Safe Mode
+                  Dashboard - Real Database
                 </p>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-4">
               <div className="hidden md:flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                 <Shield className="h-4 w-4 text-green-500" />
                 Ultra Safe Mode
               </div>
-              
+
               {user && (
                 <div className="flex items-center gap-3">
                   <div className="text-right hidden sm:block">
@@ -269,9 +265,9 @@ export default function DashboardSimplified() {
               <Building className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{MOCK_METRICS.overview.totalProjects}</div>
+              <div className="text-2xl font-bold">{metrics?.overview.totalProjects || 0}</div>
               <p className="text-xs text-muted-foreground">
-                {MOCK_METRICS.overview.completedProjects} concluídos
+                {metrics?.overview.completedProjects || 0} concluídos
               </p>
             </CardContent>
           </Card>
@@ -282,7 +278,7 @@ export default function DashboardSimplified() {
               <Eye className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{MOCK_METRICS.overview.totalViews.toLocaleString()}</div>
+              <div className="text-2xl font-bold">{(metrics?.overview.totalViews || 0).toLocaleString()}</div>
               <p className="text-xs text-muted-foreground">
                 Últimos 30 dias
               </p>
@@ -295,7 +291,7 @@ export default function DashboardSimplified() {
               <Download className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{MOCK_METRICS.overview.totalDownloads}</div>
+              <div className="text-2xl font-bold">{metrics?.overview.totalDownloads || 0}</div>
               <p className="text-xs text-muted-foregreen">
                 Total de downloads
               </p>
@@ -308,7 +304,7 @@ export default function DashboardSimplified() {
               <CheckCircle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{MOCK_METRICS.performance.successRate}%</div>
+              <div className="text-2xl font-bold">{metrics?.performance.successRate || 0}%</div>
               <p className="text-xs text-green-600">
                 Processamento bem-sucedido
               </p>
@@ -326,7 +322,7 @@ export default function DashboardSimplified() {
               Gerencie seus vídeos de treinamento
             </p>
           </div>
-          
+
           <div className="flex gap-3">
             <Button
               onClick={handleCreateProject}
@@ -341,10 +337,10 @@ export default function DashboardSimplified() {
         {/* Filter Buttons */}
         <div className="flex flex-wrap gap-2 mb-6">
           {[
-            { key: 'all', label: 'Todos', count: MOCK_PROJECTS.length },
-            { key: 'completed', label: 'Concluídos', count: MOCK_PROJECTS.filter(p => p.status === 'completed').length },
-            { key: 'processing', label: 'Processando', count: MOCK_PROJECTS.filter(p => p.status === 'processing').length },
-            { key: 'draft', label: 'Rascunhos', count: MOCK_PROJECTS.filter(p => p.status === 'draft').length }
+            { key: 'all', label: 'Todos', count: projects.length },
+            { key: 'completed', label: 'Concluídos', count: projects.filter(p => p.status === 'completed').length },
+            { key: 'processing', label: 'Processando', count: projects.filter(p => p.status === 'processing').length },
+            { key: 'draft', label: 'Rascunhos', count: projects.filter(p => p.status === 'draft').length }
           ].map(filter => (
             <Button
               key={filter.key}
@@ -364,7 +360,7 @@ export default function DashboardSimplified() {
         {/* Projects Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProjects.map(project => (
-            <Card 
+            <Card
               key={project.id}
               className="group hover:shadow-lg transition-all duration-200 cursor-pointer hover:shadow-blue-100 dark:hover:shadow-blue-900/20"
               onClick={() => handleProjectClick(project.id)}
@@ -382,21 +378,17 @@ export default function DashboardSimplified() {
                   <StatusBadge status={project.status} />
                 </div>
               </CardHeader>
-              
+
               <CardContent className="space-y-4">
                 {/* Project Stats */}
-                <div className="grid grid-cols-3 gap-4 text-sm">
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-4 w-4 text-gray-400" />
-                    <span>{Math.floor(project.duration / 60)}m</span>
-                  </div>
+                <div className="grid grid-cols-2 gap-4 text-sm">
                   <div className="flex items-center gap-1">
                     <FileVideo className="h-4 w-4 text-gray-400" />
-                    <span>{project.slidesCount} slides</span>
+                    <span className="text-xs">{project.type}</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <Eye className="h-4 w-4 text-gray-400" />
-                    <span>{project.views}</span>
+                    <Clock className="h-4 w-4 text-gray-400" />
+                    <span className="text-xs">{new Date(project.updatedAt).toLocaleDateString('pt-BR')}</span>
                   </div>
                 </div>
 
@@ -405,12 +397,12 @@ export default function DashboardSimplified() {
                   <div className="space-y-2">
                     <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400">
                       <span>Processando...</span>
-                      <span>{Math.floor((project.slidesCount / project.totalSlides) * 100)}%</span>
+                      <span>...</span>
                     </div>
                     <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                      <div 
-                        className="bg-gradient-to-r from-blue-600 to-purple-600 h-2 rounded-full transition-all duration-500"
-                        style={{ width: `${(project.slidesCount / project.totalSlides) * 100}%` }}
+                      <div
+                        className="bg-gradient-to-r from-blue-600 to-purple-600 h-2 rounded-full transition-all duration-500 animate-pulse"
+                        style={{ width: `50%` }}
                       />
                     </div>
                   </div>
@@ -443,7 +435,7 @@ export default function DashboardSimplified() {
                       </Button>
                     )}
                   </div>
-                  
+
                   <div className="flex gap-1">
                     <Button size="sm" variant="ghost" className="gap-1">
                       <Share2 className="h-3 w-3" />
@@ -463,7 +455,7 @@ export default function DashboardSimplified() {
               Nenhum projeto encontrado
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              {activeFilter === 'all' 
+              {activeFilter === 'all'
                 ? 'Comece criando seu primeiro projeto de vídeo'
                 : `Nenhum projeto com status "${activeFilter}" encontrado`
               }

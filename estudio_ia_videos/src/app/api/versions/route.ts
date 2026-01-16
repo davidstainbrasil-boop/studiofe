@@ -93,7 +93,6 @@ export async function GET(req: NextRequest) {
       include: {
         users_project_versions_created_byTousers: {
           select: {
-            name: true,
             email: true
           }
         }

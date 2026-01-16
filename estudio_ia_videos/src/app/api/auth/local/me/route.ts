@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { LocalAuth } from '@lib/auth/local-auth';
 import { cookies } from 'next/headers';
+import { logger } from '@lib/logger';
 
 export async function GET(request: NextRequest) {
   try {
@@ -34,7 +35,9 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('[Me API] Erro:', error);
+    logger.error('Erro ao obter usuário atual', error instanceof Error ? error : new Error(String(error)), {
+      component: 'API: auth/local/me'
+    });
     return NextResponse.json(
       { success: false, error: 'Erro interno' },
       { status: 500 }
@@ -54,7 +57,9 @@ export async function DELETE(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('[Logout API] Erro:', error);
+    logger.error('Erro no logout', error instanceof Error ? error : new Error(String(error)), {
+      component: 'API: auth/local/me'
+    });
     return NextResponse.json(
       { success: false, error: 'Erro interno' },
       { status: 500 }

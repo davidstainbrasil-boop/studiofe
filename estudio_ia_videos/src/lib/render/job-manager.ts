@@ -97,11 +97,27 @@ export class JobManager {
       select: { id: true }
     });
 
-    logger.info('Created new render job', {
+    logger.info('Created new render job in DB', {
       component: 'JobManager',
       jobId: job.id,
       projectId
     });
+
+    // Add to BullMQ
+    try {
+      const { addVideoJob } = await import('@lib/queue/render-queue');
+      await addVideoJob({
+        jobId: job.id,
+        projectId,
+        userId
+      });
+      logger.info('Pushed job to BullMQ', { jobId: job.id });
+    } catch (queueError) {
+      logger.error('Failed to push job to BullMQ', queueError as Error, { jobId: job.id });
+      // We should probably mark the DB job as failed_enqueue here
+      await this.markAsFailedEnqueue(job.id, queueError instanceof Error ? queueError.message : 'Queue error');
+      throw queueError;
+    }
 
     return job.id;
   }
@@ -232,6 +248,10 @@ export class JobManager {
       // Trigger Webhook
       const context = await this.getJobContext(jobId);
       if (context) {
+        // Increment global usage stats
+        const { incrementUsage } = await import('@/lib/billing/usage');
+        await incrementUsage(context.userId, 'renders', 1);
+
         triggerWebhook.renderCompleted({
           jobId,
           projectId: context.projectId,
@@ -281,6 +301,71 @@ export class JobManager {
       });
     } catch (error) {
       logger.error(`Failed to remove job ${jobId}:`, error instanceof Error ? error : new Error(String(error)), { component: 'JobManager' });
+    }
+  }
+
+  /**
+   * Find stuck jobs (jobs in processing status for longer than threshold)
+   */
+  async findStuckJobs(thresholdMinutes: number): Promise<RenderJob[]> {
+    try {
+      const thresholdDate = new Date(Date.now() - thresholdMinutes * 60 * 1000);
+      
+      const stuckJobs = await prisma.render_jobs.findMany({
+        where: {
+          status: 'processing',
+          OR: [
+            { startedAt: { lt: thresholdDate } },
+            { startedAt: null, createdAt: { lt: thresholdDate } }
+          ]
+        },
+        orderBy: { createdAt: 'asc' }
+      });
+
+      return stuckJobs.map(job => ({
+        id: job.id,
+        userId: job.userId || '',
+        projectId: job.projectId || '',
+        status: job.status as RenderJob['status'],
+        progress: job.progress || 0,
+        createdAt: job.createdAt || new Date(),
+        startedAt: job.startedAt || undefined,
+        completedAt: job.completedAt || undefined,
+        outputUrl: job.outputUrl || undefined,
+        error: job.errorMessage || undefined
+      }));
+    } catch (error) {
+      logger.error('Error finding stuck jobs', error instanceof Error ? error : new Error(String(error)), { component: 'JobManager' });
+      return [];
+    }
+  }
+
+  /**
+   * Fail stuck jobs (mark as failed)
+   */
+  async failStuckJobs(thresholdMinutes: number): Promise<number> {
+    try {
+      const thresholdDate = new Date(Date.now() - thresholdMinutes * 60 * 1000);
+      
+      const result = await prisma.render_jobs.updateMany({
+        where: {
+          status: 'processing',
+          OR: [
+            { startedAt: { lt: thresholdDate } },
+            { startedAt: null, createdAt: { lt: thresholdDate } }
+          ]
+        },
+        data: {
+          status: 'failed',
+          errorMessage: `Job stuck for more than ${thresholdMinutes} minutes`,
+          completedAt: new Date()
+        }
+      });
+
+      return result.count;
+    } catch (error) {
+      logger.error('Error failing stuck jobs', error instanceof Error ? error : new Error(String(error)), { component: 'JobManager' });
+      return 0;
     }
   }
 }

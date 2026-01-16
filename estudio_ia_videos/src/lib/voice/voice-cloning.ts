@@ -58,7 +58,7 @@ export class VoiceCloning {
       
       // Anexar samples
       audioSamples.forEach((buffer, index) => {
-        const blob = new Blob([buffer], { type: 'audio/mpeg' });
+        const blob = new Blob([buffer as any], { type: 'audio/mpeg' });
         formData.append('files', blob, `sample_${index}.mp3`);
       });
 
@@ -96,8 +96,8 @@ export class VoiceCloning {
         qualityScore: 1.0 // Assumindo sucesso, score alto
       };
 
-    } catch (error) {
-      logger.error('Failed to create voice clone', error, { component: 'VoiceCloning' });
+    } catch (error: unknown) {
+      logger.error('Failed to create voice clone', error instanceof Error ? error : new Error(String(error)), { component: 'VoiceCloning' });
       throw error;
     }
   }
@@ -106,6 +106,11 @@ export class VoiceCloning {
    * Sintetiza áudio usando uma voz clonada
    */
   async synthesize(options: CloneOptions): Promise<Buffer> {
+    const result = await this.synthesizeWithTimestamps(options);
+    return result.audio;
+  }
+
+  async synthesizeWithTimestamps(options: CloneOptions): Promise<{ audio: Buffer, alignment?: any }> {
     logger.info('Synthesizing voice', { component: 'VoiceCloning', options });
 
     if (!ELEVENLABS_API_KEY) {
@@ -122,7 +127,10 @@ export class VoiceCloning {
         style: options.emotion === 'happy' ? 0.8 : 0, // Mapeamento básico de estilo
       });
 
-      return result.audio;
+      return {
+        audio: result.audio,
+        alignment: result.alignment
+      };
     } catch (error) {
       logger.error('Synthesis failed', error instanceof Error ? error : new Error(String(error)), { component: 'VoiceCloning' });
       throw error;

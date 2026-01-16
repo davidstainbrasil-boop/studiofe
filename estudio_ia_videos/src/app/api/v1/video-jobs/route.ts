@@ -66,12 +66,12 @@ export async function POST(req: Request) {
     // Rate limiting por usuário (janela fixa 60s)
     const WINDOW_MS = 60_000;
     const MAX_REQ = 30;
-    const rl = checkRateLimit(`post:${userId}`, MAX_REQ, WINDOW_MS);
+    const rl = await checkRateLimit(`post:${userId}`, MAX_REQ, WINDOW_MS);
     if (process.env.DEBUG_RATE_LIMIT === 'true') {
       logger.info(`video-jobs: rate-limit-check`, {
         key: `post:${userId}`,
         result: rl,
-        bucket: inspectRateLimit(`post:${userId}`),
+        bucket: await inspectRateLimit(`post:${userId}`, MAX_REQ, WINDOW_MS),
       });
     }
     if (!rl.allowed) {

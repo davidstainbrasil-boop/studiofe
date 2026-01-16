@@ -42,8 +42,10 @@ export async function GET(
     
     logger.info(`📊 API v2: Verificando status do job ${jobId}`, { component: 'API: v2/avatars/render/status/[id]' })
 
-    // Buscar job do Supabase primeiro, depois da memória
-    const job = await avatar3DPipeline.getRenderJobStatus(jobId)
+    // Buscar job do Supabase/Prisma diretamente para ter acesso ao renderSettings
+    const job = await prisma.render_jobs.findUnique({
+        where: { id: jobId }
+    });
     
     if (!job) {
       return NextResponse.json({
@@ -55,56 +57,70 @@ export async function GET(
       }, { status: 404 })
     }
 
-    // Buscar informações do avatar do Prisma
-    const avatarData = await prisma.avatar_models.findUnique({
-      where: { id: job.avatarId },
-      select: {
-        id: true,
-        name: true,
-        displayName: true,
-        category: true
-      }
-    })
+    // Buscar informações do avatar do Supabase (já que não está no Prisma types)
+    // Cast 'avatar_models' to any to avoid literal type check error if table not in generated types
+    const { data: avatarData } = await supabase
+      .from('avatar_models' as any)
+      .select('id, name, display_name, category')
+      .eq('id', job.avatarModelId)
+      .single();
     
-    const avatar: AvatarModelInfo | null = avatarData ? {
-      id: avatarData.id,
-      name: avatarData.name,
-      displayName: avatarData.displayName,
-      category: avatarData.category ?? undefined
+    // Safety check for avatarData
+    const avatarRecord = avatarData as any;
+    const avatar: AvatarModelInfo | null = avatarRecord ? {
+      id: avatarRecord.id,
+      name: avatarRecord.name,
+      displayName: avatarRecord.display_name,
+      category: avatarRecord.category ?? undefined
     } : null;
+
+    const jobData = job;
+    const renderSettings = (jobData.renderSettings || {}) as any;
 
     // Calcular métricas
     const currentTime = Date.now()
-    const duration = job.endTime ? job.endTime - job.startTime! : currentTime - job.startTime!
-    const isCompleted = job.status === 'completed'
-    const isFailed = job.status === 'failed'
-    const isProcessing = job.status === 'processing'
+    const startTimeTime = jobData.createdAt ? jobData.createdAt.getTime() : currentTime;
+    const endTimeTime = jobData.completedAt?.getTime();
+    const duration = endTimeTime ? endTimeTime - startTimeTime : currentTime - startTimeTime;
+    const isCompleted = jobData.status === 'completed'
+    const isFailed = jobData.status === 'failed'
+    const isProcessing = jobData.status === 'processing' || jobData.status === 'pending' || jobData.status === 'queued';
 
     // Estimar tempo restante (baseado no progresso)
     let estimatedTimeRemaining: number | null = null
-    if (isProcessing && job.progress! > 0) {
-      const timePerPercent = duration / job.progress!
-      const remainingPercent = 100 - job.progress!
+    const progress = jobData.progress || 0;
+    
+    if (isProcessing && progress > 0) {
+      const timePerPercent = duration / progress
+      const remainingPercent = 100 - progress
       estimatedTimeRemaining = Math.round(timePerPercent * remainingPercent)
     }
 
-    const lipSyncData = job.lipSyncData as LipSyncData | undefined;
+    const lipSyncData = undefined; // Not in raw prisma yet
+
+    // Access properties safely
+    const quality = renderSettings.quality || jobData.quality || 'hyperreal';
+    const resolution = renderSettings.resolution || '4K';
+    const rayTracing = renderSettings.rayTracing || false;
+    const realTimeLipSync = renderSettings.realTimeLipSync || false;
+    const language = renderSettings.language || 'pt-BR';
+    const audio2FaceEnabled = renderSettings.audio2FaceEnabled || false;
 
     const response = {
       success: true,
       data: {
         job: {
-          id: job.id,
-          avatarId: job.avatarId,
-          userId: job.userId,
+          id: jobData.id,
+          avatarId: jobData.avatarModelId,
+          userId: jobData.userId,
           avatarName: avatar?.name || avatar?.displayName || 'Desconhecido',
-          status: job.status,
-          progress: job.progress || 0,
-          startTime: job.startTime ? new Date(job.startTime).toISOString() : null,
-          endTime: job.endTime ? new Date(job.endTime).toISOString() : null,
+          status: jobData.status,
+          progress: progress,
+          startTime: jobData.createdAt ? jobData.createdAt.toISOString() : null,
+          endTime: jobData.completedAt?.toISOString() || null,
           duration: Math.round(duration / 1000), // em segundos
           estimatedTimeRemaining: estimatedTimeRemaining ? Math.round(estimatedTimeRemaining / 1000) : null,
-          error: job.error
+          error: jobData.errorMessage
         },
         avatar: avatar ? {
           id: avatar.id,
@@ -113,47 +129,84 @@ export async function GET(
           category: avatar.category
         } : null,
         output: {
-          videoUrl: job.outputVideo,
-          thumbnailUrl: job.outputThumbnail,
-          available: isCompleted && !!job.outputVideo,
-          downloadUrl: isCompleted && job.outputVideo ? `/api/v2/avatars/render/download/${job.id}` : null
+          videoUrl: jobData.outputUrl,
+          thumbnailUrl: jobData.thumbnailUrl,
+          available: isCompleted && !!jobData.outputUrl,
+          downloadUrl: isCompleted && jobData.outputUrl ? `/api/v2/avatars/render/download/${job.id}` : null
         },
-        lipSync: lipSyncData ? {
-          accuracy: lipSyncData.accuracy || job.lipSyncAccuracy,
-          processingTime: lipSyncData.processingTime,
-          audio2FaceEnabled: job.audio2FaceEnabled || false,
-          frameCount: lipSyncData.metadata?.totalFrames,
-          frameRate: lipSyncData.metadata?.frameRate,
-          audioLength: lipSyncData.metadata?.audioLength
-        } : job.lipSyncAccuracy ? {
-          accuracy: job.lipSyncAccuracy,
-          audio2FaceEnabled: job.audio2FaceEnabled || false
-        } : null,
+        lipSync: null,
         render: {
-          quality: job.quality || 'hyperreal',
-          resolution: job.resolution || '4K',
-          rayTracing: job.rayTracingEnabled || false,
-          realTimeLipSync: job.realTimeLipSync || false,
-          language: job.language || 'pt-BR'
+          quality,
+          resolution,
+          rayTracing,
+          realTimeLipSync,
+          language
         },
         performance: {
-          renderingEngine: 'Unreal Engine 5.3 + Audio2Face',
-          qualityLevel: isCompleted ? 'Hiper-realista' : 'Processando...',
+          renderingEngine: renderSettings.provider === 'heygen' ? 'HeyGen AI' : 'Unreal Engine 5.3 + Audio2Face',
+          qualityLevel: isCompleted ? (renderSettings.provider === 'heygen' ? 'Ultra' : 'Hiper-realista') : 'Processando...',
           polygonCount: isCompleted ? 850000 : null,
           textureResolution: isCompleted ? '8K' : null,
-          rayTracingEnabled: job.rayTracingEnabled || false,
-          audio2FaceEnabled: job.audio2FaceEnabled || false
+          rayTracingEnabled: rayTracing,
+          audio2FaceEnabled: audio2FaceEnabled
         },
         metadata: {
           version: '2.0.0',
           timestamp: new Date().toISOString(),
           statusCheckedAt: currentTime,
           nextCheckRecommended: isProcessing ? currentTime + 5000 : null, // 5 segundos
-          createdAt: job.createdAt ? new Date(job.createdAt).toISOString() : null,
-          updatedAt: job.updatedAt ? new Date(job.updatedAt).toISOString() : null
+          createdAt: jobData.createdAt ? new Date(jobData.createdAt).toISOString() : null,
+          updatedAt: jobData.updatedAt ? new Date(jobData.updatedAt).toISOString() : null
         }
       }
     }
+
+    // --- HEYGEN STATUS CHECK START ---
+    const settings = (job.renderSettings || {}) as any;
+    if (settings.provider === 'heygen' && job.status === 'processing') {
+       try {
+           const { heyGenService } = await import('@lib/heygen-service');
+           // External ID stored in renderSettings
+           const externalId = settings.externalId;
+           if (externalId) {
+               const heyGenStatus = await heyGenService.checkStatus(externalId);
+               
+               if (heyGenStatus.status === 'completed') {
+                   // Update DB
+                   await prisma.render_jobs.update({
+                       where: { id: jobId },
+                       data: {
+                           status: 'completed',
+                           outputUrl: heyGenStatus.video_url, // Maps to outputVideo
+                           thumbnailUrl: heyGenStatus.thumbnail_url,
+                           progress: 100,
+                           completedAt: new Date()
+                       }
+                   });
+                   // Update local job object for response
+                   (job as any).status = 'completed';
+                   (job as any).outputUrl = heyGenStatus.video_url;
+                   (job as any).thumbnailUrl = heyGenStatus.thumbnail_url;
+                   (job as any).progress = 100;
+                   (job as any).completedAt = new Date();
+               } else if (heyGenStatus.status === 'failed') {
+                    await prisma.render_jobs.update({
+                       where: { id: jobId },
+                       data: {
+                           status: 'failed',
+                           errorMessage: heyGenStatus.error,
+                           completedAt: new Date()
+                       }
+                   });
+                   (job as any).status = 'failed';
+                   (job as any).errorMessage = heyGenStatus.error;
+               }
+           }
+       } catch (err) {
+           logger.error('Error checking HeyGen status', err instanceof Error ? err : new Error(String(err)));
+       }
+    }
+    // --- HEYGEN STATUS CHECK END ---
 
     // Headers para polling
     const headers: Record<string, string> = {
@@ -198,11 +251,10 @@ export async function POST(
     const jobId = params.id
     const body = await request.json()
     const { action } = body
-    const supabase = getSupabaseForRequest(request);
-
+    
     logger.info(`API v2: Ação ${action} no job ${jobId}`, { component: 'API: v2/avatars/render/status/[id]' })
 
-    const job = await avatar3DPipeline.getRenderJobStatus(jobId)
+    const job = await prisma.render_jobs.findUnique({ where: { id: jobId } });
     
     if (!job) {
       return NextResponse.json({
@@ -216,7 +268,7 @@ export async function POST(
 
     switch (action) {
       case 'cancel':
-        if (job.status !== 'processing') {
+        if (job.status !== 'processing' && job.status !== 'pending' && job.status !== 'queued') {
           return NextResponse.json({
             success: false,
             error: {
@@ -272,7 +324,7 @@ export async function POST(
         })
 
       case 'download':
-        if (job.status !== 'completed' || !job.outputVideo) {
+        if (job.status !== 'completed' || !job.outputUrl) {
           return NextResponse.json({
             success: false,
             error: {
@@ -282,17 +334,15 @@ export async function POST(
           }, { status: 400 })
         }
 
-        const lipSyncData = job.lipSyncData as LipSyncData | undefined;
-
         return NextResponse.json({
           success: true,
           data: {
-            downloadUrl: job.outputVideo,
-            thumbnailUrl: job.outputThumbnail,
+            downloadUrl: job.outputUrl,
+            thumbnailUrl: job.thumbnailUrl,
             fileSize: '~50MB', // Estimativa
             format: 'MP4',
             resolution: '4K',
-            duration: lipSyncData?.metadata?.audioLength || 5.0
+            duration: 5.0 // TODO: Get from durationMs
           }
         })
 
@@ -328,11 +378,10 @@ export async function DELETE(
   return rateLimiterDelete(request, async (request: NextRequest) => {
   try {
     const jobId = params.id
-    const supabase = getSupabaseForRequest(request);
     
     logger.info(`API v2: Removendo job ${jobId}`, { component: 'API: v2/avatars/render/status/[id]' })
 
-    const job = await avatar3DPipeline.getRenderJobStatus(jobId)
+    const job = await prisma.render_jobs.findUnique({ where: { id: jobId } });
     
     if (!job) {
       return NextResponse.json({
@@ -345,7 +394,7 @@ export async function DELETE(
     }
 
     // Não permitir remoção de jobs em processamento
-    if (job.status === 'processing') {
+    if (job.status === 'processing' || job.status === 'queued') {
       return NextResponse.json({
         success: false,
         error: {

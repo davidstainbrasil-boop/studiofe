@@ -12,7 +12,9 @@ import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Maximize2, Settings2, Zap, Download, Palette, User } from 'lucide-react';
+import { Maximize2, Settings2, Zap, Download, Palette, User, Mic } from 'lucide-react';
+import { VoiceSelector } from '../../studio-unified/VoiceSelector';
+import { Textarea } from '@/components/ui/textarea';
 
 interface RealisticAvatarSystemProps {
   isStudioMode?: boolean;
@@ -48,6 +50,9 @@ export default function RealisticAvatarSystem({
     metalness: 0.0,
     scale: 1.0
   });
+
+  const [text, setText] = useState('Olá! Este é um avatar hiper-realista gerado com IA.');
+  const [voiceId, setVoiceId] = useState('');
 
   const rendererRef = useRef<RealisticAvatarRendererRef>(null);
 
@@ -155,6 +160,10 @@ export default function RealisticAvatarSystem({
                 <User className="w-4 h-4 mr-2" />
                 Editar
               </TabsTrigger>
+              <TabsTrigger value="voice" className="flex-1">
+                <Mic className="w-4 h-4 mr-2" />
+                Voz
+              </TabsTrigger>
               <TabsTrigger value="settings" className="flex-1">
                 <Settings2 className="w-4 h-4 mr-2" />
                 Ajustes
@@ -162,6 +171,30 @@ export default function RealisticAvatarSystem({
             </TabsList>
 
             <div className="flex-1 overflow-y-auto mt-4 space-y-6">
+              <TabsContent value="voice" className="space-y-6">
+                <div className="space-y-4">
+                  <Label className="text-slate-400 text-xs uppercase tracking-wider">Roteiro & Voz</Label>
+
+                  <div className="space-y-2">
+                    <Label>Texto do Avatar</Label>
+                    <Textarea
+                      value={text}
+                      onChange={(e) => setText(e.target.value)}
+                      className="bg-slate-950 border-slate-700 min-h-[100px] text-sm"
+                      placeholder="Digite o que o avatar deve falar..."
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <VoiceSelector
+                      value={voiceId}
+                      onChange={setVoiceId}
+                      label="Voz Neural"
+                    />
+                  </div>
+                </div>
+              </TabsContent>
+
               <TabsContent value="customize" className="space-y-6">
                 {/* Material Colors */}
                 <div className="space-y-4">
@@ -320,7 +353,7 @@ export default function RealisticAvatarSystem({
           {isStudioMode ? (
             <>
               <Button
-                onClick={() => onConfirm?.({ ...avatarConfig, blendShapes, lightingPreset, quality })}
+                onClick={() => onConfirm?.({ ...avatarConfig, blendShapes, lightingPreset, quality, text, voiceId })}
                 className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
               >
                 <Zap className="w-4 h-4 mr-2" />

@@ -1,8 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 import { logger } from '@lib/services/logger-service';
+import { getRequiredEnv } from '@lib/env';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabaseUrl = getRequiredEnv('NEXT_PUBLIC_SUPABASE_URL');
+const supabaseServiceKey = getRequiredEnv('SUPABASE_SERVICE_ROLE_KEY');
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 

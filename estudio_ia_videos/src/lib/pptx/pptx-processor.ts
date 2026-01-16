@@ -2,6 +2,7 @@
 import { SupabaseClient, createClient } from '@supabase/supabase-js';
 import { Database } from '@/types/supabase';
 import { logger } from '@/lib/monitoring/logger';
+import { getRequiredEnv } from '@lib/env';
 import JSZip from 'jszip';
 import { PPTXParser } from './pptx-parser';
 import { PPTXTextParser } from './parsers/text-parser';
@@ -29,8 +30,8 @@ export class PptxProcessor {
 
   constructor(supabaseClient?: SupabaseClient<Database>) {
     this.supabase = supabaseClient || createClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+      getRequiredEnv('NEXT_PUBLIC_SUPABASE_URL'),
+      getRequiredEnv('SUPABASE_SERVICE_ROLE_KEY')
     );
   }
 

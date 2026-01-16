@@ -6,6 +6,7 @@
 import { AuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { createClient } from '@supabase/supabase-js';
+import { getRequiredEnv } from '@lib/env';
 
 export const authOptions: AuthOptions = {
   providers: [
@@ -20,8 +21,8 @@ export const authOptions: AuthOptions = {
           return null;
         }
 
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-        const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!; // Use service role to verify without session context initially
+        const supabaseUrl = getRequiredEnv('NEXT_PUBLIC_SUPABASE_URL');
+        const supabaseKey = getRequiredEnv('SUPABASE_SERVICE_ROLE_KEY'); // Use service role to verify without session context initially
         
         const supabase = createClient(supabaseUrl, supabaseKey, {
           auth: {

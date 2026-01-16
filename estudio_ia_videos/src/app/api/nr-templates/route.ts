@@ -9,10 +9,11 @@ import {
   type NRTemplate 
 } from '@lib/services/nr-templates-service';
 import { createClient } from '@supabase/supabase-js';
+import { getRequiredEnv } from '@lib/env';
 import { logger } from '@lib/logger';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabaseUrl = getRequiredEnv('NEXT_PUBLIC_SUPABASE_URL');
+const supabaseServiceKey = getRequiredEnv('SUPABASE_SERVICE_ROLE_KEY');
 
 /**
  * GET /api/nr-templates

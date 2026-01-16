@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { LocalAuth } from '@lib/auth/local-auth';
 import { z } from 'zod';
 import { cookies } from 'next/headers';
+import { logger } from '@lib/logger';
 
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -52,7 +53,9 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('[Login API] Erro:', error);
+    logger.error('Erro no login', error instanceof Error ? error : new Error(String(error)), {
+      component: 'API: auth/local/login'
+    });
     return NextResponse.json(
       { success: false, error: 'Erro interno' },
       { status: 500 }

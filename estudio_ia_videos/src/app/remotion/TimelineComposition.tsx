@@ -25,12 +25,17 @@ export interface TimelineTrack {
     elements: TimelineElement[];
 }
 
+import { SubtitleOverlay } from '@/components/remotion/SubtitleOverlay';
+import { getTheme } from '@/lib/themes/theme-registry';
+
 export interface TimelineCompositionProps {
     tracks: TimelineTrack[];
+    themeId?: string;
 }
 
-export const TimelineComposition: React.FC<TimelineCompositionProps> = ({ tracks }) => {
+export const TimelineComposition: React.FC<TimelineCompositionProps> = ({ tracks, themeId }) => {
     const { fps } = useVideoConfig(); // Get FPS for animation calcs
+    const theme = getTheme(themeId);
 
     return (
         <AbsoluteFill className="bg-black">
@@ -102,33 +107,46 @@ export const TimelineComposition: React.FC<TimelineCompositionProps> = ({ tracks
                                     <Audio src={element.content} volume={element.properties?.volume ?? 1} />
                                 )}
                                 {element.type === 'text' && (
-                                    <div
-                                        style={{
-                                            ...element.style, // Apply dynamic style if available
-                                            position: 'absolute',
-                                            width: element.style?.width || '100%',
-                                            height: element.style?.height || 'auto',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            textAlign: element.style?.textAlign || 'center'
-                                        }}
-                                        className="w-full h-full flex items-center justify-center"
-                                    >
-                                        <h1
-                                            style={{
-                                                fontSize: element.style?.fontSize || '60px',
-                                                color: element.style?.color || 'white',
-                                                textShadow: element.style?.textShadow || '2px 2px 4px black',
-                                                backgroundColor: element.style?.backgroundColor || 'rgba(0,0,0,0.5)',
-                                                borderRadius: element.style?.borderRadius || '8px',
-                                                padding: element.style?.padding || '16px'
-                                            }}
-                                            className="font-bold"
-                                        >
-                                            {element.content}
-                                        </h1>
-                                    </div>
+                                    <>
+                                        {element.properties?.isSubtitle ? (
+                                            <SubtitleOverlay
+                                                subtitles={element.data?.subtitles || []}
+                                                style={{
+                                                    fontFamily: theme.styles.fontFamily,
+                                                    // color: theme.styles.textPrimary // SubtitleOverlay uses its own style or we pass it
+                                                }}
+                                            />
+                                        ) : (
+                                            <div
+                                                style={{
+                                                    ...element.style, // Apply dynamic style if available
+                                                    position: 'absolute',
+                                                    width: element.style?.width || '100%',
+                                                    height: element.style?.height || 'auto',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    textAlign: element.style?.textAlign || 'center'
+                                                }}
+                                                className="w-full h-full flex items-center justify-center"
+                                            >
+                                                <h1
+                                                    style={{
+                                                        fontFamily: element.style?.fontFamily || theme.styles.fontFamily,
+                                                        fontSize: element.style?.fontSize || '60px',
+                                                        color: element.style?.color || theme.styles.textPrimary,
+                                                        textShadow: element.style?.textShadow || '2px 2px 4px black',
+                                                        backgroundColor: element.style?.backgroundColor || 'rgba(0,0,0,0.5)',
+                                                        borderRadius: element.style?.borderRadius || `${theme.styles.borderRadius}px`,
+                                                        padding: element.style?.padding || '16px'
+                                                    }}
+                                                    className="font-bold"
+                                                >
+                                                    {element.content}
+                                                </h1>
+                                            </div>
+                                        )}
+                                    </>
                                 )}
                             </Sequence>
                         );

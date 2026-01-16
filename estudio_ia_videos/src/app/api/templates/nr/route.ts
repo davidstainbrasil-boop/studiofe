@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@lib/prisma';
+import { logger } from '@lib/logger';
 
 export async function GET(request: NextRequest) {
   try {
@@ -47,7 +48,9 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('[Templates NR] Erro:', error);
+    logger.error('Erro ao buscar templates NR', error instanceof Error ? error : new Error(String(error)), {
+      component: 'API: templates/nr'
+    });
     
     // Fallback para templates estáticos
     return NextResponse.json({
@@ -188,7 +191,9 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('[Templates NR] Erro no POST:', error);
+    logger.error('[Templates NR] Erro no POST', error instanceof Error ? error : new Error(String(error)), {
+      component: 'API: templates/nr'
+    });
     return NextResponse.json(
       { success: false, error: 'Erro interno' },
       { status: 500 }

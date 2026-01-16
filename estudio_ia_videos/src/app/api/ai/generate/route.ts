@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { randomUUID } from 'crypto';
+import { logger } from '@lib/logger';
 
 // Mock response generator
 const generateMockResponse = (prompt: string, type: string) => {
@@ -50,7 +51,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(result);
 
   } catch (error) {
-    console.error('Error generating AI content:', error);
+    logger.error('Erro ao gerar conteúdo AI', error instanceof Error ? error : new Error(String(error)), {
+      component: 'API: ai/generate'
+    });
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }

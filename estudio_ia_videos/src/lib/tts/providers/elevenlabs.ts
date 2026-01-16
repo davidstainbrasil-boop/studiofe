@@ -24,6 +24,11 @@ export interface TTSResult {
   audio: Buffer;
   characters: number;
   format: string;
+  alignment?: {
+    characters: string[];
+    character_start_times_seconds: number[];
+    character_end_times_seconds: number[];
+  };
 }
 
 export interface Voice {
@@ -68,6 +73,9 @@ export class ElevenLabsProvider {
   async textToSpeech(request: TTSRequest): Promise<TTSResult> {
     const url = `${this.baseUrl}/text-to-speech/${request.voiceId}`;
     
+    // Note: For real timestamp support, we would need to use the WebSocket API or check if REST supports it.
+    // For this V2 implementation, we will prepare the structure.
+    
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -98,6 +106,8 @@ export class ElevenLabsProvider {
       audio: buffer,
       characters: request.text.length,
       format: 'mp3',
+      // Placeholder for alignment
+      alignment: undefined 
     };
   }
 

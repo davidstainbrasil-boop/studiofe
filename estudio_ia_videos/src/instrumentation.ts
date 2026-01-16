@@ -7,9 +7,25 @@
 // import { bullMQMetrics } from './lib/services/bullmq-metrics';
 import { initSentry } from './lib/monitoring/sentry.server';
 import { warmCache } from './lib/cache/cache-warming';
+import { validateEnvVarsForEnvironment } from './lib/env-validator';
 // import { logger } from './lib/services/logger-service-centralized';
 
 export async function register() {
+  // Validar variáveis de ambiente no startup (fail-fast)
+  // Executa apenas no servidor (não no cliente)
+  if (typeof window === 'undefined') {
+    try {
+      validateEnvVarsForEnvironment();
+    } catch (error) {
+      // Em produção, falhar imediatamente
+      // Em desenvolvimento, erro já foi logado como warning
+      if (process.env.NODE_ENV === 'production') {
+        console.error('❌ Falha na validação de variáveis de ambiente:', error);
+        throw error;
+      }
+    }
+  }
+
   // Inicializa Sentry (produção)
   if (process.env.NODE_ENV === 'production') {
     initSentry();

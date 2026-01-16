@@ -18,6 +18,8 @@
 - [ ] Implement `calculateSlideDurationFromAudio` logic <!-- id: 11 -->
 - [ ] Update Timeline generation to use dynamic durations <!-- id: 12 -->
 
-## Phase 4: Integration <!-- id: phase-4 -->
-- [ ] Connect `pptx-processor-real` output to `RemotionComposer` input <!-- id: 13 -->
-- [ ] Validate full E2E flow: Upload -> Parse -> Render with correct styles <!-- id: 14 -->
+## Phase 4: Pre-Render Editing <!-- id: phase-4 -->
+- [x] Create `PPTXPreRenderEditor` component with Remotion Player preview <!-- id: 14 -->
+- [x] Implement slide reordering, duration editing, content editing <!-- id: 15 -->
+- [x] Create `presentation-store.ts` with undo/redo and persistence <!-- id: 16 -->
+- [x] Create `/pptx-preview` page route for upload and editing <!-- id: 17 -->

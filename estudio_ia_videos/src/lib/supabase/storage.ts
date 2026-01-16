@@ -77,7 +77,15 @@ export const uploadAvatar = async (file: File, userId: string) => {
   await supabase.storage
     .from(AVATARS_BUCKET)
     .remove([fileName])
-    .catch(() => {}); // Ignora erro se não existir
+    .catch((error) => {
+      // Ignora erro se arquivo não existir (comportamento esperado)
+      logger.debug('Previous avatar not found during upload', {
+        component: 'Storage',
+        userId,
+        fileName,
+        error: error instanceof Error ? error.message : String(error)
+      });
+    });
   
   const { data, error } = await supabase.storage
     .from(AVATARS_BUCKET)

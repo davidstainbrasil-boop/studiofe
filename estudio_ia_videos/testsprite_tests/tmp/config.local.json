@@ -1,0 +1,21 @@
+{
+  "status": "local",
+  "type": "backend",
+  "scope": "codebase",
+  "localEndpoint": "http://localhost:3000",
+  "backendAuthType": "none",
+  "executionArgs": {
+    "projectName": "estudio_ia_videos",
+    "projectPath": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos",
+    "testIds": [
+      "TS000",
+      "TS002",
+      "TS001",
+      "TS003",
+      "TS004",
+      "TS005"
+    ],
+    "additionalInstruction": "Run python3 scripts under estudio_ia_videos/testsprite_tests. Do not use BasicAuth. Avoid dev_bypass; use x-user-id when supported."
+  }
+}
+

@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { integratedPipeline } from '@lib/pipeline/integrated-pipeline'
 import { Logger } from '@lib/logger'
+import { getRequiredEnv } from '@lib/env'
 
 const logger = new Logger('PipelineJobAPI')
 
@@ -23,8 +24,8 @@ export async function GET(
 ) {
   try {
     const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+      getRequiredEnv('NEXT_PUBLIC_SUPABASE_URL'),
+      getRequiredEnv('SUPABASE_SERVICE_ROLE_KEY')
     )
 
     // Verificar autenticação
@@ -137,8 +138,8 @@ export async function DELETE(
 ) {
   try {
     const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+      getRequiredEnv('NEXT_PUBLIC_SUPABASE_URL'),
+      getRequiredEnv('SUPABASE_SERVICE_ROLE_KEY')
     )
 
     // Verificar autenticação
@@ -260,8 +261,8 @@ export async function PATCH(
 ) {
   try {
     const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+      getRequiredEnv('NEXT_PUBLIC_SUPABASE_URL'),
+      getRequiredEnv('SUPABASE_SERVICE_ROLE_KEY')
     )
 
     // Verificar autenticação

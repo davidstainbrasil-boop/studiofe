@@ -14,6 +14,7 @@ import { EdgeTTSService } from '@lib/tts/edge-tts-service';
 import { FFmpegRenderer, SlideData } from '@lib/video/ffmpeg-renderer';
 import { z } from 'zod';
 import { randomUUID } from 'crypto';
+import { logger } from '@lib/logger';
 
 const slideInputSchema = z.object({
   title: z.string(),
@@ -61,7 +62,12 @@ export async function POST(request: NextRequest) {
     const jobId = randomUUID();
     const projectId = randomUUID();
 
-    console.log(`[Video Generate] Job ${jobId}: ${slides.length} slides`);
+    logger.info('Iniciando geração de vídeo', {
+      component: 'API: video/generate',
+      jobId,
+      slideCount: slides.length,
+      projectName
+    });
 
     // Registrar job
     videoJobs.set(jobId, {
@@ -86,7 +92,9 @@ export async function POST(request: NextRequest) {
     }, { status: 202 });
 
   } catch (error) {
-    console.error('[Video Generate] Erro:', error);
+    logger.error('[Video Generate] Erro', error instanceof Error ? error : new Error(String(error)), {
+      component: 'API: video/generate'
+    });
     return NextResponse.json(
       { success: false, error: 'Erro interno' },
       { status: 500 }
@@ -177,13 +185,20 @@ async function processVideoGeneration(
         videoUrl: renderResult.videoUrl,
       });
       
-      console.log(`[Video Generate] Job ${jobId} concluído: ${renderResult.videoUrl}`);
+      logger.info('Job de vídeo concluído', {
+        component: 'API: video/generate',
+        jobId,
+        videoUrl: renderResult.videoUrl
+      });
     } else {
       throw new Error(renderResult.error || 'Falha na renderização');
     }
 
   } catch (error) {
-    console.error(`[Video Generate] Job ${jobId} falhou:`, error);
+    logger.error('Job de vídeo falhou', error instanceof Error ? error : new Error(String(error)), {
+      component: 'API: video/generate',
+      jobId
+    });
     videoJobs.set(jobId, {
       ...videoJobs.get(jobId)!,
       status: 'failed',

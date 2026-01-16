@@ -15,13 +15,10 @@ export const workerHandler = async (job: Job<RenderTaskPayload, RenderTaskResult
   });
 
   try {
-    // Execute the pipeline
-    const outputUrl = await videoRenderPipeline.execute({
-      projectId,
-      jobId,
-      outputFormat: 'mp4',
-      quality: 'medium'
-    });
+    // Execute the Remotion pipeline
+    const { remotionRenderer } = await import('@lib/render/remotion-renderer');
+    
+    const outputUrl = await remotionRenderer.renderJob(jobId, projectId);
 
     logger.info(`[VideoWorker] ✅ Job ${jobId} completed. Output: ${outputUrl}`, {
       jobId,
@@ -41,6 +38,11 @@ export const workerHandler = async (job: Job<RenderTaskPayload, RenderTaskResult
       jobId,
       projectId,
     });
+    
+    // Mark job as failed in DB
+    const { jobManager } = await import('@lib/render/job-manager');
+    await jobManager.failJob(jobId, error instanceof Error ? error.message : 'Unknown Worker Error');
+    
     throw error;
   }
 };
@@ -52,7 +54,7 @@ export const videoRenderWorker = createRenderWorker(workerHandler, {
     max: 10,
     duration: 1000
   }
-});
+} as any);
 
 videoRenderWorker.on('completed', (job) => {
   logger.info('[VideoWorker] Job completed successfully', { jobId: job.id });

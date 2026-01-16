@@ -11,8 +11,17 @@ import { cookies } from 'next/headers';
 import { sessionService } from '@lib/database/services';
 import { UserRole } from '@prisma/client';
 
-// Chave secreta para JWT (em produção, usar variável de ambiente)
-const JWT_SECRET = process.env.JWT_SECRET || 'mvp-videos-secret-key-2025-local';
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (secret && secret.trim().length > 0) return secret;
+  // In production, refuse to run with an implicit secret.
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('JWT_SECRET é obrigatório em produção');
+  }
+  // Dev-only fallback (explicitly insecure). Avoid using this outside local dev.
+  return 'dev-only-insecure-jwt-secret';
+}
+
 const JWT_EXPIRES_IN = '7d';
 
 export interface User {
@@ -195,7 +204,7 @@ export async function loginUser(
  */
 export function verifyToken(token: string): JWTPayload | null {
   try {
-    const decoded = verify(token, JWT_SECRET) as JWTPayload;
+    const decoded = verify(token, getJwtSecret()) as JWTPayload;
     return decoded;
   } catch {
     return null;
@@ -206,7 +215,7 @@ export function verifyToken(token: string): JWTPayload | null {
  * Gerar token JWT
  */
 export function generateToken(payload: Omit<JWTPayload, 'iat' | 'exp'>): string {
-  return sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+  return sign(payload, getJwtSecret(), { expiresIn: JWT_EXPIRES_IN });
 }
 
 /**
@@ -266,17 +275,31 @@ export async function getCurrentUser(): Promise<User | null> {
  * Criar usuários padrão se não existirem
  */
 export async function ensureDefaultUsers(): Promise<void> {
+  // Never seed default users implicitly in production.
+  if (process.env.NODE_ENV === 'production') return;
+  if (process.env.SEED_DEFAULT_USERS !== 'true') return;
+
+  const adminEmail = process.env.DEFAULT_ADMIN_EMAIL;
+  const adminPassword = process.env.DEFAULT_ADMIN_PASSWORD;
+  const demoEmail = process.env.DEFAULT_DEMO_EMAIL;
+  const demoPassword = process.env.DEFAULT_DEMO_PASSWORD;
+
+  if (!adminEmail || !adminPassword || !demoEmail || !demoPassword) {
+    console.error('[Auth] SEED_DEFAULT_USERS=true, mas faltam DEFAULT_* envs (email/senha). Abortando seed.');
+    return;
+  }
+
   try {
     // Admin
     const adminExists = await prisma.users.findUnique({
-      where: { email: 'admin@mvpvideos.com' },
+      where: { email: adminEmail },
     });
 
     if (!adminExists) {
-      const passwordHash = await hash('Admin@2025!', 12);
+      const passwordHash = await hash(adminPassword, 12);
       await prisma.users.create({
         data: {
-          email: 'admin@mvpvideos.com',
+          email: adminEmail,
           passwordHash,
           name: 'Administrador',
           role: UserRole.admin,
@@ -290,14 +313,14 @@ export async function ensureDefaultUsers(): Promise<void> {
 
     // Demo
     const demoExists = await prisma.users.findUnique({
-      where: { email: 'demo@mvpvideos.com' },
+      where: { email: demoEmail },
     });
 
     if (!demoExists) {
-      const passwordHash = await hash('Demo@2025!', 12);
+      const passwordHash = await hash(demoPassword, 12);
       await prisma.users.create({
         data: {
-          email: 'demo@mvpvideos.com',
+          email: demoEmail,
           passwordHash,
           name: 'Usuário Demo',
           role: UserRole.user,

@@ -1,16 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-
-async function verifyAdmin(): Promise<boolean> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('admin_token')?.value;
-  return !!token;
-}
+import { requireAdmin } from '@lib/auth/admin-middleware';
+import { getRequiredEnv, getOptionalEnv } from '@lib/env';
+import { logger } from '@lib/logger';
 
 export async function GET(request: NextRequest) {
-  if (!await verifyAdmin()) {
-    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
-  }
+  const { isAdmin, response } = await requireAdmin(request);
+  if (!isAdmin) return response!;
 
   // Calcular uptime
   const uptimeSeconds = process.uptime();
@@ -37,8 +32,8 @@ export async function GET(request: NextRequest) {
 
   // Tentar buscar dados reais do Supabase
   try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const supabaseUrl = getOptionalEnv('NEXT_PUBLIC_SUPABASE_URL');
+    const supabaseKey = getOptionalEnv('SUPABASE_SERVICE_ROLE_KEY');
     
     if (supabaseUrl && supabaseKey) {
       // Buscar contagem de usuários
@@ -80,7 +75,10 @@ export async function GET(request: NextRequest) {
       }
     }
   } catch (error) {
-    console.error('[ADMIN STATS] Erro ao buscar estatísticas:', error);
+    logger.warn('Erro ao buscar estatísticas do Supabase', {
+      component: 'API: admin/system/stats',
+      error: error instanceof Error ? error.message : String(error)
+    });
   }
 
   return NextResponse.json(stats);

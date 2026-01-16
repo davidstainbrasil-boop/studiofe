@@ -14,11 +14,12 @@ declare global {
 
 // Serverless-optimized Prisma configuration
 const prismaClientSingleton = () => {
+  const dbUrl = process.env.DATABASE_URL || process.env.DIRECT_DATABASE_URL;
   return new PrismaClient({
     log: ['error', 'warn'],
     datasources: {
       db: {
-        url: process.env.DATABASE_URL,
+        url: dbUrl,
       },
     },
   });

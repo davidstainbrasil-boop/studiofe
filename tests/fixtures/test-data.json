@@ -1,0 +1,25 @@
+{
+    "test-slides": [
+        {
+            "id": "test-slide-1",
+            "content": {
+                "title": "Test Slide 1",
+                "body": "Test content for E2E testing"
+            },
+            "duration": 3
+        },
+        {
+            "id": "test-slide-2",
+            "content": {
+                "title": "Test Slide 2",
+                "body": "Additional test content"
+            },
+            "duration": 2
+        }
+    ],
+    "test-project": {
+        "id": "e2e-test-project-001",
+        "name": "E2E Test Project",
+        "description": "Test project for E2E Playwright tests"
+    }
+}

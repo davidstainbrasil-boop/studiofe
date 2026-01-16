@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { EdgeTTSService } from '@lib/tts/edge-tts-service';
 import { z } from 'zod';
+import { logger } from '@lib/logger';
 
 const synthesizeSchema = z.object({
   text: z.string().min(1, 'Texto é obrigatório').max(5000, 'Texto muito longo (máx 5000 caracteres)'),
@@ -34,7 +35,12 @@ export async function POST(request: NextRequest) {
 
     const { text, voice, rate, volume, pitch, slideId } = validation.data;
 
-    console.log(`[TTS] Sintetizando: "${text.substring(0, 50)}..." com voz ${voice}`);
+    logger.info('Sintetizando TTS', {
+      component: 'API: tts/synthesize',
+      textPreview: text.substring(0, 50),
+      voice,
+      slideId
+    });
 
     const result = await EdgeTTSService.synthesize({
       text,
@@ -65,7 +71,9 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('[TTS] Erro na API:', error);
+    logger.error('Erro na API TTS', error instanceof Error ? error : new Error(String(error)), {
+      component: 'API: tts/synthesize'
+    });
     return NextResponse.json(
       { 
         success: false, 

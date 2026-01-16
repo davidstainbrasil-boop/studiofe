@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { logger } from '@lib/logger'
 
 /**
  * POST /api/ai/enhance-video
@@ -52,7 +53,9 @@ export async function POST(request: NextRequest) {
       processingTime: result.processingTime
     })
   } catch (error) {
-    console.error('Error enhancing video:', error)
+    logger.error('Erro ao melhorar vídeo', error instanceof Error ? error : new Error(String(error)), {
+      component: 'API: ai/enhance-video'
+    });
     return NextResponse.json(
       { success: false, error: 'Failed to enhance video' },
       { status: 500 }
@@ -186,7 +189,9 @@ export async function GET(request: NextRequest) {
       estimatedTimeRemaining: 30
     })
   } catch (error) {
-    console.error('Error getting job status:', error)
+    logger.error('Error getting job status', error instanceof Error ? error : new Error(String(error)), {
+      component: 'API: ai/enhance-video'
+    });
     return NextResponse.json(
       { success: false, error: 'Failed to get job status' },
       { status: 500 }

@@ -54,7 +54,13 @@ export class BeatDetectorService {
       
       // Clean up temporary files
       if (audioFile !== audioPath) {
-        await fs.unlink(audioFile).catch(() => {});
+        await fs.unlink(audioFile).catch((error) => {
+          logger.debug('Temp audio file already deleted', {
+            component: 'BeatDetector',
+            audioFile,
+            error: error instanceof Error ? error.message : String(error)
+          });
+        });
       }
       
       return classifiedBeats;

@@ -179,9 +179,19 @@ export async function GET(request: NextRequest) {
 
     let analytics: AnalyticsData = {};
 
+    // Cast timeline para TimelineData
+    const timelineData: TimelineData = {
+      id: timeline.id,
+      version: timeline.version || 1,
+      totalDuration: timeline.totalDuration,
+      tracks: timeline.tracks,
+      settings: timeline.settings,
+      updatedAt: timeline.updatedAt || new Date()
+    };
+
     switch (type) {
       case 'summary':
-        analytics = await getTimelineSummary(timeline, projectId);
+        analytics = await getTimelineSummary(timelineData, projectId);
         break;
 
       case 'usage':
@@ -189,7 +199,7 @@ export async function GET(request: NextRequest) {
         break;
 
       case 'performance':
-        analytics = await getPerformanceMetrics(timeline);
+        analytics = await getPerformanceMetrics(timelineData);
         break;
 
       case 'editing_patterns':

@@ -1,39 +1,60 @@
-
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import { logger } from '@lib/logger';
+import { jobManager } from '@lib/render/job-manager';
+import { getSupabaseForRequest } from '@lib/supabase/server';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { slides } = body;
+    const { projectId } = body;
 
-    // Simulate rendering delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // Generate a dummy video file for validation
-    const jobId = `job_${Date.now()}`;
-    const fileName = `${jobId}.mp4`;
-    const publicDir = path.join(process.cwd(), 'public', 'videos');
-    
-    // Ensure dir exists
-    if (!fs.existsSync(publicDir)) {
-      fs.mkdirSync(publicDir, { recursive: true });
+    if (!projectId) {
+      return NextResponse.json(
+        { error: 'Project ID is required' },
+        { status: 400 }
+      );
     }
 
-    const filePath = path.join(publicDir, fileName);
+    // Authenticate user
+    const supabase = getSupabaseForRequest(request as any); // Type cast if needed depending on Next.js version
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+         return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    logger.info('Received render request', { projectId, userId: user.id, component: 'API:Render' });
+
+    logger.info('Received render request', { projectId, userId: user.id, component: 'API:Render' });
+
+    // Check plan limits
+    const { checkLimit } = await import('@lib/billing/limits');
+    const limitCheck = await checkLimit(user.id, 'renders');
     
-    // Create a dummy file with some content so size > 0
-    fs.writeFileSync(filePath, 'fake video content for testing purposes');
+    if (!limitCheck.allowed) {
+        logger.warn('Render limit reached', { userId: user.id, component: 'API:Render' });
+        return NextResponse.json(
+            { error: 'Payment Required', message: limitCheck.reason },
+            { status: 402 } // 402 Payment Required
+        );
+    }
+
+    // Create asynchronous job
+    const jobId = await jobManager.createJob(user.id, projectId);
 
     return NextResponse.json({
       success: true,
       jobId,
-      url: `/videos/${fileName}`
+      message: 'Render job queued successfully'
     });
 
   } catch (error) {
-    console.error('Render error:', error);
+    logger.error('Error queuing render job', error instanceof Error ? error : new Error(String(error)), {
+      component: 'API:Render'
+    });
     return NextResponse.json(
       { success: false, message: 'Internal Server Error' },
       { status: 500 }

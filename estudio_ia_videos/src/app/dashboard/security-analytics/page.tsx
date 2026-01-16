@@ -65,7 +65,7 @@ export default function SecurityAnalyticsPage() {
 
     void loadUser();
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
       if (!isMounted) return;
       setUser(session?.user ?? null);
     });
@@ -281,9 +281,8 @@ export default function SecurityAnalyticsPage() {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ name, percent }: { name: string; percent: number }) =>
-                        `${name}: ${(percent * 100).toFixed(0)}%`
-                      } as any
+                      label={(({ name, percent }: { name: string; percent: number }) =>
+                        `${name}: ${(percent * 100).toFixed(0)}%`) as any}
                       outerRadius={100}
                       fill="#8884d8"
                       dataKey="value"
@@ -406,9 +405,8 @@ export default function SecurityAnalyticsPage() {
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        label={({ name, percent }: { name: string; percent: number }) =>
-                          `${name}: ${(percent * 100).toFixed(0)}%`
-                        } as any
+                        label={(({ name, percent }: { name: string; percent: number }) =>
+                          `${name}: ${(percent * 100).toFixed(0)}%`) as any}
                         outerRadius={100}
                         fill="#8884d8"
                         dataKey="value"

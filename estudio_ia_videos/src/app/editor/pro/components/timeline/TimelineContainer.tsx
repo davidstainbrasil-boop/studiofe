@@ -242,7 +242,7 @@ const TimelineClip = ({ element, zoom, onUpdate }: { element: CanvasElement, zoo
             style={{
                 left: (element.startTime / 1000) * zoom,
                 width: Math.max(2, (element.duration / 1000) * zoom),
-                backgroundColor: element.type === 'video' ? '#3b82f6' : element.type === 'audio' ? '#10b981' : '#f59e0b',
+                backgroundColor: element.type === 'video' ? '#3b82f6' : (element.type as string) === 'audio' ? '#10b981' : '#f59e0b',
                 borderColor: 'rgba(255,255,255,0.3)',
                 opacity: 0.9
             }}

@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@lib/prisma';
 import { getSupabaseForRequest } from '@lib/supabase/server';
 import { logger } from '@lib/logger';
+import { z } from 'zod';
 
 export async function GET(
   req: NextRequest,
@@ -22,6 +23,18 @@ export async function GET(
         { status: 400 }
       );
     }
+    
+    // Validate UUID format to prevent 500 errors on DB
+    const uuidSchema = z.string().uuid();
+    const validation = uuidSchema.safeParse(projectId);
+    
+    if (!validation.success) {
+        logger.warn('Invalid project ID format', { projectId });
+        return NextResponse.json(
+            { error: 'ID do projeto inválido' },
+            { status: 400 }
+        );
+    }
 
     // Autenticação
     let userId = req.headers.get('x-user-id');
@@ -31,11 +44,13 @@ export async function GET(
       const { data: { user }, error: authError } = await supabase.auth.getUser();
 
       if (authError || !user) {
-        userId = 'demo-user';
-        logger.warn('No auth, using demo-user', { component: 'StudioLoad' });
-      } else {
-        userId = user.id;
+        logger.warn('Unauthorized access attempt', { component: 'StudioLoad', projectId });
+        return NextResponse.json(
+          { error: 'Não autorizado. Faça login novamente.' },
+          { status: 401 }
+        );
       }
+      userId = user.id;
     }
 
     // Busca projeto
@@ -47,7 +62,7 @@ export async function GET(
         userId: true,
         metadata: true,
         updatedAt: true,
-        type: true // Added type
+        type: true
       }
     });
 
@@ -70,9 +85,6 @@ export async function GET(
     const metadata = project.metadata as any;
     const snapshot = metadata?.studioSnapshot;
 
-    // TODO: Remover verificação estrita de snapshot para permitir projetos novos sem save anterior
-    // if (!snapshot) { ... }
-
     logger.info('Project loaded successfully', {
       projectId,
       userId,
@@ -85,16 +97,25 @@ export async function GET(
       name: project.name,
       type: project.type,
       snapshot,
-      updatedAt: project.updatedAt.toISOString()
+      updatedAt: project.updatedAt?.toISOString() || new Date().toISOString()
     });
 
   } catch (error) {
-    logger.error('Studio load error', error as Error);
+    // Log detailed error for debugging
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    
+    logger.error('Studio load error', error as Error, {
+        component: 'StudioLoadAPI',
+        projectId: params.id,
+        stack: errorStack
+    });
     
     return NextResponse.json(
       { 
-        error: 'Erro ao carregar projeto',
-        details: error instanceof Error ? error.message : 'Erro desconhecido'
+        error: 'Erro crítico ao carregar projeto',
+        details: errorMessage,
+        timestamp: new Date().toISOString()
       },
       { status: 500 }
     );

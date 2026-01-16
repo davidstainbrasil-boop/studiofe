@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@lib/prisma'
+import { logger } from '@lib/logger'
 
 interface VoiceLibraryItem {
   id: string
@@ -43,7 +44,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      voices: voices.map(v => ({
+      voices: voices.map((v: any) => ({
         id: v.id,
         name: v.name,
         type: v.type,
@@ -62,7 +63,9 @@ export async function GET(request: NextRequest) {
       total: voices.length
     })
   } catch (error) {
-    console.error('Error fetching voice library:', error)
+    logger.error('Erro ao buscar biblioteca de vozes', error instanceof Error ? error : new Error(String(error)), {
+      component: 'API: voice-library'
+    });
     return NextResponse.json(
       { success: false, error: 'Failed to fetch voice library' },
       { status: 500 }
@@ -139,7 +142,9 @@ export async function POST(request: NextRequest) {
       message: 'Voice model saved successfully'
     })
   } catch (error) {
-    console.error('Error saving voice model:', error)
+    logger.error('Erro ao salvar modelo de voz', error instanceof Error ? error : new Error(String(error)), {
+      component: 'API: voice-library'
+    });
     return NextResponse.json(
       { success: false, error: 'Failed to save voice model' },
       { status: 500 }
@@ -179,7 +184,9 @@ export async function PUT(request: NextRequest) {
       message: 'Voice model updated successfully'
     })
   } catch (error) {
-    console.error('Error updating voice model:', error)
+    logger.error('Error updating voice model', error instanceof Error ? error : new Error(String(error)), {
+      component: 'API: voice-library'
+    });
     return NextResponse.json(
       { success: false, error: 'Failed to update voice model' },
       { status: 500 }
@@ -212,7 +219,9 @@ export async function DELETE(request: NextRequest) {
       message: 'Voice model deleted successfully'
     })
   } catch (error) {
-    console.error('Error deleting voice model:', error)
+    logger.error('Erro ao deletar modelo de voz', error instanceof Error ? error : new Error(String(error)), {
+      component: 'API: voice-library'
+    });
     return NextResponse.json(
       { success: false, error: 'Failed to delete voice model' },
       { status: 500 }

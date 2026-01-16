@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import crypto from 'crypto';
 import fs from 'fs/promises';
 import path from 'path';
+import { requireAdmin } from '@lib/auth/admin-middleware';
+import { getRequiredEnv, getOptionalEnv } from '@lib/env';
+import { logger } from '@lib/logger';
 
 // Chave de criptografia (em produção, usar variável de ambiente segura)
-const ENCRYPTION_KEY = process.env.CREDENTIALS_ENCRYPTION_KEY || 'mvp-encryption-key-2024-secure';
+const ENCRYPTION_KEY = getOptionalEnv('CREDENTIALS_ENCRYPTION_KEY', 'mvp-encryption-key-2024-secure');
 
 // Caminho do arquivo de credenciais
-const CREDENTIALS_FILE = process.env.CREDENTIALS_FILE || '.credentials.encrypted';
+const CREDENTIALS_FILE = getOptionalEnv('CREDENTIALS_FILE', '.credentials.encrypted');
 
 function encrypt(text: string): string {
   const algorithm = 'aes-256-cbc';
@@ -35,17 +37,10 @@ function decrypt(encryptedText: string): string {
   }
 }
 
-async function verifyAdmin(request: NextRequest): Promise<boolean> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('admin_token')?.value;
-  return !!token; // Simplificado - em produção, verificar sessão completa
-}
-
 // GET - Obter credenciais (mascaradas)
 export async function GET(request: NextRequest) {
-  if (!await verifyAdmin(request)) {
-    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
-  }
+  const { isAdmin, response } = await requireAdmin(request);
+  if (!isAdmin) return response!;
 
   try {
     const credentialsPath = path.join(process.cwd(), CREDENTIALS_FILE);
@@ -62,25 +57,25 @@ export async function GET(request: NextRequest) {
 
     // Também verificar variáveis de ambiente
     const envCredentials = {
-      NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
-      SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
-      DIRECT_DATABASE_URL: process.env.DIRECT_DATABASE_URL || '',
-      ELEVENLABS_API_KEY: process.env.ELEVENLABS_API_KEY || '',
-      AZURE_SPEECH_KEY: process.env.AZURE_SPEECH_KEY || '',
-      AZURE_SPEECH_REGION: process.env.AZURE_SPEECH_REGION || '',
-      HEYGEN_API_KEY: process.env.HEYGEN_API_KEY || '',
-      OPENAI_API_KEY: process.env.OPENAI_API_KEY || '',
-      AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID || '',
-      AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY || '',
-      AWS_REGION: process.env.AWS_REGION || '',
-      AWS_S3_BUCKET: process.env.AWS_S3_BUCKET || '',
-      REDIS_URL: process.env.REDIS_URL || 'redis://redis:6379',
-      NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET || '',
-      NEXTAUTH_URL: process.env.NEXTAUTH_URL || '',
-      SENTRY_DSN: process.env.SENTRY_DSN || '',
-      LOG_LEVEL: process.env.LOG_LEVEL || 'info',
-      ADMIN_EMAIL: process.env.ADMIN_EMAIL || '',
+      NEXT_PUBLIC_SUPABASE_URL: getOptionalEnv('NEXT_PUBLIC_SUPABASE_URL'),
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: getOptionalEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY'),
+      SUPABASE_SERVICE_ROLE_KEY: getOptionalEnv('SUPABASE_SERVICE_ROLE_KEY'),
+      DIRECT_DATABASE_URL: getOptionalEnv('DIRECT_DATABASE_URL'),
+      ELEVENLABS_API_KEY: getOptionalEnv('ELEVENLABS_API_KEY'),
+      AZURE_SPEECH_KEY: getOptionalEnv('AZURE_SPEECH_KEY'),
+      AZURE_SPEECH_REGION: getOptionalEnv('AZURE_SPEECH_REGION'),
+      HEYGEN_API_KEY: getOptionalEnv('HEYGEN_API_KEY'),
+      OPENAI_API_KEY: getOptionalEnv('OPENAI_API_KEY'),
+      AWS_ACCESS_KEY_ID: getOptionalEnv('AWS_ACCESS_KEY_ID'),
+      AWS_SECRET_ACCESS_KEY: getOptionalEnv('AWS_SECRET_ACCESS_KEY'),
+      AWS_REGION: getOptionalEnv('AWS_REGION'),
+      AWS_S3_BUCKET: getOptionalEnv('AWS_S3_BUCKET'),
+      REDIS_URL: getOptionalEnv('REDIS_URL', 'redis://redis:6379'),
+      NEXTAUTH_SECRET: getOptionalEnv('NEXTAUTH_SECRET'),
+      NEXTAUTH_URL: getOptionalEnv('NEXTAUTH_URL'),
+      SENTRY_DSN: getOptionalEnv('SENTRY_DSN'),
+      LOG_LEVEL: getOptionalEnv('LOG_LEVEL', 'info'),
+      ADMIN_EMAIL: getOptionalEnv('ADMIN_EMAIL'),
     };
 
     // Mesclar com credenciais salvas (prioridade para salvas)
@@ -108,7 +103,9 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('[ADMIN CREDENTIALS] Erro ao obter credenciais:', error);
+    logger.error('Erro ao obter credenciais', error instanceof Error ? error : new Error(String(error)), {
+      component: 'API: admin/credentials'
+    });
     return NextResponse.json(
       { error: 'Erro ao obter credenciais' },
       { status: 500 }
@@ -118,9 +115,8 @@ export async function GET(request: NextRequest) {
 
 // POST - Salvar credenciais
 export async function POST(request: NextRequest) {
-  if (!await verifyAdmin(request)) {
-    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
-  }
+  const { isAdmin, response } = await requireAdmin(request);
+  if (!isAdmin) return response!;
 
   try {
     const { credentials } = await request.json();
@@ -146,7 +142,10 @@ export async function POST(request: NextRequest) {
     const envPath = path.join(process.cwd(), '.env.production');
     await fs.writeFile(envPath, `# Generated by Admin Panel - ${new Date().toISOString()}\nNODE_ENV=production\n${envContent}\n`, 'utf8');
 
-    console.log(`[ADMIN CREDENTIALS] Credenciais salvas em ${new Date().toISOString()}`);
+    logger.info('Credenciais salvas', {
+      component: 'API: admin/credentials',
+      timestamp: new Date().toISOString()
+    });
 
     return NextResponse.json({
       success: true,
@@ -154,7 +153,9 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('[ADMIN CREDENTIALS] Erro ao salvar credenciais:', error);
+    logger.error('Erro ao salvar credenciais', error instanceof Error ? error : new Error(String(error)), {
+      component: 'API: admin/credentials'
+    });
     return NextResponse.json(
       { error: 'Erro ao salvar credenciais' },
       { status: 500 }

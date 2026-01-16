@@ -1,5 +1,6 @@
 // Proxy de imagens como workaround para problemas de configuração
 import { NextRequest, NextResponse } from 'next/server'
+import { logger } from '@lib/logger'
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
@@ -12,7 +13,12 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    console.log('📷 Image Proxy:', { url, width: w, quality: q })
+    logger.debug('Image Proxy request', {
+      component: 'API: image-proxy',
+      url,
+      width: w,
+      quality: q
+    });
 
     const imageResponse = await fetch(url, {
       headers: {
@@ -24,7 +30,12 @@ export async function GET(request: NextRequest) {
     })
 
     if (!imageResponse.ok) {
-      console.error('❌ Image fetch failed:', imageResponse.status, imageResponse.statusText)
+      logger.warn('Image fetch failed', {
+        component: 'API: image-proxy',
+        status: imageResponse.status,
+        statusText: imageResponse.statusText,
+        url
+      });
       return NextResponse.json({ 
         error: 'Failed to fetch image',
         status: imageResponse.status 
@@ -46,7 +57,10 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('❌ Image proxy error:', error)
+    logger.error('Image proxy error', error instanceof Error ? error : new Error(String(error)), {
+      component: 'API: image-proxy',
+      url
+    });
     return NextResponse.json({
       error: 'Internal server error',
       message: error instanceof Error ? error.message : 'Unknown error'

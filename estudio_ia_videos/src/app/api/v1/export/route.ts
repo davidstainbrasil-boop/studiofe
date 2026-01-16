@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseForRequest } from '@lib/supabase/server';
 import { prisma } from '@lib/prisma';
 import { RenderService } from '@lib/services/render-service';
+import { createVideoRenderWorker } from '@lib/workers/video-render-worker-factory';
 import { Slide, SlideElement } from '@lib/types';
 import { logger } from '@lib/logger';
 
@@ -46,9 +47,10 @@ interface SlidesDataJson {
 }
 
     // Prepare slides for Remotion
-    // We need to map DB slides or slidesData to the format expected by Composition
+    // We need to map DB slides or metadata.slidesData to the format expected by Composition
     let slidesForRender: Slide[] = [];
-    const slidesData = project.slidesData as SlidesDataJson | null;
+    const metadata = project.metadata as { slidesData?: SlidesDataJson } | null;
+    const slidesData = metadata?.slidesData || null;
     if (slidesData && Array.isArray(slidesData.slides)) {
        slidesForRender = slidesData.slides.map((s, index: number) => ({
          id: s.id || Math.random().toString(),
@@ -99,7 +101,8 @@ interface SlidesDataJson {
     // Trigger render in background (Fire & Forget)
     // In a production serverless env, this might be killed. 
     // For this MVP/VPS setup, it should persist long enough or we should use a queue.
-    RenderService.renderVideo(projectId, slidesForRender, user.id)
+    const worker = createVideoRenderWorker();
+    RenderService.renderVideo(projectId, slidesForRender, user.id, worker)
       .then(async (result) => {
         logger.info(`Render success for ${projectId}`, { component: 'API: v1/export' });
         await prisma.projects.update({

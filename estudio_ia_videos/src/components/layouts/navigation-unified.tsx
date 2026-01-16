@@ -83,7 +83,7 @@ export const navigationUnified: NavItem[] = [
         id: 'upload-pptx-único',
         title: 'Upload PPTX',
         icon: Upload,
-        href: '/pptx-upload-real',
+        href: '/pptx',
         status: 'production',
         description: 'Único ponto de upload - processa e redireciona para editor',
         badge: 'ÚNICO'
@@ -94,20 +94,20 @@ export const navigationUnified: NavItem[] = [
         icon: Edit3,
         status: 'active',
         children: [
-          { 
-            id: 'canvas-editor-pro', 
-            title: 'Canvas Editor Pro', 
-            icon: Edit3, 
-            href: '/canvas-editor-pro', 
+          {
+            id: 'canvas-editor-pro',
+            title: 'Canvas Editor Pro',
+            icon: Edit3,
+            href: '/canvas-editor-pro',
             status: 'production',
             badge: 'V3'
           },
-          { 
-            id: 'timeline-professional', 
-            title: 'Timeline Pro', 
-            icon: Play, 
-            href: '/timeline-editor-studio', 
-            status: 'active' 
+          {
+            id: 'timeline-professional',
+            title: 'Timeline Pro',
+            icon: Play,
+            href: '/timeline-editor-studio',
+            status: 'active'
           }
         ]
       },
@@ -117,34 +117,34 @@ export const navigationUnified: NavItem[] = [
         icon: Users,
         status: 'production',
         children: [
-          { 
-            id: 'talking-photo-pro', 
-            title: 'Talking Photo Pro', 
-            icon: Users, 
-            href: '/talking-photo-pro', 
-            status: 'production' 
+          {
+            id: 'talking-photo-pro',
+            title: 'Talking Photo Pro',
+            icon: Users,
+            href: '/talking-photo-pro',
+            status: 'production'
           },
-          { 
-            id: 'avatar-3d-hyperreal', 
-            title: 'Avatar 3D Hyperreal', 
-            icon: Crown, 
-            href: '/avatar-studio-hyperreal', 
-            status: 'production' 
+          {
+            id: 'avatar-3d-hyperreal',
+            title: 'Avatar 3D Hyperreal',
+            icon: Crown,
+            href: '/avatar-system-real',
+            status: 'production'
           },
-          { 
-            id: 'elevenlabs-studio', 
-            title: 'ElevenLabs Studio', 
-            icon: Mic, 
-            href: '/elevenlabs-professional-studio', 
+          {
+            id: 'elevenlabs-studio',
+            title: 'ElevenLabs Studio',
+            icon: Mic,
+            href: '/elevenlabs-professional-studio',
             status: 'production',
             badge: '29 Vozes'
           },
-          { 
-            id: 'voice-cloning-pro', 
-            title: 'Voice Cloning Pro', 
-            icon: Brain, 
-            href: '/voice-cloning-studio', 
-            status: 'production' 
+          {
+            id: 'voice-cloning-pro',
+            title: 'Voice Cloning Pro',
+            icon: Brain,
+            href: '/voice-cloning-studio',
+            status: 'production'
           }
         ]
       },
@@ -154,26 +154,26 @@ export const navigationUnified: NavItem[] = [
         icon: Play,
         status: 'production',
         children: [
-          { 
-            id: 'video-preview', 
-            title: 'Video Preview', 
-            icon: Play, 
-            href: '/video-studio', 
-            status: 'production' 
+          {
+            id: 'video-preview',
+            title: 'Video Preview',
+            icon: Play,
+            href: '/video-studio',
+            status: 'production'
           },
-          { 
-            id: 'render-pipeline', 
-            title: 'Render Pipeline', 
-            icon: Zap, 
-            href: '/advanced-video-pipeline', 
-            status: 'production' 
+          {
+            id: 'render-pipeline',
+            title: 'Render Pipeline',
+            icon: Zap,
+            href: '/advanced-video-pipeline',
+            status: 'production'
           },
-          { 
-            id: 'export-formats', 
-            title: 'Export Multi-Format', 
-            icon: Download, 
-            href: '/export-pipeline-studio', 
-            status: 'production' 
+          {
+            id: 'export-formats',
+            title: 'Export Multi-Format',
+            icon: Download,
+            href: '/export-pipeline-studio',
+            status: 'production'
           }
         ]
       }
@@ -274,27 +274,27 @@ export const navigationUnified: NavItem[] = [
         icon: Folder,
         status: 'production',
         children: [
-          { 
-            id: 'projects-dashboard', 
-            title: 'Meus Projetos', 
-            icon: Folder, 
-            href: '/projects', 
-            status: 'production' 
+          {
+            id: 'projects-dashboard',
+            title: 'Meus Projetos',
+            icon: Folder,
+            href: '/projects',
+            status: 'production'
           },
-          { 
-            id: 'templates-nr', 
-            title: 'Templates NR', 
-            icon: Shield, 
-            href: '/templates-nr-real', 
+          {
+            id: 'templates-nr',
+            title: 'Templates NR',
+            icon: Shield,
+            href: '/smart-nr-templates',
             status: 'production',
-            badge: 'Compliance' 
+            badge: 'Compliance'
           },
-          { 
-            id: 'media-library', 
-            title: 'Biblioteca de Mídia', 
-            icon: Database, 
-            href: '/biblioteca-midia', 
-            status: 'active' 
+          {
+            id: 'media-library',
+            title: 'Biblioteca de Mídia',
+            icon: Database,
+            href: '/asset-library-studio',
+            status: 'active'
           }
         ]
       },
@@ -304,26 +304,26 @@ export const navigationUnified: NavItem[] = [
         icon: TrendingUp,
         status: 'production',
         children: [
-          { 
-            id: 'performance-dashboard', 
-            title: 'Dashboard Performance', 
-            icon: Activity, 
-            href: '/admin/metrics', 
-            status: 'production' 
+          {
+            id: 'performance-dashboard',
+            title: 'Dashboard Performance',
+            icon: Activity,
+            href: '/admin/metrics',
+            status: 'production'
           },
-          { 
-            id: 'video-analytics', 
-            title: 'Analytics de Vídeo', 
-            icon: Eye, 
-            href: '/admin/pptx-metrics', 
-            status: 'production' 
+          {
+            id: 'video-analytics',
+            title: 'Analytics de Vídeo',
+            icon: Eye,
+            href: '/admin/pptx-metrics',
+            status: 'production'
           },
-          { 
-            id: 'user-engagement', 
-            title: 'Engajamento', 
-            icon: Target, 
-            href: '/behavioral-analytics', 
-            status: 'active' 
+          {
+            id: 'user-engagement',
+            title: 'Engajamento',
+            icon: Target,
+            href: '/dashboard/analytics',
+            status: 'active'
           }
         ]
       },
@@ -333,26 +333,26 @@ export const navigationUnified: NavItem[] = [
         icon: Brain,
         status: 'active',
         children: [
-          { 
-            id: 'ai-content-assistant', 
-            title: 'AI Content Assistant', 
-            icon: Sparkles, 
-            href: '/ai-content-assistant', 
-            status: 'beta' 
+          {
+            id: 'ai-content-assistant',
+            title: 'AI Content Assistant',
+            icon: Sparkles,
+            href: '/ai-assistant',
+            status: 'beta'
           },
-          { 
-            id: 'smart-templates', 
-            title: 'Templates Inteligentes', 
-            icon: Brain, 
-            href: '/ai-templates-smart', 
-            status: 'beta' 
+          {
+            id: 'smart-templates',
+            title: 'Templates Inteligentes',
+            icon: Brain,
+            href: '/smart-templates',
+            status: 'beta'
           },
-          { 
-            id: 'workflow-automation', 
-            title: 'Automação de Workflow', 
-            icon: Workflow, 
-            href: '/automation', 
-            status: 'beta' 
+          {
+            id: 'workflow-automation',
+            title: 'Automação de Workflow',
+            icon: Workflow,
+            href: '/batch-processing',
+            status: 'beta'
           }
         ]
       }
@@ -366,33 +366,33 @@ export const navigationUnified: NavItem[] = [
     icon: Building,
     status: 'production',
     children: [
-      { 
-        id: 'enterprise-dashboard', 
-        title: 'Enterprise Dashboard', 
-        icon: Building, 
-        href: '/enterprise', 
-        status: 'production' 
+      {
+        id: 'enterprise-dashboard',
+        title: 'Enterprise Dashboard',
+        icon: Building,
+        href: '/enterprise-integration',
+        status: 'production'
       },
-      { 
-        id: 'collaboration-pro', 
-        title: 'Colaboração Pro', 
-        icon: Users2, 
-        href: '/collaboration-v2', 
-        status: 'active' 
+      {
+        id: 'collaboration-pro',
+        title: 'Colaboração Pro',
+        icon: Users2,
+        href: '/real-time-collaboration',
+        status: 'active'
       },
-      { 
-        id: 'security-compliance', 
-        title: 'Security & Compliance', 
-        icon: Shield, 
-        href: '/security-dashboard', 
-        status: 'active' 
+      {
+        id: 'security-compliance',
+        title: 'Security & Compliance',
+        icon: Shield,
+        href: '/dashboard/security-analytics',
+        status: 'active'
       },
-      { 
-        id: 'sso-integration', 
-        title: 'SSO Integration', 
-        icon: Lock, 
-        href: '/enterprise-sso', 
-        status: 'active' 
+      {
+        id: 'sso-integration',
+        title: 'SSO Integration',
+        icon: Lock,
+        href: '/integrations',
+        status: 'active'
       }
     ]
   },
@@ -410,19 +410,19 @@ export const navigationUnified: NavItem[] = [
         icon: Palette,
         status: 'active',
         children: [
-          { 
-            id: 'theme-config', 
-            title: 'Temas & Cores', 
-            icon: Palette, 
-            href: '/admin/configuracoes#themes', 
-            status: 'production' 
+          {
+            id: 'theme-config',
+            title: 'Temas & Cores',
+            icon: Palette,
+            href: '/admin/configuracoes#themes',
+            status: 'production'
           },
-          { 
-            id: 'whitelabel-config', 
-            title: 'Whitelabel', 
-            icon: Crown, 
-            href: '/whitelabel', 
-            status: 'beta' 
+          {
+            id: 'whitelabel-config',
+            title: 'Whitelabel',
+            icon: Crown,
+            href: '/brand-kit',
+            status: 'beta'
           }
         ]
       },
@@ -432,19 +432,19 @@ export const navigationUnified: NavItem[] = [
         icon: Link2,
         status: 'production',
         children: [
-          { 
-            id: 'api-integrations', 
-            title: 'APIs & Webhooks', 
-            icon: Link2, 
-            href: '/admin/configuracoes#apis', 
-            status: 'production' 
+          {
+            id: 'api-integrations',
+            title: 'APIs & Webhooks',
+            icon: Link2,
+            href: '/admin/configuracoes#apis',
+            status: 'production'
           },
-          { 
-            id: 'cloud-storage', 
-            title: 'Cloud Storage', 
-            icon: Cloud, 
-            href: '/admin/configuracoes#storage', 
-            status: 'production' 
+          {
+            id: 'cloud-storage',
+            title: 'Cloud Storage',
+            icon: Cloud,
+            href: '/admin/configuracoes#storage',
+            status: 'production'
           }
         ]
       },
@@ -454,19 +454,19 @@ export const navigationUnified: NavItem[] = [
         icon: Users2,
         status: 'production',
         children: [
-          { 
-            id: 'user-management', 
-            title: 'Gestão de Usuários', 
-            icon: Users2, 
-            href: '/admin/configuracoes#users', 
-            status: 'production' 
+          {
+            id: 'user-management',
+            title: 'Gestão de Usuários',
+            icon: Users2,
+            href: '/admin/configuracoes#users',
+            status: 'production'
           },
-          { 
-            id: 'roles-permissions', 
-            title: 'Roles & Permissões', 
-            icon: Shield, 
-            href: '/admin/configuracoes#permissions', 
-            status: 'active' 
+          {
+            id: 'roles-permissions',
+            title: 'Roles & Permissões',
+            icon: Shield,
+            href: '/admin/configuracoes#permissions',
+            status: 'active'
           }
         ]
       },
@@ -476,19 +476,19 @@ export const navigationUnified: NavItem[] = [
         icon: Server,
         status: 'production',
         children: [
-          { 
-            id: 'system-monitor', 
-            title: 'Monitor do Sistema', 
-            icon: Activity, 
-            href: '/admin/production-monitor', 
-            status: 'production' 
+          {
+            id: 'system-monitor',
+            title: 'Monitor do Sistema',
+            icon: Activity,
+            href: '/admin/monitoring',
+            status: 'production'
           },
-          { 
-            id: 'database-config', 
-            title: 'Database & Storage', 
-            icon: Database, 
-            href: '/admin/configuracoes#database', 
-            status: 'production' 
+          {
+            id: 'database-config',
+            title: 'Database & Storage',
+            icon: Database,
+            href: '/admin/configuracoes#database',
+            status: 'production'
           }
         ]
       }
@@ -509,20 +509,20 @@ export const navigationUnified: NavItem[] = [
         icon: TestTube,
         status: 'beta',
         children: [
-          { 
-            id: 'advanced-ai', 
-            title: 'IA Avançada', 
-            icon: Brain, 
-            href: '/ai-advanced-lab', 
+          {
+            id: 'advanced-ai',
+            title: 'IA Avançada',
+            icon: Brain,
+            href: '/ai-features',
             status: 'lab',
-            badge: 'Experimental' 
+            badge: 'Experimental'
           },
-          { 
-            id: 'gamification-lab', 
-            title: 'Gamificação', 
-            icon: Gamepad2, 
-            href: '/gamification', 
-            status: 'lab' 
+          {
+            id: 'gamification-lab',
+            title: 'Gamificação',
+            icon: Gamepad2,
+            href: '/interactive-elements',
+            status: 'lab'
           }
         ]
       },
@@ -532,13 +532,13 @@ export const navigationUnified: NavItem[] = [
         icon: Layers,
         status: 'lab',
         children: [
-          { 
-            id: 'editor-animaker-demo', 
-            title: 'Animaker Clone Demo', 
-            icon: Edit3, 
-            href: '/editor-animaker', 
+          {
+            id: 'editor-animaker-demo',
+            title: 'Animaker Clone Demo',
+            icon: Edit3,
+            href: '/editor-animaker',
             status: 'lab',
-            badge: 'Mockup' 
+            badge: 'Mockup'
           }
         ]
       },
@@ -548,19 +548,19 @@ export const navigationUnified: NavItem[] = [
         icon: Code,
         status: 'lab',
         children: [
-          { 
-            id: 'api-evolution', 
-            title: 'API Evolution', 
-            icon: Code, 
-            href: '/api-evolution', 
-            status: 'lab' 
+          {
+            id: 'api-evolution',
+            title: 'API Keys',
+            icon: Code,
+            href: '/api-keys',
+            status: 'lab'
           },
-          { 
-            id: 'ml-ops-lab', 
-            title: 'ML-Ops', 
-            icon: Brain, 
-            href: '/ml-ops', 
-            status: 'lab' 
+          {
+            id: 'ml-ops-lab',
+            title: 'System Control',
+            icon: Brain,
+            href: '/system-control',
+            status: 'lab'
           }
         ]
       }
@@ -571,35 +571,35 @@ export const navigationUnified: NavItem[] = [
 // Status colors and texts
 export const getStatusConfig = (status?: string) => {
   switch (status) {
-    case 'production': 
-      return { 
-        color: 'text-green-600 bg-green-100 border-green-200', 
-        text: '✅', 
-        label: 'Produção' 
+    case 'production':
+      return {
+        color: 'text-green-600 bg-green-100 border-green-200',
+        text: '✅',
+        label: 'Produção'
       }
-    case 'active': 
-      return { 
-        color: 'text-blue-600 bg-blue-100 border-blue-200', 
-        text: '✓', 
-        label: 'Ativo' 
+    case 'active':
+      return {
+        color: 'text-blue-600 bg-blue-100 border-blue-200',
+        text: '✓',
+        label: 'Ativo'
       }
-    case 'beta': 
-      return { 
-        color: 'text-orange-600 bg-orange-100 border-orange-200', 
-        text: '⚡', 
-        label: 'Beta' 
+    case 'beta':
+      return {
+        color: 'text-orange-600 bg-orange-100 border-orange-200',
+        text: '⚡',
+        label: 'Beta'
       }
-    case 'lab': 
-      return { 
-        color: 'text-purple-600 bg-purple-100 border-purple-200', 
-        text: '🧪', 
-        label: 'Lab' 
+    case 'lab':
+      return {
+        color: 'text-purple-600 bg-purple-100 border-purple-200',
+        text: '🧪',
+        label: 'Lab'
       }
-    default: 
-      return { 
-        color: 'text-gray-600 bg-gray-100 border-gray-200', 
-        text: '○', 
-        label: 'Dev' 
+    default:
+      return {
+        color: 'text-gray-600 bg-gray-100 border-gray-200',
+        text: '○',
+        label: 'Dev'
       }
   }
 }

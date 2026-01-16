@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { sessionStore } from '@/lib/admin-auth';
+import { logger } from '@lib/logger';
 
 export async function GET(request: NextRequest) {
   try {
@@ -52,7 +53,9 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('[ADMIN AUTH] Erro na verificação:', error);
+    logger.error('Erro na verificação admin', error instanceof Error ? error : new Error(String(error)), {
+      component: 'API: admin/auth/verify'
+    });
     return NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }

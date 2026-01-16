@@ -75,7 +75,6 @@ export async function cleanOldCompletedJobs(
       select: {
         id: true,
         outputUrl: true,
-        outputSize: true,
         completedAt: true
       }
     });
@@ -90,23 +89,45 @@ export async function cleanOldCompletedJobs(
           logger.info('DRY RUN: Would delete job', {
             jobId: job.id,
             outputUrl: job.outputUrl,
-            size: job.outputSize,
             completedAt: job.completedAt
           });
           deleted++;
-          freedSpace += job.outputSize || 0;
+          // freedSpace += job.outputSize || 0; // Not available in schema yet
           continue;
         }
 
-        // Delete physical file if it exists locally
+          // Delete physical file (Local or Cloud)
         if (job.outputUrl) {
-          const filePath = extractLocalPath(job.outputUrl);
-          if (filePath && existsSync(filePath)) {
-            await fs.unlink(filePath);
-            logger.debug('Deleted render output file', {
-              jobId: job.id,
-              path: filePath
-            });
+          const isCloudUrl = job.outputUrl.includes('supabase.co') || job.outputUrl.startsWith('http');
+
+          if (isCloudUrl) {
+             // Extract bucket and path for Cloud Storage
+             // URL format: .../storage/v1/object/public/BUCKET/PATH...
+             const urlParts = job.outputUrl.split('/storage/v1/object/public/');
+             if (urlParts.length > 1) {
+                const rest = urlParts[1];
+                const parts = rest.split('/');
+                const bucket = parts[0];
+                const path = parts.slice(1).join('/');
+
+                if (dryRun) {
+                    logger.info('DRY RUN: Would delete cloud file', { bucket, path });
+                } else {
+                    const { storageSystem } = await import('@/lib/storage-system-real');
+                    await storageSystem.delete(bucket, path);
+                    logger.debug('Deleted cloud file', { bucket, path });
+                }
+             }
+          } else {
+             // Local file fallback
+             const filePath = extractLocalPath(job.outputUrl);
+             if (filePath && existsSync(filePath)) {
+               await fs.unlink(filePath);
+               logger.debug('Deleted local render output file', {
+                 jobId: job.id,
+                 path: filePath
+               });
+             }
           }
         }
 
@@ -116,11 +137,10 @@ export async function cleanOldCompletedJobs(
         });
 
         deleted++;
-        freedSpace += job.outputSize || 0;
+        // freedSpace += job.outputSize || 0;
 
         logger.debug('Deleted old completed job', {
-          jobId: job.id,
-          freedSpace: job.outputSize
+          jobId: job.id
         });
       } catch (error) {
         errors++;

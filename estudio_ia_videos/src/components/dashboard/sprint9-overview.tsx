@@ -423,14 +423,14 @@ export default function Sprint9Overview() {
                 </Button>
               </Link>
               
-              <Link href="/security-dashboard">
+              <Link href="/dashboard/security-analytics">
                 <Button variant="outline" size="sm">
                   <Shield className="h-4 w-4 mr-2" />
                   Zero-Trust
                 </Button>
               </Link>
               
-              <Link href="/ml-ops">
+              <Link href="/system-control">
                 <Button variant="outline" size="sm">
                   <BarChart3 className="h-4 w-4 mr-2" />
                   ML Analytics

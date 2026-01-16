@@ -10,6 +10,7 @@ import { z } from 'zod'
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { integratedPipeline, PipelineInput } from '@lib/pipeline/integrated-pipeline'
 import { Logger } from '@lib/logger'
+import { getRequiredEnv } from '@lib/env'
 
 const logger = new Logger('PipelineAPI')
 
@@ -54,8 +55,8 @@ const PrioritySchema = z.enum(['low', 'normal', 'high', 'urgent'])
 export async function POST(request: NextRequest) {
   try {
     const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+      getRequiredEnv('NEXT_PUBLIC_SUPABASE_URL'),
+      getRequiredEnv('SUPABASE_SERVICE_ROLE_KEY')
     )
 
     // Verificar autenticação
@@ -188,8 +189,8 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+      getRequiredEnv('NEXT_PUBLIC_SUPABASE_URL'),
+      getRequiredEnv('SUPABASE_SERVICE_ROLE_KEY')
     )
 
     // Verificar autenticação

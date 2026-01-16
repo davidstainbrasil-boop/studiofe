@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SRTGenerator } from '@lib/subtitles/srt-generator';
 import { z } from 'zod';
+import { logger } from '@lib/logger';
 
 const slideSchema = z.object({
   id: z.string().optional(),
@@ -89,7 +90,9 @@ export async function POST(request: NextRequest) {
     );
 
   } catch (error) {
-    console.error('[Subtitles API] Erro:', error);
+    logger.error('Erro na API de legendas', error instanceof Error ? error : new Error(String(error)), {
+      component: 'API: subtitles/generate'
+    });
     return NextResponse.json(
       { success: false, error: 'Erro interno' },
       { status: 500 }

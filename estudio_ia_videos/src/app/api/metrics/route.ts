@@ -28,7 +28,7 @@ export async function GET(request: Request) {
   }
   
   if (format === 'json') {
-    return NextResponse.json(getMetricsJson(), {
+    return NextResponse.json(await getMetricsJson(), {
       headers: {
         'Cache-Control': 'no-store',
       },

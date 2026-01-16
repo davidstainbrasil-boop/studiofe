@@ -213,7 +213,7 @@ export default function DashboardReal() {
   const handleCreateProject = async () => {
     try {
       // Redirecionar para o PPTX Studio Enhanced - Hub principal
-      router.push('/pptx-studio-enhanced')
+      router.push('/pptx')
     } catch (error) {
       toast.error('Erro ao criar projeto')
     }
@@ -221,7 +221,7 @@ export default function DashboardReal() {
 
   const handleViewProject = async (projectId: string) => {
     try {
-      router.push(`/editor/${projectId}`)
+      router.push(`/studio/${projectId}`)
     } catch (error) {
       toast.error('Erro ao abrir projeto')
     }
@@ -315,24 +315,10 @@ export default function DashboardReal() {
                   <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
                     Estúdio IA de Vídeos
                   </h1>
-                  <p className="text-xs text-gray-500 flex items-center gap-1">
-                    <CheckCircle className="w-3 h-3 text-green-500" />
-                    Dashboard 100% Funcional
-                  </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <Badge className="bg-green-100 text-green-800">
-                    <Activity className="w-3 h-3 mr-1" />
-                    Sistema Online
-                  </Badge>
-                  <Badge className="bg-blue-100 text-blue-800">
-                    <Database className="w-3 h-3 mr-1" />
-                    API Ativa
-                  </Badge>
-                </div>
 
                 <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border">
                   <User className="w-4 h-4 text-gray-600" />
@@ -520,148 +506,90 @@ export default function DashboardReal() {
             </Card>
           </div>
 
-          {/* Módulos Ativos Funcionais - 100% REAL */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-xl font-semibold flex items-center gap-2">
-                  <Zap className="h-5 w-5 text-green-600" />
-                  Módulos Ativos - 100% Funcionais
-                </h2>
-                <p className="text-sm text-gray-600">Funcionalidades reais em produção</p>
-              </div>
-              <Badge className="bg-green-100 text-green-800 px-3 py-1">
-                <CheckCircle className="h-3 w-3 mr-1" />
-                5 Módulos Ativos
-              </Badge>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-              {/* PPTX Studio Enhanced - HUB PRINCIPAL */}
-              <Link href="/pptx-studio-enhanced" className="contents">
-                <Button
-                  variant="outline"
-                  className="p-6 h-auto flex-col gap-3 hover:bg-purple-50 hover:border-purple-200 border-purple-300 shadow-md relative"
-                >
-                  <Badge className="absolute -top-2 -right-2 bg-purple-600 text-white text-xs animate-pulse">
-                    HUB
-                  </Badge>
-                  <Brain className="w-8 h-8 text-purple-600" />
-                  <div className="text-center">
-                    <p className="font-medium">PPTX Studio Enhanced</p>
-                    <p className="text-xs text-gray-500">Hub completo IA + Editor</p>
-                  </div>
-                  <div className="text-xs text-green-600 font-medium">✓ 100% Funcional</div>
-                </Button>
-              </Link>
-
-              {/* Talking Photo Pro */}
-              <Link href="/talking-photo-pro" className="contents">
-                <Button
-                  variant="outline"
-                  className="p-6 h-auto flex-col gap-3 hover:bg-blue-50 hover:border-blue-200 border-blue-300 shadow-md"
-                >
-                  <Heart className="w-8 h-8 text-blue-600" />
-                  <div className="text-center">
-                    <p className="font-medium">Talking Photo PRO</p>
-                    <p className="text-xs text-gray-500">Avatares + TTS Brasil</p>
-                  </div>
-                  <div className="text-xs text-green-600 font-medium">✓ Produção</div>
-                </Button>
-              </Link>
-
-              {/* PPTX Upload Real */}
-              <Link href="/pptx-upload-real" className="contents">
-                <Button
-                  variant="outline"
-                  className="p-6 h-auto flex-col gap-3 hover:bg-emerald-50 hover:border-emerald-200 border-emerald-300 shadow-md"
-                >
-                  <Upload className="w-8 h-8 text-emerald-600" />
-                  <div className="text-center">
-                    <p className="font-medium">Upload PPTX Real</p>
-                    <p className="text-xs text-gray-500">Processamento IA real</p>
-                  </div>
-                  <div className="text-xs text-green-600 font-medium">✓ Pipeline Real</div>
-                </Button>
-              </Link>
-
-              {/* PPTX Editor Real */}
-              <Link href="/pptx-editor-real" className="contents">
-                <Button
-                  variant="outline"
-                  className="p-6 h-auto flex-col gap-3 hover:bg-orange-50 hover:border-orange-200 border-orange-300 shadow-md"
-                >
-                  <Play className="w-8 h-8 text-orange-600" />
-                  <div className="text-center">
-                    <p className="font-medium">Editor PPTX Real</p>
-                    <p className="text-xs text-gray-500">Renderização + TTS</p>
-                  </div>
-                  <div className="text-xs text-green-600 font-medium">✓ Render Real</div>
-                </Button>
-              </Link>
-
-              {/* Professional Render Engine - SPRINT 5 */}
-              <Link href="/render-engine" className="contents">
-                <Button
-                  variant="outline"
-                  className="p-6 h-auto flex-col gap-3 hover:bg-purple-50 hover:border-purple-200 border-purple-300 shadow-md bg-purple-25"
-                >
-                  <Film className="w-8 h-8 text-purple-600" />
-                  <div className="text-center">
-                    <p className="font-medium">Render Engine</p>
-                    <p className="text-xs text-gray-500">FFmpeg + Cinema Quality</p>
-                  </div>
-                  <div className="text-xs text-green-600 font-medium">✓ Sprint 5 NEW</div>
-                </Button>
-              </Link>
-
-              {/* Dashboard Real */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            {/* PPTX Studio Enhanced - HUB PRINCIPAL */}
+            <Link href="/pptx-preview" className="contents">
               <Button
                 variant="outline"
-                className="p-6 h-auto flex-col gap-3 hover:bg-indigo-50 hover:border-indigo-200 border-indigo-300 shadow-md bg-indigo-25"
-                onClick={() => window.location.reload()}
+                className="p-6 h-auto flex-col gap-3 hover:bg-purple-50 hover:border-purple-200 border-purple-300 shadow-md relative"
               >
-                <Activity className="w-8 h-8 text-indigo-600" />
                 <div className="text-center">
-                  <p className="font-medium">Dashboard Real</p>
-                  <p className="text-xs text-gray-500">Métricas tempo real</p>
+                  <p className="font-medium">PPTX Studio</p>
+                  <p className="text-xs text-gray-500">Editor e IA Integrada</p>
                 </div>
-                <div className="text-xs text-blue-600 font-medium">◉ Ativo Agora</div>
               </Button>
-            </div>
+            </Link>
 
-            {/* Status dos Módulos */}
-            <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                  <span className="text-sm font-medium text-green-800">Módulos Funcionais</span>
+            {/* Talking Photo Pro */}
+            <Link href="/talking-photo-pro" className="contents">
+              <Button
+                variant="outline"
+                className="p-6 h-auto flex-col gap-3 hover:bg-blue-50 hover:border-blue-200 border-blue-300 shadow-md"
+              >
+                <Heart className="w-8 h-8 text-blue-600" />
+                <div className="text-center">
+                  <p className="font-medium">Talking Photo</p>
+                  <p className="text-xs text-gray-500">Avatares e Voz</p>
                 </div>
-                <div className="text-2xl font-bold text-green-600">5/5</div>
-                <div className="text-xs text-green-600">100% Operacional</div>
-              </div>
+              </Button>
+            </Link>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Zap className="h-4 w-4 text-blue-600" />
-                  <span className="text-sm font-medium text-blue-800">APIs Ativas</span>
+            {/* PPTX Upload Real */}
+            <Link href="/pptx" className="contents">
+              <Button
+                variant="outline"
+                className="p-6 h-auto flex-col gap-3 hover:bg-emerald-50 hover:border-emerald-200 border-emerald-300 shadow-md"
+              >
+                <Upload className="w-8 h-8 text-emerald-600" />
+                <div className="text-center">
+                  <p className="font-medium">Importar PPTX</p>
+                  <p className="text-xs text-gray-500">Conversão de slides</p>
                 </div>
-                <div className="text-2xl font-bold text-blue-600">12/12</div>
-                <div className="text-xs text-blue-600">Todas online</div>
-              </div>
+              </Button>
+            </Link>
 
-              <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Brain className="h-4 w-4 text-purple-600" />
-                  <span className="text-sm font-medium text-purple-800">IA Engines</span>
+            {/* PPTX Editor Real */}
+            <Link href="/studio" className="contents">
+              <Button
+                variant="outline"
+                className="p-6 h-auto flex-col gap-3 hover:bg-orange-50 hover:border-orange-200 border-orange-300 shadow-md"
+              >
+                <Play className="w-8 h-8 text-orange-600" />
+                <div className="text-center">
+                  <p className="font-medium">Editor Visual</p>
+                  <p className="text-xs text-gray-500">Edição manual</p>
                 </div>
-                <div className="text-2xl font-bold text-purple-600">6/6</div>
-                <div className="text-xs text-purple-600">TTS + NLP ativo</div>
+              </Button>
+            </Link>
+
+            {/* Professional Render Engine - SPRINT 5 */}
+            <Link href="/render-engine" className="contents">
+              <Button
+                variant="outline"
+                className="p-6 h-auto flex-col gap-3 hover:bg-purple-50 hover:border-purple-200 border-purple-300 shadow-md bg-purple-25"
+              >
+                <Film className="w-8 h-8 text-purple-600" />
+                <div className="text-center">
+                  <p className="font-medium">Render Engine</p>
+                  <p className="text-xs text-gray-500">Exportação de vídeo</p>
+                </div>
+              </Button>
+            </Link>
+
+            {/* Dashboard Real */}
+            <Button
+              variant="outline"
+              className="p-6 h-auto flex-col gap-3 hover:bg-indigo-50 hover:border-indigo-200 border-indigo-300 shadow-md bg-indigo-25"
+              onClick={() => window.location.reload()}
+            >
+              <Activity className="w-8 h-8 text-indigo-600" />
+              <div className="text-center">
+                <p className="font-medium">Atualizar</p>
+                <p className="text-xs text-gray-500">Recarregar dados</p>
               </div>
-            </div>
+            </Button>
           </div>
 
-          {/* Recent Projects - REAL DATA */}
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold">Projetos Recentes</h2>
@@ -809,7 +737,7 @@ export default function DashboardReal() {
             )}
           </div>
         </main>
-        {/* Edit Project Dialog */}
+
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>

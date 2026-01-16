@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { logger } from '@lib/logger';
 
 export async function POST() {
   try {
@@ -14,7 +15,9 @@ export async function POST() {
     });
 
   } catch (error) {
-    console.error('[ADMIN AUTH] Erro no logout:', error);
+    logger.error('Erro no logout admin', error instanceof Error ? error : new Error(String(error)), {
+      component: 'API: admin/auth/logout'
+    });
     return NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }

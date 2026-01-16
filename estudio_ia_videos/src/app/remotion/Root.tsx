@@ -7,9 +7,9 @@ export const RemotionRoot: React.FC = () => {
   return (
     <>
       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any -- Remotion Composition generic typing requires component cast */}
-      <Composition<MyCompositionProps, Record<string, unknown>>
+      <Composition<any, any>
         id="MyVideo"
-        component={MyComposition as React.ComponentType<MyCompositionProps>}
+        component={MyComposition as any}
         durationInFrames={30 * 60} // Fallback duration
         fps={30}
         width={1920}
@@ -24,18 +24,19 @@ export const RemotionRoot: React.FC = () => {
             },
           ],
         }}
-        calculateMetadata={async ({ props }) => {
+        calculateMetadata={async ({ props }: { props: any }) => {
           const fps = 30;
-          const totalDurationInSeconds = props.slides.reduce((acc, slide) => acc + (slide.duration || 5), 0);
+          const slides = (props?.slides || []) as Array<{ duration?: number }>;
+          const totalDurationInSeconds = slides.reduce((acc: number, slide: { duration?: number }) => acc + (slide.duration || 5), 0);
           return {
             durationInFrames: Math.ceil(totalDurationInSeconds * fps),
             props,
           };
         }}
       />
-      <Composition<TimelineCompositionProps, Record<string, unknown>>
+      <Composition<any, any>
         id="TimelineVideo"
-        component={TimelineComposition as React.ComponentType<TimelineCompositionProps>}
+        component={TimelineComposition as any}
         durationInFrames={30 * 60}
         fps={30}
         width={1920}
@@ -44,11 +45,12 @@ export const RemotionRoot: React.FC = () => {
           tracks: []
         }}
         // Calculate total duration from tracks
-        calculateMetadata={async ({ props }) => {
+        calculateMetadata={async ({ props }: { props: any }) => {
           let maxDuration = 0;
-          if (props.tracks) {
-            props.tracks.forEach((t: any) => {
-              if (t.elements) {
+          const tracks = (props?.tracks || []) as Array<{ elements?: Array<{ startTime: number; duration: number }> }>;
+          if (Array.isArray(tracks)) {
+            tracks.forEach((t: any) => {
+              if (t.elements && Array.isArray(t.elements)) {
                 t.elements.forEach((e: any) => {
                   const end = e.startTime + e.duration;
                   if (end > maxDuration) maxDuration = end;

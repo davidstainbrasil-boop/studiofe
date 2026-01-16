@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@lib/prisma';
 import { createClient } from '@supabase/supabase-js';
 import { getSupabaseForRequest } from '@lib/supabase/server';
+import { getRequiredEnv } from '@lib/env';
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '@lib/logger';
 
@@ -25,8 +26,8 @@ export async function POST(request: NextRequest) {
     if (authHeader) {
         // Create a clean client and set session manually
         supabase = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            getRequiredEnv('NEXT_PUBLIC_SUPABASE_URL'),
+            getRequiredEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY'),
             {
                 auth: {
                     persistSession: false,
@@ -68,8 +69,10 @@ export async function POST(request: NextRequest) {
     const code = uuidv4().split('-')[0].toUpperCase();
 
     // Try to create in DB
+    // TODO: Se certificates não existir no schema Prisma, usar outra tabela ou Supabase diretamente
+    let certificate;
     try {
-      const certificate = await prisma.certificates.create({
+      certificate = await (prisma as any).certificates.create({
         data: {
           id: uuidv4(),
           projectId,

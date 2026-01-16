@@ -8,6 +8,7 @@ import { getSupabaseForRequest } from '@lib/supabase/server';
 import { createClient } from '@supabase/supabase-js';
 import { supabaseAdmin } from '@lib/services/server';
 import { logger } from '@lib/logger';
+import { getRequiredEnv } from '@lib/env';
 import type { CompletePPTXData, CompleteSlideData } from '@lib/pptx/parsers/advanced-parser';
 
 /**
@@ -25,8 +26,8 @@ export async function POST(request: NextRequest) {
     if (authHeader) {
         // Create a clean client and set session manually
         supabase = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            getRequiredEnv('NEXT_PUBLIC_SUPABASE_URL'),
+            getRequiredEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY'),
             {
                 auth: {
                     persistSession: false,
@@ -199,13 +200,13 @@ export async function POST(request: NextRequest) {
       projectId: project.id,
       message: 'PPTX processado com sucesso',
       slideCount: slidesToInsert.length,
-      slides: slidesToInsert.map(s => ({
-          slideNumber: s.metadata.originalSlideNumber,
-          title: s.title,
+      slides: slidesToInsert.map(s => s ? {
+          slideNumber: s.metadata?.originalSlideNumber ?? 0,
+          title: s.title ?? '',
           thumbnailUrl: s.background_image || '',
-          duration: s.durationSeconds,
+          duration: s.durationSeconds ?? 0,
           selected: true
-      }))
+      } : null).filter(Boolean)
     });
 
   } catch (error) {

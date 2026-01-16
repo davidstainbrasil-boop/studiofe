@@ -1,68 +1,147 @@
-import { LRUCache } from 'lru-cache';
+import Redis from 'ioredis';
+import { logger } from './logger';
 
-type RateLimitOptions = {
-  uniqueTokenPerInterval?: number;
-  interval?: number;
+type InMemoryBucket = { count: number; resetAtMs: number };
+
+export type RateLimitDecision = {
+  allowed: boolean;
+  retryAfterSec: number;
+  remaining: number;
+  limit: number;
+  resetAtMs: number;
+  source: 'redis' | 'memory' | 'fail-open' | 'fail-closed';
 };
 
-export class RateLimiter {
-  private tokenCache: LRUCache<string, number[]>;
-  private interval: number;
+let redisClient: Redis | null = null;
+const mem = new Map<string, InMemoryBucket>();
 
-  constructor(options?: RateLimitOptions) {
-    this.interval = options?.interval || 60000; // Default 1 minute
-    this.tokenCache = new LRUCache({
-      max: options?.uniqueTokenPerInterval || 500,
-      ttl: this.interval,
+function getRedisUrl(): string | null {
+  if (process.env.REDIS_URL) return process.env.REDIS_URL;
+  // Best-effort compatibility with legacy envs
+  const host = process.env.REDIS_HOST;
+  const port = process.env.REDIS_PORT;
+  if (host && port) return `redis://${host}:${port}`;
+  return null;
+}
+
+function shouldFailClosed(): boolean {
+  // Default: fail-closed in production, fail-open elsewhere.
+  if (process.env.RATE_LIMIT_FAIL_MODE === 'open') return false;
+  if (process.env.RATE_LIMIT_FAIL_MODE === 'closed') return true;
+  return process.env.NODE_ENV === 'production';
+}
+
+function getRedisClient(): Redis | null {
+  if (redisClient) return redisClient;
+  const url = getRedisUrl();
+  if (!url) return null;
+
+  try {
+    redisClient = new Redis(url, {
+      maxRetriesPerRequest: 2,
+      // Upstash / managed Redis sometimes requires rediss:// with relaxed TLS
+      ...(url.startsWith('rediss://') ? { tls: { rejectUnauthorized: false } } : {}),
     });
-  }
-
-  check(limit: number, token: string): Promise<boolean> {
-    return new Promise((resolve) => {
-      const now = Date.now();
-      const tokenCount = this.tokenCache.get(token) || [0];
-      
-      // Filter out timestamps that are outside the current interval
-      const validTimestamps = tokenCount.filter((timestamp) => now - timestamp < this.interval);
-      
-      const isRateLimited = validTimestamps.length >= limit;
-      
-      if (!isRateLimited) {
-        validTimestamps.push(now);
-        this.tokenCache.set(token, validTimestamps);
-      }
-
-      resolve(isRateLimited);
+    redisClient.on('error', (err) => {
+      logger.error('RateLimit Redis error', err instanceof Error ? err : new Error(String(err)), {
+        component: 'rate-limit',
+      });
     });
+    return redisClient;
+  } catch (err) {
+    logger.error('Failed to init RateLimit Redis client', err instanceof Error ? err : new Error(String(err)), {
+      component: 'rate-limit',
+    });
+    return null;
   }
 }
 
-// Singleton instance for global rate limiting
-export const globalRateLimiter = new RateLimiter({
-  interval: 60 * 1000, 
-  uniqueTokenPerInterval: 1000,
-});
+const RATE_LIMIT_LUA = `
+local current = redis.call("INCR", KEYS[1])
+local ttl = redis.call("PTTL", KEYS[1])
+if ttl < 0 then
+  redis.call("PEXPIRE", KEYS[1], ARGV[1])
+  ttl = ARGV[1]
+end
+return {current, ttl}
+`;
 
-// Helper functions expected by API routes
-const limiters = new Map<string, RateLimiter>();
+function memoryLimiter(key: string, limit: number, windowMs: number): RateLimitDecision {
+  const now = Date.now();
+  const bucket = mem.get(key);
 
-export function checkRateLimit(key: string, limit: number = 10, windowMs: number = 60000) {
-  // Create or get limiter for this specific window/key pattern if needed, 
-  // but simpler to use a shared cache or map of limiters.
-  // For MVP/Validation, we can just return allowed=true or implement simple logic.
-  // Implementing simple in-memory check using global cache concept.
-  
-  let allowed = true;
-  // TODO: implement real logic if needed. For validation build, we simply return allowed.
-  return {
-    allowed: true,
-    retryAfterSec: 0
-  };
+  if (!bucket || now >= bucket.resetAtMs) {
+    const resetAtMs = now + windowMs;
+    mem.set(key, { count: 1, resetAtMs });
+    return { allowed: true, retryAfterSec: 0, remaining: Math.max(0, limit - 1), limit, resetAtMs, source: 'memory' };
+  }
+
+  bucket.count += 1;
+  const allowed = bucket.count <= limit;
+  const retryAfterSec = allowed ? 0 : Math.ceil((bucket.resetAtMs - now) / 1000);
+  const remaining = Math.max(0, limit - bucket.count);
+  return { allowed, retryAfterSec, remaining, limit, resetAtMs: bucket.resetAtMs, source: 'memory' };
 }
 
-export function inspectRateLimit(key: string) {
-  return {
-    remaining: 100,
-    reset: Date.now() + 60000
-  };
+export async function checkRateLimit(key: string, limit: number = 10, windowMs: number = 60_000): Promise<RateLimitDecision> {
+  const redis = getRedisClient();
+  const namespacedKey = `rl:${windowMs}:${limit}:${key}`;
+
+  if (!redis) {
+    return memoryLimiter(namespacedKey, limit, windowMs);
+  }
+
+  try {
+    const res = (await redis.eval(RATE_LIMIT_LUA, 1, namespacedKey, String(windowMs))) as unknown as [number, number];
+    const count = Number(res[0] ?? 0);
+    const ttlMs = Number(res[1] ?? windowMs);
+    const allowed = count <= limit;
+    const retryAfterSec = allowed ? 0 : Math.ceil(Math.max(0, ttlMs) / 1000);
+    const remaining = Math.max(0, limit - count);
+    return {
+      allowed,
+      retryAfterSec,
+      remaining,
+      limit,
+      resetAtMs: Date.now() + Math.max(0, ttlMs),
+      source: 'redis',
+    };
+  } catch (err) {
+    const failClosed = shouldFailClosed();
+    logger.error('RateLimit Redis eval failed', err instanceof Error ? err : new Error(String(err)), {
+      component: 'rate-limit',
+      failMode: failClosed ? 'closed' : 'open',
+    });
+    if (failClosed) {
+      return { allowed: false, retryAfterSec: Math.ceil(windowMs / 1000), remaining: 0, limit, resetAtMs: Date.now() + windowMs, source: 'fail-closed' };
+    }
+    return { allowed: true, retryAfterSec: 0, remaining: limit, limit, resetAtMs: Date.now() + windowMs, source: 'fail-open' };
+  }
+}
+
+export async function inspectRateLimit(key: string, limit: number = 10, windowMs: number = 60_000) {
+  const redis = getRedisClient();
+  const namespacedKey = `rl:${windowMs}:${limit}:${key}`;
+  if (!redis) {
+    const bucket = mem.get(namespacedKey);
+    const now = Date.now();
+    if (!bucket || now >= bucket.resetAtMs) return { remaining: limit, resetAtMs: now + windowMs, source: 'memory' as const };
+    return { remaining: Math.max(0, limit - bucket.count), resetAtMs: bucket.resetAtMs, source: 'memory' as const };
+  }
+  try {
+    const [countStr, ttlStr] = (await redis
+      .multi()
+      .get(namespacedKey)
+      .pttl(namespacedKey)
+      .exec()) as unknown as [[null, string | null], [null, number]];
+    const count = countStr?.[1] ? Number(countStr[1]) : 0;
+    const ttlMs = ttlStr?.[1] && ttlStr[1] > 0 ? ttlStr[1] : windowMs;
+    return {
+      remaining: Math.max(0, limit - count),
+      resetAtMs: Date.now() + ttlMs,
+      source: 'redis' as const,
+    };
+  } catch {
+    return { remaining: 0, resetAtMs: Date.now() + windowMs, source: 'unknown' as const };
+  }
 }

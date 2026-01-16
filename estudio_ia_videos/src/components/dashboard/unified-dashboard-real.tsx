@@ -537,7 +537,7 @@ export default function UnifiedDashboardReal() {
               </Button>
             </Link>
 
-            <Link href="/templates-nr-real">
+            <Link href="/smart-nr-templates">
               <Button variant="outline" className="h-auto p-4 flex flex-col gap-2 w-full hover:bg-green-50 transition-colors">
                 <Shield className="h-8 w-8 text-green-500" />
                 <span className="font-semibold">Templates NR</span>

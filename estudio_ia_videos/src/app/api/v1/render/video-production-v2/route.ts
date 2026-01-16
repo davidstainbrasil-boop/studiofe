@@ -193,21 +193,17 @@ async function processRenderJob(
     job.progress = 30;
     renderJobs.set(jobId, job);
 
-    // Fase 2: Renderizar slides individuais
-    logger.info(`🎨 [Video Render v2] Renderizando slides para job ${jobId}...`, { component: 'API: v1/render/video-production-v2' });
-    const renderedSlides = await pipeline.renderSlides(slides as any[], timeline as any);
-    job.progress = 60;
-    renderJobs.set(jobId, job);
-
-    // Fase 3: Compor timeline final
-    logger.info(`🎞️ [Video Render v2] Compondo timeline para job ${jobId}...`, { component: 'API: v1/render/video-production-v2' });
-    const composedVideo = await pipeline.composeTimeline(renderedSlides, timeline as any);
-    job.progress = 80;
-    renderJobs.set(jobId, job);
-
-    // Fase 4: Encoding final
-    logger.info(`📹 [Video Render v2] Codificando vídeo final para job ${jobId}...`, { component: 'API: v1/render/video-production-v2' });
-    const outputPath = await pipeline.encodeVideo(composedVideo, settings as any);
+    // Fase 2-4: Executar pipeline completo (métodos individuais foram removidos, usar execute())
+    logger.info(`🎬 [Video Render v2] Executando pipeline completo para job ${jobId}...`, { component: 'API: v1/render/video-production-v2' });
+    // TODO: Extrair projectId dos slides ou timeline, ou passar como parâmetro
+    const projectId = (slides[0] as any)?.projectId || `temp-${jobId}`;
+    const outputPath = await pipeline.execute({
+      projectId,
+      jobId,
+      outputFormat: settings.format === 'webm' ? 'webm' : 'mp4',
+      quality: (settings.quality === 'ultra' ? 'high' : settings.quality) || 'medium',
+      resolution: settings.width >= 3840 ? '4k' : settings.width >= 1920 ? '1080p' : '720p'
+    });
     job.progress = 95;
     renderJobs.set(jobId, job);
 

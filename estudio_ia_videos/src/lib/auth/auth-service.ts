@@ -54,12 +54,9 @@ export class AuthService {
   }
   
   async login(email: string, password: string, request: Request): Promise<AuthTokens> {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-    if (!supabaseUrl || !supabaseKey) {
-        throw new Error('Missing Supabase configuration');
-    }
+    const { getRequiredEnv } = await import('@lib/env');
+    const supabaseUrl = getRequiredEnv('NEXT_PUBLIC_SUPABASE_URL');
+    const supabaseKey = getRequiredEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY');
 
     const supabase = createClient(supabaseUrl, supabaseKey, {
       auth: {

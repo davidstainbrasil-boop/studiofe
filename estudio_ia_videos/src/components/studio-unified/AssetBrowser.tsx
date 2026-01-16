@@ -11,6 +11,7 @@ import { AvatarConfiguratorModal } from './AvatarConfiguratorModal';
 import { useTimelineStore } from '../../lib/stores/timeline-store';
 import { useAvatarGeneration } from '../../hooks/use-avatar-generation';
 import { toast } from 'sonner';
+import { SubtitlesPanel } from './SubtitlesPanel';
 
 interface RemoteAsset {
     id: string;
@@ -142,8 +143,9 @@ export function AssetBrowser() {
         generateAvatar({
             avatarId: selectedAvatar.id,
             animation: 'talking',
-            text: "Olá! Este é um teste de geração de avatar hiper-realista.",
-            voiceCloning: false
+            text: config.text || "Sem texto definido",
+            voiceCloning: !!config.voiceId,
+            voiceId: config.voiceId
         });
     };
 
@@ -210,6 +212,7 @@ export function AssetBrowser() {
                     <TabsTrigger value="media" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary pb-2 text-xs">Mídia</TabsTrigger>
                     <TabsTrigger value="audio" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary pb-2 text-xs">Áudio</TabsTrigger>
                     <TabsTrigger value="avatars" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary pb-2 text-xs">Avatares</TabsTrigger>
+                    <TabsTrigger value="subtitles" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary pb-2 text-xs">Legendas</TabsTrigger>
                     <TabsTrigger value="templates" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary pb-2 text-xs">Templates</TabsTrigger>
                 </TabsList>
 
@@ -320,6 +323,10 @@ export function AssetBrowser() {
                             ))}
                         </div>
                     </ScrollArea>
+                </TabsContent>
+
+                <TabsContent value="subtitles" className="flex-1 p-0 m-0">
+                    <SubtitlesPanel />
                 </TabsContent>
 
                 <TabsContent value="templates" className="flex-1 p-0 m-0">

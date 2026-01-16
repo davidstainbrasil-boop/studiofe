@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
         tracks: restoredTimeline.tracks,
         settings: restoredTimeline.settings,
         totalDuration: restoredTimeline.totalDuration,
-        updatedAt: restoredTimeline.updatedAt.toISOString(),
+        updatedAt: restoredTimeline.updatedAt?.toISOString() || new Date().toISOString(),
       },
       message: `Timeline restaurada para versão ${snapshot.version}`,
     });

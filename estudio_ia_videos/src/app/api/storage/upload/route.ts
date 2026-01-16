@@ -35,12 +35,24 @@ export const POST = withRateLimit(RATE_LIMITS.UPLOAD, 'user')(async function POS
 
     const fileBuffer = Buffer.from(await file.arrayBuffer());
     
+    // Check storage limit
+    const { checkLimit } = await import('@/lib/billing/limits');
+    const limitCheck = await checkLimit(session.user.id, 'storage', file.size);
+
+    if (!limitCheck.allowed) {
+      return NextResponse.json({ error: 'Storage limit exceeded' }, { status: 402 });
+    }
+
     const publicUrl = await storageSystem.upload({
       bucket,
       path,
       file: fileBuffer,
       contentType: file.type || 'application/octet-stream',
     });
+
+    // Increment storage usage
+    const { incrementUsage } = await import('@/lib/billing/usage');
+    await incrementUsage(session.user.id, 'storage', file.size);
 
     // Audit log
     const { ip, userAgent } = getRequestMetadata(req);

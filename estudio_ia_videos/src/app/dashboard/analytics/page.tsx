@@ -137,7 +137,7 @@ export default function AnalyticsDashboard() {
 
     void loadUser();
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
       if (!isMounted) return;
       setUser(session?.user ?? null);
     });

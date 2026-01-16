@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { logger } from '@lib/logger'
 
 /**
  * POST /api/ai/detect-scenes
@@ -39,7 +40,9 @@ export async function POST(request: NextRequest) {
       }
     })
   } catch (error) {
-    console.error('Error detecting scenes:', error)
+    logger.error('Erro ao detectar cenas', error instanceof Error ? error : new Error(String(error)), {
+      component: 'API: ai/detect-scenes'
+    });
     return NextResponse.json(
       { success: false, error: 'Failed to detect scenes' },
       { status: 500 }
@@ -133,7 +136,9 @@ export async function PUT(request: NextRequest) {
       }))
     })
   } catch (error) {
-    console.error('Error exporting scenes:', error)
+    logger.error('Error exporting scenes', error instanceof Error ? error : new Error(String(error)), {
+      component: 'API: ai/detect-scenes'
+    });
     return NextResponse.json(
       { success: false, error: 'Failed to export scenes' },
       { status: 500 }

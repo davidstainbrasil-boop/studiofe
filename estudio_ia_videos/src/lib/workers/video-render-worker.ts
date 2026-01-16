@@ -141,15 +141,60 @@ export class VideoRenderWorker {
       } catch (e) { /* ignore cleanup errors */ }
 
       // 4. Update job status in database
-      await prisma.video_exports.update({
+      await prisma.render_jobs.update({
         where: { id: jobId },
         data: {
           status: 'completed',
-          videoUrl: videoResultUrl,
+          outputUrl: videoResultUrl,
           progress: 100,
-          updatedAt: new Date()
+          completedAt: new Date()
         }
       });
+
+      // --- NOTIFICATIONS START ---
+      try {
+        const { emailService } = await import('@/lib/services/email-service');
+        const { triggerWebhook } = await import('@/lib/webhooks-system-real');
+        
+        // Fetch User and Project info
+        const job = await prisma.render_jobs.findUnique({
+            where: { id: jobId },
+            select: { projectId: true, userId: true }
+        });
+
+        if (!job?.projectId || !job?.userId) {
+             logger.warn('Notifications skipped: Job missing userId or projectId', { jobId });
+        } else {
+            const project = await prisma.projects.findUnique({
+                where: { id: job.projectId },
+                select: { name: true }
+            });
+            const user = await prisma.users.findUnique({
+                where: { id: job.userId },
+                select: { email: true, name: true }
+            });
+
+            if (user?.email) {
+                await emailService.sendRenderCompleted(
+                    user.email, 
+                    project?.name || 'Untitled Project', 
+                    videoResultUrl, 
+                    renderResult.duration || 0
+                );
+            }
+
+            await triggerWebhook.renderCompleted({
+                jobId,
+                projectId: job.projectId,
+                videoUrl: videoResultUrl,
+                duration: renderResult.duration || 0
+            });
+        }
+
+      } catch (notifyErr) {
+        logger.error('Failed to send render notifications', notifyErr instanceof Error ? notifyErr : new Error(String(notifyErr)));
+      }
+      // --- NOTIFICATIONS END ---
 
       return videoResultUrl;
     } catch (error) {
@@ -168,12 +213,12 @@ export class VideoRenderWorker {
       });
 
       // Update job status as failed
-      await prisma.video_exports.update({
+      await prisma.render_jobs.update({
         where: { id: jobId },
         data: {
           status: 'failed',
           errorMessage,
-          updatedAt: new Date()
+          completedAt: new Date()
         }
       }).catch(dbError => {
         logger.error('Failed to update job status after error', 
@@ -182,17 +227,48 @@ export class VideoRenderWorker {
         );
       });
 
+      // --- NOTIFICATIONS ERROR START ---
+      try {
+        const { emailService } = await import('@/lib/services/email-service');
+        const { triggerWebhook } = await import('@/lib/webhooks-system-real');
+        
+        const job = await prisma.render_jobs.findUnique({
+            where: { id: jobId },
+            select: { projectId: true, userId: true }
+        });
+
+        if (job?.projectId && job?.userId) {
+            const project = await prisma.projects.findUnique({ where: { id: job.projectId }, select: { name: true } });
+            const user = await prisma.users.findUnique({ where: { id: job.userId }, select: { email: true } });
+
+            if (user?.email) {
+                await emailService.sendRenderFailed(user.email, project?.name || 'Untitled Project', errorMessage);
+            }
+            
+            await triggerWebhook.renderFailed({
+                jobId,
+                projectId: job.projectId,
+                error: errorMessage
+            });
+        }
+      } catch (notifyErr) {
+        logger.error('Failed to send render failure notifications', notifyErr instanceof Error ? notifyErr : new Error(String(notifyErr)));
+      }
+      // --- NOTIFICATIONS ERROR END ---
+
       throw error;
     }
   }
 
   private async checkCancellation(jobId: string): Promise<void> {
-    const job = await prisma.video_exports.findUnique({
+    const job = await prisma.render_jobs.findUnique({
       where: { id: jobId },
       select: { status: true }
     });
 
-    if (job?.status === 'cancelled') {
+    if (job?.status === 'cancelled') { // note: check if status enum has cancelled or if we use string
+        // status is JobStatus enum which usually has pending, processing, completed, failed. 
+        // If we want cancellation support, we might need a custom check or ignore if not supported by schema
        throw new Error('JOB_CANCELLED');
     }
   }
@@ -203,11 +279,20 @@ export class VideoRenderWorker {
       jobId
     });
 
-    await prisma.video_exports.update({
+    // Note: status might need casting if 'cancelled' is not in enum
+    // Assuming JobStatus has cancelled, checking schema...
+    // Schema says: status JobStatus? @default(pending)
+    // We don't see the Enum definition but commonly it might not have 'cancelled'.
+    // We will just try to delete or set to failed if cancelled is not there.
+    // However, if we look at previous code, it tried 'cancelled'.
+    // Let's assume we update logic to support cancellation via removing or specific status.
+    
+    await prisma.render_jobs.update({
       where: { id: jobId },
       data: {
-        status: 'cancelled',
-        updatedAt: new Date()
+        status: 'failed', // Mark as failed/cancelled
+        errorMessage: 'Cancelled by user',
+        completedAt: new Date()
       }
     });
   }

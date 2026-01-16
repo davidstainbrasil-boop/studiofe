@@ -192,9 +192,26 @@ export class IntegratedPipeline {
       
       // Cleanup
       try {
-        await fs.unlink(tempAudioPath).catch(() => {});
-        await fs.unlink(outputPath).catch(() => {});
-      } catch (e) {}
+        await fs.unlink(tempAudioPath).catch((error) => {
+          logger.debug('Temp audio file already deleted', {
+            component: 'IntegratedPipeline',
+            tempAudioPath,
+            error: error instanceof Error ? error.message : String(error)
+          });
+        });
+        await fs.unlink(outputPath).catch((error) => {
+          logger.debug('Output file already deleted', {
+            component: 'IntegratedPipeline',
+            outputPath,
+            error: error instanceof Error ? error.message : String(error)
+          });
+        });
+      } catch (e) {
+        logger.warn('Error during cleanup', {
+          component: 'IntegratedPipeline',
+          error: e instanceof Error ? e.message : String(e)
+        });
+      }
 
     } catch (error) {
       logger.error('IntegratedPipeline Job Failed', error instanceof Error ? error : new Error(String(error)), { jobId });
@@ -234,7 +251,13 @@ export class IntegratedPipeline {
 
   async cancelJob(jobId: string): Promise<boolean> {
       // Not fully implemented in JobManager yet, simplified
-      await jobManager.cancelJob(jobId).catch(() => {});
+      await jobManager.cancelJob(jobId).catch((error) => {
+        logger.warn('Error canceling job', {
+          component: 'IntegratedPipeline',
+          jobId,
+          error: error instanceof Error ? error.message : String(error)
+        });
+      });
       return true;
   }
 

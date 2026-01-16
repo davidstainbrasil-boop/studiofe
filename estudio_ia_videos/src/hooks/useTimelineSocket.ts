@@ -56,6 +56,19 @@ export interface NotificationPayload {
 export interface UserJoinedPayload extends UserPresence {}
 export interface UserLeftPayload { userId: string; userName?: string }
 
+export interface ElementLockedPayload {
+  projectId: string
+  elementId: string
+  userId: string
+  userName: string
+}
+
+export interface ElementUnlockedPayload {
+  projectId: string
+  elementId: string
+  userId: string
+}
+
 export interface UseTimelineSocketOptions {
   projectId: string
   userId: string
@@ -86,6 +99,10 @@ export interface TimelineSocketReturn {
   onCursorMove: (callback: (data: CursorMovePayload) => void) => void;
   onTimelineUpdated: (callback: (data: TimelineUpdatePayload) => void) => void;
   onNotification: (callback: (data: NotificationPayload) => void) => void;
+  lockElement: (elementId: string) => void;
+  unlockElement: (elementId: string) => void;
+  onElementLocked: (callback: (data: ElementLockedPayload) => void) => void;
+  onElementUnlocked: (callback: (data: ElementUnlockedPayload) => void) => void;
 }
 
 export function useTimelineSocket({
@@ -172,8 +189,14 @@ export function useTimelineSocket({
         .on('broadcast', { event: 'notification' }, ({ payload }) => {
           dispatchEvent('notification', payload)
         })
+        .on('broadcast', { event: 'element-locked' }, ({ payload }) => {
+          dispatchEvent('element-locked', payload)
+        })
+        .on('broadcast', { event: 'element-unlocked' }, ({ payload }) => {
+          dispatchEvent('element-unlocked', payload)
+        })
 
-        .subscribe(async (status) => {
+        .subscribe(async (status: 'SUBSCRIBED' | 'TIMED_OUT' | 'CLOSED' | 'CHANNEL_ERROR') => {
           if (status === 'SUBSCRIBED') {
             logger.debug('[Timeline Realtime] Connected', { component: 'useTimelineSocket' })
             setIsConnected(true)
@@ -272,6 +295,22 @@ export function useTimelineSocket({
     })
   }, [projectId])
 
+  const lockElement = useCallback((elementId: string) => {
+    channelRef.current?.send({
+      type: 'broadcast',
+      event: 'element-locked',
+      payload: { projectId, elementId, userId, userName }
+    })
+  }, [projectId, userId, userName])
+
+  const unlockElement = useCallback((elementId: string) => {
+    channelRef.current?.send({
+      type: 'broadcast',
+      event: 'element-unlocked',
+      payload: { projectId, elementId, userId }
+    })
+  }, [projectId, userId])
+
   // Event Listeners Registration
   const addEventListener = useCallback(<T,>(event: string, callback: (data: T) => void) => {
     if (!listenersRef.current.has(event)) {
@@ -308,6 +347,14 @@ export function useTimelineSocket({
     addEventListener('notification', callback)
   }, [addEventListener])
 
+  const onElementLocked = useCallback((callback: (data: ElementLockedPayload) => void) => {
+    addEventListener('element-locked', callback)
+  }, [addEventListener])
+
+  const onElementUnlocked = useCallback((callback: (data: ElementUnlockedPayload) => void) => {
+    addEventListener('element-unlocked', callback)
+  }, [addEventListener])
+
   // Auto-connect
   useEffect(() => {
     if (autoConnect) {
@@ -336,9 +383,15 @@ export function useTimelineSocket({
     onTrackUnlocked,
     onCursorMove,
     onTimelineUpdated,
-    onNotification
+    onNotification,
+    lockElement,
+    unlockElement,
+    onElementLocked,
+    onElementUnlocked
   }
 }
+
+
 
 // Utility: Throttle cursor updates
 export function useThrottledCursor(

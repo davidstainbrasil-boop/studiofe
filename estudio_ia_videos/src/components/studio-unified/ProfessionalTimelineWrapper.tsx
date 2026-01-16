@@ -11,6 +11,8 @@ import { TimelineElement, DragData } from '@lib/types/timeline-types';
 import { TimelineElement, DragData } from '@lib/types/timeline-types';
 import { AudioWaveform } from '@components/video-studio/timeline/AudioWaveform';
 import { calculateSnapTime, getSnapPoints } from '@lib/utils/snap-utils';
+import { useCollaboration } from '@components/collaboration/CollaborationProvider';
+
 
 // Constants
 const TRACK_HEIGHT = 48;
@@ -19,6 +21,14 @@ const RULER_HEIGHT = 24;
 
 export function ProfessionalTimelineWrapper() {
     const containerRef = useRef<HTMLDivElement>(null);
+    // Safe access for collaboration context
+    let lockedElements: Record<string, { userId: string; userName: string; color: string }> = {};
+    try {
+        const collab = useCollaboration();
+        lockedElements = collab.lockedElements;
+    } catch (e) {
+        // Fallback for standalone/testing
+    }
 
     // Store State
     const zoom = useTimelineStore(state => state.zoom);
@@ -299,9 +309,11 @@ export function ProfessionalTimelineWrapper() {
                                                 element={element}
                                                 pixelsPerSecond={pixelsPerSecond * zoom}
                                                 isSelected={selection.elementIds.includes(element.id)}
-                                                isLocked={!!layer.isLocked}
+                                                // Lock if layer is locked OR if element is in lockedElements map (collaborator lock)
+                                                isLocked={!!layer.isLocked || !!lockedElements[element.id]}
+                                                lockedBy={lockedElements[element.id]} // Pass lock info
                                                 // Pass shiftKey info via wrapper or handle in clip
-                                                onSelect={(multi) => !layer.isLocked && selectElement(element.id, multi)}
+                                                onSelect={(multi) => !layer.isLocked && !lockedElements[element.id] && selectElement(element.id, multi)}
                                                 onUpdate={(param) => {
                                                     if (layer.isLocked) return;
 
@@ -387,11 +399,12 @@ const TimelinePlayhead = React.memo(function TimelinePlayhead({ zoom, pixelsPerS
 // Helper to determine if an element's layer is audio (or element itself is audio)
 const layerIsAudio = (element: TimelineElement) => element.type === 'audio';
 
-const TimelineClip = React.memo(function TimelineClip({ element, pixelsPerSecond, isSelected, isLocked, onSelect, onUpdate, onKeyframeChange }: {
+const TimelineClip = React.memo(function TimelineClip({ element, pixelsPerSecond, isSelected, isLocked, lockedBy, onSelect, onUpdate, onKeyframeChange }: {
     element: TimelineElement,
     pixelsPerSecond: number,
     isSelected: boolean,
     isLocked?: boolean,
+    lockedBy?: { userId: string, userName: string, color: string },
     onSelect: (multi: boolean) => void,
     onUpdate: (u: { start?: number, duration?: number, isDelta?: boolean, updates?: Partial<TimelineElement> }) => void,
     onKeyframeChange?: (action: 'add' | 'update' | 'remove', data: any) => void
@@ -519,12 +532,14 @@ const TimelineClip = React.memo(function TimelineClip({ element, pixelsPerSecond
             className={cn(
                 "absolute top-0 bottom-0 rounded-sm overflow-hidden select-none group cursor-pointer",
                 isSelected ? "ring-2 ring-primary z-10" : "hover:ring-1 hover:ring-primary/50",
-                isLocked && "opacity-50 cursor-not-allowed grayscale"
+                isLocked && "opacity-90 cursor-not-allowed",
+                !!lockedBy && "ring-2 z-10"
             )}
             style={{
                 left: element.start * pixelsPerSecond,
                 width: element.duration * pixelsPerSecond,
-                backgroundColor: isLocked ? '#333' : '#2563eb' // Placeholder color
+                backgroundColor: isLocked ? '#333' : '#2563eb',
+                borderColor: lockedBy?.color,
             }}
             onMouseDown={(e) => {
                 // If adding keyframe
@@ -548,7 +563,14 @@ const TimelineClip = React.memo(function TimelineClip({ element, pixelsPerSecond
         >
             {/* Content (Name/Thumb) */}
             <div className="absolute inset-0 px-2 flex items-center text-xs text-white font-medium truncate pointer-events-none z-10">
-                {element.name || element.id}
+                {lockedBy ? (
+                    <span className="flex items-center gap-1">
+                        <Lock className="w-3 h-3" />
+                        {lockedBy.userName}
+                    </span>
+                ) : (
+                    element.name || element.id
+                )}
             </div>
 
             {/* Visuals Layer (SVG) */}

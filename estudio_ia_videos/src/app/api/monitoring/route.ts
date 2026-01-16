@@ -10,6 +10,7 @@ import { realTimeMonitor, SystemMetric } from '@lib/monitoring/real-time-monitor
 import { Logger } from '@lib/logger'
 import { supabase } from '@lib/supabase'
 import { createClient } from '@supabase/supabase-js'
+import { getRequiredEnv } from '@lib/env'
 
 const logger = new Logger('MonitoringAPI')
 
@@ -51,8 +52,8 @@ export async function GET(request: NextRequest) {
 
     const token = authHeader.substring(7)
     const supabaseClient = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      getRequiredEnv('NEXT_PUBLIC_SUPABASE_URL'),
+      getRequiredEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY'),
       {
         global: {
           headers: {
@@ -136,8 +137,8 @@ export async function POST(request: NextRequest) {
 
     const token = authHeader.substring(7)
     const supabaseClient = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      getRequiredEnv('NEXT_PUBLIC_SUPABASE_URL'),
+      getRequiredEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY'),
       {
         global: {
           headers: {

@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { jobManager } from '@lib/render/job-manager';
+import { jobManager, RenderJob } from '@lib/render/job-manager';
 import { stuckJobMonitor } from '@lib/render/stuck-job-monitor';
 import { logger } from '@lib/logger';
 
@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
       success: true,
       count: stuckJobs.length,
       threshold: `${thresholdMin} minutes`,
-      jobs: stuckJobs.map(job => ({
+      jobs: stuckJobs.map((job: RenderJob) => ({
         id: job.id,
         projectId: job.projectId,
         status: job.status,
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
         success: true,
         action: 'check',
         count: stuckJobs.length,
-        jobs: stuckJobs.map(j => j.id)
+        jobs: stuckJobs.map((j: RenderJob) => j.id)
       });
     }
 

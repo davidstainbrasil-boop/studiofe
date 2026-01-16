@@ -143,9 +143,20 @@ export class RenderingCache extends EventEmitter {
     if (entry) {
       try {
         // Cleanup intencional: Ignora erro se arquivo não existir (já foi deletado)
-        await fs.unlink(entry.outputPath).catch(() => {});
+        await fs.unlink(entry.outputPath).catch((error) => {
+          logger.debug('File already deleted during cache cleanup', {
+            component: 'Cache',
+            key,
+            outputPath: entry.outputPath,
+            error: error instanceof Error ? error.message : String(error)
+          });
+        });
       } catch (e) {
-        // ignore
+        logger.warn('Error during cache entry deletion', {
+          component: 'Cache',
+          key,
+          error: e instanceof Error ? e.message : String(e)
+        });
       }
       this.entries.delete(key);
       await this.saveMetadata();

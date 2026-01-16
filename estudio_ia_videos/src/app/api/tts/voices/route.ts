@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { EdgeTTSService } from '@lib/tts/edge-tts-service';
+import { logger } from '@lib/logger';
 
 export async function GET(request: NextRequest) {
   try {
@@ -38,7 +39,9 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('[TTS] Erro ao listar vozes:', error);
+    logger.error('Erro ao listar vozes TTS', error instanceof Error ? error : new Error(String(error)), {
+      component: 'API: tts/voices'
+    });
     return NextResponse.json(
       { 
         success: false, 

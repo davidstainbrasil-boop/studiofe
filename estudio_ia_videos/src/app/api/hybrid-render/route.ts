@@ -6,13 +6,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { CloudRenderingOrchestrator } from '@lib/hybrid-rendering/cloud-orchestrator';
 import { createClient } from '@lib/supabase/server';
+import { getRequiredEnv, getOptionalEnv } from '@lib/env';
 import { logger } from '@lib/logger';
 
 // Initialize orchestrator
 const orchestrator = new CloudRenderingOrchestrator(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  process.env.REDIS_URL || 'redis://localhost:6379'
+  getRequiredEnv('NEXT_PUBLIC_SUPABASE_URL'),
+  getRequiredEnv('SUPABASE_SERVICE_ROLE_KEY'),
+  getOptionalEnv('REDIS_URL', 'redis://localhost:6379')
 );
 
 // Worker initialization moved to instrumentation.ts to prevent build hangs

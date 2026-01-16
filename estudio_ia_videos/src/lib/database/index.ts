@@ -7,6 +7,7 @@
  */
 
 import { Pool, PoolClient, QueryResult } from 'pg';
+import { logger } from '@lib/logger';
 
 // ============================================
 // TIPOS
@@ -23,8 +24,13 @@ export type RecordData = Record<string, QueryParam>;
 // CONFIGURAÇÃO DO POOL DE CONEXÕES
 // ============================================
 
+const connectionString = process.env.DATABASE_URL || process.env.DIRECT_DATABASE_URL;
+if (!connectionString) {
+  throw new Error('DATABASE_URL (ou DIRECT_DATABASE_URL) é obrigatório para conexão com o banco.');
+}
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://mvp_admin:MvpVideo2025@Secure!@localhost:5432/mvp_videos',
+  connectionString,
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
@@ -32,11 +38,11 @@ const pool = new Pool({
 
 // Log de conexão
 pool.on('connect', () => {
-  console.log('[DB] Nova conexão estabelecida');
+  logger.debug('[DB] Nova conexão estabelecida');
 });
 
 pool.on('error', (err) => {
-  console.error('[DB] Erro no pool de conexões:', err);
+  logger.error('[DB] Erro no pool de conexões', err instanceof Error ? err : new Error(String(err)));
 });
 
 // ============================================
@@ -55,11 +61,11 @@ export async function query<T = unknown>(
     const result = await pool.query<T>(text, params);
     const duration = Date.now() - start;
     if (process.env.LOG_LEVEL === 'debug') {
-      console.log('[DB] Query executada:', { text, duration, rows: result.rowCount });
+      logger.debug('[DB] Query executada', { duration, rows: result.rowCount });
     }
     return result;
   } catch (error) {
-    console.error('[DB] Erro na query:', { text, error });
+    logger.error('[DB] Erro na query', error instanceof Error ? error : new Error(String(error)), { sql: text });
     throw error;
   }
 }
@@ -353,7 +359,7 @@ export async function healthCheck(): Promise<{
 
 export async function closePool(): Promise<void> {
   await pool.end();
-  console.log('[DB] Pool de conexões fechado');
+  logger.info('[DB] Pool de conexões fechado');
 }
 
 // Graceful shutdown

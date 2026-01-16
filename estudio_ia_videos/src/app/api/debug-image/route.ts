@@ -1,5 +1,6 @@
 // Debug route para testar Next.js Image API
 import { NextRequest, NextResponse } from 'next/server'
+import { logger } from '@lib/logger'
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
@@ -7,14 +8,15 @@ export async function GET(request: NextRequest) {
   const w = searchParams.get('w')
   const q = searchParams.get('q')
   
-  console.log('🔍 Image Debug:', {
-    url: url,
+  logger.debug('Image Debug request', {
+    component: 'API: debug-image',
+    url,
     width: w,
     quality: q,
     userAgent: request.headers.get('user-agent'),
     host: request.headers.get('host'),
     accept: request.headers.get('accept'),
-  })
+  });
 
   try {
     // Testar se a URL externa é acessível
@@ -46,7 +48,10 @@ export async function GET(request: NextRequest) {
       }, { status: 400 })
     }
   } catch (error) {
-    console.error('❌ Image debug error:', error)
+    logger.error('Erro no debug de imagem', error instanceof Error ? error : new Error(String(error)), {
+      component: 'API: debug-image',
+      url
+    });
     return NextResponse.json({
       status: 'error',
       error: error instanceof Error ? error.message : 'Unknown error'

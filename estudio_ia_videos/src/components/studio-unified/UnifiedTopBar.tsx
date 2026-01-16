@@ -10,6 +10,57 @@ import { useAutosave } from '@hooks/use-autosave';
 import { cn } from '@lib/utils';
 import { useTimelineStore } from '@lib/stores/timeline-store';
 import { useRouter } from 'next/navigation';
+import { useCollaboration } from '@components/collaboration/CollaborationProvider';
+import { Popover, PopoverContent, PopoverTrigger } from '@components/ui/popover';
+import { Palette } from 'lucide-react';
+import { ThemeSelector } from './ThemeSelector';
+import { NotificationBell } from '@components/notifications/NotificationBell';
+
+function ActiveUsersList() {
+    try {
+        const { activeUsers } = useCollaboration();
+        return (
+            <>
+                {activeUsers.map(user => (
+                    <div key={user.userId} className="relative group" title={user.userName}>
+                        <div className="w-8 h-8 rounded-full border-2 border-background bg-indigo-500 flex items-center justify-center text-[10px] font-medium text-white overflow-hidden">
+                            {user.userImage ? (
+                                <img src={user.userImage} alt={user.userName} className="w-full h-full object-cover" />
+                            ) : (
+                                user.userName.substring(0, 2).toUpperCase()
+                            )}
+                        </div>
+                    </div>
+                ))}
+                {activeUsers.length > 0 && (
+                    <div className="w-8 h-8 rounded-full border-2 border-background bg-gray-700 flex items-center justify-center text-[10px] font-medium text-white ml-1">
+                        +{activeUsers.length}
+                    </div>
+                )}
+            </>
+        );
+    } catch (e) {
+        // Fallback if not inside provider
+        return null;
+    }
+}
+
+import { UsageIndicator } from '@components/billing/UsageIndicator';
+
+function UsageIndicatorWrapper() {
+    const [data, setData] = useState<{ plan: 'free' | 'pro', usage: any, limits: any } | null>(null);
+
+    React.useEffect(() => {
+        fetch('/api/billing/usage')
+            .then(res => res.json())
+            .then(setData)
+            .catch(console.error);
+    }, []);
+
+    if (!data) return null;
+
+    return <UsageIndicator {...data} />;
+}
 
 export function UnifiedTopBar() {
     const [exportModalOpen, setExportModalOpen] = useState(false);
@@ -97,6 +148,14 @@ export function UnifiedTopBar() {
                     </div>
                 </div>
 
+                <div className="flex items-center -space-x-2 mr-4">
+                    <ActiveUsersList />
+                </div>
+
+                <div className="mr-4 hidden md:block">
+                    <UsageIndicatorWrapper />
+                </div>
+
                 <div className="flex items-center gap-2">
                     <Button
                         variant="outline"
@@ -121,6 +180,23 @@ export function UnifiedTopBar() {
                         Exportar
                     </Button>
                     <Separator orientation="vertical" className="h-6 mx-1" />
+
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="ghost" size="icon" title="Temas">
+                                <Palette className="w-4 h-4" />
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80 p-3" align="end">
+                            <h4 className="font-medium mb-3 text-sm">Tema do Vídeo</h4>
+                            <ThemeSelector />
+                        </PopoverContent>
+                    </Popover>
+
+                    <div className="mx-1">
+                        <NotificationBell />
+                    </div>
+
                     <Button variant="ghost" size="icon">
                         <Settings className="w-4 h-4" />
                     </Button>

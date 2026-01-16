@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { ADMIN_CONFIG, hashPassword, generateToken, sessionStore } from '@/lib/admin-auth';
+import { logger } from '@lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,7 +19,11 @@ export async function POST(request: NextRequest) {
     
     if (email !== ADMIN_CONFIG.email || passwordHash !== ADMIN_CONFIG.passwordHash) {
       // Log de tentativa de login falha
-      console.warn(`[ADMIN AUTH] Login falhou para: ${email} em ${new Date().toISOString()}`);
+      logger.warn('Tentativa de login admin falhou', {
+        component: 'API: admin/auth/login',
+        email,
+        timestamp: new Date().toISOString()
+      });
       
       return NextResponse.json(
         { error: 'Credenciais inválidas' },
@@ -38,7 +43,11 @@ export async function POST(request: NextRequest) {
     });
 
     // Log de login bem-sucedido
-    console.log(`[ADMIN AUTH] Login bem-sucedido: ${email} em ${new Date().toISOString()}`);
+    logger.info('Login admin bem-sucedido', {
+      component: 'API: admin/auth/login',
+      email,
+      timestamp: new Date().toISOString()
+    });
 
     const cookieStore = await cookies();
     cookieStore.set('admin_token', token, {
@@ -59,7 +68,9 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('[ADMIN AUTH] Erro no login:', error);
+    logger.error('Erro no login admin', error instanceof Error ? error : new Error(String(error)), {
+      component: 'API: admin/auth/login'
+    });
     return NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }

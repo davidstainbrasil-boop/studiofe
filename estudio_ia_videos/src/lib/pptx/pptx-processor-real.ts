@@ -88,8 +88,7 @@ interface PPTXShape {
 }
 
 
-import { writeFile, mkdir } from 'fs/promises';
-import { join, dirname, basename } from 'path';
+import { basename } from 'path';
 
 export class PPTXProcessorReal {
   private coreParser = new PPTXCoreParser();
@@ -113,7 +112,7 @@ export class PPTXProcessorReal {
     return slides.map(s => s.content).join('\n\n');
   }
 
-  static async extract(buffer: Buffer): Promise<PPTXExtractionResult> {
+  static async extract(buffer: Buffer, projectId: string): Promise<PPTXExtractionResult> {
     try {
       const zip = await JSZip.loadAsync(buffer);
       const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '@_' });
@@ -173,10 +172,9 @@ export class PPTXProcessorReal {
         return numA - numB;
       });
 
-      // Prepare output directory for images (quando possível)
-      const uploadId = `extract-${Date.now()}`; // Temporary ID for this extraction session
-      const publicDir = join(process.cwd(), 'public', 'uploads', 'pptx-images', uploadId);
-      await mkdir(publicDir, { recursive: true });
+      // Prepare output directory for images (REMOVED LOCAL FS)
+      // We will upload directly to Supabase Storage: bucket 'project-assets'
+      const { storageSystem } = await import('@/lib/storage-system-real');
 
       for (let i = 0; i < slideFiles.length; i++) {
         const filename = slideFiles[i];
@@ -207,7 +205,6 @@ export class PPTXProcessorReal {
         }
 
           // 2. Extract Images referenced by Relationships
-          // (em PPTX real, o slide pode não conter r:embed direto; o .rels é a fonte de verdade)
           const uniqueTargets = Array.from(new Set(Object.values(relMap)));
           for (const target of uniqueTargets) {
             if (!target) continue;
@@ -219,10 +216,29 @@ export class PPTXProcessorReal {
             if (!mediaFile) continue;
 
             const imgBuffer = await mediaFile.async('nodebuffer');
+            const ext = lower.split('.').pop() || 'jpg';
             const imgName = `slide-${slideNum}-${basename(mediaPath)}`;
-            const imgPath = join(publicDir, imgName);
-            await writeFile(imgPath, imgBuffer);
-            slideImages.push(`/uploads/pptx-images/${uploadId}/${imgName}`);
+            const storagePath = `projects/${projectId}/images/${imgName}`;
+            
+            try {
+                // Upload to Supabase Storage
+                // Using 'project-assets' bucket. 
+                // Ensure contentType is correct.
+                const contentType = ext === 'png' ? 'image/png' : 'image/jpeg';
+                
+                const publicUrl = await storageSystem.upload({
+                    bucket: 'project-assets',
+                    path: storagePath,
+                    file: imgBuffer,
+                    contentType
+                });
+                
+                slideImages.push(publicUrl);
+                logger.info('Uploaded PPTX image', { projectId, slideNum, publicUrl });
+            } catch (uploadError) {
+                logger.error('Failed to upload slide image', uploadError as Error, { projectId, imgName });
+                // Continue without this image?
+            }
           }
 
         // 3. Extract Text
@@ -350,7 +366,7 @@ export class PPTXProcessorReal {
       };
 
     } catch (error) {
-      logger.error('Falha ao extrair PPTX (PPTXProcessorReal.extract)', { error, component: 'PPTXProcessorReal' });
+      logger.error('Falha ao extrair PPTX (PPTXProcessorReal.extract)', error instanceof Error ? error : new Error(String(error)), { component: 'PPTXProcessorReal' });
       return {
         success: false,
         error: error,

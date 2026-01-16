@@ -21,13 +21,23 @@ interface UnifiedVideoStudioProps {
     initialSnapshot?: any;
 }
 
+import { CollaborationProvider } from '@components/collaboration/CollaborationProvider';
+import { CollaboratorCursors } from '@components/collaboration/CollaboratorCursors';
+
+
 export function UnifiedVideoStudio({ projectId, initialSnapshot }: UnifiedVideoStudioProps) {
     // Initialize Playback Loop
-    // Note: ensure usePlayback handles cleanup correctly if unmounted/remounted
     usePlayback();
 
     const hydrateFromSnapshot = useTimelineStore(state => state.hydrateFromSnapshot);
     const setProjectId = useTimelineStore(state => state.setProjectId);
+
+    // Get current user for socket connection
+    // We need userId and name. Using mock for now if auth hook not found, but trying to find real one.
+    // Ideally passed from page.tsx or context. 
+    // Using a simple random ID if not available for dev, but standardizing on what we have.
+    const userId = 'user-' + Math.floor(Math.random() * 10000);
+    const userName = 'Collaborator ' + Math.floor(Math.random() * 100);
 
     // Load project on mount/change
     useEffect(() => {
@@ -36,7 +46,6 @@ export function UnifiedVideoStudio({ projectId, initialSnapshot }: UnifiedVideoS
             hydrateFromSnapshot(initialSnapshot);
             setProjectId(projectId);
         } else {
-            // Fallback or explicit load if no snapshot provided (though Router should handle this ideally)
             const loadProject = async () => {
                 try {
                     logger.info('Loading project from API (Component Mount)', { projectId });
@@ -55,57 +64,61 @@ export function UnifiedVideoStudio({ projectId, initialSnapshot }: UnifiedVideoS
     }, [projectId, initialSnapshot, hydrateFromSnapshot, setProjectId]);
 
     return (
-        <div className="h-screen flex flex-col bg-background text-foreground overflow-hidden">
-            <AudioPlaybackManager />
-            {/* 1. Top Bar (Fixed Height) */}
-            <UnifiedTopBar />
+        <CollaborationProvider projectId={projectId} userId={userId} userName={userName}>
+            <div className="h-screen flex flex-col bg-background text-foreground overflow-hidden relative">
+                <AudioPlaybackManager />
+                {/* 1. Top Bar (Fixed Height) */}
+                <UnifiedTopBar />
 
-            {/* 2. Main Workspace (Resizable) */}
-            <div className="flex-1 overflow-hidden">
-                <ResizablePanelGroup direction="horizontal">
+                {/* 2. Main Workspace (Resizable) */}
+                <div className="flex-1 overflow-hidden">
+                    <ResizablePanelGroup direction="horizontal">
 
-                    {/* Left Panel: Assets */}
-                    <ResizablePanel defaultSize={20} minSize={15} maxSize={30} className="bg-background">
-                        <AssetBrowser />
-                    </ResizablePanel>
+                        {/* Left Panel: Assets */}
+                        <ResizablePanel defaultSize={20} minSize={15} maxSize={30} className="bg-background">
+                            <AssetBrowser />
+                        </ResizablePanel>
 
-                    <ResizableHandle withHandle />
+                        <ResizableHandle withHandle />
 
-                    {/* Center + Right Group */}
-                    <ResizablePanel defaultSize={80}>
-                        <ResizablePanelGroup direction="vertical">
+                        {/* Center + Right Group */}
+                        <ResizablePanel defaultSize={80}>
+                            <ResizablePanelGroup direction="vertical">
 
-                            {/* Upper Area: Preview + Inspector */}
-                            <ResizablePanel defaultSize={65} minSize={30}>
-                                <ResizablePanelGroup direction="horizontal">
+                                {/* Upper Area: Preview + Inspector */}
+                                <ResizablePanel defaultSize={65} minSize={30}>
+                                    <ResizablePanelGroup direction="horizontal">
 
-                                    {/* Center: Canvas/Preview */}
-                                    <ResizablePanel defaultSize={75} minSize={50} className="bg-muted/30">
-                                        <StudioPreview />
-                                    </ResizablePanel>
+                                        {/* Center: Canvas/Preview */}
+                                        <ResizablePanel defaultSize={75} minSize={50} className="bg-muted/30 relative">
+                                            <StudioPreview />
+                                            {/* Cursor Overlay on top of preview/canvas */}
+                                            <CollaboratorCursors />
+                                        </ResizablePanel>
 
-                                    <ResizableHandle withHandle />
+                                        <ResizableHandle withHandle />
 
-                                    {/* Right: Inspector */}
-                                    <ResizablePanel defaultSize={25} minSize={20} maxSize={35} className="bg-background">
-                                        <PropertyInspector />
-                                    </ResizablePanel>
+                                        {/* Right: Inspector */}
+                                        <ResizablePanel defaultSize={25} minSize={20} maxSize={35} className="bg-background">
+                                            <PropertyInspector />
+                                        </ResizablePanel>
 
-                                </ResizablePanelGroup>
-                            </ResizablePanel>
+                                    </ResizablePanelGroup>
+                                </ResizablePanel>
 
-                            <ResizableHandle withHandle />
+                                <ResizableHandle withHandle />
 
-                            {/* Lower Area: Timeline */}
-                            <ResizablePanel defaultSize={35} minSize={20}>
-                                <ProfessionalTimelineWrapper />
-                            </ResizablePanel>
+                                {/* Lower Area: Timeline */}
+                                <ResizablePanel defaultSize={35} minSize={20}>
+                                    <ProfessionalTimelineWrapper />
+                                </ResizablePanel>
 
-                        </ResizablePanelGroup>
-                    </ResizablePanel>
+                            </ResizablePanelGroup>
+                        </ResizablePanel>
 
-                </ResizablePanelGroup>
+                    </ResizablePanelGroup>
+                </div>
             </div>
-        </div>
+        </CollaborationProvider>
     );
 }

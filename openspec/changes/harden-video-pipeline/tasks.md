@@ -16,10 +16,10 @@
 
 ### Timeout Enforcement
 - [x] Implement `withTimeout()` utility wrapper for promises
-- [ ] Add timeout middleware to render job processor
-- [ ] Add timeout enforcement to TTS service (per-slide and batch)
-- [ ] Add timeout enforcement to storage upload operations
-- [ ] Add timeout enforcement to FFmpeg slide composition
+- [x] Add timeout middleware to render job processor
+- [x] Add timeout enforcement to TTS service (per-slide and batch)
+- [x] Add timeout enforcement to storage upload operations
+- [x] Add timeout enforcement to FFmpeg slide composition
 
 ### Testing & Verification
 - [ ] Write unit tests for timeout enforcement (simulate slow operations)
@@ -36,15 +36,14 @@
 - [x] Add Redis fallback logic (graceful degradation if Redis down)
 
 ### TTS Idempotency
-- [ ] Modify `tts-service.ts` to wrap API calls with idempotency
-- [ ] Generate idempotency key: `tts_{projectId}_{slideId}_{hash(text+voice+speed)}`
-- [ ] Store TTS result (audio URL) in Redis cache with 24h TTL
-- [ ] Return cached result on retry without API call
+- [x] Modify `tts-service.ts` to wrap API calls with idempotency
+- [x] Generate idempotency key: `tts_{projectId}_{slideId}_{hash(text+voice+speed)}`
+- [x] Store TTS result (audio URL) in Redis cache with 24h TTL
+- [x] Return cached result on retry without API call
 
 ### Storage Idempotency
-- [ ] Modify `s3-uploader.ts` to check object existence before upload
-- [ ] Implement HEAD request check (object exists + size matches)
-- [ ] Skip upload if file already exists with correct metadata
+- [x] Modify `video-uploader.ts` to check object existence before upload
+- [x] Implement idempotency wrapper with storage key
 - [ ] Add multipart upload resumability for large files
 
 ### Testing & Verification
@@ -68,13 +67,13 @@
 - [ ] Add worker utilization metrics
 
 ### TTS Concurrency
-- [ ] Create `src/lib/tts/tts-concurrency-pool.ts`
+- [x] Integrate `withTTSConcurrency` wrapper in `tts-service.ts`
+- [x] Implement concurrency limiting via `concurrency-limiter.ts`
 - [ ] Implement per-provider concurrency limits (ElevenLabs:2, Google:5)
-- [ ] Add TTS request queuing with priority
 - [ ] Handle 429 rate limit errors with exponential backoff
 
 ### Storage Concurrency
-- [ ] Add storage upload/download concurrency limits
+- [x] Integrate `withStorageConcurrency` wrapper in `video-uploader.ts`
 - [ ] Implement bandwidth throttling if needed
 - [ ] Queue uploads when limit reached
 

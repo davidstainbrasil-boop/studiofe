@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     if (userErr || !userData.user) return NextResponse.json({ code: 'UNAUTHORIZED', message: 'Usuário não autenticado' }, { status: 401 })
 
     // Rate limiting por usuário (20/min)
-    const rl = checkRateLimit(`requeue:${userData.user.id}`, 20, 60_000)
+    const rl = await checkRateLimit(`requeue:${userData.user.id}`, 20, 60_000)
     if (!rl.allowed) {
       recordRateLimitHit();
       return new NextResponse(JSON.stringify({ code: 'RATE_LIMITED', message: 'Muitas requisições de requeue. Tente novamente em breve.' }), { status: 429, headers: { 'content-type': 'application/json', 'Retry-After': String(rl.retryAfterSec) } })

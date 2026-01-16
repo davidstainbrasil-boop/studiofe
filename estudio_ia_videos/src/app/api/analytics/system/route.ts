@@ -10,8 +10,7 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@lib/auth';
+import { requireAdmin } from '@lib/auth/admin-middleware';
 import { analytics } from '@lib/analytics/analytics-standalone';
 import { logger } from '@lib/logger';
 
@@ -22,22 +21,9 @@ import { logger } from '@lib/logger';
  */
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      );
-    }
-
-    // Verificar se usuário é admin
-    // TODO: Implementar verificação de role
-    // if (session.user.role !== 'admin') {
-    //   return NextResponse.json(
-    //     { error: 'Acesso negado. Apenas administradores.' },
-    //     { status: 403 }
-    //   );
-    // }
+    // Require admin authentication
+    const { isAdmin, response } = await requireAdmin(request);
+    if (!isAdmin) return response!;
 
     const metrics = await analytics.getSystemMetrics();
 

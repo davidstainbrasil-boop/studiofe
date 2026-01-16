@@ -145,8 +145,9 @@ export interface TimelineStore extends TimelineState {
   hydrateFromSnapshot: (snapshot: any) => void;
   setProjectId: (id: string | null) => void;
   
-  // Templates
+  // Templates & Themes
   applyTemplate: (template: any) => void;
+  setTheme: (themeId: string) => void;
 }
 
 export const useTimelineStore = create<TimelineStore>()(
@@ -583,6 +584,16 @@ export const useTimelineStore = create<TimelineStore>()(
         templateId: template.id,
         newDuration: updatedProject.duration
       });
+    }),
+
+    setTheme: (themeId) => set((state) => {
+        if (!state.project) return;
+        saveHistory(state);
+
+        state.project.themeId = themeId;
+        state.isDirty = true;
+
+        logger.info('Project theme updated', { themeId });
     }),
 
     toggleLayerLock: (layerId) => set((state) => {

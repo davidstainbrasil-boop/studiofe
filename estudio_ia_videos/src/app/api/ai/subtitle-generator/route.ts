@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { subtitleService } from '@lib/services/subtitle.service'
 import { fileUploadService } from '@lib/services/file-upload.service'
 import { addVideoJob, getJobStatus } from '@lib/queue/video-processing.queue'
+import { logger } from '@lib/logger'
 
 /**
  * POST /api/ai/subtitle-generator
@@ -77,7 +78,9 @@ export async function POST(request: NextRequest) {
       }
     })
   } catch (error) {
-    console.error('Error generating subtitles:', error)
+    logger.error('Erro ao gerar legendas', error instanceof Error ? error : new Error(String(error)), {
+      component: 'API: ai/subtitle-generator'
+    });
     return NextResponse.json(
       { 
         success: false, 
@@ -111,7 +114,9 @@ export async function GET(request: NextRequest) {
       ...status
     })
   } catch (error) {
-    console.error('Error getting job status:', error)
+    logger.error('Error getting job status', error instanceof Error ? error : new Error(String(error)), {
+      component: 'API: ai/subtitle-generator'
+    });
     return NextResponse.json(
       { success: false, error: 'Failed to get job status' },
       { status: 500 }

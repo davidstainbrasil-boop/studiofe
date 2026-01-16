@@ -1,34 +1,32 @@
-# Docker Compose Principal - MVP Video Técnico Cursos
-# Arquivo de produção/staging - use docker-compose.dev.yml para desenvolvimento
-
-version: '3.8'
+version: "3.9"
 
 services:
-  # Next.js Application
   app:
     build:
       context: .
-      dockerfile: Dockerfile
-    command: npm run app:dev
-    ports:
-      - "3000:3000"
-    environment:
-      - NODE_ENV=production
-      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
-      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
-      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
-      - REDIS_URL=redis://redis:6379
+      dockerfile: estudio_ia_videos/Dockerfile
+    container_name: mvp-app
+    command: npm start
     env_file:
       - ./estudio_ia_videos/.env.local
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/video_tecnico
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
     networks:
       - app-network
     restart: unless-stopped
 
-  # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
+    container_name: mvp-postgres
     environment:
       - POSTGRES_DB=video_tecnico
       - POSTGRES_USER=postgres
@@ -48,9 +46,9 @@ services:
       timeout: 5s
       retries: 5
 
-  # Redis (opcional - para cache e filas)
   redis:
     image: redis:7-alpine
+    container_name: mvp-redis
     ports:
       - "6379:6379"
     volumes:
@@ -67,9 +65,8 @@ services:
 
 volumes:
   postgres_data:
-    driver: local
   redis_data:
-    driver: local
+
 
 networks:
   app-network:

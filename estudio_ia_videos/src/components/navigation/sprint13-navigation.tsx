@@ -447,7 +447,7 @@ export default function Sprint13Navigation() {
             </Button>
           </Link>
           
-          <Link href="/collaboration-v2">
+          <Link href="/real-time-collaboration">
             <Button variant="outline" size="sm" className="flex items-center space-x-2">
               <Users className="h-4 w-4" />
               <span>Nova Sala V2</span>

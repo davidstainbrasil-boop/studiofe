@@ -4,10 +4,16 @@ import { logger } from '@/lib/monitoring/logger';
 import { PptxUploader } from '@/lib/storage/pptx-uploader';
 import { rateLimit, getUserTier } from '@/middleware/rate-limiter';
 import { getSupabaseForRequest } from '@lib/supabase/server';
+import { prisma } from '@lib/prisma';
+import { randomUUID } from 'crypto';
+import PPTXProcessorReal from '@lib/pptx/pptx-processor-real';
+
+// Helper to create Supabase Admin Client for database operations ensuring RLS bypass if needed
+import { createClient } from '@supabase/supabase-js';
+import { Database } from '@/lib/supabase/database.types';
 
 export async function POST(req: NextRequest) {
   logger.info('PPTX upload request received');
-  logger.info('Cookies:', { cookies: req.cookies.getAll() });
 
   try {
     // Get authenticated user
@@ -28,7 +34,7 @@ export async function POST(req: NextRequest) {
         user = authUser;
     }
 
-    // Apply rate limiting (PPTX upload is resource-intensive)
+    // Apply rate limiting
     const tier = await getUserTier(user.id);
     const rateLimitResponse = await rateLimit(req, user.id, tier);
 
@@ -39,7 +45,7 @@ export async function POST(req: NextRequest) {
 
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
-    const projectId = formData.get('projectId') as string || 'mock-project-id';
+    let projectId = formData.get('projectId') as string;
 
     if (!file) {
       logger.warn('No file found in the upload request');
@@ -51,14 +57,95 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'O arquivo está vazio.' }, { status: 400 });
     }
 
+    // Upload File first
     const uploader = new PptxUploader();
-    const result = await uploader.upload({ file, userId: user.id, projectId });
+    // Pass mock projectID if null for now, or just undefined? Uploader needs string.
+    // If projectId is missing, we generate it NOW before upload so path is correct.
+    const isNewProject = !projectId || projectId === 'mock-project-id';
+    if (isNewProject) {
+        projectId = randomUUID();
+    }
 
+    const result = await uploader.upload({ file, userId: user.id, projectId });
     logger.info('File uploaded successfully via service', { result, userId: user.id });
+
+    // Extract Slides Content
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    
+    let extraction;
+    try {
+        // Pass projectId to allow image uploads to correct path
+        extraction = await PPTXProcessorReal.extract(buffer, projectId);
+        logger.info('PPTX extracted', { slideCount: extraction.slides.length });
+    } catch (extractError) {
+        logger.error('Failed to extract PPTX content', extractError as Error);
+        // We continue, but project will be empty. User might edit manually.
+        extraction = { success: false, slides: [], metadata: { title: file.name, totalSlides: 0 } as any };
+    }
+
+    // Create Project in DB if new
+    if (isNewProject) {
+        const projectName = extraction.metadata?.title || file.name.replace(/\.[^/.]+$/, "") || 'Untitled Project';
+        
+        try {
+            await prisma.projects.create({
+                data: {
+                    id: projectId,
+                    userId: user.id,
+                    name: projectName,
+                    type: 'pptx',
+                    status: 'draft',
+                    metadata: {
+                        created_via: 'upload_api',
+                        original_filename: file.name,
+                        extraction_stats: extraction.extractionStats as any
+                    }
+                }
+            });
+            logger.info('Created new project for upload', { projectId, userId: user.id });
+        } catch (dbError) {
+            logger.error('Failed to create project record', dbError as Error);
+            return NextResponse.json({ error: 'Erro ao criar registro do projeto.' }, { status: 500 });
+        }
+    }
+
+    // Insert Slides into DB (using Supabase Admin to ensure write access if RLS is strict/weird, 
+    // or just consistency with schema that might not be in Prisma)
+    if (extraction.success && extraction.slides.length > 0) {
+        const supabaseAdmin = createClient<Database>(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!
+        );
+
+        const slidesToInsert = extraction.slides.map((slide: any, index: number) => ({
+            project_id: projectId,
+            order_index: index,
+            title: slide.title?.substring(0, 100),
+            content: slide.content,
+            duration: 5, // Default duration
+            background_image: slide.images?.[0] || null, // Pick first image as background
+            notes: slide.notes
+        }));
+
+        const { error: slidesError } = await supabaseAdmin
+            .from('slides')
+            .delete()
+            .eq('project_id' as any, projectId) // Clear existing if any (e.g. re-upload)
+            .then(() => supabaseAdmin.from('slides').insert(slidesToInsert as any));
+
+        if (slidesError) {
+             logger.error('Failed to insert slides', slidesError);
+             // We don't fail the request, but log it.
+        } else {
+            logger.info('Slides inserted successfully', { count: slidesToInsert.length });
+        }
+    }
 
     return NextResponse.json({
         ...result,
-        projectId
+        projectId,
+        slidesCount: extraction.slides.length || 0
     });
 
   } catch (error) {

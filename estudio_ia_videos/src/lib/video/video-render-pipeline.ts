@@ -15,6 +15,7 @@ import * as os from 'os';
 import { avatarEngine } from '@lib/avatar-engine';
 import { HeyGenAvatarOptions } from '../engines/heygen-avatar-engine';
 import { Timeline } from '../types/timeline-types';
+import { getRequiredEnv } from '@lib/env';
 
 export interface PipelineStage {
   name: string;
@@ -68,8 +69,8 @@ export class VideoRenderPipeline {
   private settings: PipelineSettings;
 
   constructor(settings?: PipelineSettings) {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+    const supabaseUrl = getRequiredEnv('NEXT_PUBLIC_SUPABASE_URL');
+    const supabaseKey = getRequiredEnv('SUPABASE_SERVICE_ROLE_KEY');
     this.supabase = createClient(supabaseUrl, supabaseKey);
     this.settings = settings || {};
   }

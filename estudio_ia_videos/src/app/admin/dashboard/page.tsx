@@ -9,6 +9,8 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Users, Video, HardDrive, Activity } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
 
 interface Metrics {
   timestamp: string;
@@ -68,29 +70,37 @@ interface CleanupResults {
 
 export default function AdminDashboard() {
   const [metrics, setMetrics] = useState<Metrics | null>(null);
+  const [stats, setStats] = useState<any | null>(null);
   const [cleanupResults, setCleanupResults] = useState<CleanupResults | null>(null);
   const [loading, setLoading] = useState(true);
   const [cleanupLoading, setCleanupLoading] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(true);
 
   useEffect(() => {
-    fetchMetrics();
+    fetchData();
 
     // Auto-refresh every 30 seconds
     if (autoRefresh) {
-      const interval = setInterval(fetchMetrics, 30000);
+      const interval = setInterval(fetchData, 30000);
       return () => clearInterval(interval);
     }
   }, [autoRefresh]);
 
-  const fetchMetrics = async () => {
+  const fetchData = async () => {
     try {
-      const res = await fetch('/api/admin/metrics');
-      if (!res.ok) throw new Error('Failed to fetch metrics');
-      const data = await res.json();
-      setMetrics(data);
+      const [resMetrics, resStats] = await Promise.all([
+        fetch('/api/admin/metrics'),
+        fetch('/api/admin/stats')
+      ]);
+
+      if (resMetrics.ok) {
+        setMetrics(await resMetrics.json());
+      }
+      if (resStats.ok) {
+        setStats(await resStats.json());
+      }
     } catch (error) {
-      console.error('Failed to fetch metrics:', error);
+      console.error('Failed to fetch data:', error);
     } finally {
       setLoading(false);
     }
@@ -111,7 +121,7 @@ export default function AdminDashboard() {
 
       // Refresh metrics after cleanup
       if (!dryRun) {
-        setTimeout(fetchMetrics, 2000);
+        setTimeout(fetchData, 2000);
       }
     } catch (error) {
       console.error('Cleanup error:', error);
@@ -171,11 +181,63 @@ export default function AdminDashboard() {
             <span className="text-sm">Auto-refresh</span>
           </label>
 
-          <Button onClick={fetchMetrics} size="sm" variant="outline">
+          <Button onClick={fetchData} size="sm" variant="outline">
             Refresh
           </Button>
         </div>
       </div>
+
+      {/* Business KPIs */}
+      {stats && (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalUsers}</div>
+              <p className="text-xs text-muted-foreground">
+                {stats.plans?.pro || 0} Pro / {stats.plans?.free || 0} Free
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Render Jobs (Total)</CardTitle>
+              <Video className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.renderJobs?.total}</div>
+              <p className="text-xs text-muted-foreground">
+                {stats.renderJobs?.completedLast24h || 0} new in 24h
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Storage Used</CardTitle>
+              <HardDrive className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{(stats.usedStorage / 1024 / 1024 / 1024).toFixed(2)} GB</div>
+              <Progress value={stats.storageUtilization} className="h-1 mt-2" />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Active Users (1h)</CardTitle>
+              <Activity className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.activeSessions}</div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* System Health */}
       <div className="grid grid-cols-4 gap-4 mb-8">
@@ -282,8 +344,8 @@ export default function AdminDashboard() {
                         circuit.state === 'closed'
                           ? 'default'
                           : circuit.state === 'open'
-                          ? 'destructive'
-                          : 'secondary'
+                            ? 'destructive'
+                            : 'secondary'
                       }
                     >
                       {circuit.state}
@@ -337,9 +399,8 @@ export default function AdminDashboard() {
 
           {cleanupResults && (
             <div
-              className={`mt-4 p-4 rounded-lg ${
-                cleanupResults.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'
-              }`}
+              className={`mt-4 p-4 rounded-lg ${cleanupResults.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'
+                }`}
             >
               <h4 className="font-bold mb-2">
                 {cleanupResults.summary.dryRun ? 'Dry Run Results' : 'Cleanup Results'}

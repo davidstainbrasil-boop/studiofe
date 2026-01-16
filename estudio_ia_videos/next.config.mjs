@@ -78,6 +78,143 @@ const nextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      // Redirects antigos
+      {
+        source: '/pptx-studio-enhanced',
+        destination: '/pptx-preview',
+        permanent: true,
+      },
+      {
+        source: '/pptx-upload-real',
+        destination: '/pptx',
+        permanent: true,
+      },
+      {
+        source: '/pptx-editor-real',
+        destination: '/editor',
+        permanent: true,
+      },
+      // Redirects corrigidos de 404s
+      {
+        source: '/avatar-studio-hyperreal',
+        destination: '/avatar-system-real',
+        permanent: true,
+      },
+      {
+        source: '/templates-nr-real',
+        destination: '/smart-nr-templates',
+        permanent: true,
+      },
+      {
+        source: '/biblioteca-midia',
+        destination: '/asset-library-studio',
+        permanent: true,
+      },
+      {
+        source: '/behavioral-analytics',
+        destination: '/dashboard/analytics',
+        permanent: true,
+      },
+      {
+        source: '/ai-content-assistant',
+        destination: '/ai-assistant',
+        permanent: true,
+      },
+      {
+        source: '/ai-templates-smart',
+        destination: '/smart-templates',
+        permanent: true,
+      },
+      {
+        source: '/automation',
+        destination: '/batch-processing',
+        permanent: true,
+      },
+      {
+        source: '/enterprise',
+        destination: '/enterprise-integration',
+        permanent: true,
+      },
+      {
+        source: '/collaboration-v2',
+        destination: '/real-time-collaboration',
+        permanent: true,
+      },
+      {
+        source: '/security-dashboard',
+        destination: '/dashboard/security-analytics',
+        permanent: true,
+      },
+      {
+        source: '/enterprise-sso',
+        destination: '/integrations',
+        permanent: true,
+      },
+      {
+        source: '/whitelabel',
+        destination: '/brand-kit',
+        permanent: true,
+      },
+      {
+        source: '/admin/production-monitor',
+        destination: '/admin/monitoring',
+        permanent: true,
+      },
+      {
+        source: '/admin/pptx-metrics',
+        destination: '/dashboard/analytics',
+        permanent: true,
+      },
+      {
+        source: '/performance-dashboard',
+        destination: '/performance',
+        permanent: true,
+      },
+      {
+        source: '/render-studio-advanced',
+        destination: '/render-dashboard',
+        permanent: true,
+      },
+      {
+        source: '/asset-library',
+        destination: '/asset-library-studio',
+        permanent: true,
+      },
+      {
+        source: '/real-time-comments',
+        destination: '/comments',
+        permanent: true,
+      },
+      {
+        source: '/ai-advanced-lab',
+        destination: '/ai-features',
+        permanent: true,
+      },
+      {
+        source: '/gamification',
+        destination: '/interactive-elements',
+        permanent: true,
+      },
+      {
+        source: '/api-evolution',
+        destination: '/api-keys',
+        permanent: true,
+      },
+      {
+        source: '/ml-ops',
+        destination: '/system-control',
+        permanent: true,
+      },
+      // Redirect /studio sem ID para /projects
+      {
+        source: '/studio',
+        destination: '/projects',
+        permanent: false,
+      },
+    ];
+  },
 };
 
 export default withSentryConfig(

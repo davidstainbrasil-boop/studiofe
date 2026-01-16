@@ -22,7 +22,7 @@ module.exports = {
     '^@prisma/client$': '<rootDir>/node_modules/@prisma/client',
   },
 
-  
+
 
   transformIgnorePatterns: [
     '/node_modules/(?!bullmq|msgpackr|jose|@supabase/auth-helpers-shared|@supabase/auth-helpers-nextjs|dnd-core|react-dnd|react-dnd-html5-backend).+\\.(js|jsx|mjs|cjs|ts|tsx)$',
@@ -32,6 +32,7 @@ module.exports = {
     '<rootDir>/src/app/**/__tests__/**/*.test.{ts,tsx}',
     '<rootDir>/src/app/tests/**/*.test.{ts,tsx}',
     '<rootDir>/src/app/__tests__/integration/**/*.test.{ts,tsx}',
+    '<rootDir>/src/__tests__/**/*.test.{ts,tsx}',
   ],
 
   testPathIgnorePatterns: [
@@ -61,7 +62,7 @@ module.exports = {
     '.*flags\.test\.disabled\.ts$',
     '.*monitoring-service\.test\.disabled\.ts$',
   ],
-  
+
   setupFilesAfterEnv: ['<rootDir>/src/app/jest.setup.js'],
   testTimeout: 120000,
   verbose: true,

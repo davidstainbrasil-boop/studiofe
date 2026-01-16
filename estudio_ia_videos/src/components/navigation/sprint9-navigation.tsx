@@ -210,7 +210,7 @@ export default function Sprint9Navigation() {
             </Button>
           </Link>
           
-          <Link href="/security-dashboard">
+          <Link href="/dashboard/security-analytics">
             <Button variant="outline" size="sm" className="flex items-center space-x-2">
               <Lock className="h-4 w-4" />
               <span>Zero-Trust</span>
@@ -224,7 +224,7 @@ export default function Sprint9Navigation() {
             </Button>
           </Link>
           
-          <Link href="/ml-ops">
+          <Link href="/system-control">
             <Button variant="outline" size="sm" className="flex items-center space-x-2">
               <TrendingUp className="h-4 w-4" />
               <span>ML Insights</span>

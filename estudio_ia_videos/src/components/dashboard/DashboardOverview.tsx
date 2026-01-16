@@ -602,7 +602,7 @@ export default function DashboardOverview() {
                 </Button>
 
                 <Button variant="outline" className="justify-start gap-3 h-auto p-4" asChild>
-                  <Link href="/enterprise">
+                  <Link href="/enterprise-integration">
                     <Crown className="h-5 w-5" />
                     <div className="text-left">
                       <p className="font-medium">Enterprise</p>

@@ -10,11 +10,18 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@lib/logger';
 
 export async function POST(req: NextRequest) {
-  console.warn('[DEPRECATED] /api/v1/pptx/generate-timeline is a prototype endpoint that has been disabled.');
-  console.warn('[DEPRECATED] This endpoint returned mock timeline with fake audio files.');
-  console.warn('[MIGRATION] Use POST /api/pptx/upload + POST /api/render/start for real workflow.');
+  logger.warn('[DEPRECATED] /api/v1/pptx/generate-timeline is a prototype endpoint that has been disabled.', {
+    component: 'API: v1/pptx/generate-timeline'
+  });
+  logger.warn('[DEPRECATED] This endpoint returned mock timeline with fake audio files.', {
+    component: 'API: v1/pptx/generate-timeline'
+  });
+  logger.warn('[MIGRATION] Use POST /api/pptx/upload + POST /api/render/start for real workflow.', {
+    component: 'API: v1/pptx/generate-timeline'
+  });
 
   return NextResponse.json({
     error: 'Este endpoint é protótipo e foi desativado',

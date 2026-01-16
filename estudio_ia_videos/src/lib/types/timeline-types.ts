@@ -116,6 +116,7 @@ export interface TimelineProject {
   selectedElementIds?: string[];
   clipboardElements?: TimelineElement[];
   settings?: Record<string, unknown>;
+  themeId?: string; // Phase 10: Theme Support
   history?: {
     past: Array<Record<string, unknown>>;
     present: Record<string, unknown> | null;

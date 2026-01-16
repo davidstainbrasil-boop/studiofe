@@ -19,7 +19,7 @@ export async function POST(req: Request) {
     }
 
     // Rate limiting por usuário (20/min)
-    const rl = checkRateLimit(`cancel:${userData.user.id}`, 20, 60_000)
+    const rl = await checkRateLimit(`cancel:${userData.user.id}`, 20, 60_000)
     if (!rl.allowed) {
       recordRateLimitHit();
       return new NextResponse(JSON.stringify({ code: 'RATE_LIMITED', message: 'Muitas requisições de cancelamento. Tente novamente em breve.' }), { status: 429, headers: { 'content-type': 'application/json', 'Retry-After': String(rl.retryAfterSec) } })

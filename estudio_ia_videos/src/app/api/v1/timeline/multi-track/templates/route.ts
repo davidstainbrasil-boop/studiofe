@@ -352,7 +352,7 @@ export async function PUT(request: NextRequest) {
         tracks: timeline.tracks,
         settings: timeline.settings,
         totalDuration: timeline.totalDuration,
-        updatedAt: timeline.updatedAt.toISOString(),
+        updatedAt: timeline.updatedAt?.toISOString() || new Date().toISOString(),
       },
       message: 'Template aplicado com sucesso',
     });

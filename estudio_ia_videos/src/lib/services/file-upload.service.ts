@@ -6,6 +6,7 @@
 import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import crypto from 'crypto'
+import { getRequiredEnv, getOptionalEnv } from '@lib/env'
 
 export class FileUploadService {
   private s3Client: S3Client
@@ -13,29 +14,30 @@ export class FileUploadService {
 
   constructor() {
     // Support both AWS S3 and Cloudflare R2
-    const isR2 = !!process.env.R2_ACCOUNT_ID
+    const isR2 = !!getOptionalEnv('R2_ACCOUNT_ID')
 
     if (isR2) {
       // Cloudflare R2 configuration
+      const r2AccountId = getOptionalEnv('R2_ACCOUNT_ID');
       this.s3Client = new S3Client({
         region: 'auto',
-        endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+        endpoint: `https://${r2AccountId}.r2.cloudflarestorage.com`,
         credentials: {
-          accessKeyId: process.env.R2_ACCESS_KEY_ID!,
-          secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!
+          accessKeyId: getRequiredEnv('R2_ACCESS_KEY_ID'),
+          secretAccessKey: getRequiredEnv('R2_SECRET_ACCESS_KEY')
         }
       })
-      this.bucket = process.env.R2_BUCKET_NAME || 'mvp-video-storage'
+      this.bucket = getOptionalEnv('R2_BUCKET_NAME', 'mvp-video-storage')
     } else {
       // AWS S3 configuration
       this.s3Client = new S3Client({
-        region: process.env.AWS_REGION || 'us-east-1',
+        region: getOptionalEnv('AWS_REGION', 'us-east-1'),
         credentials: {
-          accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!
+          accessKeyId: getRequiredEnv('AWS_ACCESS_KEY_ID'),
+          secretAccessKey: getRequiredEnv('AWS_SECRET_ACCESS_KEY')
         }
       })
-      this.bucket = process.env.AWS_S3_BUCKET || 'mvp-video-storage'
+      this.bucket = getOptionalEnv('AWS_S3_BUCKET', 'mvp-video-storage')
     }
   }
 
@@ -160,4 +162,19 @@ export class FileUploadService {
   }
 }
 
-export const fileUploadService = new FileUploadService()
+// Lazy initialization to prevent build-time env var requirements
+let _fileUploadService: FileUploadService | null = null;
+
+export function getFileUploadService(): FileUploadService {
+  if (!_fileUploadService) {
+    _fileUploadService = new FileUploadService();
+  }
+  return _fileUploadService;
+}
+
+// For backward compatibility - will throw on first access if env vars missing
+export const fileUploadService = new Proxy({} as FileUploadService, {
+  get(_, prop) {
+    return (getFileUploadService() as any)[prop];
+  }
+});

@@ -260,15 +260,20 @@ async function getUsagePatterns(userId: string, timeRange: Date) {
     // Calculate average session duration
     const sessionDurations: number[] = [];
     if (events.length > 1) {
-      const sortedEvents = [...events].sort((a, b) => 
-        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-      );
+      const sortedEvents = [...events].sort((a, b) => {
+        const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return aTime - bTime;
+      });
       
-      let sessionStart = new Date(sortedEvents[0].createdAt).getTime();
+      const firstEventTime = sortedEvents[0]?.createdAt ? new Date(sortedEvents[0].createdAt).getTime() : 0;
+      let sessionStart = firstEventTime;
       let lastEventTime = sessionStart;
       
       for (let i = 1; i < sortedEvents.length; i++) {
-        const eventTime = new Date(sortedEvents[i].createdAt).getTime();
+        const event = sortedEvents[i];
+        if (!event) continue;
+        const eventTime = event.createdAt ? new Date(event.createdAt).getTime() : 0;
         const timeSinceLastEvent = (eventTime - lastEventTime) / 1000; // seconds
         
         if (timeSinceLastEvent > 1800) { // 30 min gap = new session

@@ -201,17 +201,19 @@ async function main() {
       update: {},
       create: {
         id: 'demo-project-nr12',
-        title: 'NR-12: Segurança em Máquinas - Demo', // Changed name to title as per schema
+        name: 'NR-12: Segurança em Máquinas - Demo',
         description: 'Projeto de demonstração sobre segurança em máquinas e equipamentos',
         userId: demoUser.id,
-        status: 'completed', // Uppercase COMPLETED might be invalid if not enum, schema says String? default "draft"
-        slidesData: slidesData,
-        duration: 53,
-        settings: settings
+        status: 'completed',
+        metadata: {
+          slidesData: slidesData,
+          duration: 53,
+          settings: settings
+        }
       }
     })
 
-    console.log('✅ Sample project created:', sampleProject.title)
+    console.log('✅ Sample project created:', sampleProject.name)
 
     console.log('🎉 Database initialization completed successfully!')
 

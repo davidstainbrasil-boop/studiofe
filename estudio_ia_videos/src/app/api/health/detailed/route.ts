@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createApiLogger, createResponseHeaders } from '@lib/logger-api'
 import { createErrorResponse, DatabaseError, withRetry } from '@lib/error-handling'
 import { createClient } from '@supabase/supabase-js'
+import { getRequiredEnv, getOptionalEnv } from '@lib/env'
 
 interface HealthCheckResult {
   service: string
@@ -41,19 +42,13 @@ interface HealthResponse {
 async function checkDatabase(): Promise<HealthCheckResult> {
   const start = Date.now()
   
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    return {
-      service: 'database',
-      status: 'unhealthy',
-      latencyMs: 0,
-      details: { error: 'Missing Supabase configuration' },
-    }
-  }
-
   try {
+    const supabaseUrl = getRequiredEnv('NEXT_PUBLIC_SUPABASE_URL');
+    const supabaseKey = getRequiredEnv('SUPABASE_SERVICE_ROLE_KEY');
+    
     const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY
+      supabaseUrl,
+      supabaseKey
     )
 
     // Simple query to check connectivity
@@ -112,10 +107,11 @@ async function checkStorage(): Promise<HealthCheckResult> {
   const provider = (process.env.STORAGE_PROVIDER || 'supabase').toLowerCase()
 
   try {
-    if (provider === 'supabase' && process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    const supabaseUrl = getOptionalEnv('NEXT_PUBLIC_SUPABASE_URL');
+    if (provider === 'supabase' && supabaseUrl) {
       const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!
+        supabaseUrl,
+        getRequiredEnv('SUPABASE_SERVICE_ROLE_KEY')
       )
 
       const { data, error } = await supabase.storage.listBuckets()

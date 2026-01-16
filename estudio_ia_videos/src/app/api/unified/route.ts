@@ -106,9 +106,7 @@ export async function POST(request: NextRequest) {
         status: 'draft',
         userId: session.user.id,
         description: '',
-        originalFileName: '',
         thumbnailUrl: '',
-        duration: 0,
       }
     })
 

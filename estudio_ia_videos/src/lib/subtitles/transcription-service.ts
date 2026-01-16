@@ -5,6 +5,8 @@ import fs from 'fs/promises';
 import { logger } from '@lib/logger';
 // TODO: Adicionar @types/tesseract.js ou tipar manualmente quando biblioteca estiver estável
 import { createWorker } from 'tesseract.js';
+import OpenAI, { toFile } from 'openai';
+import { getOptionalEnv } from '@lib/env';
 
 const execAsync = promisify(exec);
 
@@ -114,23 +116,85 @@ export class TranscriptionService {
       // Convert to WAV for better accuracy
       const wavFile = await this.convertToWav(audioFile);
       
-      // Transcribe using Whisper
-      const transcription = await this.transcribeWithWhisper(
-        wavFile,
-        language,
-        enableKaraoke,
-        enableSpeakerDiarization,
-        maxSpeakers
-      );
-
-      // Clean up temp files
-      await this.cleanupTempFiles([audioFile, wavFile]);
-
-      return transcription;
+      // Try OpenAI First
+      try {
+        const transcription = await this.transcribeWithOpenAI(
+          wavFile,
+          language,
+          enableKaraoke,
+          enableSpeakerDiarization,
+          maxSpeakers
+        );
+        
+        await this.cleanupTempFiles([audioFile, wavFile]);
+        return transcription;
+      } catch (openaiError) {
+         logger.warn('OpenAI Transcription failed, falling back to local Whisper', { error: openaiError });
+         // Fallback to local
+         const transcription = await this.transcribeWithWhisper(
+            wavFile,
+            language,
+            enableKaraoke,
+            enableSpeakerDiarization,
+            maxSpeakers
+          );
+          await this.cleanupTempFiles([audioFile, wavFile]);
+          return transcription;
+      }
     } catch (error) {
       logger.error('Transcription error:', error instanceof Error ? error : new Error(String(error)), { component: 'TranscriptionService' });
       throw new Error(`Failed to transcribe audio: ${(error as Error).message}`);
     }
+  }
+
+  private async transcribeWithOpenAI(
+    audioPath: string,
+    language: string,
+    enableKaraoke: boolean,
+    enableSpeakerDiarization: boolean, // OpenAI doesn't support diarization natively in simple API yet, but we pass it
+    maxSpeakers: number
+  ): Promise<TranscriptionResult> {
+    const apiKey = getOptionalEnv('OPENAI_API_KEY');
+    if (!apiKey) throw new Error('OpenAI API Key not found');
+
+    const openai = new OpenAI({ apiKey });
+
+    const fileStream = await fs.readFile(audioPath);
+    // OpenAI expects a File object or ReadStream. configuring for node:
+    const file = await toFile(fileStream, 'audio.wav');
+
+    const response = await openai.audio.transcriptions.create({
+      file: file,
+      model: 'whisper-1',
+      language: language.split('-')[0], // OpenAI uses ISO-639-1 (e.g. 'pt')
+      response_format: 'verbose_json',
+      timestamp_granularities: enableKaraoke ? ['word', 'segment'] : ['segment']
+    });
+
+    // Process OpenAI Response
+    const segments: TranscriptionSegment[] = (response.segments || []).map((s: any, i: number) => ({
+      id: s.id.toString(),
+      startTime: s.start,
+      endTime: s.end,
+      text: s.text.trim(),
+      confidence: 0.95, // OpenAI doesn't always return confidence per segment in simple mode
+      words: (response.words || [])
+        .filter((w: any) => w.start >= s.start && w.end <= s.end)
+        .map((w: any) => ({
+           word: w.word,
+           startTime: w.start,
+           endTime: w.end,
+           confidence: 0.95 
+        }))
+    }));
+
+    return {
+      segments,
+      language,
+      duration: response.duration,
+      confidence: 0.95,
+      wordCount: segments.reduce((acc, s) => acc + s.words.length, 0)
+    };
   }
 
   private async extractAudioIfNeeded(filePath: string): Promise<string> {

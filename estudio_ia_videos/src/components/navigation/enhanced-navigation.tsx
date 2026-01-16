@@ -67,14 +67,14 @@ const navigationItems: NavigationItem[] = [
     icon: Video,
     children: [
       {
-        title: 'PPTX Studio Enhanced',
-        href: '/pptx-studio-enhanced',
+        title: 'PPTX Studio',
+        href: '/pptx-preview',
         icon: FileText,
         badge: 'PRO'
       },
       {
         title: 'Avatar 3D Studio',
-        href: '/avatar-studio-hyperreal',
+        href: '/avatar-system-real',
         icon: Bot,
         badge: 'PREMIUM'
       },
@@ -91,7 +91,7 @@ const navigationItems: NavigationItem[] = [
         badge: 'V3'
       },
       {
-        title: 'Video Pipeline Advanced',
+        title: 'Video Pipeline',
         href: '/advanced-video-pipeline',
         icon: Camera,
         badge: 'PRO'
@@ -118,7 +118,7 @@ const navigationItems: NavigationItem[] = [
     icon: BarChart3,
     children: [
       {
-        title: 'Content Analysis Engine',
+        title: 'Content Analysis',
         href: '/content-analytics',
         icon: TrendingUp,
         badge: 'NEW',
@@ -126,12 +126,12 @@ const navigationItems: NavigationItem[] = [
       },
       {
         title: 'Performance Dashboard',
-        href: '/performance-dashboard',
+        href: '/performance',
         icon: Target
       },
       {
         title: 'Behavioral Analytics',
-        href: '/behavioral-analytics',
+        href: '/dashboard/analytics',
         icon: Users,
         badge: 'PRO'
       }
@@ -143,18 +143,18 @@ const navigationItems: NavigationItem[] = [
     icon: Upload,
     children: [
       {
-        title: 'PPTX Upload Real',
-        href: '/pptx-upload-real',
+        title: 'Importar PPTX',
+        href: '/pptx',
         icon: FileText
       },
       {
         title: 'Render Studio',
-        href: '/render-studio-advanced',
+        href: '/render-dashboard',
         icon: Play
       },
       {
-        title: 'Asset Library',
-        href: '/asset-library',
+        title: 'Biblioteca de Assets',
+        href: '/asset-library-studio',
         icon: Folder
       }
     ]
@@ -167,13 +167,13 @@ const navigationItems: NavigationItem[] = [
     children: [
       {
         title: 'Salas Colaborativas',
-        href: '/collaboration-v2',
+        href: '/real-time-collaboration',
         icon: Users,
         badge: 'BETA'
       },
       {
-        title: 'Comentários em Tempo Real',
-        href: '/real-time-comments',
+        title: 'Comentários',
+        href: '/comments',
         icon: Bell,
         badge: 'COMING'
       }
@@ -181,7 +181,7 @@ const navigationItems: NavigationItem[] = [
   },
   {
     title: 'Configurações',
-    href: '/settings',
+    href: '/settings/security',
     icon: Settings
   }
 ]
@@ -244,7 +244,7 @@ export default function EnhancedNavigation() {
             {React.createElement(item.icon, { className: "mr-3 h-4 w-4 shrink-0" })}
             <span className="truncate flex-1 text-left">{item.title}</span>
             {item.badge && (
-              <Badge 
+              <Badge
                 variant={getBadgeVariant(item.badge)}
                 className={cn("ml-2 text-xs h-5", getBadgeColor(item.badge))}
               >
@@ -282,7 +282,7 @@ export default function EnhancedNavigation() {
           {React.createElement(item.icon, { className: "mr-3 h-4 w-4 shrink-0" })}
           <span className="truncate flex-1 text-left">{item.title}</span>
           {item.badge && (
-            <Badge 
+            <Badge
               variant={getBadgeVariant(item.badge)}
               className={cn("ml-2 text-xs h-5", getBadgeColor(item.badge))}
             >
@@ -298,38 +298,19 @@ export default function EnhancedNavigation() {
   }
 
   return (
-    <div className="pb-12">
-      <div className="space-y-4 py-4">
-        <div className="px-3 py-2">
-          <div className="flex items-center space-x-2 mb-4">
-            <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg">
-              <Zap className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold tracking-tight">
-                Estúdio IA
-              </h2>
-              <p className="text-xs text-muted-foreground">
-                Sprint 23 - 98% Funcional
-              </p>
-            </div>
+    <div className="pb-12 bg-white h-full border-r">
+      <div className="flex h-16 items-center px-6 border-b">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
+            <Sparkles className="w-5 h-5 text-white" />
           </div>
-          
-          {/* Stats Overview */}
-          <div className="grid grid-cols-2 gap-2 mb-4">
-            <div className="p-2 bg-muted/50 rounded text-center">
-              <div className="text-lg font-bold text-green-600">98%</div>
-              <div className="text-xs text-muted-foreground">Funcional</div>
-            </div>
-            <div className="p-2 bg-muted/50 rounded text-center">
-              <div className="text-lg font-bold text-blue-600">576</div>
-              <div className="text-xs text-muted-foreground">Módulos</div>
-            </div>
-          </div>
-          
-          <Separator />
+          <span className="font-bold text-lg bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+            Estúdio IA
+          </span>
         </div>
-        
+      </div>
+
+      <div className="space-y-4 py-4">
         <div className="px-3">
           <div className="space-y-1">
             {/* Quick Search */}
@@ -337,46 +318,16 @@ export default function EnhancedNavigation() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <input
                 type="text"
-                placeholder="Buscar funcionalidade..."
+                placeholder="Buscar menu..."
                 className="w-full pl-10 pr-4 py-2 text-sm border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               />
             </div>
 
-            {/* New Features Highlight */}
-            <div className="mb-4 p-3 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-lg border">
-              <div className="flex items-center space-x-2 mb-2">
-                <Sparkles className="h-4 w-4 text-purple-600" />
-                <span className="text-sm font-semibold text-purple-600">Novidades Sprint 23</span>
-              </div>
-              <div className="text-xs text-muted-foreground space-y-1">
-                <div>• IA Content Assistant</div>
-                <div>• Smart NR Templates</div>
-                <div>• Content Analysis Engine</div>
-                <div>• Auto Layout System</div>
-              </div>
-            </div>
-
-            <ScrollArea className="h-[calc(100vh-20rem)]">
+            <ScrollArea className="h-[calc(100vh-10rem)]">
               <div className="space-y-2">
                 {navigationItems.map(item => renderNavigationItem(item))}
               </div>
             </ScrollArea>
-          </div>
-        </div>
-
-        <div className="px-3">
-          <Separator className="mb-4" />
-          
-          {/* User Profile */}
-          <div className="flex items-center space-x-2 p-2 rounded-lg bg-muted/50">
-            <div className="p-2 bg-primary rounded-full">
-              <User className="h-4 w-4 text-primary-foreground" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-medium truncate">Usuário Profissional</div>
-              <div className="text-xs text-muted-foreground">Premium Account</div>
-            </div>
-            <Badge variant="default" className="text-xs">PRO</Badge>
           </div>
         </div>
       </div>

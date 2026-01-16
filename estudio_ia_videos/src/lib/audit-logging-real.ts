@@ -1,5 +1,6 @@
 import { logger } from '@lib/logger';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { getRequiredEnv } from '@lib/env';
 
 export interface AuditLog {
   id: string;
@@ -14,19 +15,22 @@ export class AuditLoggingService {
   private supabase: SupabaseClient;
 
   constructor() {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+    try {
+      const supabaseUrl = getRequiredEnv('NEXT_PUBLIC_SUPABASE_URL');
+      const supabaseKey = getRequiredEnv('SUPABASE_SERVICE_ROLE_KEY');
     
-    if (!supabaseUrl || !supabaseKey) {
-      logger.warn('⚠️ Supabase credentials not found in AuditLoggingService', { component: 'AuditLoggingReal' });
+      this.supabase = createClient(supabaseUrl, supabaseKey, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      });
+    } catch (error) {
+      logger.error('Failed to initialize AuditLoggingService', error instanceof Error ? error : new Error(String(error)), {
+        component: 'AuditLoggingReal'
+      });
+      throw error;
     }
-    
-    this.supabase = createClient(supabaseUrl, supabaseKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
-    });
   }
 
   async log(log: Omit<AuditLog, 'id' | 'timestamp'>): Promise<void> {

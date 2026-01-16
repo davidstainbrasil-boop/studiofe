@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { EdgeTTSService } from '@lib/tts/edge-tts-service';
 import { z } from 'zod';
+import { logger } from '@lib/logger';
 
 const batchSchema = z.object({
   items: z.array(z.object({
@@ -34,7 +35,10 @@ export async function POST(request: NextRequest) {
 
     const { items, defaultVoice } = validation.data;
 
-    console.log(`[TTS Batch] Processando ${items.length} itens`);
+    logger.info('Processando batch TTS', {
+      component: 'API: tts/batch',
+      itemCount: items.length
+    });
 
     // Preparar itens com voz padrão se não especificada
     const preparedItems = items.map(item => ({
@@ -82,7 +86,9 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('[TTS Batch] Erro:', error);
+    logger.error('Erro ao processar batch TTS', error instanceof Error ? error : new Error(String(error)), {
+      component: 'API: tts/batch'
+    });
     return NextResponse.json(
       { 
         success: false, 

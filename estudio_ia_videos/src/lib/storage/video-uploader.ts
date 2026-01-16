@@ -262,7 +262,13 @@ export class VideoUploader {
                  await fs.writeFile(targetThumbPath, thumbnailBuffer);
                  
                  const thumbUrl = `http://localhost:3000/uploads/thumbnails/${thumbnailFileName}`;
-                 await fs.unlink(thumbnailPath).catch(() => {});
+                 await fs.unlink(thumbnailPath).catch((error) => {
+                   logger.debug('Temp thumbnail file already deleted', {
+                     component: 'VideoUploader',
+                     thumbnailPath,
+                     error: error instanceof Error ? error.message : String(error)
+                   });
+                 });
                  logger.info('MOCK STORAGE: Thumbnail gerada (DEV ONLY)', { thumbUrl });
                  resolve(thumbUrl);
                  return;
@@ -285,7 +291,13 @@ export class VideoUploader {
                 .getPublicUrl(thumbnailStoragePath);
 
               // Limpa arquivo temporário
-              await fs.unlink(thumbnailPath).catch(() => {});
+              await fs.unlink(thumbnailPath).catch((error) => {
+                logger.debug('Temp thumbnail file already deleted', {
+                  component: 'VideoUploader',
+                  thumbnailPath,
+                  error: error instanceof Error ? error.message : String(error)
+                });
+              });
 
               logger.info('Thumbnail generated and uploaded', { service: 'VideoUploader' });
               resolve(urlData.publicUrl);

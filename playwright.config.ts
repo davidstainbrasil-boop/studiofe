@@ -9,14 +9,15 @@ dotenv.config({ path: path.resolve(process.cwd(), envFile) });
 
 export default defineConfig({
   testDir: '.',
-  testMatch: ['**/estudio_ia_videos/src/app/tests/e2e/**/*.spec.ts', '**/estudio_ia_videos/src/app/e2e/**/*.spec.ts'],
+  testMatch: ['**/estudio_ia_videos/src/app/tests/e2e/**/*.spec.ts', '**/estudio_ia_videos/src/app/e2e/**/*.spec.ts', '**/tests/e2e/**/*.spec.ts'],
   testIgnore: ['**/_archive/**', '**/node_modules/**'],
   globalSetup: './tests/global-setup.ts',
   globalTeardown: './tests/global-teardown.ts',
   timeout: 60000,
   retries: process.env.CI ? 1 : 0,
   use: {
-    baseURL: process.env.NEXT_PUBLIC_APP_URL || process.env.E2E_BASE_URL || 'http://localhost:3000',
+    // Prefer explicit E2E base URL to avoid accidentally running local tests against production
+    baseURL: process.env.E2E_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
     trace: 'on-first-retry',
     ignoreHTTPSErrors: true
   },

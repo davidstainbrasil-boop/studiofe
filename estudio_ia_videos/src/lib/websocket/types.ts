@@ -16,7 +16,12 @@ export enum TimelineEvent {
   CONFLICT = 'conflict',
   TRACK_LOCKED = 'track-locked',
   TRACK_UNLOCKED = 'track-unlocked',
-  PRESENCE_UPDATE = 'presence-update'
+  PRESENCE_UPDATE = 'presence-update',
+  // Render events
+  RENDER_STARTED = 'render-started',
+  RENDER_PROGRESS = 'render-progress',
+  RENDER_COMPLETED = 'render-completed',
+  RENDER_FAILED = 'render-failed'
 }
 
 export interface SocketUser {
