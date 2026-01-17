@@ -241,6 +241,60 @@ model slides {
   @@schema("public")
 }
 
+model scenes {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId       String    @map("project_id") @db.Uuid
+  orderIndex      Int       @map("order_index")
+  name            String    @default("Nova Cena") @db.VarChar(255)
+  duration        Int       @default(5000)
+  startTime       Int       @default(0) @map("start_time")
+
+  // Visual Track
+  backgroundType  String?   @default("color") @map("background_type") @db.VarChar(50)
+  backgroundColor String?   @default("#1a1a1a") @map("background_color") @db.VarChar(50)
+  backgroundImage String?   @map("background_image")
+  backgroundVideo String?   @map("background_video")
+  visualElements  Json?     @default("[]") @map("visual_elements")
+
+  // Avatar Track
+  avatarId        String?   @map("avatar_id") @db.VarChar(255)
+  avatarProvider  String?   @map("avatar_provider") @db.VarChar(50)
+  avatarPosition  Json?     @default("{\"x\": 50, \"y\": 50, \"scale\": 1, \"rotation\": 0}") @map("avatar_position")
+  avatarScript    String?   @map("avatar_script")
+  avatarEmotion   String?   @default("neutral") @map("avatar_emotion") @db.VarChar(50)
+  avatarSettings  Json?     @default("{}") @map("avatar_settings")
+
+  // Text/Subtitle Track
+  textElements    Json?     @default("[]") @map("text_elements")
+  subtitles       Json?     @default("{}") @map("subtitles")
+
+  // Audio Track
+  voiceConfig     Json?     @default("{}") @map("voice_config")
+  backgroundMusic String?   @map("background_music")
+  musicVolume     Float?    @default(0.3) @map("music_volume") @db.Real
+  ducking         Boolean?  @default(true)
+  soundEffects    Json?     @default("[]") @map("sound_effects")
+
+  // Animation & Transitions
+  transitionIn    Json?     @default("{\"type\": \"fade\", \"duration\": 500}") @map("transition_in")
+  transitionOut   Json?     @default("{\"type\": \"fade\", \"duration\": 500}") @map("transition_out")
+  animations      Json?     @default("[]")
+
+  // Metadata
+  thumbnailUrl    String?   @map("thumbnail_url")
+  notes           String?
+  locked          Boolean?  @default(false)
+  version         Int?      @default(1)
+  createdAt       DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@index([projectId], map: "idx_scenes_project_id")
+  @@index([projectId, orderIndex], map: "idx_scenes_project_order")
+  @@index([orderIndex], map: "idx_scenes_order_index")
+  @@index([startTime], map: "idx_scenes_start_time")
+  @@schema("public")
+}
+
 model timelines {
   id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   projectId     String?   @unique @map("project_id") @db.Uuid
