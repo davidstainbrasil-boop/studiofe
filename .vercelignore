@@ -1,0 +1,12 @@
+# Exclude large upload folders from serverless functions
+public/uploads/pptx/*
+public/uploads/videos/*
+public/renders/*
+
+# Keep directory structure but exclude files
+!public/uploads/pptx/.gitkeep
+!public/uploads/videos/.gitkeep
+!public/renders/.gitkeep
+
+# Optional: Exclude other large static assets if needed
+# public/videos/*
