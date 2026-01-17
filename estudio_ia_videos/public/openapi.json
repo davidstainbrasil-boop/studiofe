@@ -1,0 +1,697 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+        "title": "CursosTecno Video Platform API",
+        "description": "API para geração de vídeos educacionais a partir de apresentações PPTX, com suporte para avatares, TTS, compliance NR e renderização.",
+        "version": "1.0.0",
+        "contact": {
+            "name": "CursosTecno",
+            "url": "https://cursostecno.com.br"
+        }
+    },
+    "servers": [
+        {
+            "url": "https://cursostecno.com.br/api",
+            "description": "Production"
+        },
+        {
+            "url": "http://localhost:3000/api",
+            "description": "Development"
+        }
+    ],
+    "paths": {
+        "/health": {
+            "get": {
+                "summary": "Health Check",
+                "description": "Retorna o status de saúde do sistema e seus serviços",
+                "tags": [
+                    "System"
+                ],
+                "parameters": [
+                    {
+                        "name": "full",
+                        "in": "query",
+                        "description": "Se true, verifica todos os serviços (mais lento)",
+                        "schema": {
+                            "type": "boolean",
+                            "default": false
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sistema saudável ou degradado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HealthResponse"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Sistema não saudável"
+                    }
+                }
+            }
+        },
+        "/quotas": {
+            "get": {
+                "summary": "API Quotas",
+                "description": "Retorna as quotas de uso das APIs externas (D-ID, HeyGen, ElevenLabs)",
+                "tags": [
+                    "Monitoring"
+                ],
+                "parameters": [
+                    {
+                        "name": "refresh",
+                        "in": "query",
+                        "description": "Força atualização do cache",
+                        "schema": {
+                            "type": "boolean",
+                            "default": false
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Quotas obtidas com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/QuotasResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/alerts": {
+            "get": {
+                "summary": "List Alerts",
+                "description": "Lista alertas do sistema",
+                "tags": [
+                    "Monitoring"
+                ],
+                "parameters": [
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 20
+                        }
+                    },
+                    {
+                        "name": "unacknowledged",
+                        "in": "query",
+                        "schema": {
+                            "type": "boolean",
+                            "default": false
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de alertas",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AlertsResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "Acknowledge Alert",
+                "description": "Marca um alerta como reconhecido",
+                "tags": [
+                    "Monitoring"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "action": {
+                                        "type": "string",
+                                        "enum": [
+                                            "acknowledge"
+                                        ]
+                                    },
+                                    "alertId": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "action",
+                                    "alertId"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Alerta reconhecido"
+                    }
+                }
+            }
+        },
+        "/projects": {
+            "get": {
+                "summary": "List Projects",
+                "description": "Lista todos os projetos do usuário autenticado",
+                "tags": [
+                    "Projects"
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de projetos",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Project"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "Create Project",
+                "description": "Cria um novo projeto de vídeo",
+                "tags": [
+                    "Projects"
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateProjectRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Projeto criado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Project"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/render/start": {
+            "post": {
+                "summary": "Start Render Job",
+                "description": "Inicia um job de renderização de vídeo",
+                "tags": [
+                    "Render"
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RenderRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Job iniciado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RenderJobResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/render/status/{jobId}": {
+            "get": {
+                "summary": "Get Render Status",
+                "description": "Obtém o status de um job de renderização",
+                "tags": [
+                    "Render"
+                ],
+                "parameters": [
+                    {
+                        "name": "jobId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Status do job",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RenderJobStatus"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/compliance/check": {
+            "post": {
+                "summary": "Check NR Compliance",
+                "description": "Verifica conformidade com Normas Regulamentadoras",
+                "tags": [
+                    "Compliance"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "nr": {
+                                        "type": "string",
+                                        "example": "NR-06"
+                                    },
+                                    "content": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "nr",
+                                    "content"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Resultado da verificação",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ComplianceResult"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/tts/generate": {
+            "post": {
+                "summary": "Generate TTS Audio",
+                "description": "Gera áudio a partir de texto usando ElevenLabs",
+                "tags": [
+                    "TTS"
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "text": {
+                                        "type": "string"
+                                    },
+                                    "voiceId": {
+                                        "type": "string"
+                                    },
+                                    "modelId": {
+                                        "type": "string",
+                                        "default": "eleven_multilingual_v2"
+                                    }
+                                },
+                                "required": [
+                                    "text"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Áudio gerado",
+                        "content": {
+                            "audio/mpeg": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT"
+            }
+        },
+        "schemas": {
+            "HealthResponse": {
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "healthy",
+                            "degraded",
+                            "unhealthy"
+                        ]
+                    },
+                    "timestamp": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "checks": {
+                        "type": "object"
+                    },
+                    "version": {
+                        "type": "string"
+                    },
+                    "uptime": {
+                        "type": "integer"
+                    }
+                }
+            },
+            "QuotasResponse": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "data": {
+                        "type": "object",
+                        "properties": {
+                            "did": {
+                                "$ref": "#/components/schemas/QuotaInfo"
+                            },
+                            "heygen": {
+                                "$ref": "#/components/schemas/QuotaInfo"
+                            },
+                            "elevenlabs": {
+                                "$ref": "#/components/schemas/QuotaInfo"
+                            }
+                        }
+                    }
+                }
+            },
+            "QuotaInfo": {
+                "type": "object",
+                "properties": {
+                    "service": {
+                        "type": "string"
+                    },
+                    "used": {
+                        "type": "integer"
+                    },
+                    "total": {
+                        "type": "integer"
+                    },
+                    "remaining": {
+                        "type": "integer"
+                    },
+                    "percentage": {
+                        "type": "integer"
+                    },
+                    "warning": {
+                        "type": "boolean"
+                    },
+                    "critical": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "AlertsResponse": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "data": {
+                        "type": "object",
+                        "properties": {
+                            "alerts": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/Alert"
+                                }
+                            },
+                            "stats": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                }
+            },
+            "Alert": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "severity": {
+                        "type": "string",
+                        "enum": [
+                            "info",
+                            "warning",
+                            "error",
+                            "critical"
+                        ]
+                    },
+                    "service": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "timestamp": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "acknowledged": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "Project": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updatedAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                }
+            },
+            "CreateProjectRequest": {
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "title"
+                ]
+            },
+            "RenderRequest": {
+                "type": "object",
+                "properties": {
+                    "projectId": {
+                        "type": "string"
+                    },
+                    "quality": {
+                        "type": "string",
+                        "enum": [
+                            "720p",
+                            "1080p",
+                            "4k"
+                        ],
+                        "default": "1080p"
+                    },
+                    "format": {
+                        "type": "string",
+                        "enum": [
+                            "mp4",
+                            "webm"
+                        ],
+                        "default": "mp4"
+                    }
+                },
+                "required": [
+                    "projectId"
+                ]
+            },
+            "RenderJobResponse": {
+                "type": "object",
+                "properties": {
+                    "jobId": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "estimatedTime": {
+                        "type": "integer"
+                    }
+                }
+            },
+            "RenderJobStatus": {
+                "type": "object",
+                "properties": {
+                    "jobId": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "processing",
+                            "completed",
+                            "failed"
+                        ]
+                    },
+                    "progress": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 100
+                    },
+                    "outputUrl": {
+                        "type": "string"
+                    },
+                    "error": {
+                        "type": "string"
+                    }
+                }
+            },
+            "ComplianceResult": {
+                "type": "object",
+                "properties": {
+                    "nr": {
+                        "type": "string"
+                    },
+                    "nrName": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "compliant",
+                            "non_compliant",
+                            "warning"
+                        ]
+                    },
+                    "score": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 100
+                    },
+                    "recommendations": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "criticalPoints": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "System",
+            "description": "Endpoints de sistema e monitoramento"
+        },
+        {
+            "name": "Monitoring",
+            "description": "Quotas, alertas e métricas"
+        },
+        {
+            "name": "Projects",
+            "description": "Gerenciamento de projetos"
+        },
+        {
+            "name": "Render",
+            "description": "Renderização de vídeos"
+        },
+        {
+            "name": "Compliance",
+            "description": "Verificação de conformidade NR"
+        },
+        {
+            "name": "TTS",
+            "description": "Text-to-Speech"
+        }
+    ]
+}

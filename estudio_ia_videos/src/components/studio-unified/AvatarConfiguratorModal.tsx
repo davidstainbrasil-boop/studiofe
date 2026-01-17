@@ -15,17 +15,19 @@ export function AvatarConfiguratorModal({ isOpen, onOpenChange, selectedAvatar, 
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-[90vw] w-[1200px] h-[85vh] p-0 bg-slate-950 border-slate-800 overflow-hidden flex flex-col">
                 <div className="flex-1 min-h-0 relative">
-                    {/* Render the System in Studio Mode */}
-                    <RealisticAvatarSystem
-                        isStudioMode={true}
-                        initialAvatarId={selectedAvatar?.id}
-                        initialAvatarName={selectedAvatar?.name}
-                        onConfirm={(config) => {
-                            onGenerate(config);
-                            onOpenChange(false);
-                        }}
-                        onCancel={() => onOpenChange(false)}
-                    />
+                    {/* Render the System in Studio Mode only when open to prevent R3F context crashes on load */}
+                    {isOpen && (
+                        <RealisticAvatarSystem
+                            isStudioMode={true}
+                            initialAvatarId={selectedAvatar?.id}
+                            initialAvatarName={selectedAvatar?.name}
+                            onConfirm={(config) => {
+                                onGenerate(config);
+                                onOpenChange(false);
+                            }}
+                            onCancel={() => onOpenChange(false)}
+                        />
+                    )}
                 </div>
             </DialogContent>
         </Dialog>

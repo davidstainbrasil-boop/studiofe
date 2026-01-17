@@ -3,6 +3,16 @@
  * 52 blend shapes padrão do ARKit para animação facial realista
  */
 
+export interface BlendShapeFrame {
+  time: number
+  weights: BlendShapeWeights
+}
+
+export interface BlendShapeAnimation {
+  frames: BlendShapeFrame[]
+  duration: number
+}
+
 export interface BlendShapeWeights {
   // Jaw (mandíbula)
   jawOpen: number
@@ -297,5 +307,202 @@ ${blendShapes}
 
   reset(): void {
     this.weights = this.createNeutralWeights()
+  }
+
+  /**
+   * Gera frames de animação a partir de visemes/fonemas
+   */
+  generateAnimation(
+    phonemes: Array<{ time: number; duration: number; phoneme: string; viseme: string; intensity: number }>,
+    fps: number = 30
+  ): { frames: Array<{ time: number; weights: BlendShapeWeights }>; duration: number } {
+    const frames: Array<{ time: number; weights: BlendShapeWeights }> = []
+
+    // Calcular duração total
+    const duration = phonemes.length > 0
+      ? Math.max(...phonemes.map(p => p.time + p.duration))
+      : 0
+
+    // Gerar frames baseados no FPS
+    const frameInterval = 1 / fps
+    const totalFrames = Math.ceil(duration * fps)
+
+    for (let i = 0; i < totalFrames; i++) {
+      const currentTime = i * frameInterval
+
+      // Encontrar fonema ativo no tempo atual
+      const activePhoneme = phonemes.find(
+        p => currentTime >= p.time && currentTime < (p.time + p.duration)
+      )
+
+      if (activePhoneme) {
+        // Aplicar viseme do fonema ativo
+        this.applyViseme(activePhoneme.viseme, activePhoneme.intensity)
+
+        // Adicionar micro-animações procedurais
+        this.applyBreathing(currentTime, 0.08)
+        this.applyBlink(currentTime, 0.12)
+
+        frames.push({
+          time: currentTime,
+          weights: this.getWeights()
+        })
+      } else {
+        // Frame neutro (silêncio)
+        this.reset()
+        this.applyBreathing(currentTime, 0.05)
+
+        frames.push({
+          time: currentTime,
+          weights: this.getWeights()
+        })
+      }
+    }
+
+    return { frames, duration }
+  }
+
+  /**
+   * Adiciona overlay de emoção aos blend shapes
+   */
+  addEmotion(
+    weights: BlendShapeWeights,
+    emotion: 'neutral' | 'happy' | 'sad' | 'angry' | 'surprised' | 'fear' | 'disgust',
+    intensity: number = 0.5
+  ): BlendShapeWeights {
+    const emotionOverlays: Record<string, Partial<BlendShapeWeights>> = {
+      neutral: {},
+      happy: {
+        mouthSmileLeft: 0.6,
+        mouthSmileRight: 0.6,
+        cheekSquintLeft: 0.3,
+        cheekSquintRight: 0.3,
+        browOuterUpLeft: 0.2,
+        browOuterUpRight: 0.2
+      },
+      sad: {
+        mouthFrownLeft: 0.5,
+        mouthFrownRight: 0.5,
+        browInnerUp: 0.6,
+        browDownLeft: 0.3,
+        browDownRight: 0.3,
+        eyeSquintLeft: 0.2,
+        eyeSquintRight: 0.2
+      },
+      angry: {
+        browDownLeft: 0.8,
+        browDownRight: 0.8,
+        mouthFrownLeft: 0.4,
+        mouthFrownRight: 0.4,
+        noseSneerLeft: 0.5,
+        noseSneerRight: 0.5,
+        jawForward: 0.3
+      },
+      surprised: {
+        browInnerUp: 0.9,
+        browOuterUpLeft: 0.8,
+        browOuterUpRight: 0.8,
+        eyeWideLeft: 0.7,
+        eyeWideRight: 0.7,
+        jawOpen: 0.5,
+        mouthFunnel: 0.3
+      },
+      fear: {
+        browInnerUp: 0.8,
+        eyeWideLeft: 0.9,
+        eyeWideRight: 0.9,
+        mouthStretchLeft: 0.4,
+        mouthStretchRight: 0.4,
+        jawOpen: 0.3
+      },
+      disgust: {
+        noseSneerLeft: 0.8,
+        noseSneerRight: 0.8,
+        mouthFrownLeft: 0.6,
+        mouthFrownRight: 0.6,
+        mouthUpperUpLeft: 0.4,
+        mouthUpperUpRight: 0.4,
+        browDownLeft: 0.3,
+        browDownRight: 0.3
+      }
+    }
+
+    const overlay = emotionOverlays[emotion] || {}
+    const result: any = { ...weights }
+
+    // Aplicar overlay com intensidade
+    Object.entries(overlay).forEach(([key, value]) => {
+      const currentValue = result[key] || 0
+      result[key] = Math.min(1.0, currentValue + (value as number) * intensity)
+    })
+
+    return result as BlendShapeWeights
+  }
+
+  /**
+   * Adiciona piscar de olhos aos blend shapes
+   * @param weights - Blend shapes atuais
+   * @param blinkProgress - Progresso da piscada (0 = aberto, 1 = fechado)
+   */
+  addBlink(
+    weights: BlendShapeWeights,
+    blinkProgress: number
+  ): BlendShapeWeights {
+    // Curva de piscada suave (ease in-out)
+    const blinkCurve = blinkProgress < 0.5
+      ? 2 * blinkProgress * blinkProgress
+      : 1 - Math.pow(-2 * blinkProgress + 2, 2) / 2
+
+    const result: any = { ...weights }
+    result.eyeBlinkLeft = Math.min(1.0, (result.eyeBlinkLeft || 0) + blinkCurve)
+    result.eyeBlinkRight = Math.min(1.0, (result.eyeBlinkRight || 0) + blinkCurve)
+
+    return result as BlendShapeWeights
+  }
+
+  /**
+   * Retorna todos os nomes dos 52 blend shapes ARKit
+   */
+  getAllBlendShapeNames(): string[] {
+    return [
+      // Jaw (4)
+      'jawOpen', 'jawForward', 'jawLeft', 'jawRight',
+
+      // Mouth (24)
+      'mouthClose', 'mouthFunnel', 'mouthPucker',
+      'mouthLeft', 'mouthRight',
+      'mouthSmileLeft', 'mouthSmileRight',
+      'mouthFrownLeft', 'mouthFrownRight',
+      'mouthDimpleLeft', 'mouthDimpleRight',
+      'mouthStretchLeft', 'mouthStretchRight',
+      'mouthRollLower', 'mouthRollUpper',
+      'mouthShrugLower', 'mouthShrugUpper',
+      'mouthPressLeft', 'mouthPressRight',
+      'mouthLowerDownLeft', 'mouthLowerDownRight',
+      'mouthUpperUpLeft', 'mouthUpperUpRight',
+
+      // Cheeks (3)
+      'cheekPuff', 'cheekSquintLeft', 'cheekSquintRight',
+
+      // Nose (2)
+      'noseSneerLeft', 'noseSneerRight',
+
+      // Tongue (1)
+      'tongueOut',
+
+      // Eyes (14)
+      'eyeBlinkLeft', 'eyeBlinkRight',
+      'eyeLookDownLeft', 'eyeLookDownRight',
+      'eyeLookInLeft', 'eyeLookInRight',
+      'eyeLookOutLeft', 'eyeLookOutRight',
+      'eyeLookUpLeft', 'eyeLookUpRight',
+      'eyeSquintLeft', 'eyeSquintRight',
+      'eyeWideLeft', 'eyeWideRight',
+
+      // Eyebrows (5)
+      'browDownLeft', 'browDownRight',
+      'browInnerUp',
+      'browOuterUpLeft', 'browOuterUpRight'
+    ]
   }
 }

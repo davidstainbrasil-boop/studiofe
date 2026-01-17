@@ -1,5 +1,5 @@
-import { renderJobProcessor } from './lib/workers/render-job-processor'
-import { logger } from './lib/logger'
+import { renderJobProcessor } from './src/lib/workers/render-job-processor'
+import { logger } from './src/lib/logger'
 
 // Start background worker
 const POLL_INTERVAL = parseInt(process.env.RENDER_JOB_POLL_INTERVAL || '5000')

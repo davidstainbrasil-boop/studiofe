@@ -47,7 +47,7 @@ export async function bootstrapSlidesFromPptx(
 
   const payload: Database['public']['Tables']['slides']['Insert'][] = slides.map((slide, index) => ({
     projectId: projectId,
-    title: slide.title.slice(0, 200),
+    title: (slide.title || '').slice(0, 200),
     content: buildSlideContent(slide.textContent, slide.notes),
     order_index: index,
     duration: null,
@@ -89,7 +89,7 @@ export async function bootstrapSlidesFromPptx(
   const projectUpdate: Database['public']['Tables']['projects']['Update'] = {
     status: 'draft',
     settings: mergedSettings as Json,
-    updatedAt: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   }
 
   const { error: updateError } = await supabase

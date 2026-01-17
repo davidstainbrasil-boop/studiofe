@@ -3,7 +3,7 @@
  * Geração automática de narração para slides PPTX
  */
 
-import { generateAndUploadTTSAudio } from '@lib/elevenlabs-service';
+import { generateAndUploadTTSAudio, generateTTSAudio } from '@lib/elevenlabs-service';
 import { logger } from '@lib/logger';
 
 export interface NarrationOptions {
@@ -64,7 +64,7 @@ export class AutoNarrationService {
         transcript: slideText,
       };
     } catch (error) {
-       logger.error('Error generating slide narration', error);
+       logger.error('Error generating slide narration', error as Error);
        throw error;
     }
   }
@@ -124,7 +124,7 @@ export class AutoNarrationService {
         }
 
         // Limitar tamanho do texto se necessário
-        if (textToNarrate.length > 5000) {
+        if (textToNarrate && textToNarrate.length > 5000) {
           textToNarrate = textToNarrate.substring(0, 5000);
         }
 

@@ -77,7 +77,22 @@
       "Bash(sudo chmod:*)",
       "Bash(rhubarb --version:*)",
       "Bash(lsof:*)",
-      "Bash(xargs:*)"
+      "Bash(xargs:*)",
+      "Bash(do if [ -f \"$file\" ])",
+      "Bash(fi)",
+      "Bash(./scripts/pre-deploy-check.sh:*)",
+      "Bash(bash:*)",
+      "Bash(npx prisma:*)",
+      "Bash(vercel whoami:*)",
+      "Bash(vercel ls:*)",
+      "Bash(vercel inspect:*)",
+      "Bash(vercel env:*)",
+      "Bash(vercel project ls:*)",
+      "Bash(/root/_MVP_Video_TecnicoCursos_v7/update-database-url.sh)",
+      "Bash(printf:*)",
+      "Bash(vercel:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

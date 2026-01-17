@@ -12,11 +12,11 @@ export async function register() {
     initSentry();
   }
   
-  // Inicializar Sentry no Edge Runtime
-  if (process.env.NEXT_RUNTIME === 'edge') {
-    const { initSentry } = await import('./src/lib/monitoring/sentry.server');
-    initSentry();
-  }
+  // Inicializar Sentry no Edge Runtime - DISABLED due to EvalError in production
+  // if (process.env.NEXT_RUNTIME === 'edge') {
+  //   const { initSentry } = await import('./src/lib/monitoring/sentry.server');
+  //   initSentry();
+  // }
 
   // Inicializar Worker caso habilitado via variável de ambiente
   // (Evita travamentos no build do Vercel e garante separação de responsabilidades)

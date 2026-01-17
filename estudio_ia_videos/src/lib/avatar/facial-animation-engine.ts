@@ -71,18 +71,18 @@ export class FacialAnimationEngine {
     });
 
     // 1. Generate base lip-sync animation
-    const visemes: Viseme[] = lipSyncResult.phonemes.map(p => ({
-      visemeId: this.phonemeToVisemeId(p.phoneme),
-      visemeName: p.phoneme,
-      startTime: p.startTime,
-      endTime: p.endTime,
-      duration: p.duration
+    // Convert LipSyncResult phonemes to format expected by BlendShapeController
+    const phonemesForAnimation = lipSyncResult.phonemes.map(p => ({
+      time: p.time,
+      duration: p.duration,
+      phoneme: p.phoneme,
+      viseme: p.viseme,
+      intensity: p.intensity
     }));
 
     const baseAnimation = this.blendShapeController.generateAnimation(
-      visemes,
-      fps,
-      lipSyncResult.duration
+      phonemesForAnimation,
+      fps
     );
 
     // 2. Enhance frames with additional features
