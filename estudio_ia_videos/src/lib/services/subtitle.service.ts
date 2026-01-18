@@ -73,19 +73,14 @@ export class SubtitleService {
         text?: string;
       };
 
+      const timestampGranularities: Array<'segment' | 'word'> = ['segment'];
       const transcription = (await openai.audio.transcriptions.create({
         file: videoFile,
         model,
         language: language === 'auto' ? undefined : language,
         response_format: 'verbose_json',
-        timestamp_granularities: ['segment'],
-      } as unknown as {
-        file: File;
-        model: string;
-        language?: string;
-        response_format: 'verbose_json';
-        timestamp_granularities: string[];
-      })) as unknown as WhisperTranscription;
+        timestamp_granularities: timestampGranularities,
+      })) as WhisperTranscription;
 
       // Parse segments into subtitles
       const segments = transcription.segments || [];
