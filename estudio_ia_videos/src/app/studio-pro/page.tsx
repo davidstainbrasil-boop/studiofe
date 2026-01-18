@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 /**
  * Professional Studio - Página Principal
@@ -6,47 +6,66 @@
  * Integra todos os componentes: Avatar Library, Properties Panel, Asset Library, etc.
  */
 
-import React, { useState, useCallback, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Button } from '@components/ui/button'
-import { Separator } from '@components/ui/separator'
-import { ScrollArea } from '@components/ui/scroll-area'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs'
+import React, { useState, useCallback } from 'react';
+import { Button } from '@components/ui/button';
+import { Separator } from '@components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs';
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@components/ui/resizable';
 import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from '@components/ui/resizable'
-import {
-  Play, Pause, Square, Save, Download, Upload, Settings,
-  Layers, User, Image, Music, Type, Sparkles, Eye,
-  Layout, Maximize, Minimize, ChevronLeft, ChevronRight,
-  Home, FileVideo, Folder, Clock, Zap
-} from 'lucide-react'
-import { cn } from '@lib/utils'
-import { toast } from 'sonner'
+  Play,
+  Pause,
+  Square,
+  Save,
+  Download,
+  Settings,
+  Layers,
+  User,
+  Image,
+  Music,
+  Type,
+  Sparkles,
+  Eye,
+  Maximize,
+  ChevronLeft,
+  ChevronRight,
+  Folder,
+  Clock,
+  Zap,
+} from 'lucide-react';
+import { cn } from '@lib/utils';
+import { toast } from 'sonner';
 
 // Components
-import { ProfessionalStudioTimeline } from '@components/studio-unified/ProfessionalStudioTimeline'
-import { AvatarLibraryPanel } from '@components/studio-unified/AvatarLibraryPanel'
-import { PropertiesPanel, ElementProperties } from '@components/studio-unified/PropertiesPanel'
-import { InteractiveCanvas, CanvasElement, CanvasScene } from '@components/studio-unified/InteractiveCanvas'
-import { ShortcutsHelpPanel } from '@components/studio-unified/ShortcutsHelpPanel'
-import { useKeyboardShortcuts, COMMON_SHORTCUTS } from '@hooks/useKeyboardShortcuts'
-import { useHistory } from '@hooks/useHistory'
+import { ProfessionalStudioTimeline } from '@components/studio-unified/ProfessionalStudioTimeline';
+import { AvatarLibraryPanel } from '@components/studio-unified/AvatarLibraryPanel';
+import { PropertiesPanel, ElementProperties } from '@components/studio-unified/PropertiesPanel';
+import {
+  InteractiveCanvas,
+  CanvasElement,
+  CanvasScene,
+} from '@components/studio-unified/InteractiveCanvas';
+import { ShortcutsHelpPanel } from '@components/studio-unified/ShortcutsHelpPanel';
+import { LayersPanel } from '@components/studio-unified/LayersPanel';
+import { useKeyboardShortcuts, COMMON_SHORTCUTS } from '@hooks/useKeyboardShortcuts';
+import { useHistory } from '@hooks/useHistory';
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
-export type StudioTab = 'avatars' | 'media' | 'text' | 'music' | 'effects'
+export type StudioTab = 'avatars' | 'media' | 'text' | 'music' | 'effects';
+
+export interface ProjectSettings {
+  resolution: { width: number; height: number };
+  fps: number;
+}
 
 export interface Project {
-  id: string
-  name: string
-  duration: number
-  scenes: any[]
-  settings: any
+  id: string;
+  name: string;
+  duration: number;
+  scenes: CanvasScene[];
+  settings: ProjectSettings;
 }
 
 // ============================================================================
@@ -55,13 +74,12 @@ export interface Project {
 
 export default function StudioProPage() {
   // State
-  const [project, setProject] = useState<Project | null>(null)
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [currentTime, setCurrentTime] = useState(0)
-  const [selectedElement, setSelectedElement] = useState<ElementProperties | null>(null)
-  const [activeTab, setActiveTab] = useState<StudioTab>('avatars')
-  const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false)
-  const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false)
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [selectedElement, setSelectedElement] = useState<ElementProperties | null>(null);
+  const [activeTab, setActiveTab] = useState<StudioTab>('avatars');
+  const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
+  const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
+  const [rightPanelTab, setRightPanelTab] = useState<'properties' | 'layers'>('layers');
 
   // Canvas State with History
   const {
@@ -70,7 +88,7 @@ export default function StudioProPage() {
     undo,
     redo,
     canUndo,
-    canRedo
+    canRedo,
   } = useHistory<CanvasScene>({
     initialState: {
       id: 'default',
@@ -78,42 +96,37 @@ export default function StudioProPage() {
       elements: [],
       backgroundColor: '#1a1a1a',
       width: 1920,
-      height: 1080
+      height: 1080,
     },
-    maxHistorySize: 50
-  })
-  const [selectedCanvasElementIds, setSelectedCanvasElementIds] = useState<string[]>([])
-  const [showShortcuts, setShowShortcuts] = useState(false)
+    maxHistorySize: 50,
+  });
+  const [selectedCanvasElementIds, setSelectedCanvasElementIds] = useState<string[]>([]);
+  const [showShortcuts, setShowShortcuts] = useState(false);
+  const [clipboard, setClipboard] = useState<CanvasElement[]>([]); // Clipboard for copy/paste
 
   // Handlers
   const handlePlay = useCallback(() => {
-    setIsPlaying(!isPlaying)
-    toast.success(isPlaying ? 'Paused' : 'Playing')
-  }, [isPlaying])
+    setIsPlaying(!isPlaying);
+    toast.success(isPlaying ? 'Paused' : 'Playing');
+  }, [isPlaying]);
 
   const handleSave = useCallback(async () => {
-    toast.promise(
-      new Promise((resolve) => setTimeout(resolve, 1000)),
-      {
-        loading: 'Saving project...',
-        success: 'Project saved successfully',
-        error: 'Failed to save project'
-      }
-    )
-  }, [])
+    toast.promise(new Promise((resolve) => setTimeout(resolve, 1000)), {
+      loading: 'Saving project...',
+      success: 'Project saved successfully',
+      error: 'Failed to save project',
+    });
+  }, []);
 
   const handleExport = useCallback(async () => {
-    toast.promise(
-      new Promise((resolve) => setTimeout(resolve, 2000)),
-      {
-        loading: 'Exporting video...',
-        success: 'Video exported successfully',
-        error: 'Failed to export video'
-      }
-    )
-  }, [])
+    toast.promise(new Promise((resolve) => setTimeout(resolve, 2000)), {
+      loading: 'Exporting video...',
+      success: 'Video exported successfully',
+      error: 'Failed to export video',
+    });
+  }, []);
 
-  const handleSelectAvatar = useCallback((avatar: any) => {
+  const handleSelectAvatar = useCallback((avatar: { name: string; thumbnailUrl: string }) => {
     // Add avatar to canvas
     const newElement: CanvasElement = {
       id: `avatar-${Date.now()}`,
@@ -131,336 +144,435 @@ export default function StudioProPage() {
       locked: false,
       visible: true,
       draggable: true,
-      zIndex: 20
-    }
+      zIndex: 20,
+    };
 
-    setCanvasScene(prev => ({
+    setCanvasScene((prev) => ({
       ...prev,
-      elements: [...prev.elements, newElement]
-    }))
+      elements: [...prev.elements, newElement],
+    }));
 
-    toast.success(`Avatar "${avatar.name}" added to scene`)
-  }, [])
+    toast.success(`Avatar "${avatar.name}" added to scene`);
+  }, []);
 
-  const handleUpdateElement = useCallback((updates: Partial<ElementProperties>) => {
-    if (!selectedElement) return
-    setSelectedElement({ ...selectedElement, ...updates })
-  }, [selectedElement])
+  const handleUpdateElement = useCallback(
+    (updates: Partial<ElementProperties>) => {
+      if (!selectedElement) return;
+      setSelectedElement({ ...selectedElement, ...updates });
+    },
+    [selectedElement],
+  );
 
   // Canvas Handlers
-  const handleSelectCanvasElement = useCallback((id: string | null, multiSelect: boolean = false) => {
-    if (id === null) {
-      setSelectedCanvasElementIds([])
-      return
-    }
+  const handleSelectCanvasElement = useCallback(
+    (id: string | null, multiSelect: boolean = false) => {
+      if (id === null) {
+        setSelectedCanvasElementIds([]);
+        return;
+      }
 
-    if (multiSelect) {
-      // Multi-select with Shift: toggle element
-      setSelectedCanvasElementIds(prev =>
-        prev.includes(id)
-          ? prev.filter(eid => eid !== id) // Deselect if already selected
-          : [...prev, id] // Add to selection
-      )
-    } else {
-      // Single select: replace selection
-      setSelectedCanvasElementIds([id])
-    }
-    // TODO: Sync with PropertiesPanel
-  }, [])
+      if (multiSelect) {
+        // Multi-select with Shift: toggle element
+        setSelectedCanvasElementIds(
+          (prev) =>
+            prev.includes(id)
+              ? prev.filter((eid) => eid !== id) // Deselect if already selected
+              : [...prev, id], // Add to selection
+        );
+      } else {
+        // Single select: replace selection
+        setSelectedCanvasElementIds([id]);
+      }
+      // TODO: Sync with PropertiesPanel
+    },
+    [],
+  );
 
   const handleUpdateCanvasElement = useCallback((id: string, updates: Partial<CanvasElement>) => {
-    setCanvasScene(prev => ({
+    setCanvasScene((prev) => ({
       ...prev,
-      elements: prev.elements.map(el =>
-        el.id === id ? { ...el, ...updates } : el
-      )
-    }))
-  }, [])
+      elements: prev.elements.map((el) => (el.id === id ? { ...el, ...updates } : el)),
+    }));
+  }, []);
 
   const handleDeleteCanvasElement = useCallback((id: string) => {
-    setCanvasScene(prev => ({
+    setCanvasScene((prev) => ({
       ...prev,
-      elements: prev.elements.filter(el => el.id !== id)
-    }))
-    setSelectedCanvasElementIds(prev => prev.filter(eid => eid !== id))
-  }, [])
+      elements: prev.elements.filter((el) => el.id !== id),
+    }));
+    setSelectedCanvasElementIds((prev) => prev.filter((eid) => eid !== id));
+  }, []);
+
+  const handleDuplicateCanvasElement = useCallback(
+    (id: string) => {
+      const element = canvasScene.elements.find((el) => el.id === id);
+      if (!element) return;
+
+      const newElement: CanvasElement = {
+        ...element,
+        id: `element-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        x: element.x + 20,
+        y: element.y + 20,
+        name: `${element.name} (Copy)`,
+      };
+
+      setCanvasScene((prev) => ({
+        ...prev,
+        elements: [...prev.elements, newElement],
+      }));
+      toast.success('Element duplicated');
+    },
+    [canvasScene.elements],
+  );
+
+  const handleReorderElements = useCallback((reorderedElements: CanvasElement[]) => {
+    setCanvasScene((prev) => ({
+      ...prev,
+      elements: reorderedElements,
+    }));
+  }, []);
 
   const handleDeleteSelectedElements = useCallback(() => {
-    if (selectedCanvasElementIds.length === 0) return
+    if (selectedCanvasElementIds.length === 0) return;
 
-    setCanvasScene(prev => ({
+    setCanvasScene((prev) => ({
       ...prev,
-      elements: prev.elements.filter(el => !selectedCanvasElementIds.includes(el.id))
-    }))
-    setSelectedCanvasElementIds([])
-    toast.success(`Deleted ${selectedCanvasElementIds.length} element(s)`)
-  }, [selectedCanvasElementIds])
+      elements: prev.elements.filter((el) => !selectedCanvasElementIds.includes(el.id)),
+    }));
+    setSelectedCanvasElementIds([]);
+    toast.success(`Deleted ${selectedCanvasElementIds.length} element(s)`);
+  }, [selectedCanvasElementIds]);
 
   const handleSelectAllElements = useCallback(() => {
-    const allIds = canvasScene.elements.map(el => el.id)
-    setSelectedCanvasElementIds(allIds)
-    toast.success(`Selected ${allIds.length} element(s)`)
-  }, [canvasScene.elements])
+    const allIds = canvasScene.elements.map((el) => el.id);
+    setSelectedCanvasElementIds(allIds);
+    toast.success(`Selected ${allIds.length} element(s)`);
+  }, [canvasScene.elements]);
 
   const handleDeselectAll = useCallback(() => {
-    setSelectedCanvasElementIds([])
-    toast.success('Deselected all')
-  }, [])
+    setSelectedCanvasElementIds([]);
+    toast.success('Deselected all');
+  }, []);
 
   const handleAddCanvasElement = useCallback((element: Omit<CanvasElement, 'id'>) => {
     const newElement: CanvasElement = {
       ...element,
-      id: `element-${Date.now()}`
-    }
+      id: `element-${Date.now()}`,
+    };
 
-    setCanvasScene(prev => ({
+    setCanvasScene((prev) => ({
       ...prev,
-      elements: [...prev.elements, newElement]
-    }))
-  }, [])
+      elements: [...prev.elements, newElement],
+    }));
+  }, []);
 
-  const handleMoveSelectedElements = useCallback((dx: number, dy: number) => {
-    if (selectedCanvasElementIds.length === 0) return
+  const handleMoveSelectedElements = useCallback(
+    (dx: number, dy: number) => {
+      if (selectedCanvasElementIds.length === 0) return;
 
-    setCanvasScene(prev => ({
-      ...prev,
-      elements: prev.elements.map(el =>
-        selectedCanvasElementIds.includes(el.id)
-          ? { ...el, x: el.x + dx, y: el.y + dy }
-          : el
-      )
-    }))
-  }, [selectedCanvasElementIds])
+      setCanvasScene((prev) => ({
+        ...prev,
+        elements: prev.elements.map((el) =>
+          selectedCanvasElementIds.includes(el.id) ? { ...el, x: el.x + dx, y: el.y + dy } : el,
+        ),
+      }));
+    },
+    [selectedCanvasElementIds],
+  );
 
   // Layer Management
   const handleBringToFront = useCallback(() => {
-    if (selectedCanvasElementIds.length === 0) return
+    if (selectedCanvasElementIds.length === 0) return;
 
-    setCanvasScene(prev => {
-      const maxZIndex = Math.max(...prev.elements.map(el => el.zIndex), 0)
+    setCanvasScene((prev) => {
+      const maxZIndex = Math.max(...prev.elements.map((el) => el.zIndex), 0);
       return {
         ...prev,
-        elements: prev.elements.map(el =>
-          selectedCanvasElementIds.includes(el.id)
-            ? { ...el, zIndex: maxZIndex + 1 }
-            : el
-        )
-      }
-    })
-    toast.success('Brought to front')
-  }, [selectedCanvasElementIds])
+        elements: prev.elements.map((el) =>
+          selectedCanvasElementIds.includes(el.id) ? { ...el, zIndex: maxZIndex + 1 } : el,
+        ),
+      };
+    });
+    toast.success('Brought to front');
+  }, [selectedCanvasElementIds]);
 
   const handleSendToBack = useCallback(() => {
-    if (selectedCanvasElementIds.length === 0) return
+    if (selectedCanvasElementIds.length === 0) return;
 
-    setCanvasScene(prev => {
-      const minZIndex = Math.min(...prev.elements.map(el => el.zIndex), 0)
+    setCanvasScene((prev) => {
+      const minZIndex = Math.min(...prev.elements.map((el) => el.zIndex), 0);
       return {
         ...prev,
-        elements: prev.elements.map(el =>
-          selectedCanvasElementIds.includes(el.id)
-            ? { ...el, zIndex: minZIndex - 1 }
-            : el
-        )
-      }
-    })
-    toast.success('Sent to back')
-  }, [selectedCanvasElementIds])
+        elements: prev.elements.map((el) =>
+          selectedCanvasElementIds.includes(el.id) ? { ...el, zIndex: minZIndex - 1 } : el,
+        ),
+      };
+    });
+    toast.success('Sent to back');
+  }, [selectedCanvasElementIds]);
 
   const handleBringForward = useCallback(() => {
-    if (selectedCanvasElementIds.length === 0) return
+    if (selectedCanvasElementIds.length === 0) return;
 
-    setCanvasScene(prev => ({
+    setCanvasScene((prev) => ({
       ...prev,
-      elements: prev.elements.map(el =>
-        selectedCanvasElementIds.includes(el.id)
-          ? { ...el, zIndex: el.zIndex + 1 }
-          : el
-      )
-    }))
-    toast.success('Brought forward')
-  }, [selectedCanvasElementIds])
+      elements: prev.elements.map((el) =>
+        selectedCanvasElementIds.includes(el.id) ? { ...el, zIndex: el.zIndex + 1 } : el,
+      ),
+    }));
+    toast.success('Brought forward');
+  }, [selectedCanvasElementIds]);
 
   const handleSendBackward = useCallback(() => {
-    if (selectedCanvasElementIds.length === 0) return
+    if (selectedCanvasElementIds.length === 0) return;
 
-    setCanvasScene(prev => ({
+    setCanvasScene((prev) => ({
       ...prev,
-      elements: prev.elements.map(el =>
-        selectedCanvasElementIds.includes(el.id)
-          ? { ...el, zIndex: el.zIndex - 1 }
-          : el
-      )
-    }))
-    toast.success('Sent backward')
-  }, [selectedCanvasElementIds])
+      elements: prev.elements.map((el) =>
+        selectedCanvasElementIds.includes(el.id) ? { ...el, zIndex: el.zIndex - 1 } : el,
+      ),
+    }));
+    toast.success('Sent backward');
+  }, [selectedCanvasElementIds]);
 
-  const handleToggleVisibility = useCallback(() => {
-    if (selectedCanvasElementIds.length === 0) return
-
-    setCanvasScene(prev => ({
+  // Single element layer management (for LayersPanel)
+  const handleBringForwardSingle = useCallback((id: string) => {
+    setCanvasScene((prev) => ({
       ...prev,
-      elements: prev.elements.map(el =>
-        selectedCanvasElementIds.includes(el.id)
-          ? { ...el, visible: !el.visible }
-          : el
-      )
-    }))
-    const element = canvasScene.elements.find(e => e.id === selectedCanvasElementIds[0])
-    toast.success(element?.visible ? 'Hidden' : 'Visible')
-  }, [selectedCanvasElementIds, canvasScene.elements])
+      elements: prev.elements.map((el) => (el.id === id ? { ...el, zIndex: el.zIndex + 1 } : el)),
+    }));
+  }, []);
+
+  const handleSendBackwardSingle = useCallback((id: string) => {
+    setCanvasScene((prev) => ({
+      ...prev,
+      elements: prev.elements.map((el) => (el.id === id ? { ...el, zIndex: el.zIndex - 1 } : el)),
+    }));
+  }, []);
+
+  // Copy/Paste Handlers
+  const handleCopy = useCallback(() => {
+    if (selectedCanvasElementIds.length === 0) {
+      toast.error('No elements selected to copy');
+      return;
+    }
+
+    const elementsToCopy = canvasScene.elements.filter((el) =>
+      selectedCanvasElementIds.includes(el.id),
+    );
+    setClipboard(elementsToCopy);
+    toast.success(`Copied ${elementsToCopy.length} element(s)`);
+  }, [selectedCanvasElementIds, canvasScene.elements]);
+
+  const handlePaste = useCallback(() => {
+    if (clipboard.length === 0) {
+      toast.error('Clipboard is empty');
+      return;
+    }
+
+    const pastedElements: CanvasElement[] = clipboard.map((el) => ({
+      ...el,
+      id: `element-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      x: el.x + 20, // Offset by 20px
+      y: el.y + 20,
+      name: `${el.name} (Copy)`,
+    }));
+
+    setCanvasScene((prev) => ({
+      ...prev,
+      elements: [...prev.elements, ...pastedElements],
+    }));
+
+    // Select the pasted elements
+    setSelectedCanvasElementIds(pastedElements.map((el) => el.id));
+    toast.success(`Pasted ${pastedElements.length} element(s)`);
+  }, [clipboard]);
+
+  const handleCut = useCallback(() => {
+    if (selectedCanvasElementIds.length === 0) {
+      toast.error('No elements selected to cut');
+      return;
+    }
+
+    const elementsToCut = canvasScene.elements.filter((el) =>
+      selectedCanvasElementIds.includes(el.id),
+    );
+    setClipboard(elementsToCut);
+
+    // Delete the selected elements
+    setCanvasScene((prev) => ({
+      ...prev,
+      elements: prev.elements.filter((el) => !selectedCanvasElementIds.includes(el.id)),
+    }));
+    setSelectedCanvasElementIds([]);
+    toast.success(`Cut ${elementsToCut.length} element(s)`);
+  }, [selectedCanvasElementIds, canvasScene.elements]);
 
   // Keyboard Shortcuts
   useKeyboardShortcuts({
     shortcuts: [
       {
         ...COMMON_SHORTCUTS.PLAY_PAUSE,
-        callback: handlePlay
+        callback: handlePlay,
       },
       {
         ...COMMON_SHORTCUTS.SAVE,
-        callback: handleSave
+        callback: handleSave,
       },
       {
         ...COMMON_SHORTCUTS.EXPORT,
-        callback: handleExport
+        callback: handleExport,
       },
       {
         ...COMMON_SHORTCUTS.UNDO,
         callback: () => {
           if (canUndo) {
-            undo()
-            toast.success('Undo')
+            undo();
+            toast.success('Undo');
           }
-        }
+        },
       },
       {
         ...COMMON_SHORTCUTS.REDO_Y,
         callback: () => {
           if (canRedo) {
-            redo()
-            toast.success('Redo')
+            redo();
+            toast.success('Redo');
           }
-        }
+        },
       },
       {
         ...COMMON_SHORTCUTS.REDO_Z,
         callback: () => {
           if (canRedo) {
-            redo()
-            toast.success('Redo')
+            redo();
+            toast.success('Redo');
           }
-        }
+        },
       },
       {
         ...COMMON_SHORTCUTS.DELETE,
-        callback: handleDeleteSelectedElements
+        callback: handleDeleteSelectedElements,
       },
       {
         ...COMMON_SHORTCUTS.BACKSPACE,
-        callback: handleDeleteSelectedElements
+        callback: handleDeleteSelectedElements,
       },
       {
         ...COMMON_SHORTCUTS.DUPLICATE,
         callback: () => {
           if (selectedCanvasElementIds.length > 0) {
-            const selectedElements = canvasScene.elements.filter(e =>
-              selectedCanvasElementIds.includes(e.id)
-            )
-            selectedElements.forEach(element => {
-              const { id, ...rest } = element
+            const selectedElements = canvasScene.elements.filter((e) =>
+              selectedCanvasElementIds.includes(e.id),
+            );
+            selectedElements.forEach((element) => {
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
+              const { id, ...rest } = element;
               handleAddCanvasElement({
                 ...rest,
                 x: rest.x + 20,
                 y: rest.y + 20,
-                name: `${rest.name} (copy)`
-              })
-            })
-            toast.success(`Duplicated ${selectedElements.length} element(s)`)
+                name: `${rest.name} (copy)`,
+              });
+            });
+            toast.success(`Duplicated ${selectedElements.length} element(s)`);
           }
-        }
+        },
       },
       {
         ...COMMON_SHORTCUTS.DESELECT,
-        callback: handleDeselectAll
+        callback: handleDeselectAll,
       },
       {
         ...COMMON_SHORTCUTS.SELECT_ALL,
-        callback: handleSelectAllElements
+        callback: handleSelectAllElements,
+      },
+      // Copy/Paste/Cut
+      {
+        ...COMMON_SHORTCUTS.COPY,
+        callback: handleCopy,
+      },
+      {
+        ...COMMON_SHORTCUTS.PASTE,
+        callback: handlePaste,
+      },
+      {
+        ...COMMON_SHORTCUTS.CUT,
+        callback: handleCut,
       },
       // Layer Management
       {
         ...COMMON_SHORTCUTS.BRING_TO_FRONT,
-        callback: handleBringToFront
+        callback: handleBringToFront,
       },
       {
         ...COMMON_SHORTCUTS.SEND_TO_BACK,
-        callback: handleSendToBack
+        callback: handleSendToBack,
       },
       {
         ...COMMON_SHORTCUTS.BRING_FORWARD,
-        callback: handleBringForward
+        callback: handleBringForward,
       },
       {
         ...COMMON_SHORTCUTS.SEND_BACKWARD,
-        callback: handleSendBackward
+        callback: handleSendBackward,
       },
       {
         ...COMMON_SHORTCUTS.HELP,
-        callback: () => setShowShortcuts(true)
+        callback: () => setShowShortcuts(true),
       },
       {
         ...COMMON_SHORTCUTS.SHORTCUTS,
-        callback: () => setShowShortcuts(true)
+        callback: () => setShowShortcuts(true),
       },
       // Arrow keys for movement (works with multi-select)
       {
         key: 'ArrowUp',
         callback: () => handleMoveSelectedElements(0, -1),
-        description: 'Move selected up 1px'
+        description: 'Move selected up 1px',
       },
       {
         key: 'ArrowDown',
         callback: () => handleMoveSelectedElements(0, 1),
-        description: 'Move selected down 1px'
+        description: 'Move selected down 1px',
       },
       {
         key: 'ArrowLeft',
         callback: () => handleMoveSelectedElements(-1, 0),
-        description: 'Move selected left 1px'
+        description: 'Move selected left 1px',
       },
       {
         key: 'ArrowRight',
         callback: () => handleMoveSelectedElements(1, 0),
-        description: 'Move selected right 1px'
+        description: 'Move selected right 1px',
       },
       // Shift + Arrow for fast movement (works with multi-select)
       {
         key: 'ArrowUp',
         shift: true,
         callback: () => handleMoveSelectedElements(0, -10),
-        description: 'Move selected up 10px'
+        description: 'Move selected up 10px',
       },
       {
         key: 'ArrowDown',
         shift: true,
         callback: () => handleMoveSelectedElements(0, 10),
-        description: 'Move selected down 10px'
+        description: 'Move selected down 10px',
       },
       {
         key: 'ArrowLeft',
         shift: true,
         callback: () => handleMoveSelectedElements(-10, 0),
-        description: 'Move selected left 10px'
+        description: 'Move selected left 10px',
       },
       {
         key: 'ArrowRight',
         shift: true,
         callback: () => handleMoveSelectedElements(10, 0),
-        description: 'Move selected right 10px'
-      }
-    ]
-  })
+        description: 'Move selected right 10px',
+      },
+    ],
+  });
 
   return (
     <div className="h-screen flex flex-col bg-background">
@@ -474,9 +586,7 @@ export default function StudioProPage() {
           <Separator orientation="vertical" className="h-6" />
           <div className="flex items-center gap-2">
             <Folder className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium">
-              {project?.name || 'Untitled Project'}
-            </span>
+            <span className="text-sm font-medium">{project?.name || 'Untitled Project'}</span>
           </div>
         </div>
 
@@ -527,7 +637,11 @@ export default function StudioProPage() {
             </div>
 
             {/* Tabs */}
-            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as StudioTab)} className="flex-1 flex flex-col">
+            <Tabs
+              value={activeTab}
+              onValueChange={(v) => setActiveTab(v as StudioTab)}
+              className="flex-1 flex flex-col"
+            >
               <TabsList className="grid grid-cols-5 m-2">
                 <TabsTrigger value="avatars" className="text-xs">
                   <User className="h-3 w-3" />
@@ -547,10 +661,7 @@ export default function StudioProPage() {
               </TabsList>
 
               <TabsContent value="avatars" className="flex-1 m-0">
-                <AvatarLibraryPanel
-                  onSelectAvatar={handleSelectAvatar}
-                  className="h-full"
-                />
+                <AvatarLibraryPanel onSelectAvatar={handleSelectAvatar} className="h-full" />
               </TabsContent>
 
               <TabsContent value="media" className="flex-1 m-0">
@@ -598,11 +709,7 @@ export default function StudioProPage() {
 
         {leftPanelCollapsed && (
           <div className="w-12 border-r flex flex-col items-center py-2 gap-2 bg-background">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setLeftPanelCollapsed(false)}
-            >
+            <Button variant="ghost" size="icon" onClick={() => setLeftPanelCollapsed(false)}>
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
@@ -620,18 +727,15 @@ export default function StudioProPage() {
                 <div className="h-12 border-b flex items-center justify-between px-4 bg-background">
                   <div className="flex items-center gap-2">
                     <Button variant="ghost" size="icon" onClick={handlePlay}>
-                      {isPlaying ? (
-                        <Pause className="h-4 w-4" />
-                      ) : (
-                        <Play className="h-4 w-4" />
-                      )}
+                      {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                     </Button>
                     <Button variant="ghost" size="icon">
                       <Square className="h-4 w-4" />
                     </Button>
                     <Separator orientation="vertical" className="h-6" />
                     <span className="text-xs font-mono tabular-nums">
-                      {Math.floor(currentTime / 60)}:{(currentTime % 60).toString().padStart(2, '0')}
+                      {Math.floor(currentTime / 60)}:
+                      {(currentTime % 60).toString().padStart(2, '0')}
                     </span>
                   </div>
 
@@ -684,33 +788,60 @@ export default function StudioProPage() {
           <div className="h-full flex flex-col bg-muted/30">
             {/* Panel Header */}
             <div className="h-12 border-b flex items-center justify-between px-4 bg-background">
-              <h2 className="text-sm font-semibold">Properties</h2>
+              <Tabs
+                value={rightPanelTab}
+                onValueChange={(v) => setRightPanelTab(v as 'properties' | 'layers')}
+                className="w-full"
+              >
+                <TabsList className="grid w-full grid-cols-2 h-9">
+                  <TabsTrigger value="layers" className="text-xs">
+                    <Layers className="w-3 h-3 mr-1" />
+                    Layers
+                  </TabsTrigger>
+                  <TabsTrigger value="properties" className="text-xs">
+                    <Settings className="w-3 h-3 mr-1" />
+                    Properties
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8"
+                className="h-8 w-8 ml-2"
                 onClick={() => setRightPanelCollapsed(true)}
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
 
-            {/* Properties Content */}
-            <PropertiesPanel
-              element={selectedElement}
-              onUpdate={handleUpdateElement}
-              className="flex-1"
-            />
+            {/* Panel Content */}
+            <div className="flex-1 overflow-hidden">
+              {rightPanelTab === 'layers' ? (
+                <LayersPanel
+                  elements={canvasScene.elements}
+                  selectedElementIds={selectedCanvasElementIds}
+                  onSelectElement={handleSelectCanvasElement}
+                  onUpdateElement={handleUpdateCanvasElement}
+                  onDeleteElement={handleDeleteCanvasElement}
+                  onDuplicateElement={handleDuplicateCanvasElement}
+                  onReorderElements={handleReorderElements}
+                  onBringForward={handleBringForwardSingle}
+                  onSendBackward={handleSendBackwardSingle}
+                />
+              ) : (
+                <PropertiesPanel
+                  element={selectedElement}
+                  onUpdate={handleUpdateElement}
+                  className="h-full"
+                />
+              )}
+            </div>
           </div>
         </ResizablePanel>
 
         {rightPanelCollapsed && (
           <div className="w-12 border-l flex flex-col items-center py-2 gap-2 bg-background">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setRightPanelCollapsed(false)}
-            >
+            <Button variant="ghost" size="icon" onClick={() => setRightPanelCollapsed(false)}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
           </div>
@@ -728,22 +859,18 @@ export default function StudioProPage() {
               <Separator orientation="vertical" className="h-4" />
               <span>
                 {selectedCanvasElementIds.length === 1
-                  ? canvasScene.elements.find(e => e.id === selectedCanvasElementIds[0])?.name + ' selected'
-                  : `${selectedCanvasElementIds.length} elements selected`
-                }
+                  ? canvasScene.elements.find((e) => e.id === selectedCanvasElementIds[0])?.name +
+                    ' selected'
+                  : `${selectedCanvasElementIds.length} elements selected`}
               </span>
             </>
           )}
         </div>
         <div className="flex items-center gap-4">
           {/* Undo/Redo Status */}
-          <span className={cn(!canUndo && "opacity-50")}>
-            Undo: {canUndo ? 'Ctrl+Z' : 'N/A'}
-          </span>
+          <span className={cn(!canUndo && 'opacity-50')}>Undo: {canUndo ? 'Ctrl+Z' : 'N/A'}</span>
           <Separator orientation="vertical" className="h-4" />
-          <span className={cn(!canRedo && "opacity-50")}>
-            Redo: {canRedo ? 'Ctrl+Y' : 'N/A'}
-          </span>
+          <span className={cn(!canRedo && 'opacity-50')}>Redo: {canRedo ? 'Ctrl+Y' : 'N/A'}</span>
           <Separator orientation="vertical" className="h-4" />
           <span>100% zoom</span>
           <Separator orientation="vertical" className="h-4" />
@@ -757,10 +884,7 @@ export default function StudioProPage() {
       </div>
 
       {/* Shortcuts Help Panel */}
-      <ShortcutsHelpPanel
-        isOpen={showShortcuts}
-        onClose={() => setShowShortcuts(false)}
-      />
+      <ShortcutsHelpPanel isOpen={showShortcuts} onClose={() => setShowShortcuts(false)} />
     </div>
-  )
+  );
 }
