@@ -5,7 +5,9 @@
 // import { addBreadcrumb, ensureMonitoringReady } from './lib/services/monitoring-service';
 // import { startQueueMetricsPolling } from './lib/services/bullmq-service';
 // import { bullMQMetrics } from './lib/services/bullmq-metrics';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { initSentry } from './lib/monitoring/sentry.server';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { warmCache } from './lib/cache/cache-warming';
 import { validateEnvVarsForEnvironment } from './lib/env-validator';
 // import { logger } from './lib/services/logger-service-centralized';
@@ -26,22 +28,24 @@ export async function register() {
     }
   }
 
-  // Inicializa Sentry (produção)
-  if (process.env.NODE_ENV === 'production') {
-    initSentry();
-  }
+  // TODO: Re-enable Sentry with edge-compatible configuration
+  // Disabled temporarily to fix edge runtime crash causing 400 errors on static assets
+  // Error: "EvalError: Code generation from strings disallowed for this context"
+  // if (process.env.NODE_ENV === 'production') {
+  //   initSentry();
+  // }
 
   // Marca início da aplicação
   // addBreadcrumb('app-start', 'lifecycle');
   // await ensureMonitoringReady();
-  
+
   // Sprint 5: Warm cache on server start
   if (process.env.NODE_ENV !== 'test') {
     // warmCache().catch((error: unknown) => {
     //   console.error('Cache warming failed on startup', error);
     // });
   }
-  
+
   /*
   if (typeof process !== 'undefined') {
     process.on('unhandledRejection', (reason: unknown) => {
@@ -61,7 +65,7 @@ export async function register() {
     });
   }
   */
-  
+
   // Inicia polling de métricas BullMQ (ajustar para somente ambiente server)
   if (process.env.NODE_ENV !== 'test') {
     // startQueueMetricsPolling(parseInt(process.env.BULLMQ_POLL_INTERVAL_MS || '30000', 10));

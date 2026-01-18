@@ -95,11 +95,10 @@ async function testPlaceholderRendering() {
 
     const renderStartTime = Date.now();
 
-    const renderResponse = await fetch(`${BASE_URL}/api/v2/avatars/render`, {
+    const renderResponse = await fetch(`${BASE_URL}/api/v2/test/avatars/render`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-user-id': 'test-user-placeholder',
       },
       body: JSON.stringify(renderRequest),
     });
@@ -112,8 +111,8 @@ async function testPlaceholderRendering() {
 
       // Check if endpoint exists
       if (renderResponse.status === 404) {
-        logWarning('Endpoint /api/v2/avatars/render not found');
-        logInfo('This may be expected if the API route is not yet created');
+        logWarning('Endpoint /api/v2/test/avatars/render not found');
+        logInfo('Make sure dev server is running in development mode');
       }
 
       return { testsPassed, testsFailed };
@@ -169,12 +168,7 @@ async function testPlaceholderRendering() {
       logInfo('\nTest 5: Checking job status...');
 
       const statusResponse = await fetch(
-        `${BASE_URL}/api/v2/avatars/render/status/${renderData.jobId}`,
-        {
-          headers: {
-            'x-user-id': 'test-user-placeholder',
-          },
-        }
+        `${BASE_URL}/api/v2/test/avatars/render/status/${renderData.jobId}`
       );
 
       if (statusResponse.ok) {

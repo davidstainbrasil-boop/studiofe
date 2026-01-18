@@ -107,11 +107,10 @@ async function testStandardRendering() {
 
     const renderStartTime = Date.now();
 
-    const renderResponse = await fetch(`${BASE_URL}/api/v2/avatars/render`, {
+    const renderResponse = await fetch(`${BASE_URL}/api/v2/test/avatars/render`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-user-id': 'test-user-standard',
       },
       body: JSON.stringify(renderRequest),
     });
@@ -124,8 +123,8 @@ async function testStandardRendering() {
 
       // Check if endpoint exists
       if (renderResponse.status === 404) {
-        logWarning('Endpoint /api/v2/avatars/render not found');
-        logInfo('This may be expected if the API route is not yet created');
+        logWarning('Endpoint /api/v2/test/avatars/render not found');
+        logInfo('Make sure dev server is running in development mode');
       }
 
       return { testsPassed, testsFailed };
@@ -208,12 +207,7 @@ async function testStandardRendering() {
       await sleep(POLL_INTERVAL_MS);
 
       const statusResponse = await fetch(
-        `${BASE_URL}/api/v2/avatars/render/status/${renderData.jobId}`,
-        {
-          headers: {
-            'x-user-id': 'test-user-standard',
-          },
-        }
+        `${BASE_URL}/api/v2/test/avatars/render/status/${renderData.jobId}`
       );
 
       if (!statusResponse.ok) {

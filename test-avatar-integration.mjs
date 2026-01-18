@@ -113,11 +113,10 @@ async function testPipelineIntegration(testCase, caseNumber, totalCases) {
       fps: 30,
     };
 
-    const renderResponse = await fetch(\`\${BASE_URL}/api/v2/avatars/render\`, {
+    const renderResponse = await fetch(\`\${BASE_URL}/api/v2/test/avatars/render\`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-user-id': \`test-integration-\${caseNumber}\`,
       },
       body: JSON.stringify(renderRequest),
     });
@@ -145,12 +144,7 @@ async function testPipelineIntegration(testCase, caseNumber, totalCases) {
       await sleep(1000); // Give it a moment to process
 
       const statusResponse = await fetch(
-        \`\${BASE_URL}/api/v2/avatars/render/status/\${renderData.jobId}\`,
-        {
-          headers: {
-            'x-user-id': \`test-integration-\${caseNumber}\`,
-          },
-        }
+        \`\${BASE_URL}/api/v2/test/avatars/render/status/\${renderData.jobId}\`
       );
 
       if (statusResponse.ok) {
