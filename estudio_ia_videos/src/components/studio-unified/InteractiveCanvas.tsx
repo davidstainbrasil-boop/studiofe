@@ -20,6 +20,7 @@ import {
 import { cn } from '@lib/utils'
 import { toast } from 'sonner'
 import Konva from 'konva'
+import { snapPosition, AlignmentGuide } from '@lib/canvas/snap-utils'
 
 // ============================================================================
 // TYPES
@@ -74,6 +75,16 @@ interface CanvasElementNodeProps {
   onSelect: (e?: any) => void
   onChange: (updates: Partial<CanvasElement>) => void
   onDelete: () => void
+  snapConfig?: {
+    snapToGrid: boolean
+    snapToElements: boolean
+    gridSize: number
+    canvasWidth: number
+    canvasHeight: number
+    otherElements: CanvasElement[]
+  }
+  onShowGuides?: (guides: AlignmentGuide[]) => void
+  onHideGuides?: () => void
 }
 
 const CanvasElementNode: React.FC<CanvasElementNodeProps> = ({
@@ -81,7 +92,10 @@ const CanvasElementNode: React.FC<CanvasElementNodeProps> = ({
   isSelected,
   onSelect,
   onChange,
-  onDelete
+  onDelete,
+  snapConfig,
+  onShowGuides,
+  onHideGuides
 }) => {
   const shapeRef = useRef<any>(null)
   const transformerRef = useRef<Konva.Transformer>(null)
@@ -107,10 +121,40 @@ const CanvasElementNode: React.FC<CanvasElementNodeProps> = ({
   }, [isSelected])
 
   const handleDragEnd = (e: any) => {
-    onChange({
-      x: e.target.x(),
-      y: e.target.y()
-    })
+    let x = e.target.x()
+    let y = e.target.y()
+
+    // Apply snapping if enabled
+    if (snapConfig) {
+      const snapResult = snapPosition(
+        x,
+        y,
+        element.width,
+        element.height,
+        {
+          snapToGrid: snapConfig.snapToGrid,
+          snapToCenter: true,
+          snapToElements: snapConfig.snapToElements,
+          gridSize: snapConfig.gridSize,
+          threshold: 10,
+          canvasWidth: snapConfig.canvasWidth,
+          canvasHeight: snapConfig.canvasHeight,
+          otherElements: snapConfig.otherElements,
+          currentElementId: element.id
+        }
+      )
+
+      x = snapResult.result.x
+      y = snapResult.result.y
+
+      // Show guides briefly
+      if (snapResult.guides.length > 0) {
+        onShowGuides?.(snapResult.guides)
+        setTimeout(() => onHideGuides?.(), 1000)
+      }
+    }
+
+    onChange({ x, y })
   }
 
   const handleTransformEnd = () => {
@@ -234,6 +278,10 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
   // State
   const [zoom, setZoom] = useState(1)
   const [showGrid, setShowGrid] = useState(true)
+  const [snapToGrid, setSnapToGrid] = useState(true)
+  const [snapToElements, setSnapToElements] = useState(true)
+  const [gridSize, setGridSize] = useState(20)
+  const [alignmentGuides, setAlignmentGuides] = useState<AlignmentGuide[]>([])
   const [canvasSize, setCanvasSize] = useState({ width: 1920, height: 1080 })
   const containerRef = useRef<HTMLDivElement>(null)
   const stageRef = useRef<Konva.Stage>(null)
@@ -393,9 +441,21 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
             size="sm"
             variant={showGrid ? "default" : "ghost"}
             onClick={() => setShowGrid(!showGrid)}
+            title="Toggle Grid (Ctrl+G)"
           >
             <Grid3x3 className="h-4 w-4 mr-1" />
             Grid
+          </Button>
+
+          {/* Snap to Grid Toggle */}
+          <Button
+            size="sm"
+            variant={snapToGrid ? "default" : "ghost"}
+            onClick={() => setSnapToGrid(!snapToGrid)}
+            title="Snap to Grid"
+          >
+            <Move className="h-4 w-4 mr-1" />
+            Snap
           </Button>
 
           {/* Element Count */}
@@ -484,27 +544,27 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
               {/* Grid */}
               {showGrid && (
                 <>
-                  {Array.from({ length: 20 }).map((_, i) => (
-                    <React.Fragment key={`grid-${i}`}>
-                      {/* Vertical lines */}
-                      <Rect
-                        x={(1920 / 20) * i}
-                        y={0}
-                        width={1}
-                        height={1080}
-                        fill="#ffffff"
-                        opacity={0.1}
-                      />
-                      {/* Horizontal lines */}
-                      <Rect
-                        x={0}
-                        y={(1080 / 20) * i}
-                        width={1920}
-                        height={1}
-                        fill="#ffffff"
-                        opacity={0.1}
-                      />
-                    </React.Fragment>
+                  {Array.from({ length: Math.ceil(1920 / gridSize) + 1 }).map((_, i) => (
+                    <Rect
+                      key={`grid-v-${i}`}
+                      x={i * gridSize}
+                      y={0}
+                      width={1}
+                      height={1080}
+                      fill="#ffffff"
+                      opacity={0.1}
+                    />
+                  ))}
+                  {Array.from({ length: Math.ceil(1080 / gridSize) + 1 }).map((_, i) => (
+                    <Rect
+                      key={`grid-h-${i}`}
+                      x={0}
+                      y={i * gridSize}
+                      width={1920}
+                      height={1}
+                      fill="#ffffff"
+                      opacity={0.1}
+                    />
                   ))}
                 </>
               )}
@@ -525,8 +585,45 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
                     }}
                     onChange={(updates) => onUpdateElement?.(element.id, updates)}
                     onDelete={() => onDeleteElement?.(element.id)}
+                    snapConfig={{
+                      snapToGrid,
+                      snapToElements,
+                      gridSize,
+                      canvasWidth: 1920,
+                      canvasHeight: 1080,
+                      otherElements: currentScene.elements
+                    }}
+                    onShowGuides={setAlignmentGuides}
+                    onHideGuides={() => setAlignmentGuides([])}
                   />
                 ))}
+            </Layer>
+
+            {/* Alignment Guides Layer */}
+            <Layer>
+              {alignmentGuides.map((guide, idx) => (
+                guide.type === 'vertical' ? (
+                  <Rect
+                    key={`guide-${idx}`}
+                    x={guide.position}
+                    y={0}
+                    width={2}
+                    height={1080}
+                    fill={guide.color}
+                    opacity={0.8}
+                  />
+                ) : (
+                  <Rect
+                    key={`guide-${idx}`}
+                    x={0}
+                    y={guide.position}
+                    width={1920}
+                    height={2}
+                    fill={guide.color}
+                    opacity={0.8}
+                  />
+                )
+              ))}
             </Layer>
           </Stage>
 
@@ -580,7 +677,10 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
           )}
         </div>
         <div className="text-muted-foreground">
-          {showGrid ? 'Grid On' : 'Grid Off'} • Zoom {Math.round(zoom * 100)}%
+          {showGrid ? 'Grid On' : 'Grid Off'} •
+          {snapToGrid ? ' Snap On' : ' Snap Off'} •
+          Grid: {gridSize}px •
+          Zoom {Math.round(zoom * 100)}%
         </div>
       </div>
     </div>
