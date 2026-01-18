@@ -31,6 +31,8 @@ import { ProfessionalStudioTimeline } from '@components/studio-unified/Professio
 import { AvatarLibraryPanel } from '@components/studio-unified/AvatarLibraryPanel'
 import { PropertiesPanel, ElementProperties } from '@components/studio-unified/PropertiesPanel'
 import { InteractiveCanvas, CanvasElement, CanvasScene } from '@components/studio-unified/InteractiveCanvas'
+import { ShortcutsHelpPanel } from '@components/studio-unified/ShortcutsHelpPanel'
+import { useKeyboardShortcuts, COMMON_SHORTCUTS } from '@hooks/useKeyboardShortcuts'
 
 // ============================================================================
 // TYPES
@@ -70,6 +72,7 @@ export default function StudioProPage() {
     height: 1080
   })
   const [selectedCanvasElementId, setSelectedCanvasElementId] = useState<string | null>(null)
+  const [showShortcuts, setShowShortcuts] = useState(false)
 
   // Handlers
   const handlePlay = useCallback(() => {
@@ -167,6 +170,163 @@ export default function StudioProPage() {
       elements: [...prev.elements, newElement]
     }))
   }, [])
+
+  // Keyboard Shortcuts
+  useKeyboardShortcuts({
+    shortcuts: [
+      {
+        ...COMMON_SHORTCUTS.PLAY_PAUSE,
+        callback: handlePlay
+      },
+      {
+        ...COMMON_SHORTCUTS.SAVE,
+        callback: handleSave
+      },
+      {
+        ...COMMON_SHORTCUTS.EXPORT,
+        callback: handleExport
+      },
+      {
+        ...COMMON_SHORTCUTS.DELETE,
+        callback: () => {
+          if (selectedCanvasElementId) {
+            handleDeleteCanvasElement(selectedCanvasElementId)
+          }
+        }
+      },
+      {
+        ...COMMON_SHORTCUTS.BACKSPACE,
+        callback: () => {
+          if (selectedCanvasElementId) {
+            handleDeleteCanvasElement(selectedCanvasElementId)
+          }
+        }
+      },
+      {
+        ...COMMON_SHORTCUTS.DUPLICATE,
+        callback: () => {
+          if (selectedCanvasElementId) {
+            const element = canvasScene.elements.find(e => e.id === selectedCanvasElementId)
+            if (element) {
+              const { id, ...rest } = element
+              handleAddCanvasElement({
+                ...rest,
+                x: rest.x + 20,
+                y: rest.y + 20,
+                name: `${rest.name} (copy)`
+              })
+            }
+          }
+        }
+      },
+      {
+        ...COMMON_SHORTCUTS.DESELECT,
+        callback: () => setSelectedCanvasElementId(null)
+      },
+      {
+        ...COMMON_SHORTCUTS.HELP,
+        callback: () => setShowShortcuts(true)
+      },
+      {
+        ...COMMON_SHORTCUTS.SHORTCUTS,
+        callback: () => setShowShortcuts(true)
+      },
+      // Arrow keys for movement
+      {
+        key: 'ArrowUp',
+        callback: () => {
+          if (selectedCanvasElementId) {
+            handleUpdateCanvasElement(selectedCanvasElementId, {
+              y: canvasScene.elements.find(e => e.id === selectedCanvasElementId)!.y - 1
+            })
+          }
+        },
+        description: 'Move up 1px'
+      },
+      {
+        key: 'ArrowDown',
+        callback: () => {
+          if (selectedCanvasElementId) {
+            handleUpdateCanvasElement(selectedCanvasElementId, {
+              y: canvasScene.elements.find(e => e.id === selectedCanvasElementId)!.y + 1
+            })
+          }
+        },
+        description: 'Move down 1px'
+      },
+      {
+        key: 'ArrowLeft',
+        callback: () => {
+          if (selectedCanvasElementId) {
+            handleUpdateCanvasElement(selectedCanvasElementId, {
+              x: canvasScene.elements.find(e => e.id === selectedCanvasElementId)!.x - 1
+            })
+          }
+        },
+        description: 'Move left 1px'
+      },
+      {
+        key: 'ArrowRight',
+        callback: () => {
+          if (selectedCanvasElementId) {
+            handleUpdateCanvasElement(selectedCanvasElementId, {
+              x: canvasScene.elements.find(e => e.id === selectedCanvasElementId)!.x + 1
+            })
+          }
+        },
+        description: 'Move right 1px'
+      },
+      // Shift + Arrow for fast movement
+      {
+        key: 'ArrowUp',
+        shift: true,
+        callback: () => {
+          if (selectedCanvasElementId) {
+            handleUpdateCanvasElement(selectedCanvasElementId, {
+              y: canvasScene.elements.find(e => e.id === selectedCanvasElementId)!.y - 10
+            })
+          }
+        },
+        description: 'Move up 10px'
+      },
+      {
+        key: 'ArrowDown',
+        shift: true,
+        callback: () => {
+          if (selectedCanvasElementId) {
+            handleUpdateCanvasElement(selectedCanvasElementId, {
+              y: canvasScene.elements.find(e => e.id === selectedCanvasElementId)!.y + 10
+            })
+          }
+        },
+        description: 'Move down 10px'
+      },
+      {
+        key: 'ArrowLeft',
+        shift: true,
+        callback: () => {
+          if (selectedCanvasElementId) {
+            handleUpdateCanvasElement(selectedCanvasElementId, {
+              x: canvasScene.elements.find(e => e.id === selectedCanvasElementId)!.x - 10
+            })
+          }
+        },
+        description: 'Move left 10px'
+      },
+      {
+        key: 'ArrowRight',
+        shift: true,
+        callback: () => {
+          if (selectedCanvasElementId) {
+            handleUpdateCanvasElement(selectedCanvasElementId, {
+              x: canvasScene.elements.find(e => e.id === selectedCanvasElementId)!.x + 10
+            })
+          }
+        },
+        description: 'Move right 10px'
+      }
+    ]
+  })
 
   return (
     <div className="h-screen flex flex-col bg-background">
@@ -429,13 +589,32 @@ export default function StudioProPage() {
           <span>Ready</span>
           <Separator orientation="vertical" className="h-4" />
           <span>1920x1080 @ 30fps</span>
+          {selectedCanvasElementId && (
+            <>
+              <Separator orientation="vertical" className="h-4" />
+              <span>
+                {canvasScene.elements.find(e => e.id === selectedCanvasElementId)?.name} selected
+              </span>
+            </>
+          )}
         </div>
         <div className="flex items-center gap-4">
           <span>100% zoom</span>
           <Separator orientation="vertical" className="h-4" />
-          <span>Auto-save enabled</span>
+          <button
+            onClick={() => setShowShortcuts(true)}
+            className="hover:text-foreground transition-colors cursor-pointer"
+          >
+            Press Ctrl+/ for shortcuts
+          </button>
         </div>
       </div>
+
+      {/* Shortcuts Help Panel */}
+      <ShortcutsHelpPanel
+        isOpen={showShortcuts}
+        onClose={() => setShowShortcuts(false)}
+      />
     </div>
   )
 }
