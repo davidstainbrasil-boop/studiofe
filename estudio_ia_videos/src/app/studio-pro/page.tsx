@@ -31,6 +31,8 @@ import {
   Folder,
   Clock,
   Zap,
+  Undo2,
+  Redo2,
 } from 'lucide-react';
 import { cn } from '@lib/utils';
 import { toast } from 'sonner';
@@ -1227,6 +1229,32 @@ export default function StudioProPage() {
                       {Math.floor(currentTime / 60)}:
                       {(currentTime % 60).toString().padStart(2, '0')}
                     </span>
+                    <Separator orientation="vertical" className="h-6" />
+                    {/* Undo/Redo Buttons */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        undo();
+                        toast.success('Undo');
+                      }}
+                      disabled={!canUndo}
+                      title="Undo (Ctrl+Z)"
+                    >
+                      <Undo2 className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        redo();
+                        toast.success('Redo');
+                      }}
+                      disabled={!canRedo}
+                      title="Redo (Ctrl+Y)"
+                    >
+                      <Redo2 className="h-4 w-4" />
+                    </Button>
                   </div>
 
                   <div className="flex items-center gap-2">
