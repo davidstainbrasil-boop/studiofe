@@ -157,12 +157,73 @@ export default function StudioProPage() {
     toast.success(`Avatar "${avatar.name}" added to scene`);
   }, []);
 
+  // Conversion: CanvasElement → ElementProperties
+  const canvasElementToProperties = useCallback((element: CanvasElement): ElementProperties => {
+    return {
+      id: element.id,
+      name: element.name,
+      type: element.type,
+      locked: element.locked ?? false,
+      visible: element.visible ?? true,
+      transform: {
+        x: element.x,
+        y: element.y,
+        scale: element.scaleX ?? 1,
+        rotation: element.rotation ?? 0,
+        opacity: element.opacity ?? 1,
+        width: element.width,
+        height: element.height,
+      },
+      textStyle: element.text
+        ? {
+            content: element.text,
+            fontSize: 24, // Default
+            fontFamily: 'Inter',
+            fontWeight: 400,
+            color: '#ffffff',
+            align: 'left',
+            lineHeight: 1.2,
+          }
+        : undefined,
+      animations: [],
+      effects: [],
+    };
+  }, []);
+
+  // Conversion: ElementProperties → CanvasElement updates
+  const propertiesToCanvasElement = useCallback(
+    (properties: ElementProperties): Partial<CanvasElement> => {
+      return {
+        name: properties.name,
+        locked: properties.locked,
+        visible: properties.visible,
+        x: properties.transform.x,
+        y: properties.transform.y,
+        scaleX: properties.transform.scale,
+        scaleY: properties.transform.scale,
+        rotation: properties.transform.rotation,
+        opacity: properties.transform.opacity,
+        width: properties.transform.width,
+        height: properties.transform.height,
+        text: properties.textStyle?.content,
+      };
+    },
+    [],
+  );
+
   const handleUpdateElement = useCallback(
     (updates: Partial<ElementProperties>) => {
       if (!selectedElement) return;
-      setSelectedElement({ ...selectedElement, ...updates });
+
+      // Update Properties Panel state
+      const updatedProperties = { ...selectedElement, ...updates };
+      setSelectedElement(updatedProperties);
+
+      // Sync to Canvas Element
+      const canvasUpdates = propertiesToCanvasElement(updatedProperties);
+      handleUpdateCanvasElement(selectedElement.id, canvasUpdates);
     },
-    [selectedElement],
+    [selectedElement, propertiesToCanvasElement],
   );
 
   // Canvas Handlers
@@ -170,6 +231,7 @@ export default function StudioProPage() {
     (id: string | null, multiSelect: boolean = false) => {
       if (id === null) {
         setSelectedCanvasElementIds([]);
+        setSelectedElement(null);
         return;
       }
 
@@ -181,21 +243,44 @@ export default function StudioProPage() {
               ? prev.filter((eid) => eid !== id) // Deselect if already selected
               : [...prev, id], // Add to selection
         );
+        // For multi-select, Properties Panel shows first selected element
+        const firstId = id;
+        const element = canvasScene.elements.find((el) => el.id === firstId);
+        if (element) {
+          setSelectedElement(canvasElementToProperties(element));
+          setRightPanelTab('properties');
+        }
       } else {
         // Single select: replace selection
         setSelectedCanvasElementIds([id]);
+        const element = canvasScene.elements.find((el) => el.id === id);
+        if (element) {
+          setSelectedElement(canvasElementToProperties(element));
+          setRightPanelTab('properties');
+        }
       }
-      // TODO: Sync with PropertiesPanel
     },
-    [],
+    [canvasScene.elements, canvasElementToProperties],
   );
 
-  const handleUpdateCanvasElement = useCallback((id: string, updates: Partial<CanvasElement>) => {
-    setCanvasScene((prev) => ({
-      ...prev,
-      elements: prev.elements.map((el) => (el.id === id ? { ...el, ...updates } : el)),
-    }));
-  }, []);
+  const handleUpdateCanvasElement = useCallback(
+    (id: string, updates: Partial<CanvasElement>) => {
+      setCanvasScene((prev) => ({
+        ...prev,
+        elements: prev.elements.map((el) => (el.id === id ? { ...el, ...updates } : el)),
+      }));
+
+      // Sync to Properties Panel if this element is selected
+      if (selectedElement?.id === id) {
+        const element = canvasScene.elements.find((el) => el.id === id);
+        if (element) {
+          const updatedElement = { ...element, ...updates };
+          setSelectedElement(canvasElementToProperties(updatedElement));
+        }
+      }
+    },
+    [selectedElement, canvasScene.elements, canvasElementToProperties],
+  );
 
   const handleDeleteCanvasElement = useCallback((id: string) => {
     setCanvasScene((prev) => ({

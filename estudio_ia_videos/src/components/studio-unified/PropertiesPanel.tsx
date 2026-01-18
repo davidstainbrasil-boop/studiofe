@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 /**
  * Properties Panel
@@ -6,83 +6,96 @@
  * Transformação, Estilo, Animação, Efeitos
  */
 
-import React, { useState, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Button } from '@components/ui/button'
-import { Input } from '@components/ui/input'
-import { Label } from '@components/ui/label'
-import { Slider } from '@components/ui/slider'
-import { Switch } from '@components/ui/switch'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs'
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { Button } from '@components/ui/button';
+import { Input } from '@components/ui/input';
+import { Label } from '@components/ui/label';
+import { Slider } from '@components/ui/slider';
+import { Switch } from '@components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@components/ui/select'
-import { Separator } from '@components/ui/separator'
-import { ScrollArea } from '@components/ui/scroll-area'
+} from '@components/ui/select';
+import { ScrollArea } from '@components/ui/scroll-area';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from '@components/ui/accordion'
+} from '@components/ui/accordion';
 import {
-  Move, Scale, RotateCw, Eye, EyeOff, Lock, Unlock,
-  Palette, Type, Layers, Sparkles, Zap, Settings,
-  Maximize, Minimize, AlignCenter, AlignLeft, AlignRight,
-  AlignJustify, Bold, Italic, Underline, ChevronDown,
-  Play, Pause, FastForward, Rewind, Circle, Square
-} from 'lucide-react'
-import { cn } from '@lib/utils'
+  Move,
+  Scale,
+  RotateCw,
+  Eye,
+  EyeOff,
+  Lock,
+  Unlock,
+  Palette,
+  Type,
+  Sparkles,
+  Zap,
+  Settings,
+  AlignCenter,
+  AlignLeft,
+  AlignRight,
+  AlignJustify,
+  Bold,
+  Italic,
+  Underline,
+} from 'lucide-react';
+import { cn } from '@lib/utils';
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
 export interface Transform {
-  x: number
-  y: number
-  scale: number
-  rotation: number
-  opacity: number
-  width?: number
-  height?: number
+  x: number;
+  y: number;
+  scale: number;
+  rotation: number;
+  opacity: number;
+  width?: number;
+  height?: number;
 }
 
 export interface TextStyle {
-  fontFamily: string
-  fontSize: number
-  fontWeight: number
-  color: string
-  backgroundColor?: string
-  textAlign: 'left' | 'center' | 'right' | 'justify'
-  textDecoration: ('bold' | 'italic' | 'underline')[]
-  lineHeight: number
-  letterSpacing: number
+  fontFamily: string;
+  fontSize: number;
+  fontWeight: number;
+  color: string;
+  backgroundColor?: string;
+  textAlign: 'left' | 'center' | 'right' | 'justify';
+  textDecoration: ('bold' | 'italic' | 'underline')[];
+  lineHeight: number;
+  letterSpacing: number;
 }
 
 export interface Animation {
-  type: 'fade' | 'slide' | 'zoom' | 'rotate' | 'bounce' | 'elastic'
-  direction?: 'in' | 'out' | 'inOut'
-  duration: number
-  delay: number
-  easing: 'linear' | 'easeIn' | 'easeOut' | 'easeInOut' | 'bounce' | 'elastic'
-  loop?: boolean
+  type: 'fade' | 'slide' | 'zoom' | 'rotate' | 'bounce' | 'elastic';
+  direction?: 'in' | 'out' | 'inOut';
+  duration: number;
+  delay: number;
+  easing: 'linear' | 'easeIn' | 'easeOut' | 'easeInOut' | 'bounce' | 'elastic';
+  loop?: boolean;
 }
 
 export interface ElementProperties {
-  id: string
-  name: string
-  type: 'image' | 'video' | 'text' | 'avatar' | 'shape'
-  locked: boolean
-  visible: boolean
-  transform: Transform
-  textStyle?: TextStyle
-  animations: Animation[]
-  effects: any[]
+  id: string;
+  name: string;
+  type: 'image' | 'video' | 'text' | 'avatar' | 'shape';
+  locked: boolean;
+  visible: boolean;
+  transform: Transform;
+  textStyle?: TextStyle;
+  animations: Animation[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  effects: any[];
 }
 
 // ============================================================================
@@ -90,14 +103,16 @@ export interface ElementProperties {
 // ============================================================================
 
 interface NumberInputProps {
-  label: string
-  value: number
-  onChange: (value: number) => void
-  min?: number
-  max?: number
-  step?: number
-  unit?: string
-  icon?: React.ReactNode
+  label: string;
+  value: number;
+  onChange: (value: number) => void;
+  min?: number;
+  max?: number;
+  step?: number;
+  unit?: string;
+  icon?: React.ReactNode;
+  inputRef?: React.RefObject<HTMLInputElement>;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
 }
 
 const NumberInput: React.FC<NumberInputProps> = ({
@@ -108,7 +123,9 @@ const NumberInput: React.FC<NumberInputProps> = ({
   max,
   step = 1,
   unit,
-  icon
+  icon,
+  inputRef,
+  onKeyDown,
 }) => {
   return (
     <div className="space-y-2">
@@ -118,31 +135,31 @@ const NumberInput: React.FC<NumberInputProps> = ({
       </Label>
       <div className="flex items-center gap-2">
         <Input
+          ref={inputRef}
           type="number"
           value={value}
           onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+          onKeyDown={onKeyDown}
           min={min}
           max={max}
           step={step}
           className="h-8 text-sm"
         />
-        {unit && (
-          <span className="text-xs text-muted-foreground w-8">{unit}</span>
-        )}
+        {unit && <span className="text-xs text-muted-foreground w-8">{unit}</span>}
       </div>
     </div>
-  )
-}
+  );
+};
 
 interface SliderInputProps {
-  label: string
-  value: number
-  onChange: (value: number) => void
-  min: number
-  max: number
-  step?: number
-  unit?: string
-  icon?: React.ReactNode
+  label: string;
+  value: number;
+  onChange: (value: number) => void;
+  min: number;
+  max: number;
+  step?: number;
+  unit?: string;
+  icon?: React.ReactNode;
 }
 
 const SliderInput: React.FC<SliderInputProps> = ({
@@ -153,7 +170,7 @@ const SliderInput: React.FC<SliderInputProps> = ({
   max,
   step = 1,
   unit,
-  icon
+  icon,
 }) => {
   return (
     <div className="space-y-2">
@@ -163,7 +180,8 @@ const SliderInput: React.FC<SliderInputProps> = ({
           {label}
         </Label>
         <span className="text-xs text-muted-foreground">
-          {value}{unit}
+          {value}
+          {unit}
         </span>
       </div>
       <Slider
@@ -175,71 +193,119 @@ const SliderInput: React.FC<SliderInputProps> = ({
         className="w-full"
       />
     </div>
-  )
-}
+  );
+};
 
 // ============================================================================
 // MAIN COMPONENT
 // ============================================================================
 
 export interface PropertiesPanelProps {
-  element: ElementProperties | null
-  onUpdate: (properties: Partial<ElementProperties>) => void
-  className?: string
+  element: ElementProperties | null;
+  onUpdate: (properties: Partial<ElementProperties>) => void;
+  className?: string;
 }
 
 export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   element,
   onUpdate,
-  className
+  className,
 }) => {
-  const [activeTab, setActiveTab] = useState('transform')
+  const [activeTab, setActiveTab] = useState('transform');
+  const [constrainProportions, setConstrainProportions] = useState(false);
 
-  const updateTransform = useCallback((updates: Partial<Transform>) => {
-    if (!element) return
-    onUpdate({
-      transform: { ...element.transform, ...updates }
-    })
-  }, [element, onUpdate])
+  // Refs for keyboard navigation
+  const xInputRef = useRef<HTMLInputElement>(null);
+  const yInputRef = useRef<HTMLInputElement>(null);
+  const widthInputRef = useRef<HTMLInputElement>(null);
+  const heightInputRef = useRef<HTMLInputElement>(null);
 
-  const updateTextStyle = useCallback((updates: Partial<TextStyle>) => {
-    if (!element || !element.textStyle) return
-    onUpdate({
-      textStyle: { ...element.textStyle, ...updates }
-    })
-  }, [element, onUpdate])
+  // Store aspect ratio for constrain proportions
+  const aspectRatio = useRef<number>(1);
+
+  useEffect(() => {
+    if (element?.transform.width && element?.transform.height) {
+      aspectRatio.current = element.transform.width / element.transform.height;
+    }
+  }, [element]);
+
+  const updateTransform = useCallback(
+    (updates: Partial<Transform>) => {
+      if (!element) return;
+
+      // Apply constrain proportions for width/height changes
+      if (constrainProportions && (updates.width || updates.height)) {
+        if (updates.width && element.transform.height) {
+          updates.height = updates.width / aspectRatio.current;
+        } else if (updates.height && element.transform.width) {
+          updates.width = updates.height * aspectRatio.current;
+        }
+      }
+
+      onUpdate({
+        transform: { ...element.transform, ...updates },
+      });
+    },
+    [element, onUpdate, constrainProportions],
+  );
+
+  const updateTextStyle = useCallback(
+    (updates: Partial<TextStyle>) => {
+      if (!element || !element.textStyle) return;
+      onUpdate({
+        textStyle: { ...element.textStyle, ...updates },
+      });
+    },
+    [element, onUpdate],
+  );
 
   const addAnimation = useCallback(() => {
-    if (!element) return
+    if (!element) return;
     const newAnimation: Animation = {
       type: 'fade',
       direction: 'in',
       duration: 500,
       delay: 0,
-      easing: 'easeInOut'
-    }
+      easing: 'easeInOut',
+    };
     onUpdate({
-      animations: [...element.animations, newAnimation]
-    })
-  }, [element, onUpdate])
+      animations: [...element.animations, newAnimation],
+    });
+  }, [element, onUpdate]);
+
+  // Keyboard navigation: Tab to cycle through inputs
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>, nextRef?: React.RefObject<HTMLInputElement>) => {
+      if (e.key === 'Tab' && !e.shiftKey && nextRef) {
+        e.preventDefault();
+        nextRef.current?.focus();
+        nextRef.current?.select();
+      } else if (e.key === 'Enter') {
+        e.currentTarget.blur();
+      }
+    },
+    [],
+  );
 
   if (!element) {
     return (
-      <div className={cn(
-        "flex flex-col items-center justify-center h-full p-8 text-center",
-        className
-      )}>
+      <div
+        className={cn(
+          'flex flex-col items-center justify-center h-full p-8 text-center',
+          className,
+        )}
+      >
         <Settings className="h-12 w-12 text-muted-foreground mb-4" />
         <p className="text-sm font-medium">No element selected</p>
         <p className="text-xs text-muted-foreground mt-1">
           Select an element to edit its properties
         </p>
       </div>
-    )
+    );
   }
 
   return (
-    <div className={cn("flex flex-col h-full bg-background", className)}>
+    <div className={cn('flex flex-col h-full bg-background', className)}>
       {/* Header */}
       <div className="border-b p-4">
         <div className="flex items-center justify-between mb-2">
@@ -271,9 +337,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
             </Button>
           </div>
         </div>
-        <p className="text-xs text-muted-foreground capitalize">
-          {element.type}
-        </p>
+        <p className="text-xs text-muted-foreground capitalize">{element.type}</p>
       </div>
 
       {/* Tabs */}
@@ -303,9 +367,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
             <Accordion type="multiple" defaultValue={['position', 'size', 'appearance']}>
               {/* Position */}
               <AccordionItem value="position">
-                <AccordionTrigger className="text-sm font-medium">
-                  Position
-                </AccordionTrigger>
+                <AccordionTrigger className="text-sm font-medium">Position</AccordionTrigger>
                 <AccordionContent className="space-y-4 pt-2">
                   <div className="grid grid-cols-2 gap-3">
                     <NumberInput
@@ -314,6 +376,8 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                       onChange={(val) => updateTransform({ x: val })}
                       step={1}
                       unit="px"
+                      inputRef={xInputRef}
+                      onKeyDown={(e) => handleKeyDown(e, yInputRef)}
                     />
                     <NumberInput
                       label="Y"
@@ -321,6 +385,8 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                       onChange={(val) => updateTransform({ y: val })}
                       step={1}
                       unit="px"
+                      inputRef={yInputRef}
+                      onKeyDown={(e) => handleKeyDown(e, widthInputRef)}
                     />
                   </div>
                 </AccordionContent>
@@ -328,9 +394,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
               {/* Size */}
               <AccordionItem value="size">
-                <AccordionTrigger className="text-sm font-medium">
-                  Size & Scale
-                </AccordionTrigger>
+                <AccordionTrigger className="text-sm font-medium">Size & Scale</AccordionTrigger>
                 <AccordionContent className="space-y-4 pt-2">
                   <SliderInput
                     label="Scale"
@@ -342,6 +406,19 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                     unit="x"
                     icon={<Scale className="h-3 w-3" />}
                   />
+                  {element.transform.width !== undefined &&
+                    element.transform.height !== undefined && (
+                      <div className="flex items-center gap-2 mb-2">
+                        <Switch
+                          id="constrain-proportions"
+                          checked={constrainProportions}
+                          onCheckedChange={setConstrainProportions}
+                        />
+                        <Label htmlFor="constrain-proportions" className="text-xs cursor-pointer">
+                          Constrain proportions
+                        </Label>
+                      </div>
+                    )}
                   {element.transform.width !== undefined && (
                     <NumberInput
                       label="Width"
@@ -349,6 +426,8 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                       onChange={(val) => updateTransform({ width: val })}
                       min={0}
                       unit="px"
+                      inputRef={widthInputRef}
+                      onKeyDown={(e) => handleKeyDown(e, heightInputRef)}
                     />
                   )}
                   {element.transform.height !== undefined && (
@@ -358,6 +437,8 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                       onChange={(val) => updateTransform({ height: val })}
                       min={0}
                       unit="px"
+                      inputRef={heightInputRef}
+                      onKeyDown={(e) => handleKeyDown(e, xInputRef)}
                     />
                   )}
                 </AccordionContent>
@@ -365,9 +446,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
               {/* Rotation & Opacity */}
               <AccordionItem value="appearance">
-                <AccordionTrigger className="text-sm font-medium">
-                  Appearance
-                </AccordionTrigger>
+                <AccordionTrigger className="text-sm font-medium">Appearance</AccordionTrigger>
                 <AccordionContent className="space-y-4 pt-2">
                   <SliderInput
                     label="Rotation"
@@ -400,9 +479,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               <Accordion type="multiple" defaultValue={['font', 'text-style', 'alignment']}>
                 {/* Font */}
                 <AccordionItem value="font">
-                  <AccordionTrigger className="text-sm font-medium">
-                    Font
-                  </AccordionTrigger>
+                  <AccordionTrigger className="text-sm font-medium">Font</AccordionTrigger>
                   <AccordionContent className="space-y-4 pt-2">
                     <div className="space-y-2">
                       <Label className="text-xs">Font Family</Label>
@@ -448,9 +525,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
                 {/* Text Style */}
                 <AccordionItem value="text-style">
-                  <AccordionTrigger className="text-sm font-medium">
-                    Text Style
-                  </AccordionTrigger>
+                  <AccordionTrigger className="text-sm font-medium">Text Style</AccordionTrigger>
                   <AccordionContent className="space-y-4 pt-2">
                     <div className="space-y-2">
                       <Label className="text-xs">Color</Label>
@@ -473,42 +548,52 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                     <div className="flex gap-2">
                       <Button
                         size="sm"
-                        variant={element.textStyle.textDecoration.includes('bold') ? 'default' : 'outline'}
+                        variant={
+                          element.textStyle.textDecoration.includes('bold') ? 'default' : 'outline'
+                        }
                         onClick={() => {
-                          const decorations = element.textStyle!.textDecoration
+                          const decorations = element.textStyle!.textDecoration;
                           updateTextStyle({
                             textDecoration: decorations.includes('bold')
-                              ? decorations.filter(d => d !== 'bold')
-                              : [...decorations, 'bold']
-                          })
+                              ? decorations.filter((d) => d !== 'bold')
+                              : [...decorations, 'bold'],
+                          });
                         }}
                       >
                         <Bold className="h-4 w-4" />
                       </Button>
                       <Button
                         size="sm"
-                        variant={element.textStyle.textDecoration.includes('italic') ? 'default' : 'outline'}
+                        variant={
+                          element.textStyle.textDecoration.includes('italic')
+                            ? 'default'
+                            : 'outline'
+                        }
                         onClick={() => {
-                          const decorations = element.textStyle!.textDecoration
+                          const decorations = element.textStyle!.textDecoration;
                           updateTextStyle({
                             textDecoration: decorations.includes('italic')
-                              ? decorations.filter(d => d !== 'italic')
-                              : [...decorations, 'italic']
-                          })
+                              ? decorations.filter((d) => d !== 'italic')
+                              : [...decorations, 'italic'],
+                          });
                         }}
                       >
                         <Italic className="h-4 w-4" />
                       </Button>
                       <Button
                         size="sm"
-                        variant={element.textStyle.textDecoration.includes('underline') ? 'default' : 'outline'}
+                        variant={
+                          element.textStyle.textDecoration.includes('underline')
+                            ? 'default'
+                            : 'outline'
+                        }
                         onClick={() => {
-                          const decorations = element.textStyle!.textDecoration
+                          const decorations = element.textStyle!.textDecoration;
                           updateTextStyle({
                             textDecoration: decorations.includes('underline')
-                              ? decorations.filter(d => d !== 'underline')
-                              : [...decorations, 'underline']
-                          })
+                              ? decorations.filter((d) => d !== 'underline')
+                              : [...decorations, 'underline'],
+                          });
                         }}
                       >
                         <Underline className="h-4 w-4" />
@@ -538,9 +623,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
                 {/* Alignment */}
                 <AccordionItem value="alignment">
-                  <AccordionTrigger className="text-sm font-medium">
-                    Alignment
-                  </AccordionTrigger>
+                  <AccordionTrigger className="text-sm font-medium">Alignment</AccordionTrigger>
                   <AccordionContent className="space-y-4 pt-2">
                     <div className="flex gap-2">
                       <Button
@@ -608,8 +691,8 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                           variant="ghost"
                           className="h-6 w-6"
                           onClick={() => {
-                            const newAnimations = element.animations.filter((_, i) => i !== index)
-                            onUpdate({ animations: newAnimations })
+                            const newAnimations = element.animations.filter((_, i) => i !== index);
+                            onUpdate({ animations: newAnimations });
                           }}
                         >
                           <X className="h-3 w-3" />
@@ -637,9 +720,9 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                         label="Duration"
                         value={animation.duration}
                         onChange={(val) => {
-                          const newAnimations = [...element.animations]
-                          newAnimations[index] = { ...animation, duration: val }
-                          onUpdate({ animations: newAnimations })
+                          const newAnimations = [...element.animations];
+                          newAnimations[index] = { ...animation, duration: val };
+                          onUpdate({ animations: newAnimations });
                         }}
                         min={100}
                         max={3000}
@@ -651,9 +734,9 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                         label="Delay"
                         value={animation.delay}
                         onChange={(val) => {
-                          const newAnimations = [...element.animations]
-                          newAnimations[index] = { ...animation, delay: val }
-                          onUpdate({ animations: newAnimations })
+                          const newAnimations = [...element.animations];
+                          newAnimations[index] = { ...animation, delay: val };
+                          onUpdate({ animations: newAnimations });
                         }}
                         min={0}
                         max={2000}
@@ -676,7 +759,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
         </ScrollArea>
       </Tabs>
     </div>
-  )
-}
+  );
+};
 
-export default PropertiesPanel
+export default PropertiesPanel;
