@@ -39,8 +39,8 @@ test.describe('SPRINT 12: Studio Pro Advanced Features', () => {
     console.error('=== Testing Scene Transitions ===');
 
     // Navigate to Studio Pro
-    await page.goto(`/studio-unified?projectId=${projectId}`);
-    await expect(page).toHaveURL(/studio-unified/);
+    await page.goto(`/studio-pro?projectId=${projectId}`);
+    await expect(page).toHaveURL(/studio-pro/);
 
     // Wait for Studio Pro to load
     await expect(page.getByText('Timeline')).toBeVisible({ timeout: 10000 });
@@ -82,8 +82,8 @@ test.describe('SPRINT 12: Studio Pro Advanced Features', () => {
     console.error('=== Testing Text Animations ===');
 
     // Navigate to Studio Pro
-    await page.goto(`/studio-unified?projectId=${projectId}`);
-    await expect(page).toHaveURL(/studio-unified/);
+    await page.goto(`/studio-pro?projectId=${projectId}`);
+    await expect(page).toHaveURL(/studio-pro/);
     await expect(page.getByText('Timeline')).toBeVisible({ timeout: 10000 });
 
     // Open Text/Animations panel
@@ -193,8 +193,8 @@ test.describe('SPRINT 12: Studio Pro Advanced Features', () => {
     // 3. Navigate to Studio Pro and verify avatar is loaded
     console.error('  Step 3: Verifying avatar in Studio Pro...');
 
-    await page.goto(`/studio-unified?projectId=${projectId}`);
-    await expect(page).toHaveURL(/studio-unified/);
+    await page.goto(`/studio-pro?projectId=${projectId}`);
+    await expect(page).toHaveURL(/studio-pro/);
     await expect(page.getByText('Timeline')).toBeVisible({ timeout: 10000 });
 
     // Check for Three.js canvas (GLB rendering)
@@ -238,7 +238,7 @@ test.describe('SPRINT 12: Studio Pro Advanced Features', () => {
 
     // 2. Navigate to Studio Pro
     console.error('  Step 2: Opening Studio Pro...');
-    await page.goto(`/studio-unified?projectId=${projectId}`);
+    await page.goto(`/studio-pro?projectId=${projectId}`);
     await expect(page.getByText('Timeline')).toBeVisible({ timeout: 10000 });
     console.error('    ✓ Studio Pro loaded');
 
@@ -293,7 +293,7 @@ test.describe('SPRINT 12: Studio Pro Advanced Features', () => {
   test('Performance: Scene Transition Rendering Speed', async ({ page }) => {
     console.error('=== Testing Scene Transition Performance ===');
 
-    await page.goto(`/studio-unified?projectId=${projectId}`);
+    await page.goto(`/studio-pro?projectId=${projectId}`);
     await expect(page.getByText('Timeline')).toBeVisible({ timeout: 10000 });
 
     // Measure transition application time
