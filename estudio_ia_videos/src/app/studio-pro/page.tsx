@@ -30,6 +30,7 @@ import { toast } from 'sonner'
 import { ProfessionalStudioTimeline } from '@components/studio-unified/ProfessionalStudioTimeline'
 import { AvatarLibraryPanel } from '@components/studio-unified/AvatarLibraryPanel'
 import { PropertiesPanel, ElementProperties } from '@components/studio-unified/PropertiesPanel'
+import { InteractiveCanvas, CanvasElement, CanvasScene } from '@components/studio-unified/InteractiveCanvas'
 
 // ============================================================================
 // TYPES
@@ -58,6 +59,17 @@ export default function StudioProPage() {
   const [activeTab, setActiveTab] = useState<StudioTab>('avatars')
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false)
   const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false)
+
+  // Canvas State
+  const [canvasScene, setCanvasScene] = useState<CanvasScene>({
+    id: 'default',
+    name: 'Default Scene',
+    elements: [],
+    backgroundColor: '#1a1a1a',
+    width: 1920,
+    height: 1080
+  })
+  const [selectedCanvasElementId, setSelectedCanvasElementId] = useState<string | null>(null)
 
   // Handlers
   const handlePlay = useCallback(() => {
@@ -88,14 +100,73 @@ export default function StudioProPage() {
   }, [])
 
   const handleSelectAvatar = useCallback((avatar: any) => {
+    // Add avatar to canvas
+    const newElement: CanvasElement = {
+      id: `avatar-${Date.now()}`,
+      type: 'avatar',
+      name: avatar.name,
+      x: 960 - 200, // Center horizontally (1920/2 - width/2)
+      y: 540 - 300, // Center vertically (1080/2 - height/2)
+      width: 400,
+      height: 600,
+      rotation: 0,
+      scaleX: 1,
+      scaleY: 1,
+      opacity: 1,
+      src: avatar.thumbnailUrl,
+      locked: false,
+      visible: true,
+      draggable: true,
+      zIndex: 20
+    }
+
+    setCanvasScene(prev => ({
+      ...prev,
+      elements: [...prev.elements, newElement]
+    }))
+
     toast.success(`Avatar "${avatar.name}" added to scene`)
-    // Adicionar avatar à cena atual
   }, [])
 
   const handleUpdateElement = useCallback((updates: Partial<ElementProperties>) => {
     if (!selectedElement) return
     setSelectedElement({ ...selectedElement, ...updates })
   }, [selectedElement])
+
+  // Canvas Handlers
+  const handleSelectCanvasElement = useCallback((id: string | null) => {
+    setSelectedCanvasElementId(id)
+    // TODO: Sync with PropertiesPanel
+  }, [])
+
+  const handleUpdateCanvasElement = useCallback((id: string, updates: Partial<CanvasElement>) => {
+    setCanvasScene(prev => ({
+      ...prev,
+      elements: prev.elements.map(el =>
+        el.id === id ? { ...el, ...updates } : el
+      )
+    }))
+  }, [])
+
+  const handleDeleteCanvasElement = useCallback((id: string) => {
+    setCanvasScene(prev => ({
+      ...prev,
+      elements: prev.elements.filter(el => el.id !== id)
+    }))
+    setSelectedCanvasElementId(null)
+  }, [])
+
+  const handleAddCanvasElement = useCallback((element: Omit<CanvasElement, 'id'>) => {
+    const newElement: CanvasElement = {
+      ...element,
+      id: `element-${Date.now()}`
+    }
+
+    setCanvasScene(prev => ({
+      ...prev,
+      elements: [...prev.elements, newElement]
+    }))
+  }, [])
 
   return (
     <div className="h-screen flex flex-col bg-background">
@@ -280,17 +351,16 @@ export default function StudioProPage() {
                   </div>
                 </div>
 
-                {/* Canvas Area */}
-                <div className="flex-1 flex items-center justify-center p-8">
-                  <div className="relative w-full max-w-4xl aspect-video bg-black rounded-lg shadow-2xl overflow-hidden">
-                    <div className="absolute inset-0 flex items-center justify-center text-white">
-                      <div className="text-center">
-                        <FileVideo className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                        <p className="text-sm opacity-75">Canvas Preview</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                {/* Interactive Canvas */}
+                <InteractiveCanvas
+                  scene={canvasScene}
+                  selectedElementId={selectedCanvasElementId}
+                  onSelectElement={handleSelectCanvasElement}
+                  onUpdateElement={handleUpdateCanvasElement}
+                  onDeleteElement={handleDeleteCanvasElement}
+                  onAddElement={handleAddCanvasElement}
+                  className="flex-1"
+                />
               </div>
             </ResizablePanel>
 
