@@ -18,6 +18,7 @@ import { AvatarLibrary } from './AvatarLibrary';
 import { ConversationBuilder } from './ConversationBuilder';
 import { Avatar3DPreview } from './Avatar3DPreview';
 import { KeyboardShortcutsDialog } from './KeyboardShortcutsDialog';
+import { VideoRenderDialog } from './VideoRenderDialog';
 import { importPPTX } from '@/lib/pptx/pptx-to-scenes';
 import type { VideoProject, Track, TimelineElement } from '@/types/video-project';
 import {
@@ -84,6 +85,7 @@ export function StudioPro({ className, onSave, onExport }: StudioProProps) {
 
   // Local UI state
   const [canvasZoom, setCanvasZoom] = useState(100);
+  const [showRenderDialog, setShowRenderDialog] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Current scene
@@ -187,6 +189,10 @@ export function StudioPro({ className, onSave, onExport }: StudioProProps) {
   }, [videoProject, onSave]);
 
   const handleExport = useCallback(() => {
+    // Open render dialog instead of direct export
+    setShowRenderDialog(true);
+
+    // Also call onExport callback if provided
     if (videoProject && onExport) {
       onExport(videoProject);
     }
@@ -629,6 +635,13 @@ export function StudioPro({ className, onSave, onExport }: StudioProProps) {
           )}
         </div>
       </div>
+
+      {/* Video Render Dialog */}
+      <VideoRenderDialog
+        open={showRenderDialog}
+        onOpenChange={setShowRenderDialog}
+        project={videoProject}
+      />
     </div>
   );
 }
