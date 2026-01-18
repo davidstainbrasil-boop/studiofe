@@ -33,6 +33,7 @@ import { PropertiesPanel, ElementProperties } from '@components/studio-unified/P
 import { InteractiveCanvas, CanvasElement, CanvasScene } from '@components/studio-unified/InteractiveCanvas'
 import { ShortcutsHelpPanel } from '@components/studio-unified/ShortcutsHelpPanel'
 import { useKeyboardShortcuts, COMMON_SHORTCUTS } from '@hooks/useKeyboardShortcuts'
+import { useHistory } from '@hooks/useHistory'
 
 // ============================================================================
 // TYPES
@@ -62,14 +63,24 @@ export default function StudioProPage() {
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false)
   const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false)
 
-  // Canvas State
-  const [canvasScene, setCanvasScene] = useState<CanvasScene>({
-    id: 'default',
-    name: 'Default Scene',
-    elements: [],
-    backgroundColor: '#1a1a1a',
-    width: 1920,
-    height: 1080
+  // Canvas State with History
+  const {
+    state: canvasScene,
+    setState: setCanvasScene,
+    undo,
+    redo,
+    canUndo,
+    canRedo
+  } = useHistory<CanvasScene>({
+    initialState: {
+      id: 'default',
+      name: 'Default Scene',
+      elements: [],
+      backgroundColor: '#1a1a1a',
+      width: 1920,
+      height: 1080
+    },
+    maxHistorySize: 50
   })
   const [selectedCanvasElementId, setSelectedCanvasElementId] = useState<string | null>(null)
   const [showShortcuts, setShowShortcuts] = useState(false)
@@ -185,6 +196,33 @@ export default function StudioProPage() {
       {
         ...COMMON_SHORTCUTS.EXPORT,
         callback: handleExport
+      },
+      {
+        ...COMMON_SHORTCUTS.UNDO,
+        callback: () => {
+          if (canUndo) {
+            undo()
+            toast.success('Undo')
+          }
+        }
+      },
+      {
+        ...COMMON_SHORTCUTS.REDO_Y,
+        callback: () => {
+          if (canRedo) {
+            redo()
+            toast.success('Redo')
+          }
+        }
+      },
+      {
+        ...COMMON_SHORTCUTS.REDO_Z,
+        callback: () => {
+          if (canRedo) {
+            redo()
+            toast.success('Redo')
+          }
+        }
       },
       {
         ...COMMON_SHORTCUTS.DELETE,
@@ -599,6 +637,15 @@ export default function StudioProPage() {
           )}
         </div>
         <div className="flex items-center gap-4">
+          {/* Undo/Redo Status */}
+          <span className={cn(!canUndo && "opacity-50")}>
+            Undo: {canUndo ? 'Ctrl+Z' : 'N/A'}
+          </span>
+          <Separator orientation="vertical" className="h-4" />
+          <span className={cn(!canRedo && "opacity-50")}>
+            Redo: {canRedo ? 'Ctrl+Y' : 'N/A'}
+          </span>
+          <Separator orientation="vertical" className="h-4" />
           <span>100% zoom</span>
           <Separator orientation="vertical" className="h-4" />
           <button
