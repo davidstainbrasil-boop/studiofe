@@ -3,103 +3,99 @@
  * Gerencia atalhos de teclado para o Studio Pro
  */
 
-import { useEffect, useCallback } from 'react'
+import { useEffect, useCallback } from 'react';
 
 export interface KeyboardShortcutConfig {
-  key: string
-  ctrl?: boolean
-  shift?: boolean
-  alt?: boolean
-  meta?: boolean
-  callback: () => void
-  description: string
-  preventDefault?: boolean
+  key: string;
+  ctrl?: boolean;
+  shift?: boolean;
+  alt?: boolean;
+  meta?: boolean;
+  callback: () => void;
+  description: string;
+  preventDefault?: boolean;
 }
 
 export interface UseKeyboardShortcutsOptions {
-  enabled?: boolean
-  shortcuts: KeyboardShortcutConfig[]
+  enabled?: boolean;
+  shortcuts: KeyboardShortcutConfig[];
 }
 
 /**
  * Hook para gerenciar keyboard shortcuts
  */
 export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions) {
-  const { enabled = true, shortcuts } = options
+  const { enabled = true, shortcuts } = options;
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
-      if (!enabled) return
+      if (!enabled) return;
 
       // Ignore if typing in input/textarea
-      const target = event.target as HTMLElement
-      if (
-        target.tagName === 'INPUT' ||
-        target.tagName === 'TEXTAREA' ||
-        target.isContentEditable
-      ) {
-        return
+      const target = event.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        return;
       }
 
       // Find matching shortcut
-      const shortcut = shortcuts.find(s => {
-        const keyMatch = s.key.toLowerCase() === event.key.toLowerCase()
-        const ctrlMatch = s.ctrl === undefined || s.ctrl === (event.ctrlKey || event.metaKey)
-        const shiftMatch = s.shift === undefined || s.shift === event.shiftKey
-        const altMatch = s.alt === undefined || s.alt === event.altKey
-        const metaMatch = s.meta === undefined || s.meta === event.metaKey
+      const shortcut = shortcuts.find((s) => {
+        const keyMatch = s.key.toLowerCase() === event.key.toLowerCase();
+        const ctrlMatch = s.ctrl === undefined || s.ctrl === (event.ctrlKey || event.metaKey);
+        const shiftMatch = s.shift === undefined || s.shift === event.shiftKey;
+        const altMatch = s.alt === undefined || s.alt === event.altKey;
+        const metaMatch = s.meta === undefined || s.meta === event.metaKey;
 
-        return keyMatch && ctrlMatch && shiftMatch && altMatch && metaMatch
-      })
+        return keyMatch && ctrlMatch && shiftMatch && altMatch && metaMatch;
+      });
 
       if (shortcut) {
         if (shortcut.preventDefault !== false) {
-          event.preventDefault()
+          event.preventDefault();
         }
-        shortcut.callback()
+        shortcut.callback();
       }
     },
-    [enabled, shortcuts]
-  )
+    [enabled, shortcuts],
+  );
 
   useEffect(() => {
     if (enabled) {
-      window.addEventListener('keydown', handleKeyDown)
-      return () => window.removeEventListener('keydown', handleKeyDown)
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
     }
-  }, [enabled, handleKeyDown])
+  }, [enabled, handleKeyDown]);
 
   return {
-    shortcuts: shortcuts.map(s => ({
+    shortcuts: shortcuts.map((s) => ({
       key: s.key,
       ctrl: s.ctrl,
       shift: s.shift,
       alt: s.alt,
-      description: s.description
-    }))
-  }
+      description: s.description,
+    })),
+  };
 }
 
 /**
  * Format shortcut for display
  */
 export function formatShortcut(shortcut: Partial<KeyboardShortcutConfig>): string {
-  const parts: string[] = []
+  const parts: string[] = [];
 
   if (shortcut.ctrl || shortcut.meta) {
-    parts.push('Ctrl')
+    parts.push('Ctrl');
   }
   if (shortcut.shift) {
-    parts.push('Shift')
+    parts.push('Shift');
   }
   if (shortcut.alt) {
-    parts.push('Alt')
+    parts.push('Alt');
   }
   if (shortcut.key) {
-    parts.push(shortcut.key.toUpperCase())
+    parts.push(shortcut.key.toUpperCase());
   }
 
-  return parts.join('+')
+  return parts.join('+');
 }
 
 /**
@@ -162,9 +158,13 @@ export const COMMON_SHORTCUTS = {
   // Lock
   LOCK: { key: 'l', ctrl: true, description: 'Lock/Unlock' },
 
+  // Grouping
+  GROUP: { key: 'g', ctrl: true, description: 'Group Elements' },
+  UNGROUP: { key: 'g', ctrl: true, shift: true, description: 'Ungroup Elements' },
+
   // Help
   HELP: { key: '/', ctrl: true, description: 'Show Help' },
-  SHORTCUTS: { key: '?', ctrl: true, description: 'Show Shortcuts' }
-}
+  SHORTCUTS: { key: '?', ctrl: true, description: 'Show Shortcuts' },
+};
 
-export default useKeyboardShortcuts
+export default useKeyboardShortcuts;

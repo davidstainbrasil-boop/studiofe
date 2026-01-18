@@ -46,6 +46,7 @@ import {
 } from '@components/studio-unified/InteractiveCanvas';
 import { ShortcutsHelpPanel } from '@components/studio-unified/ShortcutsHelpPanel';
 import { LayersPanel } from '@components/studio-unified/LayersPanel';
+import { AlignmentToolbar } from '@components/studio-unified/AlignmentToolbar';
 import { useKeyboardShortcuts, COMMON_SHORTCUTS } from '@hooks/useKeyboardShortcuts';
 import { useHistory } from '@hooks/useHistory';
 
@@ -103,6 +104,7 @@ export default function StudioProPage() {
   const [selectedCanvasElementIds, setSelectedCanvasElementIds] = useState<string[]>([]);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [clipboard, setClipboard] = useState<CanvasElement[]>([]); // Clipboard for copy/paste
+  const [elementGroups, setElementGroups] = useState<Map<string, string[]>>(new Map()); // groupId -> elementIds[]
 
   // Handlers
   const handlePlay = useCallback(() => {
@@ -408,6 +410,251 @@ export default function StudioProPage() {
     toast.success(`Cut ${elementsToCut.length} element(s)`);
   }, [selectedCanvasElementIds, canvasScene.elements]);
 
+  // Grouping Handlers
+  const handleGroupElements = useCallback(() => {
+    if (selectedCanvasElementIds.length < 2) {
+      toast.error('Select at least 2 elements to group');
+      return;
+    }
+
+    const groupId = `group-${Date.now()}`;
+    setElementGroups((prev) => {
+      const newGroups = new Map(prev);
+      newGroups.set(groupId, [...selectedCanvasElementIds]);
+      return newGroups;
+    });
+    toast.success(`Grouped ${selectedCanvasElementIds.length} elements`);
+  }, [selectedCanvasElementIds]);
+
+  const handleUngroupElements = useCallback(() => {
+    if (selectedCanvasElementIds.length === 0) {
+      toast.error('No elements selected to ungroup');
+      return;
+    }
+
+    // Find groups that contain any of the selected elements
+    const groupsToRemove: string[] = [];
+    elementGroups.forEach((elementIds, groupId) => {
+      if (elementIds.some((id) => selectedCanvasElementIds.includes(id))) {
+        groupsToRemove.push(groupId);
+      }
+    });
+
+    if (groupsToRemove.length === 0) {
+      toast.error('Selected elements are not grouped');
+      return;
+    }
+
+    setElementGroups((prev) => {
+      const newGroups = new Map(prev);
+      groupsToRemove.forEach((groupId) => newGroups.delete(groupId));
+      return newGroups;
+    });
+    toast.success(`Ungrouped ${groupsToRemove.length} group(s)`);
+  }, [selectedCanvasElementIds, elementGroups]);
+
+  // Alignment Handlers
+  const handleAlignLeft = useCallback(() => {
+    if (selectedCanvasElementIds.length < 2) {
+      toast.error('Select at least 2 elements to align');
+      return;
+    }
+
+    const selectedElements = canvasScene.elements.filter((el) =>
+      selectedCanvasElementIds.includes(el.id),
+    );
+    const minX = Math.min(...selectedElements.map((el) => el.x));
+
+    setCanvasScene((prev) => ({
+      ...prev,
+      elements: prev.elements.map((el) =>
+        selectedCanvasElementIds.includes(el.id) ? { ...el, x: minX } : el,
+      ),
+    }));
+    toast.success('Aligned left');
+  }, [selectedCanvasElementIds, canvasScene.elements]);
+
+  const handleAlignCenter = useCallback(() => {
+    if (selectedCanvasElementIds.length < 2) {
+      toast.error('Select at least 2 elements to align');
+      return;
+    }
+
+    const selectedElements = canvasScene.elements.filter((el) =>
+      selectedCanvasElementIds.includes(el.id),
+    );
+    const minX = Math.min(...selectedElements.map((el) => el.x));
+    const maxX = Math.max(...selectedElements.map((el) => el.x + el.width));
+    const centerX = (minX + maxX) / 2;
+
+    setCanvasScene((prev) => ({
+      ...prev,
+      elements: prev.elements.map((el) =>
+        selectedCanvasElementIds.includes(el.id) ? { ...el, x: centerX - el.width / 2 } : el,
+      ),
+    }));
+    toast.success('Aligned center');
+  }, [selectedCanvasElementIds, canvasScene.elements]);
+
+  const handleAlignRight = useCallback(() => {
+    if (selectedCanvasElementIds.length < 2) {
+      toast.error('Select at least 2 elements to align');
+      return;
+    }
+
+    const selectedElements = canvasScene.elements.filter((el) =>
+      selectedCanvasElementIds.includes(el.id),
+    );
+    const maxX = Math.max(...selectedElements.map((el) => el.x + el.width));
+
+    setCanvasScene((prev) => ({
+      ...prev,
+      elements: prev.elements.map((el) =>
+        selectedCanvasElementIds.includes(el.id) ? { ...el, x: maxX - el.width } : el,
+      ),
+    }));
+    toast.success('Aligned right');
+  }, [selectedCanvasElementIds, canvasScene.elements]);
+
+  const handleAlignTop = useCallback(() => {
+    if (selectedCanvasElementIds.length < 2) {
+      toast.error('Select at least 2 elements to align');
+      return;
+    }
+
+    const selectedElements = canvasScene.elements.filter((el) =>
+      selectedCanvasElementIds.includes(el.id),
+    );
+    const minY = Math.min(...selectedElements.map((el) => el.y));
+
+    setCanvasScene((prev) => ({
+      ...prev,
+      elements: prev.elements.map((el) =>
+        selectedCanvasElementIds.includes(el.id) ? { ...el, y: minY } : el,
+      ),
+    }));
+    toast.success('Aligned top');
+  }, [selectedCanvasElementIds, canvasScene.elements]);
+
+  const handleAlignMiddle = useCallback(() => {
+    if (selectedCanvasElementIds.length < 2) {
+      toast.error('Select at least 2 elements to align');
+      return;
+    }
+
+    const selectedElements = canvasScene.elements.filter((el) =>
+      selectedCanvasElementIds.includes(el.id),
+    );
+    const minY = Math.min(...selectedElements.map((el) => el.y));
+    const maxY = Math.max(...selectedElements.map((el) => el.y + el.height));
+    const centerY = (minY + maxY) / 2;
+
+    setCanvasScene((prev) => ({
+      ...prev,
+      elements: prev.elements.map((el) =>
+        selectedCanvasElementIds.includes(el.id) ? { ...el, y: centerY - el.height / 2 } : el,
+      ),
+    }));
+    toast.success('Aligned middle');
+  }, [selectedCanvasElementIds, canvasScene.elements]);
+
+  const handleAlignBottom = useCallback(() => {
+    if (selectedCanvasElementIds.length < 2) {
+      toast.error('Select at least 2 elements to align');
+      return;
+    }
+
+    const selectedElements = canvasScene.elements.filter((el) =>
+      selectedCanvasElementIds.includes(el.id),
+    );
+    const maxY = Math.max(...selectedElements.map((el) => el.y + el.height));
+
+    setCanvasScene((prev) => ({
+      ...prev,
+      elements: prev.elements.map((el) =>
+        selectedCanvasElementIds.includes(el.id) ? { ...el, y: maxY - el.height } : el,
+      ),
+    }));
+    toast.success('Aligned bottom');
+  }, [selectedCanvasElementIds, canvasScene.elements]);
+
+  // Distribution Handlers
+  const handleDistributeHorizontally = useCallback(() => {
+    if (selectedCanvasElementIds.length < 3) {
+      toast.error('Select at least 3 elements to distribute');
+      return;
+    }
+
+    const selectedElements = canvasScene.elements
+      .filter((el) => selectedCanvasElementIds.includes(el.id))
+      .sort((a, b) => a.x - b.x);
+
+    const minX = selectedElements[0].x;
+    const maxX = selectedElements[selectedElements.length - 1].x;
+    const totalWidth = selectedElements.reduce((sum, el) => sum + el.width, 0);
+    const availableSpace =
+      maxX - minX - totalWidth + selectedElements[selectedElements.length - 1].width;
+    const spacing = availableSpace / (selectedElements.length - 1);
+
+    let currentX = minX;
+    const updates = new Map<string, number>();
+
+    selectedElements.forEach((el, index) => {
+      if (index > 0) {
+        currentX += spacing;
+      }
+      updates.set(el.id, currentX);
+      currentX += el.width;
+    });
+
+    setCanvasScene((prev) => ({
+      ...prev,
+      elements: prev.elements.map((el) => {
+        const newX = updates.get(el.id);
+        return newX !== undefined ? { ...el, x: newX } : el;
+      }),
+    }));
+    toast.success('Distributed horizontally');
+  }, [selectedCanvasElementIds, canvasScene.elements]);
+
+  const handleDistributeVertically = useCallback(() => {
+    if (selectedCanvasElementIds.length < 3) {
+      toast.error('Select at least 3 elements to distribute');
+      return;
+    }
+
+    const selectedElements = canvasScene.elements
+      .filter((el) => selectedCanvasElementIds.includes(el.id))
+      .sort((a, b) => a.y - b.y);
+
+    const minY = selectedElements[0].y;
+    const maxY = selectedElements[selectedElements.length - 1].y;
+    const totalHeight = selectedElements.reduce((sum, el) => sum + el.height, 0);
+    const availableSpace =
+      maxY - minY - totalHeight + selectedElements[selectedElements.length - 1].height;
+    const spacing = availableSpace / (selectedElements.length - 1);
+
+    let currentY = minY;
+    const updates = new Map<string, number>();
+
+    selectedElements.forEach((el, index) => {
+      if (index > 0) {
+        currentY += spacing;
+      }
+      updates.set(el.id, currentY);
+      currentY += el.height;
+    });
+
+    setCanvasScene((prev) => ({
+      ...prev,
+      elements: prev.elements.map((el) => {
+        const newY = updates.get(el.id);
+        return newY !== undefined ? { ...el, y: newY } : el;
+      }),
+    }));
+    toast.success('Distributed vertically');
+  }, [selectedCanvasElementIds, canvasScene.elements]);
+
   // Keyboard Shortcuts
   useKeyboardShortcuts({
     shortcuts: [
@@ -516,6 +763,15 @@ export default function StudioProPage() {
       {
         ...COMMON_SHORTCUTS.SEND_BACKWARD,
         callback: handleSendBackward,
+      },
+      // Grouping
+      {
+        ...COMMON_SHORTCUTS.GROUP,
+        callback: handleGroupElements,
+      },
+      {
+        ...COMMON_SHORTCUTS.UNGROUP,
+        callback: handleUngroupElements,
       },
       {
         ...COMMON_SHORTCUTS.HELP,
@@ -740,6 +996,25 @@ export default function StudioProPage() {
                   </div>
 
                   <div className="flex items-center gap-2">
+                    {/* Alignment Toolbar */}
+                    {selectedCanvasElementIds.length > 0 && (
+                      <>
+                        <AlignmentToolbar
+                          selectedCount={selectedCanvasElementIds.length}
+                          onAlignLeft={handleAlignLeft}
+                          onAlignCenter={handleAlignCenter}
+                          onAlignRight={handleAlignRight}
+                          onAlignTop={handleAlignTop}
+                          onAlignMiddle={handleAlignMiddle}
+                          onAlignBottom={handleAlignBottom}
+                          onDistributeHorizontally={handleDistributeHorizontally}
+                          onDistributeVertically={handleDistributeVertically}
+                          onGroup={handleGroupElements}
+                          onUngroup={handleUngroupElements}
+                        />
+                        <Separator orientation="vertical" className="h-6" />
+                      </>
+                    )}
                     <Button variant="ghost" size="icon">
                       <Maximize className="h-4 w-4" />
                     </Button>
