@@ -20,10 +20,8 @@ import {
   Play,
   Pause,
   SkipBack,
-  SkipForward,
   ZoomIn,
   ZoomOut,
-  Grid3x3,
   Lock,
   Unlock,
   Eye,
@@ -77,15 +75,12 @@ export function Timeline({
   onSceneChange,
   onTrackUpdate,
   onElementSelect,
-  onElementUpdate,
   onPlayPause,
   onStop,
   className,
 }: TimelineProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [draggedElement, setDraggedElement] = useState<string | null>(null);
   const [zoom, setZoom] = useState(timelineState.zoom);
 
   // Calculate total timeline width
@@ -154,17 +149,12 @@ export function Timeline({
         }
       }
     },
-    [currentScene.duration, zoom, timelineWidth]
+    [currentScene.duration, zoom, timelineWidth],
   );
 
   // Render single track
   const renderTrack = useCallback(
-    (
-      ctx: CanvasRenderingContext2D,
-      track: Track,
-      trackIndex: number,
-      y: number
-    ) => {
+    (ctx: CanvasRenderingContext2D, track: Track, trackIndex: number, y: number) => {
       // Track header background
       ctx.fillStyle = track.locked ? '#1a1a1a' : '#0f0f0f';
       ctx.fillRect(0, y, TRACK_HEADER_WIDTH, TRACK_HEIGHT);
@@ -196,17 +186,12 @@ export function Timeline({
         renderTrackElement(ctx, element, track, y);
       });
     },
-    [timelineWidth]
+    [timelineWidth],
   );
 
   // Render single timeline element
   const renderTrackElement = useCallback(
-    (
-      ctx: CanvasRenderingContext2D,
-      element: TimelineElement,
-      track: Track,
-      trackY: number
-    ) => {
+    (ctx: CanvasRenderingContext2D, element: TimelineElement, track: Track, trackY: number) => {
       const x = TRACK_HEADER_WIDTH + element.startTime * zoom;
       const width = element.duration * zoom;
       const elementHeight = TRACK_HEIGHT - 10;
@@ -247,7 +232,7 @@ export function Timeline({
         renderWaveform(ctx, element, x, elementY, width, elementHeight);
       }
     },
-    [zoom, timelineState.selectedElements]
+    [zoom, timelineState.selectedElements],
   );
 
   // Render audio waveform
@@ -258,7 +243,7 @@ export function Timeline({
       x: number,
       y: number,
       width: number,
-      height: number
+      height: number,
     ) => {
       const waveformData = element.content.waveformData || [];
       const step = Math.max(1, Math.floor(waveformData.length / width));
@@ -279,7 +264,7 @@ export function Timeline({
 
       ctx.stroke();
     },
-    []
+    [],
   );
 
   // Render playback head (current time indicator)
@@ -303,7 +288,7 @@ export function Timeline({
       ctx.closePath();
       ctx.fill();
     },
-    [timelineState.currentTime, zoom]
+    [timelineState.currentTime, zoom],
   );
 
   // Handle canvas click (seek/select)
@@ -330,18 +315,14 @@ export function Timeline({
       if (track) {
         const clickTime = (x - TRACK_HEADER_WIDTH) / zoom;
         const clickedElement = track.elements.find(
-          (el) => clickTime >= el.startTime && clickTime <= el.endTime
+          (el) => clickTime >= el.startTime && clickTime <= el.endTime,
         );
 
         if (clickedElement) {
           const isMultiSelect = e.shiftKey || e.metaKey || e.ctrlKey;
           if (isMultiSelect) {
-            const newSelection = timelineState.selectedElements.includes(
-              clickedElement.id
-            )
-              ? timelineState.selectedElements.filter(
-                  (id) => id !== clickedElement.id
-                )
+            const newSelection = timelineState.selectedElements.includes(clickedElement.id)
+              ? timelineState.selectedElements.filter((id) => id !== clickedElement.id)
               : [...timelineState.selectedElements, clickedElement.id];
             onElementSelect(newSelection);
           } else {
@@ -352,13 +333,7 @@ export function Timeline({
         }
       }
     },
-    [
-      zoom,
-      currentScene,
-      timelineState.selectedElements,
-      onTimeUpdate,
-      onElementSelect,
-    ]
+    [zoom, currentScene, timelineState.selectedElements, onTimeUpdate, onElementSelect],
   );
 
   // Zoom controls
@@ -381,7 +356,7 @@ export function Timeline({
         });
       }
     },
-    [currentScene, onTrackUpdate]
+    [currentScene, onTrackUpdate],
   );
 
   // Toggle track visibility
@@ -395,7 +370,7 @@ export function Timeline({
         });
       }
     },
-    [currentScene, onTrackUpdate]
+    [currentScene, onTrackUpdate],
   );
 
   // Toggle track mute
@@ -409,7 +384,7 @@ export function Timeline({
         });
       }
     },
-    [currentScene, onTrackUpdate]
+    [currentScene, onTrackUpdate],
   );
 
   // Re-render canvas when dependencies change
@@ -423,13 +398,7 @@ export function Timeline({
       <div className="flex items-center gap-2 px-4 py-2 bg-gray-950 border-b border-gray-800">
         {/* Playback Controls */}
         <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onStop}
-            className="h-8 w-8 p-0"
-            title="Stop"
-          >
+          <Button variant="ghost" size="sm" onClick={onStop} className="h-8 w-8 p-0" title="Stop">
             <SkipBack className="h-4 w-4" />
           </Button>
           <Button
@@ -439,11 +408,7 @@ export function Timeline({
             className="h-8 w-8 p-0"
             title={timelineState.isPlaying ? 'Pause' : 'Play'}
           >
-            {timelineState.isPlaying ? (
-              <Pause className="h-4 w-4" />
-            ) : (
-              <Play className="h-4 w-4" />
-            )}
+            {timelineState.isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
           </Button>
         </div>
 
@@ -455,7 +420,8 @@ export function Timeline({
           {Math.floor(timelineState.currentTime % 60)
             .toString()
             .padStart(2, '0')}
-          .{Math.floor((timelineState.currentTime % 1) * 100)
+          .
+          {Math.floor((timelineState.currentTime % 1) * 100)
             .toString()
             .padStart(2, '0')}{' '}
           / {Math.floor(currentScene.duration / 60)}:
@@ -496,9 +462,7 @@ export function Timeline({
           >
             <ZoomIn className="h-4 w-4" />
           </Button>
-          <span className="text-xs text-gray-400 min-w-[60px]">
-            {zoom}px/s
-          </span>
+          <span className="text-xs text-gray-400 min-w-[60px]">{zoom}px/s</span>
         </div>
 
         <div className="flex-1" />
@@ -526,18 +490,11 @@ export function Timeline({
         className="flex-1 overflow-auto bg-black"
         style={{ maxHeight: '400px' }}
       >
-        <canvas
-          ref={canvasRef}
-          onClick={handleCanvasClick}
-          className="cursor-crosshair"
-        />
+        <canvas ref={canvasRef} onClick={handleCanvasClick} className="cursor-crosshair" />
       </div>
 
       {/* Track Controls (Overlaid on left side) */}
-      <div
-        className="absolute left-0 mt-[50px] pointer-events-none"
-        style={{ top: RULER_HEIGHT }}
-      >
+      <div className="absolute left-0 mt-[50px] pointer-events-none" style={{ top: RULER_HEIGHT }}>
         {currentScene.tracks.map((track, index) => (
           <div
             key={track.id}
@@ -555,11 +512,7 @@ export function Timeline({
               className="h-6 w-6 p-0"
               title={track.locked ? 'Unlock Track' : 'Lock Track'}
             >
-              {track.locked ? (
-                <Lock className="h-3 w-3" />
-              ) : (
-                <Unlock className="h-3 w-3" />
-              )}
+              {track.locked ? <Lock className="h-3 w-3" /> : <Unlock className="h-3 w-3" />}
             </Button>
             <Button
               variant="ghost"
@@ -568,11 +521,7 @@ export function Timeline({
               className="h-6 w-6 p-0"
               title={track.visible ? 'Hide Track' : 'Show Track'}
             >
-              {track.visible ? (
-                <Eye className="h-3 w-3" />
-              ) : (
-                <EyeOff className="h-3 w-3" />
-              )}
+              {track.visible ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
             </Button>
             {(track.type === 'audio' || track.type === 'video') && (
               <Button
@@ -582,11 +531,7 @@ export function Timeline({
                 className="h-6 w-6 p-0"
                 title={track.muted ? 'Unmute Track' : 'Mute Track'}
               >
-                {track.muted ? (
-                  <VolumeX className="h-3 w-3" />
-                ) : (
-                  <Volume2 className="h-3 w-3" />
-                )}
+                {track.muted ? <VolumeX className="h-3 w-3" /> : <Volume2 className="h-3 w-3" />}
               </Button>
             )}
           </div>

@@ -92,7 +92,9 @@
       "Bash(printf:*)",
       "Bash(vercel:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(npx next lint:*)",
+      "Bash(git stash pop:*)"
     ],
     "deny": [],
     "ask": []

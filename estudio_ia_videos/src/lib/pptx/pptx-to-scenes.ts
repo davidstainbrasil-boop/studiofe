@@ -12,7 +12,6 @@ import type {
   Track,
   TimelineElement,
   PPTXImportResult,
-  TrackType,
 } from '@/types/video-project';
 import type { CanvasElement } from '@/types/canvas';
 
@@ -61,8 +60,6 @@ interface PPTXShape {
 }
 
 const DEFAULT_SLIDE_DURATION = 5; // seconds
-const DEFAULT_CANVAS_WIDTH = 1920;
-const DEFAULT_CANVAS_HEIGHT = 1080;
 
 /**
  * Import PPTX file and convert to VideoProject
@@ -117,7 +114,9 @@ export async function importPPTX(file: File): Promise<PPTXImportResult> {
       elementsExtracted,
     };
   } catch (error) {
-    warnings.push(`Failed to import PPTX: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    warnings.push(
+      `Failed to import PPTX: ${error instanceof Error ? error.message : 'Unknown error'}`,
+    );
 
     // Return empty project on error
     return {
@@ -132,15 +131,12 @@ export async function importPPTX(file: File): Promise<PPTXImportResult> {
 /**
  * Parse PPTX slides from ZIP
  */
-async function parsePPTXSlides(
-  zip: JSZip,
-  warnings: string[]
-): Promise<PPTXSlide[]> {
+async function parsePPTXSlides(zip: JSZip, warnings: string[]): Promise<PPTXSlide[]> {
   const slides: PPTXSlide[] = [];
 
   // Find all slide XML files
   const slideFiles = Object.keys(zip.files).filter(
-    (path) => path.startsWith('ppt/slides/slide') && path.endsWith('.xml')
+    (path) => path.startsWith('ppt/slides/slide') && path.endsWith('.xml'),
   );
 
   slideFiles.sort((a, b) => {
@@ -162,7 +158,7 @@ async function parsePPTXSlides(
       slides.push(slide);
     } catch (error) {
       warnings.push(
-        `Error parsing slide ${i + 1}: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Error parsing slide ${i + 1}: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
     }
   }
@@ -242,7 +238,7 @@ function parseSlideXML(xml: string, index: number): PPTXSlide {
 async function convertSlideToScene(
   slide: PPTXSlide,
   zip: JSZip,
-  sceneIndex: number
+  sceneIndex: number,
 ): Promise<Scene> {
   const elements: CanvasElement[] = [];
   const tracks: Track[] = [];
@@ -440,7 +436,7 @@ export async function previewPPTX(file: File): Promise<{
     const zip = await JSZip.loadAsync(arrayBuffer);
 
     const slideFiles = Object.keys(zip.files).filter(
-      (path) => path.startsWith('ppt/slides/slide') && path.endsWith('.xml')
+      (path) => path.startsWith('ppt/slides/slide') && path.endsWith('.xml'),
     );
 
     // For now, just return count (thumbnail generation would require rendering)
