@@ -80,6 +80,7 @@ interface CanvasElementNodeProps {
   isSelected: boolean;
   onSelect: (e?: React.MouseEvent | Konva.KonvaEventObject<MouseEvent>) => void;
   onChange: (updates: Partial<CanvasElement>) => void;
+  onDoubleClick?: () => void;
   snapConfig?: {
     snapToGrid: boolean;
     snapToElements: boolean;
@@ -97,6 +98,7 @@ const CanvasElementNode: React.FC<CanvasElementNodeProps> = ({
   isSelected,
   onSelect,
   onChange,
+  onDoubleClick,
   snapConfig,
   onShowGuides,
   onHideGuides,
@@ -178,6 +180,7 @@ const CanvasElementNode: React.FC<CanvasElementNodeProps> = ({
   const commonProps = {
     onClick: onSelect,
     onTap: onSelect,
+    onDblClick: element.type === 'text' ? onDoubleClick : undefined,
     ref: shapeRef,
     draggable: !element.locked && element.draggable,
     visible: element.visible,
@@ -261,6 +264,7 @@ export interface InteractiveCanvasProps {
   onUpdateElement?: (id: string, updates: Partial<CanvasElement>) => void;
   onDeleteElement?: (id: string) => void;
   onAddElement?: (element: Omit<CanvasElement, 'id'>) => void;
+  onDoubleClickElement?: (id: string, element: CanvasElement) => void;
   className?: string;
 }
 
@@ -271,6 +275,7 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
   onUpdateElement,
   onDeleteElement,
   onAddElement,
+  onDoubleClickElement,
   className,
 }) => {
   // State
@@ -625,6 +630,7 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
                       onSelectElement?.(element.id, multiSelect);
                     }}
                     onChange={(updates) => onUpdateElement?.(element.id, updates)}
+                    onDoubleClick={() => onDoubleClickElement?.(element.id, element)}
                     snapConfig={{
                       snapToGrid,
                       snapToElements,

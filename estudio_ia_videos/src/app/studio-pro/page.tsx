@@ -369,17 +369,69 @@ export default function StudioProPage() {
     toast.success('Deselected all');
   }, []);
 
-  const handleAddCanvasElement = useCallback((element: Omit<CanvasElement, 'id'>) => {
-    const newElement: CanvasElement = {
-      ...element,
-      id: `element-${Date.now()}`,
-    };
+  const handleAddCanvasElement = useCallback(
+    (element: Omit<CanvasElement, 'id'>) => {
+      const newElement: CanvasElement = {
+        ...element,
+        id: `element-${Date.now()}`,
+      };
 
-    setCanvasScene((prev) => ({
-      ...prev,
-      elements: [...prev.elements, newElement],
-    }));
-  }, []);
+      setCanvasScene((prev) => ({
+        ...prev,
+        elements: [...prev.elements, newElement],
+      }));
+
+      // Auto-select the new element
+      setSelectedCanvasElementIds([newElement.id]);
+
+      // Convert to properties and open Properties Panel
+      const properties = canvasElementToProperties(newElement);
+      setSelectedElement(properties);
+      setRightPanelTab('properties');
+    },
+    [canvasElementToProperties],
+  );
+
+  // Text creation handler
+  const handleAddText = useCallback(
+    (template: { text: string; fontSize: number; fill: string; fontWeight?: number }) => {
+      handleAddCanvasElement({
+        type: 'text',
+        name: 'Text',
+        text: template.text,
+        fill: template.fill,
+        x: canvasScene.width / 2 - 150,
+        y: canvasScene.height / 2 - 30,
+        width: 300,
+        height: 60,
+        rotation: 0,
+        scaleX: 1,
+        scaleY: 1,
+        opacity: 1,
+        locked: false,
+        visible: true,
+        draggable: true,
+        zIndex: canvasScene.elements.length,
+      });
+      toast.success('Text added to canvas');
+    },
+    [handleAddCanvasElement, canvasScene.width, canvasScene.height, canvasScene.elements.length],
+  );
+
+  // Double-click text element handler
+  const handleDoubleClickTextElement = useCallback(
+    (id: string, element: CanvasElement) => {
+      if (element.type === 'text') {
+        // Select the element and open Properties Panel to edit
+        setSelectedCanvasElementIds([id]);
+        const properties = canvasElementToProperties(element);
+        setSelectedElement(properties);
+        setRightPanelTab('properties');
+        toast.info('Edit text in Properties Panel →');
+      }
+    },
+    [canvasElementToProperties],
+  );
 
   const handleMoveSelectedElements = useCallback(
     (dx: number, dy: number) => {
@@ -1166,12 +1218,130 @@ export default function StudioProPage() {
                 </div>
               </TabsContent>
 
-              <TabsContent value="text" className="flex-1 m-0">
-                <div className="flex items-center justify-center h-full text-muted-foreground">
-                  <div className="text-center">
-                    <Type className="h-12 w-12 mx-auto mb-4" />
-                    <p className="text-sm">Text Templates</p>
-                    <p className="text-xs">Coming soon</p>
+              <TabsContent value="text" className="flex-1 m-0 overflow-y-auto">
+                <div className="p-4 space-y-4">
+                  {/* Add Text Button */}
+                  <Button
+                    onClick={() =>
+                      handleAddText({
+                        text: 'Click to edit',
+                        fontSize: 32,
+                        fill: '#ffffff',
+                        fontWeight: 600,
+                      })
+                    }
+                    className="w-full"
+                    variant="default"
+                  >
+                    <Type className="h-4 w-4 mr-2" />
+                    Add Text
+                  </Button>
+
+                  {/* Text Templates */}
+                  <div className="space-y-2">
+                    <Label className="text-xs font-semibold">Quick Templates</Label>
+                    <div className="grid gap-2">
+                      {/* Heading Template */}
+                      <Button
+                        variant="outline"
+                        className="h-auto py-3 px-3 justify-start"
+                        onClick={() =>
+                          handleAddText({
+                            text: 'Your Heading Here',
+                            fontSize: 48,
+                            fill: '#ffffff',
+                            fontWeight: 700,
+                          })
+                        }
+                      >
+                        <div className="text-left">
+                          <div className="text-sm font-bold">Heading</div>
+                          <div className="text-xs text-muted-foreground">Large, bold title</div>
+                        </div>
+                      </Button>
+
+                      {/* Subtitle Template */}
+                      <Button
+                        variant="outline"
+                        className="h-auto py-3 px-3 justify-start"
+                        onClick={() =>
+                          handleAddText({
+                            text: 'Your subtitle text',
+                            fontSize: 28,
+                            fill: '#cccccc',
+                            fontWeight: 500,
+                          })
+                        }
+                      >
+                        <div className="text-left">
+                          <div className="text-sm font-medium">Subtitle</div>
+                          <div className="text-xs text-muted-foreground">Medium secondary text</div>
+                        </div>
+                      </Button>
+
+                      {/* Body Text Template */}
+                      <Button
+                        variant="outline"
+                        className="h-auto py-3 px-3 justify-start"
+                        onClick={() =>
+                          handleAddText({
+                            text: 'Your body text here',
+                            fontSize: 20,
+                            fill: '#e0e0e0',
+                            fontWeight: 400,
+                          })
+                        }
+                      >
+                        <div className="text-left">
+                          <div className="text-sm font-normal">Body Text</div>
+                          <div className="text-xs text-muted-foreground">
+                            Regular paragraph text
+                          </div>
+                        </div>
+                      </Button>
+
+                      {/* Call to Action Template */}
+                      <Button
+                        variant="outline"
+                        className="h-auto py-3 px-3 justify-start"
+                        onClick={() =>
+                          handleAddText({
+                            text: 'CALL TO ACTION',
+                            fontSize: 36,
+                            fill: '#fbbf24',
+                            fontWeight: 800,
+                          })
+                        }
+                      >
+                        <div className="text-left">
+                          <div className="text-sm font-bold text-yellow-400">Call to Action</div>
+                          <div className="text-xs text-muted-foreground">
+                            Attention-grabbing text
+                          </div>
+                        </div>
+                      </Button>
+
+                      {/* Caption Template */}
+                      <Button
+                        variant="outline"
+                        className="h-auto py-3 px-3 justify-start"
+                        onClick={() =>
+                          handleAddText({
+                            text: 'Caption or description',
+                            fontSize: 16,
+                            fill: '#999999',
+                            fontWeight: 300,
+                          })
+                        }
+                      >
+                        <div className="text-left">
+                          <div className="text-sm font-light">Caption</div>
+                          <div className="text-xs text-muted-foreground">
+                            Small descriptive text
+                          </div>
+                        </div>
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </TabsContent>
@@ -1294,6 +1464,7 @@ export default function StudioProPage() {
                   onUpdateElement={handleUpdateCanvasElement}
                   onDeleteElement={handleDeleteCanvasElement}
                   onAddElement={handleAddCanvasElement}
+                  onDoubleClickElement={handleDoubleClickTextElement}
                   className="flex-1"
                 />
               </div>
