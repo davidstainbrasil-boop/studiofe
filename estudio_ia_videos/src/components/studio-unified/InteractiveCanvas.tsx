@@ -71,7 +71,7 @@ export interface CanvasScene {
 interface CanvasElementNodeProps {
   element: CanvasElement
   isSelected: boolean
-  onSelect: () => void
+  onSelect: (e?: any) => void
   onChange: (updates: Partial<CanvasElement>) => void
   onDelete: () => void
 }
@@ -214,8 +214,8 @@ const CanvasElementNode: React.FC<CanvasElementNodeProps> = ({
 
 export interface InteractiveCanvasProps {
   scene?: CanvasScene
-  selectedElementId?: string
-  onSelectElement?: (id: string | null) => void
+  selectedElementIds?: string[]
+  onSelectElement?: (id: string | null, multiSelect?: boolean) => void
   onUpdateElement?: (id: string, updates: Partial<CanvasElement>) => void
   onDeleteElement?: (id: string) => void
   onAddElement?: (element: Omit<CanvasElement, 'id'>) => void
@@ -224,7 +224,7 @@ export interface InteractiveCanvasProps {
 
 export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
   scene,
-  selectedElementId,
+  selectedElementIds = [],
   onSelectElement,
   onUpdateElement,
   onDeleteElement,
@@ -296,17 +296,17 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
   }
 
   const handleDeleteSelected = () => {
-    if (selectedElementId) {
-      onDeleteElement?.(selectedElementId)
+    if (selectedElementIds.length > 0) {
+      selectedElementIds.forEach(id => onDeleteElement?.(id))
       onSelectElement?.(null)
-      toast.success('Element deleted')
+      toast.success(`Deleted ${selectedElementIds.length} element(s)`)
     }
   }
 
   const handleDuplicateSelected = () => {
-    if (selectedElementId) {
-      const element = currentScene.elements.find(e => e.id === selectedElementId)
-      if (element && onAddElement) {
+    if (selectedElementIds.length > 0 && onAddElement) {
+      const selectedElements = currentScene.elements.filter(e => selectedElementIds.includes(e.id))
+      selectedElements.forEach(element => {
         const { id, ...rest } = element
         onAddElement({
           ...rest,
@@ -314,36 +314,43 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
           y: rest.y + 20,
           name: `${rest.name} (copy)`
         })
-        toast.success('Element duplicated')
-      }
+      })
+      toast.success(`Duplicated ${selectedElements.length} element(s)`)
     }
   }
 
   const handleAlignCenter = () => {
-    if (selectedElementId && onUpdateElement) {
-      const element = currentScene.elements.find(e => e.id === selectedElementId)
-      if (element) {
-        onUpdateElement(selectedElementId, {
-          x: (1920 - element.width) / 2
-        })
-      }
+    if (selectedElementIds.length > 0 && onUpdateElement) {
+      selectedElementIds.forEach(id => {
+        const element = currentScene.elements.find(e => e.id === id)
+        if (element) {
+          onUpdateElement(id, {
+            x: (1920 - element.width) / 2
+          })
+        }
+      })
     }
   }
 
   const handleLockToggle = () => {
-    if (selectedElementId && onUpdateElement) {
-      const element = currentScene.elements.find(e => e.id === selectedElementId)
-      if (element) {
-        onUpdateElement(selectedElementId, {
-          locked: !element.locked
-        })
-        toast.success(element.locked ? 'Unlocked' : 'Locked')
-      }
+    if (selectedElementIds.length > 0 && onUpdateElement) {
+      selectedElementIds.forEach(id => {
+        const element = currentScene.elements.find(e => e.id === id)
+        if (element) {
+          onUpdateElement(id, {
+            locked: !element.locked
+          })
+        }
+      })
+      const element = currentScene.elements.find(e => e.id === selectedElementIds[0])
+      toast.success(element?.locked ? 'Unlocked' : 'Locked')
     }
   }
 
-  // Get selected element
-  const selectedElement = currentScene.elements.find(e => e.id === selectedElementId)
+  // Get first selected element for display
+  const selectedElement = selectedElementIds.length > 0
+    ? currentScene.elements.find(e => e.id === selectedElementIds[0])
+    : null
 
   return (
     <div className={cn("flex flex-col h-full bg-muted/30", className)} ref={containerRef}>
@@ -511,8 +518,11 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
                   <CanvasElementNode
                     key={element.id}
                     element={element}
-                    isSelected={element.id === selectedElementId}
-                    onSelect={() => onSelectElement?.(element.id)}
+                    isSelected={selectedElementIds.includes(element.id)}
+                    onSelect={(e?: any) => {
+                      const multiSelect = e?.evt?.shiftKey || false
+                      onSelectElement?.(element.id, multiSelect)
+                    }}
                     onChange={(updates) => onUpdateElement?.(element.id, updates)}
                     onDelete={() => onDeleteElement?.(element.id)}
                   />
@@ -557,11 +567,14 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
           <span className="text-muted-foreground">
             Canvas: {currentScene.width} × {currentScene.height}
           </span>
-          {selectedElement && (
+          {selectedElementIds.length > 0 && (
             <>
               <span className="text-muted-foreground">•</span>
               <span>
-                {selectedElement.name} ({Math.round(selectedElement.x)}, {Math.round(selectedElement.y)})
+                {selectedElementIds.length === 1 && selectedElement
+                  ? `${selectedElement.name} (${Math.round(selectedElement.x)}, ${Math.round(selectedElement.y)})`
+                  : `${selectedElementIds.length} elements selected`
+                }
               </span>
             </>
           )}

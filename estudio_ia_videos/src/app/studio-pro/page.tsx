@@ -82,7 +82,7 @@ export default function StudioProPage() {
     },
     maxHistorySize: 50
   })
-  const [selectedCanvasElementId, setSelectedCanvasElementId] = useState<string | null>(null)
+  const [selectedCanvasElementIds, setSelectedCanvasElementIds] = useState<string[]>([])
   const [showShortcuts, setShowShortcuts] = useState(false)
 
   // Handlers
@@ -148,8 +148,23 @@ export default function StudioProPage() {
   }, [selectedElement])
 
   // Canvas Handlers
-  const handleSelectCanvasElement = useCallback((id: string | null) => {
-    setSelectedCanvasElementId(id)
+  const handleSelectCanvasElement = useCallback((id: string | null, multiSelect: boolean = false) => {
+    if (id === null) {
+      setSelectedCanvasElementIds([])
+      return
+    }
+
+    if (multiSelect) {
+      // Multi-select with Shift: toggle element
+      setSelectedCanvasElementIds(prev =>
+        prev.includes(id)
+          ? prev.filter(eid => eid !== id) // Deselect if already selected
+          : [...prev, id] // Add to selection
+      )
+    } else {
+      // Single select: replace selection
+      setSelectedCanvasElementIds([id])
+    }
     // TODO: Sync with PropertiesPanel
   }, [])
 
@@ -167,7 +182,29 @@ export default function StudioProPage() {
       ...prev,
       elements: prev.elements.filter(el => el.id !== id)
     }))
-    setSelectedCanvasElementId(null)
+    setSelectedCanvasElementIds(prev => prev.filter(eid => eid !== id))
+  }, [])
+
+  const handleDeleteSelectedElements = useCallback(() => {
+    if (selectedCanvasElementIds.length === 0) return
+
+    setCanvasScene(prev => ({
+      ...prev,
+      elements: prev.elements.filter(el => !selectedCanvasElementIds.includes(el.id))
+    }))
+    setSelectedCanvasElementIds([])
+    toast.success(`Deleted ${selectedCanvasElementIds.length} element(s)`)
+  }, [selectedCanvasElementIds])
+
+  const handleSelectAllElements = useCallback(() => {
+    const allIds = canvasScene.elements.map(el => el.id)
+    setSelectedCanvasElementIds(allIds)
+    toast.success(`Selected ${allIds.length} element(s)`)
+  }, [canvasScene.elements])
+
+  const handleDeselectAll = useCallback(() => {
+    setSelectedCanvasElementIds([])
+    toast.success('Deselected all')
   }, [])
 
   const handleAddCanvasElement = useCallback((element: Omit<CanvasElement, 'id'>) => {
@@ -181,6 +218,19 @@ export default function StudioProPage() {
       elements: [...prev.elements, newElement]
     }))
   }, [])
+
+  const handleMoveSelectedElements = useCallback((dx: number, dy: number) => {
+    if (selectedCanvasElementIds.length === 0) return
+
+    setCanvasScene(prev => ({
+      ...prev,
+      elements: prev.elements.map(el =>
+        selectedCanvasElementIds.includes(el.id)
+          ? { ...el, x: el.x + dx, y: el.y + dy }
+          : el
+      )
+    }))
+  }, [selectedCanvasElementIds])
 
   // Keyboard Shortcuts
   useKeyboardShortcuts({
@@ -226,26 +276,20 @@ export default function StudioProPage() {
       },
       {
         ...COMMON_SHORTCUTS.DELETE,
-        callback: () => {
-          if (selectedCanvasElementId) {
-            handleDeleteCanvasElement(selectedCanvasElementId)
-          }
-        }
+        callback: handleDeleteSelectedElements
       },
       {
         ...COMMON_SHORTCUTS.BACKSPACE,
-        callback: () => {
-          if (selectedCanvasElementId) {
-            handleDeleteCanvasElement(selectedCanvasElementId)
-          }
-        }
+        callback: handleDeleteSelectedElements
       },
       {
         ...COMMON_SHORTCUTS.DUPLICATE,
         callback: () => {
-          if (selectedCanvasElementId) {
-            const element = canvasScene.elements.find(e => e.id === selectedCanvasElementId)
-            if (element) {
+          if (selectedCanvasElementIds.length > 0) {
+            const selectedElements = canvasScene.elements.filter(e =>
+              selectedCanvasElementIds.includes(e.id)
+            )
+            selectedElements.forEach(element => {
               const { id, ...rest } = element
               handleAddCanvasElement({
                 ...rest,
@@ -253,13 +297,18 @@ export default function StudioProPage() {
                 y: rest.y + 20,
                 name: `${rest.name} (copy)`
               })
-            }
+            })
+            toast.success(`Duplicated ${selectedElements.length} element(s)`)
           }
         }
       },
       {
         ...COMMON_SHORTCUTS.DESELECT,
-        callback: () => setSelectedCanvasElementId(null)
+        callback: handleDeselectAll
+      },
+      {
+        ...COMMON_SHORTCUTS.SELECT_ALL,
+        callback: handleSelectAllElements
       },
       {
         ...COMMON_SHORTCUTS.HELP,
@@ -269,99 +318,51 @@ export default function StudioProPage() {
         ...COMMON_SHORTCUTS.SHORTCUTS,
         callback: () => setShowShortcuts(true)
       },
-      // Arrow keys for movement
+      // Arrow keys for movement (works with multi-select)
       {
         key: 'ArrowUp',
-        callback: () => {
-          if (selectedCanvasElementId) {
-            handleUpdateCanvasElement(selectedCanvasElementId, {
-              y: canvasScene.elements.find(e => e.id === selectedCanvasElementId)!.y - 1
-            })
-          }
-        },
-        description: 'Move up 1px'
+        callback: () => handleMoveSelectedElements(0, -1),
+        description: 'Move selected up 1px'
       },
       {
         key: 'ArrowDown',
-        callback: () => {
-          if (selectedCanvasElementId) {
-            handleUpdateCanvasElement(selectedCanvasElementId, {
-              y: canvasScene.elements.find(e => e.id === selectedCanvasElementId)!.y + 1
-            })
-          }
-        },
-        description: 'Move down 1px'
+        callback: () => handleMoveSelectedElements(0, 1),
+        description: 'Move selected down 1px'
       },
       {
         key: 'ArrowLeft',
-        callback: () => {
-          if (selectedCanvasElementId) {
-            handleUpdateCanvasElement(selectedCanvasElementId, {
-              x: canvasScene.elements.find(e => e.id === selectedCanvasElementId)!.x - 1
-            })
-          }
-        },
-        description: 'Move left 1px'
+        callback: () => handleMoveSelectedElements(-1, 0),
+        description: 'Move selected left 1px'
       },
       {
         key: 'ArrowRight',
-        callback: () => {
-          if (selectedCanvasElementId) {
-            handleUpdateCanvasElement(selectedCanvasElementId, {
-              x: canvasScene.elements.find(e => e.id === selectedCanvasElementId)!.x + 1
-            })
-          }
-        },
-        description: 'Move right 1px'
+        callback: () => handleMoveSelectedElements(1, 0),
+        description: 'Move selected right 1px'
       },
-      // Shift + Arrow for fast movement
+      // Shift + Arrow for fast movement (works with multi-select)
       {
         key: 'ArrowUp',
         shift: true,
-        callback: () => {
-          if (selectedCanvasElementId) {
-            handleUpdateCanvasElement(selectedCanvasElementId, {
-              y: canvasScene.elements.find(e => e.id === selectedCanvasElementId)!.y - 10
-            })
-          }
-        },
-        description: 'Move up 10px'
+        callback: () => handleMoveSelectedElements(0, -10),
+        description: 'Move selected up 10px'
       },
       {
         key: 'ArrowDown',
         shift: true,
-        callback: () => {
-          if (selectedCanvasElementId) {
-            handleUpdateCanvasElement(selectedCanvasElementId, {
-              y: canvasScene.elements.find(e => e.id === selectedCanvasElementId)!.y + 10
-            })
-          }
-        },
-        description: 'Move down 10px'
+        callback: () => handleMoveSelectedElements(0, 10),
+        description: 'Move selected down 10px'
       },
       {
         key: 'ArrowLeft',
         shift: true,
-        callback: () => {
-          if (selectedCanvasElementId) {
-            handleUpdateCanvasElement(selectedCanvasElementId, {
-              x: canvasScene.elements.find(e => e.id === selectedCanvasElementId)!.x - 10
-            })
-          }
-        },
-        description: 'Move left 10px'
+        callback: () => handleMoveSelectedElements(-10, 0),
+        description: 'Move selected left 10px'
       },
       {
         key: 'ArrowRight',
         shift: true,
-        callback: () => {
-          if (selectedCanvasElementId) {
-            handleUpdateCanvasElement(selectedCanvasElementId, {
-              x: canvasScene.elements.find(e => e.id === selectedCanvasElementId)!.x + 10
-            })
-          }
-        },
-        description: 'Move right 10px'
+        callback: () => handleMoveSelectedElements(10, 0),
+        description: 'Move selected right 10px'
       }
     ]
   })
@@ -552,7 +553,7 @@ export default function StudioProPage() {
                 {/* Interactive Canvas */}
                 <InteractiveCanvas
                   scene={canvasScene}
-                  selectedElementId={selectedCanvasElementId}
+                  selectedElementIds={selectedCanvasElementIds}
                   onSelectElement={handleSelectCanvasElement}
                   onUpdateElement={handleUpdateCanvasElement}
                   onDeleteElement={handleDeleteCanvasElement}
@@ -627,11 +628,14 @@ export default function StudioProPage() {
           <span>Ready</span>
           <Separator orientation="vertical" className="h-4" />
           <span>1920x1080 @ 30fps</span>
-          {selectedCanvasElementId && (
+          {selectedCanvasElementIds.length > 0 && (
             <>
               <Separator orientation="vertical" className="h-4" />
               <span>
-                {canvasScene.elements.find(e => e.id === selectedCanvasElementId)?.name} selected
+                {selectedCanvasElementIds.length === 1
+                  ? canvasScene.elements.find(e => e.id === selectedCanvasElementIds[0])?.name + ' selected'
+                  : `${selectedCanvasElementIds.length} elements selected`
+                }
               </span>
             </>
           )}
