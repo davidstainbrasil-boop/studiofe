@@ -38,7 +38,7 @@ import { cn } from '@lib/utils';
 import { toast } from 'sonner';
 
 // Components
-import { ProfessionalStudioTimeline } from '@components/studio-unified/ProfessionalStudioTimeline';
+import ProfessionalStudioTimeline from '@components/studio-unified/ProfessionalStudioTimeline';
 import { AvatarLibraryPanel } from '@components/studio-unified/AvatarLibraryPanel';
 import { PropertiesPanel, ElementProperties } from '@components/studio-unified/PropertiesPanel';
 import {
@@ -1130,7 +1130,7 @@ export default function StudioProPage() {
           <Separator orientation="vertical" className="h-6" />
           <div className="flex items-center gap-2">
             <Folder className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium">{project?.name || 'Untitled Project'}</span>
+            <span className="text-sm font-medium">Untitled Project</span>
           </div>
         </div>
 

@@ -15,8 +15,8 @@ import {
   AlignStartHorizontal,
   AlignCenterHorizontal,
   AlignEndHorizontal,
-  DistributeHorizontal,
-  DistributeVertical,
+  ArrowLeftRight,
+  ArrowUpDown,
   Group,
   Ungroup,
 } from 'lucide-react';
@@ -140,7 +140,7 @@ export function AlignmentToolbar({
           disabled={!canDistribute}
           title="Distribute Horizontally (select 3+ elements)"
         >
-          <DistributeHorizontal className="h-4 w-4" />
+          <ArrowLeftRight className="h-4 w-4" />
         </Button>
         <Button
           variant="ghost"
@@ -150,7 +150,7 @@ export function AlignmentToolbar({
           disabled={!canDistribute}
           title="Distribute Vertically (select 3+ elements)"
         >
-          <DistributeVertical className="h-4 w-4" />
+          <ArrowUpDown className="h-4 w-4" />
         </Button>
       </div>
 
