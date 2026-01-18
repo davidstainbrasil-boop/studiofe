@@ -9,6 +9,7 @@
 import React, { useState, useCallback } from 'react';
 import { Button } from '@components/ui/button';
 import { Separator } from '@components/ui/separator';
+import { Label } from '@components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@components/ui/resizable';
 import {
@@ -78,6 +79,8 @@ export interface Project {
 export default function StudioProPage() {
   // State
   const [isPlaying, setIsPlaying] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [currentTime, setCurrentTime] = useState(0);
   const [selectedElement, setSelectedElement] = useState<ElementProperties | null>(null);
   const [activeTab, setActiveTab] = useState<StudioTab>('avatars');
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
