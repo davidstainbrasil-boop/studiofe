@@ -210,6 +210,12 @@ export default function StudioProPage() {
       const element = canvasScene.elements.find((el) => el.id === id);
       if (!element) return;
 
+      // Check if element is locked
+      if (element.locked) {
+        toast.error('Cannot duplicate locked element');
+        return;
+      }
+
       const newElement: CanvasElement = {
         ...element,
         id: `element-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -237,13 +243,33 @@ export default function StudioProPage() {
   const handleDeleteSelectedElements = useCallback(() => {
     if (selectedCanvasElementIds.length === 0) return;
 
+    // Filter out locked elements
+    const unlockedIds = selectedCanvasElementIds.filter((id) => {
+      const element = canvasScene.elements.find((el) => el.id === id);
+      return element && !element.locked;
+    });
+
+    if (unlockedIds.length === 0) {
+      toast.error('Cannot delete locked elements');
+      return;
+    }
+
+    const lockedCount = selectedCanvasElementIds.length - unlockedIds.length;
+
     setCanvasScene((prev) => ({
       ...prev,
-      elements: prev.elements.filter((el) => !selectedCanvasElementIds.includes(el.id)),
+      elements: prev.elements.filter((el) => !unlockedIds.includes(el.id)),
     }));
     setSelectedCanvasElementIds([]);
-    toast.success(`Deleted ${selectedCanvasElementIds.length} element(s)`);
-  }, [selectedCanvasElementIds]);
+
+    if (lockedCount > 0) {
+      toast.warning(
+        `Deleted ${unlockedIds.length} element(s), ${lockedCount} locked element(s) skipped`,
+      );
+    } else {
+      toast.success(`Deleted ${unlockedIds.length} element(s)`);
+    }
+  }, [selectedCanvasElementIds, canvasScene.elements]);
 
   const handleSelectAllElements = useCallback(() => {
     const allIds = canvasScene.elements.map((el) => el.id);
@@ -272,14 +298,24 @@ export default function StudioProPage() {
     (dx: number, dy: number) => {
       if (selectedCanvasElementIds.length === 0) return;
 
+      // Filter out locked elements
+      const unlockedIds = selectedCanvasElementIds.filter((id) => {
+        const element = canvasScene.elements.find((el) => el.id === id);
+        return element && !element.locked;
+      });
+
+      if (unlockedIds.length === 0) {
+        return; // Silently ignore if all selected elements are locked
+      }
+
       setCanvasScene((prev) => ({
         ...prev,
         elements: prev.elements.map((el) =>
-          selectedCanvasElementIds.includes(el.id) ? { ...el, x: el.x + dx, y: el.y + dy } : el,
+          unlockedIds.includes(el.id) ? { ...el, x: el.x + dx, y: el.y + dy } : el,
         ),
       }));
     },
-    [selectedCanvasElementIds],
+    [selectedCanvasElementIds, canvasScene.elements],
   );
 
   // Layer Management
@@ -460,18 +496,32 @@ export default function StudioProPage() {
       return;
     }
 
-    const selectedElements = canvasScene.elements.filter((el) =>
-      selectedCanvasElementIds.includes(el.id),
+    // Filter out locked elements
+    const unlockedElements = canvasScene.elements.filter(
+      (el) => selectedCanvasElementIds.includes(el.id) && !el.locked,
     );
-    const minX = Math.min(...selectedElements.map((el) => el.x));
+
+    if (unlockedElements.length === 0) {
+      toast.error('Cannot align locked elements');
+      return;
+    }
+
+    const lockedCount = selectedCanvasElementIds.length - unlockedElements.length;
+    const unlockedIds = unlockedElements.map((el) => el.id);
+    const minX = Math.min(...unlockedElements.map((el) => el.x));
 
     setCanvasScene((prev) => ({
       ...prev,
-      elements: prev.elements.map((el) =>
-        selectedCanvasElementIds.includes(el.id) ? { ...el, x: minX } : el,
-      ),
+      elements: prev.elements.map((el) => (unlockedIds.includes(el.id) ? { ...el, x: minX } : el)),
     }));
-    toast.success('Aligned left');
+
+    if (lockedCount > 0) {
+      toast.warning(
+        `Aligned ${unlockedElements.length} element(s), ${lockedCount} locked element(s) skipped`,
+      );
+    } else {
+      toast.success('Aligned left');
+    }
   }, [selectedCanvasElementIds, canvasScene.elements]);
 
   const handleAlignCenter = useCallback(() => {
@@ -480,20 +530,35 @@ export default function StudioProPage() {
       return;
     }
 
-    const selectedElements = canvasScene.elements.filter((el) =>
-      selectedCanvasElementIds.includes(el.id),
+    const unlockedElements = canvasScene.elements.filter(
+      (el) => selectedCanvasElementIds.includes(el.id) && !el.locked,
     );
-    const minX = Math.min(...selectedElements.map((el) => el.x));
-    const maxX = Math.max(...selectedElements.map((el) => el.x + el.width));
+
+    if (unlockedElements.length === 0) {
+      toast.error('Cannot align locked elements');
+      return;
+    }
+
+    const lockedCount = selectedCanvasElementIds.length - unlockedElements.length;
+    const unlockedIds = unlockedElements.map((el) => el.id);
+    const minX = Math.min(...unlockedElements.map((el) => el.x));
+    const maxX = Math.max(...unlockedElements.map((el) => el.x + el.width));
     const centerX = (minX + maxX) / 2;
 
     setCanvasScene((prev) => ({
       ...prev,
       elements: prev.elements.map((el) =>
-        selectedCanvasElementIds.includes(el.id) ? { ...el, x: centerX - el.width / 2 } : el,
+        unlockedIds.includes(el.id) ? { ...el, x: centerX - el.width / 2 } : el,
       ),
     }));
-    toast.success('Aligned center');
+
+    if (lockedCount > 0) {
+      toast.warning(
+        `Aligned ${unlockedElements.length} element(s), ${lockedCount} locked element(s) skipped`,
+      );
+    } else {
+      toast.success('Aligned center');
+    }
   }, [selectedCanvasElementIds, canvasScene.elements]);
 
   const handleAlignRight = useCallback(() => {
@@ -502,18 +567,33 @@ export default function StudioProPage() {
       return;
     }
 
-    const selectedElements = canvasScene.elements.filter((el) =>
-      selectedCanvasElementIds.includes(el.id),
+    const unlockedElements = canvasScene.elements.filter(
+      (el) => selectedCanvasElementIds.includes(el.id) && !el.locked,
     );
-    const maxX = Math.max(...selectedElements.map((el) => el.x + el.width));
+
+    if (unlockedElements.length === 0) {
+      toast.error('Cannot align locked elements');
+      return;
+    }
+
+    const lockedCount = selectedCanvasElementIds.length - unlockedElements.length;
+    const unlockedIds = unlockedElements.map((el) => el.id);
+    const maxX = Math.max(...unlockedElements.map((el) => el.x + el.width));
 
     setCanvasScene((prev) => ({
       ...prev,
       elements: prev.elements.map((el) =>
-        selectedCanvasElementIds.includes(el.id) ? { ...el, x: maxX - el.width } : el,
+        unlockedIds.includes(el.id) ? { ...el, x: maxX - el.width } : el,
       ),
     }));
-    toast.success('Aligned right');
+
+    if (lockedCount > 0) {
+      toast.warning(
+        `Aligned ${unlockedElements.length} element(s), ${lockedCount} locked element(s) skipped`,
+      );
+    } else {
+      toast.success('Aligned right');
+    }
   }, [selectedCanvasElementIds, canvasScene.elements]);
 
   const handleAlignTop = useCallback(() => {
@@ -522,18 +602,31 @@ export default function StudioProPage() {
       return;
     }
 
-    const selectedElements = canvasScene.elements.filter((el) =>
-      selectedCanvasElementIds.includes(el.id),
+    const unlockedElements = canvasScene.elements.filter(
+      (el) => selectedCanvasElementIds.includes(el.id) && !el.locked,
     );
-    const minY = Math.min(...selectedElements.map((el) => el.y));
+
+    if (unlockedElements.length === 0) {
+      toast.error('Cannot align locked elements');
+      return;
+    }
+
+    const lockedCount = selectedCanvasElementIds.length - unlockedElements.length;
+    const unlockedIds = unlockedElements.map((el) => el.id);
+    const minY = Math.min(...unlockedElements.map((el) => el.y));
 
     setCanvasScene((prev) => ({
       ...prev,
-      elements: prev.elements.map((el) =>
-        selectedCanvasElementIds.includes(el.id) ? { ...el, y: minY } : el,
-      ),
+      elements: prev.elements.map((el) => (unlockedIds.includes(el.id) ? { ...el, y: minY } : el)),
     }));
-    toast.success('Aligned top');
+
+    if (lockedCount > 0) {
+      toast.warning(
+        `Aligned ${unlockedElements.length} element(s), ${lockedCount} locked element(s) skipped`,
+      );
+    } else {
+      toast.success('Aligned top');
+    }
   }, [selectedCanvasElementIds, canvasScene.elements]);
 
   const handleAlignMiddle = useCallback(() => {
@@ -542,20 +635,35 @@ export default function StudioProPage() {
       return;
     }
 
-    const selectedElements = canvasScene.elements.filter((el) =>
-      selectedCanvasElementIds.includes(el.id),
+    const unlockedElements = canvasScene.elements.filter(
+      (el) => selectedCanvasElementIds.includes(el.id) && !el.locked,
     );
-    const minY = Math.min(...selectedElements.map((el) => el.y));
-    const maxY = Math.max(...selectedElements.map((el) => el.y + el.height));
+
+    if (unlockedElements.length === 0) {
+      toast.error('Cannot align locked elements');
+      return;
+    }
+
+    const lockedCount = selectedCanvasElementIds.length - unlockedElements.length;
+    const unlockedIds = unlockedElements.map((el) => el.id);
+    const minY = Math.min(...unlockedElements.map((el) => el.y));
+    const maxY = Math.max(...unlockedElements.map((el) => el.y + el.height));
     const centerY = (minY + maxY) / 2;
 
     setCanvasScene((prev) => ({
       ...prev,
       elements: prev.elements.map((el) =>
-        selectedCanvasElementIds.includes(el.id) ? { ...el, y: centerY - el.height / 2 } : el,
+        unlockedIds.includes(el.id) ? { ...el, y: centerY - el.height / 2 } : el,
       ),
     }));
-    toast.success('Aligned middle');
+
+    if (lockedCount > 0) {
+      toast.warning(
+        `Aligned ${unlockedElements.length} element(s), ${lockedCount} locked element(s) skipped`,
+      );
+    } else {
+      toast.success('Aligned middle');
+    }
   }, [selectedCanvasElementIds, canvasScene.elements]);
 
   const handleAlignBottom = useCallback(() => {
@@ -564,18 +672,33 @@ export default function StudioProPage() {
       return;
     }
 
-    const selectedElements = canvasScene.elements.filter((el) =>
-      selectedCanvasElementIds.includes(el.id),
+    const unlockedElements = canvasScene.elements.filter(
+      (el) => selectedCanvasElementIds.includes(el.id) && !el.locked,
     );
-    const maxY = Math.max(...selectedElements.map((el) => el.y + el.height));
+
+    if (unlockedElements.length === 0) {
+      toast.error('Cannot align locked elements');
+      return;
+    }
+
+    const lockedCount = selectedCanvasElementIds.length - unlockedElements.length;
+    const unlockedIds = unlockedElements.map((el) => el.id);
+    const maxY = Math.max(...unlockedElements.map((el) => el.y + el.height));
 
     setCanvasScene((prev) => ({
       ...prev,
       elements: prev.elements.map((el) =>
-        selectedCanvasElementIds.includes(el.id) ? { ...el, y: maxY - el.height } : el,
+        unlockedIds.includes(el.id) ? { ...el, y: maxY - el.height } : el,
       ),
     }));
-    toast.success('Aligned bottom');
+
+    if (lockedCount > 0) {
+      toast.warning(
+        `Aligned ${unlockedElements.length} element(s), ${lockedCount} locked element(s) skipped`,
+      );
+    } else {
+      toast.success('Aligned bottom');
+    }
   }, [selectedCanvasElementIds, canvasScene.elements]);
 
   // Distribution Handlers
@@ -585,21 +708,27 @@ export default function StudioProPage() {
       return;
     }
 
-    const selectedElements = canvasScene.elements
-      .filter((el) => selectedCanvasElementIds.includes(el.id))
+    const unlockedElements = canvasScene.elements
+      .filter((el) => selectedCanvasElementIds.includes(el.id) && !el.locked)
       .sort((a, b) => a.x - b.x);
 
-    const minX = selectedElements[0].x;
-    const maxX = selectedElements[selectedElements.length - 1].x;
-    const totalWidth = selectedElements.reduce((sum, el) => sum + el.width, 0);
+    if (unlockedElements.length === 0) {
+      toast.error('Cannot distribute locked elements');
+      return;
+    }
+
+    const lockedCount = selectedCanvasElementIds.length - unlockedElements.length;
+    const minX = unlockedElements[0].x;
+    const maxX = unlockedElements[unlockedElements.length - 1].x;
+    const totalWidth = unlockedElements.reduce((sum, el) => sum + el.width, 0);
     const availableSpace =
-      maxX - minX - totalWidth + selectedElements[selectedElements.length - 1].width;
-    const spacing = availableSpace / (selectedElements.length - 1);
+      maxX - minX - totalWidth + unlockedElements[unlockedElements.length - 1].width;
+    const spacing = availableSpace / (unlockedElements.length - 1);
 
     let currentX = minX;
     const updates = new Map<string, number>();
 
-    selectedElements.forEach((el, index) => {
+    unlockedElements.forEach((el, index) => {
       if (index > 0) {
         currentX += spacing;
       }
@@ -614,7 +743,14 @@ export default function StudioProPage() {
         return newX !== undefined ? { ...el, x: newX } : el;
       }),
     }));
-    toast.success('Distributed horizontally');
+
+    if (lockedCount > 0) {
+      toast.warning(
+        `Distributed ${unlockedElements.length} element(s), ${lockedCount} locked element(s) skipped`,
+      );
+    } else {
+      toast.success('Distributed horizontally');
+    }
   }, [selectedCanvasElementIds, canvasScene.elements]);
 
   const handleDistributeVertically = useCallback(() => {
@@ -623,21 +759,27 @@ export default function StudioProPage() {
       return;
     }
 
-    const selectedElements = canvasScene.elements
-      .filter((el) => selectedCanvasElementIds.includes(el.id))
+    const unlockedElements = canvasScene.elements
+      .filter((el) => selectedCanvasElementIds.includes(el.id) && !el.locked)
       .sort((a, b) => a.y - b.y);
 
-    const minY = selectedElements[0].y;
-    const maxY = selectedElements[selectedElements.length - 1].y;
-    const totalHeight = selectedElements.reduce((sum, el) => sum + el.height, 0);
+    if (unlockedElements.length === 0) {
+      toast.error('Cannot distribute locked elements');
+      return;
+    }
+
+    const lockedCount = selectedCanvasElementIds.length - unlockedElements.length;
+    const minY = unlockedElements[0].y;
+    const maxY = unlockedElements[unlockedElements.length - 1].y;
+    const totalHeight = unlockedElements.reduce((sum, el) => sum + el.height, 0);
     const availableSpace =
-      maxY - minY - totalHeight + selectedElements[selectedElements.length - 1].height;
-    const spacing = availableSpace / (selectedElements.length - 1);
+      maxY - minY - totalHeight + unlockedElements[unlockedElements.length - 1].height;
+    const spacing = availableSpace / (unlockedElements.length - 1);
 
     let currentY = minY;
     const updates = new Map<string, number>();
 
-    selectedElements.forEach((el, index) => {
+    unlockedElements.forEach((el, index) => {
       if (index > 0) {
         currentY += spacing;
       }
@@ -652,7 +794,14 @@ export default function StudioProPage() {
         return newY !== undefined ? { ...el, y: newY } : el;
       }),
     }));
-    toast.success('Distributed vertically');
+
+    if (lockedCount > 0) {
+      toast.warning(
+        `Distributed ${unlockedElements.length} element(s), ${lockedCount} locked element(s) skipped`,
+      );
+    } else {
+      toast.success('Distributed vertically');
+    }
   }, [selectedCanvasElementIds, canvasScene.elements]);
 
   // Keyboard Shortcuts
