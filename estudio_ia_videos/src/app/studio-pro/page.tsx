@@ -232,6 +232,84 @@ export default function StudioProPage() {
     }))
   }, [selectedCanvasElementIds])
 
+  // Layer Management
+  const handleBringToFront = useCallback(() => {
+    if (selectedCanvasElementIds.length === 0) return
+
+    setCanvasScene(prev => {
+      const maxZIndex = Math.max(...prev.elements.map(el => el.zIndex), 0)
+      return {
+        ...prev,
+        elements: prev.elements.map(el =>
+          selectedCanvasElementIds.includes(el.id)
+            ? { ...el, zIndex: maxZIndex + 1 }
+            : el
+        )
+      }
+    })
+    toast.success('Brought to front')
+  }, [selectedCanvasElementIds])
+
+  const handleSendToBack = useCallback(() => {
+    if (selectedCanvasElementIds.length === 0) return
+
+    setCanvasScene(prev => {
+      const minZIndex = Math.min(...prev.elements.map(el => el.zIndex), 0)
+      return {
+        ...prev,
+        elements: prev.elements.map(el =>
+          selectedCanvasElementIds.includes(el.id)
+            ? { ...el, zIndex: minZIndex - 1 }
+            : el
+        )
+      }
+    })
+    toast.success('Sent to back')
+  }, [selectedCanvasElementIds])
+
+  const handleBringForward = useCallback(() => {
+    if (selectedCanvasElementIds.length === 0) return
+
+    setCanvasScene(prev => ({
+      ...prev,
+      elements: prev.elements.map(el =>
+        selectedCanvasElementIds.includes(el.id)
+          ? { ...el, zIndex: el.zIndex + 1 }
+          : el
+      )
+    }))
+    toast.success('Brought forward')
+  }, [selectedCanvasElementIds])
+
+  const handleSendBackward = useCallback(() => {
+    if (selectedCanvasElementIds.length === 0) return
+
+    setCanvasScene(prev => ({
+      ...prev,
+      elements: prev.elements.map(el =>
+        selectedCanvasElementIds.includes(el.id)
+          ? { ...el, zIndex: el.zIndex - 1 }
+          : el
+      )
+    }))
+    toast.success('Sent backward')
+  }, [selectedCanvasElementIds])
+
+  const handleToggleVisibility = useCallback(() => {
+    if (selectedCanvasElementIds.length === 0) return
+
+    setCanvasScene(prev => ({
+      ...prev,
+      elements: prev.elements.map(el =>
+        selectedCanvasElementIds.includes(el.id)
+          ? { ...el, visible: !el.visible }
+          : el
+      )
+    }))
+    const element = canvasScene.elements.find(e => e.id === selectedCanvasElementIds[0])
+    toast.success(element?.visible ? 'Hidden' : 'Visible')
+  }, [selectedCanvasElementIds, canvasScene.elements])
+
   // Keyboard Shortcuts
   useKeyboardShortcuts({
     shortcuts: [
@@ -309,6 +387,23 @@ export default function StudioProPage() {
       {
         ...COMMON_SHORTCUTS.SELECT_ALL,
         callback: handleSelectAllElements
+      },
+      // Layer Management
+      {
+        ...COMMON_SHORTCUTS.BRING_TO_FRONT,
+        callback: handleBringToFront
+      },
+      {
+        ...COMMON_SHORTCUTS.SEND_TO_BACK,
+        callback: handleSendToBack
+      },
+      {
+        ...COMMON_SHORTCUTS.BRING_FORWARD,
+        callback: handleBringForward
+      },
+      {
+        ...COMMON_SHORTCUTS.SEND_BACKWARD,
+        callback: handleSendBackward
       },
       {
         ...COMMON_SHORTCUTS.HELP,
