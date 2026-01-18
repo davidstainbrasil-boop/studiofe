@@ -99,7 +99,11 @@
       "Bash(npx playwright install-deps)",
       "Bash(npx playwright:*)",
       "Bash(git reset:*)",
-      "Bash(./test-validation-quick.sh:*)"
+      "Bash(./test-validation-quick.sh:*)",
+      "Bash(npm run test:e2e:*)",
+      "Bash(npm run:*)",
+      "Bash(npm test:*)",
+      "Bash(/root/_MVP_Video_TecnicoCursos_v7/test-avatar-high-rpm.sh)"
     ],
     "deny": [],
     "ask": []
