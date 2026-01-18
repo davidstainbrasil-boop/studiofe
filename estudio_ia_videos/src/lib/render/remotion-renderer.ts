@@ -34,7 +34,7 @@ export class RemotionRenderer {
 
       // 2. Map Snapshot to Remotion Props
       const { mapProjectToRemotionProps } = await import('@lib/mappers/timeline-mapper');
-      const inputProps = mapProjectToRemotionProps(snapshot) as Record<string, unknown>;
+      const inputProps = mapProjectToRemotionProps(snapshot) as unknown as Record<string, unknown>;
 
       // 3. Bundle Remotion (This might be slow, consider caching bundle in future)
       // Pointing to the Remotion Root component
