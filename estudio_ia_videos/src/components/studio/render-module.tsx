@@ -3,80 +3,78 @@
  * Módulo de Renderização para o Studio Unificado
  */
 
-'use client'
+'use client';
 
-import React, { useState, useEffect } from 'react'
-import { logger } from '@lib/logger'
-import { 
-  Play, 
-  Pause, 
-  Square, 
-  Download, 
-  Settings, 
+import React, { useState, useEffect } from 'react';
+import { logger } from '@lib/logger';
+import {
+  Play,
+  Square,
+  Download,
+  Settings,
   Zap,
   RotateCcw,
   Film,
   Clock,
   HardDrive,
   Monitor,
-  Cpu,
   CheckCircle,
-  AlertCircle,
   XCircle,
-  Eye,
-  Share2,
-  FileVideo,
   Layers,
   Volume2,
   Image as ImageIcon,
   User,
-  Sparkles
-} from 'lucide-react'
+  Sparkles,
+} from 'lucide-react';
 
-import { Button } from '@components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@components/ui/card'
-import { Badge } from '@components/ui/badge'
-import { Slider } from '@components/ui/slider'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs'
-import { Label } from '@components/ui/label'
-import { Progress } from '@components/ui/progress'
-import { ScrollArea } from '@components/ui/scroll-area'
-import { Separator } from '@components/ui/separator'
-import { Switch } from '@components/ui/switch'
-import { toast } from 'sonner'
+import { Button } from '@components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@components/ui/card';
+import { Badge } from '@components/ui/badge';
+import { Slider } from '@components/ui/slider';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@components/ui/select';
+import { Label } from '@components/ui/label';
+import { Progress } from '@components/ui/progress';
+import { Separator } from '@components/ui/separator';
+import { Switch } from '@components/ui/switch';
+import { toast } from 'sonner';
 
-import type { UnifiedProject, RenderConfig } from '@lib/stores/unified-project-store'
+import type { UnifiedProject, RenderConfig } from '@lib/stores/unified-project-store';
 
 interface RenderModuleProps {
-  project: UnifiedProject
-  onRenderUpdate: (render: RenderConfig) => void
-  onExecuteStep: (data: Record<string, unknown>) => Promise<void>
+  project: UnifiedProject;
+  onRenderUpdate: (render: RenderConfig) => void;
+  onExecuteStep: (data: Record<string, unknown>) => Promise<void>;
 }
 
 interface RenderJob {
-  id: string
-  status: 'pending' | 'preparing' | 'rendering' | 'completed' | 'error'
-  progress: number
-  currentStep: string
-  estimatedTime?: number
-  outputUrl?: string
-  error?: string
-  startTime?: Date
-  endTime?: Date
-  fileSize?: number
+  id: string;
+  status: 'pending' | 'preparing' | 'rendering' | 'completed' | 'error';
+  progress: number;
+  currentStep: string;
+  estimatedTime?: number;
+  outputUrl?: string;
+  error?: string;
+  startTime?: Date;
+  endTime?: Date;
+  fileSize?: number;
 }
 
 interface RenderPreset {
-  id: string
-  name: string
-  description: string
-  resolution: string
-  fps: number
-  bitrate: number
-  quality: 'draft' | 'standard' | 'high' | 'ultra'
-  estimatedSize: string
-  renderTime: string
+  id: string;
+  name: string;
+  description: string;
+  resolution: string;
+  fps: number;
+  bitrate: number;
+  quality: 'draft' | 'standard' | 'high' | 'ultra';
+  estimatedSize: string;
+  renderTime: string;
 }
 
 const renderPresets: RenderPreset[] = [
@@ -89,7 +87,7 @@ const renderPresets: RenderPreset[] = [
     bitrate: 2000,
     quality: 'draft',
     estimatedSize: '~50MB',
-    renderTime: '~2min'
+    renderTime: '~2min',
   },
   {
     id: 'standard',
@@ -100,7 +98,7 @@ const renderPresets: RenderPreset[] = [
     bitrate: 5000,
     quality: 'standard',
     estimatedSize: '~150MB',
-    renderTime: '~5min'
+    renderTime: '~5min',
   },
   {
     id: 'high',
@@ -111,7 +109,7 @@ const renderPresets: RenderPreset[] = [
     bitrate: 8000,
     quality: 'high',
     estimatedSize: '~300MB',
-    renderTime: '~8min'
+    renderTime: '~8min',
   },
   {
     id: 'ultra',
@@ -122,14 +120,14 @@ const renderPresets: RenderPreset[] = [
     bitrate: 15000,
     quality: 'ultra',
     estimatedSize: '~800MB',
-    renderTime: '~15min'
-  }
-]
+    renderTime: '~15min',
+  },
+];
 
-export default function RenderModule({ 
-  project, 
-  onRenderUpdate, 
-  onExecuteStep 
+export default function RenderModule({
+  project,
+  onRenderUpdate,
+  onExecuteStep,
 }: RenderModuleProps) {
   const [renderConfig, setRenderConfig] = useState<RenderConfig>(
     project.render || {
@@ -137,108 +135,198 @@ export default function RenderModule({
       fps: 30,
       quality: 'standard',
       format: 'mp4',
-      bitrate: 5000
-    }
-  )
-  
+      bitrate: 5000,
+    },
+  );
+
   const [selectedPreset, setSelectedPreset] = useState<RenderPreset>(
-    renderPresets.find(p => p.quality === renderConfig.quality) || renderPresets[1]
-  )
-  
-  const [renderJob, setRenderJob] = useState<RenderJob | null>(null)
-  const [isRendering, setIsRendering] = useState(false)
-  const [renderHistory, setRenderHistory] = useState<RenderJob[]>([])
-  
+    renderPresets.find((p) => p.quality === renderConfig.quality) || renderPresets[1],
+  );
+
+  const [renderJob, setRenderJob] = useState<RenderJob | null>(null);
+  const [isRendering, setIsRendering] = useState(false);
+
   // Advanced settings
-  const [showAdvanced, setShowAdvanced] = useState(false)
-  const [enableSubtitles, setEnableSubtitles] = useState(true)
-  const [enableWatermark, setEnableWatermark] = useState(false)
-  const [enableTransitions, setEnableTransitions] = useState(true)
-  const [enableAvatarSync, setEnableAvatarSync] = useState(true)
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [enableSubtitles, setEnableSubtitles] = useState(true);
+  const [enableWatermark, setEnableWatermark] = useState(false);
+  const [enableTransitions, setEnableTransitions] = useState(true);
+  const [enableAvatarSync, setEnableAvatarSync] = useState(true);
 
   // Update render config when project changes
   useEffect(() => {
     if (project.render) {
-      setRenderConfig(project.render)
-      const preset = renderPresets.find(p => p.quality === project.render?.quality)
+      setRenderConfig(project.render);
+      const preset = renderPresets.find((p) => p.quality === project.render?.quality);
       if (preset) {
-        setSelectedPreset(preset)
+        setSelectedPreset(preset);
       }
     }
-  }, [project.render])
+  }, [project.render]);
 
   // Handle preset selection
   const handlePresetSelect = (preset: RenderPreset) => {
-    setSelectedPreset(preset)
+    setSelectedPreset(preset);
     const newConfig: RenderConfig = {
       ...renderConfig,
       resolution: preset.resolution,
       fps: preset.fps,
       quality: preset.quality,
-      bitrate: preset.bitrate
-    }
-    setRenderConfig(newConfig)
-    onRenderUpdate(newConfig)
-  }
+      bitrate: preset.bitrate,
+    };
+    setRenderConfig(newConfig);
+    onRenderUpdate(newConfig);
+  };
 
   // Handle render parameter changes
-  const updateRenderParameter = (key: keyof RenderConfig, value: RenderConfig[keyof RenderConfig]) => {
-    const newConfig = { ...renderConfig, [key]: value }
-    setRenderConfig(newConfig)
-    onRenderUpdate(newConfig)
-  }
+  const updateRenderParameter = (
+    key: keyof RenderConfig,
+    value: RenderConfig[keyof RenderConfig],
+  ) => {
+    const newConfig = { ...renderConfig, [key]: value };
+    setRenderConfig(newConfig);
+    onRenderUpdate(newConfig);
+  };
 
   // Start render process
   const startRender = async () => {
     if (!project.slides.length) {
-      toast.error('Projeto não possui slides para renderizar')
-      return
+      toast.error('Projeto não possui slides para renderizar');
+      return;
     }
 
-    setIsRendering(true)
-    
-    const jobId = `render_${Date.now()}`
+    setIsRendering(true);
+
+    const jobId = `render_${Date.now()}`;
     const newJob: RenderJob = {
       id: jobId,
       status: 'preparing',
       progress: 0,
       currentStep: 'Preparando renderização...',
-      startTime: new Date()
-    }
-    
-    setRenderJob(newJob)
+      startTime: new Date(),
+    };
+
+    setRenderJob(newJob);
 
     try {
-      // Simulate render process with realistic steps
+      // Step 1: Prepare avatar rendering if enabled
+      if (enableAvatarSync && project.avatar3D) {
+        setRenderJob((prev) =>
+          prev
+            ? {
+                ...prev,
+                currentStep: 'Gerando animação do avatar...',
+                progress: 10,
+              }
+            : null,
+        );
+
+        // Extract text from slides for avatar animation
+        const slideTexts = project.slides
+          .map((slide) => slide.content || '')
+          .filter((text) => text.length > 0)
+          .join(' ');
+
+        if (slideTexts.length > 0) {
+          logger.info('Generating avatar animation', {
+            textLength: slideTexts.length,
+            avatarId: project.avatar3D.id,
+            quality: renderConfig.quality,
+          });
+
+          // Call avatar generation API
+          const response = await fetch('/api/v2/avatars/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              text: slideTexts,
+              avatarId: project.avatar3D.id,
+              quality: mapRenderQualityToAvatarQuality(renderConfig.quality),
+              emotion: project.avatar3D.emotion || 'neutral',
+              enableBlinks: true,
+              enableBreathing: true,
+              enableHeadMovement: true,
+              fps: renderConfig.fps,
+              resolution: renderConfig.resolution,
+              outputFormat: renderConfig.format,
+              preview: false,
+            }),
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Avatar generation failed');
+          }
+
+          const avatarResult = await response.json();
+          logger.info('Avatar animation generated', {
+            jobId: avatarResult.data.jobId,
+            status: avatarResult.data.status,
+            frames: avatarResult.data.animation?.frames,
+          });
+
+          // Poll for avatar rendering completion
+          let avatarCompleted = false;
+          let pollAttempts = 0;
+          const maxPollAttempts = 60; // 60 attempts * 2s = 2 minutes max
+
+          while (!avatarCompleted && pollAttempts < maxPollAttempts) {
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+            pollAttempts++;
+
+            const statusResponse = await fetch(`/api/v2/avatars/status/${avatarResult.data.jobId}`);
+            if (statusResponse.ok) {
+              const statusData = await statusResponse.json();
+
+              if (statusData.data?.status === 'completed') {
+                avatarCompleted = true;
+                newJob.outputUrl = statusData.data.videoUrl;
+              } else if (statusData.data?.status === 'failed') {
+                throw new Error('Avatar rendering failed');
+              }
+
+              // Update progress based on avatar rendering
+              const avatarProgress = Math.min(10 + (pollAttempts / maxPollAttempts) * 30, 40);
+              setRenderJob((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      progress: avatarProgress,
+                      currentStep: `Renderizando avatar... (${Math.round(avatarProgress)}%)`,
+                    }
+                  : null,
+              );
+            }
+          }
+
+          if (!avatarCompleted) {
+            throw new Error('Avatar rendering timeout');
+          }
+        }
+      }
+
+      // Step 2: Process slides and compose final video
       const steps = [
-        { step: 'Preparando assets...', duration: 2000, progress: 10 },
-        { step: 'Processando slides...', duration: 3000, progress: 25 },
-        { step: 'Sincronizando avatar...', duration: 4000, progress: 45 },
-        { step: 'Aplicando áudio...', duration: 3000, progress: 65 },
-        { step: 'Renderizando vídeo...', duration: 8000, progress: 90 },
-        { step: 'Finalizando...', duration: 2000, progress: 100 }
-      ]
+        { step: 'Processando slides...', duration: 3000, progress: 55 },
+        { step: 'Aplicando áudio...', duration: 3000, progress: 70 },
+        { step: 'Aplicando transições...', duration: 2000, progress: 85 },
+        { step: 'Finalizando vídeo...', duration: 3000, progress: 100 },
+      ];
 
       for (const { step, duration, progress } of steps) {
-        setRenderJob(prev => prev ? {
-          ...prev,
-          currentStep: step,
-          status: 'rendering'
-        } : null)
+        setRenderJob((prev) =>
+          prev
+            ? {
+                ...prev,
+                currentStep: step,
+                status: 'rendering',
+              }
+            : null,
+        );
 
         // Simulate gradual progress
-        const startProgress = renderJob?.progress || 0
-        const progressDiff = progress - startProgress
-        const progressInterval = setInterval(() => {
-          setRenderJob(prev => {
-            if (!prev) return null
-            const newProgress = Math.min(prev.progress + 2, progress)
-            return { ...prev, progress: newProgress }
-          })
-        }, duration / (progressDiff / 2))
-
-        await new Promise(resolve => setTimeout(resolve, duration))
-        clearInterval(progressInterval)
+        await new Promise((resolve) => setTimeout(resolve, duration));
+        setRenderJob((prev) => (prev ? { ...prev, progress } : null));
       }
 
       // Complete render
@@ -248,59 +336,85 @@ export default function RenderModule({
         progress: 100,
         currentStep: 'Renderização concluída!',
         endTime: new Date(),
-        outputUrl: `/api/renders/${jobId}/download`,
-        fileSize: Math.round(Math.random() * 500 + 100) // Simulate file size
-      }
+        outputUrl: newJob.outputUrl || `/api/renders/${jobId}/download`,
+        fileSize: Math.round(Math.random() * 500 + 100), // Simulate file size
+      };
 
-      setRenderJob(completedJob)
-      setRenderHistory(prev => [completedJob, ...prev])
-      
-      toast.success('Vídeo renderizado com sucesso!')
+      setRenderJob(completedJob);
 
+      toast.success('Vídeo renderizado com sucesso!');
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido'
-      logger.error('Render error', error instanceof Error ? error : new Error(String(error)), { component: 'RenderModule' })
-      setRenderJob(prev => prev ? {
-        ...prev,
-        status: 'error',
-        error: errorMessage
-      } : null)
-      toast.error('Erro na renderização: ' + errorMessage)
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+      logger.error('Render error', error instanceof Error ? error : new Error(String(error)), {
+        component: 'RenderModule',
+      });
+      setRenderJob((prev) =>
+        prev
+          ? {
+              ...prev,
+              status: 'error',
+              error: errorMessage,
+            }
+          : null,
+      );
+      toast.error('Erro na renderização: ' + errorMessage);
     } finally {
-      setIsRendering(false)
+      setIsRendering(false);
     }
-  }
+  };
+
+  // Map render quality to avatar quality tier
+  const mapRenderQualityToAvatarQuality = (
+    quality: string,
+  ): 'PLACEHOLDER' | 'STANDARD' | 'HIGH' | 'HYPERREAL' => {
+    switch (quality) {
+      case 'draft':
+        return 'PLACEHOLDER';
+      case 'standard':
+        return 'STANDARD';
+      case 'high':
+        return 'HIGH';
+      case 'ultra':
+        return 'HYPERREAL';
+      default:
+        return 'STANDARD';
+    }
+  };
 
   // Cancel render
   const cancelRender = () => {
     if (renderJob && renderJob.status === 'rendering') {
-      setRenderJob(prev => prev ? {
-        ...prev,
-        status: 'error',
-        error: 'Renderização cancelada pelo usuário'
-      } : null)
-      setIsRendering(false)
-      toast.info('Renderização cancelada')
+      setRenderJob((prev) =>
+        prev
+          ? {
+              ...prev,
+              status: 'error',
+              error: 'Renderização cancelada pelo usuário',
+            }
+          : null,
+      );
+      setIsRendering(false);
+      toast.info('Renderização cancelada');
     }
-  }
+  };
 
   // Download rendered video
   const downloadVideo = (job: RenderJob) => {
     if (job.outputUrl) {
       // Simulate download
-      const link = document.createElement('a')
-      link.href = job.outputUrl
-      link.download = `video_${project.name}_${job.id}.mp4`
-      link.click()
-      toast.success('Download iniciado!')
+      const link = document.createElement('a');
+      link.href = job.outputUrl;
+      link.download = `video_${project.name}_${job.id}.mp4`;
+      link.click();
+      toast.success('Download iniciado!');
     }
-  }
+  };
 
   // Handle execute step
   const handleExecuteStep = async () => {
     if (!renderJob || renderJob.status !== 'completed') {
-      toast.error('Complete a renderização antes de continuar')
-      return
+      toast.error('Complete a renderização antes de continuar');
+      return;
     }
 
     try {
@@ -312,41 +426,39 @@ export default function RenderModule({
           enableSubtitles,
           enableWatermark,
           enableTransitions,
-          enableAvatarSync
-        }
-      })
-      toast.success('Render concluído! Prosseguindo para Export...')
+          enableAvatarSync,
+        },
+      });
+      toast.success('Render concluído! Prosseguindo para Export...');
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido'
-      toast.error('Erro ao finalizar render: ' + errorMessage)
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+      toast.error('Erro ao finalizar render: ' + errorMessage);
     }
-  }
+  };
 
   // Format file size
   const formatFileSize = (bytes: number) => {
-    if (bytes < 1024) return `${bytes} B`
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-  }
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
 
   // Format duration
   const formatDuration = (start: Date, end: Date) => {
-    const diff = end.getTime() - start.getTime()
-    const minutes = Math.floor(diff / 60000)
-    const seconds = Math.floor((diff % 60000) / 1000)
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`
-  }
+    const diff = end.getTime() - start.getTime();
+    const minutes = Math.floor(diff / 60000);
+    const seconds = Math.floor((diff % 60000) / 1000);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
 
   // Render preset selection
   const renderPresetSelection = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       {renderPresets.map((preset) => (
-        <Card 
+        <Card
           key={preset.id}
           className={`cursor-pointer transition-all hover:shadow-md ${
-            selectedPreset.id === preset.id 
-              ? 'ring-2 ring-blue-500 bg-blue-50' 
-              : 'hover:bg-gray-50'
+            selectedPreset.id === preset.id ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:bg-gray-50'
           }`}
           onClick={() => handlePresetSelect(preset)}
         >
@@ -358,9 +470,9 @@ export default function RenderModule({
                   <CheckCircle className="w-4 h-4 text-blue-500" />
                 )}
               </div>
-              
+
               <p className="text-xs text-gray-600">{preset.description}</p>
-              
+
               <div className="space-y-2">
                 <div className="flex justify-between text-xs">
                   <span className="text-gray-500">Resolução:</span>
@@ -379,25 +491,33 @@ export default function RenderModule({
                   <span className="font-medium">{preset.renderTime}</span>
                 </div>
               </div>
-              
-              <Badge 
+
+              <Badge
                 variant={
-                  preset.quality === 'draft' ? 'secondary' :
-                  preset.quality === 'standard' ? 'outline' :
-                  preset.quality === 'high' ? 'default' : 'destructive'
+                  preset.quality === 'draft'
+                    ? 'secondary'
+                    : preset.quality === 'standard'
+                      ? 'outline'
+                      : preset.quality === 'high'
+                        ? 'default'
+                        : 'destructive'
                 }
                 className="text-xs"
               >
-                {preset.quality === 'draft' ? 'Rascunho' :
-                 preset.quality === 'standard' ? 'Padrão' :
-                 preset.quality === 'high' ? 'Alta' : 'Ultra'}
+                {preset.quality === 'draft'
+                  ? 'Rascunho'
+                  : preset.quality === 'standard'
+                    ? 'Padrão'
+                    : preset.quality === 'high'
+                      ? 'Alta'
+                      : 'Ultra'}
               </Badge>
             </div>
           </CardContent>
         </Card>
       ))}
     </div>
-  )
+  );
 
   // Render advanced settings
   const renderAdvancedSettings = () => (
@@ -408,10 +528,7 @@ export default function RenderModule({
             <Settings className="w-5 h-5" />
             <span>Configurações Avançadas</span>
           </CardTitle>
-          <Switch
-            checked={showAdvanced}
-            onCheckedChange={setShowAdvanced}
-          />
+          <Switch checked={showAdvanced} onCheckedChange={setShowAdvanced} />
         </div>
       </CardHeader>
       {showAdvanced && (
@@ -491,10 +608,7 @@ export default function RenderModule({
                 <Label>Legendas Automáticas</Label>
                 <p className="text-sm text-gray-500">Gerar legendas do áudio</p>
               </div>
-              <Switch
-                checked={enableSubtitles}
-                onCheckedChange={setEnableSubtitles}
-              />
+              <Switch checked={enableSubtitles} onCheckedChange={setEnableSubtitles} />
             </div>
 
             <div className="flex items-center justify-between">
@@ -502,10 +616,7 @@ export default function RenderModule({
                 <Label>Marca d'água</Label>
                 <p className="text-sm text-gray-500">Adicionar logo da empresa</p>
               </div>
-              <Switch
-                checked={enableWatermark}
-                onCheckedChange={setEnableWatermark}
-              />
+              <Switch checked={enableWatermark} onCheckedChange={setEnableWatermark} />
             </div>
 
             <div className="flex items-center justify-between">
@@ -513,10 +624,7 @@ export default function RenderModule({
                 <Label>Transições</Label>
                 <p className="text-sm text-gray-500">Efeitos entre slides</p>
               </div>
-              <Switch
-                checked={enableTransitions}
-                onCheckedChange={setEnableTransitions}
-              />
+              <Switch checked={enableTransitions} onCheckedChange={setEnableTransitions} />
             </div>
 
             <div className="flex items-center justify-between">
@@ -524,20 +632,17 @@ export default function RenderModule({
                 <Label>Sincronia Avatar</Label>
                 <p className="text-sm text-gray-500">Sincronizar com áudio</p>
               </div>
-              <Switch
-                checked={enableAvatarSync}
-                onCheckedChange={setEnableAvatarSync}
-              />
+              <Switch checked={enableAvatarSync} onCheckedChange={setEnableAvatarSync} />
             </div>
           </div>
         </CardContent>
       )}
     </Card>
-  )
+  );
 
   // Render current job status
   const renderCurrentJob = () => {
-    if (!renderJob) return null
+    if (!renderJob) return null;
 
     return (
       <Card>
@@ -556,32 +661,35 @@ export default function RenderModule({
               {renderJob.status === 'completed' && (
                 <CheckCircle className="w-4 h-4 text-green-500" />
               )}
-              {renderJob.status === 'error' && (
-                <XCircle className="w-4 h-4 text-red-500" />
-              )}
+              {renderJob.status === 'error' && <XCircle className="w-4 h-4 text-red-500" />}
               <span className="font-medium">{renderJob.currentStep}</span>
             </div>
-            
-            <Badge 
+
+            <Badge
               variant={
-                renderJob.status === 'completed' ? 'default' :
-                renderJob.status === 'error' ? 'destructive' : 'secondary'
+                renderJob.status === 'completed'
+                  ? 'default'
+                  : renderJob.status === 'error'
+                    ? 'destructive'
+                    : 'secondary'
               }
             >
-              {renderJob.status === 'preparing' ? 'Preparando' :
-               renderJob.status === 'rendering' ? 'Renderizando' :
-               renderJob.status === 'completed' ? 'Concluído' : 'Erro'}
+              {renderJob.status === 'preparing'
+                ? 'Preparando'
+                : renderJob.status === 'rendering'
+                  ? 'Renderizando'
+                  : renderJob.status === 'completed'
+                    ? 'Concluído'
+                    : 'Erro'}
             </Badge>
           </div>
 
           <Progress value={renderJob.progress} className="w-full" />
-          
+
           <div className="flex justify-between text-sm text-gray-500">
             <span>{renderJob.progress}% concluído</span>
             {renderJob.startTime && (
-              <span>
-                Iniciado: {renderJob.startTime.toLocaleTimeString()}
-              </span>
+              <span>Iniciado: {renderJob.startTime.toLocaleTimeString()}</span>
             )}
           </div>
 
@@ -596,7 +704,9 @@ export default function RenderModule({
               <div className="flex items-center space-x-4 text-sm">
                 <div className="flex items-center space-x-1">
                   <HardDrive className="w-4 h-4" />
-                  <span>{renderJob.fileSize ? formatFileSize(renderJob.fileSize * 1024 * 1024) : 'N/A'}</span>
+                  <span>
+                    {renderJob.fileSize ? formatFileSize(renderJob.fileSize * 1024 * 1024) : 'N/A'}
+                  </span>
                 </div>
                 {renderJob.startTime && renderJob.endTime && (
                   <div className="flex items-center space-x-1">
@@ -605,11 +715,8 @@ export default function RenderModule({
                   </div>
                 )}
               </div>
-              
-              <Button
-                size="sm"
-                onClick={() => downloadVideo(renderJob)}
-              >
+
+              <Button size="sm" onClick={() => downloadVideo(renderJob)}>
                 <Download className="w-4 h-4 mr-2" />
                 Download
               </Button>
@@ -618,11 +725,7 @@ export default function RenderModule({
 
           <div className="flex justify-end space-x-2">
             {renderJob.status === 'rendering' && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={cancelRender}
-              >
+              <Button variant="outline" size="sm" onClick={cancelRender}>
                 <Square className="w-4 h-4 mr-2" />
                 Cancelar
               </Button>
@@ -630,8 +733,8 @@ export default function RenderModule({
           </div>
         </CardContent>
       </Card>
-    )
-  }
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -643,9 +746,7 @@ export default function RenderModule({
             <span>Qualidade de Renderização</span>
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          {renderPresetSelection()}
-        </CardContent>
+        <CardContent>{renderPresetSelection()}</CardContent>
       </Card>
 
       {/* Advanced Settings */}
@@ -671,7 +772,7 @@ export default function RenderModule({
               <p className="text-2xl font-bold">{project.slides.length}</p>
               <p className="text-sm text-gray-500">Slides</p>
             </div>
-            
+
             <div className="space-y-1">
               <div className="flex items-center justify-center">
                 <User className="w-5 h-5 text-green-500" />
@@ -679,7 +780,7 @@ export default function RenderModule({
               <p className="text-2xl font-bold">{project.avatar3D ? '1' : '0'}</p>
               <p className="text-sm text-gray-500">Avatar</p>
             </div>
-            
+
             <div className="space-y-1">
               <div className="flex items-center justify-center">
                 <Volume2 className="w-5 h-5 text-purple-500" />
@@ -687,7 +788,7 @@ export default function RenderModule({
               <p className="text-2xl font-bold">{project.tts ? '1' : '0'}</p>
               <p className="text-sm text-gray-500">TTS</p>
             </div>
-            
+
             <div className="space-y-1">
               <div className="flex items-center justify-center">
                 <Sparkles className="w-5 h-5 text-orange-500" />
@@ -701,19 +802,12 @@ export default function RenderModule({
 
       {/* Action Buttons */}
       <div className="flex justify-end space-x-3">
-        <Button 
-          variant="outline"
-          onClick={() => setShowAdvanced(!showAdvanced)}
-        >
+        <Button variant="outline" onClick={() => setShowAdvanced(!showAdvanced)}>
           <Settings className="w-4 h-4 mr-2" />
           Configurações
         </Button>
-        
-        <Button 
-          onClick={startRender}
-          disabled={isRendering || !project.slides.length}
-          size="lg"
-        >
+
+        <Button onClick={startRender} disabled={isRendering || !project.slides.length} size="lg">
           {isRendering ? (
             <>
               <RotateCcw className="w-4 h-4 mr-2 animate-spin" />
@@ -726,16 +820,14 @@ export default function RenderModule({
             </>
           )}
         </Button>
-        
+
         {renderJob?.status === 'completed' && (
-          <Button 
-            onClick={handleExecuteStep}
-          >
+          <Button onClick={handleExecuteStep}>
             <Zap className="w-4 h-4 mr-2" />
             Continuar para Export
           </Button>
         )}
       </div>
     </div>
-  )
+  );
 }

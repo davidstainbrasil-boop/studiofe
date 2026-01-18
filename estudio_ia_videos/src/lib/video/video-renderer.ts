@@ -7,9 +7,14 @@
  * - Client-side processing (no server required)
  * - Scene composition
  * - Avatar, text, image rendering
+ * - Real GLB avatar rendering with Three.js
  */
 
 import type { VideoProject, Scene, TimelineElement } from '@/types/video-project';
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { SceneTransitions, type TransitionConfig } from './scene-transitions';
+import { TextAnimations, type TextAnimationConfig } from './text-animations';
 
 export interface RenderProgress {
   stage: 'preparing' | 'rendering' | 'encoding' | 'complete' | 'error';
@@ -50,9 +55,116 @@ const DEFAULT_RENDER_OPTIONS: RenderOptions = {
 export class VideoRenderer {
   private options: RenderOptions;
   private abortController: AbortController | null = null;
+  private threeScene: THREE.Scene | null = null;
+  private threeCamera: THREE.PerspectiveCamera | null = null;
+  private threeRenderer: THREE.WebGLRenderer | null = null;
+  private avatarModels: Map<string, THREE.Group> = new Map();
+  private gltfLoader: GLTFLoader = new GLTFLoader();
+  private sceneCanvasCache: Map<string, HTMLCanvasElement> = new Map();
 
   constructor(options: Partial<RenderOptions> = {}) {
     this.options = { ...DEFAULT_RENDER_OPTIONS, ...options };
+  }
+
+  /**
+   * Initialize Three.js scene for avatar rendering
+   */
+  private initializeThreeJS(): void {
+    if (this.threeScene) return; // Already initialized
+
+    // Create scene
+    this.threeScene = new THREE.Scene();
+    this.threeScene.background = null; // Transparent background
+
+    // Create camera
+    this.threeCamera = new THREE.PerspectiveCamera(
+      50,
+      this.options.width / this.options.height,
+      0.1,
+      1000,
+    );
+    this.threeCamera.position.z = 2;
+
+    // Create renderer (offscreen)
+    const canvas = document.createElement('canvas');
+    canvas.width = this.options.width;
+    canvas.height = this.options.height;
+
+    this.threeRenderer = new THREE.WebGLRenderer({
+      canvas,
+      alpha: true,
+      antialias: true,
+      preserveDrawingBuffer: true,
+    });
+    this.threeRenderer.setSize(this.options.width, this.options.height);
+    this.threeRenderer.setClearColor(0x000000, 0); // Transparent
+
+    // Add lights
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    this.threeScene.add(ambientLight);
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(1, 1, 1);
+    this.threeScene.add(directionalLight);
+  }
+
+  /**
+   * Load GLB avatar model
+   */
+  private async loadAvatarModel(glbUrl: string): Promise<THREE.Group> {
+    // Check cache
+    if (this.avatarModels.has(glbUrl)) {
+      return this.avatarModels.get(glbUrl)!.clone();
+    }
+
+    return new Promise((resolve, reject) => {
+      this.gltfLoader.load(
+        glbUrl,
+        (gltf) => {
+          const model = gltf.scene;
+
+          // Center model
+          const box = new THREE.Box3().setFromObject(model);
+          const center = box.getCenter(new THREE.Vector3());
+          model.position.sub(center);
+
+          // Scale to reasonable size
+          const size = box.getSize(new THREE.Vector3());
+          const maxDim = Math.max(size.x, size.y, size.z);
+          const scale = 1.5 / maxDim;
+          model.scale.setScalar(scale);
+
+          // Cache model
+          this.avatarModels.set(glbUrl, model);
+
+          resolve(model.clone());
+        },
+        undefined,
+        (error) => {
+          reject(new Error(`Failed to load GLB: ${error}`));
+        },
+      );
+    });
+  }
+
+  /**
+   * Apply blend shape weights to avatar model
+   */
+  private applyBlendShapes(model: THREE.Group, blendShapes: Record<string, number>): void {
+    model.traverse((child) => {
+      if ((child as THREE.Mesh).isMesh) {
+        const mesh = child as THREE.Mesh;
+        if (mesh.morphTargetInfluences && mesh.morphTargetDictionary) {
+          // Apply blend shape weights
+          Object.entries(blendShapes).forEach(([shapeName, weight]) => {
+            const index = mesh.morphTargetDictionary[shapeName];
+            if (index !== undefined && mesh.morphTargetInfluences) {
+              mesh.morphTargetInfluences[index] = weight;
+            }
+          });
+        }
+      }
+    });
   }
 
   /**
@@ -129,6 +241,9 @@ export class VideoRenderer {
         duration: (Date.now() - startTime) / 1000,
         error: errorMessage,
       };
+    } finally {
+      // Cleanup Three.js resources
+      this.cleanup();
     }
   }
 
@@ -213,13 +328,34 @@ export class VideoRenderer {
     scene: Scene,
     globalTime: number,
   ): Promise<void> {
-    // Clear canvas
-    ctx.fillStyle = scene.backgroundColor || '#000000';
-    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-
     // Calculate scene-relative time
     const sceneStartTime = this.getSceneStartTime(scene);
     const sceneTime = globalTime - sceneStartTime;
+
+    // Check if we're in transition
+    const transition = scene.transition as TransitionConfig | undefined;
+    const transitionDuration = transition?.duration || 0;
+
+    if (transition && sceneTime < transitionDuration) {
+      // Render transition
+      await this.renderSceneTransition(ctx, scene, sceneTime, transition);
+    } else {
+      // Render scene normally
+      await this.renderSceneContent(ctx, scene, sceneTime);
+    }
+  }
+
+  /**
+   * Render scene content (no transition)
+   */
+  private async renderSceneContent(
+    ctx: CanvasRenderingContext2D,
+    scene: Scene,
+    sceneTime: number,
+  ): Promise<void> {
+    // Clear canvas
+    ctx.fillStyle = scene.backgroundColor || '#000000';
+    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
     // Render all visible tracks in order
     for (const track of scene.tracks) {
@@ -232,6 +368,92 @@ export class VideoRenderer {
         }
       }
     }
+  }
+
+  /**
+   * Render scene transition
+   */
+  private async renderSceneTransition(
+    ctx: CanvasRenderingContext2D,
+    currentScene: Scene,
+    sceneTime: number,
+    transition: TransitionConfig,
+  ): Promise<void> {
+    const progress = sceneTime / transition.duration;
+
+    // Get or create canvas for previous scene
+    const prevSceneIndex = this.getPreviousSceneIndex(currentScene);
+    let prevCanvas: HTMLCanvasElement;
+
+    if (prevSceneIndex >= 0) {
+      // Render previous scene to temp canvas
+      prevCanvas = await this.renderSceneToCanvas(
+        this.getSceneAtIndex(prevSceneIndex),
+        transition.duration,
+      );
+    } else {
+      // No previous scene, use black canvas
+      prevCanvas = document.createElement('canvas');
+      prevCanvas.width = ctx.canvas.width;
+      prevCanvas.height = ctx.canvas.height;
+      const prevCtx = prevCanvas.getContext('2d')!;
+      prevCtx.fillStyle = '#000000';
+      prevCtx.fillRect(0, 0, prevCanvas.width, prevCanvas.height);
+    }
+
+    // Render current scene to temp canvas
+    const currentCanvas = await this.renderSceneToCanvas(currentScene, sceneTime);
+
+    // Apply transition
+    SceneTransitions.render(
+      {
+        ctx,
+        prevCanvas,
+        nextCanvas: currentCanvas,
+        progress,
+        width: ctx.canvas.width,
+        height: ctx.canvas.height,
+      },
+      transition,
+    );
+  }
+
+  /**
+   * Render scene to a temporary canvas
+   */
+  private async renderSceneToCanvas(scene: Scene, sceneTime: number): Promise<HTMLCanvasElement> {
+    const canvas = document.createElement('canvas');
+    canvas.width = this.options.width;
+    canvas.height = this.options.height;
+    const ctx = canvas.getContext('2d')!;
+
+    await this.renderSceneContent(ctx, scene, sceneTime);
+
+    return canvas;
+  }
+
+  /**
+   * Get previous scene index
+   */
+  private getPreviousSceneIndex(_scene: Scene): number {
+    // This would need access to project.scenes
+    // For now, return -1 (no previous scene)
+    return -1;
+  }
+
+  /**
+   * Get scene at index
+   */
+  private getSceneAtIndex(_index: number): Scene {
+    // This would need access to project.scenes
+    // For now, return empty scene
+    return {
+      id: 'dummy',
+      name: 'Dummy',
+      duration: 0,
+      backgroundColor: '#000000',
+      tracks: [],
+    } as Scene;
   }
 
   /**
@@ -281,34 +503,69 @@ export class VideoRenderer {
   }
 
   /**
-   * Render text element
+   * Render text element with animation
    */
   private renderTextElement(
     ctx: CanvasRenderingContext2D,
     element: TimelineElement,
-    _progress: number,
+    progress: number,
   ): void {
     const { content } = element;
     if (!content.text) return;
 
-    // Apply transformations
-    ctx.save();
-
-    const x = content.position?.x || 0;
-    const y = content.position?.y || 0;
+    const x = content.position?.x || ctx.canvas.width / 2;
+    const y = content.position?.y || ctx.canvas.height / 2;
     const opacity = content.opacity ?? 1;
 
-    ctx.globalAlpha = opacity;
-    ctx.font = content.fontSize
+    const font = content.fontSize
       ? `${content.fontSize}px ${content.fontFamily || 'Arial'}`
       : '24px Arial';
-    ctx.fillStyle = content.color || '#ffffff';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
+    const color = content.color || '#ffffff';
 
-    ctx.fillText(content.text, x, y);
+    // Check if element has animation
+    const animation = content.animation as TextAnimationConfig | undefined;
 
-    ctx.restore();
+    if (animation && animation.type !== 'none') {
+      // Render with animation
+      const animationProgress = Math.min(progress / (animation.duration || 1), 1);
+
+      ctx.save();
+      ctx.globalAlpha = opacity;
+
+      TextAnimations.render(
+        {
+          ctx,
+          text: content.text,
+          x,
+          y,
+          font,
+          color,
+          align: (content.textAlign as CanvasTextAlign) || 'center',
+          baseline: (content.textBaseline as CanvasTextBaseline) || 'middle',
+          maxWidth: content.maxWidth,
+        },
+        animation,
+        animationProgress,
+      );
+
+      ctx.restore();
+    } else {
+      // Render static text
+      ctx.save();
+      ctx.globalAlpha = opacity;
+      ctx.font = font;
+      ctx.fillStyle = color;
+      ctx.textAlign = (content.textAlign as CanvasTextAlign) || 'center';
+      ctx.textBaseline = (content.textBaseline as CanvasTextBaseline) || 'middle';
+
+      if (content.maxWidth) {
+        ctx.fillText(content.text, x, y, content.maxWidth);
+      } else {
+        ctx.fillText(content.text, x, y);
+      }
+
+      ctx.restore();
+    }
   }
 
   /**
@@ -340,13 +597,91 @@ export class VideoRenderer {
   }
 
   /**
-   * Render avatar element (placeholder)
+   * Render avatar element with real GLB model
    */
-  private renderAvatarElement(
+  private async renderAvatarElement(
     ctx: CanvasRenderingContext2D,
     element: TimelineElement,
     _progress: number,
-  ): void {
+  ): Promise<void> {
+    const { content } = element;
+
+    // If no GLB URL, render placeholder
+    if (!content.avatarGlbUrl) {
+      this.renderAvatarPlaceholder(ctx, element);
+      return;
+    }
+
+    try {
+      // Initialize Three.js if not already done
+      this.initializeThreeJS();
+
+      if (!this.threeScene || !this.threeCamera || !this.threeRenderer) {
+        throw new Error('Three.js not initialized');
+      }
+
+      // Load avatar model
+      const model = await this.loadAvatarModel(content.avatarGlbUrl);
+
+      // Apply blend shapes if provided
+      if (content.blendShapes) {
+        this.applyBlendShapes(model, content.blendShapes);
+      }
+
+      // Position and scale model
+      const x = content.position?.x || 960;
+      const y = content.position?.y || 540;
+      const scale = content.scale || 1;
+
+      // Convert 2D position to 3D
+      const ndcX = (x / ctx.canvas.width) * 2 - 1;
+      const ndcY = -(y / ctx.canvas.height) * 2 + 1;
+
+      model.position.set(ndcX * 1.5, ndcY * 1.5, 0);
+      model.scale.multiplyScalar(scale);
+
+      // Apply rotation if provided
+      if (content.rotation) {
+        model.rotation.set(
+          content.rotation.x || 0,
+          content.rotation.y || 0,
+          content.rotation.z || 0,
+        );
+      }
+
+      // Add model to scene
+      this.threeScene.add(model);
+
+      // Render Three.js scene
+      this.threeRenderer.render(this.threeScene, this.threeCamera);
+
+      // Get rendered image from Three.js canvas
+      const threeCanvas = this.threeRenderer.domElement;
+      const threeCtx = threeCanvas.getContext('2d');
+
+      if (threeCtx) {
+        ctx.save();
+        ctx.globalAlpha = content.opacity ?? 1;
+
+        // Draw Three.js render to main canvas
+        ctx.drawImage(threeCanvas, 0, 0);
+
+        ctx.restore();
+      }
+
+      // Remove model from scene for next frame
+      this.threeScene.remove(model);
+    } catch (error) {
+      console.error('Error rendering avatar GLB:', error);
+      // Fallback to placeholder
+      this.renderAvatarPlaceholder(ctx, element);
+    }
+  }
+
+  /**
+   * Render placeholder avatar (fallback)
+   */
+  private renderAvatarPlaceholder(ctx: CanvasRenderingContext2D, element: TimelineElement): void {
     const { content } = element;
 
     ctx.save();
@@ -513,6 +848,41 @@ export class VideoRenderer {
    */
   abort(): void {
     this.abortController?.abort();
+    this.cleanup();
+  }
+
+  /**
+   * Cleanup Three.js resources
+   */
+  private cleanup(): void {
+    // Dispose of Three.js resources
+    if (this.threeRenderer) {
+      this.threeRenderer.dispose();
+      this.threeRenderer = null;
+    }
+
+    if (this.threeScene) {
+      this.threeScene.clear();
+      this.threeScene = null;
+    }
+
+    this.threeCamera = null;
+
+    // Clear avatar model cache
+    this.avatarModels.forEach((model) => {
+      model.traverse((child) => {
+        if ((child as THREE.Mesh).isMesh) {
+          const mesh = child as THREE.Mesh;
+          mesh.geometry?.dispose();
+          if (Array.isArray(mesh.material)) {
+            mesh.material.forEach((mat) => mat.dispose());
+          } else {
+            mesh.material?.dispose();
+          }
+        }
+      });
+    });
+    this.avatarModels.clear();
   }
 }
 
