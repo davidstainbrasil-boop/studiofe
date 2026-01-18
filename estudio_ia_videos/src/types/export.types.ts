@@ -3,10 +3,10 @@
  * Updated Sprint 49: Added advanced rendering options
  */
 
-import type { SubtitleStyle } from './subtitle.types'
-import type { WatermarkSettings as WatermarkConfig } from './watermark.types'
-import type { VideoFilterConfig } from '@lib/export/video-filters-types'
-import type { AudioEnhancementConfig } from '@lib/export/audio-processor'
+import type { SubtitleStyle } from './subtitle.types';
+import type { WatermarkSettings as WatermarkConfig } from './watermark.types';
+import type { VideoFilterConfig } from '@lib/export/video-filters-types';
+import type { AudioEnhancementConfig } from '@lib/export/audio-processor';
 
 export enum ExportStatus {
   PENDING = 'pending',
@@ -20,9 +20,11 @@ export enum ExportFormat {
   MP4 = 'mp4',
   WEBM = 'webm',
   MOV = 'mov',
+  AVI = 'avi',
 }
 
 export enum ExportResolution {
+  SD_480 = '480p',
   HD_720 = '720p',
   FULL_HD_1080 = '1080p',
   UHD_4K = '4k',
@@ -37,56 +39,56 @@ export enum ExportQuality {
 
 export interface ExportSettings {
   // Basic settings
-  format: ExportFormat
-  resolution: ExportResolution
-  quality: ExportQuality
-  fps?: number // Frames per second (default: 30)
-  bitrate?: string // Video bitrate (e.g., '5000k')
-  audioBitrate?: string // Audio bitrate (e.g., '192k')
-  codec?: string // Video codec (e.g., 'h264', 'vp9')
-  audioCodec?: string // Audio codec (e.g., 'aac', 'opus')
-  
+  format: ExportFormat;
+  resolution: ExportResolution;
+  quality: ExportQuality;
+  fps?: number; // Frames per second (default: 30)
+  bitrate?: string; // Video bitrate (e.g., '5000k')
+  audioBitrate?: string; // Audio bitrate (e.g., '192k')
+  codec?: string; // Video codec (e.g., 'h264', 'vp9')
+  audioCodec?: string; // Audio codec (e.g., 'aac', 'opus')
+
   // Legacy watermark flag (deprecated - use watermark object instead)
-  includeWatermark?: boolean
-  
+  includeWatermark?: boolean;
+
   // Advanced settings (Sprint 48/49)
-  watermark?: WatermarkConfig // Watermark configuration
-  videoFilters?: VideoFilterConfig[] // Video filters
-  audioEnhancements?: AudioEnhancementConfig[] // Audio enhancements
+  watermark?: WatermarkConfig; // Watermark configuration
+  videoFilters?: VideoFilterConfig[]; // Video filters
+  audioEnhancements?: AudioEnhancementConfig[]; // Audio enhancements
   subtitle?: {
-    enabled: boolean
-    source?: string
-    format?: 'srt' | 'vtt' | 'ass'
-    burnIn: boolean
-    style?: SubtitleStyle
-  }
+    enabled: boolean;
+    source?: string;
+    format?: 'srt' | 'vtt' | 'ass';
+    burnIn: boolean;
+    style?: SubtitleStyle;
+  };
 }
 
 export interface ExportJob {
-  id: string
-  userId: string
-  projectId: string
-  timelineId: string
-  status: ExportStatus
-  settings: ExportSettings
-  progress: number // 0-100
-  outputUrl?: string // URL do vídeo final
-  outputPath?: string // Path local do arquivo
-  fileSize?: number // Tamanho em bytes
-  duration?: number // Duração em segundos
-  error?: string
-  createdAt: Date
-  startedAt?: Date
-  completedAt?: Date
-  estimatedTimeRemaining?: number // Segundos estimados
+  id: string;
+  userId: string;
+  projectId: string;
+  timelineId: string;
+  status: ExportStatus;
+  settings: ExportSettings;
+  progress: number; // 0-100
+  outputUrl?: string; // URL do vídeo final
+  outputPath?: string; // Path local do arquivo
+  fileSize?: number; // Tamanho em bytes
+  duration?: number; // Duração em segundos
+  error?: string;
+  createdAt: Date;
+  startedAt?: Date;
+  completedAt?: Date;
+  estimatedTimeRemaining?: number; // Segundos estimados
 }
 
 export interface ExportProgress {
-  jobId: string
-  progress: number
-  currentPhase: ExportPhase
-  message: string
-  estimatedTimeRemaining?: number
+  jobId: string;
+  progress: number;
+  currentPhase: ExportPhase;
+  message: string;
+  estimatedTimeRemaining?: number;
 }
 
 export enum ExportPhase {
@@ -99,53 +101,58 @@ export enum ExportPhase {
 }
 
 export interface TimelineLayerData {
-  id: string
-  start: number
-  end: number
-  type: string
-  assetId?: string
-  properties?: Record<string, unknown>
-  metadata?: Record<string, unknown>
+  id: string;
+  start: number;
+  end: number;
+  type: string;
+  assetId?: string;
+  properties?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface TimelineTrackData {
-  id: string
-  type: string
-  name?: string
-  duration?: number
-  layers: TimelineLayerData[]
-  metadata?: Record<string, unknown>
+  id: string;
+  type: string;
+  name?: string;
+  duration?: number;
+  layers: TimelineLayerData[];
+  metadata?: Record<string, unknown>;
 }
 
 export interface TimelineData {
-  id?: string
-  name?: string
-  duration?: number
-  fps?: number
-  tracks?: TimelineTrackData[]
-  settings?: Record<string, unknown>
-  metadata?: Record<string, unknown>
-  [key: string]: unknown
+  id?: string;
+  name?: string;
+  duration?: number;
+  fps?: number;
+  tracks?: TimelineTrackData[];
+  settings?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
+  [key: string]: unknown;
 }
 
 export interface RenderTask {
-  jobId: string
-  timelineData: TimelineData | null
-  settings: ExportSettings
-  userId: string
-  projectId: string
+  jobId: string;
+  timelineData: TimelineData | null;
+  settings: ExportSettings;
+  userId: string;
+  projectId: string;
 }
 
 export interface ExportQueueStatus {
-  totalJobs: number
-  pendingJobs: number
-  processingJobs: number
-  completedJobs: number
-  failedJobs: number
+  totalJobs: number;
+  pendingJobs: number;
+  processingJobs: number;
+  completedJobs: number;
+  failedJobs: number;
 }
 
 // Configurações de resolução
 export const RESOLUTION_CONFIGS = {
+  [ExportResolution.SD_480]: {
+    width: 854,
+    height: 480,
+    bitrate: '1500k',
+  },
   [ExportResolution.HD_720]: {
     width: 1280,
     height: 720,
@@ -161,7 +168,7 @@ export const RESOLUTION_CONFIGS = {
     height: 2160,
     bitrate: '15000k',
   },
-}
+};
 
 // Configurações de qualidade
 export const QUALITY_CONFIGS = {
@@ -181,7 +188,7 @@ export const QUALITY_CONFIGS = {
     crf: 15,
     preset: 'veryslow',
   },
-}
+};
 
 // Configurações de codec por formato
 export const CODEC_CONFIGS = {
@@ -200,4 +207,9 @@ export const CODEC_CONFIGS = {
     audioCodec: 'aac',
     container: 'mov',
   },
-}
+  [ExportFormat.AVI]: {
+    videoCodec: 'libx264',
+    audioCodec: 'aac',
+    container: 'avi',
+  },
+};

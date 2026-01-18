@@ -1,33 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@lib/logger';
 import { TranscriptionService } from '@lib/subtitles/transcription-service';
-import { createClient } from '@supabase/supabase-js';
-import { getRequiredEnv } from '@lib/env';
+import { prisma } from '@lib/prisma';
+import { getSupabaseForRequest } from '@lib/supabase/server';
+import { uploadSubtitleFile } from '@lib/subtitles/subtitle-storage';
 import { promises as fs } from 'fs';
 import path from 'path';
-
-// Initialize Supabase client
-const supabase = createClient(
-  getRequiredEnv('NEXT_PUBLIC_SUPABASE_URL'),
-  getRequiredEnv('SUPABASE_SERVICE_ROLE_KEY')
-);
+import type { Prisma } from '@prisma/client';
 
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const audioPath = formData.get('audioPath') as string;
-    const language = formData.get('language') as string || 'pt-BR';
+    const language = (formData.get('language') as string) || 'pt-BR';
     const enableKaraoke = formData.get('enableKaraoke') === 'true';
     const enableSpeakerDiarization = formData.get('enableSpeakerDiarization') === 'true';
     const maxSpeakers = parseInt(formData.get('maxSpeakers') as string) || 2;
-    const userId = formData.get('userId') as string;
+    const formUserId = formData.get('userId') as string;
+    const projectId = formData.get('projectId') as string | null;
+
+    const authSupabase = getSupabaseForRequest(request);
+    const {
+      data: { session },
+    } = await authSupabase.auth.getSession();
+    const userId = session?.user?.id || formUserId;
 
     if (!file && !audioPath) {
       return NextResponse.json(
         { error: 'Arquivo de áudio ou caminho do arquivo é necessário' },
-        { status: 400 }
+        { status: 400 },
       );
+    }
+
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     let finalAudioPath: string;
@@ -36,20 +43,17 @@ export async function POST(request: NextRequest) {
       // Save uploaded file to temp directory
       const tempDir = path.join(process.cwd(), 'temp', 'uploads');
       await fs.mkdir(tempDir, { recursive: true });
-      
+
       const fileName = `${Date.now()}_${file.name}`;
       const filePath = path.join(tempDir, fileName);
       const buffer = Buffer.from(await file.arrayBuffer());
       await fs.writeFile(filePath, buffer);
-      
+
       finalAudioPath = filePath;
     } else if (audioPath) {
       finalAudioPath = audioPath;
     } else {
-      return NextResponse.json(
-        { error: 'Nenhum arquivo válido fornecido' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Nenhum arquivo válido fornecido' }, { status: 400 });
     }
 
     const transcriptionService = TranscriptionService.getInstance();
@@ -59,38 +63,73 @@ export async function POST(request: NextRequest) {
       language,
       enableKaraoke,
       enableSpeakerDiarization,
-      maxSpeakers
+      maxSpeakers,
     });
 
+    // Generate subtitle files
+    const karaokeSubtitles = enableKaraoke
+      ? transcriptionService.generateKaraokeSubtitles(result)
+      : null;
+
+    const srtSubtitles = transcriptionService.generateSRT(result);
+    const vttSubtitles = transcriptionService.generateVTT(result);
+
+    // Upload subtitle files to storage
+    const srtUpload = await uploadSubtitleFile({
+      content: srtSubtitles,
+      extension: 'srt',
+      projectId,
+      language,
+      kind: 'srt',
+    });
+
+    const vttUpload = await uploadSubtitleFile({
+      content: vttSubtitles,
+      extension: 'vtt',
+      projectId,
+      language,
+      kind: 'vtt',
+    });
+
+    const karaokeUpload = karaokeSubtitles
+      ? await uploadSubtitleFile({
+          content: karaokeSubtitles,
+          extension: 'ass',
+          projectId,
+          language,
+          kind: 'karaoke',
+        })
+      : null;
+
     // Save transcription to database
-    const { data: transcriptionData, error: dbError } = await supabase
-      .from('transcriptions')
-      .insert({
+    const transcriptionData = await prisma.transcriptions.create({
+      data: {
         userId: userId,
-        audio_path: finalAudioPath,
+        projectId: projectId || undefined,
+        audioPath: finalAudioPath,
         language,
         duration: result.duration,
         confidence: result.confidence,
-        word_count: result.wordCount,
-        segments: result.segments,
-        karaoke_enabled: enableKaraoke,
-        speaker_diarization_enabled: enableSpeakerDiarization,
-        createdAt: new Date().toISOString()
-      })
-      .select()
-      .single();
+        wordCount: result.wordCount,
+        segments: result.segments as Prisma.InputJsonValue,
+        karaokeEnabled: enableKaraoke,
+        speakerDiarizationEnabled: enableSpeakerDiarization,
+        srtUrl: srtUpload.url,
+        vttUrl: vttUpload.url,
+        karaokeUrl: karaokeUpload?.url,
+      },
+      select: { id: true },
+    });
 
-    if (dbError) {
-      logger.error('Database error:', dbError instanceof Error ? dbError : new Error(String(dbError)), { component: 'API: subtitles/transcribe' });
-      throw new Error(`Failed to save transcription: ${dbError.message}`);
-    }
-
-    // Generate subtitle files
-    const karaokeSubtitles = enableKaraoke 
-      ? transcriptionService.generateKaraokeSubtitles(result)
-      : null;
-    
-    const srtSubtitles = transcriptionService.generateSRT(result);
+    await prisma.subtitle_tracks.create({
+      data: {
+        transcriptionId: transcriptionData.id,
+        language,
+        segments: result.segments as Prisma.InputJsonValue,
+        srtUrl: srtUpload.url,
+        vttUrl: vttUpload.url,
+      },
+    });
 
     // Clean up temp file if it was uploaded
     if (file) {
@@ -106,17 +145,24 @@ export async function POST(request: NextRequest) {
       transcription: result,
       karaokeSubtitles,
       srtSubtitles,
-      transcriptionId: transcriptionData.id
+      vttSubtitles,
+      transcriptionId: transcriptionData.id,
+      srtUrl: srtUpload.url,
+      vttUrl: vttUpload.url,
+      karaokeUrl: karaokeUpload?.url,
     });
-
   } catch (error) {
-    logger.error('Transcription API error:', error instanceof Error ? error : new Error(String(error)), { component: 'API: subtitles/transcribe' });
+    logger.error(
+      'Transcription API error:',
+      error instanceof Error ? error : new Error(String(error)),
+      { component: 'API: subtitles/transcribe' },
+    );
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to transcribe audio',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -128,45 +174,33 @@ export async function GET(request: NextRequest) {
     const transcriptionId = searchParams.get('transcriptionId');
 
     if (!userId) {
-      return NextResponse.json(
-        { error: 'User ID is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
 
-    let query = supabase
-      .from('transcriptions')
-      .select('*')
-      .eq("userId", userId)
-      .order("createdAt", { ascending: false });
-
-    if (transcriptionId) {
-      query = query.eq('id', transcriptionId);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      logger.error('Database error:', error instanceof Error ? error : new Error(String(error)), { component: 'API: subtitles/transcribe' });
-      return NextResponse.json(
-        { error: `Failed to fetch transcriptions: ${error.message}` },
-        { status: 500 }
-      );
-    }
+    const data = await prisma.transcriptions.findMany({
+      where: {
+        userId,
+        ...(transcriptionId ? { id: transcriptionId } : {}),
+      },
+      orderBy: { createdAt: 'desc' },
+    });
 
     return NextResponse.json({
       success: true,
-      transcriptions: data
+      transcriptions: data,
     });
-
   } catch (error) {
-    logger.error('Get transcriptions API error:', error instanceof Error ? error : new Error(String(error)), { component: 'API: subtitles/transcribe' });
+    logger.error(
+      'Get transcriptions API error:',
+      error instanceof Error ? error : new Error(String(error)),
+      { component: 'API: subtitles/transcribe' },
+    );
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to fetch transcriptions',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -180,37 +214,33 @@ export async function DELETE(request: NextRequest) {
     if (!transcriptionId || !userId) {
       return NextResponse.json(
         { error: 'Transcription ID and User ID are required' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    const { error } = await supabase
-      .from('transcriptions')
-      .delete()
-      .eq('id', transcriptionId)
-      .eq("userId", userId);
-
-    if (error) {
-      logger.error('Database error:', error instanceof Error ? error : new Error(String(error)), { component: 'API: subtitles/transcribe' });
-      return NextResponse.json(
-        { error: `Failed to delete transcription: ${error.message}` },
-        { status: 500 }
-      );
-    }
+    await prisma.transcriptions.deleteMany({
+      where: {
+        id: transcriptionId,
+        userId,
+      },
+    });
 
     return NextResponse.json({
       success: true,
-      message: 'Transcription deleted successfully'
+      message: 'Transcription deleted successfully',
     });
-
   } catch (error) {
-    logger.error('Delete transcription API error:', error instanceof Error ? error : new Error(String(error)), { component: 'API: subtitles/transcribe' });
+    logger.error(
+      'Delete transcription API error:',
+      error instanceof Error ? error : new Error(String(error)),
+      { component: 'API: subtitles/transcribe' },
+    );
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to delete transcription',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

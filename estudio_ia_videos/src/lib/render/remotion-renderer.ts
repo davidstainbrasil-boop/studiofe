@@ -1,15 +1,15 @@
-
 import { bundle } from '@remotion/bundler';
 import { renderMedia, selectComposition } from '@remotion/renderer';
 import path from 'path';
 import fs from 'fs';
+import os from 'os';
 import { logger } from '@lib/logger';
 import { prisma } from '@lib/prisma';
 import { jobManager } from './job-manager';
 import { TimelineProject } from '@lib/types/timeline-types';
+import { VideoUploader } from '@lib/storage/video-uploader';
 
 export class RemotionRenderer {
-  
   async renderJob(jobId: string, projectId: string): Promise<string> {
     try {
       logger.info('Starting Remotion render', { jobId, projectId });
@@ -17,15 +17,15 @@ export class RemotionRenderer {
       // 1. Fetch Project Data
       const project = await prisma.projects.findUnique({
         where: { id: projectId },
-        select: { metadata: true }
+        select: { metadata: true, userId: true },
       });
 
-      if (!project || !project.metadata) {
+      if (!project || !project.metadata || !project.userId) {
         throw new Error('Project not found or empty');
       }
 
       // Safe cast
-      const metadata = project.metadata as Record<string, any>;
+      const metadata = project.metadata as Record<string, unknown>;
       const snapshot = metadata.studioSnapshot as TimelineProject;
 
       if (!snapshot) {
@@ -34,14 +34,14 @@ export class RemotionRenderer {
 
       // 2. Map Snapshot to Remotion Props
       const { mapProjectToRemotionProps } = await import('@lib/mappers/timeline-mapper');
-      const inputProps = mapProjectToRemotionProps(snapshot);
+      const inputProps = mapProjectToRemotionProps(snapshot) as Record<string, unknown>;
 
       // 3. Bundle Remotion (This might be slow, consider caching bundle in future)
       // Pointing to the Remotion Root component
       const entryPoint = path.join(process.cwd(), 'src', 'app', 'remotion', 'index.ts');
-      
+
       logger.info('Bundling Remotion project...', { entryPoint });
-      
+
       const bundled = await bundle({
         entryPoint,
         // Webpack config adjustments if needed
@@ -52,42 +52,62 @@ export class RemotionRenderer {
       const composition = await selectComposition({
         serveUrl: bundled,
         id: compositionId,
-        inputProps: inputProps as any,
+        inputProps,
       });
 
       // 5. Render to MP4
-      const outputDir = path.join(process.cwd(), 'public', 'renders');
+      const outputDir = path.join(os.tmpdir(), 'remotion-renders');
       if (!fs.existsSync(outputDir)) {
         fs.mkdirSync(outputDir, { recursive: true });
       }
-      
+
       const fileName = `${jobId}.mp4`;
       const outputPath = path.join(outputDir, fileName);
 
-      logger.info('Rendering video...', { outputPath, durationInFrames: composition.durationInFrames });
+      logger.info('Rendering video...', {
+        outputPath,
+        durationInFrames: composition.durationInFrames,
+      });
 
       await renderMedia({
         composition,
         serveUrl: bundled,
         codec: 'h264',
         outputLocation: outputPath,
-        inputProps: inputProps as any,
+        inputProps,
         onProgress: ({ progress }) => {
           // Update job progress (0-100)
           const p = Math.round(progress * 100);
-          jobManager.updateProgress(jobId, p).catch(e => console.error(e));
-        }
+          jobManager.updateProgress(jobId, p).catch((e) => console.error(e));
+        },
       });
 
       logger.info('Render completed', { outputPath });
 
-      // 6. Upload to Storage (Optional, for now returning local public URL)
-      // In production, we would upload to S3/Supabase Storage here.
-      // For MVP, we serve from /renders/
-      
-      const publicUrl = `/renders/${fileName}`;
-      return publicUrl;
+      // 6. Upload to Storage (real)
+      const uploader = new VideoUploader();
+      const outputUrl = await uploader.uploadVideo({
+        videoPath: outputPath,
+        projectId,
+        userId: project.userId,
+        jobId,
+        metadata: {
+          resolution: { width: composition.width, height: composition.height },
+          fps: composition.fps,
+          codec: 'h264',
+          format: 'mp4',
+          duration: composition.durationInFrames / composition.fps,
+        },
+      });
 
+      // Cleanup local file
+      try {
+        await fs.promises.unlink(outputPath);
+      } catch {
+        // ignore
+      }
+
+      return outputUrl;
     } catch (error) {
       logger.error('Remotion render failed', error as Error);
       throw error;

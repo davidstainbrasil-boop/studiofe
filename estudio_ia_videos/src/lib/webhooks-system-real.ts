@@ -1,8 +1,14 @@
-import { prisma } from '@lib/prisma'
-import { logger } from '@lib/logger'
-import { randomUUID, createHmac } from 'crypto'
-import { Prisma } from '@prisma/client'
-import { getRedisClient } from '@lib/services/redis-service'
+import { prisma } from '@lib/prisma';
+import { logger } from '@lib/logger';
+import { randomUUID, createHmac } from 'crypto';
+import {
+  Prisma,
+  type webhooks as WebhookRecord,
+  type webhook_deliveries as WebhookDeliveryRecord,
+} from '@prisma/client';
+import { getRedisClient } from '@lib/services/redis-service';
+
+const MAX_WEBHOOK_RETRIES = Math.max(1, parseInt(process.env.WEBHOOK_MAX_RETRIES || '3', 10));
 
 export type WebhookEvent =
   | 'render.started'
@@ -10,71 +16,54 @@ export type WebhookEvent =
   | 'render.failed'
   | 'project.created'
   | 'storage.uploaded'
-  | 'system.alert'
+  | 'system.alert';
 
 export interface WebhookConfig {
-  userId: string
-  url: string
-  events: WebhookEvent[]
-  description?: string
-  headers?: Record<string, string>
-  secret?: string
-}
-
-interface PrismaWebhook {
-  id: string;
   userId: string;
   url: string;
-  secret: string;
-  events: unknown;
-  active: boolean;
-  retryInterval?: number;
+  events: WebhookEvent[];
+  description?: string;
+  headers?: Record<string, string>;
+  secret?: string;
 }
 
-interface PrismaWebhookDelivery {
-  id: string;
-  webhookId: string;
-  event: string;
-  payload: unknown;
-  url: string;
-  status: string;
-  scheduledFor: Date;
-}
+type PrismaWebhook = WebhookRecord;
+type PrismaWebhookDelivery = WebhookDeliveryRecord;
 
 export class WebhookManager {
   async listWebhooks(userId: string) {
     try {
       return await prisma.webhooks.findMany({
         where: { userId },
-        orderBy: { createdAt: 'desc' }
-      })
+        orderBy: { createdAt: 'desc' },
+      });
     } catch (error) {
-      logger.error('Failed to list webhooks', error as Error, { userId })
-      throw error
+      logger.error('Failed to list webhooks', error as Error, { userId });
+      throw error;
     }
   }
 
   async registerWebhook(config: WebhookConfig) {
     try {
-      const secret = config.secret || randomUUID()
-      
+      const secret = config.secret || randomUUID();
+
       // Prisma doesn't have description/headers in the schema shown in migration.sql
       // But the route passes them. I will check if I can store them or if I should ignore.
       // The migration SQL shows:
       // "events" JSONB NOT NULL
       // It does NOT show "description" or "headers" columns in Webhook table.
-      // However, the route passes them. 
-      // I will assume for now that I might need to store them in a metadata field if it existed, 
+      // However, the route passes them.
+      // I will assume for now that I might need to store them in a metadata field if it existed,
       // or maybe the schema in the migration file I read was partial or I missed something.
       // Re-reading the migration sql provided in context:
       // CREATE TABLE "Webhook" ( ... "events" JSONB NOT NULL ... );
       // No description or headers column.
-      // I will ignore description and headers for the DB creation to avoid runtime errors, 
-      // or put them in a hypothetical metadata field if I can find one. 
+      // I will ignore description and headers for the DB creation to avoid runtime errors,
+      // or put them in a hypothetical metadata field if I can find one.
       // There is no metadata field in the CREATE TABLE statement.
       // I will proceed with creating the webhook with available fields.
-      
-          const webhook = await prisma.webhooks.create({
+
+      const webhook = await prisma.webhooks.create({
         data: {
           id: randomUUID(),
           userId: config.userId,
@@ -82,32 +71,32 @@ export class WebhookManager {
           secret,
           events: config.events as unknown as Prisma.InputJsonValue, // JSONB
           active: true,
-        }
-      })
-      logger.info('Webhook registered', { webhookId: webhook.id, userId: config.userId })
-      return webhook
+        },
+      });
+      logger.info('Webhook registered', { webhookId: webhook.id, userId: config.userId });
+      return webhook;
     } catch (error) {
-      logger.error('Failed to register webhook', error as Error, { config })
-      throw error
+      logger.error('Failed to register webhook', error as Error, { config });
+      throw error;
     }
   }
 
   async deleteWebhook(id: string, userId: string) {
     try {
       await prisma.webhooks.deleteMany({
-        where: { id, userId }
-      })
-      return true
+        where: { id, userId },
+      });
+      return true;
     } catch (error) {
-      logger.error('Failed to delete webhook', error as Error, { id, userId })
-      throw error
+      logger.error('Failed to delete webhook', error as Error, { id, userId });
+      throw error;
     }
   }
 
   async getWebhook(id: string) {
     return await prisma.webhooks.findUnique({
-      where: { id }
-    })
+      where: { id },
+    });
   }
 
   /**
@@ -118,23 +107,23 @@ export class WebhookManager {
   async calculateAverageResponseTime(webhookId: string): Promise<number> {
     try {
       // Tentar recuperar do cache Redis primeiro (cache de 5 minutos)
-      const cacheKey = `webhook:${webhookId}:avg_response_time`
+      const cacheKey = `webhook:${webhookId}:avg_response_time`;
       try {
-        const redis = await getRedisClient()
+        const redis = await getRedisClient();
         if (redis) {
-          const cached = await redis.get(cacheKey)
+          const cached = await redis.get(cacheKey);
           if (cached) {
-            return parseInt(cached, 10)
+            return parseInt(cached, 10);
           }
         }
       } catch (redisError) {
         // Redis não disponível, continuar com cálculo do banco
-        logger.info('Redis não disponível para cache de avgResponseTime', { webhookId })
+        logger.info('Redis não disponível para cache de avgResponseTime', { webhookId });
       }
 
       // Buscar logs de delivery das últimas 24 horas
-      const oneDayAgo = new Date(Date.now() - 24 * 3600000)
-      
+      const oneDayAgo = new Date(Date.now() - 24 * 3600000);
+
       const deliveries = await prisma.webhook_deliveries.findMany({
         where: {
           webhookId,
@@ -148,49 +137,52 @@ export class WebhookManager {
         },
         orderBy: { createdAt: 'desc' },
         take: 100, // Últimas 100 entregas
-      })
+      });
 
       if (deliveries.length === 0) {
-        return 0
+        return 0;
       }
 
       // Calcular média dos tempos de resposta
-      const totalResponseTime = deliveries.reduce((sum, delivery) => {
-        return sum + (delivery.responseTime || 0)
-      }, 0)
+      const totalResponseTime = deliveries.reduce(
+        (sum: number, delivery: { responseTime: number | null }) => {
+          return sum + (delivery.responseTime || 0);
+        },
+        0,
+      );
 
-      const avgTime = Math.round(totalResponseTime / deliveries.length)
+      const avgTime = Math.round(totalResponseTime / deliveries.length);
 
       // Armazenar métrica no Redis para cache (5 minutos)
       try {
-        const redis = await getRedisClient()
+        const redis = await getRedisClient();
         if (redis) {
-          await redis.setex(cacheKey, 300, avgTime.toString())
+          await redis.setex(cacheKey, 300, avgTime.toString());
         }
       } catch (redisError) {
         // Redis não disponível, continuar sem cache
-        logger.info('Não foi possível cachear avgResponseTime no Redis', { webhookId })
+        logger.info('Não foi possível cachear avgResponseTime no Redis', { webhookId });
       }
 
-      return avgTime
+      return avgTime;
     } catch (error) {
-      logger.error('Erro ao calcular avgResponseTime', error as Error, { webhookId })
-      
+      logger.error('Erro ao calcular avgResponseTime', error as Error, { webhookId });
+
       // Tentar recuperar do cache em caso de erro
       try {
-        const redis = await getRedisClient()
+        const redis = await getRedisClient();
         if (redis) {
-          const cacheKey = `webhook:${webhookId}:avg_response_time`
-          const cached = await redis.get(cacheKey)
+          const cacheKey = `webhook:${webhookId}:avg_response_time`;
+          const cached = await redis.get(cacheKey);
           if (cached) {
-            return parseInt(cached, 10)
+            return parseInt(cached, 10);
           }
         }
       } catch {
         // Ignorar erro de cache
       }
-      
-      return 0
+
+      return 0;
     }
   }
 
@@ -201,12 +193,12 @@ export class WebhookManager {
    */
   async getWebhookStats(webhookId: string) {
     try {
-      const webhook = await this.getWebhook(webhookId)
+      const webhook = await this.getWebhook(webhookId);
       if (!webhook) {
-        throw new Error('Webhook not found')
+        throw new Error('Webhook not found');
       }
 
-      const avgResponseTime = await this.calculateAverageResponseTime(webhookId)
+      const avgResponseTime = await this.calculateAverageResponseTime(webhookId);
 
       return {
         id: webhook.id,
@@ -217,38 +209,38 @@ export class WebhookManager {
         failedDeliveries: webhook.failedDeliveries,
         lastDeliveryAt: webhook.lastDeliveryAt,
         avgResponseTime,
-      }
+      };
     } catch (error) {
-      logger.error('Erro ao obter estatísticas do webhook', error as Error, { webhookId })
-      throw error
+      logger.error('Erro ao obter estatísticas do webhook', error as Error, { webhookId });
+      throw error;
     }
   }
 }
 
-export const webhookManager = new WebhookManager()
+export const webhookManager = new WebhookManager();
 
 // Trigger system
 class WebhookTrigger {
   private async dispatch(event: WebhookEvent, payload: Record<string, unknown>) {
     try {
       // Find all active webhooks that subscribe to this event
-      // Since events is JSONB, we might need to fetch all active and filter in code 
-      // or use specific JSON filtering if supported. 
+      // Since events is JSONB, we might need to fetch all active and filter in code
+      // or use specific JSON filtering if supported.
       // For simplicity and compatibility, I'll fetch active webhooks and filter in JS.
-      
+
       // Note: In a real high-scale system, this should be optimized.
       const webhooks = await prisma.webhooks.findMany({
-        where: { active: true }
-      })
+        where: { active: true },
+      });
 
-      const matchingWebhooks = webhooks.filter(wh => {
-        const events = wh.events as unknown as string[]
-        return Array.isArray(events) && (events.includes(event) || events.includes('*'))
-      })
+      const matchingWebhooks = webhooks.filter((wh) => {
+        const events = wh.events as unknown as string[];
+        return Array.isArray(events) && (events.includes(event) || events.includes('*'));
+      });
 
-      if (matchingWebhooks.length === 0) return
+      if (matchingWebhooks.length === 0) return;
 
-      logger.info(`Dispatching webhook event: ${event}`, { count: matchingWebhooks.length })
+      logger.info(`Dispatching webhook event: ${event}`, { count: matchingWebhooks.length });
 
       const deliveryPromises = matchingWebhooks.map(async (webhook) => {
         try {
@@ -261,83 +253,126 @@ class WebhookTrigger {
               payload: payload as unknown as Prisma.InputJsonValue,
               url: webhook.url,
               status: 'pending',
-              scheduledFor: new Date()
-            }
-          })
+              scheduledFor: new Date(),
+            },
+          });
 
           // In a real system, we would push this to a queue (BullMQ).
           // Here we will simulate a "fire and forget" or simple async execution
           // But since we are "real", we should probably try to send it or queue it.
           // Given the context of "ProcessingQueue" existing, maybe we should use it?
           // For now, I'll implement a simple immediate send to satisfy the interface.
-          
-          this.sendWebhook(webhook as unknown as PrismaWebhook, delivery as unknown as PrismaWebhookDelivery, event, payload).catch(err => {
-            logger.error('Background webhook delivery failed', err as Error, { deliveryId: delivery.id })
-          })
 
+          this.sendWebhook(webhook, delivery, event, payload).catch((err) => {
+            logger.error('Background webhook delivery failed', err as Error, {
+              deliveryId: delivery.id,
+            });
+          });
         } catch (err) {
-          logger.error('Failed to create webhook delivery record', err as Error, { webhookId: webhook.id })
+          logger.error('Failed to create webhook delivery record', err as Error, {
+            webhookId: webhook.id,
+          });
         }
-      })
+      });
 
-      await Promise.all(deliveryPromises)
-
+      await Promise.all(deliveryPromises);
     } catch (error) {
-      logger.error('Webhook dispatch error', error as Error, { event })
+      logger.error('Webhook dispatch error', error as Error, { event });
     }
   }
 
-  private async sendWebhook(webhook: PrismaWebhook, delivery: PrismaWebhookDelivery, event: string, payload: Record<string, unknown>) {
-    const timestamp = Date.now()
+  private async sendWebhook(
+    webhook: PrismaWebhook,
+    delivery: PrismaWebhookDelivery,
+    event: string,
+    payload: Record<string, unknown>,
+  ) {
+    const timestamp = Date.now();
     const signature = createHmac('sha256', webhook.secret)
       .update(`${timestamp}.${JSON.stringify(payload)}`)
-      .digest('hex')
+      .digest('hex');
 
-    const startTime = Date.now()
-    
+    const startTime = Date.now();
+
     try {
-      const response = await fetch(webhook.url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Webhook-Event': event,
-          'X-Webhook-Signature': `t=${timestamp},v1=${signature}`,
-          'User-Agent': 'EstudioIA-Webhooks/1.0'
-        },
-        body: JSON.stringify(payload)
-      })
+      let lastError: Error | null = null;
+      for (let attempt = 1; attempt <= MAX_WEBHOOK_RETRIES; attempt += 1) {
+        const attemptStart = Date.now();
+        const response = await fetch(webhook.url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Webhook-Event': event,
+            'X-Webhook-Signature': `t=${timestamp},v1=${signature}`,
+            'User-Agent': 'EstudioIA-Webhooks/1.0',
+          },
+          body: JSON.stringify(payload),
+          signal: AbortSignal.timeout(10000),
+        });
 
-      const duration = Date.now() - startTime
-      const responseBody = await response.text()
+        const duration = Date.now() - attemptStart;
+        const responseBody = await response.text();
 
-      await prisma.webhook_deliveries.update({
-        where: { id: delivery.id },
-        data: {
-          status: response.ok ? 'completed' : 'failed',
-          responseCode: response.status,
-          responseBody: responseBody.substring(0, 1000), // Truncate if too long
-          responseTime: duration,
-          deliveredAt: new Date(),
-          attempts: { increment: 1 }
+        if (response.ok) {
+          await prisma.webhook_deliveries.update({
+            where: { id: delivery.id },
+            data: {
+              status: 'completed',
+              responseCode: response.status,
+              responseBody: responseBody.substring(0, 1000),
+              responseTime: duration,
+              deliveredAt: new Date(),
+              attempts: { increment: 1 },
+            },
+          });
+
+          await prisma.webhooks.update({
+            where: { id: webhook.id },
+            data: {
+              totalDeliveries: { increment: 1 },
+              successfulDeliveries: { increment: 1 },
+              lastDeliveryAt: new Date(),
+            },
+          });
+
+          return;
         }
-      })
 
-      // Update webhook stats
-      await prisma.webhooks.update({
-        where: { id: webhook.id },
-        data: {
-          totalDeliveries: { increment: 1 },
-          successfulDeliveries: response.ok ? { increment: 1 } : undefined,
-          failedDeliveries: !response.ok ? { increment: 1 } : undefined,
-          lastDeliveryAt: new Date(),
-          // Simple moving average for response time could be implemented here
+        lastError = new Error(`Webhook responded ${response.status}`);
+        await prisma.webhook_deliveries.update({
+          where: { id: delivery.id },
+          data: {
+            status: attempt < MAX_WEBHOOK_RETRIES ? 'retrying' : 'failed',
+            responseCode: response.status,
+            responseBody: responseBody.substring(0, 1000),
+            responseTime: duration,
+            attempts: { increment: 1 },
+            nextRetryAt:
+              attempt < MAX_WEBHOOK_RETRIES
+                ? new Date(Date.now() + (webhook.retryInterval || 60) * 1000)
+                : null,
+          },
+        });
+
+        if (attempt >= MAX_WEBHOOK_RETRIES) {
+          await prisma.webhooks.update({
+            where: { id: webhook.id },
+            data: {
+              totalDeliveries: { increment: 1 },
+              failedDeliveries: { increment: 1 },
+              lastDeliveryAt: new Date(),
+            },
+          });
         }
-      })
+      }
 
+      if (lastError) {
+        throw lastError;
+      }
     } catch (error) {
-      const duration = Date.now() - startTime
+      const duration = Date.now() - startTime;
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      
+
       await prisma.webhook_deliveries.update({
         where: { id: delivery.id },
         data: {
@@ -345,45 +380,54 @@ class WebhookTrigger {
           error: errorMessage,
           responseTime: duration,
           attempts: { increment: 1 },
-          nextRetryAt: new Date(Date.now() + (webhook.retryInterval || 60) * 1000) 
-        }
-      })
-      
+          nextRetryAt: new Date(Date.now() + (webhook.retryInterval || 60) * 1000),
+        },
+      });
+
       await prisma.webhooks.update({
         where: { id: webhook.id },
         data: {
           totalDeliveries: { increment: 1 },
           failedDeliveries: { increment: 1 },
-          lastDeliveryAt: new Date()
-        }
-      })
+          lastDeliveryAt: new Date(),
+        },
+      });
     }
   }
 
   // Typed triggers
-  async renderStarted(payload: { jobId: string, projectId: string, userId: string }) {
-    return this.dispatch('render.started', payload)
+  async renderStarted(payload: { jobId: string; projectId: string; userId: string }) {
+    return this.dispatch('render.started', payload);
   }
 
-  async renderCompleted(payload: { jobId: string, projectId: string, videoUrl: string, duration: number }) {
-    return this.dispatch('render.completed', payload)
-  }
-  
-  async renderFailed(payload: { jobId: string, projectId: string, error: string }) {
-    return this.dispatch('render.failed', payload)
-  }
-
-  async projectCreated(payload: { projectId: string, userId: string, name: string }) {
-    return this.dispatch('project.created', payload)
+  async renderCompleted(payload: {
+    jobId: string;
+    projectId: string;
+    videoUrl: string;
+    duration: number;
+  }) {
+    return this.dispatch('render.completed', payload);
   }
 
-  async storageUploaded(payload: { fileId: string, url: string, size: number }) {
-    return this.dispatch('storage.uploaded', payload)
+  async renderFailed(payload: { jobId: string; projectId: string; error: string }) {
+    return this.dispatch('render.failed', payload);
   }
 
-  async systemAlert(payload: { type: string, message: string, severity: 'info'|'warning'|'error'|'critical' }) {
-    return this.dispatch('system.alert', payload)
+  async projectCreated(payload: { projectId: string; userId: string; name: string }) {
+    return this.dispatch('project.created', payload);
+  }
+
+  async storageUploaded(payload: { fileId: string; url: string; size: number }) {
+    return this.dispatch('storage.uploaded', payload);
+  }
+
+  async systemAlert(payload: {
+    type: string;
+    message: string;
+    severity: 'info' | 'warning' | 'error' | 'critical';
+  }) {
+    return this.dispatch('system.alert', payload);
   }
 }
 
-export const triggerWebhook = new WebhookTrigger()
+export const triggerWebhook = new WebhookTrigger();

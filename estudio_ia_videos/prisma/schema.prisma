@@ -27,6 +27,52 @@ model analytics_events {
   @@schema("public")
 }
 
+model webhooks {
+  id                  String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId              String              @map("user_id") @db.Uuid
+  url                 String              @db.Text
+  secret              String              @db.Text
+  events              Json                @default("[]")
+  active              Boolean             @default(true)
+  retryInterval       Int?                @map("retry_interval")
+  totalDeliveries     Int                 @default(0) @map("total_deliveries")
+  successfulDeliveries Int                @default(0) @map("successful_deliveries")
+  failedDeliveries    Int                 @default(0) @map("failed_deliveries")
+  lastDeliveryAt      DateTime?           @map("last_delivery_at") @db.Timestamptz(6)
+  createdAt           DateTime?           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime?           @default(now()) @map("updated_at") @db.Timestamptz(6)
+  deliveries          webhook_deliveries[]
+  users               users               @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([userId], map: "idx_webhooks_user_id")
+  @@index([active], map: "idx_webhooks_active")
+  @@schema("public")
+}
+
+model webhook_deliveries {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  webhookId    String    @map("webhook_id") @db.Uuid
+  event        String    @db.VarChar(100)
+  payload      Json
+  url          String    @db.Text
+  status       String    @db.VarChar(50)
+  responseCode Int?      @map("response_code")
+  responseBody String?   @map("response_body")
+  responseTime Int?      @map("response_time")
+  error        String?
+  attempts     Int       @default(0)
+  scheduledFor DateTime? @map("scheduled_for") @db.Timestamptz(6)
+  deliveredAt  DateTime? @map("delivered_at") @db.Timestamptz(6)
+  nextRetryAt  DateTime? @map("next_retry_at") @db.Timestamptz(6)
+  createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
+  webhooks     webhooks  @relation(fields: [webhookId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([webhookId], map: "idx_webhook_deliveries_webhook_id")
+  @@index([status], map: "idx_webhook_deliveries_status")
+  @@schema("public")
+}
+
 model courses {
   id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   title        String    @db.VarChar(500)
@@ -161,6 +207,7 @@ model projects {
   project_versions      project_versions[]
   users                 auth_users              @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   render_jobs           render_jobs[]
+  transcriptions        transcriptions[]
   slides                slides[]
   timelines             timelines?
 
@@ -344,11 +391,54 @@ model users {
   courses          courses[]
   project_history  project_history[]
   render_jobs      render_jobs[]
+  transcriptions   transcriptions[]
+  webhooks         webhooks[]
   user_progress    user_progress[]
   user_usage       user_usage[]
   users            auth_users         @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([email], map: "idx_users_email")
+  @@schema("public")
+}
+
+model transcriptions {
+  id                        String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId                    String           @map("user_id") @db.Uuid
+  projectId                 String?          @map("project_id") @db.Uuid
+  audioPath                 String?          @map("audio_path")
+  language                  String           @db.VarChar(20)
+  duration                  Float?
+  confidence                Float?
+  wordCount                 Int?             @map("word_count")
+  segments                  Json             @default("[]")
+  karaokeEnabled            Boolean          @default(false) @map("karaoke_enabled")
+  speakerDiarizationEnabled Boolean          @default(false) @map("speaker_diarization_enabled")
+  srtUrl                    String?          @map("srt_url")
+  vttUrl                    String?          @map("vtt_url")
+  karaokeUrl                String?          @map("karaoke_url")
+  createdAt                 DateTime?        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                 DateTime?        @default(now()) @map("updated_at") @db.Timestamptz(6)
+  subtitle_tracks           subtitle_tracks[]
+  users                     users            @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  projects                  projects?        @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([userId], map: "idx_transcriptions_user_id")
+  @@index([projectId], map: "idx_transcriptions_project_id")
+  @@schema("public")
+}
+
+model subtitle_tracks {
+  id               String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  transcriptionId  String         @map("transcription_id") @db.Uuid
+  language         String         @db.VarChar(20)
+  segments         Json           @default("[]")
+  srtUrl           String?        @map("srt_url")
+  vttUrl           String?        @map("vtt_url")
+  createdAt        DateTime?      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime?      @default(now()) @map("updated_at") @db.Timestamptz(6)
+  transcriptions   transcriptions @relation(fields: [transcriptionId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([transcriptionId], map: "idx_subtitle_tracks_transcription_id")
   @@schema("public")
 }
 
