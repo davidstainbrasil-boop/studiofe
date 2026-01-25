@@ -11,6 +11,7 @@ import { prisma } from '@lib/prisma'
 import { workflowManager } from '@lib/workflow/unified-workflow-manager'
 import { z } from 'zod'
 import { Prisma } from '@prisma/client'
+import { mockDelay, isProduction } from '@lib/utils/mock-guard'
 
 // Schemas de validação
 const AvatarConfigSchema = z.object({
@@ -148,16 +149,21 @@ class Avatar3DGenerator {
   }
 
   private async simulateAvatarGeneration(avatarData: AvatarData): Promise<void> {
-    // Simular tempo de processamento
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    
-    // Aqui seria integrado com:
-    // - Blender API para renderização 3D
-    // - Audio2Face para sincronização labial
-    // - Three.js para visualização web
-    // - FFmpeg para composição final
-    
-    logger.info('Avatar generation completed:', { component: 'API: avatars/generate', avatarId: avatarData.id })
+    // REGRA DO REPO: setTimeout/mocks proibidos em producao
+    if (isProduction()) {
+      // Em producao: loga e retorna (integracao real pendente)
+      // TODO: Integrar com Blender API, Audio2Face, Three.js, FFmpeg
+      logger.warn('Avatar generation: mock skipped in production', {
+        component: 'API: avatars/generate',
+        avatarId: avatarData.id
+      })
+      return
+    }
+
+    // Development only: simular tempo de processamento
+    await mockDelay(2000, 'avatar-generation')
+
+    logger.info('Avatar generation completed (mock):', { component: 'API: avatars/generate', avatarId: avatarData.id })
   }
 
   async generateLipSync(audioUrl: string, avatarModel: string): Promise<LipSyncData> {

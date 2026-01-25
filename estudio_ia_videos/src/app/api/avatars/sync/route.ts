@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@lib/logger';
+import { mockDelay, isProduction } from '@lib/utils/mock-guard';
 // Using inline implementations instead of external modules
 // import { AdvancedLipSyncProcessor } from '@lib/lipsync/advanced-lipsync-processor';
 // import { Avatar3DRenderEngine } from '@lib/avatar/avatar-3d-render-engine';
@@ -32,9 +33,11 @@ class AdvancedLipSyncProcessor {
   }
   
   async processAudio(audioData: ArrayBuffer, config: Record<string, unknown>) {
-    // Simulate lip-sync processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
+    // REGRA DO REPO: mocks proibidos em producao
+    if (!isProduction()) {
+      await mockDelay(2000, 'lip-sync-processing');
+    }
+
     const duration = 5000; // 5 seconds
     const frameCount = Math.floor(duration / 1000 * ((config.frameRate as number) || 30));
     
@@ -93,9 +96,11 @@ class Avatar3DRenderEngine {
   }
   
   async loadAvatar(avatarId: string) {
-    // Simulate avatar loading
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
+    // REGRA DO REPO: mocks proibidos em producao
+    if (!isProduction()) {
+      await mockDelay(500, 'avatar-loading');
+    }
+
     const avatars = await this.getAvailableAvatars();
     const avatar = avatars.find(a => a.id === avatarId);
     

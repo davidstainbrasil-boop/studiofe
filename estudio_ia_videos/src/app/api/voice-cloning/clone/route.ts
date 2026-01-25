@@ -1,6 +1,6 @@
-
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@lib/logger'
+import { mockDelay, isProduction, notImplementedResponse } from '@lib/utils/mock-guard'
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,14 +30,22 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // In production, this would:
+    // REGRA DO REPO: mocks proibidos em producao
+    if (isProduction()) {
+      return notImplementedResponse(
+        'voice-cloning',
+        'ElevenLabs voice cloning integration pending. Configure ELEVENLABS_API_KEY.'
+      )
+    }
+
+    // TODO: Integracao real com ElevenLabs:
     // 1. Upload files to storage (S3)
     // 2. Process audio files (noise reduction, normalization)
     // 3. Send to ElevenLabs voice cloning API
     // 4. Store voice model metadata in database
-    
-    // Simulate processing time for voice cloning
-    await new Promise(resolve => setTimeout(resolve, 5000))
+
+    // Development only: simulate processing time
+    await mockDelay(5000, 'voice-cloning')
 
     // Generate a unique voice ID
     const voice_id = `custom_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
