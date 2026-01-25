@@ -1,6 +1,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@lib/logger'
+import { isProduction } from '@lib/utils/mock-guard'
 
 export async function GET(request: NextRequest) {
   try {
@@ -114,15 +115,16 @@ export async function POST(request: NextRequest) {
       createdAt: new Date().toISOString()
     }
 
+    // REGRA DO REPO: mocks proibidos em producao
     // In a real implementation, this would trigger the actual AI generation
-    // For now, we'll simulate the process
-    setTimeout(() => {
-      // This would update the generation status in a database
-      logger.info(`Generation ${generationRequest.id} completed`, {
-        component: 'API: v1/ai-content-generation',
-        generationId: generationRequest.id
-      })
-    }, generationRequest.estimatedTime * 1000)
+    if (!isProduction()) {
+      setTimeout(() => {
+        logger.info(`Generation ${generationRequest.id} completed`, {
+          component: 'API: v1/ai-content-generation',
+          generationId: generationRequest.id
+        })
+      }, generationRequest.estimatedTime * 1000)
+    }
 
     return NextResponse.json({
       success: true,

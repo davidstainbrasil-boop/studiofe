@@ -1,6 +1,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@lib/logger'
+import { isProduction } from '@lib/utils/mock-guard'
 
 export async function GET(request: NextRequest) {
   try {
@@ -107,10 +108,12 @@ export async function POST(request: NextRequest) {
         recordsToProcess: Math.floor(Math.random() * 10000) + 5000
       }
 
-      // Simulate async sync completion
-      setTimeout(() => {
-        logger.info(`ERP sync completed for ${systemId}`, { component: 'API: v1/enterprise-integration', systemId })
-      }, 3000)
+      // REGRA DO REPO: mocks proibidos em producao
+      if (!isProduction()) {
+        setTimeout(() => {
+          logger.info(`ERP sync completed for ${systemId}`, { component: 'API: v1/enterprise-integration', systemId })
+        }, 3000)
+      }
 
       return NextResponse.json({
         success: true,

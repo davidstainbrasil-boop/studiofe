@@ -1,6 +1,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@lib/logger'
+import { mockDelay, isProduction, notImplementedResponse } from '@lib/utils/mock-guard'
 
 interface AnalysisRequest {
   contentId: string
@@ -23,9 +24,14 @@ interface ContentAnalysis {
 export async function POST(request: NextRequest) {
   try {
     const body: AnalysisRequest = await request.json()
-    
-    // Simular análise IA (em produção, aqui seria integração com serviços de IA)
-    await new Promise(resolve => setTimeout(resolve, 2000))
+
+    // REGRA DO REPO: mocks proibidos em producao
+    if (isProduction()) {
+      return notImplementedResponse('ai-assistant-analyze', 'AI analysis integration pending');
+    }
+
+    // Development only: simulate AI analysis
+    await mockDelay(2000, 'ai-assistant-analysis')
     
     // Gerar análises baseadas no tipo de conteúdo
     const analyses: ContentAnalysis[] = []

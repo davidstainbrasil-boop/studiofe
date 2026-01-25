@@ -1,6 +1,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@lib/logger'
+import { mockDelay, isProduction, notImplementedResponse } from '@lib/utils/mock-guard'
 
 interface ContentMetrics {
   viewCount: number
@@ -35,9 +36,14 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { timeRange = '30d', contentType } = body
-    
-    // Simular coleta de dados analytics
-    await new Promise(resolve => setTimeout(resolve, 1500))
+
+    // REGRA DO REPO: mocks proibidos em producao
+    if (isProduction()) {
+      return notImplementedResponse('content-analysis', 'Analytics integration pending')
+    }
+
+    // Development only: simulate analytics data collection
+    await mockDelay(1500, 'content-analysis')
     
     // Métricas principais
     const currentMetrics: ContentMetrics = {

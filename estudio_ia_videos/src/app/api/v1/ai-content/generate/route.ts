@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@lib/logger'
+import { mockDelay, isProduction, notImplementedResponse } from '@lib/utils/mock-guard'
 
 interface AIContentOptions {
   nrType: string
@@ -12,8 +13,10 @@ interface AIContentOptions {
 
 // Mock AI content generation - In production, this would call actual AI services
 const generateAIContent = async (prompt: string, options: AIContentOptions) => {
-  // Simulate AI processing time
-  await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 3000))
+  // REGRA DO REPO: mocks proibidos em producao
+  if (!isProduction()) {
+    await mockDelay(2000 + Math.random() * 3000, 'ai-content-generation')
+  }
   
   const templates = {
     'nr-12': {

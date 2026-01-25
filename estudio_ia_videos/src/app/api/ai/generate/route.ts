@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { randomUUID } from 'crypto';
 import { logger } from '@lib/logger';
+import { mockDelay, isProduction, notImplementedResponse } from '@lib/utils/mock-guard';
 
 // Mock response generator
 const generateMockResponse = (prompt: string, type: string) => {
@@ -29,8 +30,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Simulate processing delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // REGRA DO REPO: mocks proibidos em producao
+    if (isProduction()) {
+      return notImplementedResponse('ai-generate', 'AI content generation integration pending');
+    }
+    await mockDelay(2000, 'ai-generate');
 
     const result = {
       id: randomUUID(),

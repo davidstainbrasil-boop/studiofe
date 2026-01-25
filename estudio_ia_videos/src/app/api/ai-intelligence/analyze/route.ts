@@ -1,6 +1,6 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@lib/logger';
+import { mockDelay, isProduction, notImplementedResponse } from '@lib/utils/mock-guard';
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,8 +13,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Simulate AI analysis processing time
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // REGRA DO REPO: mocks proibidos em producao
+    if (isProduction()) {
+      return notImplementedResponse('ai-intelligence-analyze', 'AI analysis integration pending');
+    }
+
+    // Development only: simulate AI analysis
+    await mockDelay(2000, 'ai-analysis');
 
     // Mock AI analysis results
     const analysisResults = {

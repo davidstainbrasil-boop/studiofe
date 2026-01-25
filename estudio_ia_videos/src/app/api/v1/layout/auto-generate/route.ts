@@ -2,6 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@lib/logger'
+import { mockDelay, isProduction, notImplementedResponse } from '@lib/utils/mock-guard'
 
 interface LayoutElement {
   id: string
@@ -35,9 +36,14 @@ export async function POST(request: NextRequest) {
       settings: LayoutSettings
       existingElements: LayoutElement[]
     } = body
-    
-    // Simular geração IA
-    await new Promise(resolve => setTimeout(resolve, 2000))
+
+    // REGRA DO REPO: mocks proibidos em producao
+    if (isProduction()) {
+      return notImplementedResponse('layout-auto-generate', 'AI layout generation integration pending')
+    }
+
+    // Development only: simulate AI generation
+    await mockDelay(2000, 'layout-auto-generate')
     
     // Gerar layout baseado nas configurações
     const spacing = settings?.spacing || 20

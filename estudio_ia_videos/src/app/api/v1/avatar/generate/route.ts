@@ -7,6 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@lib/logger';
+import { mockDelay, isProduction } from '@lib/utils/mock-guard';
 
 interface AvatarConfig {
   id: string;
@@ -112,8 +113,10 @@ async function generateTalkingPhoto(
 
   const duration = estimateAudioDuration(text, audioUrl);
 
-  // Simular geração (em produção seria chamada real para API)
-  await new Promise(resolve => setTimeout(resolve, 2000));
+  // REGRA DO REPO: mocks proibidos em producao
+  if (!isProduction()) {
+    await mockDelay(2000, 'talking-photo-generation');
+  }
 
   // URLs reais dos vídeos gerados
     const videoUrl = generateRealVideoUrl('talking-photo', avatar?.id || 'default');
@@ -142,7 +145,10 @@ async function generate3DAvatar(
 
   const duration = estimateAudioDuration(text, audioUrl);
 
-  await new Promise(resolve => setTimeout(resolve, 3000));
+  // REGRA DO REPO: mocks proibidos em producao
+  if (!isProduction()) {
+    await mockDelay(3000, '3d-avatar-generation');
+  }
 
   const videoUrl = generateRealVideoUrl('3d-avatar', avatar?.id || 'instructor');
     const thumbnail = generateRealThumbnail('3d-avatar', avatar?.id || 'instructor');
@@ -170,7 +176,10 @@ async function generateAnimatedCharacter(
 
   const duration = estimateAudioDuration(text, audioUrl);
 
-  await new Promise(resolve => setTimeout(resolve, 1500));
+  // REGRA DO REPO: mocks proibidos em producao
+  if (!isProduction()) {
+    await mockDelay(1500, 'animated-character-generation');
+  }
 
   const videoUrl = generateRealVideoUrl('animated-character', avatar?.id || 'cartoon');
     const thumbnail = generateRealThumbnail('animated-character', avatar?.id || 'cartoon');

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@lib/logger';
+import { mockDelay, isProduction } from '@lib/utils/mock-guard';
 // import { MonitoringService } from '@lib/monitoring/monitoring-service';
 
 // Inline monitoring service
@@ -138,41 +139,56 @@ class IntelligentCacheSystem {
     return { ...this.cacheStats };
   }
 
-  // Métodos simulados para Redis
+  // Métodos simulados para Redis - REGRA DO REPO: mocks proibidos em producao
   private async getFromRedis(key: string): Promise<unknown> {
-    // Simular latência do Redis
-    await new Promise(resolve => setTimeout(resolve, 5));
+    if (!isProduction()) {
+      await mockDelay(5, 'redis-get');
+    }
     return null; // Simulado
   }
 
   private async setToRedis(key: string, value: unknown, ttl: number = 3600): Promise<void> {
-    await new Promise(resolve => setTimeout(resolve, 5));
+    if (!isProduction()) {
+      await mockDelay(5, 'redis-set');
+    }
   }
 
   private async deleteFromRedis(key: string): Promise<void> {
-    await new Promise(resolve => setTimeout(resolve, 5));
+    if (!isProduction()) {
+      await mockDelay(5, 'redis-delete');
+    }
   }
 
   private async clearRedis(): Promise<void> {
-    await new Promise(resolve => setTimeout(resolve, 10));
+    if (!isProduction()) {
+      await mockDelay(10, 'redis-clear');
+    }
   }
 
-  // Métodos simulados para cache de arquivo
+  // Métodos simulados para cache de arquivo - REGRA DO REPO: mocks proibidos em producao
   private async getFromFile(key: string): Promise<unknown> {
-    await new Promise(resolve => setTimeout(resolve, 20));
+    if (!isProduction()) {
+      await mockDelay(20, 'file-cache-get');
+    }
     return null; // Simulado
   }
 
   private async setToFile(key: string, value: unknown): Promise<void> {
-    await new Promise(resolve => setTimeout(resolve, 20));
+    if (!isProduction()) {
+      await mockDelay(20, 'file-cache-set');
+    }
   }
 
   private async deleteFromFile(key: string): Promise<void> {
-    await new Promise(resolve => setTimeout(resolve, 20));
+    if (!isProduction()) {
+      await mockDelay(20, 'file-cache-delete');
+    }
   }
 
   private async clearFiles(): Promise<void> {
-    await new Promise(resolve => setTimeout(resolve, 50));
+    if (!isProduction()) {
+      await mockDelay(50, 'file-cache-clear');
+    }
   }
 
   private updateHitRate(): void {

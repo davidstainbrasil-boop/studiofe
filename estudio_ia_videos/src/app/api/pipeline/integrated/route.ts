@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@lib/logger';
+import { mockDelay, isProduction } from '@lib/utils/mock-guard';
 // Using inline implementations instead of external modules
 // import { IntegratedTTSAvatarPipeline } from '@lib/pipeline/integrated-tts-avatar-pipeline';
 // import { MonitoringService } from '@lib/monitoring/monitoring-service';
@@ -63,8 +64,10 @@ class IntegratedTTSAvatarPipeline {
     job.progress = 50;
     job.updatedAt = new Date();
     
-    // Simulate processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // REGRA DO REPO: mocks proibidos em producao
+    if (!isProduction()) {
+      await mockDelay(2000, 'pipeline-processing');
+    }
     
     job.status = 'completed';
     job.progress = 100;

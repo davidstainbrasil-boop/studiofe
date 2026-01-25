@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@lib/auth'
 import { logger } from '@lib/logger'
+import { mockDelay, isProduction } from '@lib/utils/mock-guard'
 
 // Interfaces
 interface AvatarRenderRequest {
@@ -199,7 +200,7 @@ class Avatar3DRenderer {
   // Analyze audio for lip-sync and gestures
   private async analyzeAudio(audioUrl: string, audioText: string): Promise<AudioAnalysis> {
     // Simulate audio analysis
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    await mockDelay(2000, 'avatar-render')
 
     // Generate phonemes from text
     const phonemes = this.textToPhonemes(audioText)
@@ -331,7 +332,7 @@ class Avatar3DRenderer {
   // Generate lip-sync data
   private async generateLipSync(audioAnalysis: AudioAnalysis, text: string): Promise<LipSyncData> {
     // Simulate lip-sync generation
-    await new Promise(resolve => setTimeout(resolve, 1500))
+    await mockDelay(1500, 'avatar-render')
 
     const keyframes: LipSyncData['keyframes'] = []
     const blendShapes: LipSyncData['blendShapes'] = []
@@ -399,7 +400,7 @@ class Avatar3DRenderer {
   // Generate gesture data
   private async generateGestures(audioAnalysis: AudioAnalysis, avatarConfig: AvatarRenderRequest['avatarConfig']): Promise<GestureData> {
     // Simulate gesture generation
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    await mockDelay(1000, 'avatar-render')
 
     const gestures: GestureData['gestures'] = []
 
@@ -538,7 +539,7 @@ class Avatar3DRenderer {
     gestureData?: GestureData
   ): Promise<{videoUrl: string; thumbnailUrl: string}> {
     // Simulate avatar rendering
-    await new Promise(resolve => setTimeout(resolve, 3000))
+    await mockDelay(3000, 'avatar-render')
 
     const outputFilename = `avatar_${request.slideId}_${Date.now()}.mp4`
     const thumbnailFilename = `avatar_${request.slideId}_${Date.now()}_thumb.jpg`

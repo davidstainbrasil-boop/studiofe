@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { listNRTemplates, NRTemplate as ServiceNRTemplate } from '@lib/services/nr-templates-service'
 import { logger } from '@lib/logger'
+import { mockDelay, isProduction, notImplementedResponse } from '@lib/utils/mock-guard'
 
 interface NRTemplate {
   id: string
@@ -196,7 +197,11 @@ export async function POST(request: NextRequest) {
     
     // Gerar template personalizado com IA
     if (body.action === 'generate') {
-      await new Promise(resolve => setTimeout(resolve, 3000))
+      // REGRA DO REPO: mocks proibidos em producao
+      if (isProduction()) {
+        return notImplementedResponse('nr-template-generate', 'AI template generation integration pending')
+      }
+      await mockDelay(3000, 'nr-template-generation')
       
       const customTemplate: NRTemplate = {
         id: 'custom-' + Date.now(),

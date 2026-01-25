@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@lib/logger';
+import { mockDelay, isProduction } from '@lib/utils/mock-guard';
 // Using inline implementations instead of external modules
 // import { EnhancedTTSService, EnhancedTTSConfig } from '@lib/enhanced-tts-service';
 // import { UnifiedAvatarPipeline } from '@lib/unified-avatar-pipeline';
@@ -45,8 +46,10 @@ class EnhancedTTSService {
   }
   
   async synthesizeSpeech(config: EnhancedTTSConfig): Promise<TTSResult> {
-    // Simulate TTS processing
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // REGRA DO REPO: mocks proibidos em producao
+    if (!isProduction()) {
+      await mockDelay(1000, 'tts-synthesis');
+    }
     
     return {
       success: true,
@@ -92,20 +95,22 @@ class UnifiedAvatarPipeline {
     
     this.jobs.set(jobId, job);
     
-    // Simulate processing
-    setTimeout(() => {
-      const updatedJob = this.jobs.get(jobId);
-      if (updatedJob) {
-        updatedJob.status = 'completed';
-        updatedJob.progress = 100;
-        updatedJob.endTime = new Date().toISOString();
-        updatedJob.output = {
-          audioUrl: `/api/audio/generated/${jobId}.mp3`,
-          videoUrl: `/api/video/generated/${jobId}.mp4`,
-          duration: estimateDuration(text, (config.tts as { speed?: number })?.speed || 1.0)
-        };
-      }
-    }, 5000);
+    // REGRA DO REPO: mocks proibidos em producao - simular processamento async apenas em dev
+    if (!isProduction()) {
+      setTimeout(() => {
+        const updatedJob = this.jobs.get(jobId);
+        if (updatedJob) {
+          updatedJob.status = 'completed';
+          updatedJob.progress = 100;
+          updatedJob.endTime = new Date().toISOString();
+          updatedJob.output = {
+            audioUrl: `/api/audio/generated/${jobId}.mp3`,
+            videoUrl: `/api/video/generated/${jobId}.mp4`,
+            duration: estimateDuration(text, (config.tts as { speed?: number })?.speed || 1.0)
+          };
+        }
+      }, 5000);
+    }
     
     return jobId;
   }

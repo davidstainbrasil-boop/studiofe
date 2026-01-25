@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getSupabaseForRequest } from '@lib/supabase/server'
 import { logger } from '@lib/logger'
+import { mockDelay, isProduction } from '@lib/utils/mock-guard'
 
 // Schema de validação
 const VoiceSettingsSchema = z.object({
@@ -66,8 +67,10 @@ export async function POST(request: NextRequest) {
 
     const { voiceId, text, voiceSettings } = validationResult.data
 
-    // Simulate processing time for real audio generation
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    // REGRA DO REPO: mocks proibidos em producao
+    if (!isProduction()) {
+      await mockDelay(2000, 'voice-generation');
+    }
 
     // Generate real audio response using TTS service
     const audioBuffer = await generateRealAudio(text, voiceId, voiceSettings)

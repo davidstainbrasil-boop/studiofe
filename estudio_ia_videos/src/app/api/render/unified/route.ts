@@ -8,6 +8,7 @@ import { logger } from '@lib/logger'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@lib/auth'
 import { db } from '@lib/db'
+import { mockDelay, isProduction } from '@lib/utils/mock-guard'
 
 // Interfaces
 interface RenderRequest {
@@ -209,7 +210,7 @@ class UnifiedRenderPipeline {
   // Validate assets
   private async validateAssets(slides: RenderRequest['slides']): Promise<Record<string, unknown>> {
     // Simulate asset validation
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    await mockDelay(1000, 'render-unified')
     
     const validatedAssets = {
       slides: slides.length,
@@ -225,7 +226,7 @@ class UnifiedRenderPipeline {
   // Create composition timeline
   private async createComposition(slides: RenderRequest['slides'], config: RenderRequest['renderConfig']): Promise<CompositionStep[]> {
     // Simulate composition creation
-    await new Promise(resolve => setTimeout(resolve, 1500))
+    await mockDelay(1500, 'render-unified')
 
     let currentTime = 0
     const composition: CompositionStep[] = []
@@ -303,7 +304,7 @@ class UnifiedRenderPipeline {
   // Composite video layers
   private async compositeVideoLayers(composition: CompositionStep[], config: RenderRequest['renderConfig']): Promise<Record<string, unknown>> {
     // Simulate video compositing
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    await mockDelay(2000, 'render-unified')
     
     return {
       composition,
@@ -316,7 +317,7 @@ class UnifiedRenderPipeline {
   // Sync audio and avatar
   private async syncAudioAndAvatar(video: Record<string, unknown>, slides: RenderRequest['slides'], config: RenderRequest['renderConfig']): Promise<Record<string, unknown>> {
     // Simulate audio/avatar sync
-    await new Promise(resolve => setTimeout(resolve, 1500))
+    await mockDelay(1500, 'render-unified')
     
     if (config.avatarSync) {
       // Perform lip-sync and gesture alignment
@@ -329,7 +330,7 @@ class UnifiedRenderPipeline {
   // Add effects and transitions
   private async addEffectsAndTransitions(video: Record<string, unknown>, config: RenderRequest['renderConfig']): Promise<Record<string, unknown>> {
     // Simulate effects and transitions
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    await mockDelay(1000, 'render-unified')
     
     return { 
       ...video, 
@@ -341,7 +342,7 @@ class UnifiedRenderPipeline {
   // Encode final video
   private async encodeVideo(video: Record<string, unknown> & { totalDuration?: number }, config: RenderRequest['renderConfig']): Promise<{ url: string; size: number }> {
     // Simulate video encoding
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    await mockDelay(2000, 'render-unified')
     
     const outputFilename = `render_${Date.now()}.${config.format}`
     const outputUrl = `/api/files/renders/${outputFilename}`
