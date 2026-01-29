@@ -251,10 +251,8 @@ async function getTimelineSummary(timeline: TimelineData, projectId: string): Pr
     sum + (track.keyframes?.length || 0), 0
   );
 
-  // Get snapshot count
-  const snapshotCount = await prisma.timeline_snapshots.count({
-    where: { timelines: { projectId: projectId } },
-  });
+  // Snapshot count - tabela timeline_snapshots não existe ainda no schema
+  const snapshotCount = 0;
 
   return {
     overview: {
@@ -296,11 +294,7 @@ async function getUsageStats(projectId: string): Promise<UsageStats> {
     };
   }
 
-  const snapshots = await prisma.timeline_snapshots.findMany({
-    where: { timelineId: timeline.id },
-    orderBy: { createdAt: 'desc' },
-    take: 50,
-  }) as TimelineSnapshot[];
+  const snapshots: TimelineSnapshot[] = []; // TODO: Tabela timeline_snapshots não existe ainda
 
   // Calculate edit frequency
   const editTimes = snapshots.map((s: TimelineSnapshot) => s.createdAt.getTime());
@@ -440,11 +434,7 @@ async function getEditingPatterns(projectId: string): Promise<EditingPatterns> {
     };
   }
 
-  const snapshots = await prisma.timeline_snapshots.findMany({
-    where: { timelineId: timeline.id },
-    orderBy: { createdAt: 'asc' },
-    take: 100,
-  }) as TimelineSnapshot[];
+  const snapshots: TimelineSnapshot[] = []; // TODO: Tabela timeline_snapshots não existe ainda
 
   // Analyze editing patterns
   const hourlyDistribution: Record<number, number> = {};

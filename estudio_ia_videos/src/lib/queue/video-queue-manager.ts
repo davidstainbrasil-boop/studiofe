@@ -3,9 +3,10 @@
  * Sistema completo de filas com BullMQ para processamento paralelo
  */
 
-import { Queue, Worker, Job, QueueEvents } from 'bullmq'
+import { Queue, Worker, Job, QueueEvents, type ConnectionOptions } from 'bullmq'
 import { Redis } from 'ioredis'
 import { prisma } from '@/lib/prisma'
+import { Prisma } from '@prisma/client'
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -32,6 +33,7 @@ export interface VideoRenderJobData {
     fps: 24 | 30 | 60
     codec: 'h264' | 'h265' | 'vp9'
     bitrate?: string
+    exportFormat?: 'mp4' | 'webm' | 'mov'
   }
 
   // Priority
@@ -96,6 +98,27 @@ export interface WorkerMetrics {
   cpu: number
 }
 
+const mapQualityToEnum = (resolution: VideoRenderJobData['options']['resolution']) => {
+  switch (resolution) {
+    case '720p':
+      return 'p720'
+    case '1080p':
+      return 'p1080'
+    case '4k':
+      return 'p1080'
+    default:
+      return 'p1080'
+  }
+}
+
+const mapPriorityToEnum = (priority?: number) => {
+  if (!priority) return 'medium'
+  if (priority >= 9) return 'urgent'
+  if (priority >= 7) return 'high'
+  if (priority <= 3) return 'low'
+  return 'medium'
+}
+
 // ============================================================================
 // VIDEO QUEUE MANAGER
 // ============================================================================
@@ -107,17 +130,22 @@ export class VideoQueueManager {
 
   private static instance: VideoQueueManager
   private workers: Map<string, Worker> = new Map()
+  private redisClient: Redis
 
   constructor() {
     // Redis connection
-    this.redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
+    this.redisClient = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
       maxRetriesPerRequest: null,
       enableReadyCheck: false
     })
+    
+    // Cast para compatibilidade de tipos
+    this.redis = this.redisClient as unknown as Redis
+    const connection = this.redisClient as unknown as ConnectionOptions
 
     // Create queue
     this.queue = new Queue<VideoRenderJobData, VideoRenderJobResult>('video-render', {
-      connection: this.redis,
+      connection,
       defaultJobOptions: {
         attempts: 3,
         backoff: {
@@ -136,7 +164,7 @@ export class VideoQueueManager {
 
     // Queue events for monitoring
     this.queueEvents = new QueueEvents('video-render', {
-      connection: this.redis
+      connection
     })
 
     this.setupEventListeners()
@@ -165,10 +193,10 @@ export class VideoQueueManager {
       attempts?: number
     }
   ): Promise<Job<VideoRenderJobData, VideoRenderJobResult>> {
-    // Validate user credits (if applicable)
-    if (data.type === 'avatar' || data.type === 'export') {
-      await this.validateUserCredits(data.userId, data.options.quality)
-    }
+    // Credits validation disabled for now
+    // if (data.type === 'avatar' || data.type === 'export') {
+    //   await this.validateUserCredits(data.userId, data.options.quality)
+    // }
 
     // Add to queue
     const job = await this.queue.add(
@@ -183,16 +211,23 @@ export class VideoQueueManager {
     )
 
     // Create database record
-    await prisma.renderJob.create({
+    await prisma.render_jobs.create({
       data: {
         id: data.jobId,
         userId: data.userId,
-        type: data.type,
+        projectId: data.metadata?.projectId,
         status: 'queued',
-        input: data.input as any,
-        options: data.options as any,
-        metadata: data.metadata as any,
-        createdAt: new Date()
+        priority: mapPriorityToEnum(options?.priority || data.priority),
+        quality: mapQualityToEnum(data.options.resolution),
+        renderSettings: {
+          options: data.options,
+          metadata: data.metadata,
+          type: data.type
+        },
+        settings: {
+          input: data.input
+        },
+        estimatedDuration: data.metadata?.estimatedDuration
       }
     })
 
@@ -249,17 +284,17 @@ export class VideoQueueManager {
       return false
     }
 
-    // Refund credits if applicable
-    const jobData = job.data
-    if (jobData.type === 'avatar' || jobData.type === 'export') {
-      await this.refundUserCredits(jobData.userId, jobData.options.quality)
-    }
+    // Credits refund disabled
+    // const jobData = job.data
+    // if (jobData.type === 'avatar' || jobData.type === 'export') {
+    //   await this.refundUserCredits(jobData.userId, jobData.options.quality)
+    // }
 
     // Remove job
     await job.remove()
 
     // Update database
-    await prisma.renderJob.update({
+    await prisma.render_jobs.update({
       where: { id: jobId },
       data: { status: 'cancelled' }
     })
@@ -292,12 +327,12 @@ export class VideoQueueManager {
     await job.retry()
 
     // Update database
-    await prisma.renderJob.update({
+    await prisma.render_jobs.update({
       where: { id: jobId },
       data: {
-        status: 'waiting',
-        error: null,
-        failedAt: null
+        status: 'queued',
+        errorMessage: null,
+        completedAt: null
       }
     })
 
@@ -428,11 +463,12 @@ export class VideoQueueManager {
     concurrency: number = 1,
     processor: (job: Job<VideoRenderJobData, VideoRenderJobResult>) => Promise<VideoRenderJobResult>
   ): Worker<VideoRenderJobData, VideoRenderJobResult> {
+    const connection = this.redisClient as unknown as ConnectionOptions
     const worker = new Worker<VideoRenderJobData, VideoRenderJobResult>(
       'video-render',
       processor,
       {
-        connection: this.redis,
+        connection,
         concurrency,
         limiter: {
           max: 10,
@@ -444,13 +480,15 @@ export class VideoQueueManager {
     // Worker event listeners
     worker.on('completed', async (job) => {
       console.log(`[Worker ${name}] Job ${job.id} completed`)
+      const result = job.returnvalue as VideoRenderJobResult | undefined
 
-      await prisma.renderJob.update({
+      await prisma.render_jobs.update({
         where: { id: job.id as string },
         data: {
           status: 'completed',
-          result: job.returnvalue as any,
-          completedAt: new Date()
+          outputUrl: result?.outputUrl,
+          completedAt: new Date(),
+          settings: result ? (result as unknown as Prisma.InputJsonValue) : undefined
         }
       })
     })
@@ -459,12 +497,12 @@ export class VideoQueueManager {
       console.error(`[Worker ${name}] Job ${job?.id} failed:`, err)
 
       if (job) {
-        await prisma.renderJob.update({
+        await prisma.render_jobs.update({
           where: { id: job.id as string },
           data: {
             status: 'failed',
-            error: err.message,
-            failedAt: new Date()
+            errorMessage: err.message,
+            completedAt: new Date()
           }
         })
       }
@@ -472,10 +510,14 @@ export class VideoQueueManager {
 
     worker.on('progress', async (job, progress) => {
       // Update progress in database
-      await prisma.renderJob.update({
+      const progressValue =
+        typeof progress === 'number'
+          ? Math.round(progress)
+          : Math.round((progress as VideoRenderJobProgress).progress || 0)
+      await prisma.render_jobs.update({
         where: { id: job.id as string },
         data: {
-          progress: progress as any
+          progress: progressValue
         }
       })
     })
@@ -549,46 +591,13 @@ export class VideoQueueManager {
   // HELPER METHODS
   // ============================================================================
 
-  private async validateUserCredits(userId: string, quality: string): Promise<void> {
-    // Placeholder - implement actual credit validation
-    const user = await prisma.profile.findUnique({
-      where: { id: userId },
-      select: { credits: true }
-    })
+  // private async validateUserCredits(userId: string, quality: string): Promise<void> {
+  //   // Placeholder - implement actual credit validation
+  // }
 
-    if (!user) {
-      throw new Error('User not found')
-    }
-
-    const requiredCredits = this.calculateRequiredCredits(quality)
-
-    if (user.credits < requiredCredits) {
-      throw new Error('Insufficient credits')
-    }
-
-    // Deduct credits
-    await prisma.profile.update({
-      where: { id: userId },
-      data: {
-        credits: {
-          decrement: requiredCredits
-        }
-      }
-    })
-  }
-
-  private async refundUserCredits(userId: string, quality: string): Promise<void> {
-    const requiredCredits = this.calculateRequiredCredits(quality)
-
-    await prisma.profile.update({
-      where: { id: userId },
-      data: {
-        credits: {
-          increment: requiredCredits
-        }
-      }
-    })
-  }
+  // private async refundUserCredits(userId: string, quality: string): Promise<void> {
+  //   // Placeholder
+  // }
 
   private calculateRequiredCredits(quality: string): number {
     const creditMap: Record<string, number> = {

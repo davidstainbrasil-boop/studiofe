@@ -38,7 +38,7 @@ import {
   User,
   Settings
 } from 'lucide-react';
-import { EditorState, EditorElement, EditorLayer, Keyframe, TimelineMarker } from '@types/editor';
+import { EditorState, EditorElement, EditorLayer, Keyframe, TimelineMarker } from '@/types/editor';
 
 interface TimelinePanelProps {
   state: EditorState;

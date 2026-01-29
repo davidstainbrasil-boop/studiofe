@@ -1,122 +1,51 @@
 #!/bin/bash
-# ============================================
-# Production Deploy Script
-# MVP Video TécnicoCursos v7
-# ============================================
-# Run as deploy user in /opt/mvp/_MVP_Video_TecnicoCursos_v7
-
 set -e
 
-REPO_URL="https://github.com/jessegabrielstain-debug/_MVP_Video_TecnicoCursos_v7.git"
-APP_DIR="/opt/mvp/_MVP_Video_TecnicoCursos_v7"
-COMPOSE_FILE="docker-compose.prod.yml"
+# =========================================================================
+# 🚀 DEPLOY PRODUCTION - VIDEO STUDIO PRO
+# =========================================================================
 
-echo "🚀 Starting Production Deploy..."
+echo "📦 Starting Production Deployment..."
 
-# ============================================
-# 1. Clone or Update Repository
-# ============================================
-if [ ! -d "$APP_DIR" ]; then
-    echo "📥 Cloning repository..."
-    cd /opt/mvp
-    git clone "$REPO_URL"
-    cd "$APP_DIR"
-    git lfs pull
-else
-    echo "📥 Updating repository..."
-    cd "$APP_DIR"
-    git fetch origin
-    git reset --hard origin/main
-    git lfs pull
-fi
-
-# ============================================
-# 2. Create required directories
-# ============================================
-echo "📁 Creating required directories..."
-mkdir -p redis nginx/ssl logs/nginx
-
-# Create placeholder redis.conf if not exists
-if [ ! -f redis/redis.conf ]; then
-    echo "# Redis placeholder config" > redis/redis.conf
-fi
-
-# ============================================
-# 3. Create docker-compose.override.yml
-# ============================================
-echo "📝 Creating docker-compose.override.yml..."
-cat > docker-compose.override.yml <<'EOF'
-services:
-  nginx:
-    volumes:
-      - ./nginx/snippets:/etc/nginx/snippets:ro
-EOF
-
-# ============================================
-# 4. Check for .env.production
-# ============================================
+# 1. Validate Environment
 if [ ! -f .env.production ]; then
-    echo "⚠️  WARNING: .env.production not found!"
-    echo "Please create .env.production with your environment variables."
-    echo ""
-    echo "Required variables:"
-    echo "  NEXT_PUBLIC_SUPABASE_URL="
-    echo "  NEXT_PUBLIC_SUPABASE_ANON_KEY="
-    echo "  SUPABASE_SERVICE_ROLE_KEY="
-    echo "  DIRECT_DATABASE_URL="
-    echo "  ELEVENLABS_API_KEY="
-    echo "  HEYGEN_API_KEY="
-    echo ""
+    echo "❌ ERROR: .env.production file not found!"
+    echo "Please create it based on .env.production.example"
     exit 1
 fi
 
-# ============================================
-# 5. Update Nginx server_name (optional)
-# ============================================
-# By default, uses server_name _; for testing
-if grep -q "tecnicocursos.com" nginx/conf.d/app.conf; then
-    echo "📝 Updating nginx server_name for IP access..."
-    sed -i 's/server_name tecnicocursos.com www.tecnicocursos.com;/server_name _;/' nginx/conf.d/app.conf
+echo "🔍 Reading environment variables..."
+# Read secrets for build args (careful not to print them)
+NEXT_PUBLIC_SUPABASE_URL=$(grep NEXT_PUBLIC_SUPABASE_URL .env.production | cut -d '=' -f2)
+NEXT_PUBLIC_SUPABASE_ANON_KEY=$(grep NEXT_PUBLIC_SUPABASE_ANON_KEY .env.production | cut -d '=' -f2)
+NEXT_PUBLIC_SITE_URL=$(grep NEXT_PUBLIC_SITE_URL .env.production | cut -d '=' -f2)
+
+if [ -z "$NEXT_PUBLIC_SUPABASE_URL" ]; then
+    echo "❌ ERROR: NEXT_PUBLIC_SUPABASE_URL is missing in .env.production"
+    exit 1
 fi
 
-# ============================================
-# 6. Build and Start Containers
-# ============================================
-echo "🐳 Building and starting containers..."
-docker compose -f "$COMPOSE_FILE" down --remove-orphans 2>/dev/null || true
-docker compose -f "$COMPOSE_FILE" up -d --build
+# 2. Database Migration (Safe to run multiple times? Yes, scripts are idempotent mostly or handle conflicts)
+echo "🗄️  Applying Database Migrations..."
+npm run setup:supabase
 
-# ============================================
-# 7. Wait for services to be ready
-# ============================================
-echo "⏳ Waiting for services to start..."
-sleep 30
+# 3. Docker Build
+echo "🐳 Building Docker Image..."
+docker build \
+  --build-arg NEXT_PUBLIC_SUPABASE_URL="$NEXT_PUBLIC_SUPABASE_URL" \
+  --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY="$NEXT_PUBLIC_SUPABASE_ANON_KEY" \
+  --build-arg NEXT_PUBLIC_SITE_URL="$NEXT_PUBLIC_SITE_URL" \
+  --build-arg NEXT_PUBLIC_SENTRY_DSN="" \
+  -f Dockerfile.production \
+  -t video-studio-pro:latest .
 
-# ============================================
-# 8. Health Check
-# ============================================
-echo "🏥 Running health check..."
-if curl -sf http://localhost/api/health > /dev/null 2>&1; then
-    echo "✅ Health check passed!"
-else
-    echo "⚠️  Health check failed. Checking logs..."
-    docker compose -f "$COMPOSE_FILE" logs --tail=50 app
-fi
+echo "✅ Build Complete!"
 
-# ============================================
-# 9. Show status
-# ============================================
+# 4. Instructions
 echo ""
-echo "📊 Container Status:"
-docker compose -f "$COMPOSE_FILE" ps
-
-echo ""
-echo "✅ Deploy Complete!"
-echo ""
-echo "🌐 Access your app at: http://$(curl -s ifconfig.me 2>/dev/null || echo 'YOUR_IP')"
-echo ""
-echo "Useful commands:"
-echo "  View logs:   docker compose -f $COMPOSE_FILE logs -f"
-echo "  Restart:     docker compose -f $COMPOSE_FILE restart"
-echo "  Stop:        docker compose -f $COMPOSE_FILE down"
+echo "========================================================"
+echo "🚀 READY TO RUN"
+echo "========================================================"
+echo "To start the container:"
+echo "docker run -d -p 3000:3000 --env-file .env.production --name video-studio video-studio-pro:latest"
 echo ""

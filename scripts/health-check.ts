@@ -78,23 +78,21 @@ async function checkDatabase(): Promise<HealthCheckResult> {
 async function checkRedis(): Promise<HealthCheckResult> {
   const start = Date.now()
   
-  // Test Redis connectivity (via BullMQ)
+  // Test Redis connectivity directly with ioredis
   try {
-    const { getRedisClient } = await import('../estudio_ia_videos/src/lib/services/redis-service')
-    const client = await getRedisClient()
+    const Redis = (await import('ioredis')).default
+    const client = new Redis({
+      host: process.env.REDIS_HOST || '127.0.0.1',
+      port: parseInt(process.env.REDIS_PORT || '6379'),
+      password: process.env.REDIS_PASSWORD || undefined,
+      maxRetriesPerRequest: 1,
+      retryStrategy: () => null, // Don't retry for health check
+      lazyConnect: true
+    })
     
-    // Check if Redis is stubbed
-    if (client === null) {
-      return {
-        service: 'Redis',
-        status: 'warning',
-        message: 'Redis service is stubbed (not configured)',
-        duration: Date.now() - start
-      }
-    }
-    
-    // Ping Redis
+    await client.connect()
     await client.ping()
+    await client.quit()
     
     return {
       service: 'Redis',

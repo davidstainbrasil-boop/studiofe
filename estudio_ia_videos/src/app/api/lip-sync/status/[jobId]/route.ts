@@ -4,12 +4,12 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { Queue } from 'bullmq';
+import { Queue, ConnectionOptions } from 'bullmq';
 import { Redis } from 'ioredis';
 import { logger } from '@/lib/logger';
 
 const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
-const lipSyncQueue = new Queue('lip-sync', { connection: redis });
+const lipSyncQueue = new Queue('lip-sync', { connection: redis as unknown as ConnectionOptions });
 
 export interface LipSyncStatusResponse {
   success: boolean;

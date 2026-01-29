@@ -95,7 +95,7 @@ export class PerformanceOptimizationSystem {
     evictionCount: 0,
     hitRate: 0
   }
-  private responseT imes: number[] = []
+  private responseTimes: number[] = []
   private requestTimestamps: number[] = []
   private maxCacheSize: number = 100 * 1024 * 1024 // 100MB
   private budget: PerformanceBudget
@@ -294,11 +294,11 @@ export class PerformanceOptimizationSystem {
    * Track response time
    */
   trackResponseTime(duration: number): void {
-    this.responseT imes.push(duration)
+    this.responseTimes.push(duration)
 
     // Keep only last 1000 entries
-    if (this.responseT imes.length > 1000) {
-      this.responseT imes.shift()
+    if (this.responseTimes.length > 1000) {
+      this.responseTimes.shift()
     }
   }
 
@@ -318,11 +318,11 @@ export class PerformanceOptimizationSystem {
    * Get performance metrics
    */
   getPerformanceMetrics(): PerformanceMetrics {
-    const sortedTimes = [...this.responseT imes].sort((a, b) => a - b)
+    const sortedTimes = [...this.responseTimes].sort((a, b) => a - b)
 
     return {
       responseTime: {
-        avg: this.calculateAverage(this.responseT imes),
+        avg: this.calculateAverage(this.responseTimes),
         p50: this.calculatePercentile(sortedTimes, 50),
         p95: this.calculatePercentile(sortedTimes, 95),
         p99: this.calculatePercentile(sortedTimes, 99)

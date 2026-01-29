@@ -16,7 +16,10 @@ export async function listSlides(projectId: string): Promise<Slide[]> {
     .returns<Slide[]>()
 
   if (error) {
-    logger.error('Supabase slides error', { error: error.message, projectId, component: 'slides' })
+    logger.error('Supabase slides error', new Error(error.message), {
+      projectId,
+      component: 'slides'
+    })
     throw new Error(`Failed to list slides: ${error.message}`)
   }
 

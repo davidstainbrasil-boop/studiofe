@@ -17,7 +17,7 @@ interface EmailPayload {
 
 export class EmailService {
   private resend: Resend | null = null;
-  private fromEmail: string = 'Acme <onboarding@resend.dev>'; // Default Resend test email
+  private fromEmail: string = 'Estudio IA <onboarding@resend.dev>'; // Default Resend test email
   private isConfigured: boolean = false;
 
   constructor(config: EmailConfig = {}) {
@@ -30,7 +30,8 @@ export class EmailService {
         this.fromEmail = config.fromEmail || process.env.EMAIL_FROM || 'onboarding@resend.dev';
       }
     } else {
-      logger.warn('EmailService: RESEND_API_KEY not found. Emails will be logged to console only.', { component: 'EmailService' });
+      // Don't warn in constructor to avoid noise during build/test, 
+      // but log when trying to send.
     }
   }
 
@@ -39,11 +40,14 @@ export class EmailService {
    */
   private async sendEmail(payload: EmailPayload): Promise<boolean> {
     if (!this.resend || !this.isConfigured) {
-      logger.info(`[Email Mock] To: ${payload.to} | Subject: ${payload.subject}`, {
-        htmlPreview: payload.html.substring(0, 100) + '...',
-        component: 'EmailService'
+      logger.warn('Tentativa de envio de email sem RESEND_API_KEY configurada.', { 
+        to: payload.to, 
+        subject: payload.subject,
+        component: 'EmailService' 
       });
-      return true; // Simulate success
+      // Em produção, isso deveria falhar ou usar uma fila de retry se for crítico.
+      // Retornar false indica falha.
+      return false;
     }
 
     try {

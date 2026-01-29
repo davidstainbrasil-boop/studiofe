@@ -5,7 +5,7 @@
 
 import { useState, useRef } from 'react'
 import { logger } from '@lib/logger'
-import { SubtitleFormat, SubtitleStyle } from '@types/subtitle.types'
+import { SubtitleFormat, SubtitleStyle } from '@/types/subtitle.types'
 import { SubtitleParser } from '@lib/export/subtitle-parser'
 import { Button } from '@components/ui/button'
 import { Card } from '@components/ui/card'

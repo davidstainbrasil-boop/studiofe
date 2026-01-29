@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { User } from '@types/collaboration';
+import { User } from '@/types/collaboration';
 
 interface UserCursorProps {
   user: User;

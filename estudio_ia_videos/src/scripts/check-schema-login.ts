@@ -6,7 +6,7 @@ async function check() {
     try {
         console.log('Checking users table for lastLogin field...');
         const user = await prisma.users.findFirst({
-            select: { id: true, lastLogin: true }
+            select: { id: true, createdAt: true, updatedAt: true }
         });
         console.log('User sample:', user);
     } catch (e) {

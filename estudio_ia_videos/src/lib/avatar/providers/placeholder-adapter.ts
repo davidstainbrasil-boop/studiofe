@@ -26,6 +26,9 @@ export class PlaceholderAdapter extends BaseAvatarProvider {
    * Render avatar video (simulated - instant)
    */
   async render(request: RenderRequest): Promise<RenderResult> {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('Placeholder adapter is disabled in production');
+    }
     this.validateRequest(request)
 
     const jobId = `placeholder-${Date.now()}-${Math.random().toString(36).substring(7)}`
@@ -73,6 +76,9 @@ export class PlaceholderAdapter extends BaseAvatarProvider {
    * Get job status
    */
   async getStatus(jobId: string): Promise<JobStatus> {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('Placeholder adapter is disabled in production');
+    }
     const job = this.jobs.get(jobId)
 
     if (!job) {
@@ -86,6 +92,9 @@ export class PlaceholderAdapter extends BaseAvatarProvider {
    * Cancel job (no-op for placeholder)
    */
   async cancel(jobId: string): Promise<void> {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('Placeholder adapter is disabled in production');
+    }
     const job = this.jobs.get(jobId)
 
     if (job) {
@@ -113,6 +122,9 @@ export class PlaceholderAdapter extends BaseAvatarProvider {
    * Health check (always healthy)
    */
   async healthCheck(): Promise<boolean> {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('Placeholder adapter is disabled in production');
+    }
     return true
   }
 

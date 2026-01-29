@@ -3,7 +3,6 @@ import { PPTXTextParser } from './text-parser';
 import { PPTXLayoutParser } from './layout-parser';
 import { PPTXNotesParser } from './notes-parser';
 import type { SlideTextExtractionResult } from './text-parser';
-import type { SpeakerNotesResult } from './notes-parser';
 import type { SlideLayoutDetectionResult } from './layout-parser';
 
 export interface SlideDurationResult {
@@ -55,8 +54,8 @@ export class SlideDurationCalculator {
       const slideWordCount = textResult.wordCount || 0;
       
       // 2. Extrair speaker notes (prioridade para narração)
-      const notesResult = await this.notesParser.extractNotes(zip, slideNumber);
-      const notesWordCount = notesResult.wordCount || 0;
+      const notesText = await this.notesParser.extractNotes(zip, slideNumber);
+      const notesWordCount = notesText ? notesText.split(/\s+/).filter(Boolean).length : 0;
       
       // 3. Analisar layout e elementos visuais
       const layoutResult = await this.layoutParser.detectLayout(zip, slideNumber);
@@ -89,7 +88,7 @@ export class SlideDurationCalculator {
       totalDuration = Math.min(this.options.maxSlideDuration, totalDuration);
       
       // Calcular confiança baseado na qualidade dos dados
-      const confidence = this.calculateConfidence(textResult, notesResult, layoutResult);
+      const confidence = this.calculateConfidence(textResult, { notes: notesText, wordCount: notesWordCount }, layoutResult);
       
       return {
         success: true,
@@ -128,18 +127,18 @@ export class SlideDurationCalculator {
 
   private calculateConfidence(
     textResult: SlideTextExtractionResult,
-    notesResult: SpeakerNotesResult,
+    notesResult: { notes: string; wordCount: number },
     layoutResult: SlideLayoutDetectionResult
   ): number {
     let confidence = 0.5; // Base
     
     // Se temos notes, confiança maior (mais preciso para TTS)
-    if (notesResult.success && notesResult.wordCount && notesResult.wordCount > 0) {
+    if (notesResult.wordCount > 0) {
       confidence += 0.3;
     }
     
     // Se temos texto do slide
-    if (textResult.success && textResult.wordCount && textResult.wordCount > 0) {
+    if (textResult.wordCount > 0) {
       confidence += 0.1;
     }
     

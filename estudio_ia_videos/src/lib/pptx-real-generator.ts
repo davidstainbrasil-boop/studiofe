@@ -7,6 +7,7 @@ import PptxGenJS from 'pptxgenjs';
 import { logger } from '@lib/logger';
 import { prisma } from '@lib/prisma';
 import { randomUUID } from 'crypto';
+import { storageSystem } from '@lib/storage-system-real';
 
 export interface GeneratorSlide {
   title: string;
@@ -167,40 +168,36 @@ export const generateRealPptxFromProject = async (
       ...options
     });
 
-    // 4. "Upload" / Save
-    // For this MVP step, we generate a filename. In a real real scenario we upload to S3/Supabase Storage.
-    // Here we'll simulate the upload by treating the buffer availability as success and maybe writing to a local tmp or just returning URL pattern.
-    // If we have a storage service: 
-    // const url = await storageService.upload(`pptx/${projectId}/${filename}`, buffer);
-    
-    // We will update the project's pptxUrl.
-    // Since we don't have the storage uploader wired here yet (outside scope of just this file refactor), 
-    // we will set a "pending-upload" or a generated URL structure assuming a route handles serving or separate upload.
-    
-    const filename = `presentation_${projectId}_${Date.now()}.pptx`;
-    const mockUrl = `/api/v1/storage/download?file=${filename}&bucket=generated`; // Placeholder for real URL
+    const filename = `presentation_${projectId}_${Date.now()}_${randomUUID()}.pptx`;
+    const storagePath = `pptx/generated/${projectId}/${filename}`;
+    const pptxUrl = await storageSystem.upload({
+      bucket: 'uploads',
+      path: storagePath,
+      file: buffer,
+      contentType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+    });
 
-    // Update Project
     await prisma.projects.update({
       where: { id: projectId },
       data: {
-        pptxUrl: mockUrl,
+        pptxUrl,
         metadata: {
           ...(project.metadata as object),
           pptxGenerated: true,
           generatedAt: new Date().toISOString(),
-          slideCount: generatorSlides.length
+          slideCount: generatorSlides.length,
+          pptxStoragePath: storagePath
         }
       }
     });
 
     return {
       success: true,
-      pptxUrl: mockUrl,
+      pptxUrl,
       filename,
       buffer,
       slideCount: generatorSlides.length,
-      metadata: { generatedAt: new Date().toISOString() }
+      metadata: { generatedAt: new Date().toISOString(), storagePath }
     };
 
   } catch (error) {

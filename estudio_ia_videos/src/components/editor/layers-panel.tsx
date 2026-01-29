@@ -25,7 +25,7 @@ import {
   Layers,
   GripVertical
 } from 'lucide-react'
-import { EditorLayer, EditorElement } from '@types/editor'
+import { EditorLayer, EditorElement } from '@/types/editor'
 
 interface LayersPanelProps {
   layers: EditorLayer[];

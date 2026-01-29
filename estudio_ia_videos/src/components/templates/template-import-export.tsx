@@ -25,7 +25,7 @@ import {
   FileCode,
   Globe
 } from 'lucide-react';
-import { Template } from '@types/templates';
+import { Template } from '@/types/templates';
 
 /** Dados exportados em diferentes formatos */
 type ExportData = string;

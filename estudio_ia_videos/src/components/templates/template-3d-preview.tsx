@@ -54,7 +54,7 @@ import {
   Info,
   ExternalLink
 } from 'lucide-react';
-import { Template } from '@types/templates';
+import { Template } from '@/types/templates';
 import { toast } from 'sonner';
 
 interface Template3DPreviewProps {
@@ -404,8 +404,8 @@ export const Template3DPreview: React.FC<Template3DPreviewProps> = ({
     setVolume(value[0]);
   };
 
-  const handleSettingsChange = (key: keyof ViewerSettings, value: ViewerSettings[typeof key]) => {
-    setViewerSettings(prev => ({ ...prev, [key]: value }));
+  const handleSettingsChange = <K extends keyof ViewerSettings>(key: K, value: ViewerSettings[K] | string | boolean) => {
+    setViewerSettings(prev => ({ ...prev, [key]: value as ViewerSettings[K] }));
     
     // Apply settings to 3D viewer
     toast.success(`Configuração ${key} atualizada`);

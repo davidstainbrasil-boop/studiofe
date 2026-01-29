@@ -4,7 +4,7 @@
 import useSWR from 'swr'
 import { logger } from '@lib/logger'
 
-interface Metrics {
+export interface Metrics {
   overview: {
     totalProjects: number
     completedProjects: number
@@ -42,7 +42,19 @@ interface Metrics {
 
 const fetcher = async (url: string) => {
   try {
-    const res = await fetch(url)
+    const res = await fetch(url, {
+      credentials: 'include' // Send cookies for auth
+    })
+    
+    if (!res.ok) {
+      // Handle auth errors gracefully
+      if (res.status === 401) {
+        logger.warn('Unauthorized access to metrics', { component: 'use-metrics' })
+        return null
+      }
+      throw new Error(`Failed to fetch: ${res.status}`)
+    }
+    
     const data = await res.json()
     return data.data || data // Support both {data: ...} and direct response
   } catch (error) {
@@ -79,15 +91,15 @@ const fetcher = async (url: string) => {
 
 export function useMetrics(period: 'day' | 'week' | 'month' | 'quarter' = 'month') {
   const { data, error, mutate, isLoading } = useSWR<Metrics>(
-    `/api/metrics?period=${period}&format=json`,
+    `/api/metrics/dashboard?period=${period}`,
     fetcher,
     { 
-      refreshInterval: 0, // 🚨 EMERGENCY: Disabled auto-refresh to prevent loops
-      revalidateOnFocus: false, // 🚨 EMERGENCY: Disabled focus revalidation
-      revalidateOnReconnect: false, // 🚨 EMERGENCY: Disabled reconnect revalidation
-      dedupingInterval: 60000, // 60 second deduping
-      errorRetryCount: 1, // Limit retry attempts
-      errorRetryInterval: 5000, // 5 second retry interval
+      refreshInterval: 30000, // Refresh a cada 30 segundos
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
+      dedupingInterval: 10000, // 10 second deduping
+      errorRetryCount: 2,
+      errorRetryInterval: 5000,
       fallbackData: {
         overview: {
           totalProjects: 0,

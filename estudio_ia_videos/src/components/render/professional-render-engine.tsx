@@ -102,6 +102,10 @@ export default function ProfessionalRenderEngine() {
     name?: string;
     slides?: number;
     duration?: number;
+    tts?: {
+      audioBase64?: string;
+      duration?: number;
+    };
   }
 
   const startRender = useCallback(async (projectData: RenderProjectData) => {

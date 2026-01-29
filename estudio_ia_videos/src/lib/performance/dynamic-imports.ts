@@ -54,10 +54,14 @@ async function retryImport<T = unknown>(
     return result;
   } catch (error) {
     if (attempt >= maxRetries) {
-      logger.error(`Dynamic import failed after ${maxRetries} attempts`, error, {
-        component: componentName,
-        maxRetries
-      });
+      logger.error(
+        `Dynamic import failed after ${maxRetries} attempts`,
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          component: componentName,
+          maxRetries
+        },
+      );
       throw error;
     }
 
@@ -102,7 +106,7 @@ export function preloadComponent(
 export const dynamicComponents = {
   // Editor components (heavy)
   CanvasEditor: () => createDynamicImport(
-    () => import('@components/editor/canvas-editor'),
+    () => import('@components/editor/canvas-editor').then((mod) => ({ default: mod.CanvasEditor })),
     'CanvasEditor'
   ),
   
@@ -113,7 +117,7 @@ export const dynamicComponents = {
   
   // Render components
   RenderQueue: () => createDynamicImport(
-    () => import('@components/render/render-queue'),
+    () => import('@components/render/render-queue-monitor'),
     'RenderQueue'
   ),
   
@@ -125,12 +129,12 @@ export const dynamicComponents = {
   
   // Admin/settings components
   ComplianceDashboard: () => createDynamicImport(
-    () => import('@components/compliance/dashboard'),
+    () => import('@components/compliance/compliance-dashboard').then((mod) => ({ default: mod.ComplianceDashboard })),
     'ComplianceDashboard'
   ),
   
   UserSettings: () => createDynamicImport(
-    () => import('@components/settings/user-settings'),
+    () => import('@components/user/user-settings').then((mod) => ({ default: mod.UserSettings })),
     'UserSettings'
   )
 };
@@ -142,7 +146,7 @@ export function preloadCriticalComponents(): void {
   // Preload commonly used components after initial page load
   setTimeout(() => {
     preloadComponent(
-      () => import('@components/editor/canvas-editor'),
+      () => import('@components/editor/canvas-editor').then((mod) => ({ default: mod.CanvasEditor })),
       'CanvasEditor'
     );
     

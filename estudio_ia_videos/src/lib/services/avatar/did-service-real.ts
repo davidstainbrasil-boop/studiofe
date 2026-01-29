@@ -1,42 +1,44 @@
-import axios, { AxiosInstance } from 'axios'
-import { logger } from '@/lib/logger' // Fixed path from plan to match project structure
+import axios, { AxiosInstance } from 'axios';
+import { logger } from '@lib/logger';
+import { getOptionalEnv, getRequiredEnv } from '@lib/env';
 
 export interface DIDTalkConfig {
-  sourceImage: string      // URL da imagem do avatar
-  text?: string           // Texto para falar
-  audioUrl?: string       // Ou URL de áudio customizado
-  voice?: string          // ID da voz (ex: pt-BR-FranciscaNeural)
+  sourceImage: string;      // URL da imagem do avatar
+  text?: string;           // Texto para falar
+  audioUrl?: string;       // Ou URL de áudio customizado
+  voice?: string;          // ID da voz (ex: pt-BR-FranciscaNeural)
   settings?: {
-    fluent?: boolean      // Smooth transitions
-    padAudio?: number     // Padding em segundos
-    stitch?: boolean      // Stitch gaps
+    fluent?: boolean;      // Smooth transitions
+    padAudio?: number;     // Padding em segundos
+    stitch?: boolean;      // Stitch gaps
     crop?: {
-      type: 'wide' | 'square' | 'vertical'
-    }
-  }
-  webhookUrl?: string
+      type: 'wide' | 'square' | 'vertical';
+    };
+  };
+  webhookUrl?: string;
 }
 
 export interface DIDTalkStatus {
-  id: string
-  status: 'created' | 'processing' | 'done' | 'error'
-  resultUrl?: string
-  error?: string
-  createdAt: string
-  duration?: number
+  id: string;
+  status: 'created' | 'processing' | 'done' | 'error';
+  resultUrl?: string;
+  error?: string;
+  createdAt: string;
+  duration?: number;
 }
 
 export class DIDServiceReal {
-  private client: AxiosInstance
-  private baseURL = 'https://api.d-id.com'
+  private client: AxiosInstance;
+  private baseURL = 'https://api.d-id.com';
 
   constructor() {
-    const apiKey = process.env.DID_API_KEY
+    // In strict real mode, we must have the API key.
+    const apiKey = process.env.STRICT_REAL_MODE === 'true' 
+        ? getRequiredEnv('DID_API_KEY') 
+        : getOptionalEnv('DID_API_KEY');
 
-    // Allow internal usage without key validation for testing/mocks, 
-    // but log warning if missing
     if (!apiKey) {
-      logger.warn('DID_API_KEY not configured')
+      logger.warn('DID_API_KEY not configured. D-ID features will fail.');
     }
 
     this.client = axios.create({
@@ -46,15 +48,19 @@ export class DIDServiceReal {
         'Content-Type': 'application/json'
       },
       timeout: 30000
-    })
+    });
   }
 
   /**
    * Cria um novo avatar falante
    */
   async createTalk(config: DIDTalkConfig): Promise<string> {
+    if (!this.client.defaults.headers['Authorization'] || this.client.defaults.headers['Authorization'] === 'Basic undefined') {
+         throw new Error('DID_API_KEY is missing. Cannot create talk.');
+    }
+
     try {
-      logger.info('Creating D-ID talk', { sourceImage: config.sourceImage })
+      logger.info('Creating D-ID talk', { sourceImage: config.sourceImage });
 
       const payload: any = {
         source_url: config.sourceImage,
@@ -64,14 +70,14 @@ export class DIDServiceReal {
           stitch: config.settings?.stitch ?? true,
           result_format: 'mp4'
         }
-      }
+      };
 
       // Script de áudio ou texto
       if (config.audioUrl) {
         payload.script = {
           type: 'audio',
           audio_url: config.audioUrl
-        }
+        };
       } else if (config.text) {
         payload.script = {
           type: 'text',
@@ -80,34 +86,34 @@ export class DIDServiceReal {
             type: 'microsoft',
             voice_id: config.voice || 'pt-BR-FranciscaNeural'
           }
-        }
+        };
       } else {
-        throw new Error('Either text or audioUrl must be provided')
+        throw new Error('Either text or audioUrl must be provided');
       }
 
       // Webhook callback
       if (config.webhookUrl) {
-        payload.webhook = config.webhookUrl
+        payload.webhook = config.webhookUrl;
       }
 
-      const response = await this.client.post('/talks', payload)
+      const response = await this.client.post('/talks', payload);
 
       logger.info('D-ID talk created', {
         talkId: response.data.id,
         status: response.data.status
-      })
+      });
 
-      return response.data.id
+      return response.data.id;
 
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
         logger.error('D-ID API error', new Error(error.message), {
           status: error.response?.status,
           data: error.response?.data
-        })
-        throw new Error(`D-ID API error: ${JSON.stringify(error.response?.data?.error) || error.message}`)
+        });
+        throw new Error(`D-ID API error: ${JSON.stringify(error.response?.data?.error) || error.message}`);
       }
-      throw error
+      throw error;
     }
   }
 
@@ -116,7 +122,7 @@ export class DIDServiceReal {
    */
   async getTalkStatus(talkId: string): Promise<DIDTalkStatus> {
     try {
-      const response = await this.client.get(`/talks/${talkId}`)
+      const response = await this.client.get(`/talks/${talkId}`);
 
       return {
         id: response.data.id,
@@ -125,13 +131,13 @@ export class DIDServiceReal {
         error: response.data.error,
         createdAt: response.data.created_at,
         duration: response.data.duration
-      }
+      };
 
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
-        throw new Error(`Failed to get talk status: ${JSON.stringify(error.response?.data?.error) || error.message}`)
+        throw new Error(`Failed to get talk status: ${JSON.stringify(error.response?.data?.error) || error.message}`);
       }
-      throw error
+      throw error;
     }
   }
 
@@ -141,36 +147,36 @@ export class DIDServiceReal {
   async waitForTalkCompletion(
     talkId: string,
     options: {
-      maxWaitTime?: number    // ms (default: 5 min)
-      pollInterval?: number    // ms (default: 2s)
-      onProgress?: (status: DIDTalkStatus) => void
+      maxWaitTime?: number;    // ms (default: 5 min)
+      pollInterval?: number;    // ms (default: 2s)
+      onProgress?: (status: DIDTalkStatus) => void;
     } = {}
   ): Promise<DIDTalkStatus> {
 
-    const maxWaitTime = options.maxWaitTime || 300000 // 5 minutos
-    const pollInterval = options.pollInterval || 2000  // 2 segundos
-    const startTime = Date.now()
+    const maxWaitTime = options.maxWaitTime || 300000; // 5 minutos
+    const pollInterval = options.pollInterval || 2000;  // 2 segundos
+    const startTime = Date.now();
 
     while (Date.now() - startTime < maxWaitTime) {
-      const status = await this.getTalkStatus(talkId)
+      const status = await this.getTalkStatus(talkId);
 
       if (options.onProgress) {
-        options.onProgress(status)
+        options.onProgress(status);
       }
 
       if (status.status === 'done') {
-        return status
+        return status;
       }
 
       if (status.status === 'error') {
-        throw new Error(`D-ID talk failed: ${JSON.stringify(status.error)}`)
+        throw new Error(`D-ID talk failed: ${JSON.stringify(status.error)}`);
       }
 
       // Aguardar antes do próximo poll
-      await new Promise(resolve => setTimeout(resolve, pollInterval))
+      await new Promise(resolve => setTimeout(resolve, pollInterval));
     }
 
-    throw new Error('D-ID talk timeout: exceeded maximum wait time')
+    throw new Error('D-ID talk timeout: exceeded maximum wait time');
   }
 
   /**
@@ -178,11 +184,11 @@ export class DIDServiceReal {
    */
   async deleteTalk(talkId: string): Promise<void> {
     try {
-      await this.client.delete(`/talks/${talkId}`)
-      logger.info('D-ID talk deleted', { talkId })
+      await this.client.delete(`/talks/${talkId}`);
+      logger.info('D-ID talk deleted', { talkId });
     } catch (error) {
        // Just warn, don't throw for deletion failure
-      logger.warn('Failed to delete D-ID talk', { talkId, error })
+      logger.warn('Failed to delete D-ID talk', { talkId, error });
     }
   }
 
@@ -190,20 +196,20 @@ export class DIDServiceReal {
    * Lista voices disponíveis
    */
   async listVoices(language?: string): Promise<Array<{
-    id: string
-    name: string
-    language: string
-    gender: 'Male' | 'Female'
+    id: string;
+    name: string;
+    language: string;
+    gender: 'Male' | 'Female';
   }>> {
     try {
       const response = await this.client.get('/voices', {
         params: { language }
-      })
+      });
 
-      return response.data.voices
+      return response.data.voices;
     } catch (error) {
-      logger.error('Failed to list D-ID voices', error as Error)
-      return []
+      logger.error('Failed to list D-ID voices', error as Error);
+      return [];
     }
   }
 
@@ -212,13 +218,12 @@ export class DIDServiceReal {
    */
   async uploadImage(imageBuffer: Buffer, filename: string): Promise<string> {
     try {
-      // Note: D-ID upload endpoint usually requires form-data
-      // This implementation assumes axios handles FormData if passed correctly, 
-      // but in Node environment we might need 'form-data' package if not using Blob/File APIs standard
-      // Let's use 'form-data' package if available or construct it manually.
-      // Since package.json has 'form-data', we should import it.
+      const { FormData } = await import('form-data'); // Ensure dynamic import for Node environment compatibility if needed
+      // Or simply: const FormData = require('form-data');
+      // Typescript needs import usually.
+      // We will assume standard import works or use require if strict mode issues.
+      // But let's rely on package.json 'form-data'.
       
-      const FormData = require('form-data');
       const formData = new FormData();
       formData.append('image', imageBuffer, filename);
 
@@ -226,15 +231,15 @@ export class DIDServiceReal {
         headers: {
           ...formData.getHeaders()
         }
-      })
+      });
 
-      return response.data.url
+      return response.data.url;
 
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
-        throw new Error(`Failed to upload image: ${JSON.stringify(error.response?.data?.error) || error.message}`)
+        throw new Error(`Failed to upload image: ${JSON.stringify(error.response?.data?.error) || error.message}`);
       }
-      throw error
+      throw error;
     }
   }
 }

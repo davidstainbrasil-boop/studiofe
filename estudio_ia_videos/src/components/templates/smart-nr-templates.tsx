@@ -176,13 +176,61 @@ const mockNRTemplates: NRTemplate[] = [
 ]
 
 export default function SmartNRTemplates() {
-  const [templates, setTemplates] = useState<NRTemplate[]>(mockNRTemplates)
-  const [filteredTemplates, setFilteredTemplates] = useState<NRTemplate[]>(mockNRTemplates)
+  const [templates, setTemplates] = useState<NRTemplate[]>([])
+  const [filteredTemplates, setFilteredTemplates] = useState<NRTemplate[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [selectedNorma, setSelectedNorma] = useState<string>('all')
   const [showOnlyAI, setShowOnlyAI] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Fetch templates from API
+  useEffect(() => {
+    async function fetchTemplates() {
+      try {
+        setIsLoading(true)
+        const res = await fetch('/api/nr-templates', { credentials: 'include' })
+        
+        if (res.ok) {
+          const data = await res.json()
+          // Transform API data to match our interface
+          const transformed: NRTemplate[] = (data || []).map((t: Record<string, unknown>) => ({
+            id: String(t.id || t.nrNumber || ''),
+            name: String(t.title || t.name || ''),
+            norma: String(t.nrNumber || t.norma || ''),
+            description: String(t.description || ''),
+            category: String(t.category || 'seguranca') as NRTemplate['category'],
+            industry: Array.isArray(t.industry) ? t.industry as string[] : [],
+            duration: String(t.durationFormatted || t.duration || '30 min'),
+            slides: Number(t.slideCount || t.slides || 0),
+            compliance: Number(t.compliance || 95),
+            thumbnail: String(t.thumbnail || '/nr12-thumb.jpg'),
+            features: Array.isArray(t.features) ? t.features as string[] : [],
+            lastUpdated: String(t.updatedAt || t.lastUpdated || new Date().toISOString()),
+            downloads: Number(t.downloads || 0),
+            rating: Number(t.rating || 4.5),
+            isNew: Boolean(t.isNew),
+            isPremium: Boolean(t.isPremium),
+            aiOptimized: Boolean(t.aiOptimized)
+          }))
+          
+          // If API returns data, use it; otherwise fallback to mocks
+          setTemplates(transformed.length > 0 ? transformed : mockNRTemplates)
+        } else {
+          // Fallback to mock data on error
+          setTemplates(mockNRTemplates)
+        }
+      } catch (error) {
+        console.warn('Using mock templates:', error)
+        setTemplates(mockNRTemplates)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    
+    fetchTemplates()
+  }, [])
 
   // Filtros
   useEffect(() => {
@@ -391,10 +439,25 @@ export default function SmartNRTemplates() {
         </CardContent>
       </Card>
 
+      {/* Loading State */}
+      {isLoading && (
+        <div className="flex items-center justify-center py-12">
+          <div className="flex flex-col items-center space-y-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <p className="text-muted-foreground">Carregando templates NR...</p>
+          </div>
+        </div>
+      )}
+
       {/* Templates Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredTemplates.map((template) => (
-          <Card key={template.id} className="hover:shadow-lg transition-shadow">
+      {!isLoading && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredTemplates.length === 0 ? (
+            <div className="col-span-full text-center py-12">
+              <p className="text-muted-foreground">Nenhum template encontrado</p>
+            </div>
+          ) : filteredTemplates.map((template) => (
+            <Card key={template.id} className="hover:shadow-lg transition-shadow">
             <div className="relative">
               {/* Thumbnail */}
               <div className="aspect-video relative bg-muted rounded-t-lg overflow-hidden">
@@ -529,27 +592,8 @@ export default function SmartNRTemplates() {
               </div>
             </CardContent>
           </Card>
-        ))}
-      </div>
-
-      {/* Empty State */}
-      {filteredTemplates.length === 0 && (
-        <Card className="text-center p-12">
-          <CardContent className="space-y-4">
-            <div className="mx-auto w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-              <FileText className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-            </div>
-            <h3 className="text-lg font-semibold">Nenhum template encontrado</h3>
-            <p className="text-muted-foreground max-w-md mx-auto">
-              Não encontramos templates que correspondam aos seus critérios de busca. 
-              Tente ajustar os filtros ou gerar um template personalizado.
-            </p>
-            <Button onClick={generateCustomTemplate} className="mt-4">
-              <Zap className="h-4 w-4 mr-2" />
-              Gerar Template Personalizado
-            </Button>
-          </CardContent>
-        </Card>
+          ))}
+        </div>
       )}
 
       {/* Quick Stats */}

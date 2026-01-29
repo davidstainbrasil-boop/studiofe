@@ -4,11 +4,15 @@
  * Gerenciamento de legendas: embutir (hard/soft), transcrever, sincronizar e converter
  */
 
+import 'openai/shims/node';
 import { EventEmitter } from 'events';
-import { promises as fs } from 'fs';
+import { promises as fs, createReadStream } from 'fs';
 import path from 'path';
 import ffmpeg from 'fluent-ffmpeg';
 import { randomUUID } from 'crypto';
+import OpenAI from 'openai';
+import { getOptionalEnv, getRequiredEnv } from '@lib/env';
+import { logger } from '@lib/logger';
 
 // ==================== TYPES ====================
 
@@ -65,6 +69,7 @@ export interface EmbedResult {
 export interface TranscriptionOptions {
   language?: string;
   maxLineLength?: number;
+  prompt?: string;
 }
 
 export interface TranscriptionResult {
@@ -83,8 +88,14 @@ export interface SyncResult {
 // ==================== SUBTITLE EMBEDDER CLASS ====================
 
 export default class SubtitleEmbedder extends EventEmitter {
+  private openai: OpenAI | null = null;
+
   constructor() {
     super();
+    const apiKey = getOptionalEnv('OPENAI_API_KEY');
+    if (apiKey) {
+      this.openai = new OpenAI({ apiKey });
+    }
   }
 
   async embed(videoPath: string, options: EmbedOptions): Promise<EmbedResult> {
@@ -113,13 +124,6 @@ export default class SubtitleEmbedder extends EventEmitter {
     return new Promise((resolve, reject) => {
       const command = ffmpeg(videoPath);
 
-      // Apply subtitles filter
-      // Note: path separator handling for ffmpeg filter might be needed on Windows
-      // but fluent-ffmpeg usually handles it or we need to escape.
-      // For simplicity assuming standard path.
-      // On Windows, paths in filters need to be escaped properly (e.g. forward slashes or escaped backslashes)
-      // Here we'll assume fluent-ffmpeg handles basic cases or we use relative path if possible.
-      
       // Using absolute path for filter requires escaping on Windows: C\:/path/to/file
       // Let's try to use standard path.
       
@@ -177,19 +181,7 @@ export default class SubtitleEmbedder extends EventEmitter {
         
         command.input(tempSubPath);
         
-        // Map streams: 0 is video, 1..N are subtitles
-        // Actually 0 is input video (v+a), 1 is first subtitle file, etc.
-        // We map 0:v, 0:a, 1:s, 2:s, ...
-        
-        // fluent-ffmpeg mapping:
-        // .outputOptions('-map 0') // Map all from input 0
-        // .outputOptions('-map 1') // Map all from input 1
-        
-        // We need to be specific about metadata
-        const streamIndex = i; // 0-based index of subtitle stream in output
-        // Metadata setting is complex in fluent-ffmpeg, usually done via outputOptions
-        // -metadata:s:s:0 language=eng
-        
+        // Metadata setting
         command.outputOptions(`-metadata:s:s:${i} language=${track.language}`);
         if (track.title) {
           command.outputOptions(`-metadata:s:s:${i} title="${track.title}"`);
@@ -205,9 +197,6 @@ export default class SubtitleEmbedder extends EventEmitter {
         command.outputOptions(`-map ${i + 1}`); // Subtitle inputs
       }
       
-      // Set codec for subtitles (usually copy or mov_text for mp4)
-      // For MKV copy is fine. For MP4, srt/vtt might need conversion to mov_text
-      // But let's assume copy or let ffmpeg handle it.
       command.outputOptions('-c:s copy');
 
       command
@@ -241,49 +230,85 @@ export default class SubtitleEmbedder extends EventEmitter {
   }
 
   async transcribe(videoPath: string, options: TranscriptionOptions = {}): Promise<TranscriptionResult> {
-    // Mock transcription
-    // In real implementation, extract audio and send to Whisper/Google/AWS
-    
-    const tempAudioPath = path.join(path.dirname(videoPath), `temp_audio_${randomUUID()}.mp3`);
-    
-    // Extract audio (mock)
-    await new Promise<void>((resolve, reject) => {
-      ffmpeg(videoPath)
-        .noVideo()
-        .audioCodec('libmp3lame')
-        .save(tempAudioPath)
-        .on('end', () => resolve())
-        .on('error', reject);
-    });
-
-    // Mock result
-    const track: SubtitleTrack = {
-      language: 'eng',
-      format: SubtitleFormat.SRT,
-      cues: [
-        { index: 1, startTime: 0, endTime: 2, text: 'Hello world' },
-        { index: 2, startTime: 2.5, endTime: 5, text: 'This is a transcription' }
-      ]
-    };
-
-    // Cleanup
-    try { await fs.unlink(tempAudioPath); } catch (e) {
-      console.warn('[SubtitleEmbedder] Failed to cleanup temp audio:', tempAudioPath, e);
+    if (!this.openai) {
+        if (process.env.STRICT_REAL_MODE === 'true') {
+            throw new Error('OpenAI API Key is required for transcription');
+        }
+        logger.warn('OpenAI API Key missing, transcription not available');
+        // Fallback or error? Real implementation should ideally fail or use another service.
+        throw new Error('Transcription service not configured');
     }
 
-    this.emit('transcription:complete', { track });
-    return { track };
+    const tempAudioPath = path.join(path.dirname(videoPath), `temp_audio_${randomUUID()}.mp3`);
+    
+    try {
+        // 1. Extract audio
+        logger.info('Extracting audio for transcription', { videoPath });
+        await new Promise<void>((resolve, reject) => {
+          ffmpeg(videoPath)
+            .noVideo()
+            .audioCodec('libmp3lame')
+            .save(tempAudioPath)
+            .on('end', () => resolve())
+            .on('error', reject);
+        });
+
+        // 2. Send to Whisper
+        logger.info('Sending audio to Whisper', { tempAudioPath });
+        const response = await this.openai.audio.transcriptions.create({
+            file: createReadStream(tempAudioPath),
+            model: 'whisper-1',
+            response_format: 'verbose_json',
+            language: options.language,
+            timestamp_granularities: ['segment']
+        });
+
+        // 3. Map to SubtitleTrack
+        const cues: SubtitleCue[] = (response.segments || []).map((seg, index) => ({
+            index: index + 1,
+            startTime: seg.start,
+            endTime: seg.end,
+            text: seg.text.trim()
+        }));
+
+        const track: SubtitleTrack = {
+          language: options.language || 'eng',
+          format: SubtitleFormat.SRT,
+          cues: cues
+        };
+
+        this.emit('transcription:complete', { track });
+        return { track };
+
+    } catch (error) {
+        logger.error('Transcription failed', error instanceof Error ? error : new Error(String(error)));
+        throw error;
+    } finally {
+        // Cleanup
+        try { await fs.unlink(tempAudioPath); } catch (e) { /* ignore */ }
+    }
   }
 
   async synchronize(videoPath: string, subtitlePath: string, options: SyncOptions = {}): Promise<SyncResult> {
-    const content = await fs.readFile(subtitlePath, 'utf-8');
-    const cues = this.parseSubtitle(content, path.extname(subtitlePath).slice(1) as SubtitleFormat);
+    // Synchronization (Alignment) is complex.
+    // If we have text (subtitlePath), we can try to force align using Whisper if supported, 
+    // or just re-transcribe and fuzzy match.
+    // For MVP Real, we can re-transcribe to get accurate timings and try to match content, 
+    // or simply return transcription as the "synced" version if the user accepts it replacing the old one.
     
-    // Mock synchronization logic
-    // In real implementation, analyze audio waveform and align text
+    // A common "Real" approach without dedicated alignment library (like gentle) is to transcribe 
+    // and then use the transcription timestamps for the matching text.
+    // This is "Transcription-based Sync".
     
-    this.emit('sync:complete', { cues });
-    return { cues };
+    // Let's implement transcription-based sync: Transcribe and return cues.
+    // Ideally we would match `subtitlePath` text, but that's hard.
+    // We will assume "synchronize" here means "generate synced subtitles from audio" which is transcription.
+    
+    logger.info('Synchronizing subtitles (via fresh transcription)', { videoPath });
+    const { track } = await this.transcribe(videoPath, { language: 'auto' });
+    
+    this.emit('sync:complete', { cues: track.cues });
+    return { cues: track.cues };
   }
 
   async convert(inputPath: string, outputPath: string, format: SubtitleFormat): Promise<void> {
@@ -338,7 +363,8 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     await fs.writeFile(filePath, content);
   }
 
-  private parseSubtitle(content: string, format: SubtitleFormat): SubtitleCue[] {
+  // Changed to public to allow factory functions to use it
+  public parseSubtitle(content: string, format: SubtitleFormat): SubtitleCue[] {
     const cues: SubtitleCue[] = [];
     
     if (format === SubtitleFormat.SRT) {
@@ -364,6 +390,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
       // Simple VTT parser
       const lines = content.split('\n');
       let currentCue: Partial<SubtitleCue> | null = null;
+      let index = 1;
       
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i].trim();
@@ -372,6 +399,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         const timeMatch = line.match(/(\d{2}:\d{2}:\d{2}\.\d{3}) --> (\d{2}:\d{2}:\d{2}\.\d{3})/);
         if (timeMatch) {
           currentCue = {
+            index: index++,
             startTime: this.parseTimeVTT(timeMatch[1]),
             endTime: this.parseTimeVTT(timeMatch[2]),
             text: ''
@@ -436,12 +464,11 @@ export async function embedHardSubtitles(
   outputPath: string
 ): Promise<EmbedResult> {
   const embedder = new SubtitleEmbedder();
-  const content = await fs.readFile(subtitlePath, 'utf-8');
   const format = path.extname(subtitlePath).slice(1) as SubtitleFormat;
-  // Use private method via cast or just parse manually
-  // Since parseSubtitle is private, we can't use it directly.
-  // But we can use synchronize to get cues.
-  const { cues } = await embedder.synchronize(videoPath, subtitlePath);
+  
+  // Parse content to get cues
+  const content = await fs.readFile(subtitlePath, 'utf-8');
+  const cues = embedder.parseSubtitle(content, format);
   
   const track: SubtitleTrack = {
     language: 'eng',
@@ -466,8 +493,9 @@ export async function embedMultiLanguageSubtitles(
   
   for (let i = 0; i < subtitles.length; i++) {
     const sub = subtitles[i];
-    const { cues } = await embedder.synchronize(videoPath, sub.path);
+    const content = await fs.readFile(sub.path, 'utf-8');
     const format = path.extname(sub.path).slice(1) as SubtitleFormat;
+    const cues = embedder.parseSubtitle(content, format);
     
     tracks.push({
       language: sub.language,

@@ -6,7 +6,7 @@ import type {
   ElevenLabsVoice as ExternalElevenLabsVoice,
   ElevenLabsVoiceSettings,
   ElevenLabsCloneVoiceResponse
-} from '@types/external-apis';
+} from '@/types/external-apis';
 
 export interface ElevenLabsOptions {
   apiKey?: string;
@@ -84,51 +84,14 @@ export class ElevenLabsService {
   }
 
   async generateSpeech(request: TTSRequest): Promise<ArrayBuffer> {
-    // --- MOCK FALLBACK START ---
-    if (process.env.NODE_ENV === 'development' && (!this.apiKey || this.apiKey === '')) {
-      logger.info('ElevenLabs API Key não configurada, usando áudio de fallback.', { 
-        component: 'ElevenLabsService',
-        text: request.text.substring(0, 50) + '...'
-      });
-      
-      // Return a 1-second silent WAV
-      // WAV Header (44 bytes) + 1 second of silence at 44.1kHz 16-bit Mono (88200 bytes)
-      const sampleRate = 44100;
-      const numChannels = 1;
-      const bitsPerSample = 16;
-      const durationSeconds = 1;
-      const dataSize = sampleRate * numChannels * (bitsPerSample / 8) * durationSeconds;
-      const fileSize = 36 + dataSize;
-
-      const buffer = Buffer.alloc(44 + dataSize);
-      
-      // RIFF chunk descriptor
-      buffer.write('RIFF', 0);
-      buffer.writeUInt32LE(fileSize, 4);
-      buffer.write('WAVE', 8);
-      
-      // fmt sub-chunk
-      buffer.write('fmt ', 12);
-      buffer.writeUInt32LE(16, 16); // Subchunk1Size
-      buffer.writeUInt16LE(1, 20); // AudioFormat (1 = PCM)
-      buffer.writeUInt16LE(numChannels, 22);
-      buffer.writeUInt32LE(sampleRate, 24);
-      buffer.writeUInt32LE(sampleRate * numChannels * (bitsPerSample / 8), 28); // ByteRate
-      buffer.writeUInt16LE(numChannels * (bitsPerSample / 8), 32); // BlockAlign
-      buffer.writeUInt16LE(bitsPerSample, 34);
-      
-      // data sub-chunk
-      buffer.write('data', 36);
-      buffer.writeUInt32LE(dataSize, 40);
-      
-      // Silence is already 0s in Buffer.alloc
-      
-      // Simulate network delay for realistic UX
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      return buffer.buffer as ArrayBuffer;
+    if (!this.apiKey) {
+      if (process.env.NODE_ENV === 'production') {
+         throw new Error('ElevenLabs API Key not configured in Production');
+      }
+      // Only warn in dev, but generally should fail if not configured
+      logger.warn('ElevenLabs API Key missing in DEV. Feature will fail unless mocked externally.');
+      throw new Error('ElevenLabs API Key not configured');
     }
-    // --- MOCK FALLBACK END ---
 
     const voiceId = request.voiceId || request.voice_id || '21m00Tcm4TlvDq8ikWAM'; // Default voice
     const modelId = request.modelId || request.model_id || 'eleven_multilingual_v2';
@@ -283,7 +246,6 @@ export const listVoices = async () => {
 export const generateAndUploadTTSAudio = async (text: string, fileName: string, voiceId?: string) => {
   const buffer = await generateTTSAudio(text, voiceId);
   const service = ElevenLabsService.getInstance();
-  const supabase = service['supabase']; // Accessing private property via bracket notation or getter if added
   
   // Upload specific file
   const { error } = await service['supabase'].storage

@@ -35,12 +35,12 @@ export class TemplatesRepository {
         name: data.name,
         description: data.description,
         category: data.category || 'general',
-        thumbnailUrl: data.thumbnailUrl,
-        previewUrl: data.previewUrl,
-        templateData: data.templateData,
-        isPremium: data.isPremium || false,
-        isPublic: data.isPublic !== undefined ? data.isPublic : true,
-        createdBy: data.createdBy,
+        thumbnail_url: data.thumbnailUrl,
+        preview_url: data.previewUrl,
+        metadata: data.templateData, // Mapeado para metadata
+        // isPremium não existe no schema templates, removido
+        is_public: data.isPublic !== undefined ? data.isPublic : true,
+        created_by: data.createdBy,
       },
       include: {
         users: {
@@ -83,8 +83,8 @@ export class TemplatesRepository {
     const where: Prisma.templatesWhereInput = {};
 
     if (filters?.category) where.category = filters.category;
-    if (filters?.isPublic !== undefined) where.isPublic = filters.isPublic;
-    if (filters?.createdBy) where.createdBy = filters.createdBy;
+    if (filters?.isPublic !== undefined) where.is_public = filters.isPublic;
+    if (filters?.createdBy) where.created_by = filters.createdBy;
     if (filters?.search) {
       where.OR = [
         { name: { contains: filters.search, mode: 'insensitive' } },
@@ -96,7 +96,7 @@ export class TemplatesRepository {
       where,
       take: options?.limit,
       skip: options?.offset,
-      orderBy: options?.orderBy || { usageCount: 'desc' },
+      orderBy: options?.orderBy || { usage_count: 'desc' },
       include: {
         users: {
           select: {
@@ -115,10 +115,10 @@ export class TemplatesRepository {
   async findPublic(limit?: number) {
     return prisma.templates.findMany({
       where: {
-        isPublic: true,
+        is_public: true,
       },
       take: limit,
-      orderBy: { usageCount: 'desc' },
+      orderBy: { usage_count: 'desc' },
       include: {
         users: {
           select: {
@@ -138,7 +138,7 @@ export class TemplatesRepository {
     return prisma.templates.update({
       where: { id },
       data: {
-        usageCount: {
+        usage_count: {
           increment: 1,
         },
       },
@@ -155,11 +155,11 @@ export class TemplatesRepository {
         name: data.name,
         description: data.description,
         category: data.category,
-        thumbnailUrl: data.thumbnailUrl,
-        previewUrl: data.previewUrl,
-        templateData: data.templateData,
-        isPremium: data.isPremium,
-        isPublic: data.isPublic,
+        thumbnail_url: data.thumbnailUrl,
+        preview_url: data.previewUrl,
+        metadata: data.templateData,
+        // isPremium removido
+        is_public: data.isPublic,
       },
     });
   }
@@ -189,7 +189,7 @@ export class TemplatesRepository {
   async findMostUsed(limit: number = 10) {
     return prisma.templates.findMany({
       take: limit,
-      orderBy: { usageCount: 'desc' },
+      orderBy: { usage_count: 'desc' },
       include: {
         users: {
           select: {

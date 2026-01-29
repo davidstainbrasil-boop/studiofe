@@ -1,3 +1,4 @@
+import 'openai/shims/node';
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@lib/logger';
 import { TranscriptionService } from '@lib/subtitles/transcription-service';

@@ -1,7 +1,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseForRequest } from '@lib/supabase/server';
-import { DIDService } from '@lib/services/avatar/did-service';
+import { getDIDService } from '@lib/services/avatar/did-service';
 import { logger } from '@lib/logger';
 import { randomUUID } from 'crypto';
 
@@ -23,7 +23,7 @@ export async function POST(
     // Check D-ID connection
     let didService;
     try {
-        didService = DIDService;
+        didService = getDIDService();
     } catch {
         return NextResponse.json({ 
             success: false, 
@@ -81,7 +81,7 @@ export async function POST(
             // Assuming audio_url is accessible by D-ID servers.
             
             const videoUrl = await didService.createTalk({
-                sourceUrl: DEFAULT_AVATAR, // In proper app, let user select avatar per slide
+                sourceImage: DEFAULT_AVATAR, // In proper app, let user select avatar per slide
                 audioUrl: audioUrl
             });
 

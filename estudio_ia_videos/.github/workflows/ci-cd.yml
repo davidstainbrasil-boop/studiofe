@@ -7,7 +7,7 @@ on:
     branches: [main, staging]
 
 env:
-  NODE_VERSION: '18'
+  NODE_VERSION: '20'
 
 jobs:
   # Job 1: Lint & Type Check
@@ -148,6 +148,10 @@ jobs:
           vercel-args: '--prod'
           working-directory: estudio_ia_videos
           scope: ${{ secrets.VERCEL_ORG_ID }}
+
+      - name: Validate production assets
+        working-directory: estudio_ia_videos
+        run: node check-assets.mjs https://cursostecno.com.br
 
       - name: Notify deployment success
         if: success()

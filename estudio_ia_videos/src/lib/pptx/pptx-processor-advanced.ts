@@ -86,13 +86,13 @@ export async function processAdvancedPPTX(
       // 1. Extrair imagens
       if (options.extractImages) {
         const images = await imageParser.extractImages(zip, slideNumber);
-        enrichedSlide.richImages = images.map(url => ({
-          url,
+        enrichedSlide.richImages = images.map((image) => ({
+          url: image.dataUrl,
           width: 0, // TODO: Extrair dimensões reais
           height: 0,
           position: { x: 0, y: 0 }
         }));
-        enrichedSlide.images = images; // Compatibilidade com tipo Slide base
+        enrichedSlide.images = images.map((image) => image.dataUrl); // Compatibilidade com tipo Slide base
       }
 
       // 2. Extrair notas
@@ -108,7 +108,11 @@ export async function processAdvancedPPTX(
 
     return enrichedSlides;
   } catch (error) {
-    logger.error('Erro no processamento avançado do PPTX', { error });
+    logger.error(
+      'Erro no processamento avançado do PPTX',
+      error instanceof Error ? error : new Error(String(error)),
+      { component: 'PptxProcessorAdvanced' }
+    );
     return [];
   }
 }
@@ -123,7 +127,8 @@ export async function extractSlideImages(
   slideNumber: number
 ): Promise<string[]> {
   const imageParser = new PPTXImageParser();
-  return imageParser.extractImages(zip, slideNumber);
+  const images = await imageParser.extractImages(zip, slideNumber);
+  return images.map((image) => image.dataUrl);
 }
 
 /**

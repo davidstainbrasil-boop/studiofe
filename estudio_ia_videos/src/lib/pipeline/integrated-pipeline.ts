@@ -116,10 +116,13 @@ export class IntegratedPipeline {
           await jobManager.updateProgress(jobId, 10);
           logger.info('Generating TTS', { jobId, service: 'IntegratedPipeline' });
           
-          audioBuffer = await elevenLabsService.generateSpeech({
+          const audioData = await elevenLabsService.generateSpeech({
              text: input.text,
              voiceId: input.voice_config.voice_id || '21m00Tcm4TlvDq8ikWAM'
           });
+          audioBuffer = Buffer.isBuffer(audioData)
+            ? audioData
+            : Buffer.from(audioData as ArrayBuffer);
       }
 
       await jobManager.updateProgress(jobId, 40);
@@ -251,7 +254,7 @@ export class IntegratedPipeline {
 
   async cancelJob(jobId: string): Promise<boolean> {
       // Not fully implemented in JobManager yet, simplified
-      await jobManager.cancelJob(jobId).catch((error) => {
+      await jobManager.cancelJob(jobId).catch((error: unknown) => {
         logger.warn('Error canceling job', {
           component: 'IntegratedPipeline',
           jobId,

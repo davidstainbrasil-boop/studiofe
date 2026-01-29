@@ -9,7 +9,7 @@ import path from 'path';
 dotenv.config({ path: path.resolve(__dirname, '.env.local') });
 
 export default defineConfig({
-  testDir: './src/app/e2e',
+  testDir: './src/app/__tests__/e2e',
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,

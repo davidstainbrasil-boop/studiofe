@@ -42,8 +42,9 @@ process.env.AWS_S3_BUCKET = 'test-bucket'
 process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co'
 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c'
 process.env.SUPABASE_SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c'
-process.env.AUDIO2FACE_API_URL = 'http://localhost:8011'
-process.env.REDIS_URL = 'redis://localhost:6379'
+process.env.AUDIO2FACE_API_URL = 'http://localhost:8011' // Keep localhost for tests unless specific integration test requires otherwise
+process.env.REDIS_URL = 'redis://localhost:6379' // Keep localhost for tests
+
 
 // Mock console methods to reduce noise in tests
 // global.console = {

@@ -44,12 +44,11 @@ async function main() {
     data: {
       id: `slide-${randomUUID()}`,
       projectId: projectId,
-      slideOrder: 0,
+      orderIndex: 0,
       title: 'Test Slide',
       content: 'Hello World, this is a test render.',
-      durationSeconds: 5,
-      layoutType: 'blank',
-      background: { type: 'color', value: '#FF0000' } // Red background
+      duration: 5,
+      backgroundColor: '#FF0000'
     }
   });
   

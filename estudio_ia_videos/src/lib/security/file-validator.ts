@@ -11,7 +11,7 @@ import { logger } from '@lib/logger';
 export interface FileValidationResult {
   valid: boolean;
   error?: string;
-  details?: {
+  details: {
     magicBytes: boolean;
     zipBomb: boolean;
     pathTraversal: boolean;
@@ -149,7 +149,9 @@ async function validateZipBomb(zip: JSZip, buffer: Buffer): Promise<void> {
 
   zip.forEach((relativePath, file) => {
     // Acumular tamanho descompactado
-    totalUncompressed += file._data.uncompressedSize;
+    const rawData = (file as { _data?: { uncompressedSize?: number } })._data;
+    const size = typeof rawData?.uncompressedSize === 'number' ? rawData.uncompressedSize : 0;
+    totalUncompressed += size;
   });
 
   const compressionRatio = totalUncompressed / buffer.length;

@@ -16,10 +16,10 @@ describe('FacialAnimationEngine', () => {
 
   const createMockLipSyncResult = (duration: number = 2): LipSyncResult => ({
     phonemes: [
-      { phoneme: 'A', startTime: 0, endTime: 0.5, duration: 0.5 },
-      { phoneme: 'B', startTime: 0.5, endTime: 1.0, duration: 0.5 },
-      { phoneme: 'C', startTime: 1.0, endTime: 1.5, duration: 0.5 },
-      { phoneme: 'D', startTime: 1.5, endTime: 2.0, duration: 0.5 }
+      { phoneme: 'A', time: 0, duration: 0.5, viseme: 0, intensity: 1.0 },
+      { phoneme: 'B', time: 0.5, duration: 0.5, viseme: 21, intensity: 1.0 },
+      { phoneme: 'C', time: 1.0, duration: 0.5, viseme: 0, intensity: 1.0 },
+      { phoneme: 'D', time: 1.5, duration: 0.5, viseme: 0, intensity: 1.0 }
     ],
     duration,
     source: 'mock'
@@ -272,11 +272,11 @@ describe('FacialAnimationEngine', () => {
       expect(optimized.metadata).toEqual(animation.metadata);
     });
 
-    it('should not remove frames with high threshold', async () => {
+    it('should not remove frames with low threshold (high fidelity)', async () => {
       const lipSyncResult = createMockLipSyncResult(1);
       const animation = await engine.createAnimation(lipSyncResult);
 
-      const optimized = engine.optimizeAnimation(animation, 1.0); // Very high threshold
+      const optimized = engine.optimizeAnimation(animation, 0.000001); // Very low threshold
 
       // Should keep almost all frames
       expect(optimized.frames.length).toBeGreaterThan(animation.frames.length * 0.8);

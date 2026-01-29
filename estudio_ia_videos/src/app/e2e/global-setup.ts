@@ -18,7 +18,7 @@ async function globalSetup() {
 
   console.log('✅ E2E environment configured');
   console.log('   - External requests will be blocked');
-  console.log('   - Only localhost URLs allowed');
+  console.log('   - Allowed domains: localhost, cursostecno.com.br');
 }
 
 export default globalSetup;

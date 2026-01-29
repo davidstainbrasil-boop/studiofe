@@ -1,6 +1,9 @@
+
+import 'openai/shims/node';
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@lib/logger';
-import { mockDelay, isProduction, notImplementedResponse } from '@lib/utils/mock-guard';
+import { prisma } from '@lib/prisma';
+import { AIContentService } from '@lib/services/ai-content.service';
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,124 +16,62 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // REGRA DO REPO: mocks proibidos em producao
-    if (isProduction()) {
-      return notImplementedResponse('ai-intelligence-analyze', 'AI analysis integration pending');
+    // Fetch real project data
+    const project = await prisma.projects.findUnique({
+      where: { id: projectId },
+    });
+
+    if (!project) {
+      return NextResponse.json(
+        { error: 'Project not found' },
+        { status: 404 }
+      );
     }
 
-    // Development only: simulate AI analysis
-    await mockDelay(2000, 'ai-analysis');
+    // Buscar relações separadamente (Prisma não tem todas as relações configuradas)
+    const [slides, scenes, transcriptions] = await Promise.all([
+      prisma.slides.findMany({ where: { projectId }, take: 10 }),
+      prisma.scenes.findMany({ where: { projectId }, take: 10 }),
+      prisma.transcriptions.findMany({ where: { projectId }, take: 5 }),
+    ]);
 
-    // Mock AI analysis results
-    const analysisResults = {
-      projectId,
-      analysisType,
-      completedAt: new Date().toISOString(),
-      confidence: 89,
-      overallScore: 92,
-      
-      engagementMetrics: {
-        retentionRate: {
-          current: 78,
-          predicted: 85,
-          confidence: 92,
-          trend: 'up'
-        },
-        engagementScore: {
-          current: 8.4,
-          predicted: 9.1,
-          confidence: 88,
-          trend: 'up'
-        },
-        completionRate: {
-          current: 82,
-          predicted: 89,
-          confidence: 85,
-          trend: 'up'
-        },
-        learningRetention: {
-          current: 76,
-          predicted: 83,
-          confidence: 90,
-          trend: 'up'
-        }
-      },
+    logger.info('Analyzing project via AIContentService', { projectId, analysisType });
 
-      performanceScores: {
-        contentQuality: {
-          score: 9.2,
-          maxScore: 10,
-          category: 'Qualidade de Conteúdo'
-        },
-        visualExperience: {
-          score: 8.8,
-          maxScore: 10,
-          category: 'Experiência Visual'
-        },
-        audioNarration: {
-          score: 9.5,
-          maxScore: 10,
-          category: 'Áudio e Narração'
-        },
-        pedagogicalStructure: {
-          score: 8.6,
-          maxScore: 10,
-          category: 'Estrutura Pedagógica'
-        },
-        complianceNR12: {
-          score: 9.7,
-          maxScore: 10,
-          category: 'Compliance NR-12'
-        }
-      },
-
-      predictions: {
-        successRate: 89,
-        estimatedViews: 2400,
-        timelinePerformance: [
-          { period: 'Primeira semana', views: 750, growth: '+15%' },
-          { period: 'Primeiro mês', views: 2400, growth: '+22%' },
-          { period: 'Trimestre', views: 8100, growth: '+18%' }
-        ],
-        riskAnalysis: {
-          lowEngagement: 12,
-          nonCompletion: 28,
-          complianceIssues: 3
-        }
-      },
-
-      insights: [
-        'Narração ElevenLabs de alta qualidade mantém atenção do usuário',
-        'Estrutura NR-12 está em total conformidade com normas atuais',
-        'Exemplos práticos da indústria aumentam relevância em 34%',
-        'Timeline de 8:45 min está no ponto ideal para absorção',
-        'Avatar 3D gera 23% mais conexão emocional'
-      ],
-
-      aiRecommendations: [
-        {
-          id: 'rec_ai_1',
-          priority: 'high',
-          title: 'Adicionar quiz no minuto 4:20',
-          impact: 85,
-          confidence: 94,
-          description: 'IA detectou queda de atenção. Quiz sobre EPIs aumentaria retenção.'
-        },
-        {
-          id: 'rec_ai_2',
-          priority: 'medium',
-          title: 'Otimizar velocidade da narração',
-          impact: 76,
-          confidence: 87,
-          description: 'Reduzir velocidade em 15% em conceitos técnicos complexos.'
-        }
-      ]
+    // Analyze with Real AI Service
+    const aiService = AIContentService.getInstance();
+    
+    // Prepare context for AI (sanitize/minimize data if needed)
+    const projectContext = {
+      name: project.name,
+      description: project.description,
+      type: project.type,
+      scenesCount: scenes.length,
+      slidesCount: slides.length,
+      // Sample of content for analysis
+      slidesContent: slides.slice(0, 5).map((s: { title: string | null; content: unknown }) => ({ title: s.title, content: s.content })),
+      scenesScript: scenes.slice(0, 5).map((s: { name: string; avatarScript: string | null }) => ({ name: s.name, script: s.avatarScript })),
+      metadata: project.metadata
     };
+
+    const analysisResults = await aiService.analyzeProject(projectId, projectContext);
+
+    // Persist the analysis result
+    await prisma.analytics_events.create({
+      data: {
+        eventType: 'project_analysis_completed',
+        userId: project.userId,
+        eventData: {
+          projectId,
+          analysisType,
+          result: analysisResults
+        }
+      }
+    });
 
     return NextResponse.json({
       success: true,
       analysis: analysisResults,
-      processingTime: '2.3 segundos',
+      processingTime: 'Real-time',
       message: 'Análise de IA concluída com sucesso'
     });
 
@@ -138,7 +79,7 @@ export async function POST(request: NextRequest) {
     logger.error('Error in AI analysis', error instanceof Error ? error : new Error(String(error))
     , { component: 'API: ai-intelligence/analyze' });
     return NextResponse.json(
-      { error: 'Erro interno do servidor' },
+      { error: 'Erro interno do servidor: ' + (error instanceof Error ? error.message : String(error)) },
       { status: 500 }
     );
   }
@@ -156,33 +97,39 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Mock previous analysis results
-    const previousAnalyses = [
-      {
-        id: 'analysis_1',
-        projectId,
-        type: 'full',
-        completedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-        overallScore: 92,
-        confidence: 89,
-        status: 'completed'
+    // Fetch historical analysis from DB
+    const events = await prisma.analytics_events.findMany({
+      where: {
+        eventType: 'project_analysis_completed',
+        eventData: {
+          path: ['projectId'],
+          equals: projectId
+        }
       },
-      {
-        id: 'analysis_2',
+      orderBy: {
+        createdAt: 'desc'
+      },
+      take: 10
+    });
+
+    const previousAnalyses = events.map(event => {
+      const data = event.eventData as any;
+      return {
+        id: event.id,
         projectId,
-        type: 'engagement',
-        completedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-        overallScore: 88,
-        confidence: 86,
+        type: data.analysisType || 'full',
+        completedAt: event.createdAt,
+        overallScore: data.result?.overallScore || 0,
+        confidence: data.result?.confidence || 0,
         status: 'completed'
-      }
-    ];
+      };
+    });
 
     return NextResponse.json({
       success: true,
       analyses: previousAnalyses,
       totalAnalyses: previousAnalyses.length,
-      lastAnalysis: previousAnalyses[0]
+      lastAnalysis: previousAnalyses[0] || null
     });
 
   } catch (error) {
@@ -194,4 +141,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-

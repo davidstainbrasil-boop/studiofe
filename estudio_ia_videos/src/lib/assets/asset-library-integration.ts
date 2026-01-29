@@ -314,16 +314,162 @@ class PixabayProvider {
 }
 
 // ============================================================================
+// UNSPLASH INTEGRATION
+// ============================================================================
+
+class UnsplashProvider {
+  private accessKey: string
+  private baseUrl = 'https://api.unsplash.com'
+
+  constructor(accessKey: string) {
+    this.accessKey = accessKey
+  }
+
+  private async request(endpoint: string, params: URLSearchParams): Promise<any> {
+    const response = await fetch(`${this.baseUrl}/${endpoint}?${params}`, {
+      headers: {
+        'Authorization': `Client-ID ${this.accessKey}`
+      }
+    })
+
+    if (!response.ok) {
+      throw new Error(`Unsplash API error: ${response.statusText}`)
+    }
+
+    return response.json()
+  }
+
+  async searchPhotos(options: SearchOptions): Promise<SearchResult> {
+    const { query, page = 1, perPage = 20, orientation, color } = options
+
+    const params = new URLSearchParams({
+      query,
+      page: page.toString(),
+      per_page: perPage.toString()
+    })
+
+    if (orientation) params.append('orientation', orientation)
+    if (color) params.append('color', color)
+
+    const data = await this.request('search/photos', params)
+
+    return {
+      assets: data.results.map((photo: any) => this.mapPhotoToAsset(photo)),
+      totalResults: data.total,
+      page,
+      perPage,
+      hasMore: page * perPage < data.total
+    }
+  }
+
+  private mapPhotoToAsset(photo: any): Asset {
+    return {
+      id: `unsplash-photo-${photo.id}`,
+      provider: 'unsplash',
+      type: 'image',
+      url: photo.urls.regular,
+      thumbnailUrl: photo.urls.small,
+      previewUrl: photo.urls.regular,
+      title: photo.description || photo.alt_description || 'Untitled',
+      author: photo.user.name,
+      authorUrl: photo.user.links.html,
+      width: photo.width,
+      height: photo.height,
+      license: 'Unsplash License',
+      licenseUrl: 'https://unsplash.com/license',
+      attribution: `Photo by ${photo.user.name} on Unsplash`,
+      downloadUrls: {
+        small: photo.urls.small,
+        medium: photo.urls.regular,
+        large: photo.urls.full,
+        original: photo.urls.raw
+      }
+    }
+  }
+}
+
+// ============================================================================
+// FREESOUND INTEGRATION
+// ============================================================================
+
+class FreesoundProvider {
+  private apiKey: string
+  private baseUrl = 'https://freesound.org/apiv2'
+
+  constructor(apiKey: string) {
+    this.apiKey = apiKey
+  }
+
+  private async request(endpoint: string, params: URLSearchParams): Promise<any> {
+    params.append('token', this.apiKey)
+    const response = await fetch(`${this.baseUrl}/${endpoint}?${params}`)
+
+    if (!response.ok) {
+      throw new Error(`Freesound API error: ${response.statusText}`)
+    }
+
+    return response.json()
+  }
+
+  async searchAudio(options: SearchOptions): Promise<SearchResult> {
+    const { query, page = 1, perPage = 20 } = options
+
+    const params = new URLSearchParams({
+      query,
+      page: page.toString(),
+      page_size: perPage.toString(),
+      fields: 'id,name,username,previews,duration,license,tags,url'
+    })
+
+    const data = await this.request('search/text/', params)
+
+    return {
+      assets: data.results.map((sound: any) => this.mapSoundToAsset(sound)),
+      totalResults: data.count,
+      page,
+      perPage,
+      hasMore: data.next !== null
+    }
+  }
+
+  private mapSoundToAsset(sound: any): Asset {
+    return {
+      id: `freesound-audio-${sound.id}`,
+      provider: 'freesound',
+      type: 'music',
+      url: sound.previews['preview-hq-mp3'],
+      thumbnailUrl: '', 
+      previewUrl: sound.previews['preview-hq-mp3'],
+      title: sound.name,
+      author: sound.username,
+      authorUrl: sound.url,
+      duration: sound.duration,
+      tags: sound.tags,
+      license: sound.license,
+      licenseUrl: sound.license,
+      attribution: `Sound by ${sound.username} on Freesound`,
+      downloadUrls: {
+        original: sound.previews['preview-hq-mp3']
+      }
+    }
+  }
+}
+
+// ============================================================================
 // UNIFIED ASSET LIBRARY
 // ============================================================================
 
 export class AssetLibrary {
   private pexels: PexelsProvider | null = null
   private pixabay: PixabayProvider | null = null
+  private unsplash: UnsplashProvider | null = null
+  private freesound: FreesoundProvider | null = null
 
   constructor(config?: {
     pexelsApiKey?: string
     pixabayApiKey?: string
+    unsplashAccessKey?: string
+    freesoundApiKey?: string
   }) {
     if (config?.pexelsApiKey) {
       this.pexels = new PexelsProvider(config.pexelsApiKey)
@@ -331,26 +477,42 @@ export class AssetLibrary {
     if (config?.pixabayApiKey) {
       this.pixabay = new PixabayProvider(config.pixabayApiKey)
     }
+    if (config?.unsplashAccessKey) {
+      this.unsplash = new UnsplashProvider(config.unsplashAccessKey)
+    }
+    if (config?.freesoundApiKey) {
+      this.freesound = new FreesoundProvider(config.freesoundApiKey)
+    }
   }
 
-  async search(options: SearchOptions, providers: AssetProvider[] = ['pexels', 'pixabay']): Promise<SearchResult> {
+  async search(options: SearchOptions, providers: AssetProvider[] = ['pexels', 'pixabay', 'unsplash', 'freesound']): Promise<SearchResult> {
     const results = await Promise.allSettled(
       providers.map(async (provider) => {
         switch (provider) {
           case 'pexels':
-            if (!this.pexels) throw new Error('Pexels not configured')
+            if (!this.pexels) return { assets: [], totalResults: 0, page: 0, perPage: 0, hasMore: false }
             return options.type === 'video'
               ? this.pexels.searchVideos(options)
               : this.pexels.searchPhotos(options)
 
           case 'pixabay':
-            if (!this.pixabay) throw new Error('Pixabay not configured')
+            if (!this.pixabay) return { assets: [], totalResults: 0, page: 0, perPage: 0, hasMore: false }
             return options.type === 'video'
               ? this.pixabay.searchVideos(options)
               : this.pixabay.searchImages(options)
 
+          case 'unsplash':
+             if (!this.unsplash) return { assets: [], totalResults: 0, page: 0, perPage: 0, hasMore: false }
+             if (options.type !== 'image') return { assets: [], totalResults: 0, page: 0, perPage: 0, hasMore: false }
+             return this.unsplash.searchPhotos(options)
+
+          case 'freesound':
+            if (!this.freesound) return { assets: [], totalResults: 0, page: 0, perPage: 0, hasMore: false }
+            if (options.type !== 'music' && options.type !== 'sfx') return { assets: [], totalResults: 0, page: 0, perPage: 0, hasMore: false }
+            return this.freesound.searchAudio(options)
+
           default:
-            throw new Error(`Provider ${provider} not implemented`)
+            return { assets: [], totalResults: 0, page: 0, perPage: 0, hasMore: false }
         }
       })
     )
@@ -405,7 +567,9 @@ export function getAssetLibrary(): AssetLibrary {
   if (!assetLibraryInstance) {
     assetLibraryInstance = new AssetLibrary({
       pexelsApiKey: process.env.NEXT_PUBLIC_PEXELS_API_KEY,
-      pixabayApiKey: process.env.NEXT_PUBLIC_PIXABAY_API_KEY
+      pixabayApiKey: process.env.NEXT_PUBLIC_PIXABAY_API_KEY,
+      unsplashAccessKey: process.env.NEXT_PUBLIC_UNSPLASH_ACCESS_KEY || process.env.UNSPLASH_ACCESS_KEY,
+      freesoundApiKey: process.env.NEXT_PUBLIC_FREESOUND_API_KEY || process.env.FREESOUND_API_KEY
     })
   }
   return assetLibraryInstance

@@ -1,11 +1,19 @@
 
 import { PptxProcessor } from '@/lib/pptx/pptx-processor';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { parseOffice } from 'officeparser';
+import * as advancedProcessor from '@/lib/pptx/pptx-processor-advanced';
 
-// Mock da biblioteca officeparser
-jest.mock('officeparser', () => ({
-  parseOffice: jest.fn(),
+// Mock JSZip
+jest.mock('jszip', () => ({
+  loadAsync: jest.fn().mockResolvedValue({
+    files: {},
+    file: jest.fn()
+  })
+}));
+
+// Mock processAdvancedPPTX
+jest.mock('@/lib/pptx/pptx-processor-advanced', () => ({
+  processAdvancedPPTX: jest.fn()
 }));
 
 // Mock do cliente Supabase
@@ -31,16 +39,17 @@ describe('PptxProcessor', () => {
     const mockFileContent = 'fake-pptx-content';
     const mockFileBuffer = Buffer.from(mockFileContent);
     const mockBlob = new Blob([mockFileBuffer]);
-    const mockParsedAst = { 
-      slideCount: 2,
-      slides: [{id: 1, content: 'slide 1'}, {id: 2, content: 'slide 2'}] 
-    };
+    const mockParsedAst = [
+      { id: 1, content: 'slide 1', layout: 'Title' },
+      { id: 2, content: 'slide 2', layout: 'Content' }
+    ];
 
     mockSupabaseClient.storage.from('uploads').download.mockResolvedValueOnce({
       data: mockBlob,
       error: null,
     });
-    (parseOffice as jest.Mock).mockResolvedValueOnce(mockParsedAst);
+    
+    (advancedProcessor.processAdvancedPPTX as jest.Mock).mockResolvedValueOnce(mockParsedAst);
 
     // Act
     const result = await processor.process({ storagePath });
@@ -48,10 +57,11 @@ describe('PptxProcessor', () => {
     // Assert
     expect(mockSupabaseClient.storage.from).toHaveBeenCalledWith('uploads');
     expect(mockSupabaseClient.storage.from('uploads').download).toHaveBeenCalledWith(storagePath);
-    expect(parseOffice).toHaveBeenCalledWith(mockFileBuffer);
+    expect(advancedProcessor.processAdvancedPPTX).toHaveBeenCalled();
     // Verifica que o processo foi executado e retornou uma estrutura válida
     expect(result).toBeDefined();
-    expect(typeof result).toBe('object');
+    expect(result.slideCount).toBe(2);
+    expect(result.content).toEqual(mockParsedAst);
   });
 
   it('deve lançar um erro se o download do arquivo falhar', async () => {
@@ -68,7 +78,7 @@ describe('PptxProcessor', () => {
     await expect(processor.process({ storagePath })).rejects.toThrow(
       `Não foi possível encontrar ou baixar o arquivo do storage: ${storagePath}`
     );
-    expect(parseOffice).not.toHaveBeenCalled();
+    expect(advancedProcessor.processAdvancedPPTX).not.toHaveBeenCalled();
   });
 
   it('deve lançar um erro se o parsing do arquivo falhar', async () => {
@@ -83,7 +93,7 @@ describe('PptxProcessor', () => {
       data: mockBlob,
       error: null,
     });
-    (parseOffice as jest.Mock).mockRejectedValueOnce(mockError);
+    (advancedProcessor.processAdvancedPPTX as jest.Mock).mockRejectedValueOnce(mockError);
 
     // Act & Assert
     await expect(processor.process({ storagePath })).rejects.toThrow(

@@ -12,8 +12,8 @@ import type {
   RenderJobRecord,
   RenderJobStatus,
   RenderProgressResponse
-} from '@types/rendering'
-import { isActiveStatus, isFinalStatus } from '@types/rendering'
+} from '@/types/rendering'
+import { isActiveStatus, isFinalStatus } from '@/types/rendering'
 
 interface UseRenderProgressOptions {
   /** Intervalo inicial de polling em ms (default: 1000) */

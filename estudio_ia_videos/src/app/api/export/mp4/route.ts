@@ -19,6 +19,11 @@ import type {
   ExportQuality,
   ExportResolution,
 } from '@/types/export.types';
+import {
+  ExportFormat as ExportFormatEnum,
+  ExportQuality as ExportQualityEnum,
+  ExportResolution as ExportResolutionEnum,
+} from '@/types/export.types';
 
 const ExportConfigSchema = z.object({
   projectId: z.string(),
@@ -52,20 +57,20 @@ type ExportConfig = z.infer<typeof ExportConfigSchema>['exportConfig'];
 const SUPABASE_PUBLIC_URL_PREFIX = '/storage/v1/object/public/';
 
 const resolveResolution = (quality: string): ExportResolution => {
-  if (quality === '4k') return '4k';
-  if (quality === '1080p') return '1080p';
-  if (quality === '720p') return '720p';
-  return '480p' as ExportResolution;
+  if (quality === '4k') return ExportResolutionEnum.UHD_4K;
+  if (quality === '1080p') return ExportResolutionEnum.FULL_HD_1080;
+  if (quality === '720p') return ExportResolutionEnum.HD_720;
+  return ExportResolutionEnum.SD_480;
 };
 
 const resolveQuality = (compression: string): ExportQuality => {
-  if (compression === 'high') return 'high';
-  if (compression === 'low') return 'low';
-  return 'medium';
+  if (compression === 'high') return ExportQualityEnum.HIGH;
+  if (compression === 'low') return ExportQualityEnum.LOW;
+  return ExportQualityEnum.MEDIUM;
 };
 
 const buildExportSettings = (config?: ExportConfig): ExportSettings => ({
-  format: (config?.format || 'mp4') as ExportFormat,
+  format: (config?.format || ExportFormatEnum.MP4) as ExportFormat,
   resolution: resolveResolution(config?.quality || '1080p'),
   quality: resolveQuality(config?.compression || 'medium'),
   fps: 30,

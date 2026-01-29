@@ -1,13 +1,14 @@
 /**
  * 🎬 Render Progress Component
  * Componente para exibir progresso de renderização em tempo real
+ * Suporta: WebSocket, SSE e Polling como fallback
  */
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { logger } from '@lib/logger'
-import { Loader2, CheckCircle2, XCircle, Download, Play } from 'lucide-react'
+import { Loader2, CheckCircle2, XCircle, Download, Play, Wifi, WifiOff } from 'lucide-react'
 
 export interface RenderStatus {
   jobId: string
@@ -37,101 +38,111 @@ export function RenderProgress({
 }: RenderProgressProps) {
   const [status, setStatus] = useState<RenderStatus | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [ws, setWs] = useState<WebSocket | null>(null)
+  const [connectionType, setConnectionType] = useState<'ws' | 'sse' | 'polling'>('polling')
+  const [isConnected, setIsConnected] = useState(false)
 
   /**
-   * Conectar ao WebSocket
+   * Fetch status from API (usado como fallback e inicialização)
    */
-  useEffect(() => {
-    if (!jobId) return
-
-    const wsUrl = `ws://localhost:${process.env.NEXT_PUBLIC_WS_PORT || 3001}?jobId=${jobId}`
-    const socket = new WebSocket(wsUrl)
-
-    socket.onopen = () => {
-      logger.debug('WebSocket connected', { component: 'RenderProgress', jobId })
-    }
-
-    socket.onmessage = (event) => {
-      const data = JSON.parse(event.data)
-      
-      if (data.type === 'progress') {
-        setStatus((prev) => ({
-          ...prev!,
-          progress: data.progress.percentage,
-          currentSlide: data.progress.currentSlide,
-          totalSlides: data.progress.totalSlides,
-          estimatedTime: data.progress.estimatedTime,
-          stage: data.progress.stage,
-        }))
-      } else if (data.type === 'completed') {
-        fetchStatus() // Atualizar com URL final
-      } else if (data.type === 'failed') {
-        setError(data.error)
-        if (onError) {
-          onError(data.error)
-        }
-      }
-    }
-
-    socket.onerror = (error) => {
-      logger.error('WebSocket error', new Error('WebSocket connection failed'), { component: 'RenderProgress', jobId, error })
-      setError('Failed to connect to render server')
-    }
-
-    socket.onclose = () => {
-      logger.debug('WebSocket disconnected', { component: 'RenderProgress', jobId })
-    }
-
-    setWs(socket)
-
-    // Cleanup
-    return () => {
-      socket.close()
-    }
-  }, [jobId])
-
-  /**
-   * Buscar status inicial
-   */
-  useEffect(() => {
-    fetchStatus()
-    
-    // Poll a cada 5 segundos como fallback
-    const interval = setInterval(fetchStatus, 5000)
-    return () => clearInterval(interval)
-  }, [jobId])
-
-  /**
-   * Fetch status from API
-   */
-  async function fetchStatus() {
+  const fetchStatus = useCallback(async () => {
     try {
-      const response = await fetch(`/api/render/status/${jobId}`)
+      const response = await fetch(`/api/render/status?jobId=${jobId}`)
       const data = await response.json()
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to fetch status')
       }
 
-      setStatus(data.data)
+      const statusData = data.data || data
+      setStatus(statusData)
 
       // Callbacks
-      if (data.data.status === 'completed' && data.data.outputUrl) {
+      if (statusData.status === 'completed' && statusData.outputUrl) {
         if (onComplete) {
-          onComplete(data.data.outputUrl)
+          onComplete(statusData.outputUrl)
         }
-      } else if (data.data.status === 'failed' && data.data.error) {
-        setError(data.data.error)
+      } else if (statusData.status === 'failed' && statusData.error) {
+        setError(statusData.error)
         if (onError) {
-          onError(data.data.error)
+          onError(statusData.error)
         }
       }
     } catch (err) {
       logger.error('Error fetching status', err instanceof Error ? err : new Error(String(err)), { component: 'RenderProgress', jobId })
-      setError(err instanceof Error ? err.message : 'Unknown error')
     }
-  }
+  }, [jobId, onComplete, onError])
+
+  /**
+   * Tentar conectar via SSE (mais eficiente que polling)
+   */
+  useEffect(() => {
+    if (!jobId) return
+
+    let eventSource: EventSource | null = null
+    let pollingInterval: NodeJS.Timeout | null = null
+
+    // Buscar status inicial
+    fetchStatus()
+
+    // Tentar SSE primeiro
+    try {
+      const sseUrl = `/api/render/progress/stream?jobId=${encodeURIComponent(jobId)}`
+      eventSource = new EventSource(sseUrl)
+
+      eventSource.onopen = () => {
+        setConnectionType('sse')
+        setIsConnected(true)
+        logger.debug('SSE connected', { component: 'RenderProgress', jobId })
+      }
+
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data)
+          setStatus(prev => ({
+            ...prev,
+            jobId,
+            projectId: prev?.projectId || '',
+            status: data.status,
+            progress: data.progress,
+            currentSlide: data.currentSlide,
+            totalSlides: data.totalSlides,
+            estimatedTime: data.estimatedTimeRemaining,
+            outputUrl: data.outputUrl,
+            error: data.error
+          }))
+
+          // Callbacks
+          if (data.status === 'completed' && data.outputUrl) {
+            onComplete?.(data.outputUrl)
+          } else if (data.status === 'failed' && data.error) {
+            setError(data.error)
+            onError?.(data.error)
+          }
+        } catch (err) {
+          logger.error('SSE parse error', err instanceof Error ? err : new Error(String(err)), { component: 'RenderProgress' })
+        }
+      }
+
+      eventSource.onerror = () => {
+        // SSE falhou, fallback para polling
+        eventSource?.close()
+        setConnectionType('polling')
+        setIsConnected(false)
+        
+        pollingInterval = setInterval(fetchStatus, 3000)
+      }
+    } catch {
+      // SSE não suportado, usar polling
+      setConnectionType('polling')
+      pollingInterval = setInterval(fetchStatus, 3000)
+    }
+
+    // Cleanup
+    return () => {
+      eventSource?.close()
+      if (pollingInterval) clearInterval(pollingInterval)
+    }
+  }, [jobId, fetchStatus, onComplete, onError])
 
   /**
    * Cancelar renderização

@@ -1,4 +1,4 @@
-import { TimelineClip, TimelineState } from '@types/timeline';
+import { TimelineClip, TimelineState } from '@/types/timeline';
 
 export interface VisualContinuityConfig {
   sceneChangeThreshold: number; // 0-1, sensitivity for detecting scene changes
@@ -43,6 +43,36 @@ export interface FlowMetrics {
   visualCoherence: number; // 0-1, consistency of visual elements
   engagementPrediction: number; // 0-1, predicted viewer engagement
 }
+
+const toNumber = (value: unknown, fallback: number) => {
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
+  return fallback;
+};
+
+const toStringValue = (value: unknown) => {
+  if (typeof value === 'string') return value;
+  if (Array.isArray(value)) return value.join(',');
+  if (value === undefined || value === null) return '';
+  return String(value);
+};
+
+const toNumberArray = (value: unknown): number[] => {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => {
+      if (typeof item === 'number') return item;
+      if (typeof item === 'string') {
+        const parsed = Number(item);
+        return Number.isFinite(parsed) ? parsed : null;
+      }
+      return null;
+    })
+    .filter((item): item is number => item !== null);
+};
 
 export class VisualContinuityAnalyzer {
   private config: VisualContinuityConfig;
@@ -139,8 +169,8 @@ export class VisualContinuityAnalyzer {
     // Visual similarity (if metadata available)
     if (clip1.metadata?.visualHash && clip2.metadata?.visualHash) {
       const visualSimilarity = this.calculateVisualSimilarity(
-        clip1.metadata.visualHash,
-        clip2.metadata.visualHash
+        toStringValue(clip1.metadata.visualHash),
+        toStringValue(clip2.metadata.visualHash)
       );
       score += visualSimilarity * 0.4;
     }
@@ -148,18 +178,19 @@ export class VisualContinuityAnalyzer {
     // Motion continuity (if available)
     if (clip1.metadata?.motionIntensity && clip2.metadata?.motionIntensity) {
       const motionContinuity = 1 - Math.abs(
-        clip1.metadata.motionIntensity - clip2.metadata.motionIntensity
+        toNumber(clip1.metadata.motionIntensity, 0) - toNumber(clip2.metadata.motionIntensity, 0)
       );
       score += motionContinuity * this.config.motionContinuityWeight;
     }
     
     // Color continuity (if available)
     if (clip1.metadata?.colorPalette && clip2.metadata?.colorPalette) {
-      const colorContinuity = this.calculateColorContinuity(
-        clip1.metadata.colorPalette,
-        clip2.metadata.colorPalette
-      );
-      score += colorContinuity * this.config.colorContinuityWeight;
+      const palette1 = toNumberArray(clip1.metadata.colorPalette);
+      const palette2 = toNumberArray(clip2.metadata.colorPalette);
+      if (palette1.length > 0 && palette1.length === palette2.length) {
+        const colorContinuity = this.calculateColorContinuity(palette1, palette2);
+        score += colorContinuity * this.config.colorContinuityWeight;
+      }
     }
     
     return Math.max(0, Math.min(1, score));
@@ -212,7 +243,7 @@ export class VisualContinuityAnalyzer {
     
     for (const clip of group) {
       if (clip.metadata?.motionIntensity) {
-        totalIntensity += clip.metadata.motionIntensity;
+        totalIntensity += toNumber(clip.metadata.motionIntensity, 0);
         count++;
       }
       
@@ -266,7 +297,10 @@ export class VisualContinuityAnalyzer {
     
     for (const clip of group) {
       if (clip.metadata?.colorPalette) {
-        colorData.push(clip.metadata.colorPalette);
+        const palette = toNumberArray(clip.metadata.colorPalette);
+        if (palette.length > 0) {
+          colorData.push(palette);
+        }
       }
     }
     
@@ -326,21 +360,24 @@ export class VisualContinuityAnalyzer {
         if (motionPeakTime) {
           keyFrames.push({
             time: motionPeakTime,
-            importance: clip.metadata.motionIntensity,
+            importance: toNumber(clip.metadata.motionIntensity, 0.5),
             type: 'motion_peak'
           });
         }
       }
       
       // Look for color changes
-      if (clip.metadata?.colorTransitions) {
-        for (const transition of clip.metadata.colorTransitions) {
-          keyFrames.push({
-            time: clip.startTime + transition.time,
-            importance: transition.intensity,
-            type: 'color_change'
-          });
-        }
+      const transitions = Array.isArray(clip.metadata?.colorTransitions)
+        ? clip.metadata?.colorTransitions
+        : [];
+      for (const transition of transitions) {
+        const transitionTime = toNumber((transition as { time?: unknown }).time, 0);
+        const intensity = toNumber((transition as { intensity?: unknown }).intensity, 0.5);
+        keyFrames.push({
+          time: clip.startTime + transitionTime,
+          importance: intensity,
+          type: 'color_change'
+        });
       }
     }
     

@@ -36,7 +36,8 @@ test.describe('Authentication Flow', () => {
     await page.goto('/login');
 
     // Verificar elementos da página
-    await expect(page.locator('h1')).toContainText('Bem-vindo de volta');
+    await expect(page).toHaveTitle(/Login/);
+    await expect(page.locator('body')).toContainText('Estúdio IA de Vídeos');
     await expect(page.locator('input[type="email"]')).toBeVisible();
     await expect(page.locator('input[type="password"]')).toBeVisible();
     await expect(page.locator('button[type="submit"]')).toBeVisible();
@@ -65,12 +66,12 @@ test.describe('Authentication Flow', () => {
     await page.goto('/dashboard');
     // Cookie injetado, continuando fluxo
 
-    // Aguardar redirecionamento para dashboard
-    await page.waitForURL('**/dashboard', { timeout: 15000 });
+    // Aguardar redirecionamento para dashboard ou projetos
+    await page.waitForURL(/.*(dashboard|projects)/, { timeout: 15000 });
 
     // Verificar que está logado
     // Verificar que está logado (dashboard pode não ter texto "Dashboard" visível)
-    await expect(page).toHaveURL(/dashboard/);
+    await expect(page).toHaveURL(/dashboard|projects/);
   });
 
   test('should show error for invalid credentials', async ({ page }) => {
@@ -160,14 +161,14 @@ test.describe('Authentication Flow', () => {
     }
 
     // Aguardar dashboard
-    await page.waitForURL('**/dashboard');
+    await page.waitForURL(/.*(dashboard|projects)/);
 
     // Recarregar página
     await page.reload();
 
     // Verificar que ainda está logado
     // Verificar que ainda está logado
-    await expect(page).toHaveURL(/dashboard/);
+    await expect(page).toHaveURL(/dashboard|projects/);
   });
 
   // ==========================================

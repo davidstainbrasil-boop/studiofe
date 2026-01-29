@@ -61,7 +61,8 @@ export async function POST(req: NextRequest) {
     );
 
     // Chama endpoint de render existente
-    const renderResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/render/start`, {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.NODE_ENV === 'production' ? 'https://cursostecno.com.br' : 'http://localhost:3000');
+    const renderResponse = await fetch(`${baseUrl}/api/render/start`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

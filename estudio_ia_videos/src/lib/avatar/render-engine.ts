@@ -65,10 +65,13 @@ export class AvatarRenderEngine {
    * mas mantemos a interface para compatibilidade, retornando placeholder enquanto processa.
    */
   async renderFrame(options: AvatarOptions, frameNumber: number): Promise<AvatarFrame> {
-    return {
-      imageData: Buffer.from(''),
-      timestamp: frameNumber / 30,
-    };
+    if (process.env.NODE_ENV === 'development') {
+      return {
+        imageData: Buffer.from(''),
+        timestamp: frameNumber / 30,
+      };
+    }
+    throw new Error('RenderFrame is not supported for HeyGen rendering in production');
   }
 }
 
@@ -128,49 +131,37 @@ export class Avatar3DRenderEngine {
     logger.info('Starting Real Avatar Rendering (HeyGen)', { component: 'RenderEngine' });
 
     if (!HEYGEN_API_KEY) {
-      logger.warn('HEYGEN_API_KEY not found. Falling back to Mock but logging error.', { component: 'RenderEngine' });
-       // Lança erro em produção real se a chave for obrigatória
-       // throw new Error('HEYGEN_API_KEY is required for real rendering');
+      throw new Error('HEYGEN_API_KEY is required for real rendering');
     }
 
-    const inputText = textToSpeak || "Texto de exemplo para renderização de avatar.";
-    const selectedAvatar = avatarId || "Anna_public_3_20240108"; // ID Exemplo HeyGen
+    if (!textToSpeak) {
+      throw new Error('textToSpeak is required for HeyGen rendering');
+    }
+
+    const selectedAvatar = avatarId || process.env.HEYGEN_DEFAULT_AVATAR_ID;
+    if (!selectedAvatar) {
+      throw new Error('avatarId is required for HeyGen rendering');
+    }
 
     try {
-      if (HEYGEN_API_KEY) {
-         // 1. Criar Job de Vídeo
-         const jobId = await this.createHeyGenJob(inputText, selectedAvatar, settings);
-         logger.info(`HeyGen Job Created: ${jobId}`, { component: 'RenderEngine' });
+      const jobId = await this.createHeyGenJob(textToSpeak, selectedAvatar, settings);
+      logger.info(`HeyGen Job Created: ${jobId}`, { component: 'RenderEngine' });
 
-         // 2. Aguardar Conclusão (Polling)
-         const videoUrl = await this.pollJobStatus(jobId);
-         
-         return {
-           video_url: videoUrl,
-           metadata: {
-             job_id: jobId,
-             duration: 0, // Duração real viria da API
-             fileSize: 0,
-             format: 'mp4'
-           }
-         };
-      }
+      const videoUrl = await this.pollJobStatus(jobId);
+      
+      return {
+        video_url: videoUrl,
+        metadata: {
+          job_id: jobId,
+          duration: 0,
+          fileSize: 0,
+          format: 'mp4'
+        }
+      };
     } catch (error) {
       logger.error('HeyGen API Failed', error, { component: 'RenderEngine' });
-      // Se falhar a API real, não fazemos fallback silencioso para mock, lançamos o erro
       throw error;
     }
-
-    // Fallback apenas se não houver chave configurada (para não quebrar dev local sem chave)
-    return {
-      video_url: 'https://example.com/video_placeholder_no_key.mp4',
-      metadata: {
-        job_id: `job_${Date.now()}_mock`,
-        duration: 10,
-        fileSize: 1024,
-        format: settings.format
-      }
-    };
   }
 
   private async createHeyGenJob(text: string, avatarId: string, settings: RenderSettings): Promise<string> {

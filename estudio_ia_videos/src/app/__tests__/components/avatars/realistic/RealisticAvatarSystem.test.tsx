@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import RealisticAvatarSystem from '@/components/avatars/realistic/RealisticAvatarSystem';
 
 // Mock ResizeObserver
@@ -9,36 +10,102 @@ global.ResizeObserver = class ResizeObserver {
   disconnect() {}
 };
 
-// Mock R3F and Drei components
-jest.mock('@react-three/fiber', () => ({
-  Canvas: ({ children }: { children: React.ReactNode }) => <div>CanvasMock {children}</div>,
-  useFrame: jest.fn(),
-  useThree: () => ({ gl: { domElement: { toDataURL: jest.fn() }, render: jest.fn() }, scene: {}, camera: {} }),
-}));
+// Mock child components to avoid issues with their dependencies or rendering
+jest.mock('@/components/avatars/realistic/RealisticAvatarRenderer', () => {
+  const React = require('react');
+  return {
+    RealisticAvatarRenderer: React.forwardRef(function RealisticAvatarRenderer(props: any, ref: any) {
+      React.useImperativeHandle(ref, () => ({
+        captureScreenshot: () => 'data:image/png;base64,fake'
+      }));
+      return React.createElement('div', { 'data-testid': 'realistic-avatar-renderer' }, 'RealisticAvatarRenderer Mock');
+    })
+  };
+});
 
-jest.mock('@react-three/drei', () => ({
-  OrbitControls: () => <div>OrbitControlsMock</div>,
-  PerspectiveCamera: () => <div>PerspectiveCameraMock</div>,
-  Environment: () => <div>EnvironmentMock</div>,
-  ContactShadows: () => <div>ContactShadowsMock</div>,
-  useGLTF: () => ({ scene: {} }),
-  Stage: ({ children }: { children: React.ReactNode }) => <div>StageMock {children}</div>,
-  SoftShadows: () => <div>SoftShadowsMock</div>,
-  BakeShadows: () => <div>BakeShadowsMock</div>,
-}));
+jest.mock('@/components/avatars/realistic/FacialCapture', () => {
+  const React = require('react');
+  return {
+    FacialCapture: function FacialCapture() { return React.createElement('div', { 'data-testid': 'facial-capture' }, 'FacialCapture Mock') }
+  };
+});
 
-// Mock Lucide icons
+jest.mock('@/components/studio-unified/VoiceSelector', () => {
+  const React = require('react');
+  return {
+    VoiceSelector: function VoiceSelector() { return React.createElement('div', { 'data-testid': 'voice-selector' }, 'VoiceSelector Mock') }
+  };
+});
+
+// Mock UI components
+// ... (Removing the first duplicated Tabs mock block entirely as it was overridden by the second one anyway)
+
+// Melhor mock para Tabs que funciona com aninhamento
+jest.mock('@/components/ui/tabs', () => {
+  const React = require('react');
+  const TabsContext = React.createContext({ value: '', setValue: (v: string) => {} });
+
+  return {
+    Tabs: function Tabs({ children, defaultValue, className }: any) {
+      const [value, setValue] = React.useState(defaultValue || 'customize');
+      return (
+        <TabsContext.Provider value={{ value, setValue }}>
+          <div className={className} data-testid="tabs-root">{children}</div>
+        </TabsContext.Provider>
+      );
+    },
+    TabsList: function TabsList({ children, className }: any) { return <div className={className}>{children}</div> },
+    TabsTrigger: function TabsTrigger({ value, children, onClick }: any) {
+      const { setValue, value: currentValue } = React.useContext(TabsContext);
+      return (
+        <button 
+          onClick={(e) => {
+            setValue(value);
+            if(onClick) onClick(e);
+          }}
+          data-state={currentValue === value ? 'active' : 'inactive'}
+        >
+          {children}
+        </button>
+      );
+    },
+    TabsContent: function TabsContent({ value, children }: any) {
+       const { value: currentValue } = React.useContext(TabsContext);
+       if (value !== currentValue) return null;
+       return <div>{children}</div>;
+     }
+   };
+ });
+
+ jest.mock('@/components/ui/select', () => ({
+  Select: function Select({ children }: any) { return <div>{children}</div> },
+  SelectTrigger: function SelectTrigger({ children }: any) { return <button>{children}</button> },
+  SelectValue: function SelectValue() { return <span>Select Value</span> },
+  SelectContent: function SelectContent({ children }: any) { return <div>{children}</div> },
+  SelectItem: function SelectItem({ children }: any) { return <div>{children}</div> },
+ }));
+
+ jest.mock('@/components/ui/slider', () => ({
+  Slider: function Slider() { return <div data-testid="slider-mock" /> }
+ }));
+
+ jest.mock('@/components/ui/switch', () => ({
+  Switch: function Switch() { return <div data-testid="switch-mock" /> }
+ }));
+ 
+ // Mock Lucide icons
 jest.mock('lucide-react', () => ({
-  Maximize2: () => <div data-testid="icon-maximize" />,
-  Settings2: () => <div data-testid="icon-settings" />,
-  Zap: () => <div data-testid="icon-zap" />,
-  Download: () => <div data-testid="icon-download" />,
-  Palette: () => <div data-testid="icon-palette" />,
-  User: () => <div data-testid="icon-user" />,
-  Camera: () => <div data-testid="icon-camera" />,
-  RefreshCw: () => <div data-testid="icon-refresh" />,
-  Power: () => <div data-testid="icon-power" />,
-  PowerOff: () => <div data-testid="icon-power-off" />,
+  Maximize2: function Maximize2() { return <div data-testid="icon-maximize" /> },
+  Settings2: function Settings2() { return <div data-testid="icon-settings" /> },
+  Zap: function Zap() { return <div data-testid="icon-zap" /> },
+  Download: function Download() { return <div data-testid="icon-download" /> },
+  Palette: function Palette() { return <div data-testid="icon-palette" /> },
+  User: function User() { return <div data-testid="icon-user" /> },
+  Mic: function Mic() { return <div data-testid="icon-mic" /> },
+  Camera: function Camera() { return <div data-testid="icon-camera" /> },
+  RefreshCw: function RefreshCw() { return <div data-testid="icon-refresh" /> },
+  Power: function Power() { return <div data-testid="icon-power" /> },
+  PowerOff: function PowerOff() { return <div data-testid="icon-power-off" /> },
 }));
 
 describe('RealisticAvatarSystem', () => {
@@ -62,6 +129,7 @@ describe('RealisticAvatarSystem', () => {
   });
 
   it('switches tabs correctly', async () => {
+    const user = userEvent.setup();
     render(<RealisticAvatarSystem />);
     
     // Default tab is 'customize' (Editar)
@@ -69,11 +137,14 @@ describe('RealisticAvatarSystem', () => {
     
     // Click on Settings tab
     const ajustesTab = screen.getByText('Ajustes');
-    fireEvent.click(ajustesTab);
+    await user.click(ajustesTab);
     
-    // Aguarda a tab ser renderizada e verifica o texto em maiúsculas
+    // Aguarda a mudança de conteúdo
     await waitFor(() => {
-      expect(screen.getByText(/qualidade de renderização/i)).toBeInTheDocument();
+      // Verifica se o conteúdo da aba 'Ajustes' aparece (Qualidade de Renderização é um título provável)
+      expect(screen.getByText(/Qualidade de Renderização/i)).toBeInTheDocument();
+      // Verifica se o conteúdo da aba anterior sumiu
+      expect(screen.queryByText('Materiais')).not.toBeInTheDocument();
     });
   });
 });

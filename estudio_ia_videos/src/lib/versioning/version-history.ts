@@ -174,10 +174,16 @@ export async function restoreVersion(
   }
 
   // Update the project with the restored snapshot
+  const project = await prisma.projects.findUnique({
+    where: { id: projectId },
+    select: { metadata: true }
+  });
+  const currentMetadata = (project?.metadata as Record<string, unknown> | null) || {};
+
   await prisma.projects.update({
     where: { id: projectId },
     data: {
-      data: snapshot as any,
+      metadata: { ...currentMetadata, snapshot } as any,
       updatedAt: new Date()
     }
   });

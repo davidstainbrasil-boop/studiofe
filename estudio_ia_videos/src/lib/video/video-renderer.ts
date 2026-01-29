@@ -12,7 +12,8 @@
 
 import type { VideoProject, Scene, TimelineElement } from '@/types/video-project';
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import type { GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { SceneTransitions, type TransitionConfig } from './scene-transitions';
 import { TextAnimations, type TextAnimationConfig } from './text-animations';
 
@@ -120,7 +121,7 @@ export class VideoRenderer {
     return new Promise((resolve, reject) => {
       this.gltfLoader.load(
         glbUrl,
-        (gltf) => {
+        (gltf: GLTF) => {
           const model = gltf.scene;
 
           // Center model
@@ -140,8 +141,8 @@ export class VideoRenderer {
           resolve(model.clone());
         },
         undefined,
-        (error) => {
-          reject(new Error(`Failed to load GLB: ${error}`));
+        (error: unknown) => {
+          reject(new Error(`Failed to load GLB: ${String(error)}`));
         },
       );
     });
@@ -153,13 +154,17 @@ export class VideoRenderer {
   private applyBlendShapes(model: THREE.Group, blendShapes: Record<string, number>): void {
     model.traverse((child) => {
       if ((child as THREE.Mesh).isMesh) {
-        const mesh = child as THREE.Mesh;
+        const mesh = child as THREE.Mesh & {
+          morphTargetInfluences?: number[];
+          morphTargetDictionary?: Record<string, number>;
+        };
         if (mesh.morphTargetInfluences && mesh.morphTargetDictionary) {
-          // Apply blend shape weights
+          const dictionary = mesh.morphTargetDictionary;
+          const influences = mesh.morphTargetInfluences;
           Object.entries(blendShapes).forEach(([shapeName, weight]) => {
-            const index = mesh.morphTargetDictionary[shapeName];
-            if (index !== undefined && mesh.morphTargetInfluences) {
-              mesh.morphTargetInfluences[index] = weight;
+            const index = dictionary[shapeName];
+            if (index !== undefined && influences) {
+              influences[index] = weight;
             }
           });
         }
@@ -453,7 +458,9 @@ export class VideoRenderer {
       duration: 0,
       backgroundColor: '#000000',
       tracks: [],
-    } as Scene;
+      elements: [],
+      order: 0,
+    };
   }
 
   /**
@@ -642,10 +649,13 @@ export class VideoRenderer {
 
       // Apply rotation if provided
       if (content.rotation) {
+        const rotation = typeof content.rotation === 'number'
+          ? { x: 0, y: 0, z: content.rotation }
+          : content.rotation;
         model.rotation.set(
-          content.rotation.x || 0,
-          content.rotation.y || 0,
-          content.rotation.z || 0,
+          rotation.x || 0,
+          rotation.y || 0,
+          rotation.z || 0,
         );
       }
 

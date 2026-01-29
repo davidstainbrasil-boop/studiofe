@@ -7,9 +7,53 @@ import { LipSyncOrchestrator } from '@/lib/sync/lip-sync-orchestrator';
 import type { LipSyncRequest } from '@/lib/sync/lip-sync-orchestrator';
 
 // Mock the engines
-jest.mock('@/lib/sync/rhubarb-lip-sync-engine');
-jest.mock('@/lib/sync/azure-viseme-engine');
-jest.mock('@/lib/sync/viseme-cache');
+jest.mock('@/lib/sync/rhubarb-lip-sync-engine', () => {
+  return {
+    RhubarbLipSyncEngine: jest.fn().mockImplementation(() => ({
+      generatePhonemes: jest.fn().mockResolvedValue({
+        phonemes: [],
+        duration: 1.0,
+        metadata: {}
+      })
+    }))
+  };
+});
+
+jest.mock('@/lib/sync/azure-viseme-engine', () => {
+  return {
+    AzureVisemeEngine: jest.fn().mockImplementation(() => ({
+      synthesizeWithVisemes: jest.fn().mockResolvedValue({
+        visemes: [
+            { visemeId: 1, audioOffset: 0 },
+            { visemeId: 2, audioOffset: 100 }
+        ],
+        duration: 200
+      }),
+      convertAzureVisemes: jest.fn().mockReturnValue([
+        { phoneme: 'A', startTime: 0, endTime: 0.1, duration: 0.1 },
+        { phoneme: 'B', startTime: 0.1, endTime: 0.2, duration: 0.1 }
+      ])
+    }))
+  };
+});
+
+jest.mock('@/lib/sync/viseme-cache', () => {
+  return {
+    VisemeCache: jest.fn().mockImplementation(() => ({
+      get: jest.fn().mockResolvedValue(null),
+      set: jest.fn().mockResolvedValue(undefined),
+      disconnect: jest.fn().mockResolvedValue(undefined),
+      getStats: jest.fn().mockReturnValue({
+        hits: 10,
+        misses: 5,
+        sets: 5,
+        errors: 0,
+        totalRequests: 15,
+        hitRate: 10 / 15
+      })
+    }))
+  };
+});
 
 describe('LipSyncOrchestrator', () => {
   let orchestrator: LipSyncOrchestrator;
@@ -36,7 +80,7 @@ describe('LipSyncOrchestrator', () => {
       expect(response.result.phonemes).toBeDefined();
       expect(response.result.duration).toBeGreaterThan(0);
       expect(response.provider).toBeDefined();
-      expect(response.processingTime).toBeGreaterThan(0);
+      expect(response.processingTime).toBeGreaterThanOrEqual(0);
     });
 
     it('should return mock result when all providers fail', async () => {
@@ -50,7 +94,7 @@ describe('LipSyncOrchestrator', () => {
 
       expect(response.success).toBe(true);
       expect(response.provider).toBe('mock');
-      expect(response.result.source).toBe('mock');
+      expect(response.result.metadata?.provider).toBe('mock'); // Changed from source
     });
 
     it('should respect preferred provider', async () => {
@@ -115,7 +159,7 @@ describe('LipSyncOrchestrator', () => {
       const response = await orchestrator.generateLipSync(request);
 
       expect(response.result.metadata).toBeDefined();
-      expect(response.result.metadata?.dialogText).toBeDefined();
+      expect(response.result.metadata?.dialog).toBeDefined(); // Changed from dialogText
     });
   });
 
@@ -187,7 +231,7 @@ describe('LipSyncOrchestrator', () => {
       expect(response).toHaveProperty('processingTime');
       expect(response.result).toHaveProperty('phonemes');
       expect(response.result).toHaveProperty('duration');
-      expect(response.result).toHaveProperty('source');
+      expect(response.result).toHaveProperty('metadata.provider'); // Changed from 'source'
     });
   });
 

@@ -28,7 +28,7 @@ import {
   ComplianceViolation,
   ComplianceProjectData
 } from '@hooks/useComplianceAnalyzer';
-import { Template } from '@types/templates';
+import { Template } from '@/types/templates';
 
 interface ComplianceDashboardProps {
   template?: Template;

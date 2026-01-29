@@ -308,7 +308,9 @@ export const useStudioStore = create<StudioStore>()(
           set({
             canvasScene: {
               ...scene,
-              elements: scene.elements.map((el) => (el.id === id ? { ...el, ...updates } : el)),
+              elements: scene.elements.map((el: CanvasElement) =>
+                el.id === id ? { ...el, ...updates } : el
+              ),
             },
           });
         },
@@ -322,7 +324,7 @@ export const useStudioStore = create<StudioStore>()(
 
         updateAvatar: (avatarId, updates) => {
           set({
-            avatars: get().avatars.map((avatar) =>
+            avatars: get().avatars.map((avatar: Avatar) =>
               avatar.id === avatarId ? { ...avatar, ...updates } : avatar,
             ),
           });

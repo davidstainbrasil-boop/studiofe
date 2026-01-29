@@ -1,4 +1,4 @@
-import type { ExportSettings } from '@types/export.types';
+import type { ExportSettings } from '@/types/export.types';
 import { logger } from '@lib/logger';
 
 /**

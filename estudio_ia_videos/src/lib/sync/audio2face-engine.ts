@@ -3,7 +3,8 @@
  * NVIDIA Audio2Face integration para lip-sync neural network de alta precisão
  */
 
-import type { LipSyncEngine, LipSyncResult } from './lip-sync-orchestrator'
+import type { LipSyncEngine } from './lip-sync-orchestrator'
+import type { LipSyncResult } from './types/phoneme.types'
 import type { Viseme } from './utils/viseme-mapper'
 
 // ============================================================================
@@ -83,11 +84,14 @@ export class Audio2FaceEngine implements LipSyncEngine {
 
     try {
       // Check cache
-      const cacheKey = this.getCacheKey(audioFile, options)
-      const cached = this.cache.get(cacheKey)
-      if (cached) {
-        return this.convertToLipSyncResult(cached)
+    const cacheKey = this.getCacheKey(audioFile, options)
+    const cached = this.cache.get(cacheKey)
+    if (cached) {
+      return {
+        ...this.convertToLipSyncResult(cached),
+        phonemes: [] // Adicionado para compatibilidade com LipSyncResult
       }
+    }
 
       // 1. Upload audio to Audio2Face
       const audioId = await this.uploadAudio(audioFile)
@@ -105,12 +109,14 @@ export class Audio2FaceEngine implements LipSyncEngine {
 
       return {
         ...this.convertToLipSyncResult(result),
+        phonemes: [], // Adicionado para compatibilidade com LipSyncResult
         metadata: {
           provider: 'audio2face',
           model: this.config.model,
           language: options?.language || this.config.language,
           processingTime,
-          confidence: result.metadata.confidence
+          confidence: result.metadata.confidence,
+          recognizer: 'audio2face' // Required by LipSyncResult metadata
         }
       }
     } catch (error) {
@@ -128,13 +134,15 @@ export class Audio2FaceEngine implements LipSyncEngine {
 
     return {
       visemes,
+      phonemes: [], // Adicionado para compatibilidade com LipSyncResult
       duration: a2fResult.duration,
       fps: a2fResult.fps,
       metadata: {
         provider: 'audio2face',
         model: a2fResult.metadata.model,
         blendShapeCount: a2fResult.blendShapeNames.length,
-        frameCount: a2fResult.frames.length
+        frameCount: a2fResult.frames.length,
+        recognizer: 'audio2face' // Required by LipSyncResult metadata
       }
     }
   }
@@ -374,6 +382,7 @@ export class Audio2FaceEngine implements LipSyncEngine {
 
     return {
       ...result,
+      phonemes: [], // Adicionado para compatibilidade com LipSyncResult
       emotions
     }
   }

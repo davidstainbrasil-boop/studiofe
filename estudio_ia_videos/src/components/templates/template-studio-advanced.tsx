@@ -51,7 +51,7 @@ import {
   Gauge
 } from 'lucide-react';
 import { useAdvancedTemplates } from '@hooks/useAdvancedTemplates';
-import { Template, NRCategory, TemplateFilter, TemplateSort } from '@types/templates';
+import { Template, NRCategory, TemplateFilter, TemplateSort } from '@/types/templates';
 import { toast } from 'sonner';
 
 interface TemplateStudioAdvancedProps {

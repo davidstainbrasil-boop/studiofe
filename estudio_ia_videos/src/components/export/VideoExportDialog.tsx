@@ -15,7 +15,7 @@ import {
   ExportSettings,
   ExportPhase,
   TimelineData,
-} from '@types/export.types'
+} from '@/types/export.types'
 import { useRenderPipeline } from '@hooks/use-render-pipeline'
 import { useEffect } from 'react'
 import { WatermarkSettings } from './WatermarkSettings'
@@ -32,7 +32,7 @@ import {
   Download,
   X
 } from 'lucide-react'
-import type { WatermarkConfig } from '@types/watermark.types'
+import type { WatermarkConfig } from '@/types/watermark.types'
 import type { VideoFilterConfig } from '@lib/export/video-filters-types'
 import type { AudioEnhancement as AudioEnhancementConfig } from '@lib/export/audio-processor'
 

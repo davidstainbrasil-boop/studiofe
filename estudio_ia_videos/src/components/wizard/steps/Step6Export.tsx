@@ -156,7 +156,7 @@ export function Step6Export({ videoData }: { videoData: any }) {
                         <CheckCircle className="w-10 h-10" />
                     </div>
                     <h2 className="text-3xl font-bold">Vídeo Pronto!</h2>
-                    <p className="text-slate-500">Seu vídeo foi renderizado e salvo em "Projetos Recentes".</p>
+                    <p className="text-slate-500">Seu vídeo foi renderizado e salvo em &quot;Projetos Recentes&quot;.</p>
 
                     <div className="grid grid-cols-2 gap-4 mt-8">
                         <Button size="lg" variant="outline" className="h-14">

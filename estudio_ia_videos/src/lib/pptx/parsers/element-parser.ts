@@ -95,6 +95,10 @@ export interface UniversalSlide {
   };
   notes?: string;
   duration: number; // seconds
+  audio?: {
+    src: string;
+    duration: number;
+  };
   transition?: {
     type: string;
     duration: number;

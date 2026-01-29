@@ -40,23 +40,24 @@ export async function GET(request: NextRequest) {
     const { status, start, end } = validation.data
 
     const jobs = await videoQueueManager.getJobs(status, start, end)
+    const serializedJobs = await Promise.all(jobs.map(async (job) => ({
+      id: job.id,
+      name: job.name,
+      data: job.data,
+      progress: job.progress,
+      state: await job.getState(),
+      attempts: job.attemptsMade,
+      timestamp: job.timestamp,
+      processedOn: job.processedOn,
+      finishedOn: job.finishedOn,
+      failedReason: job.failedReason
+    })))
 
     return NextResponse.json({
       success: true,
       data: {
-        jobs: jobs.map(job => ({
-          id: job.id,
-          name: job.name,
-          data: job.data,
-          progress: job.progress,
-          state: job.getState(),
-          attempts: job.attemptsMade,
-          timestamp: job.timestamp,
-          processedOn: job.processedOn,
-          finishedOn: job.finishedOn,
-          failedReason: job.failedReason
-        })),
-        count: jobs.length,
+        jobs: serializedJobs,
+        count: serializedJobs.length,
         status
       }
     })
@@ -87,7 +88,7 @@ const createJobSchema = z.object({
   options: z.object({
     quality: z.enum(['draft', 'standard', 'high', 'ultra']),
     resolution: z.enum(['720p', '1080p', '4k']),
-    fps: z.enum([24, 30, 60]),
+    fps: z.union([z.literal(24), z.literal(30), z.literal(60)]),
     codec: z.enum(['h264', 'h265', 'vp9']),
     bitrate: z.string().optional()
   }),

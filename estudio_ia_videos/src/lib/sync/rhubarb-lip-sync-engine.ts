@@ -71,6 +71,7 @@ export class RhubarbLipSyncEngine {
       }
 
       return {
+        visemes: [], // Adicionado para compatibilidade com LipSyncResult
         phonemes,
         duration: result.metadata.duration,
         metadata: {

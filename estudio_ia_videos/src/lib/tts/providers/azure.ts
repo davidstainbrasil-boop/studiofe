@@ -30,9 +30,25 @@ export class AzureTTSProvider {
   }
 
   async getVoices(): Promise<Voice[]> {
-    // Mock implementation for now as we don't have the full SDK setup in this environment
-    // In a real implementation, we would use the SDK to fetch voices
-    return this.getAvailableVoices();
+    const speechConfig = sdk.SpeechConfig.fromSubscription(this.subscriptionKey, this.region);
+    const synthesizer = new sdk.SpeechSynthesizer(speechConfig);
+
+    try {
+      const result = await synthesizer.getVoicesAsync();
+      if (result.reason === sdk.ResultReason.VoicesListRetrieved) {
+        return result.voices.map((v) => ({
+          name: v.localName,
+          locale: v.locale,
+          voiceType: v.voiceType.toString(),
+          shortName: v.shortName,
+          displayName: `${v.localName} (${v.shortName})`,
+          styleList: v.styleList || [],
+        }));
+      }
+      throw new Error(`Failed to get voices: ${result.errorDetails}`);
+    } finally {
+      synthesizer.close();
+    }
   }
 
   getAvailableVoices(): Voice[] {
@@ -101,13 +117,6 @@ export class AzureTTSProvider {
   }
 
   async textToSpeech(text: string, voiceId: string): Promise<Buffer> {
-    // This would use the SDK to synthesize speech
-    // For now, we'll throw if SDK is not available or return a mock buffer
-    // The test mocks the SDK, so we need to use the SDK classes if they are available
-    
-    // Since we are in a Node environment, we assume the SDK is installed or mocked
-    // But for this file creation, I'll write the code assuming the SDK is present
-    
     const speechConfig = sdk.SpeechConfig.fromSubscription(this.subscriptionKey, this.region);
     speechConfig.speechSynthesisOutputFormat = sdk.SpeechSynthesisOutputFormat.Audio16Khz128KBitRateMonoMp3;
     speechConfig.speechSynthesisVoiceName = voiceId;

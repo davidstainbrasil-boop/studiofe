@@ -332,7 +332,7 @@ export default function VoiceWizard({ onComplete }: { onComplete?: (voiceId: str
             <CheckCircle className="h-16 w-16 text-green-600 mx-auto mb-4" />
             <h3 className="text-2xl font-bold mb-2">Voz Customizada Criada!</h3>
             <p className="text-muted-foreground mb-6">
-              Sua voz "{voiceName}" está pronta para ser usada em qualquer projeto
+              Sua voz &quot;{voiceName}&quot; está pronta para ser usada em qualquer projeto
             </p>
             <Badge variant="outline" className="text-lg px-4 py-2">
               Voice ID: {voiceId}

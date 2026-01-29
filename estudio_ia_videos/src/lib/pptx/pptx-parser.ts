@@ -2,7 +2,7 @@ import JSZip from 'jszip';
 import { XMLParser } from 'fast-xml-parser';
 import { ParsedPPTXData, ParsedPPTXMetadata, Slide } from '@lib/definitions';
 import { logger } from '@lib/logger';
-import type { PPTXParseResult } from '@types/external-apis';
+import type { PPTXParseResult } from '@/types/external-apis';
 
 const DEFAULT_METADATA: ParsedPPTXMetadata = {
   title: 'Untitled Presentation',

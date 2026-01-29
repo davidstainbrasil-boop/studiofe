@@ -21,7 +21,7 @@ import {
   Settings
 } from 'lucide-react';
 import { useMagneticTimeline, UseMagneticTimelineReturn } from '@hooks/useMagneticTimeline';
-import { TimelineState } from '@types/timeline';
+import { TimelineState } from '@/types/timeline';
 
 interface MagneticTimelinePanelProps {
   initialState: TimelineState;

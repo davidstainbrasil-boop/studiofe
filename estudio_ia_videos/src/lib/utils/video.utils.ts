@@ -1,3 +1,4 @@
+
 /**
  * Video Processing Utilities
  * Helper functions for video manipulation using FFmpeg
@@ -6,11 +7,30 @@
 import { exec } from 'child_process'
 import { promisify } from 'util'
 import { writeFile, unlink } from 'fs/promises'
+import { createWriteStream } from 'fs'
 import path from 'path'
+import axios from 'axios'
+import { pipeline } from 'stream/promises'
 
 const execAsync = promisify(exec)
 
 export class VideoUtils {
+  /**
+   * Download video from URL to local path
+   */
+  static async downloadVideo(url: string, outputPath?: string): Promise<string> {
+    const output = outputPath || path.join('/tmp', `download_${Date.now()}.mp4`)
+    
+    const response = await axios({
+      method: 'GET',
+      url: url,
+      responseType: 'stream'
+    })
+
+    await pipeline(response.data, createWriteStream(output))
+    return output
+  }
+
   /**
    * Extract audio from video file
    */

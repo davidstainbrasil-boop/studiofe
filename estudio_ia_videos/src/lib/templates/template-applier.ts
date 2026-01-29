@@ -6,104 +6,89 @@
 import { TimelineProject, TimelineElement, TimelineLayer } from '@lib/types/timeline-types';
 import { Template } from './template-definitions';
 import { logger } from '@lib/logger';
+import { prisma } from '@lib/prisma';
+import crypto from 'crypto';
 
-/**
- * Apply template to project
- * Merges template elements without overwriting existing elements
- */
-export function applyTemplateToProject(
-  template: Template,
-  currentProject: TimelineProject | null,
-  insertTime?: number
-): TimelineProject {
-  logger.info('Applying template', { templateId: template.id, insertTime });
+interface TemplateData {
+  id: string;
+  title: string;
+  slides: any[]; // Defined in JSON
+}
 
-  // If no project, create minimal one
-  if (!currentProject) {
-    return {
-      id: crypto.randomUUID(),
-      name: 'Novo Projeto',
-      duration: Math.max(template.duration, 30),
-      fps: 30,
-      resolution: { width: 1920, height: 1080 },
-      layers: [
-        {
-          id: 'template-layer',
-          name: 'Template Layer',
-          type: 'video', // Default type
-          visible: true,
-          locked: false,
-          items: cloneTemplateElements(template.elements, 0)
+export class TemplateApplier {
+  
+  /**
+   * Apply template to project by ID
+   * Merges template elements without overwriting existing elements
+   */
+  async applyTemplate(projectId: string, templateId: string): Promise<void> {
+    logger.info('Applying template', { projectId, templateId });
+
+    // 1. Fetch Template from DB (Real)
+    let templateData: TemplateData | null = null;
+
+    // Try NR Templates
+    const nrTemplate = await prisma.nr_templates.findUnique({ where: { id: templateId } });
+    if (nrTemplate) {
+        const config = nrTemplate.templateConfig as any || {};
+        templateData = {
+            id: nrTemplate.id,
+            title: nrTemplate.title,
+            slides: config.slides || []
+        };
+    } else {
+        // Try Generic Templates
+        const genTemplate = await prisma.templates.findUnique({ where: { id: templateId } });
+        if (genTemplate) {
+             const metadata = genTemplate.metadata as any || {};
+             const settings = genTemplate.settings as any || {};
+             templateData = {
+                 id: genTemplate.id,
+                 title: genTemplate.name,
+                 slides: metadata.slides || settings.slides || []
+             };
         }
-      ]
-    };
+    }
+
+    if (!templateData) {
+        throw new Error(`Template not found: ${templateId}`);
+    }
+
+    // 2. Fetch Project
+    const project = await prisma.projects.findUnique({ where: { id: projectId } });
+    if (!project) throw new Error('Project not found');
+
+    // 3. Apply logic (Create Slides in DB)
+    if (templateData.slides && Array.isArray(templateData.slides) && templateData.slides.length > 0) {
+        logger.info(`Creating ${templateData.slides.length} slides from template`, { projectId });
+        
+        // Get current max order index
+        const lastSlide = await prisma.slides.findFirst({
+            where: { projectId },
+            orderBy: { orderIndex: 'desc' }
+        });
+        let startIndex = (lastSlide?.orderIndex ?? -1) + 1;
+
+        for (const s of templateData.slides) {
+             await prisma.slides.create({
+                 data: {
+                     projectId,
+                     orderIndex: startIndex++,
+                     title: s.title || `Slide ${startIndex}`,
+                     content: s.content || '',
+                     duration: s.duration || 5,
+                     backgroundColor: s.backgroundColor,
+                     backgroundImage: s.backgroundImage,
+                     avatarConfig: s.avatarConfig || {},
+                     audioConfig: s.audioConfig || {}
+                 }
+             });
+        }
+    } else {
+        // Timeline based or empty?
+        logger.warn('Template has no slides configuration', { templateId });
+        // Could implement timeline layer copying here if we had timeline storage structure fully defined
+    }
   }
-
-  // Determine insert time
-  let targetTime = insertTime ?? 0;
-  
-  // Smart positioning based on template type
-  if (template.type === 'intro' && insertTime === undefined) {
-    targetTime = 0; // Always at start
-  } else if (template.type === 'outro' && insertTime === undefined) {
-    targetTime = Math.max(currentProject.duration - template.duration, 0); // At end
-  }
-
-  // Clone and adjust template elements
-  const newElements = cloneTemplateElements(template.elements, targetTime);
-
-  // Find or create target layer
-  const templateLayerId = `template-${template.type}`;
-  let targetLayer = currentProject.layers.find(l => l.id === templateLayerId);
-
-  if (!targetLayer) {
-    // Create new layer for template
-    targetLayer = {
-      id: templateLayerId,
-      name: `${template.name} Layer`,
-      type: 'video',
-      visible: true,
-      locked: false,
-      items: []
-    };
-    currentProject.layers.push(targetLayer);
-  }
-
-  // Add elements to layer
-  targetLayer.items.push(...newElements);
-
-  // Update project duration if needed
-  const maxEndTime = Math.max(
-    ...currentProject.layers.flatMap(l => 
-      l.items.map(e => e.start + e.duration)
-    )
-  );
-  
-  if (maxEndTime > currentProject.duration) {
-    currentProject.duration = maxEndTime;
-  }
-
-  logger.info('Template applied successfully', {
-    templateId: template.id,
-    elementsAdded: newElements.length,
-    newDuration: currentProject.duration
-  });
-
-  return currentProject;
 }
 
-/**
- * Clone template elements with new IDs and adjusted start times
- */
-function cloneTemplateElements(
-  elements: TimelineElement[],
-  timeOffset: number
-): TimelineElement[] {
-  return elements.map(element => ({
-    ...element,
-    id: crypto.randomUUID(), // New unique ID
-    start: element.start + timeOffset, // Adjust start time
-    // Deep clone properties to avoid mutations
-    properties: JSON.parse(JSON.stringify(element.properties || {}))
-  }));
-}

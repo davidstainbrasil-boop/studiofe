@@ -16,7 +16,7 @@ import {
   DEFAULT_PADDING,
   ImageWatermarkConfig,
   TextWatermarkConfig,
-} from '@types/watermark.types'
+} from '@/types/watermark.types'
 
 interface WatermarkSettingsProps {
   /** Current watermark configuration */

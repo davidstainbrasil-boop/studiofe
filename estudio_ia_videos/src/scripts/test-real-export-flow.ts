@@ -37,9 +37,7 @@ async function main() {
             id: 'test-project-sim',
             userId: user.id,
             name: 'Simulation Project',
-            status: 'draft',
-            totalSlides: 1,
-            duration: 5
+            status: 'draft'
         }
     });
 
@@ -50,8 +48,8 @@ async function main() {
             projectId: project.id,
             orderIndex: 0,
             duration: 5,
-            content: { text: "Hello Simulation" }, 
-            background: { type: "color", value: "red" }
+            content: 'Hello Simulation',
+            backgroundColor: 'red'
         }
     });
 
@@ -60,15 +58,17 @@ async function main() {
     // 4. Create Video Export Record (QUEUED)
     // Note: In real app, this is done by api/export-real.
     const exportJobId = 'job-sim-' + Date.now();
-    await prisma.video_exports.create({
+    await prisma.render_jobs.create({
         data: {
             id: exportJobId,
             projectId: project.id,
             userId: user.id,
-            status: 'queued',
-            format: 'mp4',
-            quality: 'hd',
-            fps: 30
+            status: 'pending',
+            renderSettings: {
+                format: 'mp4',
+                quality: 'p1080',
+                fps: 30
+            }
         }
     });
 
@@ -90,9 +90,9 @@ async function main() {
         console.log('Worker Handler Finished.');
 
         // 6. Verify Result in DB
-        const result = await prisma.video_exports.findUnique({ where: { id: exportJobId } });
+        const result = await prisma.render_jobs.findUnique({ where: { id: exportJobId } });
         console.log(`Final Job Status: ${result?.status}`);
-        console.log(`Output URL: ${result?.videoUrl}`);
+        console.log(`Output URL: ${result?.outputUrl}`);
         
         if (result?.status === 'completed') {
             console.log('✅ TEST PASSED: Job completed successfully.');

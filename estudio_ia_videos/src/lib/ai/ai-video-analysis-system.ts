@@ -68,7 +68,7 @@ export class AIVideoAnalysisSystem {
         });
 
         // Cleanup
-        await fs.unlink(framePath).catch((error) => {
+        await fs.unlink(framePath).catch((error: unknown) => {
           logger.debug('Temp frame file already deleted', {
             component: 'AIVideoAnalysisSystem',
             framePath,

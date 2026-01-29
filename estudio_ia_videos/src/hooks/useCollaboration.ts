@@ -7,7 +7,7 @@ import {
   ActivityNotification,
   CollaborationSession,
   ConflictResolution,
-} from '@types/collaboration';
+} from '@/types/collaboration';
 import {
   CursorMovePayload,
   ElementUpdatePayload,

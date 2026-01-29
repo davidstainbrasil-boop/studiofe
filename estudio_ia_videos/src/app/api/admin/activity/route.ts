@@ -15,23 +15,31 @@ export async function GET(req: NextRequest) {
         // Let's use audit_logs if available, otherwise mock or empty.
         // Based on Phase 1, we implemented audit-logging-real.ts which uses 'audit_logs'.
         
-        const logs = await prisma.audit_logs.findMany({
+        const events = await prisma.analytics_events.findMany({
             select: {
                 id: true,
-                action: true,
-                details: true,
-                created_at: true,
-                user: {
+                eventType: true,
+                eventData: true,
+                createdAt: true,
+                users: {
                     select: {
                         email: true
                     }
                 }
             },
             orderBy: {
-                created_at: 'desc'
+                createdAt: 'desc'
             },
             take: 50
         });
+
+        const logs = events.map((event) => ({
+            id: event.id,
+            action: event.eventType,
+            details: event.eventData,
+            created_at: event.createdAt,
+            user: event.users ? { email: event.users.email } : null
+        }));
 
         return NextResponse.json({ logs });
     } catch (error) {

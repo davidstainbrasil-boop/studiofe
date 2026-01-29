@@ -1,23 +1,21 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 import { ScriptGenerator } from '@/lib/scripting/script-generator';
 import { logger } from '@/lib/monitoring/logger';
+import { validateRequestBody } from '@/lib/validation/api-validator';
+import { ScriptGenerateSchema } from '@/lib/validation/schemas';
 
 export async function POST(req: NextRequest) {
   logger.info('Recebida requisição para gerar roteiro.');
 
+  const validation = await validateRequestBody(req, ScriptGenerateSchema);
+
+  if (!validation.success) {
+    return validation.response;
+  }
+
+  const { projectId, pptxAst } = validation.data;
+
   try {
-    const body = await req.json();
-    const { projectId, pptxAst } = body;
-
-    if (!projectId || !pptxAst) {
-      logger.warn('Requisição inválida: projectId ou pptxAst ausentes.');
-      return NextResponse.json(
-        { error: 'As propriedades "projectId" e "pptxAst" são obrigatórias.' },
-        { status: 400 }
-      );
-    }
-
     const generator = new ScriptGenerator();
     const script = generator.generate({ projectId, pptxAst });
 

@@ -13,7 +13,10 @@ jest.mock('ioredis', () => {
     setex: jest.fn().mockResolvedValue('OK'),
     del: jest.fn().mockResolvedValue(1),
     keys: jest.fn().mockResolvedValue([]),
-    quit: jest.fn().mockResolvedValue('OK')
+    quit: jest.fn().mockResolvedValue('OK'),
+    on: jest.fn(),
+    connect: jest.fn().mockResolvedValue('OK'),
+    status: 'ready'
   }));
 });
 

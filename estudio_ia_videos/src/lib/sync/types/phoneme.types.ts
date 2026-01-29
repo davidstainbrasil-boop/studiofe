@@ -8,11 +8,20 @@ export interface Phoneme {
 }
 
 export interface LipSyncResult {
-  phonemes: Phoneme[]
+  visemes: any[] // Adicionado para compatibilidade com Audio2FaceEngine
+  phonemes?: Phoneme[] // Opcional se usar visemes diretos
   duration: number
+  fps?: number
   metadata: {
-    mouthCueCount: number
-    recognizer: string
+    provider?: string // Adicionado
+    model?: string // Adicionado
+    processingTime?: number // Adicionado
+    confidence?: number // Adicionado
+    blendShapeCount?: number // Adicionado
+    frameCount?: number // Adicionado
+    mouthCueCount?: number // Opcional
+    recognizer?: string // Opcional
     dialog?: string
+    [key: string]: unknown; // Allow additional metadata properties
   }
 }

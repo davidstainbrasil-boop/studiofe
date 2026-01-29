@@ -3,7 +3,7 @@
  * Implementação real usando BullMQ + Redis para fila de renderização
  */
 
-import { Queue, QueueEvents, Worker, type Job, type WorkerOptions } from 'bullmq';
+import { Queue, QueueEvents, Worker, type Job, type WorkerOptions, type ConnectionOptions } from 'bullmq';
 import Redis from 'ioredis';
 import { logger } from '@lib/logger';
 
@@ -12,7 +12,7 @@ const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
 const QUEUE_NAME = process.env.RENDER_QUEUE_NAME || 'render-jobs';
 
 // Criar conexão Redis
-const connection = new Redis(REDIS_URL, {
+const redisClient = new Redis(REDIS_URL, {
   maxRetriesPerRequest: null,
   enableReadyCheck: false,
   retryStrategy: (times) => {
@@ -21,15 +21,16 @@ const connection = new Redis(REDIS_URL, {
   }
 });
 
+// Cast para ConnectionOptions (ioredis versões são compatíveis em runtime)
+const connection = redisClient as unknown as ConnectionOptions;
+
 // Log de conexão
-connection.on('connect', () => {
+redisClient.on('connect', () => {
   logger.info('Redis connected for render queue', { service: 'RenderQueue', url: REDIS_URL });
 });
 
-connection.on('error', (error) => {
-  logger.error('Redis connection error', error instanceof Error ? error : new Error(String(error)), {
-    service: 'RenderQueue'
-  });
+redisClient.on('error', (error) => {
+  logger.error('Redis connection error', error instanceof Error ? error : new Error(String(error)));
 });
 
 // Criar Queue BullMQ
@@ -42,8 +43,7 @@ export const videoQueue = new Queue(QUEUE_NAME, {
       type: 'exponential',
       delay: 5000 // 5s, 10s, 20s
     },
-    // F2.6: Timeout de 30 minutos por tentativa (render + upload)
-    timeout: 30 * 60 * 1000, // 30 min
+    // F2.6: Timeout de 30 minutos (na prática, usar jobTimeout no worker)
     removeOnComplete: {
       count: 100, // Manter últimos 100 jobs completos
       age: 24 * 3600 // Remover após 24 horas
@@ -55,7 +55,7 @@ export const videoQueue = new Queue(QUEUE_NAME, {
 });
 
 // QueueEvents para monitoramento
-const queueEvents = new QueueEvents(QUEUE_NAME, { connection: connection.duplicate() });
+const queueEvents = new QueueEvents(QUEUE_NAME, { connection });
 
 // Interface para compatibilidade com código anterior
 export interface RenderQueueEvents {
@@ -79,7 +79,7 @@ export function createRenderQueueEvents(queueName: string = 'default'): RenderQu
     close: async () => {
       await queueEvents.close();
       await videoQueue.close();
-      await connection.quit();
+      await redisClient.quit();
     },
   };
 }
@@ -89,7 +89,7 @@ export function createRenderQueueEvents(queueName: string = 'default'): RenderQu
  */
 export function createRenderWorker<TPayload = unknown, TResult = unknown>(
   processor: (job: Job<TPayload, TResult>) => Promise<TResult>,
-  options: WorkerOptions = {}
+  options: Partial<WorkerOptions> = {}
 ) {
   const worker = new Worker<TPayload, TResult>(QUEUE_NAME, processor, {
     connection,
@@ -97,9 +97,7 @@ export function createRenderWorker<TPayload = unknown, TResult = unknown>(
   });
 
   worker.on('error', (error) => {
-    logger.error('Render worker error', error instanceof Error ? error : new Error(String(error)), {
-      service: 'RenderQueue',
-    });
+    logger.error('Render worker error', error instanceof Error ? error : new Error(String(error)));
   });
 
   return worker;
@@ -251,12 +249,12 @@ process.on('SIGTERM', async () => {
   logger.info('SIGTERM received, closing queue connections', { service: 'RenderQueue' });
   await queueEvents.close();
   await videoQueue.close();
-  await connection.quit();
+  await redisClient.quit();
 });
 
 process.on('SIGINT', async () => {
   logger.info('SIGINT received, closing queue connections', { service: 'RenderQueue' });
   await queueEvents.close();
   await videoQueue.close();
-  await connection.quit();
+  await redisClient.quit();
 });

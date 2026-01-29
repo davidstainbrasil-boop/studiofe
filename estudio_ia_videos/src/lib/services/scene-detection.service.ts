@@ -1,188 +1,223 @@
+
 /**
  * Scene Detection Service
- * Handles video scene detection and analysis
+ * Handles video scene detection and analysis using FFmpeg
  */
 
+import ffmpeg from 'fluent-ffmpeg';
+import path from 'path';
+import fs from 'fs/promises';
+import { createReadStream } from 'fs';
+import { v4 as uuidv4 } from 'uuid';
+import { logger } from '@lib/logger';
+import { supabase } from '@lib/supabase/client';
+
 interface Scene {
-  id: number
-  startTime: number
-  endTime: number
-  thumbnail?: string
-  description: string
-  confidence: number
+  id: number;
+  startTime: number;
+  endTime: number;
+  thumbnail?: string;
+  description: string;
+  confidence: number;
 }
 
 interface SceneDetectionResult {
-  success: boolean
-  scenes?: Scene[]
-  metadata?: Record<string, any>
-  error?: string
+  success: boolean;
+  scenes?: Scene[];
+  metadata?: Record<string, any>;
+  error?: string;
 }
 
 export class SceneDetectionService {
-  private apiKey: string | undefined
-  private baseUrl: string
+  private tempDir: string;
 
   constructor() {
-    this.apiKey = process.env.SCENE_DETECTION_API_KEY
-    this.baseUrl = process.env.SCENE_DETECTION_API_URL || 'http://localhost:8001'
+    this.tempDir = path.join(process.cwd(), 'tmp', 'scenes');
+    this.ensureTempDir();
+  }
+
+  private async ensureTempDir() {
+    try {
+      await fs.mkdir(this.tempDir, { recursive: true });
+    } catch (error) {
+      logger.error('Failed to create temp directory', error instanceof Error ? error : new Error(String(error)));
+    }
+  }
+
+  private async uploadToStorage(filePath: string, folder: string): Promise<string> {
+    const fileName = path.basename(filePath);
+    const fileContent = createReadStream(filePath);
+    const { data, error } = await supabase.storage
+      .from('videos')
+      .upload(`${folder}/${fileName}`, fileContent as any, {
+        contentType: folder === 'thumbnails' ? 'image/jpeg' : 'video/mp4',
+        upsert: true
+      });
+
+    if (error) throw error;
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('videos')
+      .getPublicUrl(`${folder}/${fileName}`);
+
+    return publicUrl;
   }
 
   /**
-   * Detect scenes in a video using PySceneDetect or similar
+   * Detect scenes in a video using FFmpeg scene filter
    */
   async detectScenes(
-    videoFile: File,
+    videoPath: string,
     sensitivity: number = 50
   ): Promise<SceneDetectionResult> {
-    try {
-      // TODO: Integrate with PySceneDetect
-      // Example implementation:
-      // 
-      // import { spawn } from 'child_process'
-      // 
-      // const threshold = this.calculateThreshold(sensitivity)
-      // const videoPath = await this.saveTemporaryFile(videoFile)
-      // 
-      // const sceneDetect = spawn('scenedetect', [
-      //   '-i', videoPath,
-      //   'detect-content',
-      //   '--threshold', threshold.toString(),
-      //   'list-scenes'
-      // ])
-      // 
-      // const scenes = await this.parseSceneOutput(sceneDetect)
-      // return { success: true, scenes }
+    // FFmpeg scene detection: 0 to 1. 
+    // sensitivity 0-100. 
+    // High sensitivity = low threshold (more scenes).
+    // Threshold 0.1 (very sensitive) to 0.5 (less sensitive).
+    // Formula: 0.6 - (sensitivity / 200) -> 50% = 0.35. 100% = 0.1. 0% = 0.6.
+    const threshold = 0.6 - (sensitivity / 200);
+    
+    logger.info(`Starting scene detection`, { videoPath, sensitivity, threshold });
 
-      // Mock implementation
-      const scenes = this.generateMockScenes(sensitivity)
+    return new Promise((resolve) => {
+      const timestamps: number[] = [0]; // Start with 0
 
-      return {
-        success: true,
-        scenes,
-        metadata: {
-          totalScenes: scenes.length,
-          sensitivity,
-          algorithm: 'PySceneDetect',
-          videoDuration: 30.0
-        }
-      }
-    } catch (error) {
-      console.error('Scene detection error:', error)
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
-      }
-    }
+      ffmpeg(videoPath)
+        .videoFilters(`select='gt(scene,${threshold})',showinfo`)
+        .outputOptions('-f', 'null')
+        .on('stderr', (line: string) => {
+          // Parse output like: [Parsed_showinfo_1 @ 0x...] n:   0 pts:  120120 pts_time:0.4004 ...
+          if (line.includes('pts_time:')) {
+            const match = line.match(/pts_time:([0-9.]+)/);
+            if (match && match[1]) {
+               const time = parseFloat(match[1]);
+               // Avoid duplicates close to each other
+               if (time - timestamps[timestamps.length - 1] > 0.5) {
+                 timestamps.push(time);
+               }
+            }
+          }
+        })
+        .on('end', async () => {
+            // Get duration to close the last scene
+            const duration = await this.getVideoDuration(videoPath);
+            if (duration > timestamps[timestamps.length - 1]) {
+                timestamps.push(duration);
+            }
+
+            const scenes: Scene[] = [];
+            for (let i = 0; i < timestamps.length - 1; i++) {
+                scenes.push({
+                    id: i + 1,
+                    startTime: parseFloat(timestamps[i].toFixed(2)),
+                    endTime: parseFloat(timestamps[i + 1].toFixed(2)),
+                    description: `Scene ${i + 1}`,
+                    confidence: 1.0 // FFmpeg matched
+                });
+            }
+
+            // Generate thumbnails for detected scenes
+            const scenesWithThumbnails = await this.enrichScenesWithThumbnails(videoPath, scenes);
+
+            resolve({
+                success: true,
+                scenes: scenesWithThumbnails,
+                metadata: {
+                    totalScenes: scenes.length,
+                    sensitivity,
+                    algorithm: 'FFmpeg-scene',
+                    videoDuration: duration
+                }
+            });
+        })
+        .on('error', (err) => {
+            logger.error('Scene detection error', err);
+            resolve({ success: false, error: err.message });
+        })
+        .run();
+    });
   }
 
-  /**
-   * Generate thumbnails for detected scenes
-   */
-  async generateThumbnails(videoFile: File, scenes: Scene[]): Promise<string[]> {
-    try {
-      // TODO: Implement thumbnail generation using FFmpeg
-      // Example:
-      // const thumbnails = await Promise.all(
-      //   scenes.map(scene => this.extractFrame(videoFile, scene.startTime))
-      // )
-      // return thumbnails
+  private async getVideoDuration(videoPath: string): Promise<number> {
+    return new Promise((resolve) => {
+      ffmpeg.ffprobe(videoPath, (err, metadata) => {
+        if (err) resolve(0);
+        else resolve(metadata.format.duration || 0);
+      });
+    });
+  }
 
-      // Mock implementation
-      return scenes.map((_, i) => `#thumbnail-${i}`)
-    } catch (error) {
-      console.error('Thumbnail generation error:', error)
-      return []
-    }
+  private async enrichScenesWithThumbnails(videoPath: string, scenes: Scene[]): Promise<Scene[]> {
+     const enriched = [...scenes];
+     for (const scene of enriched) {
+         try {
+             const thumbPath = path.join(this.tempDir, `${uuidv4()}_thumb.jpg`);
+             await new Promise<void>((resolve, reject) => {
+                 ffmpeg(videoPath)
+                    .screenshots({
+                        timestamps: [scene.startTime],
+                        filename: path.basename(thumbPath),
+                        folder: this.tempDir,
+                        size: '320x180'
+                    })
+                    .on('end', () => resolve())
+                    .on('error', (e) => reject(e));
+             });
+             
+             const url = await this.uploadToStorage(thumbPath, 'thumbnails');
+             scene.thumbnail = url;
+             await fs.unlink(thumbPath).catch(() => {});
+         } catch (e) {
+             logger.warn(`Failed to generate thumbnail for scene ${scene.id}`, e);
+         }
+     }
+     return enriched;
   }
 
   /**
    * Export individual scenes from video
    */
   async exportScenes(
-    videoFile: File,
+    videoPath: string,
     scenes: Scene[],
     selectedIds: number[]
   ): Promise<{ sceneId: number; url: string }[]> {
-    try {
-      // TODO: Implement scene extraction using FFmpeg
-      // Example:
-      // const selectedScenes = scenes.filter(s => selectedIds.includes(s.id))
-      // 
-      // const exports = await Promise.all(
-      //   selectedScenes.map(async scene => {
-      //     const outputPath = await this.extractScene(
-      //       videoFile,
-      //       scene.startTime,
-      //       scene.endTime
-      //     )
-      //     const url = await this.uploadToStorage(outputPath)
-      //     return { sceneId: scene.id, url }
-      //   })
-      // )
-      // return exports
+    const selectedScenes = scenes.filter(s => selectedIds.includes(s.id));
+    const results: { sceneId: number; url: string }[] = [];
 
-      // Mock implementation
-      return selectedIds.map(id => ({
-        sceneId: id,
-        url: `#scene-${id}-export`
-      }))
-    } catch (error) {
-      console.error('Scene export error:', error)
-      throw error
+    for (const scene of selectedScenes) {
+        const outputPath = path.join(this.tempDir, `${uuidv4()}_scene_${scene.id}.mp4`);
+        try {
+            await new Promise<void>((resolve, reject) => {
+                ffmpeg(videoPath)
+                    .seekInput(scene.startTime)
+                    .duration(scene.endTime - scene.startTime)
+                    .output(outputPath)
+                    .videoCodec('libx264')
+                    .audioCodec('aac')
+                    .on('end', () => resolve())
+                    .on('error', (e) => reject(e))
+                    .run();
+            });
+
+            const url = await this.uploadToStorage(outputPath, 'scenes');
+            results.push({ sceneId: scene.id, url });
+            await fs.unlink(outputPath);
+
+        } catch (e) {
+            logger.error(`Failed to export scene ${scene.id}`, e instanceof Error ? e : new Error(String(e)));
+        }
     }
+    return results;
   }
 
   /**
-   * Calculate detection threshold from sensitivity (0-100)
+   * Generate thumbnails (Public method matching interface, but utilizing internal helper)
    */
-  private calculateThreshold(sensitivity: number): number {
-    // Higher sensitivity = lower threshold = more scenes detected
-    // PySceneDetect typical threshold range: 27-30
-    const minThreshold = 20
-    const maxThreshold = 35
-    return maxThreshold - ((sensitivity / 100) * (maxThreshold - minThreshold))
-  }
-
-  /**
-   * Generate mock scenes for testing
-   */
-  private generateMockScenes(sensitivity: number): Scene[] {
-    const sceneCount = Math.floor(2 + (sensitivity / 20))
-    const scenes: Scene[] = []
-    
-    let currentTime = 0
-    const videoDuration = 30.0
-    const avgSceneDuration = videoDuration / sceneCount
-
-    const descriptions = [
-      'Introdução',
-      'Cena principal',
-      'Transição',
-      'Segundo ato',
-      'Clímax',
-      'Resolução',
-      'Conclusão',
-      'Créditos'
-    ]
-
-    for (let i = 0; i < sceneCount; i++) {
-      const duration = avgSceneDuration * (0.8 + Math.random() * 0.4)
-      const endTime = Math.min(currentTime + duration, videoDuration)
-      
-      scenes.push({
-        id: i + 1,
-        startTime: parseFloat(currentTime.toFixed(2)),
-        endTime: parseFloat(endTime.toFixed(2)),
-        description: descriptions[i % descriptions.length] || `Cena ${i + 1}`,
-        confidence: 0.85 + Math.random() * 0.15
-      })
-      
-      currentTime = endTime
-    }
-
-    return scenes
+  async generateThumbnails(videoPath: string, scenes: Scene[]): Promise<string[]> {
+      const enriched = await this.enrichScenesWithThumbnails(videoPath, scenes);
+      return enriched.map(s => s.thumbnail || '');
   }
 }
 
-export const sceneDetectionService = new SceneDetectionService()
+export const sceneDetectionService = new SceneDetectionService();

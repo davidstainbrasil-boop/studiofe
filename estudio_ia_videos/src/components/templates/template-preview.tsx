@@ -28,7 +28,7 @@ import {
   AlertTriangle,
   XCircle
 } from 'lucide-react';
-import { Template } from '@types/templates';
+import { Template } from '@/types/templates';
 import { Slider } from '@components/ui/slider';
 
 interface TemplatePreviewProps {

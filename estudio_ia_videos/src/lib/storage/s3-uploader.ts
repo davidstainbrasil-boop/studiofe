@@ -40,8 +40,11 @@ export async function uploadToS3(
 ): Promise<S3UploadResult> {
   // Check for credentials
   if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
-    logger.warn('AWS credentials not found. Using Mock S3 Uploader.')
-    return mockUploadToS3(fileName)
+    if (process.env.NODE_ENV === 'development') {
+      logger.warn('AWS credentials not found. Using Mock S3 Uploader.')
+      return mockUploadToS3(fileName)
+    }
+    throw new Error('AWS credentials are required for S3 uploads')
   }
 
   try {

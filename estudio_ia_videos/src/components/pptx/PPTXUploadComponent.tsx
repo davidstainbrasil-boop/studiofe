@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@components/ui/card';
@@ -55,6 +55,7 @@ export default function PPTXUploadComponent({
   const [status, setStatus] = useState<'idle' | 'uploading' | 'processing' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [processingResult, setProcessingResult] = useState<ProcessingResult | null>(null);
+  const uploadXhrRef = useRef<XMLHttpRequest | null>(null);
 
   const fileSizeInMb = useMemo(() => {
     if (!file) return 0;
@@ -111,52 +112,59 @@ export default function PPTXUploadComponent({
       setUploading(true);
       setStatus('uploading');
       setProgress(0);
-
-      // Progress simulation with more granular steps
-      const progressSteps = [10, 25, 40, 55, 70, 85];
-      let stepIndex = 0;
-
-      const interval = setInterval(() => {
-        if (stepIndex < progressSteps.length) {
-          setProgress(progressSteps[stepIndex]);
-          stepIndex++;
-        }
-      }, 600);
-
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch('/api/pptx/upload', {
-        method: 'POST',
-        body: formData,
+      const xhr = new XMLHttpRequest();
+      uploadXhrRef.current = xhr;
+
+      const result = await new Promise<Record<string, unknown>>((resolve, reject) => {
+        xhr.upload.addEventListener('progress', (e) => {
+          if (!e.lengthComputable) return;
+          const percent = Math.round((e.loaded / e.total) * 100);
+          setProgress(percent);
+          if (percent >= 100) {
+            setStatus('processing');
+          }
+        });
+
+        xhr.addEventListener('load', () => {
+          const statusCode = xhr.status;
+          let payload: any = null;
+          try {
+            payload = xhr.responseText ? JSON.parse(xhr.responseText) : null;
+          } catch {
+            payload = null;
+          }
+
+          if (statusCode === 401) {
+            reject(new Error('Você precisa estar logado para fazer upload. Faça login e tente novamente.'));
+            return;
+          }
+
+          if (statusCode < 200 || statusCode >= 300) {
+            reject(new Error(payload?.error || payload?.message || `Falha no upload (HTTP ${statusCode})`));
+            return;
+          }
+
+          resolve(payload || {});
+        });
+
+        xhr.addEventListener('error', () => reject(new Error('Falha de rede durante o upload.')));
+        xhr.addEventListener('abort', () => reject(new Error('Upload cancelado.')));
+
+        xhr.open('POST', '/api/pptx/upload');
+        xhr.send(formData);
       });
-
-      clearInterval(interval);
-
-      if (!response.ok) {
-        const errorData = await response.json();
-
-        // Tratamento especial para erros de autenticação
-        if (response.status === 401) {
-          throw new Error('Você precisa estar logado para fazer upload. Faça login e tente novamente.');
-        }
-
-        throw new Error(errorData.error || errorData.message || 'Falha no upload');
-      }
-
-      setProgress(90);
-      setStatus('processing');
-
-      const result = await response.json();
 
       setProgress(100);
       setStatus('success');
 
       const processedResult: ProcessingResult = {
-        projectId: result.projectId || result.data?.projectId,
-        slidesCount: result.slidesCount || result.data?.slidesCount,
-        estimatedDuration: result.estimatedDuration || result.data?.estimatedDuration,
-        rawData: result
+        projectId: (result as any).projectId || (result as any).data?.projectId,
+        slidesCount: (result as any).slidesCount || (result as any).data?.slidesCount,
+        estimatedDuration: (result as any).estimatedDuration || (result as any).data?.estimatedDuration,
+        rawData: result as any
       };
 
       setProcessingResult(processedResult);
@@ -183,6 +191,7 @@ export default function PPTXUploadComponent({
       });
     } finally {
       setUploading(false);
+      uploadXhrRef.current = null;
     }
   };
 
@@ -195,6 +204,7 @@ export default function PPTXUploadComponent({
   };
 
   const handleCancel = () => {
+    uploadXhrRef.current?.abort();
     removeFile();
     if (onCancel) {
       onCancel();

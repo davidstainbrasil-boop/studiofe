@@ -217,17 +217,17 @@ export const bundleAnalyzer = {
   logImportSize: <T>(moduleName: string, modulePromise: Promise<T>): Promise<T> => {
     const startTime = performance.now();
     
-    return modulePromise.then(module => {
+    return modulePromise.then(loadedModule => {
       const loadTime = performance.now() - startTime;
       
       logger.debug('Module imported', {
         component: 'BundleAnalyzer',
         moduleName,
         loadTime: Math.round(loadTime),
-        moduleSize: JSON.stringify(module).length // Aproximação
+        moduleSize: JSON.stringify(loadedModule).length // Aproximação
       });
 
-      return module;
+      return loadedModule;
     });
   },
 
@@ -241,9 +241,9 @@ export const bundleAnalyzer = {
     const startTime = performance.now();
     
     try {
-      const module = await importFn();
+      const loadedModule = await importFn();
       const loadTime = performance.now() - startTime;
-      const estimatedSize = JSON.stringify(module).length;
+      const estimatedSize = JSON.stringify(loadedModule).length;
 
       const metrics = { loadTime, estimatedSize };
 
@@ -253,15 +253,19 @@ export const bundleAnalyzer = {
         ...metrics
       });
 
-      return { module, metrics };
+      return { module: loadedModule, metrics };
     } catch (error) {
       const loadTime = performance.now() - startTime;
       
-      logger.error('Dynamic import failed', error, {
-        component: 'BundleAnalyzer',
-        moduleName,
-        loadTime
-      });
+      logger.error(
+        'Dynamic import failed',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          component: 'BundleAnalyzer',
+          moduleName,
+          loadTime
+        },
+      );
 
       throw error;
     }
@@ -282,7 +286,7 @@ export const featureSplitting = {
   ): Promise<T> => {
     try {
       const startTime = performance.now();
-      const module = await importFn();
+      const loadedModule = await importFn();
       const loadTime = performance.now() - startTime;
 
       logger.debug('Feature loaded', {
@@ -291,12 +295,16 @@ export const featureSplitting = {
         loadTime: Math.round(loadTime)
       });
 
-      return module.default;
+      return loadedModule.default;
     } catch (error) {
-      logger.error('Failed to load feature', error, {
-        component: 'FeatureSplitting',
-        featureName
-      });
+      logger.error(
+        'Failed to load feature',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          component: 'FeatureSplitting',
+          featureName
+        },
+      );
 
       if (fallback !== undefined) {
         logger.info('Using fallback for feature', {

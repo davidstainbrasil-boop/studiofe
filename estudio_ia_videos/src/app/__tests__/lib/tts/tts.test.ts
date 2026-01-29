@@ -23,6 +23,18 @@ const mockSpeakTextAsync = jest.fn((text, success) => {
     audioData: new Uint8Array([1, 2, 3]),
   })
 })
+const mockGetVoicesAsync = jest.fn().mockResolvedValue({
+  reason: 0, // ResultReason.VoicesListRetrieved
+  voices: [
+    {
+      localName: 'Francisca',
+      locale: 'pt-BR',
+      voiceType: 'Neural',
+      shortName: 'pt-BR-FranciscaNeural',
+      styleList: ['neutral']
+    }
+  ]
+})
 const mockClose = jest.fn()
 
 jest.mock('microsoft-cognitiveservices-speech-sdk', () => ({
@@ -34,10 +46,12 @@ jest.mock('microsoft-cognitiveservices-speech-sdk', () => ({
   SpeechSynthesizer: jest.fn(() => ({
     speakSsmlAsync: mockSpeakSsmlAsync,
     speakTextAsync: mockSpeakTextAsync,
+    getVoicesAsync: mockGetVoicesAsync,
     close: mockClose,
   })),
   ResultReason: {
     SynthesizingAudioCompleted: 0,
+    VoicesListRetrieved: 0,
   },
   SpeechSynthesisOutputFormat: {
     Audio16Khz128KBitRateMonoMp3: 'audio-16khz-128kbitrate-mono-mp3',

@@ -152,8 +152,8 @@ export class VariableDataEngine {
       }
 
       // Validate headers
-      const csvHeaders = Object.keys(rows[0]);
-      const templateVariableNames = template.variables.map(v => v.name);
+      const csvHeaders: string[] = Object.keys(rows[0]);
+      const templateVariableNames: string[] = template.variables.map((v) => v.name);
       const missingHeaders = templateVariableNames.filter(name => !csvHeaders.includes(name));
       const extraHeaders = csvHeaders.filter(name => !templateVariableNames.includes(name));
 
@@ -225,8 +225,14 @@ export class VariableDataEngine {
         if (variable.validation?.pattern && !new RegExp(variable.validation.pattern).test(value)) {
           return { isValid: false, error: `'${variable.name}' does not match required pattern` };
         }
-        if (variable.validation?.options && !variable.validation.options.includes(value)) {
-          return { isValid: false, error: `'${variable.name}' must be one of: ${variable.validation.options.join(', ')}` };
+        if (variable.validation?.options) {
+          const valueAsString = String(value);
+          if (!variable.validation.options.includes(valueAsString)) {
+            return {
+              isValid: false,
+              error: `'${variable.name}' must be one of: ${variable.validation.options.join(', ')}`
+            };
+          }
         }
         break;
 

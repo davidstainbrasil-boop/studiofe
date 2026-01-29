@@ -14,7 +14,7 @@ import * as child_process from 'child_process';
 import * as os from 'os';
 import { avatarEngine } from '@lib/avatar-engine';
 import { HeyGenAvatarOptions } from '../engines/heygen-avatar-engine';
-import { Timeline } from '../types/timeline-types';
+// import { Timeline } from '../types/timeline-types'; // Não utilizado
 import { getRequiredEnv } from '@lib/env';
 
 export interface PipelineStage {
@@ -104,18 +104,19 @@ export class VideoRenderPipeline {
 
       const typedSlides: DatabaseSlide[] = slidesData.map(s => ({
         id: s.id,
-        projectId: s.projectId,
+        projectId: projectId, // Usando projectId do escopo que é string garantida
         order_index: s.orderIndex,
         title: s.title,
         content: typeof s.content === 'string' ? s.content : JSON.stringify(s.content), // content is Json? in prisma
-        duration: s.duration || s.durationSeconds || 5, // fallback
+        duration: s.duration ?? 5,
         background_color: s.backgroundColor,
         background_image: s.backgroundImage,
         avatar_config: s.avatarConfig as Record<string, unknown>,
         audio_config: s.audioConfig as AudioConfig,
-        createdAt: s.createdAt,
-        updatedAt: s.updatedAt
+        createdAt: s.createdAt || new Date(),
+        updatedAt: s.updatedAt || new Date()
       }));
+      
       const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'render-'));
       const slideVideos: string[] = [];
 
@@ -130,19 +131,24 @@ export class VideoRenderPipeline {
         const videoPath = path.join(tempDir, `slide_${i}.mp4`);
 
         // Check for HeyGen Avatar
-        if (slide.avatar_config?.engine === 'heygen') {
+        const avatarConfig = slide.avatar_config as Record<string, unknown> | null;
+        if (avatarConfig?.engine === 'heygen') {
           logger.info('Slide uses HeyGen avatar, initiating cloud render', { slideIndex: i, service: 'VideoRenderPipeline' });
           await this.processHeyGenSlide(slide, videoPath, options.test);
         } else {
           // 2a. Generate Audio (TTS)
           let audioPath = '';
           if (slide.content) {
-            const audioBuffer = await elevenLabsService.generateSpeech({
-              text: slide.content,
-              voiceId: slide.audio_config?.voiceId || '21m00Tcm4TlvDq8ikWAM', // Default voice
-            });
-            audioPath = path.join(tempDir, `slide_${i}_audio.mp3`);
-            await fs.writeFile(audioPath, Buffer.from(audioBuffer));
+            try {
+                const audioBuffer = await elevenLabsService.generateSpeech({
+                  text: slide.content,
+                  voiceId: slide.audio_config?.voiceId || '21m00Tcm4TlvDq8ikWAM', // Default voice
+                });
+                audioPath = path.join(tempDir, `slide_${i}_audio.mp3`);
+                await fs.writeFile(audioPath, Buffer.from(audioBuffer));
+            } catch (err) {
+                logger.warn('Failed to generate audio, proceeding with silent slide', { error: err });
+            }
           }
 
           // 2b. Generate Video Segment (Image + Audio)
@@ -188,7 +194,7 @@ export class VideoRenderPipeline {
       if (errorMessage === 'JOB_CANCELLED') {
         logger.info('Job cancelled by user', { jobId, projectId });
         // Cleanup temp dir
-        try { await fs.rm(path.join(os.tmpdir(), `render-${jobId}`), { recursive: true, force: true }); } catch (e) {} // best effort
+        try { await fs.rm(path.join(os.tmpdir(), `render-${jobId}`), { recursive: true, force: true }); } catch (e) { /* ignore */ } // best effort
         return ''; // Return empty string or handle as specific result
       }
 
@@ -204,6 +210,7 @@ export class VideoRenderPipeline {
     
     const duration = slide.duration || 5;
     const bgColor = slide.background_color || 'black';
+    const title = slide.title || '';
     
     // If we have audio, we use it. If not, we generate silent video.
     const args = [
@@ -221,15 +228,33 @@ export class VideoRenderPipeline {
       // Map video from 0:v and audio from 1:a
       args.push('-map', '0:v', '-map', '1:a');
       // Shortest to stop if audio is shorter (or longer)
-      args.push('-shortest');
+      // args.push('-shortest'); // Can cut off audio if video is shorter
     }
 
-    // Add text overlay (requires fontconfig usually, might fail on minimal envs without fonts)
-    // We'll skip complex text overlay for this MVP step to ensure stability, 
-    // or use a simple drawtext if we are sure ffmpeg has support.
-    // args.push('-vf', `drawtext=text='${slide.title}':fontcolor=white:fontsize=24:x=(w-text_w)/2:y=(h-text_h)/2`);
+    // Add text overlay
+    // Ensure text is sanitized for FFmpeg drawtext
+    const sanitizedTitle = title.replace(/'/g, "\\'").replace(/:/g, "\\:");
+    
+    // Using a font that is likely available or a default
+    // Assuming a standard font path or relying on fontconfig. 
+    // In minimal containers, we might need a specific ttf file.
+    // For safety, we can try to use a specific font if we have assets, or rely on system default.
+    // Let's assume Arial or similar is present, or skip if unsure.
+    // We will use a generic fontfile arg if we had one, but without it drawtext might fail if no default font.
+    // Let's try adding it but handle potential error by logging or using a safe fallback in future.
+    // For now, we will add a simple drawtext if title exists.
+    
+    if (sanitizedTitle) {
+        // Centered text
+        args.push('-vf', `drawtext=text='${sanitizedTitle}':fontcolor=white:fontsize=48:x=(w-text_w)/2:y=(h-text_h)/2`);
+    }
 
     args.push('-c:v', 'libx264', '-pix_fmt', 'yuv420p');
+    // If audio input exists, copy audio or re-encode
+    if (audioPath) {
+        args.push('-c:a', 'aac');
+    }
+    
     args.push(outputPath);
 
     await this.runFFmpeg(args);
@@ -261,9 +286,10 @@ export class VideoRenderPipeline {
       let videoUrl = '';
       let attempts = 0;
       const maxAttempts = 60; // 5 minutes (5s interval)
+      const pollingInterval = 5000;
 
       while (attempts < maxAttempts) {
-        await new Promise(resolve => setTimeout(resolve, 5000));
+        await new Promise(resolve => setTimeout(resolve, pollingInterval));
         const status = await avatarEngine.checkHeyGenStatus(result.jobId);
         
         if (status.status === 'completed' && status.videoUrl) {

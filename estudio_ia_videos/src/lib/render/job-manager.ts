@@ -288,6 +288,24 @@ export class JobManager {
       logger.error(`Failed to fail job ${jobId}:`, error instanceof Error ? error : new Error(String(error)), { component: 'JobManager' });
     }
   }
+
+  async cancelJob(jobId: string): Promise<void> {
+    try {
+      await prisma.render_jobs.update({
+        where: { id: jobId },
+        data: {
+          status: 'cancelled',
+          updatedAt: new Date()
+        }
+      });
+    } catch (error) {
+      logger.error(
+        `Failed to cancel job ${jobId}:`,
+        error instanceof Error ? error : new Error(String(error)),
+        { component: 'JobManager' }
+      );
+    }
+  }
   
   async listJobs(projectId?: string, limit: number = 100): Promise<RenderJob[]> {
       // Not implemented for now, mostly used for internal management

@@ -9,6 +9,17 @@ interface Relationship {
   Target: string;
 }
 
+export interface ExtractedImage {
+  dataUrl: string;
+  mimeType: string;
+  extension: string;
+  filename?: string;
+}
+
+export interface ImageExtractionOptions {
+  includeDataUrl?: boolean;
+}
+
 export class PPTXImageParser {
   private xmlParser: XMLParser;
 
@@ -25,8 +36,12 @@ export class PPTXImageParser {
    * @param zip The JSZip instance of the PPTX file
    * @param slideNumber The 1-based index of the slide
    */
-  public async extractImages(zip: JSZip, slideNumber: number): Promise<string[]> {
-    const images: string[] = [];
+  public async extractImages(
+    zip: JSZip,
+    slideNumber: number,
+    options: ImageExtractionOptions = {},
+  ): Promise<ExtractedImage[]> {
+    const images: ExtractedImage[] = [];
     
     try {
       // 1. Read relationships file for the slide
@@ -68,11 +83,23 @@ export class PPTXImageParser {
           const extension = target.split('.').pop() || 'png';
           const mimeType = this.getMimeType(extension);
           
-          images.push(`data:${mimeType};base64,${base64}`);
+          const dataUrl = `data:${mimeType};base64,${base64}`;
+          if (options.includeDataUrl ?? true) {
+            images.push({
+              dataUrl,
+              mimeType,
+              extension,
+              filename: target.split('/').pop()
+            });
+          }
         }
       }
     } catch (error) {
-      logger.error(`Failed to extract images for slide ${slideNumber}`, { error });
+      logger.error(
+        `Failed to extract images for slide ${slideNumber}`,
+        error instanceof Error ? error : new Error(String(error)),
+        { slideNumber }
+      );
     }
 
     return images;

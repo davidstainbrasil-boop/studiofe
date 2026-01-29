@@ -34,9 +34,9 @@ describe('RenderingPipeline - Integration Validation', () => {
       expect(PipelineStage.COMPLETE).toBe('complete')
     })
 
-    it('deve ter 5 estágios no total', () => {
+    it('deve ter 6 estágios no total', () => {
       const stages = Object.values(PipelineStage)
-      expect(stages).toHaveLength(5)
+      expect(stages).toHaveLength(6)
     })
   })
 

@@ -44,24 +44,22 @@ export class CommentsService {
         userId,
         projectId,
         content,
-        position: position ? JSON.stringify(position) : Prisma.JsonNull,
+        metadata: { position: position || null, resolved: false },
         parentId: parentId || null,
       },
       include: {
         users: {
           select: {
-            name: true,
             email: true,
-            avatarUrl: true
+            id: true
           }
         },
-        replies: {
+        other_project_comments: {
           include: {
             users: {
               select: {
-                name: true,
                 email: true,
-                avatarUrl: true
+                id: true
               }
             }
           }

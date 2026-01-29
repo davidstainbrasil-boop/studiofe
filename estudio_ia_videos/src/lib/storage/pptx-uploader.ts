@@ -3,6 +3,7 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/monitoring/logger';
 import { Database } from '@lib/supabase/database.types';
 import { getRequiredEnv } from '@lib/env';
+import { ValidationError } from '@lib/error-handling';
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB
 const ALLOWED_FILE_TYPES = ['application/vnd.openxmlformats-officedocument.presentationml.presentation'];
@@ -24,13 +25,10 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 
 export class PptxUploader {
-  private supabase: SupabaseClient<Database>;
+  private supabase?: SupabaseClient<Database>;
 
   constructor(supabaseClient?: SupabaseClient<Database>) {
-    this.supabase = supabaseClient || createClient<Database>(
-      getRequiredEnv('NEXT_PUBLIC_SUPABASE_URL'),
-      getRequiredEnv('SUPABASE_SERVICE_ROLE_KEY')
-    );
+    this.supabase = supabaseClient;
   }
 
   async upload(options: PptxUploadOptions): Promise<PptxUploadResult> {
@@ -38,10 +36,15 @@ export class PptxUploader {
 
     // 1. Validar arquivo
     if (file.size > MAX_FILE_SIZE) {
-      throw new Error(`Tamanho do arquivo excede o limite de ${MAX_FILE_SIZE / 1024 / 1024}MB.`);
+      throw new ValidationError(`Tamanho do arquivo excede o limite de ${MAX_FILE_SIZE / 1024 / 1024}MB.`);
     }
-    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
-      throw new Error('Tipo de arquivo inválido. Apenas .pptx é permitido.');
+    const nameLooksLikePptx = typeof file.name === 'string' && file.name.toLowerCase().endsWith('.pptx');
+    const typeIsAllowed = ALLOWED_FILE_TYPES.includes(file.type);
+    const typeIsGenericBinary = file.type === 'application/octet-stream';
+    const typeIsMissing = !file.type || file.type.trim().length === 0;
+
+    if (!typeIsAllowed && !(nameLooksLikePptx && (typeIsMissing || typeIsGenericBinary))) {
+      throw new ValidationError('Tipo de arquivo inválido. Envie um arquivo .pptx.');
     }
 
     // 2. Gerar caminho de armazenamento
@@ -73,7 +76,14 @@ export class PptxUploader {
       };
     }
 
-    const { data, error } = await this.supabase.storage
+    const supabase =
+      this.supabase ||
+      createClient<Database>(
+        getRequiredEnv('NEXT_PUBLIC_SUPABASE_URL'),
+        getRequiredEnv('SUPABASE_SERVICE_ROLE_KEY'),
+      );
+
+    const { data, error } = await supabase.storage
       .from('uploads') // Bucket 'uploads' para arquivos brutos
       .upload(storagePath, file);
 

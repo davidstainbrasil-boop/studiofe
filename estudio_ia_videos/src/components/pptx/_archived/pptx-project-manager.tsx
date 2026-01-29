@@ -29,7 +29,7 @@ import {
 } from 'lucide-react'
 import { useToast } from '../ui/use-toast'
 import { Logger } from '@lib/logger'
-import { SlideLayout, SlideMetadata, NarrationSegment, SceneMapping } from '@types/pptx'
+import { SlideLayout, SlideMetadata, NarrationSegment, SceneMapping } from '@/types/pptx'
 
 const logger = new Logger('PPTXProjectManager')
 

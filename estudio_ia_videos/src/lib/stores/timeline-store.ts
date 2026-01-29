@@ -564,7 +564,7 @@ export const useTimelineStore = create<TimelineStore>()(
 
     // Template Actions
     applyTemplate: (template) => set((state) => {
-      const { applyTemplateToProject } = require('@lib/templates/template-applier');
+      const { applyTemplateToProject } = require('@lib/templates/template-utils');
       
       logger.info('Applying template to project', { 
         templateId: template.id, 

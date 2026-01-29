@@ -7,6 +7,8 @@ import { getSupabaseForRequest } from '@lib/supabase/server';
 import { prisma } from '@lib/prisma';
 import { randomUUID } from 'crypto';
 import PPTXProcessorReal from '@lib/pptx/pptx-processor-real';
+import { AppError, getUserMessage, normalizeError } from '@lib/error-handling';
+import { getRequiredEnv } from '@lib/env';
 
 // Helper to create Supabase Admin Client for database operations ensuring RLS bypass if needed
 import { createClient } from '@supabase/supabase-js';
@@ -16,17 +18,25 @@ export async function POST(req: NextRequest) {
   logger.info('PPTX upload request received');
 
   try {
-    // Get authenticated user
-    const supabase = getSupabaseForRequest(req);
     let user;
     
-    // [DEV] Bypass check
+    // [NON-PROD] Bypass check
+    const bypassEnabled = process.env.NODE_ENV !== 'production';
     const bypassId = '12b21f2e-8ac1-480c-af1e-542a7d9b185a';
     const headerUserId = req.headers.get('x-user-id');
+    let devBypassCookie = false;
+    if (bypassEnabled) {
+      try {
+        devBypassCookie = req.cookies.get('dev_bypass')?.value === 'true';
+      } catch {
+        devBypassCookie = false;
+      }
+    }
     
-    if (req.cookies.get('dev_bypass')?.value === 'true' || headerUserId === bypassId) {
+    if (bypassEnabled && (devBypassCookie || headerUserId === bypassId)) {
         user = { id: bypassId, email: 'admin@estudio.ai' };
     } else {
+        const supabase = getSupabaseForRequest(req);
         const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
         if (authError || !authUser) {
             return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
@@ -59,8 +69,6 @@ export async function POST(req: NextRequest) {
 
     // Upload File first
     const uploader = new PptxUploader();
-    // Pass mock projectID if null for now, or just undefined? Uploader needs string.
-    // If projectId is missing, we generate it NOW before upload so path is correct.
     const isNewProject = !projectId || projectId === 'mock-project-id';
     if (isNewProject) {
         projectId = randomUUID();
@@ -114,8 +122,8 @@ export async function POST(req: NextRequest) {
     // or just consistency with schema that might not be in Prisma)
     if (extraction.success && extraction.slides.length > 0) {
         const supabaseAdmin = createClient<Database>(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY!
+            getRequiredEnv('NEXT_PUBLIC_SUPABASE_URL'),
+            getRequiredEnv('SUPABASE_SERVICE_ROLE_KEY')
         );
 
         const slidesToInsert = extraction.slides.map((slide: any, index: number) => ({
@@ -149,8 +157,21 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (error) {
-    logger.error('Error handling PPTX upload', error instanceof Error ? error : new Error(String(error)));
-    const message = error instanceof Error ? error.message : 'Erro ao processar o upload.';
-    return NextResponse.json({ error: message }, { status: 500 });
+    const err = error instanceof Error ? error : new Error(String(error));
+    const normalized = normalizeError(error);
+
+    logger.error('Error handling PPTX upload', err, {
+      category: normalized.category,
+      context: normalized.context,
+    });
+
+    const message =
+      error instanceof AppError
+        ? error.message
+        : process.env.NODE_ENV === 'production'
+          ? getUserMessage(error)
+          : err.message;
+
+    return NextResponse.json({ error: message }, { status: normalized.statusCode });
   }
 }

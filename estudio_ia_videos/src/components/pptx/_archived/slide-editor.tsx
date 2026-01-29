@@ -27,7 +27,7 @@ import {
   Edit3
 } from 'lucide-react'
 import { CanvasEditor } from './canvas-editor'
-import { PPTXSlide } from '@types/pptx-types'
+import { PPTXSlide } from '@/types/pptx-types'
 
 interface AvailableTemplate {
   id: string

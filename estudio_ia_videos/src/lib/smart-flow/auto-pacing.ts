@@ -1,4 +1,4 @@
-import { TimelineClip, TimelineState } from '@types/timeline';
+import { TimelineClip, TimelineState } from '@/types/timeline';
 import { BeatDetectorService, Beat } from '@lib/timeline/beat-detector';
 
 export interface AutoPacingConfig {
@@ -52,6 +52,15 @@ export interface EmotionProfile {
     dominance: number;
   }>;
 }
+
+const toNumber = (value: unknown, fallback: number) => {
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
+  return fallback;
+};
 
 export class AutoPacingEngine {
   private config: AutoPacingConfig;
@@ -181,7 +190,7 @@ export class AutoPacingEngine {
     
     // Factor in average motion intensity
     const avgMotionIntensity = state.clips.reduce((sum, clip) => {
-      return sum + (clip.metadata?.motionIntensity || 0.5);
+      return sum + toNumber(clip.metadata?.motionIntensity, 0.5);
     }, 0) / state.clips.length;
     complexityScore += avgMotionIntensity * 0.2;
     
@@ -269,8 +278,8 @@ export class AutoPacingEngine {
   private calculateMotionRhythm(state: TimelineState): number {
     if (state.clips.length === 0) return 0;
 
-    const motionIntensities = state.clips.map(clip => 
-      clip.metadata?.motionIntensity || 0.5
+    const motionIntensities = state.clips.map((clip) =>
+      toNumber(clip.metadata?.motionIntensity, 0.5)
     );
 
     // Calculate rhythm based on motion intensity variations
@@ -361,7 +370,7 @@ export class AutoPacingEngine {
 
     // Add energy from motion
     for (const clip of state.clips) {
-      const motionIntensity = clip.metadata?.motionIntensity || 0.5;
+      const motionIntensity = toNumber(clip.metadata?.motionIntensity, 0.5);
       const startSample = Math.floor((clip.startTime / duration) * numSamples);
       const endSample = Math.floor(((clip.startTime + clip.duration) / duration) * numSamples);
       
@@ -448,7 +457,7 @@ export class AutoPacingEngine {
         }
 
         // Check motion peaks
-        const clipMotionIntensity = clip.metadata?.motionIntensity || 0;
+        const clipMotionIntensity = toNumber(clip.metadata?.motionIntensity, 0);
         if (clipMotionIntensity > 0.7) {
           confidence += 0.2;
           if (primaryReason === 'content') primaryReason = 'motion';
@@ -599,7 +608,7 @@ export class AutoPacingEngine {
     
     // Identify clips with poor motion rhythm
     for (const clip of state.clips) {
-      const motionIntensity = clip.metadata?.motionIntensity || 0;
+      const motionIntensity = toNumber(clip.metadata?.motionIntensity, 0);
       
       if (motionIntensity < 0.3) {
         recommendations.push({

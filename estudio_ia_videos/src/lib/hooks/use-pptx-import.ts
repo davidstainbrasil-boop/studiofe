@@ -54,7 +54,64 @@ export function usePPTXImport() {
     setSteps(prev => prev.map((step, i) => i === index ? { ...step, status } : step));
   };
 
-  // ... (existing code for nextStep, prevStep)
+  const nextStep = useCallback(() => {
+    if (currentStep < steps.length - 1) {
+      updateStepStatus(currentStep, 'completed');
+      updateStepStatus(currentStep + 1, 'active');
+      setCurrentStep(prev => prev + 1);
+    }
+  }, [currentStep, steps.length]);
+
+  const prevStep = useCallback(() => {
+    if (currentStep > 0) {
+      updateStepStatus(currentStep, 'pending');
+      updateStepStatus(currentStep - 1, 'active');
+      setCurrentStep(prev => prev - 1);
+    }
+  }, [currentStep]);
+
+  const analyzeSlides = useCallback(async () => {
+    setIsProcessing(true);
+    updateStepStatus(1, 'completed');
+    updateStepStatus(2, 'active');
+    setCurrentStep(2);
+    setIsProcessing(false);
+  }, []);
+
+  const updateConfig = useCallback((updates: Partial<ImportConfig>) => {
+    setConfig(prev => ({ ...prev, ...updates }));
+  }, []);
+
+  const toggleSlideSelection = useCallback((slideNumber: number) => {
+    setSlides(prev => prev.map(s => 
+      s.slideNumber === slideNumber ? { ...s, selected: !s.selected } : s
+    ));
+  }, []);
+
+  const updateSlideDuration = useCallback((slideNumber: number, duration: number) => {
+    setSlides(prev => prev.map(s => 
+      s.slideNumber === slideNumber ? { ...s, duration } : s
+    ));
+  }, []);
+
+  const convertToTimeline = useCallback(async (): Promise<ImportResult> => {
+    setIsProcessing(true);
+    try {
+      updateStepStatus(3, 'completed');
+      updateStepStatus(4, 'active');
+      setCurrentStep(4);
+      
+      const result: ImportResult = {
+        success: true,
+        projectId: 'generated-project-id',
+        clipsCreated: slides.filter(s => s.selected).length
+      };
+      setResult(result);
+      return result;
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [slides]);
 
   const uploadPPTX = useCallback(async (file: File) => {
     setIsProcessing(true);
@@ -99,8 +156,6 @@ export function usePPTXImport() {
       setIsProcessing(false);
     }
   }, [config]);
-
-  // ... (existing code for analyzeSlides)
 
   const reset = useCallback(() => {
     setCurrentStep(0);

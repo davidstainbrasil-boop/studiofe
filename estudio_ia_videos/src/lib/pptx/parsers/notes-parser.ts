@@ -99,3 +99,29 @@ export class PPTXNotesParser {
     return Array.isArray(value) ? value : [value];
   }
 }
+
+export interface SpeakerNotesResult {
+  slideNumber: number;
+  notes: string;
+}
+
+export const extractSpeakerNotes = async (
+  zip: JSZip,
+  slideNumber: number,
+): Promise<SpeakerNotesResult> => {
+  const parser = new PPTXNotesParser();
+  const notes = await parser.extractNotes(zip, slideNumber);
+  return { slideNumber, notes };
+};
+
+export const extractAllSpeakerNotes = async (
+  zip: JSZip,
+  slideCount: number,
+): Promise<SpeakerNotesResult[]> => {
+  const results: SpeakerNotesResult[] = [];
+  for (let i = 1; i <= slideCount; i += 1) {
+    const result = await extractSpeakerNotes(zip, i);
+    results.push(result);
+  }
+  return results;
+};

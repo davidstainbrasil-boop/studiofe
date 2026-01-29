@@ -6,7 +6,7 @@
  * Integra todos os componentes: Avatar Library, Properties Panel, Asset Library, etc.
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { Button } from '@components/ui/button';
 import { Separator } from '@components/ui/separator';
 import { Label } from '@components/ui/label';
@@ -34,12 +34,13 @@ import {
   Zap,
   Undo2,
   Redo2,
+  Upload,
 } from 'lucide-react';
 import { cn } from '@lib/utils';
 import { toast } from 'sonner';
 
 // Components
-import ProfessionalStudioTimeline from '@components/studio-unified/ProfessionalStudioTimeline';
+import { ScenesTimeline } from '@components/studio-unified/ScenesTimeline';
 import { AvatarLibraryPanel } from '@components/studio-unified/AvatarLibraryPanel';
 import { PropertiesPanel, ElementProperties } from '@components/studio-unified/PropertiesPanel';
 import {
@@ -52,6 +53,9 @@ import { LayersPanel } from '@components/studio-unified/LayersPanel';
 import { AlignmentToolbar } from '@components/studio-unified/AlignmentToolbar';
 import { useKeyboardShortcuts, COMMON_SHORTCUTS } from '@hooks/useKeyboardShortcuts';
 import { useHistory } from '@hooks/useHistory';
+import type { Scene } from '@/types/scene';
+import type { Scene as VideoProjectScene, CanvasElement as VideoProjectCanvasElement } from '@/types/video-project';
+import { importPPTX } from '@lib/pptx/pptx-to-scenes';
 
 // ============================================================================
 // TYPES
@@ -68,9 +72,62 @@ export interface Project {
   id: string;
   name: string;
   duration: number;
-  scenes: CanvasScene[];
+  scenes: Scene[];
   settings: ProjectSettings;
 }
+
+const createScene = (index: number): Scene => {
+  const id = `scene-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  return {
+    id,
+    name: `Scene ${index}`,
+    elements: [],
+    backgroundColor: '#1a1a1a',
+    width: 1920,
+    height: 1080,
+    duration: 5,
+    transition: 'fade',
+  };
+};
+
+const formatDuration = (seconds: number) => {
+  const totalSeconds = Math.max(0, Math.round(seconds));
+  const minutes = Math.floor(totalSeconds / 60);
+  const remainingSeconds = totalSeconds % 60;
+  return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+};
+
+const mapImportedElement = (element: VideoProjectCanvasElement, index: number): CanvasElement => ({
+  id: element.id,
+  type: element.type,
+  name: element.text ? element.text.slice(0, 32) : `${element.type} ${index + 1}`,
+  x: element.x,
+  y: element.y,
+  width: element.width,
+  height: element.height,
+  rotation: element.rotation,
+  scaleX: element.scaleX,
+  scaleY: element.scaleY,
+  opacity: 1,
+  src: element.src,
+  text: element.text,
+  fill: element.fill,
+  locked: false,
+  visible: true,
+  draggable: true,
+  zIndex: element.zIndex,
+});
+
+const mapImportedScene = (scene: VideoProjectScene, index: number): Scene => ({
+  id: scene.id,
+  name: scene.name || `Scene ${index + 1}`,
+  elements: scene.elements.map(mapImportedElement),
+  backgroundColor: scene.backgroundColor || '#1a1a1a',
+  width: 1920,
+  height: 1080,
+  duration: scene.duration || 5,
+  transition: 'fade',
+});
 
 // ============================================================================
 // MAIN COMPONENT
@@ -86,30 +143,158 @@ export default function StudioProPage() {
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
   const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
   const [rightPanelTab, setRightPanelTab] = useState<'properties' | 'layers'>('layers');
-
-  // Canvas State with History
-  const {
-    state: canvasScene,
-    setState: setCanvasScene,
-    undo,
-    redo,
-    canUndo,
-    canRedo,
-  } = useHistory<CanvasScene>({
-    initialState: {
-      id: 'default',
-      name: 'Default Scene',
+  const [projectName, setProjectName] = useState('Untitled Project');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const initialScene = useMemo(() => createScene(1), []);
+  const emptyScene = useMemo<CanvasScene>(
+    () => ({
+      id: 'empty',
+      name: 'Empty',
       elements: [],
       backgroundColor: '#1a1a1a',
       width: 1920,
       height: 1080,
-    },
+    }),
+    [],
+  );
+  const [scenes, setScenes] = useState<Scene[]>([initialScene]);
+  const [activeSceneId, setActiveSceneId] = useState<string | null>(initialScene.id);
+  const totalDuration = useMemo(
+    () => scenes.reduce((sum, scene) => sum + scene.duration, 0),
+    [scenes],
+  );
+
+  // Canvas State with History
+  const {
+    state: canvasScene,
+    setState: setCanvasSceneInternal,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    clear,
+  } = useHistory<CanvasScene>({
+    initialState: initialScene,
     maxHistorySize: 50,
   });
   const [selectedCanvasElementIds, setSelectedCanvasElementIds] = useState<string[]>([]);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [clipboard, setClipboard] = useState<CanvasElement[]>([]); // Clipboard for copy/paste
   const [elementGroups, setElementGroups] = useState<Map<string, string[]>>(new Map()); // groupId -> elementIds[]
+  const setCanvasScene = useCallback(
+    (nextState: CanvasScene | ((prev: CanvasScene) => CanvasScene)) => {
+      setCanvasSceneInternal((prev) => {
+        const next = typeof nextState === 'function' ? nextState(prev) : nextState;
+        if (activeSceneId) {
+          setScenes((prevScenes) =>
+            prevScenes.map((scene) => (scene.id === activeSceneId ? { ...scene, ...next } : scene)),
+          );
+        }
+        return next;
+      });
+    },
+    [activeSceneId, setCanvasSceneInternal],
+  );
+
+  const handleAddScene = useCallback(() => {
+    setScenes((prev) => {
+      const newScene = createScene(prev.length + 1);
+      setActiveSceneId(newScene.id);
+      setCanvasSceneInternal(newScene);
+      clear();
+      setSelectedCanvasElementIds([]);
+      setSelectedElement(null);
+      toast.success('Scene added');
+      return [...prev, newScene];
+    });
+  }, [clear, setCanvasSceneInternal]);
+
+  const handleRemoveScene = useCallback(
+    (sceneId: string) => {
+      setScenes((prev) => {
+        const remaining = prev.filter((scene) => scene.id !== sceneId);
+        if (remaining.length === 0) {
+          setActiveSceneId(null);
+          setCanvasSceneInternal(emptyScene);
+          clear();
+          setSelectedCanvasElementIds([]);
+          setSelectedElement(null);
+          return remaining;
+        }
+        if (sceneId === activeSceneId) {
+          setActiveSceneId(remaining[0].id);
+        }
+        return remaining;
+      });
+    },
+    [activeSceneId, clear, emptyScene, setCanvasSceneInternal],
+  );
+
+  const handleSceneDurationChange = useCallback((sceneId: string, duration: number) => {
+    setScenes((prev) =>
+      prev.map((scene) => (scene.id === sceneId ? { ...scene, duration } : scene)),
+    );
+  }, []);
+
+  const handleImportClick = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handlePPTXImport = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      try {
+        const result = await importPPTX(file);
+        const importedScenes = result.project.scenes.map(mapImportedScene);
+        if (importedScenes.length === 0) {
+          toast.error('No slides found in PPTX');
+          return;
+        }
+
+        setProjectName(result.project.name || file.name.replace(/\.pptx?$/i, ''));
+        setScenes(importedScenes);
+        setActiveSceneId(importedScenes[0].id);
+        setCanvasSceneInternal(importedScenes[0]);
+        clear();
+        setSelectedCanvasElementIds([]);
+        setSelectedElement(null);
+        toast.success('PPTX imported');
+      } catch (error) {
+        toast.error('Failed to import PPTX');
+      } finally {
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      }
+    },
+    [clear, setCanvasSceneInternal],
+  );
+
+  useEffect(() => {
+    if (scenes.length === 0) {
+      setActiveSceneId(null);
+      setCanvasSceneInternal(emptyScene);
+      clear();
+      setSelectedCanvasElementIds([]);
+      setSelectedElement(null);
+      return;
+    }
+
+    const activeScene = scenes.find((scene) => scene.id === activeSceneId);
+    if (!activeScene) {
+      setActiveSceneId(scenes[0].id);
+      return;
+    }
+
+    if (canvasScene.id !== activeScene.id) {
+      setCanvasSceneInternal(activeScene);
+      clear();
+      setSelectedCanvasElementIds([]);
+      setSelectedElement(null);
+    }
+  }, [scenes, activeSceneId, canvasScene.id, clear, emptyScene, setCanvasSceneInternal]);
 
   // Handlers
   const handlePlay = useCallback(() => {
@@ -1133,14 +1318,30 @@ export default function StudioProPage() {
           <Separator orientation="vertical" className="h-6" />
           <div className="flex items-center gap-2">
             <Folder className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium">Untitled Project</span>
+            <span className="text-sm font-medium">
+              {projectName}
+              <span className="text-xs text-muted-foreground ml-2">
+                {formatDuration(totalDuration)}
+              </span>
+            </span>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".ppt,.pptx"
+            onChange={handlePPTXImport}
+            className="hidden"
+          />
           <Button variant="ghost" size="sm">
             <Clock className="h-4 w-4 mr-2" />
             History
+          </Button>
+          <Button variant="ghost" size="sm" onClick={handleImportClick}>
+            <Upload className="h-4 w-4 mr-2" />
+            Import PPTX
           </Button>
           <Button variant="ghost" size="sm" onClick={handleSave}>
             <Save className="h-4 w-4 mr-2" />
@@ -1461,7 +1662,7 @@ export default function StudioProPage() {
 
                 {/* Interactive Canvas */}
                 <InteractiveCanvas
-                  scene={canvasScene}
+                  scene={activeSceneId ? canvasScene : emptyScene}
                   selectedElementIds={selectedCanvasElementIds}
                   onSelectElement={handleSelectCanvasElement}
                   onUpdateElement={handleUpdateCanvasElement}
@@ -1478,7 +1679,14 @@ export default function StudioProPage() {
             {/* Timeline */}
             <ResizablePanel defaultSize={40} minSize={20}>
               <div className="h-full bg-background">
-                <ProfessionalStudioTimeline />
+                <ScenesTimeline
+                  scenes={scenes}
+                  activeSceneId={activeSceneId}
+                  onSelectScene={setActiveSceneId}
+                  onAddScene={handleAddScene}
+                  onRemoveScene={handleRemoveScene}
+                  onDurationChange={handleSceneDurationChange}
+                />
               </div>
             </ResizablePanel>
           </ResizablePanelGroup>

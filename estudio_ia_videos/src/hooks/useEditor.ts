@@ -11,7 +11,7 @@ import {
   ImageElement,
   ShapeElement,
   AvatarElement
-} from '@types/editor';
+} from '@/types/editor';
 
 const initialState: EditorState = {
   elements: [],

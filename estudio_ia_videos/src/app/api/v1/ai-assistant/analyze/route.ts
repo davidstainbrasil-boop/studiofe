@@ -1,7 +1,11 @@
 
+import 'openai/shims/node';
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@lib/logger'
-import { mockDelay, isProduction, notImplementedResponse } from '@lib/utils/mock-guard'
+import { AIContentService } from '@lib/services/ai-content.service'
+
+// Force dynamic rendering - this route uses OpenAI and shouldn't be prerendered
+export const dynamic = 'force-dynamic';
 
 interface AnalysisRequest {
   contentId: string
@@ -9,104 +13,24 @@ interface AnalysisRequest {
   contentData?: Record<string, unknown>
 }
 
-interface ContentAnalysis {
-  id: string
-  title: string
-  type: 'layout' | 'color' | 'content' | 'engagement' | 'nr-compliance'
-  priority: 'high' | 'medium' | 'low'
-  confidence: number
-  description: string
-  suggestion: string
-  impact: string
-  implementation: string
-}
-
 export async function POST(request: NextRequest) {
   try {
     const body: AnalysisRequest = await request.json()
 
-    // REGRA DO REPO: mocks proibidos em producao
-    if (isProduction()) {
-      return notImplementedResponse('ai-assistant-analyze', 'AI analysis integration pending');
-    }
+    logger.info('Analyzing content via AIContentService', { contentType: body.contentType });
 
-    // Development only: simulate AI analysis
-    await mockDelay(2000, 'ai-assistant-analysis')
+    // Use Real AI Service
+    const aiService = AIContentService.getInstance();
     
-    // Gerar análises baseadas no tipo de conteúdo
-    const analyses: ContentAnalysis[] = []
-    
-    if (body.contentType === 'pptx') {
-      analyses.push(
-        {
-          id: '1',
-          title: 'Layout Otimizado para NR-12',
-          type: 'layout',
-          priority: 'high',
-          confidence: 94,
-          description: 'Layout atual pode ser otimizado para melhor compliance com NR-12',
-          suggestion: 'Reorganizar elementos seguindo padrões visuais da NR-12',
-          impact: 'Aumenta compliance em 25% e reduz tempo de compreensão em 30%',
-          implementation: 'Aplicar template NR-12 automático com guides visuais'
-        },
-        {
-          id: '2',
-          title: 'Harmonia de Cores Profissional',
-          type: 'color',
-          priority: 'high',
-          confidence: 89,
-          description: 'Paleta de cores pode ser otimizada para melhor legibilidade',
-          suggestion: 'Usar palette corporativa com contraste WCAG AA',
-          impact: 'Melhora legibilidade em 40% e profissionalismo visual',
-          implementation: 'Aplicar theme corporativo com cores acessíveis'
-        }
-      )
-    }
-    
-    if (body.contentType === 'video') {
-      analyses.push(
-        {
-          id: '3',
-          title: 'Ritmo de Narrativa Otimizado',
-          type: 'content',
-          priority: 'medium',
-          confidence: 87,
-          description: 'Ritmo pode ser ajustado para melhor retenção',
-          suggestion: 'Adicionar pausas estratégicas e variações de tom',
-          impact: 'Aumenta retenção em 35% e engajamento',
-          implementation: 'Edição automática de timing e pausas'
-        }
-      )
-    }
-    
-    // Sempre incluir análise de compliance NR
-    analyses.push({
-      id: '4',
-      title: 'Compliance NR Automático',
-      type: 'nr-compliance',
-      priority: 'high',
-      confidence: 96,
-      description: 'Conteúdo pode ser validado automaticamente para compliance NR',
-      suggestion: 'Aplicar checklist de validação NR específica',
-      impact: 'Garante conformidade legal total',
-      implementation: 'Sistema automático de validação'
-    })
-    
-    // Calcular métricas
-    const metrics = {
-      readability: 85 + Math.floor(Math.random() * 10),
-      engagement: 75 + Math.floor(Math.random() * 15),
-      visualHarmony: 80 + Math.floor(Math.random() * 15),
-      nrCompliance: 90 + Math.floor(Math.random() * 8),
-      contentQuality: 82 + Math.floor(Math.random() * 12),
-      performance: 85 + Math.floor(Math.random() * 10)
-    }
+    // Pass content data or ID to the service
+    const analysisResult = await aiService.analyzeSpecificContent(
+      body.contentType, 
+      body.contentData || { id: body.contentId }
+    );
     
     return NextResponse.json({
       success: true,
-      analysis: analyses,
-      metrics,
-      timestamp: new Date().toISOString()
+      ...analysisResult
     })
     
   } catch (error) {
@@ -114,7 +38,7 @@ export async function POST(request: NextRequest) {
     logger.error('AI Analysis Error', err, { component: 'API: v1/ai-assistant/analyze' });
     return NextResponse.json({
       success: false,
-      error: 'Failed to analyze content'
+      error: 'Failed to analyze content: ' + err.message
     }, { status: 500 })
   }
 }
@@ -130,4 +54,3 @@ export async function GET() {
     }
   })
 }
-

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Template, NRCategory, TemplateFilter, TemplateSort } from '@types/templates';
+import { Template, NRCategory, TemplateFilter, TemplateSort } from '@/types/templates';
 import { useTemplates } from './useTemplates';
 import { useComplianceAnalyzer, ComplianceProjectData } from './useComplianceAnalyzer';
 import { useAdvancedAI } from './useAdvancedAI';

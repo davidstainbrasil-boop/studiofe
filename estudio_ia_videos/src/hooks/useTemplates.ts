@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Template, TemplateFilter, TemplateSort, TemplateImportExport, NRCategory } from '@types/templates';
+import { Template, TemplateFilter, TemplateSort, TemplateImportExport, NRCategory } from '@/types/templates';
 
 interface UseTemplatesReturn {
   templates: Template[];

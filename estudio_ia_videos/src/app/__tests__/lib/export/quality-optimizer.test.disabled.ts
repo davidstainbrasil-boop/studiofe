@@ -7,7 +7,7 @@ import {
   OptimizationStrategy,
   qualityOptimizer,
 } from '@lib/export/quality-optimizer'
-import type { ExportSettings } from '@types/export.types'
+import type { ExportSettings } from '@/types/export.types'
 
 describe('AdaptiveQualityOptimizer - Quality Optimization (Sprint 52)', () => {
   let optimizer: AdaptiveQualityOptimizer

@@ -167,7 +167,7 @@ interface Assessment {
 interface InteractiveElement {
   id: string
   type: 'quiz' | 'simulation' | 'checklist' | 'video' | 'diagram'
-  content: Record<string, unknown>
+  content: string | Record<string, unknown>
   duration: number
   mandatory: boolean
 }

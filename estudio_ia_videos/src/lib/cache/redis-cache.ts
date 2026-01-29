@@ -20,7 +20,7 @@ let redis: Redis | null = null;
 let isRedisAvailable = false;
 
 try {
-  if (process.env.REDIS_URL) {
+  if (process.env.REDIS_URL && process.env.NODE_ENV !== 'test') {
     redis = new Redis(process.env.REDIS_URL, {
       maxRetriesPerRequest: 3,
       enableOfflineQueue: false,
@@ -45,7 +45,7 @@ try {
     redis.connect().catch((err) => {
       logger.warn('Failed to connect to Redis cache', { error: err.message });
     });
-  } else {
+  } else if (process.env.NODE_ENV !== 'test') {
     logger.warn('REDIS_URL not configured - using in-memory cache only');
   }
 } catch (error) {

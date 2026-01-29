@@ -105,11 +105,15 @@ export class ReadyPlayerMeService {
         contentType,
       };
     } catch (error) {
-      logger.error('Failed to fetch GLB metadata', {
-        component: 'ReadyPlayerMeService',
-        avatarUrl,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      });
+      logger.error(
+        'Failed to fetch GLB metadata',
+        undefined,
+        {
+          component: 'ReadyPlayerMeService',
+          avatarUrl,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
+      );
 
       throw new Error('Invalid Ready Player Me avatar URL or model not accessible');
     }
@@ -170,23 +174,23 @@ export class ReadyPlayerMeService {
       const jobId = `rpm-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
       // 7. Store job in database for tracking
-      await prisma.video_jobs.create({
+      await prisma.render_jobs.create({
         data: {
           id: jobId,
-          user_id: params.userId,
+          userId: params.userId,
           status: 'pending',
-          type: 'rpm-avatar-render',
-          metadata: {
+          renderSettings: {
+            quality: params.quality,
+            voiceId: params.voiceId,
+          },
+          settings: {
+            type: 'rpm-avatar-render',
             avatarUrl: normalizedUrl,
             audioUrl: params.audioUrl,
             text: params.text,
             blendShapeFrames,
             glbMetadata,
-            quality: params.quality,
-            voiceId: params.voiceId,
           },
-          created_at: new Date(),
-          updated_at: new Date(),
         },
       });
 
@@ -218,11 +222,15 @@ export class ReadyPlayerMeService {
 
       return jobId;
     } catch (error) {
-      logger.error('Failed to create Ready Player Me video', {
-        component: 'ReadyPlayerMeService',
-        error: error instanceof Error ? error.message : 'Unknown error',
-        userId: params.userId,
-      });
+      logger.error(
+        'Failed to create Ready Player Me video',
+        undefined,
+        {
+          component: 'ReadyPlayerMeService',
+          error: error instanceof Error ? error.message : 'Unknown error',
+          userId: params.userId,
+        },
+      );
 
       throw error;
     }
@@ -237,7 +245,7 @@ export class ReadyPlayerMeService {
   async getStatus(jobId: string): Promise<AvatarGenerationResult> {
     try {
       // 1. Get job from database
-      const job = await prisma.video_jobs.findUnique({
+      const job = await prisma.render_jobs.findUnique({
         where: { id: jobId },
       });
 
@@ -280,8 +288,9 @@ export class ReadyPlayerMeService {
       }
 
       // 4. Get video URL from job result
-      const metadata = job.metadata as any; // eslint-disable-line @typescript-eslint/no-explicit-any
-      const videoUrl = metadata?.output_url || bullmqStatus.result?.outputUrl;
+      const settings = job.settings as Record<string, unknown> | null;
+      const videoUrl =
+        (settings?.outputUrl as string | undefined) || bullmqStatus.result?.outputUrl;
 
       logger.info('Ready Player Me job status', {
         component: 'ReadyPlayerMeService',
@@ -299,11 +308,14 @@ export class ReadyPlayerMeService {
         cost: 3,
       };
     } catch (error) {
-      logger.error('Failed to get Ready Player Me job status', {
-        component: 'ReadyPlayerMeService',
-        jobId,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      });
+      logger.error(
+        'Failed to get Ready Player Me job status',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          component: 'ReadyPlayerMeService',
+          jobId,
+        },
+      );
 
       return {
         jobId,

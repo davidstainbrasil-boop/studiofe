@@ -50,7 +50,7 @@ import {
   FastForward
 } from 'lucide-react';
 import { useToast } from '@hooks/use-toast';
-import type { TimelineProject } from '@types/advanced-editor';
+import type { TimelineProject } from '@/types/advanced-editor';
 
 // Render Engine Types
 interface RenderJob {

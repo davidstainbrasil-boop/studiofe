@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { logger } from '@/lib/logger';
 
 export async function updateVideoJobWatermark(
   jobId: string,
@@ -10,12 +11,15 @@ export async function updateVideoJobWatermark(
         id: jobId,
       },
       data: {
-        watermark: watermarkText,
-        status: 'PENDING', 
+        status: 'pending',
+        renderSettings: {
+          watermarkText
+        },
       },
     });
+    logger.info(`Updated watermark for job ${jobId}`, { watermarkText });
   } catch (error) {
-    console.error(`Error updating watermark for job ${jobId}:`, error);
+    logger.error(`Error updating watermark for job ${jobId}:`, error as Error);
     throw new Error('Could not update video job with watermark.');
   }
 }

@@ -5,6 +5,8 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@lib/logger'
+import { prisma } from '@lib/prisma'
+import { getSupabaseForRequest } from '@lib/supabase/server'
 
 export async function GET(req: NextRequest) {
   try {
@@ -17,25 +19,72 @@ export async function GET(req: NextRequest) {
       )
     }
 
-    // Mock: retornar usuários ativos
-    const activeUsers = [
-      {
-        id: 'user-1',
-        name: 'João Silva',
-        email: 'joao@empresa.com',
-        role: 'owner',
-        color: '#3B82F6',
-        status: 'online'
+    const supabase = getSupabaseForRequest(req)
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Não autorizado' },
+        { status: 401 }
+      )
+    }
+
+    const project = await prisma.projects.findUnique({
+      where: { id: projectId },
+      select: { id: true, userId: true }
+    })
+
+    if (!project) {
+      return NextResponse.json(
+        { error: 'Projeto não encontrado' },
+        { status: 404 }
+      )
+    }
+
+    const collaboratorRecord = await prisma.project_collaborators.findUnique({
+      where: {
+        project_id_user_id: {
+          project_id: projectId,
+          user_id: user.id
+        }
       },
-      {
-        id: 'user-2',
-        name: 'Maria Santos',
-        email: 'maria@empresa.com',
-        role: 'editor',
-        color: '#10B981',
-        status: 'online'
+      select: { id: true }
+    })
+
+    if (project.userId !== user.id && !collaboratorRecord) {
+      return NextResponse.json(
+        { error: 'Sem permissão para acessar este projeto' },
+        { status: 403 }
+      )
+    }
+
+    const collaborators = await prisma.project_collaborators.findMany({
+      where: { project_id: projectId },
+      select: { user_id: true, role: true }
+    })
+
+    const uniqueUserIds = Array.from(new Set([project.userId, ...collaborators.map((c) => c.user_id)]))
+    const users = await prisma.users.findMany({
+      where: { id: { in: uniqueUserIds } },
+      select: { id: true, email: true, name: true, avatarUrl: true }
+    })
+
+    const userMap = new Map(users.map((profile) => [profile.id, profile]))
+    const palette = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4']
+
+    const activeUsers = uniqueUserIds.map((userId, index) => {
+      const profile = userMap.get(userId)
+      const collaborator = collaborators.find((item) => item.user_id === userId)
+
+      return {
+        id: userId,
+        name: profile?.name || profile?.email || 'Usuário',
+        email: profile?.email || '',
+        role: userId === project.userId ? 'owner' : (collaborator?.role || 'viewer'),
+        color: palette[index % palette.length],
+        status: userId === user.id ? 'online' : 'offline'
       }
-    ]
+    })
 
     return NextResponse.json({
       success: true,

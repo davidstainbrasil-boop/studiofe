@@ -6,10 +6,9 @@
 import { logger } from '@lib/logger';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { createCanvas, loadImage } from 'canvas';
-import { FileObject } from '@supabase/storage-js';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@lib/supabase/database.types';
+import { getRequiredEnv } from '@lib/env';
 
 export interface VideoUploadOptions {
   videoPath: string;
@@ -42,18 +41,8 @@ export class VideoUploader {
   }
 
   private createDefaultSupabaseClient(): SupabaseClient<Database> {
-    // Video upload + DB update são operações server-side.
-    // Em testes, `createClient()` costuma ser mockado; então mesmo valores dummy funcionam.
-    const url =
-      process.env.NEXT_PUBLIC_SUPABASE_URL ||
-      process.env.SUPABASE_URL ||
-      'https://test.supabase.co';
-
-    const key =
-      process.env.SUPABASE_SERVICE_ROLE_KEY ||
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-      process.env.SUPABASE_ANON_KEY ||
-      'test-anon-key';
+    const url = getRequiredEnv('NEXT_PUBLIC_SUPABASE_URL');
+    const key = getRequiredEnv('SUPABASE_SERVICE_ROLE_KEY');
 
     return createClient<Database>(url, key, {
       auth: {
@@ -67,6 +56,12 @@ export class VideoUploader {
    * Upload de vídeo para Supabase Storage with timeout, idempotency, and concurrency control
    */
   async uploadVideo(options: VideoUploadOptions): Promise<string> {
+    // In a strict real environment, we don't mock storage.
+    // If MOCK_STORAGE is set, we throw an error if STRICT_REAL_MODE is on.
+    if (process.env.MOCK_STORAGE === 'true' && process.env.STRICT_REAL_MODE === 'true') {
+        throw new Error('Mock storage is not allowed in strict real mode.');
+    }
+
     const { withTimeout, PIPELINE_TIMEOUTS } = await import('../config/timeout-config');
     const { withStorageConcurrency } = await import('../queue/concurrency-limiter');
     const { withIdempotency, generateStorageIdempotencyKey } = await import('../middleware/idempotency-middleware');
@@ -108,47 +103,6 @@ export class VideoUploader {
    */
   private async uploadVideoInternal(options: VideoUploadOptions): Promise<string> {
     try {
-      // Use local storage if configured OR if in mock/dev mode
-      const useLocalStorage = process.env.STORAGE_TYPE === 'local' || 
-                             (process.env.MOCK_STORAGE === 'true' && process.env.NODE_ENV === 'development');
-
-      if (useLocalStorage) {
-        const isMock = process.env.MOCK_STORAGE === 'true';
-        logger.info(isMock ? 'MOCK STORAGE: Upload vídeo simulado' : 'LOCAL STORAGE: Saving video locally', { 
-          videoPath: options.videoPath 
-        });
-        
-        // Copia para public/uploads/videos
-        const extension = path.extname(options.videoPath);
-        const fileName = `${options.projectId}_${options.jobId}_${Date.now()}${extension}`;
-        const targetPath = path.join(process.cwd(), 'public', 'uploads', 'videos', fileName);
-        
-        await fs.mkdir(path.dirname(targetPath), { recursive: true });
-        await fs.copyFile(options.videoPath, targetPath);
-        
-        // In production, use valid public URL
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-        const videoUrl = `${baseUrl}/uploads/videos/${fileName}`;
-        
-        // 5. Gera thumbnail
-        const thumbnailUrl = await this.generateAndUploadThumbnail(
-          options.videoPath,
-          options.userId,
-          options.jobId
-        );
-
-        // 6. Atualiza tabela render_jobs
-        await this.updateRenderJobRecord(options.jobId, {
-          videoUrl,
-          thumbnailUrl,
-          fileSize: (await fs.stat(options.videoPath)).size,
-          status: 'completed',
-          completedAt: new Date().toISOString()
-        });
-
-        return videoUrl;
-      }
-
       // 1. Lê o arquivo de vídeo
       const videoBuffer = await fs.readFile(options.videoPath);
       const fileSize = videoBuffer.length;
@@ -171,7 +125,8 @@ export class VideoUploader {
             jobId: options.jobId,
             userId: options.userId,
             ...options.metadata
-          }
+          },
+          upsert: true
         });
 
       if (uploadError) {
@@ -255,34 +210,16 @@ export class VideoUploader {
               const thumbnailFileName = `thumb_${jobId}_${Date.now()}.png`;
               const thumbnailStoragePath = `thumbnails/${userId}/${thumbnailFileName}`;
 
-              // [DEV] Mock thumbnail upload (DEV ONLY)
-              if (process.env.MOCK_STORAGE === 'true' && process.env.NODE_ENV === 'development') {
-                 const targetThumbPath = path.join(process.cwd(), 'public', 'uploads', 'thumbnails', thumbnailFileName);
-                 await fs.mkdir(path.dirname(targetThumbPath), { recursive: true });
-                 await fs.writeFile(targetThumbPath, thumbnailBuffer);
-                 
-                 const thumbUrl = `http://localhost:3000/uploads/thumbnails/${thumbnailFileName}`;
-                 await fs.unlink(thumbnailPath).catch((error) => {
-                   logger.debug('Temp thumbnail file already deleted', {
-                     component: 'VideoUploader',
-                     thumbnailPath,
-                     error: error instanceof Error ? error.message : String(error)
-                   });
-                 });
-                 logger.info('MOCK STORAGE: Thumbnail gerada (DEV ONLY)', { thumbUrl });
-                 resolve(thumbUrl);
-                 return;
-              }
-
               const { data, error } = await this.supabase.storage
                 .from('thumbnails')
                 .upload(thumbnailStoragePath, thumbnailBuffer, {
-                  contentType: 'image/png'
+                  contentType: 'image/png',
+                  upsert: true
                 });
 
               if (error) {
                 logger.warn('Thumbnail upload failed', { error: error.message, service: 'VideoUploader' });
-                resolve(''); // Não falha o processo principal
+                resolve(''); 
                 return;
               }
 
@@ -304,23 +241,23 @@ export class VideoUploader {
 
             } catch (error) {
               logger.warn('Thumbnail processing failed', { error: error instanceof Error ? error.message : String(error), service: 'VideoUploader' });
-              resolve(''); // Não falha o processo principal
+              resolve(''); 
             }
           } else {
             logger.warn('FFmpeg thumbnail generation failed', { code, service: 'VideoUploader' });
-            resolve(''); // Não falha o processo principal
+            resolve(''); 
           }
         });
 
         ffmpeg.on('error', (error) => {
           logger.warn('FFmpeg spawn error', { error: error.message, service: 'VideoUploader' });
-          resolve(''); // Não falha o processo principal
+          resolve(''); 
         });
       });
 
     } catch (error) {
       logger.warn('Thumbnail generation failed', { error: error instanceof Error ? error.message : String(error), service: 'VideoUploader' });
-      return ''; // Não falha o processo principal
+      return ''; 
     }
   }
 
@@ -373,141 +310,5 @@ export class VideoUploader {
     };
 
     return contentTypes[extension.toLowerCase()] || 'video/mp4';
-  }
-
-  /**
-   * Upload de vídeo com progresso
-   */
-  async uploadVideoWithProgress(
-    options: VideoUploadOptions,
-    onProgress?: (progress: number) => void
-  ): Promise<string> {
-    const videoBuffer = await fs.readFile(options.videoPath);
-    const fileSize = videoBuffer.length;
-    const chunkSize = 1024 * 1024; // 1MB chunks
-    const totalChunks = Math.ceil(fileSize / chunkSize);
-
-    logger.info('Uploading video in chunks', { totalChunks, fileSize, service: 'VideoUploader' });
-
-    // Para upload com progresso, usaríamos a API multipart do Supabase
-    // Por simplicidade, vamos usar upload direto.
-    // Simula progresso APENAS em desenvolvimento para UX feedback visual
-    if (onProgress && process.env.NODE_ENV === 'development') {
-      for (let i = 0; i <= 100; i += 10) {
-        onProgress(i);
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
-    } else if (onProgress) {
-        // In production, we might just signal 0 and 100 or use real progress if available
-        onProgress(10); // STARTED
-    }
-
-    return this.uploadVideo(options);
-  }
-
-  /**
-   * Lista vídeos de um usuário
-   */
-  async listUserVideos(userId: string): Promise<FileObject[]> {
-    try {
-      const { data, error } = await this.supabase.storage
-        .from('videos')
-        .list(`${userId}/`, {
-          limit: 100,
-          sortBy: { column: "createdAt", order: 'desc' }
-        });
-
-      if (error) {
-        throw error;
-      }
-
-      return data || [];
-    } catch (error) {
-      logger.error('Failed to list user videos', error instanceof Error ? error : new Error(String(error)), { component: 'VideoUploader' });
-      return [];
-    }
-  }
-
-  /**
-   * Remove vídeo do storage
-   */
-  async deleteVideo(videoPath: string): Promise<boolean> {
-    try {
-      const { error } = await this.supabase.storage
-        .from('videos')
-        .remove([videoPath]);
-
-      if (error) {
-        logger.error('Failed to delete video', error instanceof Error ? error : new Error(String(error)), { component: 'VideoUploader' });
-        return false;
-      }
-
-      logger.info(`Video deleted: ${videoPath}`, { component: 'VideoUploader' });
-      return true;
-    } catch (error) {
-      logger.error('Error deleting video', error instanceof Error ? error : new Error(String(error)), { component: 'VideoUploader' });
-      return false;
-    }
-  }
-
-  /**
-   * Obtém informações de um vídeo
-   */
-  async getVideoInfo(videoPath: string): Promise<FileObject | null> {
-    try {
-      const { data, error } = await this.supabase.storage
-        .from('videos')
-        .list('', {
-          search: path.basename(videoPath)
-        });
-
-      if (error || !data || data.length === 0) {
-        return null;
-      }
-
-      return data[0];
-    } catch (error) {
-      logger.error('Failed to get video info', error instanceof Error ? error : new Error(String(error)), { component: 'VideoUploader' });
-      return null;
-    }
-  }
-
-  /**
-   * Verifica espaço disponível no storage
-   */
-  async checkStorageQuota(userId: string): Promise<{
-    used: number;
-    total: number;
-    available: number;
-    percentUsed: number;
-  }> {
-    try {
-      // Lista todos os arquivos do usuário
-      const videos = await this.listUserVideos(userId);
-      
-      const used = videos.reduce((total, video) => {
-        return total + (video.metadata?.size || 0);
-      }, 0);
-
-      // Assumindo quota de 5GB por usuário (configurável)
-      const total = 5 * 1024 * 1024 * 1024; // 5GB em bytes
-      const available = total - used;
-      const percentUsed = (used / total) * 100;
-
-      return {
-        used,
-        total,
-        available,
-        percentUsed
-      };
-    } catch (error) {
-      logger.error('Failed to check storage quota', error instanceof Error ? error : new Error(String(error)), { component: 'VideoUploader' });
-      return {
-        used: 0,
-        total: 5 * 1024 * 1024 * 1024,
-        available: 5 * 1024 * 1024 * 1024,
-        percentUsed: 0
-      };
-    }
   }
 }

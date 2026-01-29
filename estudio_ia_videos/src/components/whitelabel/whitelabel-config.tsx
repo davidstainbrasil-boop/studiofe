@@ -392,7 +392,7 @@ export default function WhiteLabelConfig() {
 
                   <div className="flex items-center justify-between p-3 border rounded-lg">
                     <div>
-                      <p className="font-medium">Remoção de Marca D'água</p>
+                      <p className="font-medium">Remoção de Marca D&apos;água</p>
                       <p className="text-sm text-gray-600">Remover watermarks dos vídeos exportados</p>
                     </div>
                     <Switch 

@@ -8,7 +8,7 @@ import { Checkbox } from '@components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
 import { Slider } from '@components/ui/slider';
 import { X, Filter } from 'lucide-react';
-import { TemplateFilter, NRCategory, TemplateSort } from '@types/templates';
+import { TemplateFilter, NRCategory, TemplateSort } from '@/types/templates';
 
 interface TemplateFiltersProps {
   filter: TemplateFilter;

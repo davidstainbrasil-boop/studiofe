@@ -2,7 +2,7 @@ type HeaderMap = Record<string, string>
 
 const DEFAULT_ALLOWED_ORIGINS = [
   process.env.NEXT_PUBLIC_SITE_URL || 'https://cursostecno.com.br',
-  'http://localhost:3000' // Apenas para desenvolvimento
+  'https://cursostecno.com.br' // Domínio de produção
 ]
 
 export function getSecurityHeaders(isDev = false): HeaderMap {

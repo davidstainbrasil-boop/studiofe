@@ -186,97 +186,91 @@ export default function UnifiedDashboardReal() {
   const loadDashboardData = async () => {
     try {
       setLoading(true)
-      
-      // Simular carregamento de dados (substituir por APIs reais)
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      const mockProjects: Project[] = [
-        {
-          id: '1',
-          name: 'NR-12: Segurança em Máquinas e Equipamentos',
-          type: 'template-nr',
-          status: 'completed',
-          progress: 100,
-          createdAt: '2024-09-20T10:00:00Z',
-          updatedAt: '2024-09-24T15:30:00Z',
-          duration: 480,
-          views: 1247,
-          collaboration: {
-            comments: 8,
-            shares: 23,
-            collaborators: ['user1', 'user2', 'user3']
-          },
-          nrCompliance: {
-            nr: 'NR-12',
-            validated: true,
-            score: 98
-          }
-        },
-        {
-          id: '2',
-          name: 'Apresentação Corporativa Q3 2024',
-          type: 'pptx',
-          status: 'processing',
-          progress: 65,
-          createdAt: '2024-09-24T08:15:00Z',
-          updatedAt: '2024-09-24T18:45:00Z',
-          views: 89,
-          collaboration: {
-            comments: 3,
-            shares: 5,
-            collaborators: ['user1']
-          }
-        },
-        {
-          id: '3',
-          name: 'Avatar CEO - Mensagem Mensal',
-          type: 'talking-photo',
-          status: 'completed',
-          progress: 100,
-          createdAt: '2024-09-23T14:20:00Z',
-          updatedAt: '2024-09-23T16:10:00Z',
-          duration: 120,
-          views: 456,
-          collaboration: {
-            comments: 12,
-            shares: 18,
-            collaborators: ['user1', 'user4']
-          }
-        },
-        {
-          id: '4',
-          name: 'NR-35: Trabalho em Altura',
-          type: 'template-nr',
-          status: 'draft',
-          progress: 20,
-          createdAt: '2024-09-24T19:00:00Z',
-          updatedAt: '2024-09-24T19:30:00Z',
-          views: 0,
-          collaboration: {
-            comments: 0,
-            shares: 0,
-            collaborators: []
-          },
-          nrCompliance: {
-            nr: 'NR-35',
-            validated: false,
-            score: 0
-          }
-        }
-      ]
+      const [projectsResponse, statsResponse] = await Promise.all([
+        fetch('/api/projects?limit=12', { credentials: 'include' }),
+        fetch('/api/dashboard/unified-stats', { credentials: 'include' })
+      ])
 
-      const mockStats: DashboardStats = {
-        totalProjects: 24,
-        completedProjects: 18,
-        totalViews: 15678,
-        totalShares: 234,
-        complianceScore: 94,
-        weeklyGrowth: 12
+      if (!projectsResponse.ok) {
+        throw new Error('Falha ao carregar projetos')
       }
 
-      setProjects(mockProjects)
-      setStats(mockStats)
-      setNotifications(3) // Mock de notificações
+      if (!statsResponse.ok) {
+        throw new Error('Falha ao carregar estatísticas')
+      }
+
+      const projectsPayload = await projectsResponse.json()
+      const statsPayload = await statsResponse.json()
+
+      const normalizeStatus = (status?: string | null): Project['status'] => {
+        switch (status) {
+          case 'completed':
+            return 'completed'
+          case 'processing':
+          case 'queued':
+          case 'in_progress':
+            return 'processing'
+          case 'error':
+          case 'failed':
+            return 'error'
+          default:
+            return 'draft'
+        }
+      }
+
+      const normalizeType = (type?: string | null): Project['type'] => {
+        switch (type) {
+          case 'template-nr':
+          case 'template_nr':
+            return 'template-nr'
+          case 'talking-photo':
+          case 'talking_photo':
+            return 'talking-photo'
+          case 'pptx':
+            return 'pptx'
+          default:
+            return 'custom'
+        }
+      }
+
+      const realProjects: Project[] = (projectsPayload?.data || []).map((project: any) => ({
+        id: project.id,
+        name: project.name,
+        type: normalizeType(project.type),
+        status: normalizeStatus(project.status),
+        progress: project.status === 'completed' ? 100 : project.status === 'draft' ? 0 : 50,
+        createdAt: project.createdAt || project.created_at || new Date().toISOString(),
+        updatedAt: project.updatedAt || project.updated_at || new Date().toISOString(),
+        duration: project.duration || undefined,
+        views: project.views || 0,
+        collaboration: {
+          comments: 0,
+          shares: 0,
+          collaborators: []
+        },
+        nrCompliance: project.nrCompliance
+          ? {
+              nr: project.nrCompliance.nr,
+              validated: project.nrCompliance.validated,
+              score: project.nrCompliance.score
+            }
+          : undefined
+      }))
+
+      const completedCount = realProjects.filter((project) => project.status === 'completed').length
+
+      const realStats: DashboardStats = {
+        totalProjects: statsPayload.totalProjects ?? realProjects.length,
+        completedProjects: completedCount,
+        totalViews: statsPayload.totalViews ?? 0,
+        totalShares: 0,
+        complianceScore: 0,
+        weeklyGrowth: 0
+      }
+
+      setProjects(realProjects)
+      setStats(realStats)
+      setNotifications(0)
     } catch (error) {
       logger.error('Erro ao carregar dashboard', error instanceof Error ? error : new Error(String(error)), { component: 'UnifiedDashboardReal' })
       toast.error('Erro ao carregar dashboard')

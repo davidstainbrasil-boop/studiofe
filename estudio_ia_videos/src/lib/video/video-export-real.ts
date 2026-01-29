@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto'
-import type { Prisma, VideoExport as VideoExportRecord } from '@prisma/client'
+import type { Prisma, render_jobs as RenderJobRecord, PriorityLevel } from '@prisma/client'
 
 import { logger } from '@lib/logger'
 import { prisma } from '@lib/prisma'
@@ -43,7 +43,7 @@ export type VideoExportStatus = 'queued' | 'processing' | 'completed' | 'error' 
 
 export interface VideoExportJob {
   id: string
-  projectId: string
+  projectId: string | null
   status: VideoExportStatus
   progress: number
   outputUrl: string | null
@@ -98,9 +98,10 @@ export async function exportProjectVideo(
   context?: ExportContext
 ): Promise<ExportProjectVideoResult> {
   try {
+    // 1. Buscar projeto
     const project = await prisma.projects.findUnique({
       where: { id: projectId },
-      select: { id: true, userId: true, totalSlides: true, duration: true, status: true }
+      select: { id: true, userId: true, status: true, slides: { select: { duration: true } } }
     })
 
     if (!project) {
@@ -108,73 +109,50 @@ export async function exportProjectVideo(
       return { success: false, error: 'Projeto não encontrado' }
     }
 
+    // Calcular duração total (já que não tem no modelo projects)
+    const totalDuration = project.slides.reduce((acc, slide) => acc + (slide.duration || 5), 0)
+    const totalSlides = project.slides.length
+
     const now = new Date()
     const jobId = randomUUID()
-    const requestId = context?.requestId ?? jobId
     const queuePriority = resolvePriority(context?.priority, project.status)
     const resolution = QUALITY_TO_RESOLUTION[options.quality] ?? QUALITY_TO_RESOLUTION.hd
     const serializableOptions = serializeOptions(options)
 
-    const processingLog: Prisma.JsonObject = {
-      startedAt: now.toISOString(),
-      trigger: context?.trigger ?? 'manual',
-      requestId,
-      options: serializableOptions,
-      events: [
-        {
-          at: now.toISOString(),
-          status: 'queued',
-          message: 'Job registrado na fila de exportação',
-          progress: 0
-        }
-      ]
+    // Estrutura de settings para render_jobs
+    const renderSettings: Prisma.JsonObject = {
+        ...serializableOptions,
+        resolution,
+        trigger: context?.trigger ?? 'manual',
     }
 
-    await prisma.$transaction(async (tx) => {
-      await tx.video_exports.create({
-        data: {
-          id: jobId,
-          projectId,
-          userId: context?.userId ?? project.userId,
-          format: options.format,
-          quality: options.quality,
-          resolution,
-          fps: options.fps,
-          status: 'queued',
-          progress: 0,
-          processingLog,
-          updatedAt: now
-        }
-      })
+    // Mapeamento de prioridade manual
+    let dbPriority: PriorityLevel = 'medium';
+    if (context?.priority === 'low') dbPriority = 'low';
+    if (context?.priority === 'high') dbPriority = 'high';
+    if (context?.priority === 'urgent') dbPriority = 'urgent';
+    // 'normal' maps to 'medium'
 
-      const queuePayload: Prisma.JsonObject = {
-        videoExportId: jobId,
-        projectId,
-        options: serializableOptions,
-        trigger: context?.trigger ?? 'manual',
-        requestId
-      }
-
-      await tx.processing_queue.create({
+    // 2. Criar Job na tabela render_jobs
+    await prisma.render_jobs.create({
         data: {
-          id: randomUUID(),
-          jobType: 'video_export',
-          jobData: queuePayload,
-          status: 'pending',
-          priority: queuePriority,
-          scheduledFor: now,
-          progress: 0,
-          currentStep: 'waiting_worker',
-          maxAttempts: 3,
-          createdAt: now,
-          updatedAt: now
+            id: jobId,
+            projectId,
+            userId: context?.userId ?? project.userId,
+            status: 'queued', 
+            progress: 0,
+            renderSettings,
+            settings: renderSettings,
+            priority: dbPriority,
+            createdAt: now,
+            updatedAt: now,
+            estimatedDuration: estimateExportDurationMinutes(totalSlides, totalDuration, options) * 60
         }
-      })
     })
 
     const estimatedCompletionMinutes = estimateExportDurationMinutes(
-      project.totalSlides ?? 0,
-      project.duration ?? 0,
+      totalSlides,
+      totalDuration,
       options
     )
 
@@ -203,7 +181,7 @@ export async function getExportJobStatus(
   jobId: string
 ): Promise<{ job?: VideoExportJob; error?: string }> {
   try {
-    const jobRecord = await prisma.video_exports.findUnique({ where: { id: jobId } })
+    const jobRecord = await prisma.render_jobs.findUnique({ where: { id: jobId } })
 
     if (!jobRecord) {
       return { error: 'Job não encontrado' }
@@ -259,24 +237,24 @@ function estimateExportDurationMinutes(
   return Math.max(2, Math.round(estimated / 60))
 }
 
-function mapRecordToJob(record: VideoExportRecord): VideoExportJob {
-  const log = asJsonObject(record.processingLog)
-  const options = asJsonObject(log?.options)
-  const startedAt = extractTimestamp(log, 'startedAt') ?? record.createdAt
-  const completedAt = TERMINAL_STATUSES.has(normalizeStatus(record.status))
-    ? extractTimestamp(log, 'completedAt') ?? record.updatedAt
-    : null
-
+function mapRecordToJob(record: RenderJobRecord): VideoExportJob {
+  const settings = asJsonObject(record.renderSettings || record.settings)
+  
   return {
     id: record.id,
     projectId: record.projectId,
-    status: normalizeStatus(record.status),
+    status: normalizeStatus(record.status || 'pending'),
     progress: record.progress ?? 0,
-    outputUrl: record.videoUrl ?? record.fileUrl ?? null,
-    error: record.errorMessage ?? null,
-    startedAt,
-    completedAt,
-    metadata: buildMetadata(record, options, log)
+    outputUrl: record.outputUrl,
+    error: record.errorMessage,
+    startedAt: record.startedAt,
+    completedAt: record.completedAt,
+    metadata: {
+        settings,
+        durationMs: record.durationMs,
+        attempts: record.attempts,
+        priority: record.priority
+    }
   }
 }
 
@@ -291,63 +269,10 @@ function normalizeStatus(status: string): VideoExportStatus {
   return 'processing'
 }
 
-function extractTimestamp(log: Prisma.JsonObject | null, key: 'startedAt' | 'completedAt'): Date | null {
-  if (!log) return null
-  const raw = log[key]
-  if (typeof raw === 'string') {
-    const parsed = new Date(raw)
-    if (!Number.isNaN(parsed.getTime())) return parsed
-  }
-
-  const eventsRaw = log.events
-  const events = Array.isArray(eventsRaw) ? (eventsRaw as Array<Record<string, unknown>>) : []
-  const target = key === 'startedAt' ? 'processing' : 'completed'
-  const found = events.find((event) => event.status === target && typeof event.at === 'string')
-
-  if (found && typeof found.at === 'string') {
-    const parsed = new Date(found.at)
-    if (!Number.isNaN(parsed.getTime())) return parsed
-  }
-
-  return null
-}
-
 function asJsonObject(value: Prisma.JsonValue | null | undefined): Prisma.JsonObject | null {
   if (!value) return null
   if (typeof value === 'object' && !Array.isArray(value)) {
     return value as Prisma.JsonObject
   }
   return null
-}
-
-function buildMetadata(
-  record: VideoExportRecord,
-  options: Prisma.JsonObject | null,
-  log: Prisma.JsonObject | null
-): Record<string, unknown> {
-  const fileSize = typeof record.fileSize === 'bigint' ? Number(record.fileSize) : record.fileSize
-  const includeAudioValue = typeof options?.includeAudio === 'boolean' ? options?.includeAudio : true
-  const codecValue = typeof options?.codec === 'string' ? (options?.codec as string) : record.format
-  const presetValue = typeof options?.preset === 'string' ? (options?.preset as string) : null
-  const bitrateValue = typeof options?.bitrate === 'string' ? (options?.bitrate as string) : null
-
-  const metadata: Record<string, unknown> = {
-    format: record.format,
-    quality: record.quality,
-    resolution: record.resolution,
-    fps: record.fps,
-    duration: record.duration ?? null,
-    fileName: record.fileName ?? null,
-    fileSize: fileSize ?? null,
-    includeAudio: includeAudioValue,
-    codec: codecValue,
-    preset: presetValue,
-    bitrate: bitrateValue,
-    updatedAt: record.updatedAt,
-    options,
-    processingLog: log,
-    outputUrl: record.videoUrl ?? record.fileUrl ?? null
-  }
-
-  return metadata
 }

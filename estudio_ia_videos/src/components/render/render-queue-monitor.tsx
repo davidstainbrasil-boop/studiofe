@@ -110,7 +110,7 @@ export default function RenderQueueMonitor() {
           current_step: 'Render completed successfully',
           cost_so_far: 0.85,
           output_url: 'https://cdn.estudio-ia.com/renders/job-2.mp4',
-          thumbnailUrl: 'https://miro.medium.com/v2/resize:fit:1400/1*hyTsMqvcXD70uo7jGzrZjQ.png'
+          thumbnail_url: 'https://miro.medium.com/v2/resize:fit:1400/1*hyTsMqvcXD70uo7jGzrZjQ.png'
         },
         {
           id: 'job-3',
@@ -314,11 +314,11 @@ export default function RenderQueueMonitor() {
                       </Button>
                     )}
                     
-                    {job.stage === 'complete' && job.thumbnailUrl && (
+                    {job.stage === 'complete' && job.thumbnail_url && (
                       <Button 
                         variant="outline" 
                         size="sm"
-                        onClick={() => window.open(job.thumbnailUrl, '_blank')}
+                        onClick={() => window.open(job.thumbnail_url, '_blank')}
                       >
                         <Eye className="w-4 h-4" />
                       </Button>
@@ -391,11 +391,11 @@ export default function RenderQueueMonitor() {
                         </span>
                       </div>
                       <div className="flex gap-2">
-                        {job.thumbnailUrl && (
+                        {job.thumbnail_url && (
                           <Button 
                             variant="outline" 
                             size="sm"
-                            onClick={() => window.open(job.thumbnailUrl, '_blank')}
+                            onClick={() => window.open(job.thumbnail_url, '_blank')}
                           >
                             <Eye className="w-4 h-4 mr-1" />
                             Preview

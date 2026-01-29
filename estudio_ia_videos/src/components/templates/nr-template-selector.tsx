@@ -20,14 +20,19 @@ import { useRouter } from 'next/navigation';
 
 interface NRTemplate {
   id: string;
-  nr: string;
+  nrNumber: string;
   title: string;
   description: string;
   category: string;
-  duration: number;
-  thumbnailUrl: string;
-  certification?: string;
-  slides: Record<string, unknown>[];
+  slideCount: number;
+  durationSeconds: number;
+  durationFormatted: string;
+  tags: string[];
+  compliance: {
+    version: string;
+    lastUpdate: string;
+    source?: string;
+  };
 }
 
 interface NRTemplateSelectorProps {
@@ -136,7 +141,7 @@ export default function NRTemplateSelector({ open, onClose }: NRTemplateSelector
                     <CardHeader>
                       <div className="flex items-start justify-between">
                         <div>
-                          <Badge className="mb-2">{template.nr}</Badge>
+                          <Badge className="mb-2">{template.nrNumber}</Badge>
                           <CardTitle className="text-lg">{template.title}</CardTitle>
                         </div>
                         {selectedTemplate?.id === template.id && (
@@ -151,17 +156,17 @@ export default function NRTemplateSelector({ open, onClose }: NRTemplateSelector
                       <div className="flex items-center justify-between text-sm text-gray-600">
                         <div className="flex items-center gap-1">
                           <Clock className="w-4 h-4" />
-                          {formatDuration(template.duration)}
+                          {template.durationFormatted}
                         </div>
                         <div className="flex items-center gap-1">
                           <Play className="w-4 h-4" />
-                          {template.slides?.length || 0} slides
+                          {template.slideCount} slides
                         </div>
                       </div>
-                      {template.certification && (
+                      {template.compliance && (
                         <div className="flex items-center gap-1 mt-2 text-sm text-green-600">
                           <Award className="w-4 h-4" />
-                          {template.certification}
+                          {template.compliance.version}
                         </div>
                       )}
                     </CardContent>
@@ -175,7 +180,7 @@ export default function NRTemplateSelector({ open, onClose }: NRTemplateSelector
           {selectedTemplate && (
             <Card className="w-96 flex flex-col">
               <CardHeader>
-                <Badge className="w-fit mb-2">{selectedTemplate.nr}</Badge>
+                <Badge className="w-fit mb-2">{selectedTemplate.nrNumber}</Badge>
                 <CardTitle>{selectedTemplate.title}</CardTitle>
                 <CardDescription>{selectedTemplate.description}</CardDescription>
               </CardHeader>
@@ -194,30 +199,30 @@ export default function NRTemplateSelector({ open, onClose }: NRTemplateSelector
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <div className="text-gray-600">Duração</div>
-                      <div className="font-medium">{formatDuration(selectedTemplate.duration)}</div>
+                      <div className="font-medium">{selectedTemplate.durationFormatted}</div>
                     </div>
                     <div>
                       <div className="text-gray-600">Slides</div>
-                      <div className="font-medium">{selectedTemplate.slides?.length || 0}</div>
+                      <div className="font-medium">{selectedTemplate.slideCount}</div>
                     </div>
                     <div>
                       <div className="text-gray-600">Categoria</div>
                       <div className="font-medium">{selectedTemplate.category}</div>
                     </div>
                     <div>
-                      <div className="text-gray-600">Certificação</div>
-                      <div className="font-medium">{selectedTemplate.certification || 'N/A'}</div>
+                      <div className="text-gray-600">Compliance</div>
+                      <div className="font-medium">{selectedTemplate.compliance?.version || 'N/A'}</div>
                     </div>
                   </div>
 
-                  {selectedTemplate.certification && (
+                  {selectedTemplate.compliance && (
                     <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
                       <div className="flex items-start gap-2">
                         <Award className="w-5 h-5 text-green-600 mt-0.5" />
                         <div>
-                          <div className="font-medium text-green-900">Template Certificado</div>
+                          <div className="font-medium text-green-900">Template em Conformidade</div>
                           <div className="text-sm text-green-700">
-                            Este template está em conformidade com as normas do MTE
+                            {selectedTemplate.compliance.version} - Atualizado em {selectedTemplate.compliance.lastUpdate}
                           </div>
                         </div>
                       </div>

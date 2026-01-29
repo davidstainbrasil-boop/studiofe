@@ -35,11 +35,10 @@ jest.doMock('@/lib/render/ffmpeg-executor', () => {
 // Mock do FrameGenerator para evitar a criação real de imagens
 jest.mock('@/lib/render/frame-generator', () => {
     return {
-        FrameGenerator: jest.fn().mockImplementation(() => {
-            return {
-                generateFrames: jest.fn().mockResolvedValue({ success: true, totalFrames: 120 }),
-            };
-        }),
+        FrameGenerator: class {
+            static convertPPTXSlidesToFrames = jest.fn().mockReturnValue([]);
+            generateFrames = jest.fn().mockResolvedValue({ success: true, totalFrames: 120, framesDir: 'mock/frames' });
+        }
     };
 });
 
@@ -77,10 +76,14 @@ describe('Video Render Pipeline Integration', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    const FrameGeneratorClass = require('@/lib/render/frame-generator').FrameGenerator;
+    const mockFrameGenerator = new FrameGeneratorClass();
+    console.log('DEBUG: mockFrameGenerator', mockFrameGenerator);
+    console.log('DEBUG: mockFrameGenerator.generateFrames type', typeof mockFrameGenerator.generateFrames);
+    
     const mockFFmpegExecutor = new (require('@/lib/render/ffmpeg-executor').FFmpegExecutor)();
-    const mockFrameGenerator = new (require('@/lib/render/frame-generator').FrameGenerator)();
     const mockVideoUploader = new (require('@/lib/storage/video-uploader').VideoUploader)();
-    worker = new VideoRenderWorker(mockFFmpegExecutor, mockFrameGenerator, mockVideoUploader);
+    worker = new VideoRenderWorker(mockFrameGenerator, mockFFmpegExecutor, mockVideoUploader);
   });
 
   describe('Full Pipeline', () => {
@@ -112,10 +115,10 @@ describe('Video Render Pipeline Integration', () => {
       expect(prisma.render_jobs.update).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: jobData.id },
-          data: {
+          data: expect.objectContaining({
             status: 'completed',
-            output_url: resultUrl,
-          },
+            outputUrl: resultUrl,
+          }),
         })
       );
     });

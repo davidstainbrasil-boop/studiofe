@@ -6,6 +6,7 @@
  */
 
 import { prisma } from '@lib/prisma';
+import { Prisma } from '@prisma/client';
 import { logger } from '@lib/logger';
 
 export interface StorageQuota {
@@ -46,6 +47,18 @@ export const DEFAULT_QUOTAS = {
   ENTERPRISE: 100 * 1024 * 1024 * 1024 // 100GB
 } as const;
 
+type SubscriptionTier = keyof typeof DEFAULT_QUOTAS;
+
+const normalizeTier = (value?: string | null): SubscriptionTier => {
+  const normalized = (value || 'FREE').toUpperCase();
+  return (normalized in DEFAULT_QUOTAS ? normalized : 'FREE') as SubscriptionTier;
+};
+
+const getNumberFromRecord = (record: Record<string, unknown> | null, key: string) => {
+  const value = record?.[key];
+  return typeof value === 'number' ? value : 0;
+};
+
 /**
  * Calculate user's current storage usage
  */
@@ -57,28 +70,29 @@ export async function calculateUserStorageUsage(userId: string): Promise<number>
     const projects = await prisma.projects.findMany({
       where: { userId },
       select: {
-        pptxFileSize: true,
-        videoFileSize: true
-      }
+        metadata: true,
+      },
     });
 
     // Sum up all render outputs
     const renders = await prisma.render_jobs.findMany({
       where: { userId, status: 'completed' },
-      select: { outputSize: true }
+      select: { settings: true },
     });
 
     let totalUsage = 0;
 
     // Add project files
     for (const project of projects) {
-      totalUsage += project.pptxFileSize || 0;
-      totalUsage += project.videoFileSize || 0;
+      const metadata = (project.metadata as Record<string, unknown> | null) || null;
+      totalUsage += getNumberFromRecord(metadata, 'pptxFileSize');
+      totalUsage += getNumberFromRecord(metadata, 'videoFileSize');
     }
 
     // Add render outputs
     for (const render of renders) {
-      totalUsage += render.outputSize || 0;
+      const settings = (render.settings as Record<string, unknown> | null) || null;
+      totalUsage += getNumberFromRecord(settings, 'outputSize');
     }
 
     logger.info('Storage usage calculated', {
@@ -102,7 +116,7 @@ export async function getUserQuotaLimit(userId: string): Promise<number> {
     // Check if user has a subscription
     const user = await prisma.users.findUnique({
       where: { id: userId },
-      select: { subscriptionTier: true }
+      select: { plan_tier: true }
     });
 
     if (!user) {
@@ -110,8 +124,8 @@ export async function getUserQuotaLimit(userId: string): Promise<number> {
     }
 
     // Map subscription tier to quota
-    const tier = user.subscriptionTier || 'FREE';
-    const limit = DEFAULT_QUOTAS[tier as keyof typeof DEFAULT_QUOTAS] || DEFAULT_QUOTAS.FREE;
+    const tier = normalizeTier(user.plan_tier);
+    const limit = DEFAULT_QUOTAS[tier];
 
     logger.debug('User quota limit determined', {
       userId,
@@ -179,7 +193,7 @@ export async function checkQuota(
         requiredSpace
       };
 
-      logger.warn('Quota check failed', result);
+      logger.warn('Quota check failed', result as unknown as Record<string, unknown>);
       return result;
     }
 
@@ -190,7 +204,7 @@ export async function checkQuota(
       requiredSpace
     };
 
-    logger.debug('Quota check passed', result);
+    logger.debug('Quota check passed', result as unknown as Record<string, unknown>);
     return result;
   } catch (error) {
     logger.error('Quota check error', error instanceof Error ? error : new Error(String(error)), { userId, requiredSpace });
@@ -231,9 +245,16 @@ export async function updateProjectFileSize(
   size: number
 ): Promise<void> {
   try {
+    const project = await prisma.projects.findUnique({
+      where: { id: projectId },
+      select: { metadata: true },
+    });
+    const currentMetadata = (project?.metadata as Record<string, unknown> | null) || {};
+    const nextMetadata = { ...currentMetadata, [field]: size };
+
     await prisma.projects.update({
       where: { id: projectId },
-      data: { [field]: size }
+      data: { metadata: nextMetadata as Prisma.InputJsonValue }
     });
 
     logger.info('Project file size updated', { projectId, field, size });
@@ -254,9 +275,16 @@ export async function updateRenderOutputSize(
   size: number
 ): Promise<void> {
   try {
+    const render = await prisma.render_jobs.findUnique({
+      where: { id: jobId },
+      select: { settings: true },
+    });
+    const currentSettings = (render?.settings as Record<string, unknown> | null) || {};
+    const nextSettings = { ...currentSettings, outputSize: size };
+
     await prisma.render_jobs.update({
       where: { id: jobId },
-      data: { outputSize: size }
+      data: { settings: nextSettings as Prisma.InputJsonValue }
     });
 
     logger.info('Render output size updated', { jobId, size });
@@ -300,15 +328,14 @@ export async function suggestFilesToDelete(userId: string, targetBytes: number) 
       where: {
         userId,
         status: 'completed',
-        outputSize: { gt: 0 }
       },
-      orderBy: { completed_at: 'asc' },
+      orderBy: { completedAt: 'asc' },
       select: {
         id: true,
         projectId: true,
-        output_url: true,
-        outputSize: true,
-        completed_at: true
+        outputUrl: true,
+        settings: true,
+        completedAt: true
       }
     });
 
@@ -318,14 +345,17 @@ export async function suggestFilesToDelete(userId: string, targetBytes: number) 
     for (const render of oldRenders) {
       if (accumulated >= targetBytes) break;
 
+      const settings = (render.settings as Record<string, unknown> | null) || null;
+      const outputSize = getNumberFromRecord(settings, 'outputSize');
+
       suggestions.push({
         jobId: render.id,
         projectId: render.projectId || '',
-        size: render.outputSize || 0,
-        date: render.completed_at
+        size: outputSize,
+        date: render.completedAt
       });
 
-      accumulated += render.outputSize || 0;
+      accumulated += outputSize;
     }
 
     return {

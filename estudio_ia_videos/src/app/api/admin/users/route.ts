@@ -10,26 +10,33 @@ export async function GET(req: NextRequest) {
         const { isAdmin, response } = await requireAdmin(req);
         if (!isAdmin) return response!;
 
-        const users = await prisma.users.findMany({
+        const records = await prisma.users.findMany({
             select: {
                 id: true,
                 email: true,
                 name: true,
                 role: true,
                 plan_tier: true,
-                created_at: true,
+                createdAt: true,
             },
             orderBy: {
-                created_at: 'desc'
+                createdAt: 'desc'
             },
             take: 100
         });
 
-        // Map for frontend compatibility if needed, or send as is
+        const users = records.map((user) => ({
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+            plan_tier: user.plan_tier,
+            created_at: user.createdAt
+        }));
+
         return NextResponse.json({ users });
     } catch (error) {
         logger.error('Failed to fetch users', error instanceof Error ? error : new Error(String(error)));
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }
-

@@ -94,7 +94,8 @@ export class CircuitBreaker {
           return await Promise.resolve(fallback());
         }
 
-        throw new Error(`Circuit breaker ${this.options.name} is OPEN`);
+        const err = new Error(`Circuit breaker ${this.options.name} is OPEN`);
+        throw err;
       }
     }
 
@@ -163,12 +164,16 @@ export class CircuitBreaker {
     this.stats.state = CircuitState.OPEN;
     this.stats.successes = 0;
 
-    logger.error(`Circuit breaker ${this.options.name} opened`, {
-      component: 'CircuitBreaker',
-      circuit: this.options.name,
-      failures: this.stats.failures,
-      totalFailures: this.stats.totalFailures,
-    });
+    logger.error(
+      `Circuit breaker ${this.options.name} opened`,
+      undefined,
+      {
+        component: 'CircuitBreaker',
+        circuit: this.options.name,
+        failures: this.stats.failures,
+        totalFailures: this.stats.totalFailures,
+      },
+    );
 
     // Alert via Sentry
     if (Sentry) {
@@ -334,4 +339,3 @@ export async function withCircuitBreaker<T>(
   const circuit = circuitBreakerRegistry.getOrCreate(name, options);
   return circuit.execute(fn, fallback);
 }
-

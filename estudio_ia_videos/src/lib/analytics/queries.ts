@@ -104,7 +104,7 @@ export async function getProjectStats(userId: string, limit: number): Promise<Pr
     .order('last_accessed_at', { ascending: false })
     .limit(limit);
 
-  return (projects || []).map(p => ({
+  return (projects || []).map((p: { id: string; name: string; last_accessed_at: string | null }) => ({
     projectId: p.id,
     projectName: p.name,
     uploads: 0,

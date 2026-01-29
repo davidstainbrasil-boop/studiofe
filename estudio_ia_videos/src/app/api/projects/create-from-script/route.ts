@@ -1,7 +1,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseForRequest } from '@lib/supabase/server';
-import { searchBatchMedia } from '@lib/services/stock-service';
+import { assetsManager } from '@/lib/assets-manager';
 import { logger } from '@lib/logger';
 import { z } from 'zod';
 
@@ -67,7 +67,22 @@ export async function POST(req: NextRequest) {
     // 1. Fetch real Stock Media for scenes
     // Extract first visual cue from each scene as query
     const queries = scenes.map(s => s.visual_cues[0] || `${nr} safety training`);
-    const stockAssets = await searchBatchMedia(queries);
+    
+    // Parallel search for assets
+    const stockAssets = await Promise.all(queries.map(async (query) => {
+        try {
+            // Prefer video for scenes
+            const videos = await assetsManager.searchAll(query, { type: 'video' });
+            if (videos.length > 0) return videos[0];
+            
+            // Fallback to images
+            const images = await assetsManager.searchAll(query, { type: 'image' });
+            return images.length > 0 ? images[0] : null;
+        } catch (e) {
+            logger.warn(`Failed to find asset for query: ${query}`);
+            return null;
+        }
+    }));
 
     // 2. Create Project
     const { data: project, error: projectError } = await supabase

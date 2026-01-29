@@ -2,6 +2,7 @@
 /**
  * 🤝 Timeline Collaboration API - Real-time Collaboration
  * Sprint 44 - Multi-user timeline editing
+ * NOTE: timeline_track_locks table not yet in schema, using in-memory map
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -9,6 +10,21 @@ import { prisma } from '@lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
 import { logger } from '@lib/logger';
+
+// In-memory lock storage (TODO: migrate to database when timeline_track_locks table exists)
+interface TrackLock {
+  id: string;
+  projectId: string;
+  trackId: string;
+  userId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+const trackLocksMap = new Map<string, TrackLock>();
+
+function getLockKey(projectId: string, trackId: string): string {
+  return `${projectId}:${trackId}`;
+}
 
 /**
  * POST - Lock/Unlock track for editing
@@ -48,12 +64,8 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === 'lock') {
-      const existingLock = await prisma.timeline_track_locks.findFirst({
-        where: {
-          projectId,
-          trackId,
-        },
-      });
+      const lockKey = getLockKey(projectId, trackId);
+      const existingLock = trackLocksMap.get(lockKey);
 
       if (existingLock && existingLock.userId !== session.user.id) {
         return NextResponse.json(
@@ -62,34 +74,24 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      const lock = await prisma.timeline_track_locks.upsert({
-        where: {
-          projectId_trackId_userId: {
-            projectId,
-            trackId,
-            userId: session.user.id,
-          },
-        },
-        update: {
-          updatedAt: new Date(),
-        },
-        create: {
-          id: `lock_${projectId}_${trackId}_${Date.now()}`,
-          projectId,
-          trackId,
-          userId: session.user.id,
-        },
-      });
+      const lock: TrackLock = {
+        id: `lock_${projectId}_${trackId}_${Date.now()}`,
+        projectId,
+        trackId,
+        userId: session.user.id,
+        createdAt: existingLock?.createdAt || new Date(),
+        updatedAt: new Date(),
+      };
+      trackLocksMap.set(lockKey, lock);
 
       return NextResponse.json({ success: true, data: lock });
     } else if (action === 'unlock') {
-      await prisma.timeline_track_locks.deleteMany({
-        where: {
-          projectId,
-          trackId,
-          userId: session.user.id,
-        },
-      });
+      const lockKey = getLockKey(projectId, trackId);
+      const existingLock = trackLocksMap.get(lockKey);
+      
+      if (existingLock?.userId === session.user.id) {
+        trackLocksMap.delete(lockKey);
+      }
 
       return NextResponse.json({ success: true });
     } else {
@@ -132,61 +134,28 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get all active locks
-    const locks = await prisma.timeline_track_locks.findMany({
-      where: { projectId },
-      include: {
-        users: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            avatarUrl: true,
-          },
-        },
-      },
+    // Get all active locks from in-memory storage
+    const locks: TrackLock[] = [];
+    trackLocksMap.forEach((lock) => {
+      if (lock.projectId === projectId) {
+        locks.push(lock);
+      }
     });
 
-    // Get active users (presence)
-    const activeUsers = await prisma.timeline_presence.findMany({
-      where: {
-        projectId,
-        lastSeenAt: {
-          gte: new Date(Date.now() - 5 * 60 * 1000), // Last 5 minutes
-        },
-      },
-      include: {
-        users: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            avatarUrl: true,
-          },
-        },
-      },
-    });
+    // TODO: Get active users (presence) - timeline_presence table not in schema
+    const activeUsers: unknown[] = [];
 
-    interface LockRecord { id: string; trackId: string; userId: string; users: { name: string | null; avatarUrl: string | null }; createdAt: Date }
-    interface PresenceRecord { userId: string; users: { name: string | null; avatarUrl: string | null }; lastSeenAt: Date; currentTrackId?: string | null }
+    interface LockResponse { id: string; trackId: string; userId: string; lockedAt: string }
     return NextResponse.json({
       success: true,
       data: {
-        locks: locks.map((lock: LockRecord) => ({
+        locks: locks.map((lock): LockResponse => ({
           id: lock.id,
           trackId: lock.trackId,
           userId: lock.userId,
-          userName: lock.users.name || 'Unknown',
-          userImage: lock.users.avatarUrl,
           lockedAt: lock.createdAt.toISOString(),
         })),
-        activeUsers: activeUsers.map((presence: PresenceRecord) => ({
-          userId: presence.userId,
-          userName: presence.users.name || 'Unknown',
-          userImage: presence.users.avatarUrl,
-          lastSeenAt: presence.lastSeenAt.toISOString(),
-          currentTrackId: presence.currentTrackId || undefined,
-        })),
+        activeUsers: activeUsers,
       },
     });
 

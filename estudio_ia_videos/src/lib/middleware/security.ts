@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { rateLimit } from '../../../lib/utils/rate-limit';
+import { globalRateLimiter } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 import { z } from 'zod';
 
@@ -169,7 +169,7 @@ export function validateInputMiddleware<T extends z.ZodSchema>(schema: T) {
                 body = JSON.parse(text);
                 body = sanitizeInput(body);
             } catch (error) {
-                logger.warn('Invalid JSON in request', { error: error.message });
+                logger.warn(`Invalid JSON in request: ${error instanceof Error ? error.message : 'Unknown error'}`);
                 return NextResponse.json(
                     { error: 'Invalid JSON' },
                     { status: 400 }
@@ -200,7 +200,7 @@ export function validateInputMiddleware<T extends z.ZodSchema>(schema: T) {
             return NextResponse.next();
             
         } catch (error) {
-            logger.error('Input validation error:', error);
+            logger.error('Input validation error', error instanceof Error ? error : new Error(String(error)));
             return NextResponse.json(
                 { error: 'Internal server error' },
                 { status: 500 }
@@ -229,11 +229,11 @@ export function createRateLimiter(options: {
     return async (req: NextRequest) => {
         const identifier = req.ip || 'anonymous';
         
-        const { success, limit, remaining, reset } = await rateLimit(
-            identifier,
-            windowMs,
-            max
-        );
+        const result = globalRateLimiter.check(identifier);
+        const success = result.success;
+        const limit = result.limit;
+        const remaining = result.remaining;
+        const reset = result.resetTime;
         
         if (!success) {
             logger.warn('Rate limit exceeded', {
@@ -387,7 +387,7 @@ export function fileUploadMiddleware() {
             return NextResponse.next();
             
         } catch (error) {
-            logger.error('File upload middleware error:', error);
+            logger.error('File upload middleware error', error instanceof Error ? error : new Error(String(error)));
             return NextResponse.json(
                 { error: 'File upload processing failed' },
                 { status: 500 }

@@ -32,7 +32,7 @@ export class IntelligentRecommendationSystem {
         orderBy: { updatedAt: 'desc' } // Simple heuristic: newest first
       });
 
-      templates.forEach(t => {
+      templates.forEach((t: { id: string; title: string; description: string | null; nrNumber: string; durationSeconds: number }) => {
         recommendations.push({
           id: t.id,
           type: 'template',

@@ -7,7 +7,26 @@
  * - Each Track contains TimelineElements with temporal properties
  */
 
-import { CanvasElement } from './canvas';
+import { TransitionConfig } from '@lib/video/scene-transitions';
+
+export interface CanvasElement {
+  id: string;
+  type: 'video' | 'image' | 'text' | 'shape';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotation: number;
+  scaleX: number;
+  scaleY: number;
+  src?: string;
+  text?: string;
+  fill?: string;
+  zIndex: number;
+  startTime: number;
+  duration: number;
+  trackId: string;
+}
 
 export type VideoResolution = '720p' | '1080p' | '4K';
 export type VideoFPS = 24 | 30 | 60;
@@ -51,6 +70,7 @@ export interface Scene {
   backgroundColor: string;
   tracks: Track[];
   order: number; // Scene order in project
+  transition?: TransitionConfig;
 }
 
 /**
@@ -100,10 +120,20 @@ export interface TimelineElementContent {
   // Text content
   text?: string;
   textStyle?: TextStyle;
+  fontSize?: number;
+  fontFamily?: string;
+  color?: string;
+  animation?: Record<string, unknown>;
+  textAlign?: CanvasTextAlign | string;
+  textBaseline?: CanvasTextBaseline | string;
+  maxWidth?: number;
 
   // Media content (image/video)
   src?: string;
   thumbnailUrl?: string;
+  imageUrl?: string;
+  avatarGlbUrl?: string;
+  blendShapes?: Record<string, number>;
 
   // Audio content
   audioUrl?: string;
@@ -111,10 +141,12 @@ export interface TimelineElementContent {
   volume?: number; // 0-1
 
   // Spatial properties
-  position: { x: number; y: number };
-  scale: number;
-  rotation: number;
-  opacity: number;
+  position?: { x: number; y: number };
+  scale?: number;
+  rotation?: number | { x: number; y: number; z: number };
+  opacity?: number;
+  width?: number;
+  height?: number;
 }
 
 /**

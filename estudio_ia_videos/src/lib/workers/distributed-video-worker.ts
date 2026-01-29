@@ -6,7 +6,7 @@
 import { Job } from 'bullmq'
 import { exec } from 'child_process'
 import { promisify } from 'util'
-import { writeFile, unlink, mkdir } from 'fs/promises'
+import { writeFile, unlink, mkdir, readFile } from 'fs/promises'
 import { existsSync } from 'fs'
 import { join } from 'path'
 import os from 'os'
@@ -17,6 +17,7 @@ import {
 } from '../queue/video-queue-manager'
 import { AvatarLipSyncIntegration } from '../avatar/avatar-lip-sync-integration'
 import { ColorGradingEngine } from '../video/color-grading-engine'
+import { storageSystem } from '@lib/storage-system-real'
 
 const execAsync = promisify(exec)
 
@@ -557,9 +558,14 @@ export class DistributedVideoWorker {
   // ============================================================================
 
   private async uploadToStorage(filePath: string, jobId: string): Promise<string> {
-    // In production, upload to S3, Supabase Storage, etc.
-    // For now, return a mock URL
-    return `https://storage.example.com/renders/${jobId}.mp4`
+    const fileBuffer = await readFile(filePath)
+    const storagePath = `renders/${jobId}.mp4`
+    return storageSystem.upload({
+      bucket: 'videos',
+      path: storagePath,
+      file: fileBuffer,
+      contentType: 'video/mp4'
+    })
   }
 
   // ============================================================================

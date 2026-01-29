@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useTemplates } from '@hooks/useTemplates';
-import { Template, TemplateFilter, TemplateSort, NRCategory } from '@types/templates';
+import { Template, TemplateFilter, TemplateSort, NRCategory } from '@/types/templates';
 import { Button } from '@components/ui/button';
 import { Input } from '@components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@components/ui/card';

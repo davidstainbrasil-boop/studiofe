@@ -1,15 +1,15 @@
 /**
  * Local Authentication Service
  * Sistema de autenticação local usando JWT
- * Não depende de serviços externos como Supabase
+ * ADAPTADO: Métodos de login/registro local desativados em favor do Supabase Auth
  */
 
 import { sign, verify } from 'jsonwebtoken';
-import { hash, compare } from 'bcryptjs';
+// import { hash, compare } from 'bcryptjs'; // Removido pois auth é via Supabase
 import { prisma } from '@lib/prisma';
 import { cookies } from 'next/headers';
 import { sessionService } from '@lib/database/services';
-import { UserRole } from '@prisma/client';
+// import { UserRole } from '@prisma/client'; // Enum não existe
 
 function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET;
@@ -28,7 +28,7 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  role: UserRole | string;
+  role: string;
   isActive: boolean;
   isVerified: boolean;
   createdAt: Date;
@@ -51,72 +51,20 @@ export interface JWTPayload {
 
 /**
  * Registrar novo usuário
+ * @deprecated Use Supabase Auth signUp
  */
 export async function registerUser(
   email: string,
   password: string,
   name: string,
-  role: UserRole = UserRole.user
+  role: string = 'user'
 ): Promise<AuthResult> {
-  try {
-    // Verificar se email já existe
-    const existingUser = await prisma.users.findUnique({
-      where: { email },
-    });
-
-    if (existingUser) {
-      return { success: false, error: 'Email já cadastrado' };
-    }
-
-    // Hash da senha
-    const passwordHash = await hash(password, 12);
-
-    // Criar usuário com todos os campos
-    const user = await prisma.users.create({
-      data: {
-        email,
-        passwordHash,
-        name,
-        role,
-        isActive: true,
-        isVerified: false, // Requer verificação de email
-        loginCount: 0,
-      },
-    });
-
-    // Criar sessão
-    const session = await sessionService.createSession({
-      userId: user.id,
-    });
-
-    // Gerar token JWT
-    const token = generateToken({
-      userId: user.id,
-      email: user.email,
-      role: user.role || UserRole.user,
-    });
-
-    return {
-      success: true,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name || '',
-        role: user.role || UserRole.user,
-        isActive: user.isActive,
-        isVerified: user.isVerified,
-        createdAt: user.createdAt,
-      },
-      token,
-    };
-  } catch (error) {
-    console.error('[Auth] Erro no registro:', error);
-    return { success: false, error: 'Erro ao criar conta' };
-  }
+  return { success: false, error: 'Registro local desativado. Use Supabase Auth.' };
 }
 
 /**
  * Login de usuário
+ * @deprecated Use Supabase Auth signInWithPassword
  */
 export async function loginUser(
   email: string,
@@ -124,79 +72,7 @@ export async function loginUser(
   ipAddress?: string,
   userAgent?: string
 ): Promise<AuthResult> {
-  try {
-    // Buscar usuário com passwordHash
-    const user = await prisma.users.findUnique({
-      where: { email },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        passwordHash: true,
-        isActive: true,
-        isVerified: true,
-        createdAt: true,
-      },
-    });
-
-    if (!user || !user.passwordHash) {
-      return { success: false, error: 'Credenciais inválidas' };
-    }
-
-    // Verificar se usuário está ativo
-    if (!user.isActive) {
-      return { success: false, error: 'Conta desativada' };
-    }
-
-    // Verificar senha
-    const isValidPassword = await compare(password, user.passwordHash);
-    if (!isValidPassword) {
-      return { success: false, error: 'Credenciais inválidas' };
-    }
-
-    // Atualizar último login e contador
-    await prisma.users.update({
-      where: { id: user.id },
-      data: {
-        lastLogin: new Date(),
-        loginCount: {
-          increment: 1,
-        },
-      },
-    });
-
-    // Criar sessão
-    const session = await sessionService.createSession({
-      userId: user.id,
-      ipAddress,
-      userAgent,
-    });
-
-    // Gerar token JWT
-    const token = generateToken({
-      userId: user.id,
-      email: user.email,
-      role: user.role || UserRole.user,
-    });
-
-    return {
-      success: true,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name || '',
-        role: user.role || UserRole.user,
-        isActive: user.isActive,
-        isVerified: user.isVerified,
-        createdAt: user.createdAt,
-      },
-      token,
-    };
-  } catch (error) {
-    console.error('[Auth] Erro no login:', error);
-    return { success: false, error: 'Erro ao fazer login' };
-  }
+  return { success: false, error: 'Login local desativado. Use Supabase Auth.' };
 }
 
 /**
@@ -233,22 +109,22 @@ export async function getUserFromToken(token: string): Promise<User | null> {
         email: true,
         name: true,
         role: true,
-        isActive: true,
-        isVerified: true,
+        // isActive: true, // Não existe no schema
+        // isVerified: true, // Não existe no schema
         createdAt: true,
       },
     });
 
-    if (!user || !user.isActive) return null;
+    if (!user) return null;
 
     return {
       id: user.id,
       email: user.email,
       name: user.name || '',
-      role: user.role || UserRole.user,
-      isActive: user.isActive,
-      isVerified: user.isVerified,
-      createdAt: user.createdAt,
+      role: user.role || 'user',
+      isActive: true, // Mocked for interface compat
+      isVerified: true, // Mocked for interface compat
+      createdAt: user.createdAt || new Date(),
     };
   } catch {
     return null;
@@ -275,65 +151,9 @@ export async function getCurrentUser(): Promise<User | null> {
  * Criar usuários padrão se não existirem
  */
 export async function ensureDefaultUsers(): Promise<void> {
-  // Never seed default users implicitly in production.
-  if (process.env.NODE_ENV === 'production') return;
-  if (process.env.SEED_DEFAULT_USERS !== 'true') return;
-
-  const adminEmail = process.env.DEFAULT_ADMIN_EMAIL;
-  const adminPassword = process.env.DEFAULT_ADMIN_PASSWORD;
-  const demoEmail = process.env.DEFAULT_DEMO_EMAIL;
-  const demoPassword = process.env.DEFAULT_DEMO_PASSWORD;
-
-  if (!adminEmail || !adminPassword || !demoEmail || !demoPassword) {
-    console.error('[Auth] SEED_DEFAULT_USERS=true, mas faltam DEFAULT_* envs (email/senha). Abortando seed.');
+    // Implementação desativada pois requer criação no Supabase Auth
+    // console.log('[Auth] ensureDefaultUsers skipped (use Supabase seeding)');
     return;
-  }
-
-  try {
-    // Admin
-    const adminExists = await prisma.users.findUnique({
-      where: { email: adminEmail },
-    });
-
-    if (!adminExists) {
-      const passwordHash = await hash(adminPassword, 12);
-      await prisma.users.create({
-        data: {
-          email: adminEmail,
-          passwordHash,
-          name: 'Administrador',
-          role: UserRole.admin,
-          isActive: true,
-          isVerified: true,
-          loginCount: 0,
-        },
-      });
-      console.log('[Auth] Usuário admin criado');
-    }
-
-    // Demo
-    const demoExists = await prisma.users.findUnique({
-      where: { email: demoEmail },
-    });
-
-    if (!demoExists) {
-      const passwordHash = await hash(demoPassword, 12);
-      await prisma.users.create({
-        data: {
-          email: demoEmail,
-          passwordHash,
-          name: 'Usuário Demo',
-          role: UserRole.user,
-          isActive: true,
-          isVerified: true,
-          loginCount: 0,
-        },
-      });
-      console.log('[Auth] Usuário demo criado');
-    }
-  } catch (error) {
-    console.error('[Auth] Erro ao criar usuários padrão:', error);
-  }
 }
 
 // Exportar serviço
@@ -347,4 +167,3 @@ export const LocalAuth = {
 };
 
 export default LocalAuth;
-

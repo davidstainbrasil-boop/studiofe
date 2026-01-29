@@ -19,7 +19,7 @@ let redis: Redis | null = null;
 let redisConnected = false;
 
 try {
-  if (process.env.REDIS_URL) {
+  if (process.env.REDIS_URL && process.env.NODE_ENV !== 'test') {
     redis = new Redis(process.env.REDIS_URL, {
       maxRetriesPerRequest: 3,
       enableOfflineQueue: false,
@@ -162,7 +162,7 @@ export async function rateLimit(
   } catch (error) {
     // Rate limit exceeded
     if (error instanceof Error && 'msBeforeNext' in error) {
-      const rateLimitError = error as { msBeforeNext: number; consumedPoints: number };
+      const rateLimitError = error as unknown as { msBeforeNext: number; consumedPoints: number };
 
       const retryAfter = Math.ceil(rateLimitError.msBeforeNext / 1000);
 

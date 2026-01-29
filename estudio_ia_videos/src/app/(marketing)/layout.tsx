@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Video } from 'lucide-react';
+import { MarketingMobileMenu } from '@/components/layout/MarketingMobileMenu';
 
 export default function MarketingLayout({
     children,
@@ -21,15 +22,18 @@ export default function MarketingLayout({
                     <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600 dark:text-slate-400">
                         <Link href="#features" className="hover:text-violet-600 dark:hover:text-violet-400 transition-colors">Recursos</Link>
                         <Link href="#how-it-works" className="hover:text-violet-600 dark:hover:text-violet-400 transition-colors">Como Funciona</Link>
-                        <Link href="#" className="hover:text-violet-600 dark:hover:text-violet-400 transition-colors">Blog</Link>
+                        <Link href="/blog" className="hover:text-violet-600 dark:hover:text-violet-400 transition-colors">Blog</Link>
                     </nav>
                     <div className="flex items-center gap-4">
+                        <MarketingMobileMenu />
+                        <div className="hidden md:flex items-center gap-4">
                         <Link href="/login">
                             <Button variant="ghost" size="sm">Entrar</Button>
                         </Link>
                         <Link href="/register">
                             <Button size="sm" className="bg-violet-600 hover:bg-violet-700">Começar Grátis</Button>
                         </Link>
+                        </div>
                     </div>
                 </div>
             </header>

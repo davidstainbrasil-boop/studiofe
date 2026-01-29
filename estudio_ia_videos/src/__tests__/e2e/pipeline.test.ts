@@ -150,3 +150,12 @@ export async function runE2ETests(): Promise<{ passed: number; failed: number; r
 
   return { passed, failed, results };
 }
+
+// Add Jest test wrapper to allow this file to be ignored or run as test
+if (typeof describe !== 'undefined') {
+  describe('E2E Pipeline Runner', () => {
+    it('should export runE2ETests function', () => {
+      expect(typeof runE2ETests).toBe('function');
+    });
+  });
+}

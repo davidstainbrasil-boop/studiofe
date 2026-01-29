@@ -145,9 +145,10 @@ export async function POST(request: NextRequest) {
     // 4. Insert Slides (with Filter for empty)
     const slidesToInsert = parsedData.slides
         .map((slide: CompleteSlideData, index: number) => {
-            // Combine text content
-            const textContent = (slide.text.textBoxes || []).map((t: any) => t.text).join('\n').trim();
-            const backgroundImage = slide.images.length > 0 ? slide.images[0].url : null;
+            // Use o texto principal do slide (combina lines ou usa text diretamente)
+            const textContent = slide.text.lines?.join('\n').trim() || slide.text.text?.trim() || '';
+            // ExtractedImage tem dataUrl, não url
+            const backgroundImage = slide.images.length > 0 ? slide.images[0].dataUrl : null;
 
             // HARDENING: Skip truly empty slides
             if (!textContent && !backgroundImage) {

@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { logger } from '@lib/logger';
 import { MagneticTimelineEngine, MagneticTimelineConfig, MagneticEvent } from '@lib/timeline/magnetic-timeline';
 import { BeatDetectorService, BeatDetectionConfig } from '@lib/timeline/beat-detector';
-import { TimelineState, TimelineClip } from '@types/timeline';
+import { TimelineState, TimelineClip } from '@/types/timeline';
 import { useToast } from '@hooks/use-toast';
 
 // Beat detection result type

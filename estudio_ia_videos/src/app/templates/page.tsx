@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { TemplateLibrary } from '@components/templates/template-library';
-import { Template } from '@types/templates';
+import { Template } from '@/types/templates';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 

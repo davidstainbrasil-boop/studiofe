@@ -492,8 +492,8 @@ export async function generateProjectTTS(projectId: string, voice: VoiceConfig):
           voiceId: voice.voiceId,
           audioUrl: projectAudioUrl ?? (currentSettings.audioUrl as string),
           processingLog,
+          totalDuration: Math.round(totalDuration),
         } as unknown as Prisma.InputJsonValue,
-        duration: Math.round(totalDuration),
       },
     })
 

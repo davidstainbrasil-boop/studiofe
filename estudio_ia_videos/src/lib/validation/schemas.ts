@@ -243,6 +243,21 @@ export const AvatarRenderSchema = z.object({
 export type AvatarRender = z.infer<typeof AvatarRenderSchema>;
 
 // =====================================
+// Script Schemas
+// =====================================
+
+export const ScriptGenerateSchema = z.object({
+  projectId: z.string().uuid('ID de projeto inválido'),
+  pptxAst: z.record(z.unknown()).refine(val => Object.keys(val).length > 0, {
+    message: 'AST do PPTX é obrigatório e não pode ser vazio'
+  }),
+  context: z.string().optional(),
+  prompt: z.string().optional(),
+});
+
+export type ScriptGenerate = z.infer<typeof ScriptGenerateSchema>;
+
+// =====================================
 // Export Schemas
 // =====================================
 

@@ -541,7 +541,7 @@ function extractLocalPath(url: string): string | null {
 
     // Handle full URLs with local paths
     const urlObj = new URL(url);
-    if (urlObj.hostname === 'localhost' || urlObj.hostname === '127.0.0.1') {
+    if (urlObj.hostname === 'localhost' || urlObj.hostname === '127.0.0.1' || urlObj.hostname === 'cursostecno.com.br' || urlObj.hostname === 'www.cursostecno.com.br') {
       return path.join(process.cwd(), urlObj.pathname);
     }
 

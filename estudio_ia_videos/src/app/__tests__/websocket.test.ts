@@ -19,6 +19,37 @@ import { io as ioClient, Socket as ClientSocket } from 'socket.io-client'
 import { AddressInfo } from 'net'
 import { initializeWebSocket, TimelineEvent } from '@lib/websocket/timeline-websocket'
 
+// Mock authentication
+jest.mock('@lib/auth/jwt', () => ({
+  verifyJWT: jest.fn((token: string) => {
+    if (token === 'token-user-1') {
+      return {
+        sub: 'user_1',
+        user_metadata: { full_name: 'User 1' }
+      }
+    }
+    if (token === 'token-user-2') {
+      return {
+        sub: 'user_2',
+        user_metadata: { full_name: 'User 2' }
+      }
+    }
+    if (token === 'token-user-3') {
+      return {
+        sub: 'user_3',
+        user_metadata: { full_name: 'User 3' }
+      }
+    }
+    if (token === 'test-token') { // Default fallback for existing tests
+        return {
+            sub: 'user_1',
+            user_metadata: { full_name: 'User 1' }
+        }
+    }
+    return null
+  })
+}))
+
 describe('WebSocket Server - Testes Unitários', () => {
   let httpServer: HttpServer
   let io: SocketIOServer
@@ -144,7 +175,7 @@ describe('WebSocket Server - Testes Unitários', () => {
 
       clientSocket1.on(TimelineEvent.USER_JOINED, (data) => {
         expect(data.userId).toBe('user_1')
-        expect(data.userName).toBe('Test User 1')
+        expect(data.userName).toBe('User 1')
         expect(data.projectId).toBe('proj_test_1')
         done()
       })
@@ -223,8 +254,8 @@ describe('WebSocket Server - Testes Unitários', () => {
         clientSocket2 = ioClient(serverUrl, {
           path: '/api/socket/timeline',
           auth: {
-            token: 'test-token',
-            userId: 'user_2',
+            token: 'token-user-2',
+          userId: 'user_2',
             userName: 'User 2'
           }
         })
@@ -296,7 +327,7 @@ describe('WebSocket Server - Testes Unitários', () => {
       clientSocket2 = ioClient(serverUrl, {
         path: '/api/socket/timeline',
         auth: {
-          token: 'test-token',
+          token: 'token-user-2',
           userId: 'user_2',
           userName: 'User 2'
         }
@@ -355,7 +386,7 @@ describe('WebSocket Server - Testes Unitários', () => {
       clientSocket2 = ioClient(serverUrl, {
         path: '/api/socket/timeline',
         auth: {
-          token: 'test-token',
+          token: 'token-user-2',
           userId: 'user_2',
           userName: 'User 2'
         }
@@ -424,7 +455,7 @@ describe('WebSocket Server - Testes Unitários', () => {
       clientSocket2 = ioClient(serverUrl, {
         path: '/api/socket/timeline',
         auth: {
-          token: 'test-token',
+          token: 'token-user-2',
           userId: 'user_2',
           userName: 'User 2'
         }
@@ -498,7 +529,7 @@ describe('WebSocket Server - Testes Unitários', () => {
       clientSocket2 = ioClient(serverUrl, {
         path: '/api/socket/timeline',
         auth: {
-          token: 'test-token',
+          token: 'token-user-2',
           userId: 'user_2',
           userName: 'User 2'
         }
@@ -567,7 +598,7 @@ describe('WebSocket Server - Testes Unitários', () => {
       clientSocket2 = ioClient(serverUrl, {
         path: '/api/socket/timeline',
         auth: {
-          token: 'test-token',
+          token: 'token-user-2',
           userId: 'user_2',
           userName: 'User 2'
         }
@@ -634,7 +665,7 @@ describe('WebSocket Server - Testes Unitários', () => {
       clientSocket2 = ioClient(serverUrl, {
         path: '/api/socket/timeline',
         auth: {
-          token: 'test-token',
+          token: 'token-user-2',
           userId: 'user_2',
           userName: 'User 2'
         }
@@ -643,7 +674,7 @@ describe('WebSocket Server - Testes Unitários', () => {
       clientSocket3 = ioClient(serverUrl, {
         path: '/api/socket/timeline',
         auth: {
-          token: 'test-token',
+          token: 'token-user-3',
           userId: 'user_3',
           userName: 'User 3'
         }
@@ -714,7 +745,7 @@ describe('WebSocket Server - Testes Unitários', () => {
       clientSocket2 = ioClient(serverUrl, {
         path: '/api/socket/timeline',
         auth: {
-          token: 'test-token',
+          token: 'token-user-2',
           userId: 'user_2',
           userName: 'User 2'
         }
@@ -784,7 +815,7 @@ describe('WebSocket Server - Testes Unitários', () => {
       clientSocket2 = ioClient(serverUrl, {
         path: '/api/socket/timeline',
         auth: {
-          token: 'test-token',
+          token: 'token-user-2',
           userId: 'user_2',
           userName: 'User 2'
         }
@@ -855,7 +886,7 @@ describe('WebSocket Server - Testes Unitários', () => {
       clientSocket2 = ioClient(serverUrl, {
         path: '/api/socket/timeline',
         auth: {
-          token: 'test-token',
+          token: 'token-user-2',
           userId: 'user_2',
           userName: 'User 2'
         }
@@ -920,7 +951,7 @@ describe('WebSocket Server - Testes Unitários', () => {
       clientSocket2 = ioClient(serverUrl, {
         path: '/api/socket/timeline',
         auth: {
-          token: 'test-token',
+          token: 'token-user-2',
           userId: 'user_2',
           userName: 'User 2'
         }
@@ -993,7 +1024,7 @@ describe('WebSocket Server - Testes Unitários', () => {
       clientSocket2 = ioClient(serverUrl, {
         path: '/api/socket/timeline',
         auth: {
-          token: 'test-token',
+          token: 'token-user-2',
           userId: 'user_2',
           userName: 'User 2'
         }
@@ -1050,7 +1081,7 @@ describe('WebSocket Server - Testes Unitários', () => {
       clientSocket2 = ioClient(serverUrl, {
         path: '/api/socket/timeline',
         auth: {
-          token: 'test-token',
+          token: 'token-user-2',
           userId: 'user_2',
           userName: 'User 2'
         }

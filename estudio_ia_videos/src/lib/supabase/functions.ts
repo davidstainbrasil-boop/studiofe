@@ -9,7 +9,7 @@ export const invokeFunction = async <TResponse = Json>(
   functionName: string,
   payload: JsonRecord = {}
 ): Promise<TResponse | null> => {
-  const rawResponse = await supabase.functions.invoke<TResponse>(functionName, {
+  const rawResponse = await supabase.functions.invoke(functionName, {
     body: payload,
   });
 

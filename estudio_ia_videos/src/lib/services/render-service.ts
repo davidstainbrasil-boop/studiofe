@@ -16,11 +16,17 @@ export const RenderService = {
     const jobId = uuidv4();
 
     // Mock config for now, should be passed from the client
+    const normalizedSlides = slides.map((slide) => ({
+      id: slide.id,
+      content: slide.content ?? slide,
+      duration: slide.duration,
+    }));
+
     const jobData: RenderJobData = {
       id: jobId,
       projectId,
       userId,
-      slides,
+      slides: normalizedSlides,
       config: {
         resolution: { width: 1920, height: 1080 },
         fps: 30,

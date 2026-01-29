@@ -9,6 +9,7 @@ import { LocalAvatarRenderer, AvatarConfig } from './local-avatar-renderer';
 import { HeyGenAvatarEngine, HeyGenAvatarOptions } from './engines/heygen-avatar-engine';
 import { LipSyncFrame, audio2FaceService } from './services/audio2face-service';
 import { avatarRegistry, AvatarDefinition } from './avatars/avatar-registry';
+import fs from 'fs/promises';
 
 export type { LipSyncFrame };
 
@@ -38,6 +39,8 @@ export interface ThreeMesh {
 export class AvatarEngine {
   private static instance: AvatarEngine;
   private ue5 = new UE5AvatarEngine();
+  // Local renderer is considered a placeholder/fallback, so we might want to avoid it in strict production
+  // unless explicitly requested for simple 2D generation.
   private local = new LocalAvatarRenderer();
   private heygen = new HeyGenAvatarEngine();
   
@@ -83,11 +86,20 @@ export class AvatarEngine {
         return { type: 'frames', frames: ue5Result.frames };
         
       case 'local':
-      default:
+        // If explicitly requested, we allow it, but we warn it might be basic.
+        // For 'REAL' production, this should ideally be a real renderer (e.g. ffmpeg based or similar).
+        // Since LocalAvatarRenderer is just drawing circles, we should probably throw if strict mode is on.
+        // However, if the user wants "Real" and we don't have UE5/HeyGen, failing is better than fake circles.
+        if (process.env.STRICT_REAL_MODE === 'true') {
+             throw new Error('Local placeholder renderer is disabled in strict real mode.');
+        }
         const fps = 30;
         const totalFrames = Math.floor(request.duration * fps);
         const frames = await this.local.renderSequence(request.config as AvatarConfig, totalFrames);
         return { type: 'frames', frames };
+        
+      default:
+        throw new Error(`Unsupported engine: ${engine}`);
     }
   }
   
@@ -96,14 +108,23 @@ export class AvatarEngine {
 
     if (preferred === 'ue5') {
       const available = await this.ue5.isAvailable();
-      return available ? 'ue5' : 'local';
+      if (available) return 'ue5';
+      // Fail if preferred engine is not available
+      throw new Error('UE5 Engine requested but not available');
     }
     
     if (preferred === 'local') return 'local';
     
-    // Auto: tenta UE5, fallback para local
+    // Auto selection logic
+    // 1. Try UE5
     const ue5Available = await this.ue5.isAvailable();
-    return ue5Available ? 'ue5' : 'local';
+    if (ue5Available) return 'ue5';
+
+    // 2. Try HeyGen (needs config check usually, but assuming available if configured)
+    // We don't default to HeyGen usually due to cost, unless specifically configured.
+    
+    // 3. Fail instead of falling back to 'local' (placeholder)
+    throw new Error('No suitable Avatar Engine available (UE5 missing, Local disabled for auto)');
   }
 
   async checkHeyGenStatus(jobId: string) {
@@ -119,12 +140,16 @@ export class AvatarEngine {
       let audioBuffer: Buffer;
       if (audioUrl.startsWith('http')) {
         const response = await fetch(audioUrl);
+        if (!response.ok) throw new Error(`Failed to fetch audio from URL: ${response.statusText}`);
         const arrayBuffer = await response.arrayBuffer();
         audioBuffer = Buffer.from(arrayBuffer);
       } else {
-        // Fallback for local paths or data URIs if needed, or keep mock for testing if URL is invalid
-        logger.warn('Invalid audio URL for lip sync, using mock data', { component: 'AvatarEngine', audioUrl });
-        audioBuffer = Buffer.from('mock-audio-data');
+        // Read local file
+        try {
+            audioBuffer = await fs.readFile(audioUrl);
+        } catch (e) {
+            throw new Error(`Failed to read local audio file: ${audioUrl}`);
+        }
       }
 
       const result = await audio2FaceService.processAudio(sessionId, audioBuffer, {
@@ -137,36 +162,19 @@ export class AvatarEngine {
       if (result.success) {
         return result.lipSyncData;
       } else {
-        // TypeScript narrowing should work here, but if not, we cast
         const errorMsg = 'error' in result ? result.error : 'Unknown error';
         logger.error('LipSync generation failed', new Error(String(errorMsg)), { component: 'AvatarEngine' });
-        return this.generateFallbackFrames(duration);
+        throw new Error(`LipSync generation failed: ${errorMsg}`);
       }
     } catch (error) {
       logger.error('Error generating lip sync frames', error instanceof Error ? error : new Error(String(error)), { component: 'AvatarEngine' });
-      return this.generateFallbackFrames(duration);
+      throw error; // Fail fast
     }
-  }
-
-  private generateFallbackFrames(duration: number): LipSyncFrame[] {
-    const fps = 30;
-    const frames: LipSyncFrame[] = [];
-    const totalFrames = Math.floor(duration * fps);
-    
-    for (let i = 0; i < totalFrames; i++) {
-      frames.push({
-        timestampMs: (i / fps) * 1000,
-        phoneme: 'X',
-        intensity: Math.random() * 0.5 + 0.2
-      });
-    }
-    return frames;
   }
 
   getLipSyncFrameAtTime(frames: LipSyncFrame[], time: number): LipSyncFrame | undefined {
     if (!frames || frames.length === 0) return undefined;
-    const timeMs = time; // time is already in ms from useLipSync
-    // Find closest frame
+    const timeMs = time;
     return frames.reduce((prev, curr) => {
       return (Math.abs(curr.timestampMs - timeMs) < Math.abs(prev.timestampMs - timeMs) ? curr : prev);
     });
@@ -175,10 +183,7 @@ export class AvatarEngine {
   applyBlendShapes(mesh: ThreeMesh, frame: LipSyncFrame, emotion?: string, emotionIntensity: number = 1.0) {
     if (!mesh || !mesh.morphTargetDictionary || !mesh.morphTargetInfluences) return;
 
-    // 1. Reset all relevant morph targets first (optional, but good for safety)
-    // This might be too heavy for every frame, so we rely on overwriting.
-
-    // 2. Apply Lip Sync
+    // Apply Lip Sync
     const map: Record<string, number | undefined> = {
       jawOpen: frame.jawOpen,
       mouthClose: frame.mouthClose,
@@ -201,7 +206,7 @@ export class AvatarEngine {
       }
     });
     
-    // 3. Apply Emotion Overlay
+    // Apply Emotion Overlay
     if (emotion && emotion !== 'neutral') {
       this.applyEmotion(mesh, emotion, emotionIntensity);
     }
@@ -240,7 +245,7 @@ export class AvatarEngine {
         browOuterUpRight: 0.8,
         eyeWideLeft: 0.6,
         eyeWideRight: 0.6,
-        jawOpen: 0.2 // Slight mouth opening
+        jawOpen: 0.2
       },
       fear: {
         browInnerUp: 0.8,
@@ -258,15 +263,7 @@ export class AvatarEngine {
       Object.entries(shapes).forEach(([shapeName, targetValue]) => {
         const index = mesh.morphTargetDictionary![shapeName];
         if (index !== undefined) {
-          // We add to existing value or overwrite? 
-          // Usually for emotions we want to blend on top.
-          // If lip sync uses the same shape (e.g. jawOpen in surprise), we need to be careful.
-          // Simple approach: Max(existing, new) or weighted average.
-          // Let's use a simple addition with clamping for now, or just overwrite if not set by lip sync.
-          
           const existing = mesh.morphTargetInfluences![index];
-          // Blend: existing (from lip sync) + emotion * intensity
-          // For smiles, lip sync might set mouthSmile. We want to enhance it.
           mesh.morphTargetInfluences![index] = Math.min(1.0, existing + (targetValue * intensity));
         }
       });

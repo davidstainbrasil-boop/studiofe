@@ -45,8 +45,14 @@ export async function GET(
       )
     }
 
-    // 3. Check job ownership
-    if (job.userId !== user.id) {
+    // 3. Check job ownership via project
+    const { data: projectOwner } = await supabase
+      .from('projects')
+      .select('user_id')
+      .eq('id', job.projectId)
+      .single() as { data: { user_id: string } | null; error: unknown }
+
+    if (!projectOwner || projectOwner.user_id !== user.id) {
       return NextResponse.json(
         { error: 'Forbidden', message: 'You do not own this job' },
         { status: 403 }
@@ -70,20 +76,20 @@ export async function GET(
         jobId,
         status: job.status as 'pending' | 'processing' | 'completed' | 'failed',
         progress: job.progress,
-        videoUrl: job.output_video_url,
-        error: job.errorMessage
+        videoUrl: job.output_url,
+        error: job.error_message
       }
     }
 
     // 5. Calculate duration
     const startTime = new Date(job.createdAt).getTime()
-    const endTime = job.completedAt ? new Date(job.completedAt).getTime() : Date.now()
+    const endTime = job.completed_at ? new Date(job.completed_at).getTime() : Date.now()
     const duration = endTime - startTime
 
     // 6. Parse render settings
-    const renderSettings = typeof job.renderSettings === 'string'
-      ? JSON.parse(job.renderSettings)
-      : job.renderSettings
+    const renderSettings = typeof job.render_settings === 'string'
+      ? JSON.parse(job.render_settings)
+      : job.render_settings
 
     return NextResponse.json({
       success: true,
@@ -92,20 +98,18 @@ export async function GET(
         status: detailedStatus.status,
         progress: detailedStatus.progress || job.progress || 0,
         createdAt: job.createdAt,
-        completedAt: job.completedAt,
+        completedAt: job.completed_at,
         duration,
         output: {
-          videoUrl: detailedStatus.videoUrl || job.output_video_url,
-          thumbnailUrl: job.output_thumbnail_url
+          videoUrl: detailedStatus.videoUrl || job.output_url,
+          thumbnailUrl: null // Not available in current schema
         },
-        error: detailedStatus.error || job.errorMessage,
+        error: detailedStatus.error || job.error_message,
         metadata: {
           provider: renderSettings?.provider,
           quality: renderSettings?.options?.quality,
           resolution: renderSettings?.options?.resolution,
-          estimatedTimeRemaining: detailedStatus.estimatedTimeRemaining,
-          lipSyncAccuracy: job.lipsyncAccuracy,
-          audio2FaceEnabled: job.audio2face_enabled
+          estimatedTimeRemaining: detailedStatus.estimatedTimeRemaining
         }
       }
     })
@@ -163,8 +167,14 @@ export async function DELETE(
       )
     }
 
-    // 3. Check job ownership
-    if (job.userId !== user.id) {
+    // 3. Check job ownership via project
+    const { data: projectData } = await supabase
+      .from('projects')
+      .select('user_id')
+      .eq('id', job.projectId)
+      .single() as { data: { user_id: string } | null; error: unknown }
+
+    if (!projectData || projectData.user_id !== user.id) {
       return NextResponse.json(
         { error: 'Forbidden', message: 'You do not own this job' },
         { status: 403 }
@@ -200,8 +210,8 @@ export async function DELETE(
       .from('render_jobs')
       .update({
         status: 'failed',
-        errorMessage: 'Cancelled by user',
-        completedAt: new Date().toISOString()
+        error_message: 'Cancelled by user',
+        completed_at: new Date().toISOString()
       })
       .eq('id', jobId)
 
@@ -209,44 +219,25 @@ export async function DELETE(
       throw updateError
     }
 
-    // 7. Refund credits if applicable
-    const renderSettings = typeof job.renderSettings === 'string'
-      ? JSON.parse(job.renderSettings)
-      : job.renderSettings
+    // 7. Log cancellation (credits system not yet implemented)
+    const renderSettings = typeof job.render_settings === 'string'
+      ? JSON.parse(job.render_settings as string)
+      : job.render_settings
 
     const creditsUsed = renderSettings?.creditsUsed || 0
 
-    if (creditsUsed > 0) {
-      // Get current credits
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('credits_available, credits_used')
-        .eq('id', user.id)
-        .single()
-
-      if (profile) {
-        await supabase
-          .from('profiles')
-          .update({
-            credits_available: (profile.credits_available || 0) + creditsUsed,
-            credits_used: Math.max(0, (profile.credits_used || 0) - creditsUsed)
-          })
-          .eq('id', user.id)
-
-        logger.info('[API: v2/avatars/status] Credits refunded', {
-          userId: user.id,
-          jobId,
-          creditsRefunded: creditsUsed
-        })
-      }
-    }
+    logger.info('[API: v2/avatars/status] Job cancelled', {
+      userId: user.id,
+      jobId,
+      creditsUsed // Future: implement credit refund
+    })
 
     return NextResponse.json({
       success: true,
       data: {
         message: 'Job cancelled successfully',
         jobId,
-        creditsRefunded: creditsUsed,
+        creditsRefunded: 0, // Credits system not yet implemented
         timestamp: new Date().toISOString()
       }
     })

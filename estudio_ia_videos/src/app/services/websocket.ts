@@ -4,7 +4,7 @@ import {
   CommentReply,
   ProjectVersion,
   User,
-} from '@types/collaboration';
+} from '@/types/collaboration';
 
 export type WebSocketEventType = 
   | 'user_joined'

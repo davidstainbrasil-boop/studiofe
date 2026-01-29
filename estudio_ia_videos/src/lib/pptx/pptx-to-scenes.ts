@@ -11,9 +11,9 @@ import type {
   Scene,
   Track,
   TimelineElement,
+  CanvasElement,
   PPTXImportResult,
 } from '@/types/video-project';
-import type { CanvasElement } from '@/types/canvas';
 
 /**
  * PPTX Slide parsed data
@@ -272,7 +272,6 @@ async function convertSlideToScene(
     const textElement: CanvasElement = {
       id: elementId,
       type: 'text',
-      name: `Text ${i + 1}`,
       text: text.content,
       fill: text.color || '#000000',
       x: text.x,
@@ -282,11 +281,10 @@ async function convertSlideToScene(
       rotation: 0,
       scaleX: 1,
       scaleY: 1,
-      opacity: 1,
-      locked: false,
-      visible: true,
-      draggable: true,
       zIndex: i,
+      startTime: 0,
+      duration: DEFAULT_SLIDE_DURATION,
+      trackId: textTrack.id,
     };
 
     elements.push(textElement);
@@ -339,7 +337,6 @@ async function convertSlideToScene(
         const imageElement: CanvasElement = {
           id: elementId,
           type: 'image',
-          name: `Image ${i + 1}`,
           src: imageUrl,
           x: image.x,
           y: image.y,
@@ -348,11 +345,10 @@ async function convertSlideToScene(
           rotation: 0,
           scaleX: 1,
           scaleY: 1,
-          opacity: 1,
-          locked: false,
-          visible: true,
-          draggable: true,
           zIndex: slide.texts.length + i,
+          startTime: 0,
+          duration: DEFAULT_SLIDE_DURATION,
+          trackId: imageTrack.id,
         };
 
         elements.push(imageElement);

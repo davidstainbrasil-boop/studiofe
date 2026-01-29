@@ -215,7 +215,7 @@ export default function BrazilianVoiceSelector({
                 
                 {/* Preview Text */}
                 <div className="bg-muted/50 rounded p-2 text-xs italic">
-                  "{voice.preview_text}"
+                  &quot;{voice.preview_text}&quot;
                 </div>
                 
                 {/* Ações */}
@@ -334,4 +334,3 @@ export default function BrazilianVoiceSelector({
     </div>
   )
 }
-

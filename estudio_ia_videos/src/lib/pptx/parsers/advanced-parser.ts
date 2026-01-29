@@ -48,7 +48,7 @@ export interface AdvancedParsingOptions {
 
 export class PPTXAdvancedParser {
   private textParser: PPTXTextParser;
-  private imageParser: typeof PPTXImageParser;
+  private imageParser: PPTXImageParser;
   private layoutParser: PPTXLayoutParser;
   private notesParser: PPTXNotesParser;
   private durationCalculator: SlideDurationCalculator;
@@ -56,7 +56,7 @@ export class PPTXAdvancedParser {
 
   constructor() {
     this.textParser = new PPTXTextParser();
-    this.imageParser = PPTXImageParser;
+    this.imageParser = new PPTXImageParser();
     this.layoutParser = new PPTXLayoutParser();
     this.notesParser = new PPTXNotesParser();
     this.durationCalculator = new SlideDurationCalculator();
@@ -86,17 +86,20 @@ export class PPTXAdvancedParser {
     // Extrair imagens (se solicitado)
     let images: ExtractedImage[] = [];
     if (includeImages) {
-      const imageResult = await this.imageParser.extractImages(zip, projectId, imageOptions);
-      images = imageResult.images;
+      images = await this.imageParser.extractImages(zip, slideNumber, imageOptions);
     }
 
     // Detectar layout
     const layout = await this.layoutParser.detectLayout(zip, slideNumber);
 
     // Extrair notes (se solicitado)
-    let notes: SpeakerNotesResult = { success: true, notes: '', wordCount: 0, estimatedDuration: 0 };
+    let notes: SpeakerNotesResult = { slideNumber, notes: '', };
     if (includeNotes) {
-      notes = await this.notesParser.extractNotes(zip, slideNumber);
+      const notesText = await this.notesParser.extractNotes(zip, slideNumber);
+      notes = {
+        slideNumber,
+        notes: notesText,
+      };
     }
 
     // Calcular duração

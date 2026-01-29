@@ -38,6 +38,17 @@ interface Project {
   updated_at?: string;
 }
 
+interface DatabaseSlide {
+  id: string;
+  order_index: number;
+  title?: string | null;
+  content?: string | null;
+  duration?: number | null;
+  background_image?: string | null;
+  background_color?: string | null;
+  audio_config?: Record<string, unknown> | null;
+}
+
 interface SlideWithTTS extends Slide {
   ttsState: 'idle' | 'generating' | 'ready' | 'error' | 'success';
   ttsUrl?: string;
@@ -66,16 +77,16 @@ export const useEditorStore = create<EditorState>()(
     immer((set, get) => ({
       project: null,
       slides: [],
-      setSlides: (slides) =>
+      setSlides: (slides: Slide[]) =>
         set((state) => {
-          state.slides = slides.map((slide) => ({
+          state.slides = slides.map((slide: Slide) => ({
             ...slide,
             ttsState: 'idle',
           }));
         }),
       updateSlide: (slideId, slideData) =>
         set((state) => {
-          const slide = state.slides.find((s) => s.id === slideId);
+          const slide = state.slides.find((s: SlideWithTTS) => s.id === slideId);
           if (slide) {
             Object.assign(slide, slideData);
           }
@@ -135,7 +146,8 @@ export const useEditorStore = create<EditorState>()(
 
           if (slides && slides.length > 0) {
             // Map database slides to store format
-            const mappedSlides: SlideWithTTS[] = slides.map(s => ({
+            const slidesData = slides as unknown as DatabaseSlide[];
+            const mappedSlides: SlideWithTTS[] = slidesData.map((s) => ({
               id: s.id,
               number: s.order_index + 1,
               order_index: s.order_index,

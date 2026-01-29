@@ -26,7 +26,7 @@ import {
   Settings
 } from 'lucide-react';
 import { useTemplates } from '@hooks/useTemplates';
-import { Template, NRCategory } from '@types/templates';
+import { Template, NRCategory } from '@/types/templates';
 import { TemplateCard } from './template-card';
 import { TemplatePreview } from './template-preview';
 import { TemplateEditor } from './template-editor';

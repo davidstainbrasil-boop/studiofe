@@ -172,7 +172,7 @@ async function enrichSlidesWithAdvancedData(
         results.forEach((result, i) => {
           if (result.status === 'fulfilled' && result.value.length > 0) {
             enrichedSlides[i].images = result.value
-              .map(img => img.url)
+              .map((img) => img.dataUrl)
               .filter((url): url is string => !!url);
           }
         });
@@ -192,7 +192,7 @@ async function enrichSlidesWithAdvancedData(
         );
         results.forEach((result, i) => {
           if (result.status === 'fulfilled' && result.value) {
-            enrichedSlides[i].notes = result.value.notes || '';
+            enrichedSlides[i].notes = result.value;
           }
         });
       })();
@@ -210,10 +210,8 @@ async function enrichSlidesWithAdvancedData(
           })
         );
         results.forEach((result, i) => {
-          if (result.status === 'fulfilled' && result.value.success && result.value.textBoxes) {
-            const formattedContent = result.value.textBoxes
-              .map(tb => `[${tb.id}] ${tb.text}`)
-              .join('\n\n');
+          if (result.status === 'fulfilled') {
+            const formattedContent = result.value.text;
             if (formattedContent) {
               enrichedSlides[i].content = formattedContent;
             }
@@ -393,5 +391,4 @@ export async function validatePPTXFile(file: File): Promise<{ valid: boolean; er
     return { valid: false, error: 'Formato de arquivo inválido ou corrompido.' };
   }
 }
-
 

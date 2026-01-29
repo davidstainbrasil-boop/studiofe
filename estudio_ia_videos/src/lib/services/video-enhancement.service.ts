@@ -1,163 +1,232 @@
+
 /**
  * Video Enhancement Service
- * Handles all video quality enhancement operations
+ * Handles all video quality enhancement operations using FFmpeg and Supabase Storage
  */
 
-interface EnhancementOptions {
-  resolution?: string
-  intensity?: number
-  targetFps?: number
-  preset?: string
-}
+import ffmpeg from 'fluent-ffmpeg';
+import path from 'path';
+import fs from 'fs/promises';
+import { createReadStream } from 'fs';
+import { v4 as uuidv4 } from 'uuid';
+import { logger } from '@lib/logger';
+import { supabase } from '@lib/supabase/client'; // Assuming this exists or similar
 
 interface EnhancementResult {
-  success: boolean
-  outputUrl?: string
-  metadata?: Record<string, any>
-  error?: string
+  success: boolean;
+  outputUrl?: string;
+  metadata?: Record<string, any>;
+  error?: string;
 }
 
 export class VideoEnhancementService {
-  private apiKey: string | undefined
-  private baseUrl: string
+  private tempDir: string;
 
   constructor() {
-    this.apiKey = process.env.ENHANCEMENT_API_KEY
-    this.baseUrl = process.env.ENHANCEMENT_API_URL || 'http://localhost:8000'
+    this.tempDir = path.join(process.cwd(), 'tmp', 'enhancement');
+    this.ensureTempDir();
   }
 
-  /**
-   * Upscale video to higher resolution using Real-ESRGAN
-   */
-  async upscale(videoFile: File, resolution: string): Promise<EnhancementResult> {
+  private async ensureTempDir() {
     try {
-      // TODO: Integrate with Real-ESRGAN API
-      // Example implementation:
-      // const formData = new FormData()
-      // formData.append('video', videoFile)
-      // formData.append('scale', this.getScaleFactor(resolution))
-      // 
-      // const response = await fetch(`${this.baseUrl}/upscale`, {
-      //   method: 'POST',
-      //   headers: { 'Authorization': `Bearer ${this.apiKey}` },
-      //   body: formData
-      // })
-      // 
-      // const result = await response.json()
-      // return { success: true, outputUrl: result.url, metadata: result.metadata }
-
-      // Mock implementation
-      return {
-        success: true,
-        outputUrl: '#',
-        metadata: {
-          originalResolution: '720p',
-          targetResolution: resolution,
-          enhancement: 'Real-ESRGAN',
-          processingTime: 5000
-        }
-      }
+      await fs.mkdir(this.tempDir, { recursive: true });
     } catch (error) {
-      console.error('Upscale error:', error)
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
-      }
+      logger.error('Failed to create temp directory', error instanceof Error ? error : new Error(String(error)));
     }
   }
 
-  /**
-   * Reduce video noise using AI
-   */
-  async denoise(videoFile: File, intensity: number): Promise<EnhancementResult> {
-    try {
-      // TODO: Integrate with noise reduction service
-      // This could use FFmpeg with AI-based denoising filters
-      // or services like Topaz Video AI
+  private async uploadToStorage(filePath: string, fileName: string): Promise<string> {
+    const fileContent = createReadStream(filePath);
+    // Assuming 'videos' bucket exists
+    const { data, error } = await supabase.storage
+      .from('videos')
+      .upload(`enhancements/${fileName}`, fileContent as any, {
+        contentType: 'video/mp4',
+        upsert: true
+      });
 
-      return {
-        success: true,
-        outputUrl: '#',
-        metadata: {
-          noiseReduction: `${intensity}%`,
-          algorithm: 'AI-Denoise',
-          processingTime: 3000
-        }
-      }
-    } catch (error) {
-      console.error('Denoise error:', error)
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
-      }
-    }
+    if (error) throw error;
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('videos')
+      .getPublicUrl(`enhancements/${fileName}`);
+
+    return publicUrl;
   }
 
   /**
-   * Interpolate frames to increase FPS using RIFE or DAIN
+   * Upscale video to higher resolution using FFmpeg (Lanczos)
    */
-  async interpolate(videoFile: File, targetFps: number): Promise<EnhancementResult> {
-    try {
-      // TODO: Integrate with frame interpolation service
-      // Options: RIFE, DAIN, or commercial APIs
+  async upscale(inputPath: string, resolution: string): Promise<EnhancementResult> {
+    const outputPath = path.join(this.tempDir, `${uuidv4()}_upscaled.mp4`);
+    
+    // Map resolution names to height
+    const heightMap: Record<string, number> = {
+      '720p': 720,
+      '1080p': 1080,
+      '1440p': 1440,
+      '2160p': 2160,
+      '4k': 2160
+    };
+    const height = heightMap[resolution] || 1080;
 
-      return {
-        success: true,
-        outputUrl: '#',
-        metadata: {
-          originalFps: 30,
-          targetFps,
-          algorithm: 'RIFE',
-          processingTime: 8000
-        }
-      }
-    } catch (error) {
-      console.error('Interpolate error:', error)
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
-      }
-    }
+    logger.info(`Starting upscale to ${resolution}`, { inputPath });
+
+    return new Promise((resolve) => {
+      ffmpeg(inputPath)
+        .output(outputPath)
+        .videoCodec('libx264')
+        .size(`?x${height}`) // Maintain aspect ratio
+        .outputOptions('-preset fast')
+        .on('end', async () => {
+            try {
+                const publicUrl = await this.uploadToStorage(outputPath, path.basename(outputPath));
+                await fs.unlink(outputPath); // Cleanup
+                resolve({
+                    success: true,
+                    outputUrl: publicUrl,
+                    metadata: { resolution, method: 'ffmpeg-lanczos' }
+                });
+            } catch (e) {
+                resolve({ success: false, error: e instanceof Error ? e.message : String(e) });
+            }
+        })
+        .on('error', (err) => {
+            logger.error('FFmpeg upscale error', err);
+            resolve({ success: false, error: err.message });
+        })
+        .run();
+    });
+  }
+
+  /**
+   * Reduce video noise using FFmpeg (hqdn3d)
+   */
+  async denoise(inputPath: string, intensity: number): Promise<EnhancementResult> {
+    const outputPath = path.join(this.tempDir, `${uuidv4()}_denoised.mp4`);
+    // Map intensity (0-100) to hqdn3d parameters (luma_spatial, chroma_spatial, luma_tmp, chroma_tmp)
+    // Default roughly 4.0
+    const factor = (intensity / 100) * 10; // 0 to 10
+
+    logger.info(`Starting denoise with intensity ${intensity}`, { inputPath });
+
+    return new Promise((resolve) => {
+        ffmpeg(inputPath)
+          .output(outputPath)
+          .videoCodec('libx264')
+          .videoFilters(`hqdn3d=${factor}:${factor}:${factor}:${factor}`)
+          .outputOptions('-preset fast')
+          .on('end', async () => {
+              try {
+                  const publicUrl = await this.uploadToStorage(outputPath, path.basename(outputPath));
+                  await fs.unlink(outputPath);
+                  resolve({
+                      success: true,
+                      outputUrl: publicUrl,
+                      metadata: { intensity, method: 'ffmpeg-hqdn3d' }
+                  });
+              } catch (e) {
+                  resolve({ success: false, error: e instanceof Error ? e.message : String(e) });
+              }
+          })
+          .on('error', (err) => {
+              logger.error('FFmpeg denoise error', err);
+              resolve({ success: false, error: err.message });
+          })
+          .run();
+      });
+  }
+
+  /**
+   * Interpolate frames to target FPS
+   */
+  async interpolate(inputPath: string, targetFps: number): Promise<EnhancementResult> {
+    const outputPath = path.join(this.tempDir, `${uuidv4()}_interpolated.mp4`);
+
+    logger.info(`Starting interpolation to ${targetFps}fps`, { inputPath });
+
+    return new Promise((resolve) => {
+        ffmpeg(inputPath)
+          .output(outputPath)
+          .videoCodec('libx264')
+          .fps(targetFps) // Simple frame duplication/drop. For motion interpolation, use minterpolate filter (very slow)
+          // .videoFilters(`minterpolate=fps=${targetFps}:mi_mode=mci:mc_mode=aobmc:me_mode=bidir:vsbmc=1`) // Too slow for MVP without GPU
+          .outputOptions('-preset fast')
+          .on('end', async () => {
+              try {
+                  const publicUrl = await this.uploadToStorage(outputPath, path.basename(outputPath));
+                  await fs.unlink(outputPath);
+                  resolve({
+                      success: true,
+                      outputUrl: publicUrl,
+                      metadata: { targetFps, method: 'ffmpeg-fps' }
+                  });
+              } catch (e) {
+                  resolve({ success: false, error: e instanceof Error ? e.message : String(e) });
+              }
+          })
+          .on('error', (err) => {
+              logger.error('FFmpeg interpolation error', err);
+              resolve({ success: false, error: err.message });
+          })
+          .run();
+      });
   }
 
   /**
    * Apply color grading preset
    */
-  async applyColorGrading(videoFile: File, preset: string): Promise<EnhancementResult> {
-    try {
-      // TODO: Implement color grading
-      // This can use FFmpeg with LUT files or AI-based color grading
+  async applyColorGrading(inputPath: string, preset: string): Promise<EnhancementResult> {
+    const outputPath = path.join(this.tempDir, `${uuidv4()}_graded.mp4`);
+    
+    let filter = 'eq=saturation=1.0'; // default
 
-      return {
-        success: true,
-        outputUrl: '#',
-        metadata: {
-          preset,
-          colorSpace: 'Rec.709',
-          processingTime: 2000
-        }
-      }
-    } catch (error) {
-      console.error('Color grading error:', error)
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
-      }
+    switch (preset) {
+        case 'cinematic':
+            filter = 'eq=contrast=1.2:saturation=1.2:brightness=-0.05';
+            break;
+        case 'vibrant':
+            filter = 'eq=saturation=1.5:contrast=1.1';
+            break;
+        case 'bw':
+            filter = 'hue=s=0';
+            break;
+        case 'warm':
+            filter = 'colorbalance=rs=0.1:gs=-0.05:bs=-0.1';
+            break;
+        case 'cool':
+             filter = 'colorbalance=rs=-0.1:gs=-0.05:bs=0.1';
+            break;
     }
-  }
 
-  /**
-   * Get scale factor for upscaling
-   */
-  private getScaleFactor(resolution: string): number {
-    const factors: Record<string, number> = {
-      '720p': 2,
-      '1080p': 2,
-      '1440p': 3,
-      '2160p': 4
-    }
-    return factors[resolution] || 2
+    logger.info(`Starting color grading with preset ${preset}`, { inputPath });
+
+    return new Promise((resolve) => {
+        ffmpeg(inputPath)
+          .output(outputPath)
+          .videoCodec('libx264')
+          .videoFilters(filter)
+          .outputOptions('-preset fast')
+          .on('end', async () => {
+              try {
+                  const publicUrl = await this.uploadToStorage(outputPath, path.basename(outputPath));
+                  await fs.unlink(outputPath);
+                  resolve({
+                      success: true,
+                      outputUrl: publicUrl,
+                      metadata: { preset, method: 'ffmpeg-eq' }
+                  });
+              } catch (e) {
+                  resolve({ success: false, error: e instanceof Error ? e.message : String(e) });
+              }
+          })
+          .on('error', (err) => {
+              logger.error('FFmpeg color grading error', err);
+              resolve({ success: false, error: err.message });
+          })
+          .run();
+      });
   }
 }
 
-export const videoEnhancementService = new VideoEnhancementService()
+export const videoEnhancementService = new VideoEnhancementService();

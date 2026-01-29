@@ -3,7 +3,7 @@ import { logger } from '@lib/logger';
 import { getRequiredEnv, getOptionalEnv } from '@lib/env';
 import { withRetry } from '@lib/error-handling';
 import { withCircuitBreaker } from '@lib/resilience/circuit-breaker';
-import type { HeyGenVoice, HeyGenGenerateVideoResponse } from '@types/external-apis';
+import type { HeyGenVoice, HeyGenGenerateVideoResponse } from '@/types/external-apis';
 
 export interface HeyGenAvatar {
   avatar_id: string;
@@ -70,10 +70,7 @@ export class HeyGenService {
 
   private async request(endpoint: string, method: string = 'GET', body?: Record<string, unknown>) {
     if (!this.apiKey || this.apiKey === '') {
-      logger.info('HeyGen API Key não configurada, funcionalidades de avatar indisponíveis.', { 
-        component: 'HeyGenService',
-        endpoint 
-      });
+      logger.error('HeyGen API Key não configurada.');
       throw new Error('HeyGen API Key not configured');
     }
 
@@ -147,28 +144,9 @@ export class HeyGenService {
         previewVideoUrl: a.previewVideoUrl,
       }));
     } catch (error) {
-      logger.info('HeyGen avatares não disponíveis, retornando lista mock.', { 
-        component: 'HeyGenService',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-      
-      // Return mock avatars for development/demo
-      return [
-        {
-          avatar_id: 'mock-avatar-1',
-          name: 'Instrutor Virtual (Demo)',
-          gender: 'male',
-          preview_image_url: '/placeholder-avatar.jpg',
-          previewVideoUrl: undefined
-        },
-        {
-          avatar_id: 'mock-avatar-2', 
-          name: 'Instrutora Virtual (Demo)',
-          gender: 'female',
-          preview_image_url: '/placeholder-avatar.jpg',
-          previewVideoUrl: undefined
-        }
-      ];
+      logger.error('HeyGen avatares não disponíveis.');
+      // Strict Real Implementation: Throw error instead of returning mock data
+      throw error;
     }
   }
 
@@ -177,8 +155,8 @@ export class HeyGenService {
       const data = await this.request('voices') as { data: { voices: HeyGenVoice[] } };
       return data.data.voices;
     } catch (error) {
-      logger.error('Failed to list HeyGen voices:', error instanceof Error ? error : new Error(String(error)), { component: 'HeygenService' });
-      return [];
+      logger.error('Failed to list HeyGen voices', error instanceof Error ? error : new Error(String(error)));
+      throw error; // Fail fast/real
     }
   }
 
@@ -187,11 +165,11 @@ export class HeyGenService {
     
     const data = await this.request('video/generate', 'POST', request as unknown as Record<string, unknown>);
     
-    if (!data.data || !data.data.videoId) {
+    if (!data.data || !data.data.video_id) { // Fix: video_id property name
       throw new Error('Failed to get video_id from HeyGen response');
     }
 
-    return data.data.videoId;
+    return data.data.video_id;
   }
 
   async checkStatus(videoId: string): Promise<HeyGenJobStatus> {
@@ -207,7 +185,7 @@ export class HeyGenService {
 
     if (status === 'completed') {
       result.video_url = data.data.video_url;
-      result.thumbnailUrl = data.data.thumbnailUrl;
+      result.thumbnail_url = data.data.thumbnail_url;
     } else if (status === 'failed') {
       result.error = data.data.error?.message || 'Unknown error';
     }

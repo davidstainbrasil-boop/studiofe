@@ -50,9 +50,9 @@ describe('RenderService', () => {
     expect(prisma.render_jobs.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         id: 'mock-job-id-123',
-        project_id: mockProjectId,
-        user_id: mockUserId,
-        status: 'queued',
+        projectId: mockProjectId,
+        userId: mockUserId,
+        status: 'pending',
       }),
     });
 
@@ -63,7 +63,7 @@ describe('RenderService', () => {
     
     expect(prisma.render_jobs.update).toHaveBeenCalledWith({
         where: { id: 'mock-job-id-123' },
-        data: { status: 'completed', output_url: 'https://mock-worker-url.com/video.mp4' },
+        data: { status: 'completed', outputUrl: 'https://mock-worker-url.com/video.mp4' },
     });
 
     expect(result).toEqual({
@@ -87,7 +87,7 @@ describe('RenderService', () => {
     // Check that the update to 'failed' status happened
     expect(prisma.render_jobs.update).toHaveBeenCalledWith({
         where: { id: 'mock-job-id-123' },
-        data: { status: 'failed', error_message: 'Worker failed' },
+        data: { status: 'failed', errorMessage: 'Worker failed' },
     });
   });
 });

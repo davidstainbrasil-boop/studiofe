@@ -173,45 +173,33 @@ export class StorageSystemReal {
    */
   async getQuota(userId: string): Promise<{ used: number; limit: number; percentage: number }> {
     try {
-      // Get user's storage usage from analytics_events or calculate from storage
-      const { data, error } = await this.supabase
-        .from('users')
-        .select('storage_quota, storage_used')
-        .eq('id', userId)
-        .single();
+      // Use the billing system to get plan limits and usage
+      // This avoids querying non-existent columns in the users table
+      const { getUserPlan, PLANS } = await import('@/lib/billing/limits');
+      const { getUsageSummary } = await import('@/lib/billing/usage'); // Use getUsageSummary for consistency
 
-      if (error) {
-        // Default quota if no data found
-        return { used: 0, limit: 1073741824, percentage: 0 }; // 1GB default
-      }
-
-      const used = (data as { storage_used?: number }).storage_used || 0;
-      const limit = (data as { storage_quota?: number }).storage_quota || 1073741824;
+      const plan = await getUserPlan(userId);
+      const limits = PLANS[plan].limits;
+      const usage = await getUsageSummary(userId);
+      
+      const used = usage.storageUsedBytes;
+      const limit = limits.storageBytes;
       const percentage = limit > 0 ? Math.round((used / limit) * 100) : 0;
 
       return { used, limit, percentage };
     } catch (error) {
       logger.error(`[Storage] GetQuota failed for user ${userId}:`, error instanceof Error ? error : new Error(String(error)), { component: 'StorageSystemReal' });
-      return { used: 0, limit: 1073741824, percentage: 0 };
+      return { used: 0, limit: 1073741824, percentage: 0 }; // 1GB default
     }
   }
 
   /**
    * Set storage quota for a user (admin only)
+   * @deprecated Storage quota is now managed by Plan Tiers in Billing System
    */
   async setQuota(userId: string, newLimit: number): Promise<boolean> {
-    try {
-      const { error } = await this.supabase
-        .from('users')
-        .update({ storage_quota: newLimit })
-        .eq('id', userId);
-
-      if (error) throw error;
-      return true;
-    } catch (error) {
-      logger.error(`[Storage] SetQuota failed for user ${userId}:`, error instanceof Error ? error : new Error(String(error)), { component: 'StorageSystemReal' });
-      return false;
-    }
+    logger.warn('setQuota is deprecated. Storage limits are defined by User Plan.', { userId, newLimit });
+    return false;
   }
 
   /**

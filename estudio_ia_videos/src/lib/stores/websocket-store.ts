@@ -54,7 +54,7 @@ export const useWebSocketStore = create<WebSocketStore>((set, get) => {
             table: 'render_jobs',
             filter: `user_id=eq.${user.id}`
           },
-          (payload) => {
+          (payload: { eventType: string; new: unknown }) => {
             if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
               const job = payload.new as unknown as JobPayload;
               if (job.status === 'processing') {
@@ -85,14 +85,14 @@ export const useWebSocketStore = create<WebSocketStore>((set, get) => {
             table: 'notifications',
             filter: `user_id=eq.${user.id}`
           },
-          (payload) => {
+          (payload: { new: unknown }) => {
             const notification = payload.new as unknown as Notification;
             set((state) => ({
               notifications: [notification, ...state.notifications]
             }));
           }
         )
-        .subscribe((status) => {
+        .subscribe((status: string) => {
           if (status === 'SUBSCRIBED') {
             set({ isConnected: true });
           } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {

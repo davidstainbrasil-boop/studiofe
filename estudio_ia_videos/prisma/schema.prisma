@@ -288,6 +288,51 @@ model slides {
   @@schema("public")
 }
 
+model assets {
+  id           String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  title        String             @db.VarChar(255)
+  type         String             @db.VarChar(50)
+  url          String             @db.Text
+  thumbnailUrl String?            @map("thumbnail_url")
+  source       String             @db.VarChar(50)
+  category     String?            @db.VarChar(100)
+  tags         String[]
+  license      String?            @db.VarChar(50)
+  width        Int?
+  height       Int?
+  duration     Int?
+  size         Int?
+  favorites    Int                @default(0)
+  authorName   String?            @map("author_name")
+  authorUrl    String?            @map("author_url")
+  metadata     Json?              @default("{}")
+  createdAt    DateTime?          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime?          @default(now()) @map("updated_at") @db.Timestamptz(6)
+  collectionId String?            @map("collection_id") @db.Uuid
+  
+  collection   asset_collections? @relation(fields: [collectionId], references: [id], onDelete: SetNull)
+
+  @@index([type])
+  @@index([source])
+  @@index([tags])
+  @@schema("public")
+}
+
+model asset_collections {
+  id          String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name        String    @db.VarChar(255)
+  description String?
+  coverImage  String?   @map("cover_image")
+  isSystem    Boolean   @default(false) @map("is_system")
+  userId      String?   @map("user_id") @db.Uuid
+  createdAt   DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
+  
+  assets      assets[]
+
+  @@schema("public")
+}
+
 model scenes {
   id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   projectId       String    @map("project_id") @db.Uuid

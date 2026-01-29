@@ -109,7 +109,7 @@ export class SecurityAuditSystem {
       },
       cors: {
         enabled: true,
-        origins: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
+        origins: process.env.ALLOWED_ORIGINS?.split(',') || (process.env.NODE_ENV === 'production' ? ['https://cursostecno.com.br'] : ['http://localhost:3000']),
         credentials: true,
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
         ...config?.cors

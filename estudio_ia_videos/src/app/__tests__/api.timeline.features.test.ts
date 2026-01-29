@@ -165,21 +165,28 @@ describe('Timeline Advanced Features', () => {
     })
 
     it('retorna 409 se track já está bloqueada', async () => {
-      const { prisma } = require('@/lib/prisma')
-      prisma.timeline_track_locks.findFirst.mockResolvedValueOnce({
-        id: 'lock1',
-        userId: 'u2',
-        createdAt: new Date()
-      })
-
-      const req = makeRequest('POST', '/api/v1/timeline/multi-track/collaborate', {
-        projectId: 'p1',
-        trackId: 'track1',
+      // NOTE: The collaborate API uses an in-memory map for locks, not prisma.
+      // First lock as user u1 (mocked session)
+      const lockReq1 = makeRequest('POST', '/api/v1/timeline/multi-track/collaborate', {
+        projectId: 'p-conflict',
+        trackId: 'track-conflict',
         action: 'lock'
       })
-      const res = await collaborateRoute.POST(req)
+      const res1 = await collaborateRoute.POST(lockReq1)
+      expect(res1.status).toBe(200)
+
+      // Now try to lock with a different user (mock different session)
+      const { getServerSession } = require('next-auth')
+      getServerSession.mockResolvedValueOnce({ user: { id: 'u2' } })
+
+      const lockReq2 = makeRequest('POST', '/api/v1/timeline/multi-track/collaborate', {
+        projectId: 'p-conflict',
+        trackId: 'track-conflict',
+        action: 'lock'
+      })
+      const res2 = await collaborateRoute.POST(lockReq2)
       
-      expect(res.status).toBe(409)
+      expect(res2.status).toBe(409)
     })
 
     it('desbloqueia track', async () => {

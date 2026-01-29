@@ -26,7 +26,7 @@ import {
   Type,
   Square
 } from 'lucide-react';
-import { Template, NRCategory, TemplateSlide } from '@types/templates';
+import { Template, NRCategory, TemplateSlide } from '@/types/templates';
 
 interface TemplateEditorProps {
   template: Template | null;
@@ -108,7 +108,7 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
     }));
   };
 
-  const handleSettingsChange = (field: string, value: string | number | boolean) => {
+  const handleSettingsChange = (field: string, value: string | number | boolean | Record<string, unknown>) => {
     setFormData(prev => ({
       ...prev,
       content: {
@@ -417,7 +417,7 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
                 <div className="text-center py-8 text-gray-500">
                   <Square className="w-12 h-12 mx-auto mb-3 text-gray-300" />
                   <p>Nenhum slide adicionado ainda.</p>
-                  <p className="text-sm">Clique em "Adicionar Slide" para começar.</p>
+                  <p className="text-sm">Clique em &quot;Adicionar Slide&quot; para começar.</p>
                 </div>
               )}
             </div>

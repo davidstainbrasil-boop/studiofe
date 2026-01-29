@@ -1,40 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@lib/logger';
+import { prisma } from '@lib/prisma';
+import { randomUUID } from 'crypto';
 
-interface Template {
-  id: string
-  name: string
-  isCustom: boolean
-  isFavorite: boolean
-  createdAt: Date
-  updatedAt: Date
-  downloads: number
-  rating: number
-  metadata: {
-    usage: {
-      views: number
-      downloads: number
-      likes: number
-      shares: number
-      lastUsed: Date
-    }
-  }
-  [key: string]: unknown
-}
-
-// Mock database - em produção, usar banco de dados real
-const templates: Template[] = [];
-
-// POST - Duplicar template
+// POST - Duplicar template (Implementação Real)
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
     const { id } = params;
-    const { name } = await request.json();
+    const body = await request.json();
+    const { name } = body;
 
-    const originalTemplate = templates.find(t => t.id === id);
+    // Buscar template original no banco
+    const originalTemplate = await prisma.templates.findUnique({
+      where: { id },
+    });
 
     if (!originalTemplate) {
       return NextResponse.json(
@@ -43,29 +25,27 @@ export async function POST(
       );
     }
 
-    const duplicatedTemplate = {
-      ...originalTemplate,
-      id: `template-${Date.now()}`,
-      name: name || `${originalTemplate.name} (Cópia)`,
-      isCustom: true,
-      isFavorite: false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      downloads: 0,
-      rating: 0,
-      metadata: {
-        ...originalTemplate.metadata,
-        usage: {
-          views: 0,
-          downloads: 0,
-          likes: 0,
-          shares: 0,
-          lastUsed: new Date(),
-        },
-      },
-    };
+    // Criar cópia
+    const newId = randomUUID();
+    const newName = name || `${originalTemplate.name} (Cópia)`;
 
-    templates.push(duplicatedTemplate);
+    const duplicatedTemplate = await prisma.templates.create({
+      data: {
+        id: newId,
+        name: newName,
+        description: originalTemplate.description,
+        category: originalTemplate.category,
+        thumbnail_url: originalTemplate.thumbnail_url,
+        preview_url: originalTemplate.preview_url,
+        metadata: originalTemplate.metadata || {},
+        settings: originalTemplate.settings || {},
+        is_public: false, // Cópias são privadas por padrão
+        created_by: originalTemplate.created_by, // Mantém o mesmo criador
+        usage_count: 0,
+      },
+    });
+
+    logger.info(`Template duplicado com sucesso: ${id} -> ${newId}`, { component: 'API: templates/[id]/duplicate' });
 
     return NextResponse.json({
       template: duplicatedTemplate,
@@ -73,7 +53,7 @@ export async function POST(
     }, { status: 201 });
 
   } catch (error) {
-    logger.error('Erro ao duplicar template', error instanceof Error ? error : new Error(String(error)), { component: 'API: templates/[id]/duplicate' });
+    logger.error('Erro ao duplicar template', error instanceof Error ? error : new Error(String(error)), { component: 'API: templates/[id]/duplicate' });
     return NextResponse.json(
       { error: 'Erro interno do servidor', success: false },
       { status: 500 }

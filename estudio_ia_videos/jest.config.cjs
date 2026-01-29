@@ -22,8 +22,6 @@ module.exports = {
     '^@prisma/client$': '<rootDir>/node_modules/@prisma/client',
   },
 
-
-
   transformIgnorePatterns: [
     '/node_modules/(?!bullmq|msgpackr|jose|@supabase/auth-helpers-shared|@supabase/auth-helpers-nextjs|dnd-core|react-dnd|react-dnd-html5-backend).+\\.(js|jsx|mjs|cjs|ts|tsx)$',
   ],
@@ -40,27 +38,12 @@ module.exports = {
     '<rootDir>/.next/',
     'vitest',
     'playwright',
-    // Ignorar arquivos que não existem ou estão desabilitados
-    '.*\.disabled\.(ts|js)$',
-    '.*\.test\.disabled\.(ts|js)$',
-    '.*tests_disabled.*',
-    '.*_archive.*',
-    '.*tests-legacy.*',
-    // Ignorar arquivos que não têm testes
-    '.*setup\.ts$',
-    '.*mocks.*\.ts$',
-    '.*mock\.ts$',
-    // Ignorar arquivos que causam conflitos
-    '.*page\.test\.tsx$',
-    '.*browser\.test\.disabled\.ts$',
-    '.*full-user-flow\.test\.disabled\.ts$',
-    '.*api\.video\.export.*\.test.*\.ts$',
-    '.*logger-service\.test\.ts$',
-    '.*feedback\.test\.tsx$',
-    '.*rbac.*\.test.*\.ts$',
-    '.*storage.*\.test.*\.ts$',
-    '.*flags\.test\.disabled\.ts$',
-    '.*monitoring-service\.test\.disabled\.ts$',
+    // Arquivos de setup e mocks
+    '.*setup\\.ts$',
+    '.*mocks.*\\.ts$',
+    '.*mock\\.ts$',
+    // Testes de páginas que requerem ambiente completo do Next.js
+    '.*page\\.test\\.tsx$',
   ],
 
   setupFilesAfterEnv: ['<rootDir>/src/app/jest.setup.js'],

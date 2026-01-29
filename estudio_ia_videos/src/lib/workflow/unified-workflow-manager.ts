@@ -6,6 +6,8 @@
 import { prisma } from '@lib/prisma';
 import { logger } from '@lib/logger';
 import { jobManager } from '@lib/render/job-manager';
+import { storageSystem } from '@/lib/storage-system-real';
+import { PPTXProcessorReal } from '@/lib/pptx/pptx-processor-real';
 
 // Types for workflow data
 export interface StepData {
@@ -209,20 +211,27 @@ export class UnifiedWorkflowManager {
   }
 
   private async executeImport(projectId: string, data?: StepData): Promise<StepData> {
-    const { PptxProcessor } = require('@lib/pptx/pptx-processor');
-    const processor = new PptxProcessor();
-
+    
     // Integração com PPTX Studio
     if (data && typeof data.type === 'string' && data.type === 'pptx') {
       if (typeof data.storagePath !== 'string') {
         throw new Error('PPTX Import requires storagePath');
       }
       
-      const result = await processor.process({
-        storagePath: data.storagePath,
-        extractImages: true,
-        extractNotes: true
+      logger.info('Starting PPTX import via UnifiedWorkflow', { projectId, storagePath: data.storagePath });
+
+      // 1. Download File
+      const buffer = await storageSystem.download({
+          bucket: 'uploads',
+          path: data.storagePath
       });
+
+      // 2. Process File using Real Processor
+      const result = await PPTXProcessorReal.extract(buffer, projectId);
+
+      if (!result.success) {
+          throw result.error || new Error('PPTX extraction failed');
+      }
       
       // Persist import metadata to project
       await prisma.projects.update({
@@ -233,7 +242,7 @@ export class UnifiedWorkflowManager {
              // For now, simpler to assume workflow store handles the main workflow state, 
              // but we might want to store specific import details
              importStats: {
-                 slideCount: result.slideCount,
+                 slideCount: result.slides.length,
                  importedAt: new Date().toISOString()
              }
           } // Note: this effectively merges or overwrites top keys depending on prisma version/db.
@@ -241,7 +250,7 @@ export class UnifiedWorkflowManager {
         }
       });
       
-      return { success: true, message: 'PPTX Processed', slideCount: result.slideCount, slides: result.content };
+      return { success: true, message: 'PPTX Processed', slideCount: result.slides.length, slides: result.slides };
     }
 
     // Integração com Templates NR via TemplateApplier
@@ -353,7 +362,7 @@ export class UnifiedWorkflowManager {
                 
                 generatedCount++;
             } finally {
-                await fs.unlink(tempFile).catch((error) => {
+                await fs.unlink(tempFile).catch((error: unknown) => {
                   logger.debug('Temp file already deleted during workflow cleanup', {
                     component: 'UnifiedWorkflowManager',
                     tempFile,
