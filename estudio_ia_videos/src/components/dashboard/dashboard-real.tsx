@@ -63,6 +63,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
 import { Textarea } from '../ui/textarea'
+import { AnalyticsCharts } from './analytics-charts'
 
 export default function DashboardReal() {
   const router = useRouter()
@@ -506,7 +507,24 @@ export default function DashboardReal() {
             </Card>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+            {/* Unified Studio - NOVO HUB PROFISSIONAL */}
+            <Link href="/unified-studio" className="contents">
+              <Button
+                variant="outline"
+                className="p-6 h-auto flex-col gap-3 hover:bg-gradient-to-br hover:from-purple-50 hover:to-blue-50 hover:border-purple-300 border-purple-400 shadow-lg relative overflow-hidden"
+              >
+                <div className="absolute -top-1 -right-1 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-[10px] px-2 py-0.5 rounded-bl-lg font-semibold">
+                  NOVO
+                </div>
+                <Workflow className="w-8 h-8 text-purple-600" />
+                <div className="text-center">
+                  <p className="font-semibold text-purple-700">Unified Studio</p>
+                  <p className="text-xs text-gray-500">Produção Completa</p>
+                </div>
+              </Button>
+            </Link>
+
             {/* PPTX Studio Enhanced - HUB PRINCIPAL */}
             <Link href="/pptx-preview" className="contents">
               <Button
@@ -588,6 +606,20 @@ export default function DashboardReal() {
                 <p className="text-xs text-gray-500">Recarregar dados</p>
               </div>
             </Button>
+          </div>
+
+          {/* Analytics Charts Section */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-purple-600" />
+                Analytics
+              </h2>
+              <Badge variant="outline" className="text-xs">
+                {selectedPeriod === 'day' ? 'Hoje' : selectedPeriod === 'week' ? 'Última Semana' : selectedPeriod === 'month' ? 'Último Mês' : 'Último Trimestre'}
+              </Badge>
+            </div>
+            <AnalyticsCharts period={selectedPeriod} />
           </div>
 
           <div className="mb-8">
