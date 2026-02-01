@@ -6,15 +6,19 @@ import { Button } from '@components/ui/button';
 import { Switch } from '@components/ui/switch';
 import { Label } from '@components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs';
-import { Bell, Moon, Globe, Shield, Smartphone } from 'lucide-react';
+import { Bell, Moon, Globe, Shield, Smartphone, CreditCard, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { SubscriptionStatus } from '@/components/billing/subscription-status';
+import { useRouter } from 'next/navigation';
 
 interface UserSettingsProps {
   userId: string;
 }
 
 export function UserSettings({ userId }: UserSettingsProps) {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [billingLoading, setBillingLoading] = useState(false);
   const [settings, setSettings] = useState({
     notifications: {
       email: true,
@@ -42,6 +46,28 @@ export function UserSettings({ userId }: UserSettingsProps) {
     toast.success('Configuração atualizada');
   };
 
+  const handleManageBilling = async () => {
+    setBillingLoading(true);
+    try {
+      const response = await fetch(`/api/stripe/checkout?userId=${userId}`);
+      const data = await response.json();
+      
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        toast.error('Erro ao acessar portal de billing');
+      }
+    } catch (error) {
+      toast.error('Erro ao acessar portal de billing');
+    } finally {
+      setBillingLoading(false);
+    }
+  };
+
+  const handleUpgrade = () => {
+    router.push('/pricing');
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -54,9 +80,45 @@ export function UserSettings({ userId }: UserSettingsProps) {
       <Tabs defaultValue="general" className="space-y-4">
         <TabsList>
           <TabsTrigger value="general">Geral</TabsTrigger>
+          <TabsTrigger value="billing">Assinatura</TabsTrigger>
           <TabsTrigger value="notifications">Notificações</TabsTrigger>
           <TabsTrigger value="privacy">Privacidade</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="billing" className="space-y-4">
+          <SubscriptionStatus userId={userId} onUpgrade={handleUpgrade} />
+          
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5" />
+                Gerenciar Pagamento
+              </CardTitle>
+              <CardDescription>
+                Acesse o portal de billing para gerenciar seu método de pagamento e faturas.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button 
+                onClick={handleManageBilling}
+                disabled={billingLoading}
+                variant="outline"
+              >
+                {billingLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Carregando...
+                  </>
+                ) : (
+                  <>
+                    <CreditCard className="w-4 h-4 mr-2" />
+                    Acessar Portal de Billing
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="general" className="space-y-4">
           <Card>

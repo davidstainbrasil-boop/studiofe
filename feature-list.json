@@ -447,16 +447,76 @@
         "Invalida sessões após deleção"
       ],
       "passes": true
+    },
+    {
+      "id": "p2-001",
+      "category": "render",
+      "description": "Video Resolution Profiles API",
+      "steps": [
+        "GET /api/render/resolution lista todos os perfis",
+        "Filtrar por plataforma, aspect ratio, qualidade",
+        "POST estima tamanho e tempo de render",
+        "Gera argumentos FFmpeg automaticamente"
+      ],
+      "passes": true
+    },
+    {
+      "id": "p2-002",
+      "category": "render",
+      "description": "Subtitles Generation API",
+      "steps": [
+        "POST /api/subtitles?operation=generate gera legendas",
+        "Suporta input de texto ou slides",
+        "Converte entre SRT, VTT, JSON",
+        "Sincroniza timing (shift, scale)"
+      ],
+      "passes": true
+    },
+    {
+      "id": "p2-003",
+      "category": "render",
+      "description": "Video Preview Generator",
+      "steps": [
+        "POST /api/preview gera preview de 30s",
+        "Cache de previews com TTL 30min",
+        "Suporta transições e avatar overlay",
+        "GET busca preview existente"
+      ],
+      "passes": true
+    },
+    {
+      "id": "p2-004",
+      "category": "pptx",
+      "description": "Google Drive Integration",
+      "steps": [
+        "OAuth2 flow funcional",
+        "Lista apresentações do Drive",
+        "Download e import de PPTX",
+        "Suporta Google Slides (exporta como PPTX)"
+      ],
+      "passes": true
+    },
+    {
+      "id": "p2-005",
+      "category": "pptx",
+      "description": "OneDrive Integration",
+      "steps": [
+        "OAuth2 com Microsoft Graph API",
+        "Lista apresentações do OneDrive",
+        "Download e import de PPTX",
+        "Busca em todo o Drive"
+      ],
+      "passes": true
     }
   ],
   "summary": {
-    "total": 36,
-    "passing": 36,
+    "total": 41,
+    "passing": 41,
     "failing": 0,
     "categories": {
       "core": { "total": 4, "passing": 4 },
-      "pptx": { "total": 4, "passing": 4 },
-      "render": { "total": 6, "passing": 6 },
+      "pptx": { "total": 6, "passing": 6 },
+      "render": { "total": 9, "passing": 9 },
       "auth": { "total": 7, "passing": 7 },
       "api": { "total": 7, "passing": 7 },
       "database": { "total": 3, "passing": 3 },

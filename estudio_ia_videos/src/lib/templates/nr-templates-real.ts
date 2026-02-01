@@ -823,19 +823,734 @@ ELETRICIDADE NÃO PERDOA IMPRUDÊNCIA!`,
 }
 
 // ============================================================================
+// NR-12 - Segurança no Trabalho em Máquinas e Equipamentos
+// ============================================================================
+
+export const NR12_TEMPLATE: NRTemplate = {
+  id: 'nr12-maquinas-basico',
+  nr: 'NR-12',
+  title: 'Segurança em Máquinas e Equipamentos',
+  description: 'Treinamento sobre princípios de segurança na operação de máquinas e equipamentos',
+  category: 'Máquinas e Equipamentos',
+  duration: 35,
+  tags: ['máquinas', 'equipamentos', 'proteção', 'operação segura'],
+  compliance: {
+    version: 'Portaria SEPRT n.º 916/2019',
+    lastUpdate: '2019-07-30',
+    source: 'Ministério do Trabalho'
+  },
+  slides: [
+    {
+      order: 1,
+      title: 'NR-12: Segurança em Máquinas e Equipamentos',
+      content: 'Treinamento Obrigatório - Operação Segura',
+      type: 'title',
+      duration: 10
+    },
+    {
+      order: 2,
+      title: 'Objetivo da NR-12',
+      content: `A NR-12 estabelece medidas de prevenção para garantir a saúde e integridade física dos trabalhadores.
+
+APLICA-SE A:
+• Máquinas e equipamentos novos e usados
+• Todas as fases: projeto, fabricação, importação, comercialização, exposição e cessão
+• Utilização em todas as atividades econômicas
+
+PRINCÍPIO FUNDAMENTAL:
+Máquinas devem ser seguras em TODAS as fases de vida útil`,
+      notes: 'Enfatizar que a norma é abrangente e preventiva',
+      imageKeywords: ['máquinas industriais', 'segurança'],
+      type: 'content',
+      duration: 45
+    },
+    {
+      order: 3,
+      title: 'Principais Riscos',
+      content: `RISCOS MECÂNICOS:
+⚠️ Esmagamento
+⚠️ Corte e cisalhamento  
+⚠️ Enroscamento
+⚠️ Agarramento
+⚠️ Impacto
+⚠️ Perfuração
+⚠️ Abrasão
+⚠️ Projeção de materiais
+
+ZONAS DE PERIGO:
+• Pontos de operação
+• Mecanismos de transmissão
+• Partes móveis
+• Alimentação e descarga`,
+      imageKeywords: ['riscos máquinas', 'zona de perigo'],
+      type: 'content',
+      duration: 50
+    },
+    {
+      order: 4,
+      title: 'Sistemas de Segurança',
+      content: `PROTEÇÕES FIXAS:
+• Envolvem completamente a zona de perigo
+• Removidas apenas com ferramentas
+• Devem ser robustas e duráveis
+
+PROTEÇÕES MÓVEIS:
+• Com intertravamento (interlock)
+• Máquina só funciona com proteção fechada
+• Ao abrir, máquina para imediatamente
+
+DISPOSITIVOS DE SEGURANÇA:
+• Cortinas de luz
+• Scanners de área
+• Tapetes sensíveis
+• Comandos bimanuais
+• Botões de emergência`,
+      notes: 'Demonstrar cada tipo se possível',
+      type: 'content',
+      duration: 60
+    },
+    {
+      order: 5,
+      title: 'Dispositivos de Parada de Emergência',
+      content: `CARACTERÍSTICAS OBRIGATÓRIAS:
+
+✓ Cor VERMELHA com fundo AMARELO
+✓ Formato cogumelo (tipo soco)
+✓ Acessível a qualquer momento
+✓ Não pode ser usado como partida
+✓ Deve manter a máquina parada até reset manual
+
+LOCALIZAÇÃO:
+• Em cada posto de trabalho
+• Nas vias de acesso
+• Próximo às zonas de perigo
+
+⚠️ NUNCA desabilite ou ignore dispositivos de emergência!`,
+      imageKeywords: ['botão emergência', 'parada emergência'],
+      type: 'content',
+      duration: 45
+    },
+    {
+      order: 6,
+      title: 'Procedimentos Seguros de Operação',
+      content: `ANTES DE OPERAR:
+1. Verificar proteções e dispositivos de segurança
+2. Conferir EPIs necessários
+3. Avaliar condições da máquina
+4. Ler procedimentos operacionais
+
+DURANTE A OPERAÇÃO:
+• Manter atenção total
+• Não usar celular ou fones
+• Não improvisar ferramentas
+• Respeitar sinalizações
+• Comunicar qualquer anomalia
+
+APÓS A OPERAÇÃO:
+• Desligar corretamente
+• Limpar a área de trabalho
+• Reportar problemas encontrados`,
+      type: 'content',
+      duration: 50
+    },
+    {
+      order: 7,
+      title: 'Manutenção Segura',
+      content: `PROCEDIMENTO LOTO (Lock Out / Tag Out):
+
+1️⃣ COMUNICAR a todos os envolvidos
+2️⃣ DESLIGAR a máquina normalmente
+3️⃣ ISOLAR todas as fontes de energia
+4️⃣ APLICAR dispositivos de bloqueio
+5️⃣ SINALIZAR com etiquetas
+6️⃣ VERIFICAR energia zero
+7️⃣ EXECUTAR a manutenção
+8️⃣ REMOVER bloqueios (só quem instalou)
+
+⚠️ Cada trabalhador coloca SEU PRÓPRIO cadeado!`,
+      imageKeywords: ['lockout tagout', 'bloqueio máquinas'],
+      type: 'content',
+      duration: 55
+    },
+    {
+      order: 8,
+      title: 'EPIs Específicos para Máquinas',
+      content: `PROTEÇÃO OBRIGATÓRIA:
+
+👓 ÓCULOS DE SEGURANÇA
+   Contra projeção de partículas
+
+🧤 LUVAS ADEQUADAS
+   Conforme o risco (corte, abrasão)
+   ⚠️ PROIBIDO em máquinas rotativas!
+
+👂 PROTEÇÃO AUDITIVA
+   Em ambientes com ruído > 85 dB
+
+👢 CALÇADO DE SEGURANÇA
+   Com biqueira de proteção
+
+🦺 UNIFORME SEM PARTES SOLTAS
+   Evitar enroscamento`,
+      type: 'content',
+      duration: 45
+    },
+    {
+      order: 9,
+      title: 'Quiz - Teste seus Conhecimentos',
+      content: `1. Qual a cor obrigatória do botão de emergência?
+a) Azul com fundo branco
+b) Vermelho com fundo amarelo
+c) Verde com fundo preto
+
+2. O que significa LOTO?
+a) Loteria de Trabalho Operacional
+b) Lock Out / Tag Out (Bloqueio e Etiquetagem)
+c) Lista de Operações Técnicas Obrigatórias
+
+3. Luvas podem ser usadas em máquinas rotativas?
+a) Sim, sempre
+b) Não, risco de enroscamento
+c) Apenas luvas de couro`,
+      type: 'quiz',
+      duration: 60
+    },
+    {
+      order: 10,
+      title: 'Resumo Final',
+      content: `LEMBRE-SE SEMPRE:
+
+✓ Proteções existem para te proteger - NUNCA desabilite
+✓ Botão de emergência é seu amigo - saiba onde está
+✓ Manutenção só com máquina bloqueada
+✓ EPIs corretos para cada atividade
+✓ Na dúvida, PARE e pergunte
+✓ Acidentes com máquinas costumam ser graves
+
+SEGURANÇA NÃO É OPÇÃO, É OBRIGAÇÃO!`,
+      type: 'summary',
+      duration: 30
+    }
+  ]
+}
+
+// ============================================================================
+// NR-33 - Segurança e Saúde nos Trabalhos em Espaços Confinados
+// ============================================================================
+
+export const NR33_TEMPLATE: NRTemplate = {
+  id: 'nr33-espaco-confinado',
+  nr: 'NR-33',
+  title: 'Trabalho em Espaços Confinados',
+  description: 'Treinamento sobre identificação, avaliação e controle de riscos em espaços confinados',
+  category: 'Espaços Confinados',
+  duration: 40,
+  tags: ['espaço confinado', 'atmosfera perigosa', 'resgate', 'permissão entrada'],
+  compliance: {
+    version: 'Portaria MTE n.º 1.409/2012',
+    lastUpdate: '2012-08-29',
+    source: 'Ministério do Trabalho'
+  },
+  slides: [
+    {
+      order: 1,
+      title: 'NR-33: Trabalho em Espaços Confinados',
+      content: 'Treinamento Obrigatório - Entrada e Trabalho Seguro',
+      type: 'title',
+      duration: 10
+    },
+    {
+      order: 2,
+      title: 'O que é Espaço Confinado?',
+      content: `DEFINIÇÃO (NR-33):
+Qualquer área ou ambiente não projetado para ocupação humana contínua, que possua meios limitados de entrada e saída, e onde exista ou possa existir atmosfera perigosa.
+
+EXEMPLOS COMUNS:
+• Tanques e vasos de pressão
+• Silos e reservatórios
+• Galerias e túneis
+• Caixas d'água
+• Poços de visita (bueiros)
+• Porões de navios
+• Fornos e caldeiras
+• Dutos e tubulações`,
+      notes: 'Mostrar fotos de exemplos reais',
+      imageKeywords: ['espaço confinado', 'tanque', 'silo'],
+      type: 'content',
+      duration: 50
+    },
+    {
+      order: 3,
+      title: 'Por que é Perigoso?',
+      content: `RISCOS ATMOSFÉRICOS:
+
+🔴 DEFICIÊNCIA DE OXIGÊNIO (< 19,5%)
+   Causa: consumo, deslocamento
+   Efeito: inconsciência, morte
+
+🟡 ENRIQUECIMENTO DE OXIGÊNIO (> 23%)
+   Causa: vazamentos
+   Efeito: risco de incêndio/explosão
+
+⚫ GASES TÓXICOS
+   H2S, CO, NH3, Cloro
+   Efeito: intoxicação, morte
+
+🔶 ATMOSFERA EXPLOSIVA
+   Vapores, poeiras combustíveis
+   LEL > 10% = PERIGO
+
+⚠️ A maioria dos acidentes fatais em EC envolve resgate improvisado!`,
+      type: 'content',
+      duration: 55
+    },
+    {
+      order: 4,
+      title: 'Outros Riscos',
+      content: `RISCOS FÍSICOS:
+• Calor excessivo
+• Ruído amplificado
+• Iluminação deficiente
+• Vibração
+
+RISCOS MECÂNICOS:
+• Engolfamento (grãos, líquidos)
+• Equipamentos rotativos
+• Queda de materiais
+• Choque elétrico
+
+RISCOS ERGONÔMICOS:
+• Posturas inadequadas
+• Esforço físico intenso
+• Acesso difícil
+
+RISCOS BIOLÓGICOS:
+• Fungos, bactérias
+• Animais peçonhentos`,
+      imageKeywords: ['riscos espaço confinado'],
+      type: 'content',
+      duration: 45
+    },
+    {
+      order: 5,
+      title: 'Responsabilidades',
+      content: `TRABALHADOR AUTORIZADO:
+• Conhecer os riscos e medidas de controle
+• Comunicar ao Vigia qualquer condição de risco
+• Cumprir procedimentos e usar EPIs
+• Pode recusar entrada se identificar risco
+
+VIGIA:
+• Permanecer FORA do espaço confinado
+• Manter comunicação constante
+• Controlar entrada e saída
+• Acionar emergência quando necessário
+• NUNCA entrar para resgatar
+
+SUPERVISOR DE ENTRADA:
+• Emitir a Permissão de Entrada e Trabalho (PET)
+• Verificar medidas de controle
+• Autorizar a entrada
+• Encerrar a permissão`,
+      type: 'content',
+      duration: 50
+    },
+    {
+      order: 6,
+      title: 'Permissão de Entrada e Trabalho (PET)',
+      content: `A PET É OBRIGATÓRIA e deve conter:
+
+📋 Identificação do espaço confinado
+📋 Propósito da entrada
+📋 Data e duração autorizada
+📋 Riscos identificados
+📋 Medidas de controle
+📋 Resultados de testes atmosféricos
+📋 Equipamentos de resgate disponíveis
+📋 Nome dos trabalhadores autorizados
+📋 Assinatura do Supervisor
+
+⚠️ Válida apenas para uma entrada
+⚠️ Cancelada se condições mudarem
+⚠️ Arquivar por no mínimo 1 ano`,
+      imageKeywords: ['permissão entrada trabalho', 'PET'],
+      type: 'content',
+      duration: 55
+    },
+    {
+      order: 7,
+      title: 'Monitoramento Atmosférico',
+      content: `ORDEM DE TESTE (obrigatória):
+
+1️⃣ OXIGÊNIO (O2)
+   Normal: 19,5% a 23%
+   
+2️⃣ GASES INFLAMÁVEIS
+   Seguro: < 10% LEL
+   
+3️⃣ CONTAMINANTES TÓXICOS
+   Conforme limites de tolerância
+
+QUANDO MONITORAR:
+✓ Antes da entrada
+✓ Durante todo o trabalho
+✓ Após qualquer interrupção
+✓ Quando condições mudarem
+
+⚠️ Teste em diferentes níveis (gases pesados descem, leves sobem)`,
+      type: 'content',
+      duration: 50
+    },
+    {
+      order: 8,
+      title: 'Equipamentos de Proteção',
+      content: `EPIs OBRIGATÓRIOS:
+• Capacete com jugular
+• Óculos de proteção
+• Luvas adequadas ao risco
+• Calçado de segurança
+• Cinto de segurança tipo paraquedista
+• Linha de vida
+
+EQUIPAMENTOS DE RESGATE:
+• Tripé com guincho
+• Trava-quedas retrátil
+• Maca para espaços confinados
+• Equipamento de respiração autônoma
+
+EQUIPAMENTOS DE MEDIÇÃO:
+• Detector multigás calibrado
+• Explosímetro
+• Oxímetro`,
+      imageKeywords: ['epi espaço confinado', 'tripé resgate'],
+      type: 'content',
+      duration: 50
+    },
+    {
+      order: 9,
+      title: 'Procedimentos de Emergência',
+      content: `SINAIS DE ALERTA:
+• Comunicação interrompida
+• Trabalhador não responde
+• Alarme do detector de gás
+• Mudança visível no ambiente
+
+AÇÕES DO VIGIA:
+1. NUNCA entre para resgatar!
+2. Tente retirar com linha de vida
+3. Acione emergência imediatamente
+4. Mantenha área isolada
+5. Aguarde equipe de resgate
+
+⚠️ 60% DAS MORTES em EC são de pessoas tentando resgatar!
+
+EQUIPE DE RESGATE:
+• Treinada especificamente
+• Equipamentos adequados
+• Simulados periódicos`,
+      type: 'content',
+      duration: 55
+    },
+    {
+      order: 10,
+      title: 'Quiz - Avaliação',
+      content: `1. O que caracteriza um espaço confinado?
+a) Ambiente pequeno
+b) Meios limitados de entrada/saída e risco atmosférico
+c) Local subterrâneo
+
+2. Qual a primeira medição atmosférica a ser feita?
+a) Gases tóxicos
+b) Gases inflamáveis
+c) Oxigênio
+
+3. O Vigia pode entrar para resgatar um trabalhador?
+a) Sim, se for rápido
+b) Sim, com máscara de proteção
+c) Não, nunca`,
+      type: 'quiz',
+      duration: 60
+    },
+    {
+      order: 11,
+      title: 'Resumo Final',
+      content: `REGRAS DE OURO:
+
+✓ Sem PET válida = Sem entrada
+✓ Sem teste atmosférico = Sem entrada
+✓ Sem vigia = Sem entrada
+✓ Sem comunicação = Saída imediata
+✓ Condições mudaram = Evacuar e reavaliar
+✓ Resgate improvisado = MAIS mortes
+
+ESPAÇO CONFINADO EXIGE RESPEITO!
+Sua vida depende de seguir os procedimentos.`,
+      type: 'summary',
+      duration: 30
+    }
+  ]
+}
+
+// ============================================================================
+// NR-18 - Condições e Meio Ambiente de Trabalho na Indústria da Construção
+// ============================================================================
+
+export const NR18_TEMPLATE: NRTemplate = {
+  id: 'nr18-construcao-basico',
+  nr: 'NR-18',
+  title: 'Segurança na Construção Civil',
+  description: 'Treinamento sobre condições de segurança em canteiros de obras',
+  category: 'Construção Civil',
+  duration: 35,
+  tags: ['construção civil', 'canteiro de obras', 'pcmat', 'proteção coletiva'],
+  compliance: {
+    version: 'Portaria SEPRT n.º 3.733/2020',
+    lastUpdate: '2020-12-16',
+    source: 'Ministério do Trabalho'
+  },
+  slides: [
+    {
+      order: 1,
+      title: 'NR-18: Segurança na Construção Civil',
+      content: 'Condições e Meio Ambiente de Trabalho na Indústria da Construção',
+      type: 'title',
+      duration: 10
+    },
+    {
+      order: 2,
+      title: 'Abrangência da NR-18',
+      content: `A NR-18 se aplica a:
+
+🏗️ Construção de edificações
+🛣️ Infraestrutura (estradas, pontes)
+🔧 Reformas e manutenção
+🏚️ Demolições
+⚡ Montagem e desmontagem de estruturas
+
+DOCUMENTAÇÃO OBRIGATÓRIA:
+• PGR - Programa de Gerenciamento de Riscos
+• PCMSO - Programa de Controle Médico
+• Ordem de Serviço
+• Registros de treinamentos`,
+      notes: 'Explicar que a NR-18 é uma das mais extensas e detalhadas',
+      imageKeywords: ['construção civil', 'canteiro obras'],
+      type: 'content',
+      duration: 45
+    },
+    {
+      order: 3,
+      title: 'Principais Riscos na Construção',
+      content: `RISCOS MAIS COMUNS:
+
+⬇️ QUEDA DE ALTURA
+   Principal causa de mortes (35%)
+
+🧱 QUEDA DE MATERIAIS
+   Sobre trabalhadores ou terceiros
+
+⚡ CHOQUE ELÉTRICO
+   Instalações provisórias
+
+🔨 ACIDENTES COM MÁQUINAS
+   Serras, betoneiras, gruas
+
+🏗️ DESABAMENTO
+   Escavações, estruturas instáveis
+
+🌡️ CONDIÇÕES CLIMÁTICAS
+   Calor, frio, chuva`,
+      type: 'content',
+      duration: 50
+    },
+    {
+      order: 4,
+      title: 'Proteção Contra Quedas',
+      content: `SISTEMAS DE PROTEÇÃO COLETIVA:
+
+GUARDA-CORPO:
+• Altura mínima 1,20m
+• Travessão intermediário
+• Rodapé de 20cm
+
+REDE DE PROTEÇÃO:
+• Instalada o mais próximo do piso de trabalho
+• Testada conforme normas técnicas
+• Fixação resistente
+
+PLATAFORMAS DE PROTEÇÃO:
+• Primária: 1ª laje
+• Secundárias: a cada 3 lajes
+
+LINHA DE VIDA:
+• Quando EPC não for viável
+• Usar com cinto paraquedista`,
+      imageKeywords: ['proteção queda', 'guarda corpo'],
+      type: 'content',
+      duration: 55
+    },
+    {
+      order: 5,
+      title: 'Escadas, Rampas e Passarelas',
+      content: `ESCADAS DE MÃO:
+• Comprimento máximo: 7m
+• Apoio seguro (topo e base)
+• Ultrapassar 1m acima do piso
+• Proibido emendas improvisadas
+
+ESCADAS DE USO COLETIVO:
+• Largura mínima: 80cm
+• Corrimão em ambos os lados
+• Degraus uniformes
+
+RAMPAS:
+• Inclinação máxima: 30°
+• Travessas a cada 40cm (se > 18°)
+• Guarda-corpo lateral
+
+PASSARELAS:
+• Largura mínima: 60cm
+• Guarda-corpo quando altura > 2m`,
+      type: 'content',
+      duration: 45
+    },
+    {
+      order: 6,
+      title: 'Escavações',
+      content: `REGRAS DE SEGURANÇA:
+
+📏 Profundidade > 1,25m:
+   • Escoramento obrigatório OU
+   • Taludes estáveis
+
+🚧 ISOLAMENTO:
+   • Sinalização adequada
+   • Proteção contra queda de pessoas
+   • Barreiras físicas
+
+⚠️ ATENÇÃO ESPECIAL:
+   • Redes subterrâneas (gás, elétrica, água)
+   • Solo instável ou encharcado
+   • Proximidade de edificações
+   • Trânsito de máquinas
+
+🔍 INSPEÇÃO DIÁRIA:
+   Após chuvas ou vibrações significativas`,
+      imageKeywords: ['escavação', 'escoramento'],
+      type: 'content',
+      duration: 50
+    },
+    {
+      order: 7,
+      title: 'Instalações Elétricas Provisórias',
+      content: `REQUISITOS OBRIGATÓRIOS:
+
+✓ Quadro de distribuição com DR
+✓ Aterramento adequado
+✓ Disjuntores dimensionados
+✓ Cabos em bom estado (sem emendas)
+✓ Proteção contra intempéries
+
+PROIBIDO:
+✗ Fios expostos ou desencapados
+✗ Gambiarras e improvisos
+✗ Conexões instáveis
+✗ Sobrecarga de circuitos
+
+MANUTENÇÃO:
+• Somente por eletricista qualificado
+• Inspeções periódicas documentadas`,
+      type: 'content',
+      duration: 45
+    },
+    {
+      order: 8,
+      title: 'EPIs na Construção Civil',
+      content: `EQUIPAMENTOS OBRIGATÓRIOS:
+
+⛑️ CAPACETE COM JUGULAR
+   Em toda a obra
+
+👢 CALÇADO DE SEGURANÇA
+   Com biqueira e solado resistente
+
+🧤 LUVAS
+   Conforme a atividade
+
+👓 ÓCULOS
+   Contra projeção de partículas
+
+🦺 CINTO DE SEGURANÇA
+   Trabalho em altura (tipo paraquedista)
+
+👂 PROTETOR AURICULAR
+   Ambientes com ruído
+
+🧪 RESPIRADOR
+   Poeira, vapores, produtos químicos`,
+      imageKeywords: ['epi construção', 'capacete obra'],
+      type: 'content',
+      duration: 45
+    },
+    {
+      order: 9,
+      title: 'Quiz - Teste seus Conhecimentos',
+      content: `1. Qual a principal causa de mortes na construção?
+a) Choque elétrico
+b) Queda de altura
+c) Soterramento
+
+2. Altura mínima do guarda-corpo?
+a) 1,00 metro
+b) 1,10 metros
+c) 1,20 metros
+
+3. A partir de que profundidade a escavação precisa de escoramento?
+a) 0,75 metros
+b) 1,00 metro
+c) 1,25 metros`,
+      type: 'quiz',
+      duration: 60
+    },
+    {
+      order: 10,
+      title: 'Resumo e Compromisso',
+      content: `REGRAS DE SOBREVIVÊNCIA NA OBRA:
+
+✓ Use SEMPRE o capacete
+✓ Trabalho em altura = cinto + linha de vida
+✓ Nunca mexa em instalações elétricas
+✓ Escavações devem estar escoradas/sinalizadas
+✓ Máquinas só por operadores habilitados
+✓ Arrumação e limpeza = menos acidentes
+
+A CONSTRUÇÃO CIVIL É UM DOS SETORES MAIS PERIGOSOS
+Sua atenção salva sua vida!`,
+      type: 'summary',
+      duration: 30
+    }
+  ]
+}
+
+// ============================================================================
 // Export All Templates
 // ============================================================================
 
 export const NR_TEMPLATES: NRTemplate[] = [
   NR06_TEMPLATE,
   NR35_TEMPLATE,
-  NR10_TEMPLATE
+  NR10_TEMPLATE,
+  NR12_TEMPLATE,
+  NR33_TEMPLATE,
+  NR18_TEMPLATE
 ]
 
 export const NR_TEMPLATES_MAP: Record<string, NRTemplate> = {
   'nr06-epi-completo': NR06_TEMPLATE,
   'nr35-altura-completo': NR35_TEMPLATE,
-  'nr10-eletricidade-basico': NR10_TEMPLATE
+  'nr10-eletricidade-basico': NR10_TEMPLATE,
+  'nr12-maquinas-basico': NR12_TEMPLATE,
+  'nr33-espaco-confinado': NR33_TEMPLATE,
+  'nr18-construcao-basico': NR18_TEMPLATE
 }
 
 export function getTemplateByNR(nr: string): NRTemplate | undefined {

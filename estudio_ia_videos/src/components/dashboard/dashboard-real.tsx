@@ -305,11 +305,11 @@ export default function DashboardReal() {
     <>
       <div className="min-h-screen bg-gray-50">
         {/* Header */}
-        <header className="bg-white border-b shadow-sm">
+        <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center shadow-lg">
+              <div className="flex items-center gap-3 transition-transform hover:scale-105 duration-300">
+                <div className="w-8 h-8 bg-gradient-to-tr from-purple-600 to-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-purple-500/20">
                   <Sparkles className="w-5 h-5 text-white" />
                 </div>
                 <div>
@@ -321,29 +321,32 @@ export default function DashboardReal() {
 
               <div className="flex items-center gap-4">
 
-                <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border">
-                  <User className="w-4 h-4 text-gray-600" />
-                  <span className="text-sm text-gray-700 font-medium">
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50/80 rounded-full border shadow-sm">
+                  <div className="bg-gradient-to-br from-gray-100 to-gray-200 p-1.5 rounded-full">
+                    <User className="w-4 h-4 text-gray-600" />
+                  </div>
+                  <span className="text-sm text-gray-700 font-medium pr-2">
                     {displayName ?? user?.email ?? 'Usuário'}
                   </span>
+                  <div className="h-4 w-px bg-gray-300 mx-1"></div>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => { refreshProjects(); refreshMetrics() }}
                     title="Atualizar dados"
-                    className="hover:bg-blue-100"
+                    className="h-7 w-7 p-0 rounded-full hover:bg-blue-100/50"
                   >
-                    <RefreshCw className="w-4 h-4 text-blue-600" />
+                    <RefreshCw className="w-3.5 h-3.5 text-blue-600" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={handleSignOut}
                     title="Sair"
-                    className="hover:bg-red-100"
+                    className="h-7 w-7 p-0 rounded-full hover:bg-red-100/50"
                     disabled={signingOut}
                   >
-                    <LogOut className="w-4 h-4 text-red-600" />
+                    <LogOut className="w-3.5 h-3.5 text-red-600" />
                   </Button>
                 </div>
               </div>
@@ -391,60 +394,69 @@ export default function DashboardReal() {
 
           {/* Real Metrics Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <Card>
+            <Card className="hover:shadow-md transition-shadow duration-300 border-none shadow-sm bg-gradient-to-br from-white to-gray-50/50">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Total de Projetos</CardTitle>
+                <CardTitle className="text-sm font-medium text-gray-500 uppercase tracking-wider">Total de Projetos</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-2">
-                  <span className="text-2xl font-bold">{metrics?.overview?.totalProjects ?? 0}</span>
-                  <FileVideo className="w-5 h-5 text-blue-600" />
+                  <span className="text-3xl font-bold text-gray-800">{metrics?.overview?.totalProjects ?? 0}</span>
+                  <div className="p-2 bg-blue-50 text-blue-600 rounded-full">
+                    <FileVideo className="w-5 h-5" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="hover:shadow-md transition-shadow duration-300 border-none shadow-sm bg-gradient-to-br from-white to-gray-50/50">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Vídeos Concluídos</CardTitle>
+                <CardTitle className="text-sm font-medium text-gray-500 uppercase tracking-wider">Vídeos Concluídos</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-2">
-                  <span className="text-2xl font-bold">{metrics?.overview?.completedProjects ?? 0}</span>
-                  <CheckCircle className="w-5 h-5 text-green-600" />
+                  <span className="text-3xl font-bold text-gray-800">{metrics?.overview?.completedProjects ?? 0}</span>
+                  <div className="p-2 bg-green-50 text-green-600 rounded-full">
+                    <CheckCircle className="w-5 h-5" />
+                  </div>
                 </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  Taxa de sucesso: {metrics?.performance?.successRate ?? 0}%
+                <div className="text-xs text-gray-500 mt-2 font-medium flex items-center gap-1">
+                  <span className="block h-1.5 w-1.5 rounded-full bg-green-500"></span>
+                  Sucesso: {metrics?.performance?.successRate ?? 0}%
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="hover:shadow-md transition-shadow duration-300 border-none shadow-sm bg-gradient-to-br from-white to-gray-50/50">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Tempo Total</CardTitle>
+                <CardTitle className="text-sm font-medium text-gray-500 uppercase tracking-wider">Tempo Total</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-2">
-                  <span className="text-2xl font-bold">{Math.floor((metrics?.overview?.totalDuration ?? 0) / 60)}</span>
-                  <span className="text-sm text-gray-500">min</span>
-                  <Clock className="w-5 h-5 text-orange-600" />
+                  <span className="text-3xl font-bold text-gray-800">{Math.floor((metrics?.overview?.totalDuration ?? 0) / 60)}</span>
+                  <span className="text-sm text-gray-500 font-medium self-end mb-1.5">min</span>
+                  <div className="p-2 bg-orange-50 text-orange-600 rounded-full ml-auto">
+                    <Clock className="w-5 h-5" />
+                  </div>
                 </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  Média: {metrics?.performance?.avgProcessingTime ?? 0}s
+                <div className="text-xs text-gray-500 mt-2 font-medium">
+                  Média: {metrics?.performance?.avgProcessingTime ?? 0}s / vídeo
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="hover:shadow-md transition-shadow duration-300 border-none shadow-sm bg-gradient-to-br from-white to-gray-50/50">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Visualizações</CardTitle>
+                <CardTitle className="text-sm font-medium text-gray-500 uppercase tracking-wider">Engajamento</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-2">
-                  <span className="text-2xl font-bold">{metrics?.overview?.totalViews ?? 0}</span>
-                  <Eye className="w-5 h-5 text-purple-600" />
+                  <span className="text-3xl font-bold text-gray-800">{metrics?.overview?.totalViews ?? 0}</span>
+                  <div className="p-2 bg-purple-50 text-purple-600 rounded-full ml-auto">
+                    <Eye className="w-5 h-5" />
+                  </div>
                 </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  Downloads: {metrics?.overview?.totalDownloads ?? 0}
+                <div className="text-xs text-gray-500 mt-2 font-medium">
+                  {metrics?.overview?.totalDownloads ?? 0} Downloads totais
                 </div>
               </CardContent>
             </Card>
@@ -512,14 +524,16 @@ export default function DashboardReal() {
             <Link href="/unified-studio" className="contents">
               <Button
                 variant="outline"
-                className="p-6 h-auto flex-col gap-3 hover:bg-gradient-to-br hover:from-purple-50 hover:to-blue-50 hover:border-purple-300 border-purple-400 shadow-lg relative overflow-hidden"
+                className="p-6 h-auto flex-col gap-3 hover:bg-gradient-to-br hover:from-purple-50 hover:to-blue-50 hover:border-purple-300 border-none shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group bg-white"
               >
-                <div className="absolute -top-1 -right-1 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-[10px] px-2 py-0.5 rounded-bl-lg font-semibold">
+                <div className="absolute -top-1 -right-1 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-[10px] px-3 py-1 rounded-bl-xl font-bold tracking-wide z-10">
                   NOVO
                 </div>
-                <Workflow className="w-8 h-8 text-purple-600" />
+                <div className="p-3 bg-purple-50 rounded-full group-hover:bg-white transition-colors">
+                  <Workflow className="w-8 h-8 text-purple-600 group-hover:scale-110 transition-transform" />
+                </div>
                 <div className="text-center">
-                  <p className="font-semibold text-purple-700">Unified Studio</p>
+                  <p className="font-bold text-gray-800 group-hover:text-purple-700">Unified Studio</p>
                   <p className="text-xs text-gray-500">Produção Completa</p>
                 </div>
               </Button>
@@ -529,10 +543,14 @@ export default function DashboardReal() {
             <Link href="/pptx-preview" className="contents">
               <Button
                 variant="outline"
-                className="p-6 h-auto flex-col gap-3 hover:bg-purple-50 hover:border-purple-200 border-purple-300 shadow-md relative"
+                className="p-6 h-auto flex-col gap-3 hover:bg-purple-50/50 border-none shadow-md hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group bg-white"
               >
+                <div className="p-3 bg-purple-50 rounded-full group-hover:bg-purple-100 transition-colors">
+                  {/* Using existing placeholder or icon if available in original code logic, inferred here */}
+                  <FileVideo className="w-8 h-8 text-purple-600 group-hover:scale-110 transition-transform" />
+                </div>
                 <div className="text-center">
-                  <p className="font-medium">PPTX Studio</p>
+                  <p className="font-semibold text-gray-800">PPTX Studio</p>
                   <p className="text-xs text-gray-500">Editor e IA Integrada</p>
                 </div>
               </Button>
@@ -542,11 +560,13 @@ export default function DashboardReal() {
             <Link href="/talking-photo-pro" className="contents">
               <Button
                 variant="outline"
-                className="p-6 h-auto flex-col gap-3 hover:bg-blue-50 hover:border-blue-200 border-blue-300 shadow-md"
+                className="p-6 h-auto flex-col gap-3 hover:bg-blue-50/50 border-none shadow-md hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group bg-white"
               >
-                <Heart className="w-8 h-8 text-blue-600" />
+                <div className="p-3 bg-blue-50 rounded-full group-hover:bg-blue-100 transition-colors">
+                  <Heart className="w-8 h-8 text-blue-600 group-hover:scale-110 transition-transform" />
+                </div>
                 <div className="text-center">
-                  <p className="font-medium">Talking Photo</p>
+                  <p className="font-semibold text-gray-800">Talking Photo</p>
                   <p className="text-xs text-gray-500">Avatares e Voz</p>
                 </div>
               </Button>
@@ -556,11 +576,13 @@ export default function DashboardReal() {
             <Link href="/pptx" className="contents">
               <Button
                 variant="outline"
-                className="p-6 h-auto flex-col gap-3 hover:bg-emerald-50 hover:border-emerald-200 border-emerald-300 shadow-md"
+                className="p-6 h-auto flex-col gap-3 hover:bg-emerald-50/50 border-none shadow-md hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group bg-white"
               >
-                <Upload className="w-8 h-8 text-emerald-600" />
+                <div className="p-3 bg-emerald-50 rounded-full group-hover:bg-emerald-100 transition-colors">
+                  <Upload className="w-8 h-8 text-emerald-600 group-hover:scale-110 transition-transform" />
+                </div>
                 <div className="text-center">
-                  <p className="font-medium">Importar PPTX</p>
+                  <p className="font-semibold text-gray-800">Importar PPTX</p>
                   <p className="text-xs text-gray-500">Conversão de slides</p>
                 </div>
               </Button>
@@ -570,42 +592,33 @@ export default function DashboardReal() {
             <Link href="/studio" className="contents">
               <Button
                 variant="outline"
-                className="p-6 h-auto flex-col gap-3 hover:bg-orange-50 hover:border-orange-200 border-orange-300 shadow-md"
+                className="p-6 h-auto flex-col gap-3 hover:bg-orange-50/50 border-none shadow-md hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group bg-white"
               >
-                <Play className="w-8 h-8 text-orange-600" />
+                <div className="p-3 bg-orange-50 rounded-full group-hover:bg-orange-100 transition-colors">
+                  <Play className="w-8 h-8 text-orange-600 group-hover:scale-110 transition-transform" />
+                </div>
                 <div className="text-center">
-                  <p className="font-medium">Editor Visual</p>
+                  <p className="font-semibold text-gray-800">Editor Visual</p>
                   <p className="text-xs text-gray-500">Edição manual</p>
                 </div>
               </Button>
             </Link>
 
-            {/* Professional Render Engine - SPRINT 5 */}
+            {/* Professional Render Engine */}
             <Link href="/render-engine" className="contents">
               <Button
                 variant="outline"
-                className="p-6 h-auto flex-col gap-3 hover:bg-purple-50 hover:border-purple-200 border-purple-300 shadow-md bg-purple-25"
+                className="p-6 h-auto flex-col gap-3 hover:bg-purple-50/50 border-none shadow-md hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group bg-white"
               >
-                <Film className="w-8 h-8 text-purple-600" />
+                <div className="p-3 bg-purple-50 rounded-full group-hover:bg-purple-100 transition-colors">
+                  <Film className="w-8 h-8 text-purple-600 group-hover:scale-110 transition-transform" />
+                </div>
                 <div className="text-center">
-                  <p className="font-medium">Render Engine</p>
+                  <p className="font-semibold text-gray-800">Render Engine</p>
                   <p className="text-xs text-gray-500">Exportação de vídeo</p>
                 </div>
               </Button>
             </Link>
-
-            {/* Dashboard Real */}
-            <Button
-              variant="outline"
-              className="p-6 h-auto flex-col gap-3 hover:bg-indigo-50 hover:border-indigo-200 border-indigo-300 shadow-md bg-indigo-25"
-              onClick={() => window.location.reload()}
-            >
-              <Activity className="w-8 h-8 text-indigo-600" />
-              <div className="text-center">
-                <p className="font-medium">Atualizar</p>
-                <p className="text-xs text-gray-500">Recarregar dados</p>
-              </div>
-            </Button>
           </div>
 
           {/* Analytics Charts Section */}

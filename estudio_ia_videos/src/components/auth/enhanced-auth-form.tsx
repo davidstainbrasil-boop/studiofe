@@ -311,34 +311,37 @@ export function EnhancedAuthForm({ mode = 'login' }: EnhancedAuthFormProps) {
           </Alert>
         )}
 
-        {/* OAuth Buttons */}
-        <div className="grid grid-cols-2 gap-2">
+        {/* OAuth Buttons - Premium Style */}
+        <div className="grid grid-cols-2 gap-3">
           <Button
             type="button"
             variant="outline"
             onClick={signInWithGoogle}
             disabled={isLoading}
+            className="h-11 bg-white hover:bg-slate-50 border-slate-200 hover:border-slate-300 shadow-sm hover:shadow-md transition-all duration-200 group"
           >
-            <Chrome className="mr-2 h-4 w-4" />
-            Google
+            <Chrome className="mr-2 h-4 w-4 text-[#4285F4] group-hover:scale-110 transition-transform" />
+            <span className="font-medium">Google</span>
           </Button>
           <Button
             type="button"
             variant="outline"
             onClick={signInWithGithub}
             disabled={isLoading}
+            className="h-11 bg-white hover:bg-slate-50 border-slate-200 hover:border-slate-300 shadow-sm hover:shadow-md transition-all duration-200 group"
           >
-            <Github className="mr-2 h-4 w-4" />
-            GitHub
+            <Github className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" />
+            <span className="font-medium">GitHub</span>
           </Button>
         </div>
 
-        <div className="relative">
+        {/* Divisor Premium */}
+        <div className="relative py-2">
           <div className="absolute inset-0 flex items-center">
-            <Separator />
+            <div className="w-full border-t border-slate-200 dark:border-slate-700" />
           </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">
+          <div className="relative flex justify-center">
+            <span className="bg-card px-4 text-xs font-medium uppercase tracking-wider text-muted-foreground/70">
               Ou continue com email
             </span>
           </div>

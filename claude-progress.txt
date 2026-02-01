@@ -1,5 +1,516 @@
 # Claude Progress Log - MVP Vídeos TécnicoCursos v7
-# Updated: 2026-02-01 (Session 7)
+# Updated: 2026-02-01 (Session 14 - P2 Features Implementation)
+
+## Session 14 Summary (Current) - P2 Features: Subtitles, Resolution, Preview, Cloud Integration
+
+### ✅ Completed Tasks:
+
+1. **Video Resolution API** - `app/api/render/resolution/route.ts` (~400 lines)
+   - GET endpoints para listar perfis (720p, 1080p, 4K, vertical, square)
+   - Filtros por plataforma, aspect ratio, qualidade
+   - POST para estimar tamanho de arquivo e tempo de render
+   - Geração de argumentos FFmpeg para cada perfil
+   - 7 perfis pré-definidos + suporte a perfis customizados
+
+2. **Subtitles API** - `app/api/subtitles/route.ts` (~550 lines)
+   - Geração de legendas a partir de texto ou notas de slides
+   - Conversão entre formatos SRT, VTT, JSON
+   - Operações de sincronização (shift, scale)
+   - SubtitleGenerator class completa inline
+
+3. **Video Preview Generator** - `app/src/lib/preview/video-preview-generator.ts` (~500 lines)
+   - VideoPreviewGenerator class
+   - Preview de 30s sem render completo
+   - Cache de previews com TTL 30min
+   - Suporte a transições e avatar overlay
+   - 3 resoluções: draft, preview, standard
+
+4. **Video Preview API** - `app/api/preview/route.ts` (~400 lines)
+   - POST para gerar preview
+   - GET para buscar preview existente
+   - DELETE para remover do cache
+   - Validação com Zod
+
+5. **Google Drive Integration** - Library + API
+   - `app/src/lib/integrations/google-drive.ts` (~580 lines)
+   - `app/api/integrations/google-drive/route.ts` (~450 lines)
+   - OAuth2 completo (auth, callback, refresh)
+   - Listagem de arquivos e pastas
+   - Download e import de apresentações PPTX
+   - Suporte a Google Slides (exporta como PPTX)
+
+6. **OneDrive Integration** - Library + API
+   - `app/src/lib/integrations/onedrive.ts` (~530 lines)
+   - `app/api/integrations/onedrive/route.ts` (~430 lines)
+   - OAuth2 com Microsoft Graph API
+   - Listagem de arquivos e pastas
+   - Download e import de apresentações PPTX
+   - Quota e informações do usuário
+
+### 📁 Files Created This Session:
+- estudio_ia_videos/app/api/render/resolution/route.ts
+- estudio_ia_videos/app/api/subtitles/route.ts
+- estudio_ia_videos/app/api/preview/route.ts
+- estudio_ia_videos/app/src/lib/preview/video-preview-generator.ts
+- estudio_ia_videos/app/src/lib/integrations/google-drive.ts
+- estudio_ia_videos/app/src/lib/integrations/onedrive.ts
+- estudio_ia_videos/app/api/integrations/google-drive/route.ts
+- estudio_ia_videos/app/api/integrations/onedrive/route.ts
+
+### ✅ TypeScript: Passa sem erros
+
+### 🔧 Environment Variables Required for Cloud Integration:
+```
+# Google Drive
+GOOGLE_CLIENT_ID=xxx
+GOOGLE_CLIENT_SECRET=xxx
+GOOGLE_REDIRECT_URI=https://yourapp.com/api/integrations/google-drive?action=callback
+
+# OneDrive
+MICROSOFT_CLIENT_ID=xxx
+MICROSOFT_CLIENT_SECRET=xxx
+MICROSOFT_REDIRECT_URI=https://yourapp.com/api/integrations/onedrive?action=callback
+MICROSOFT_TENANT_ID=common
+```
+
+---
+
+## Session 13 Summary - Onboarding & UX
+
+---
+
+## Session Summary (2026-02-01 - Session 12 Continuation)
+
+### 📂 PROJECT VERSIONING + SLIDE ANNOTATIONS
+
+**Componentes/Hooks Criados:**
+
+1. **Version History Hook (hooks/use-version-history.ts)**
+   - useVersionHistory() - gerenciamento completo de versões
+   - Auto-save com debounce configurável
+   - Snapshots manuais com nome e descrição
+   - Comparação de versões com diff
+   - Restauração de versões anteriores
+   - IndexedDB para persistência local
+   - Metadados: slides, elementos, configurações
+   - Agrupamento por data
+   - Limite de versões configurável
+
+2. **Version History Panel (components/versioning/version-history-panel.tsx)**
+   - Timeline visual de versões
+   - Agrupamento por data (Hoje, Ontem, Semana passada, etc)
+   - Filtros: todas, manuais, automáticas
+   - Busca por nome/descrição
+   - Visualização de diff entre versões
+   - Dialog para salvar versão manual
+   - Confirmação para restaurar/excluir
+   - Stats: total de versões, tamanho
+   - Animações Framer Motion
+
+3. **Slide Annotations (components/annotations/slide-annotations.tsx)**
+   - useAnnotations() - hook para gerenciar anotações
+   - Ferramentas: select, pen, highlighter, text, rectangle, ellipse, arrow, sticky, eraser
+   - Undo/Redo com histórico
+   - Cores personalizáveis + highlighter colors
+   - Espessura e opacidade ajustáveis
+   - AnnotationToolbar - toolbar flutuante
+   - AnnotationCanvas - canvas SVG interativo
+   - StickyNoteAnnotation - notas adesivas editáveis
+   - Persistência de anotações por slide
+   - Exportação com anotações
+
+**Exports Atualizados:**
+- hooks/index.ts - Version history hooks adicionados
+
+**TypeScript:** ✅ Passa sem erros
+
+---
+
+## Session Summary (2026-02-01 - Session 12)
+
+### 🔌 OFFLINE SUPPORT + BATCH EXPORT + KEYBOARD SHORTCUTS
+
+**Componentes/Hooks Criados:**
+
+1. **Offline Support (hooks/use-offline.ts)**
+   - useOnlineStatus() - detecta status de rede
+   - useServiceWorker() - registro e gerenciamento de SW
+   - useOfflineStorage<T>() - IndexedDB genérico
+   - useOfflineProjects() - projetos offline
+   - useBackgroundSync() - fila de sincronização
+   - useStorageEstimate() - quota de armazenamento
+   - IndexedDB com stores: projects, assets, syncQueue, settings, cache
+
+2. **Offline Indicator (components/offline/offline-indicator.tsx)**
+   - OfflineIndicator - indicador visual de status
+   - OfflineBanner - banner de reconexão
+   - SyncStatus - status de sincronização
+   - CompactIndicator - versão compacta
+   - Popover com detalhes de conexão e storage
+   - Animações Framer Motion
+
+3. **Service Worker Aprimorado (public/sw.js)**
+   - Versionamento de caches (v2)
+   - Caches separados: static, dynamic, api, media
+   - Network-first para API
+   - Cache-first para assets
+   - Stale-while-revalidate para rotas específicas
+   - Background sync integration
+   - Push notifications melhoradas
+   - Periodic sync (se suportado)
+   - Limpeza automática de cache antigo
+
+4. **Batch Export Dialog (components/export/batch-export-dialog.tsx)**
+   - 3 etapas: Select → Configure → Confirm
+   - Seleção múltipla de projetos
+   - Formatos: MP4, WebM, MOV
+   - Presets: YouTube 1080p/4K, Instagram Feed/Stories, TikTok, LinkedIn
+   - Configurações personalizadas (resolução, FPS, bitrate)
+   - Opções: áudio, marca d'água, otimização (qualidade/tamanho/velocidade)
+   - Estimativas de tempo e tamanho
+   - Animações entre etapas
+
+5. **Keyboard Shortcuts Panel (components/keyboard/keyboard-shortcuts-panel.tsx)**
+   - 60+ atalhos documentados
+   - Categorias: Geral, Reprodução, Timeline, Canvas, Texto, Mídia, Navegação, View
+   - Busca em tempo real
+   - Tabs por categoria
+   - Formatação de teclas (⌘, ⇧, ⌥)
+   - useKeyboardShortcut() - hook para registrar atalhos
+   - KeyboardKey - componente para exibir tecla
+   - ShortcutHint - dica de atalho inline
+   - Atalho Ctrl+/ para abrir painel
+
+**Exports Atualizados:**
+- hooks/index.ts - Offline hooks adicionados
+
+**TypeScript:** ✅ Passa sem erros
+
+---
+
+## Session Summary (2026-02-01 - Session 11)
+
+### 📱 RESPONSIVE EDITOR + TOUCH GESTURES
+
+**Componentes Criados:**
+
+1. **ResponsiveEditorLayout (components/editor/responsive-editor-layout.tsx)**
+   - Layout adaptativo para desktop/tablet/mobile
+   - Desktop: Three-column layout com painéis redimensionáveis
+   - Tablet: Two-column com painéis swipeable
+   - Mobile: Single column com tab navigation
+   - ResizablePanel com drag handle para resize
+   - MobileTabBar para navegação inferior
+   - SwipeablePanel com gestos de arrasto
+   - MobilePreviewControls para controles compactos
+   - DeviceModeIndicator para debug
+   - Timeline colapsável em todos os layouts
+   - Animações Framer Motion
+
+2. **useTouchGestures Hook (hooks/use-touch-gestures.ts)**
+   - useTouchGestures() - hook principal de gestos
+   - Suporte a swipe (left/right/up/down)
+   - Pinch to zoom com escala e centro
+   - Long press detection
+   - Double tap detection
+   - Drag tracking com velocity
+   - Pan para scroll
+   - useTimelineScrub() - scrubbing de timeline
+   - usePinchZoom() - zoom em preview
+   - useSwipeNavigation() - navegação entre slides
+
+**Exports Atualizados:**
+- components/editor/index.ts - Editor barrel export
+- hooks/index.ts - Touch gesture hooks
+
+**Features Verificadas como Existentes:**
+- Template Library (853 linhas) - Já completa
+
+**TypeScript:** ✅ Passa sem erros
+**Health Check:** Redis + BullMQ OK, Supabase offline (normal em dev)
+
+---
+
+## Session Summary (2026-02-01 - Session 10)
+
+### 🔍 PRD FEATURE AUDIT + MOBILE RESPONSIVE
+
+**Análise de Features do PRD:**
+
+Verificadas as seguintes features como já implementadas:
+- ✅ Templates NR-12, NR-18, NR-33 (lib/templates/nr-templates-real.ts)
+- ✅ Animações PPTX (lib/pptx/parsers/animation-parser.ts)
+- ✅ Transições entre Slides (components/editor/slide-transitions.tsx)
+- ✅ Upload Áudio Próprio (api/audio/upload + components/audio/audio-upload.tsx)
+- ✅ Export 4K (lib/render/quality-presets.ts + components/export/export-quality-selector.tsx)
+
+**Novos Componentes Criados:**
+
+1. **Mobile Navigation (mobile-navigation.tsx)**
+   - Hamburger menu responsivo
+   - Drawer de navegação full-screen
+   - Touch-optimized interactions
+   - NAV_GROUPS com 3 grupos (Principal, Criar, Aprender)
+   - ACCOUNT_ITEMS para configurações da conta
+   - MobileBottomNavigation para quick actions
+   - Animações de entrada/saída com Framer Motion
+   - Safe area support para iOS
+
+2. **useMediaQuery Hook (use-media-query.ts)**
+   - useMediaQuery() - queries customizadas
+   - useBreakpoint() - >= breakpoint
+   - useBreakpointDown() - < breakpoint
+   - useIsMobile() - < 768px
+   - useIsTablet() - 768px - 1023px
+   - useIsDesktop() - >= 1024px
+   - useCurrentBreakpoint() - retorna breakpoint atual
+   - useResponsiveValue() - valores responsivos
+   - usePrefersDarkMode() - preferência dark mode
+   - usePrefersReducedMotion() - acessibilidade
+   - useIsTouchDevice() - detecção touch
+   - useWindowSize() - dimensões da janela
+   - useOrientation() - portrait/landscape
+
+**Exports Atualizados:**
+- components/navigation/index.ts - Mobile Navigation
+- hooks/index.ts - useMediaQuery e relacionados
+
+**TypeScript:** ✅ Passa sem erros
+
+---
+
+## Session Summary (2026-02-01 - Session 9 Part 2)
+
+### 🚀 LANDING PAGE + UX + SUPORTE
+
+**Conquistas desta parte da sessão:**
+
+1. **Landing Page Melhorada (F9.1)**
+   - Seção de Stats (10k+ vídeos, 500+ empresas, 98% satisfação)
+   - Features Grid com 6 features (renderização, vozes, avatares, segurança, export, templates)
+   - Testimonials Section com 3 depoimentos
+   - Logo wall de empresas
+   - Badge de recursos
+   - Animações e hover effects
+
+2. **Sistema de Tooltips Contextuais (F9.4)**
+   - TooltipsProvider com context
+   - Hook useTooltips()
+   - Componente TooltipTrigger
+   - Smart positioning (auto-ajuste viewport)
+   - Keyboard support (Escape para fechar)
+   - Persistência de tooltips dismissed
+   - EDITOR_TOOLTIPS pré-definidos (8 tooltips)
+   - TooltipsSettings component
+
+3. **Chat de Suporte (F9.6)**
+   - SupportChat widget flutuante
+   - Bot com respostas inteligentes
+   - 6 Quick Actions predefinidas
+   - Keyword matching para respostas
+   - Contact Form integrado
+   - Histórico no localStorage
+   - Animações e indicadores de typing
+   - Badge de online status
+
+4. **API de Tickets de Suporte**
+   - POST /api/support/ticket
+   - GET /api/support/ticket (admin)
+   - Validação com Zod
+   - Prioridade automática baseada em keywords
+   - Auto-reply email simulado
+   - Metadata tracking (IP, user-agent)
+
+5. **Database Migration 004**
+   - Tabela support_tickets
+   - Tabela ticket_responses
+   - Tabela user_tooltip_preferences
+   - RLS policies
+   - Trigger para updated_at
+   - Funções get_ticket_stats, get_avg_response_time
+
+### Arquivos Criados (Session 9 Part 2)
+
+| Arquivo | Descrição |
+|---------|-----------|
+| `src/components/tooltips/contextual-tooltips.tsx` | Sistema de tooltips contextuais |
+| `src/components/support/support-chat.tsx` | Widget de chat de suporte |
+| `src/app/api/support/ticket/route.ts` | API de tickets de suporte |
+| `database/migrations/004_support_tickets.sql` | Migration DB |
+
+### Arquivos Editados (Session 9 Part 2)
+
+| Arquivo | Alteração |
+|---------|-----------|
+| `src/app/(marketing)/page.tsx` | +100 linhas (stats, features grid, testimonials) |
+
+---
+
+## Session Summary (2026-02-01 - Session 9)
+
+### 🎯 FEATURES ADICIONAIS - UX + EXPORTS
+
+**Conquistas desta sessão:**
+
+1. **Guided Tour (F9.3)**
+   - Componente GuidedTour com 9 passos
+   - Suporte a spotlight em elementos
+   - Navegação por teclado (←→, Enter, Esc)
+   - Persistência no localStorage
+   - Hook useTour() para controle externo
+   - Animações com Framer Motion
+
+2. **Central de Ajuda (F9.5)**
+   - HelpCenter com busca
+   - 10 FAQs organizadas por categoria
+   - 7 Artigos de ajuda
+   - 5 Video tutorials (placeholder)
+   - Filtros por categoria/mood
+   - Seção de contato (email + chat)
+   - FloatingHelpButton component
+   - Página /ajuda
+
+3. **Gerador de Certificados PDF (F5.8)**
+   - API POST /api/certificate/generate
+   - API GET /api/certificate/generate?id=X (verificação)
+   - SVG certificate template profissional
+   - Suporte a NR badge, logo empresa
+   - Número único de certificado
+   - Formatos: SVG, HTML (para PDF)
+
+4. **Biblioteca de Músicas (F2.7)**
+   - MusicLibrary component
+   - 12 tracks organizados por categoria
+   - Filtros: categoria, mood, favoritos
+   - Waveform visualization
+   - Controle de volume
+   - Sistema de favoritos
+   - Badge Premium
+
+5. **Export SCORM para LMS (F5.6)**
+   - API POST /api/export/scorm
+   - SCORM 1.2 e 2004 suportados
+   - Manifest XML gerado dinamicamente
+   - Player HTML com tracking
+   - SCORM API wrapper completo
+   - CSS responsivo
+   - Instruções de uso
+
+6. **Embed Code Generator (F5.7)**
+   - API POST /api/embed/generate
+   - API GET /api/embed/generate (oEmbed)
+   - Formatos: HTML, iframe, WordPress, oEmbed
+   - Componente EmbedGenerator visual
+   - Preview responsivo (desktop/tablet/mobile)
+   - Opções: autoplay, controls, loop, responsive
+   - Suporte a oEmbed XML e JSON
+
+7. **Database Migration 003**
+   - Tabela certificates
+   - Tabela scorm_exports
+   - Tabela music_tracks (com seed data)
+   - Tabela user_music_favorites
+   - Tabela user_tour_completions
+   - RLS policies
+   - Funções increment_*
+
+### Arquivos Criados (Session 9)
+
+| Arquivo | Descrição |
+|---------|-----------|
+| `src/components/tour/guided-tour.tsx` | Tour guiado + useTour hook |
+| `src/components/help/help-center.tsx` | Central de ajuda completa |
+| `src/app/(marketing)/ajuda/page.tsx` | Página de ajuda |
+| `src/app/api/certificate/generate/route.ts` | API de certificados |
+| `src/components/audio/music-library.tsx` | Biblioteca de músicas |
+| `src/app/api/export/scorm/route.ts` | Export SCORM 1.2/2004 |
+| `src/app/api/embed/generate/route.ts` | API embed + oEmbed |
+| `src/components/embed/embed-generator.tsx` | UI gerador de embed |
+| `database/migrations/003_certificates_scorm_music.sql` | Migration DB |
+
+---
+
+## Session Summary (2026-02-01 - Session 8)
+
+### 💰 MONETIZAÇÃO COMPLETA - STRIPE + PAYWALL + ONBOARDING
+
+**Conquistas desta sessão:**
+
+1. **Sistema de Monetização Stripe**
+   - Pricing page com 3 planos (Free/Pro/Business)
+   - Toggle anual/mensal com desconto
+   - Tabela de comparação de features
+   - FAQ section
+   - Checkout API com trial de 7 dias
+   - Webhook handler para eventos Stripe
+   - Portal de billing integrado
+
+2. **Paywall & Usage Control**
+   - Componente Paywall modal
+   - Hook useVideoLimit() para verificação
+   - Widget SubscriptionStatus (compact + full)
+   - Hook useCanCreateVideo()
+   - Verificação no render pipeline (402 Payment Required)
+   - Incremento automático de uso ao completar vídeo
+
+3. **Onboarding Wizard**
+   - 4 passos: Método → Conteúdo → Voz → Gerar
+   - Suporte a PPTX upload e templates NR
+   - Seleção de voz com preview
+   - Animações com Framer Motion
+
+4. **NR Templates Library**
+   - 9 NRs pré-configuradas (NR-01, 05, 06, 10, 12, 17, 23, 33, 35)
+   - Busca e filtro por categoria
+   - Cards com duração, slides e features
+   - Tags Popular/Novo
+
+5. **Database Migration**
+   - Tabelas: plans, subscriptions
+   - RLS policies para segurança
+   - Funções: check_video_limit, increment_video_usage, reset_monthly_video_usage
+   - Trigger para auto-criar subscription
+
+### Arquivos Criados/Modificados
+
+| Arquivo | Ação | Descrição |
+|---------|------|-----------|
+| `src/app/(marketing)/pricing/page.tsx` | CRIADO | Pricing page completa |
+| `src/app/api/stripe/checkout/route.ts` | CRIADO | Checkout + billing portal |
+| `src/app/api/stripe/webhook/route.ts` | CRIADO | Webhook handler |
+| `src/app/api/user/video-limit/route.ts` | CRIADO | Verificação de limite |
+| `src/app/api/user/complete-onboarding/route.ts` | CRIADO | Onboarding API |
+| `src/app/api/user/increment-video-usage/route.ts` | CRIADO | Incremento de uso |
+| `src/components/billing/paywall.tsx` | CRIADO | Paywall + useVideoLimit |
+| `src/components/billing/subscription-status.tsx` | CRIADO | Widget de status |
+| `src/components/onboarding/wizard.tsx` | CRIADO | Onboarding 4 passos |
+| `src/components/nr-templates/nr-template-library.tsx` | CRIADO | Biblioteca NR |
+| `src/components/user/user-settings.tsx` | MODIFICADO | +Tab Billing |
+| `src/app/api/render/start/route.ts` | MODIFICADO | +Verificação limite |
+| `src/lib/billing/usage.ts` | MODIFICADO | +Suporte subscriptions |
+| `database/migrations/002_subscriptions_plans.sql` | CRIADO | Schema monetização |
+
+### Métricas
+
+| Métrica | Status |
+|---------|--------|
+| TypeScript | ✅ 0 erros |
+| Novos arquivos | 13 |
+| APIs criadas | 6 |
+| Componentes | 5 |
+
+### Variáveis de Ambiente Necessárias
+
+```env
+STRIPE_SECRET_KEY=sk_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_PRICE_PRO_MONTHLY=price_...
+STRIPE_PRICE_PRO_YEARLY=price_...
+STRIPE_PRICE_BUSINESS_MONTHLY=price_...
+STRIPE_PRICE_BUSINESS_YEARLY=price_...
+```
+
+---
 
 ## Session Summary (2026-02-01 - Session 7)
 

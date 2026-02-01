@@ -137,6 +137,35 @@ export async function POST(req: NextRequest) {
       userId = user.id;
     }
 
+    // ========================================
+    // VERIFICAÇÃO DE LIMITE DE VÍDEOS (MONETIZAÇÃO)
+    // ========================================
+    try {
+      const limitResponse = await fetch(
+        `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/user/video-limit?userId=${userId}`
+      );
+      const limitData = await limitResponse.json();
+      
+      if (!limitData.can_create) {
+        logger.warn('User hit video limit', { userId, videosUsed: limitData.videos_used, limit: limitData.video_limit });
+        return NextResponse.json(
+          { 
+            error: 'Limite de vídeos atingido',
+            code: 'VIDEO_LIMIT_EXCEEDED',
+            videosUsed: limitData.videos_used,
+            videoLimit: limitData.video_limit,
+            planName: limitData.plan_name,
+            upgradeUrl: '/pricing'
+          },
+          { status: 402 } // Payment Required
+        );
+      }
+    } catch (limitError) {
+      // Em caso de erro na verificação, permitir (fail-open)
+      // mas logar para investigação
+      logger.warn('Failed to check video limit, allowing render', { userId, error: limitError });
+    }
+
     // Redis-backed distributed rate limiting
     // Tier-based limits: free=500/hr, basic=2000/hr, pro=5000/hr, enterprise=50000/hr
     const tier = await getUserTier(userId as string);

@@ -34,3 +34,74 @@ export {
   type PublishProgress,
   type PublishResult,
 } from './use-social-publish';
+
+// API Data hooks
+export {
+  useAnalyticsOverview,
+  useRenderJobsAnalytics,
+  useUserProfile,
+  useUserPreferences,
+  useAssets,
+} from './use-api-data';
+
+// Media Query hooks
+export {
+  useMediaQuery,
+  useBreakpoint,
+  useBreakpointDown,
+  useIsMobile,
+  useIsTablet,
+  useIsDesktop,
+  useCurrentBreakpoint,
+  useResponsiveValue,
+  usePrefersDarkMode,
+  usePrefersReducedMotion,
+  useIsTouchDevice,
+  useWindowSize,
+  useOrientation,
+  BREAKPOINTS,
+} from './use-media-query';
+
+// Touch Gestures hooks
+export {
+  useTouchGestures,
+  useTimelineScrub,
+  usePinchZoom,
+  useSwipeNavigation,
+  type Point,
+  type TouchState,
+  type SwipeDirection,
+  type PinchState,
+  type LongPressState,
+  type DragState,
+  type GestureConfig,
+  type GestureHandlers,
+} from './use-touch-gestures';
+
+// Offline Support hooks
+export {
+  useOnlineStatus,
+  useServiceWorker,
+  useOfflineStorage,
+  useOfflineProjects,
+  useBackgroundSync,
+  useStorageEstimate,
+  type OfflineStatus,
+  type ServiceWorkerStatus,
+  type StorageEstimate,
+  type SyncQueueItem,
+  type OfflineProject,
+} from './use-offline';
+
+// Version History hooks
+export {
+  useVersionHistory,
+  type ProjectVersion,
+  type ProjectSnapshot,
+  type SlideSnapshot,
+  type ElementSnapshot,
+  type VersionDiff,
+  type DiffItem,
+  type VersionHistoryState,
+  type UseVersionHistoryOptions,
+} from './use-version-history';
