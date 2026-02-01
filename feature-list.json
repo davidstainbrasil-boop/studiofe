@@ -615,21 +615,57 @@
         "Abuse pattern detection"
       ],
       "passes": true
+    },
+    {
+      "id": "p0-006",
+      "category": "api",
+      "description": "Webhook Events System",
+      "steps": [
+        "Endpoint registration com HMAC",
+        "Retry com exponential backoff",
+        "Event filtering por subscription",
+        "Delivery logging e stats"
+      ],
+      "passes": true
+    },
+    {
+      "id": "p0-007",
+      "category": "infra",
+      "description": "Health Check System",
+      "steps": [
+        "Full health check com score 0-100",
+        "K8s probes (liveness/readiness/startup)",
+        "Component-level status",
+        "Resource monitoring (CPU/Memory)"
+      ],
+      "passes": true
+    },
+    {
+      "id": "p0-008",
+      "category": "infra",
+      "description": "Audit Log System LGPD/GDPR",
+      "steps": [
+        "Log de ações sensíveis",
+        "Imutabilidade com checksum",
+        "Export para compliance",
+        "Busca e filtros avançados"
+      ],
+      "passes": true
     }
   ],
   "summary": {
-    "total": 50,
-    "passing": 50,
+    "total": 53,
+    "passing": 53,
     "failing": 0,
     "categories": {
       "core": { "total": 6, "passing": 6 },
       "pptx": { "total": 6, "passing": 6 },
       "render": { "total": 9, "passing": 9 },
       "auth": { "total": 7, "passing": 7 },
-      "api": { "total": 10, "passing": 10 },
+      "api": { "total": 12, "passing": 12 },
       "database": { "total": 3, "passing": 3 },
       "testing": { "total": 4, "passing": 4 },
-      "infra": { "total": 5, "passing": 5 }
+      "infra": { "total": 6, "passing": 6 }
     }
   }
 }
