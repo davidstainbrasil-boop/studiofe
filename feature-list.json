@@ -555,21 +555,81 @@
         "Multi-track editing"
       ],
       "passes": true
+    },
+    {
+      "id": "p0-001",
+      "category": "infra",
+      "description": "Alerting Service Multi-Channel",
+      "steps": [
+        "Integração Slack notifications",
+        "Discord webhook support",
+        "Email via SendGrid/SES",
+        "PagerDuty escalation"
+      ],
+      "passes": true
+    },
+    {
+      "id": "p0-002",
+      "category": "infra",
+      "description": "Security Headers OWASP",
+      "steps": [
+        "CSP (Content Security Policy)",
+        "HSTS com preload",
+        "X-Frame-Options, COOP, CORP",
+        "Permissions-Policy compliant"
+      ],
+      "passes": true
+    },
+    {
+      "id": "p0-003",
+      "category": "api",
+      "description": "LMS Integration LTI/SCORM/xAPI",
+      "steps": [
+        "LTI 1.3 Provider OIDC flow",
+        "SCORM 1.2 e 2004 export",
+        "xAPI/TinCan statements",
+        "Grade passback to LMS"
+      ],
+      "passes": true
+    },
+    {
+      "id": "p0-004",
+      "category": "infra",
+      "description": "Automated Backup System",
+      "steps": [
+        "PostgreSQL backup via pg_dump",
+        "Redis BGSAVE ou key-by-key",
+        "Supabase Storage manifest",
+        "S3 upload com rotation"
+      ],
+      "passes": true
+    },
+    {
+      "id": "p0-005",
+      "category": "api",
+      "description": "Advanced Rate Limiter",
+      "steps": [
+        "Sliding window algorithm",
+        "Redis-backed com fallback memory",
+        "IP whitelist/blacklist",
+        "Abuse pattern detection"
+      ],
+      "passes": true
     }
   ],
   "summary": {
-    "total": 45,
-    "passing": 45,
+    "total": 50,
+    "passing": 50,
     "failing": 0,
     "categories": {
       "core": { "total": 6, "passing": 6 },
       "pptx": { "total": 6, "passing": 6 },
       "render": { "total": 9, "passing": 9 },
       "auth": { "total": 7, "passing": 7 },
-      "api": { "total": 8, "passing": 8 },
+      "api": { "total": 10, "passing": 10 },
       "database": { "total": 3, "passing": 3 },
       "testing": { "total": 4, "passing": 4 },
-      "infra": { "total": 2, "passing": 2 }
+      "infra": { "total": 5, "passing": 5 }
     }
   }
 }
