@@ -26,7 +26,8 @@ const createInitialProject = (): TimelineProject => ({
       locked: false,
       height: 60,
       color: '#3b82f6',
-      elements: []
+      elements: [],
+      items: []
     },
     {
       id: 'audio-layer',
@@ -36,7 +37,8 @@ const createInitialProject = (): TimelineProject => ({
       locked: false,
       height: 40,
       color: '#10b981',
-      elements: []
+      elements: [],
+      items: []
     },
     {
       id: 'overlay-layer',
@@ -46,7 +48,8 @@ const createInitialProject = (): TimelineProject => ({
       locked: false,
       height: 50,
       color: '#f59e0b',
-      elements: []
+      elements: [],
+      items: []
     }
   ],
   settings: {

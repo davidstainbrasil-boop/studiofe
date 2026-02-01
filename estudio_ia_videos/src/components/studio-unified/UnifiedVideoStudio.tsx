@@ -6,9 +6,9 @@ import {
 } from '@components/ui/resizable';
 
 import { UnifiedTopBar } from '@components/studio-unified/UnifiedTopBar';
-import { AssetBrowser } from '@components/studio-unified/AssetBrowser';
+import { UnifiedAssetBrowser } from '@components/studio-unified/UnifiedAssetBrowser';
 import { StudioPreview } from '@components/studio-unified/StudioPreview';
-import { PropertyInspector } from '@components/studio-unified/PropertyInspector';
+import { UnifiedInspector } from '@components/studio-unified/inspector/UnifiedInspector';
 import { ProfessionalTimelineWrapper } from '@components/studio-unified/ProfessionalTimelineWrapper';
 import { AudioPlaybackManager } from '@components/studio-unified/AudioPlaybackManager';
 
@@ -76,7 +76,7 @@ export function UnifiedVideoStudio({ projectId, initialSnapshot }: UnifiedVideoS
 
                         {/* Left Panel: Assets */}
                         <ResizablePanel defaultSize={20} minSize={15} maxSize={30} className="bg-background">
-                            <AssetBrowser />
+                            <UnifiedAssetBrowser />
                         </ResizablePanel>
 
                         <ResizableHandle withHandle />
@@ -100,7 +100,7 @@ export function UnifiedVideoStudio({ projectId, initialSnapshot }: UnifiedVideoS
 
                                         {/* Right: Inspector */}
                                         <ResizablePanel defaultSize={25} minSize={20} maxSize={35} className="bg-background">
-                                            <PropertyInspector />
+                                            <UnifiedInspector />
                                         </ResizablePanel>
 
                                     </ResizablePanelGroup>

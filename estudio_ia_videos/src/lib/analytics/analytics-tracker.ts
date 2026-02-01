@@ -124,7 +124,8 @@ export class AnalyticsTracker {
     
     // Alternative: Check 'render_jobs' for render performance (since it has status)
     if (params.category === 'render') {
-         const jobs = await prisma.render_jobs.findMany({
+         interface RenderJobRow { status: string; duration_ms: number | null }
+         const jobs: RenderJobRow[] = await prisma.render_jobs.findMany({
              where: { createdAt: { gte: params.startDate, lte: params.endDate } },
              select: { status: true, duration_ms: true }
          });
@@ -132,9 +133,9 @@ export class AnalyticsTracker {
          const total = jobs.length;
          if (total === 0) return [];
          
-         const success = jobs.filter((j: any) => j.status === 'completed').length;
-         const failed = jobs.filter((j: any) => j.status === 'failed').length;
-         const avgLatency = jobs.reduce((acc: number, j: any) => acc + (j.duration_ms || 0), 0) / (total || 1);
+         const success = jobs.filter((j) => j.status === 'completed').length;
+         const failed = jobs.filter((j) => j.status === 'failed').length;
+         const avgLatency = jobs.reduce((acc, j) => acc + (j.duration_ms || 0), 0) / (total || 1);
          
          return [{
              provider: 'renderer',

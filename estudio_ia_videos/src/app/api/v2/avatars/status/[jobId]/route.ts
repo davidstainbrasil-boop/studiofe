@@ -115,9 +115,9 @@ export async function GET(
     })
 
   } catch (error) {
-    logger.error('[API: v2/avatars/status] Status check failed', {
-      error: error instanceof Error ? error.message : String(error)
-    })
+    logger.error('[API: v2/avatars/status] Status check failed', 
+      error instanceof Error ? error : new Error(String(error))
+    )
 
     return NextResponse.json(
       {
@@ -243,9 +243,9 @@ export async function DELETE(
     })
 
   } catch (error) {
-    logger.error('[API: v2/avatars/status] Cancel failed', {
-      error: error instanceof Error ? error.message : String(error)
-    })
+    logger.error('[API: v2/avatars/status] Cancel failed', 
+      error instanceof Error ? error : new Error(String(error))
+    )
 
     return NextResponse.json(
       {

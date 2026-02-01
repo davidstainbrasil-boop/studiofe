@@ -58,9 +58,8 @@ interface FabricSelectionEvent {
 }
 
 // Extended Fabric.Object type with custom properties
-interface ExtendedFabricObject extends Fabric.Object {
+type ExtendedFabricObject = Fabric.Object & {
   id?: string
-  excludeFromExport?: boolean
 }
 
 // Fabric.js - dynamic import for SSR safety

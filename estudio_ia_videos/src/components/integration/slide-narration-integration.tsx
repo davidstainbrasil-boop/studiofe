@@ -391,7 +391,13 @@ export default function SlideNarrationIntegration({
       {state.step === 'narration' && (
         <div className="space-y-6">
           <SlideNarrationStudio
-            slides={adjustedSlides}
+            slides={adjustedSlides.map((s, idx) => ({
+              id: s.id || `slide-${idx}`,
+              slideNumber: s.slideNumber,
+              title: s.title,
+              content: typeof s.content === 'string' ? s.content : undefined,
+              notes: typeof (s as Record<string, unknown>).notes === 'string' ? (s as Record<string, unknown>).notes as string : undefined
+            }))}
             onNarrationComplete={(results) => {
               setState(prev => ({ 
                 ...prev, 

@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useTimelineStore } from '@lib/stores/timeline-store';
 import { logger } from '@lib/logger';
 
-type SaveStatus = 'idle' | 'saving' | 'saved' | 'error' | 'retrying';
+export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error' | 'retrying';
 
 interface AutosaveOptions {
   debounceMs?: number;
@@ -16,6 +16,7 @@ export function useAutosave(options: AutosaveOptions = {}) {
   
   const [status, setStatus] = useState<SaveStatus>('idle');
   const [error, setError] = useState<string | null>(null);
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   
   const project = useTimelineStore(state => state.project);
   const projectId = useTimelineStore(state => state.projectId);
@@ -29,8 +30,11 @@ export function useAutosave(options: AutosaveOptions = {}) {
   const MAX_RETRIES = 3;
   const INITIAL_RETRY_DELAY = 1000;
 
+  // Derived states for backwards compatibility
+  const isSaving = status === 'saving' || status === 'retrying';
+
   // Manual save function with improved retry logic
-  const saveNow = async (retryCount = 0) => {
+  const saveNow = useCallback(async (retryCount = 0) => {
     if (!project) {
       logger.warn('No project to save', { component: 'useAutosave' });
       return;
@@ -72,6 +76,7 @@ export function useAutosave(options: AutosaveOptions = {}) {
       }
 
       setStatus('saved');
+      setLastSavedAt(new Date());
       logger.info('Project saved', { projectId: result.projectId, version: result.version });
 
       // Reset to idle after 2 seconds
@@ -94,7 +99,10 @@ export function useAutosave(options: AutosaveOptions = {}) {
         setStatus('error');
       }
     }
-  };
+  }, [project, projectId, exportSnapshot, setProjectId]);
+
+  // Alias for backwards compatibility
+  const saveProject = saveNow;
 
   // Autosave effect
   useEffect(() => {
@@ -126,11 +134,14 @@ export function useAutosave(options: AutosaveOptions = {}) {
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [project, enabled, debounceMs]);
+  }, [project, enabled, debounceMs, exportSnapshot, saveNow]);
 
   return {
     status,
     error,
-    saveNow
+    saveNow,
+    saveProject,
+    isSaving,
+    lastSavedAt
   };
 }

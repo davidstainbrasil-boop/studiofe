@@ -27,7 +27,9 @@ export async function getUserPlan(userId: string): Promise<PlanTier> {
         where: { id: userId },
         select: { plan_tier: true }
     });
-    return ((user as any)?.plan_tier as PlanTier) || 'free';
+    // plan_tier pode não existir no schema, fallback para 'free'
+    const planTier = (user?.plan_tier as PlanTier | null) ?? 'free';
+    return PLANS[planTier] ? planTier : 'free';
 }
 
 export async function checkLimit(userId: string, resource: 'renders' | 'storage', amount = 1): Promise<{ allowed: boolean; reason?: string }> {
@@ -37,7 +39,7 @@ export async function checkLimit(userId: string, resource: 'renders' | 'storage'
     const date = new Date();
     const currentMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 
-    const usage = await (prisma as any).user_usage.findUnique({
+    const usage = await prisma.user_usage.findUnique({
         where: {
             userId_month: {
                 userId,

@@ -27,7 +27,7 @@ export class IntelligentRecommendationSystem {
 
     try {
       // 1. Recommend NR Templates (Cold Start / Popular)
-      const templates = await prisma.nrTemplate.findMany({
+      const templates = await prisma.nr_templates.findMany({
         take: 5,
         orderBy: { updatedAt: 'desc' } // Simple heuristic: newest first
       });

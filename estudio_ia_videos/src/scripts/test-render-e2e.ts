@@ -94,8 +94,7 @@ async function main() {
     userId: userId,
     slides: slidesPayload,
     config: {
-      width: 1280,
-      height: 720,
+      resolution: '1280x720',
       fps: 30,
       quality: 'medium',
       format: 'mp4',

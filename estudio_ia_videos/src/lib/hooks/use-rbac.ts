@@ -230,9 +230,11 @@ export function useUserRoles() {
           throw queryError
         }
 
-        const roleNames = data
-          ?.map((item: { role: { name: string } | null }) => item.role?.name)
-          .filter((name: string | null | undefined): name is string => name !== null && name !== undefined) || []
+        // Type assertion to work around Supabase generated types
+        const roleData = data as unknown as Array<{ role: { name: string } | null }> | null
+        const roleNames = roleData
+          ?.map((item) => item.role?.name)
+          .filter((name): name is string => name !== null && name !== undefined) || []
 
         setRoles(roleNames)
       } catch (err) {

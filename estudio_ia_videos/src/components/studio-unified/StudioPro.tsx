@@ -484,7 +484,7 @@ export function StudioPro({ className, onSave, onExport }: StudioProProps) {
               <ScrollArea className="h-full">
                 <AvatarLibrary
                   avatars={avatars}
-                  selectedAvatarId={selectedAvatarId}
+                  selectedAvatarId={selectedAvatarId ?? undefined}
                   onAvatarSelect={handleAvatarSelect}
                   className="p-4"
                 />
@@ -582,7 +582,7 @@ export function StudioPro({ className, onSave, onExport }: StudioProProps) {
               </div>
               <ScrollArea className="flex-1">
                 <ConversationBuilder
-                  availableAvatars={avatars}
+                  avatars={avatars}
                   existingConversations={conversations}
                   onSave={(conversation) => {
                     addConversation(conversation);

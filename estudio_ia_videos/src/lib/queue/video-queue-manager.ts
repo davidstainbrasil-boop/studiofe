@@ -20,8 +20,8 @@ export interface VideoRenderJobData {
   // Input data
   input: {
     text?: string
-    avatarConfig?: any
-    timelineState?: any
+    avatarConfig?: AvatarRenderConfig
+    timelineState?: TimelineRenderState
     pptxFile?: string
     exportFormat?: 'mp4' | 'webm' | 'mov'
   }
@@ -45,6 +45,62 @@ export interface VideoRenderJobData {
     projectName?: string
     estimatedDuration?: number
   }
+}
+
+/** Configuration for avatar-based video rendering */
+export interface AvatarRenderConfig {
+  avatarId: string
+  voiceId?: string
+  style?: string
+  expression?: string
+  background?: string
+  animation?: AvatarAnimationData
+}
+
+/** Avatar animation data for lip-sync and movements */
+export interface AvatarAnimationData {
+  blendShapes?: BlendShapeFrame[]
+  duration: number
+  fps?: number
+}
+
+/** Single frame of blend shape animation */
+export interface BlendShapeFrame {
+  time: number
+  weights: Record<string, number>
+}
+
+/** State of the timeline for rendering */
+export interface TimelineRenderState {
+  tracks: TimelineTrack[]
+  duration: number
+  markers?: TimelineMarker[]
+}
+
+/** Single track in the timeline */
+export interface TimelineTrack {
+  id: string
+  type: 'video' | 'audio' | 'text' | 'image'
+  clips: TimelineClip[]
+  muted?: boolean
+  volume?: number
+}
+
+/** A clip within a timeline track */
+export interface TimelineClip {
+  id: string
+  startTime: number
+  duration: number
+  sourceUrl?: string
+  content?: string
+  effects?: Record<string, unknown>
+}
+
+/** Marker on the timeline */
+export interface TimelineMarker {
+  time: number
+  label: string
+  color?: string
 }
 
 export interface VideoRenderJobProgress {
@@ -225,7 +281,7 @@ export class VideoQueueManager {
           type: data.type
         },
         settings: {
-          input: data.input
+          input: JSON.parse(JSON.stringify(data.input)) // Ensure JSON serializable
         },
         estimatedDuration: data.metadata?.estimatedDuration
       }

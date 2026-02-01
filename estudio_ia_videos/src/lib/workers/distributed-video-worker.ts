@@ -13,7 +13,9 @@ import os from 'os'
 import {
   VideoRenderJobData,
   VideoRenderJobProgress,
-  VideoRenderJobResult
+  VideoRenderJobResult,
+  AvatarAnimationData,
+  TimelineTrack
 } from '../queue/video-queue-manager'
 import { AvatarLipSyncIntegration } from '../avatar/avatar-lip-sync-integration'
 import { ColorGradingEngine } from '../video/color-grading-engine'
@@ -395,6 +397,10 @@ export class DistributedVideoWorker {
 
     // Timeline processing would integrate with Phase 3
     const timelineState = input.timelineState
+    
+    if (!timelineState) {
+      throw new Error('Timeline state is required for timeline processing')
+    }
 
     // Calculate total frames needed
     const totalFrames = Math.ceil(timelineState.duration * options.fps)
@@ -407,7 +413,7 @@ export class DistributedVideoWorker {
     })
 
     // Render each track
-    const renderedTracks = []
+    const renderedTracks: string[] = []
 
     for (let i = 0; i < timelineState.tracks.length; i++) {
       const track = timelineState.tracks[i]
@@ -491,7 +497,7 @@ export class DistributedVideoWorker {
   // ============================================================================
 
   private async renderAvatarToVideo(
-    animation: any,
+    animation: AvatarAnimationData,
     options: VideoRenderJobData['options'],
     onProgress?: (progress: number) => void
   ): Promise<string> {
@@ -511,7 +517,7 @@ export class DistributedVideoWorker {
     return outputPath
   }
 
-  private async renderTrack(track: any, options: VideoRenderJobData['options']): Promise<string> {
+  private async renderTrack(track: TimelineTrack, options: VideoRenderJobData['options']): Promise<string> {
     const outputPath = join(this.tempDir, `track-${track.id}.mp4`)
     // Actual rendering logic here
     return outputPath
@@ -579,8 +585,8 @@ export class DistributedVideoWorker {
     await job.updateProgress(progress)
   }
 
-  private mapQualityToAvatarQuality(quality: string): string {
-    const map: Record<string, string> = {
+  private mapQualityToAvatarQuality(quality: string): 'PLACEHOLDER' | 'STANDARD' | 'HIGH' | 'HYPERREAL' {
+    const map: Record<string, 'PLACEHOLDER' | 'STANDARD' | 'HIGH' | 'HYPERREAL'> = {
       draft: 'PLACEHOLDER',
       standard: 'STANDARD',
       high: 'HIGH',

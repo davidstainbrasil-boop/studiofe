@@ -2,6 +2,9 @@ import { assetsManager } from '../assets-manager';
 import { AssetItem } from '../assets-manager';
 import { logger } from '../logger';
 
+// Re-export for compatibility
+export type StockMedia = AssetItem;
+
 export const StockService = {
   /**
    * Search for stock assets (images, videos, etc)

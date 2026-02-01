@@ -145,3 +145,44 @@ export async function inspectRateLimit(key: string, limit: number = 10, windowMs
     return { remaining: 0, resetAtMs: Date.now() + windowMs, source: 'unknown' as const };
   }
 }
+
+/**
+ * Global rate limiter with sync-compatible check method
+ * Used for compatibility with existing code
+ */
+export const globalRateLimiter = {
+  /** Default limit per window */
+  limit: 100,
+  /** Default window in milliseconds */
+  windowMs: 60_000,
+  
+  /**
+   * Synchronous check using in-memory rate limiting
+   * Returns { success: true } if allowed, { success: false } if rate limited
+   */
+  check(key: string): { success: boolean; remaining: number; limit: number } {
+    const result = memoryLimiter(`global:${key}`, this.limit, this.windowMs);
+    return {
+      success: result.allowed,
+      remaining: result.remaining,
+      limit: result.limit,
+    };
+  },
+  
+  /**
+   * Async check using Redis if available
+   */
+  async checkAsync(key: string): Promise<RateLimitDecision> {
+    return checkRateLimit(`global:${key}`, this.limit, this.windowMs);
+  },
+  
+  /**
+   * Configure the rate limiter
+   */
+  configure(options: { limit?: number; windowMs?: number }) {
+    if (options.limit) this.limit = options.limit;
+    if (options.windowMs) this.windowMs = options.windowMs;
+    return this;
+  },
+};
+

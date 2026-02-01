@@ -1,5 +1,5 @@
 import { Player } from '@remotion/player';
-import { useMemo } from 'react';
+import { useMemo, ComponentType } from 'react';
 import type { TimelineProject } from '@lib/types/timeline-types';
 import { TimelineComposition } from '@/app/remotion/TimelineComposition';
 import { mapProjectToRemotionProps } from '@lib/mappers/timeline-mapper';
@@ -37,8 +37,8 @@ export function RemotionPreview({
     return (
         <div className="aspect-video bg-black w-full h-full">
             <Player
-                component={TimelineComposition}
-                inputProps={inputProps}
+                component={TimelineComposition as unknown as ComponentType<Record<string, unknown>>}
+                inputProps={inputProps as unknown as Record<string, unknown>}
                 durationInFrames={durationInFrames}
                 fps={30}
                 compositionWidth={compositionWidth}

@@ -57,7 +57,7 @@ import {
   StopCircle
 } from 'lucide-react'
 import { createBrowserSupabaseClient } from '@/lib/services'
-import type { User as SupabaseUser } from '@supabase/supabase-js'
+import type { User as SupabaseUser, AuthChangeEvent, Session } from '@supabase/supabase-js'
 
 // Interfaces
 interface Project {
@@ -235,7 +235,7 @@ export default function UnifiedDashboard() {
 
     void loadSession()
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
       if (!isMounted) return
       setUser(session?.user ?? null)
     })
@@ -272,7 +272,19 @@ export default function UnifiedDashboard() {
     }
 
     try {
-      const result = await createProject(newProject)
+      // Convert source data to expected format
+      const sourceData: Record<string, unknown> | undefined = 
+        newProject.source.data === null 
+          ? undefined 
+          : typeof newProject.source.data === 'string' 
+            ? { path: newProject.source.data }
+            : { file: true, name: newProject.source.data.name };
+      
+      const result = await createProject({
+        name: newProject.name,
+        type: newProject.type,
+        source: { type: newProject.source.type, data: sourceData }
+      })
       setProjects(prev => [...prev, result.project])
       setShowCreateDialog(false)
       setNewProject({ name: '', type: 'pptx', source: { type: 'blank', data: null } })

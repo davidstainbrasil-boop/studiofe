@@ -56,9 +56,9 @@ export function BrowseView() {
   // Transform templates to Netflix items
   const nrItems = templates.map(t => ({
     id: t.id,
-    title: `${t.nr_number} - ${t.title}`,
+    title: `${t.nrNumber || t.nr_code || 'NR'} - ${t.title}`,
     image: '', // Placeholder
-    duration: `${Math.floor(t.duration_seconds / 60)} min`,
+    duration: `${Math.floor((t.durationSeconds || 0) / 60)} min`,
     description: t.description || 'Sem descrição',
     match: 98,
     year: 2024,
@@ -69,7 +69,7 @@ export function BrowseView() {
   const newItems = [...nrItems].sort((a, b) => b.id.localeCompare(a.id)).slice(0, 5)
 
   const featured = templates[0] ? {
-    title: `${templates[0].nr_number} - ${templates[0].title}`,
+    title: `${templates[0].nrNumber || templates[0].nr_code || 'NR'} - ${templates[0].title}`,
     description: templates[0].description,
   } : {
     title: 'NR-35 Trabalho em Altura',

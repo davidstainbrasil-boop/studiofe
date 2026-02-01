@@ -679,7 +679,7 @@ export default function AppearanceCustomization({
                 <div>
                   <Label>Formato do Rosto</Label>
                   <div className="grid grid-cols-3 gap-2 mt-2">
-                    {['oval', 'round', 'square', 'heart', 'diamond'].map((shape) => (
+                    {(['oval', 'round', 'square', 'heart', 'diamond'] as const).map((shape) => (
                       <Button
                         key={shape}
                         variant={appearanceSettings.face.shape === shape ? "default" : "outline"}
@@ -695,7 +695,7 @@ export default function AppearanceCustomization({
                 <div>
                   <Label>Gênero</Label>
                   <div className="grid grid-cols-3 gap-2 mt-2">
-                    {['masculine', 'feminine', 'neutral'].map((gender) => (
+                    {(['masculine', 'feminine', 'neutral'] as const).map((gender) => (
                       <Button
                         key={gender}
                         variant={appearanceSettings.face.gender === gender ? "default" : "outline"}
@@ -740,7 +740,7 @@ export default function AppearanceCustomization({
               <div>
                 <Label>Textura da Pele</Label>
                 <div className="grid grid-cols-3 gap-2 mt-2">
-                  {['smooth', 'normal', 'textured'].map((texture) => (
+                  {(['smooth', 'normal', 'textured'] as const).map((texture) => (
                     <Button
                       key={texture}
                       variant={appearanceSettings.face.skinTexture === texture ? "default" : "outline"}
@@ -826,7 +826,7 @@ export default function AppearanceCustomization({
               <div>
                 <Label>Textura</Label>
                 <div className="grid grid-cols-4 gap-2 mt-2">
-                  {['straight', 'wavy', 'curly', 'coily'].map((texture) => (
+                  {(['straight', 'wavy', 'curly', 'coily'] as const).map((texture) => (
                     <Button
                       key={texture}
                       variant={appearanceSettings.hair.texture === texture ? "default" : "outline"}
@@ -854,7 +854,7 @@ export default function AppearanceCustomization({
               <div>
                 <Label>Formato dos Olhos</Label>
                 <div className="grid grid-cols-3 gap-2 mt-2">
-                  {['almond', 'round', 'hooded', 'monolid', 'upturned', 'downturned'].map((shape) => (
+                  {(['almond', 'round', 'hooded', 'monolid', 'upturned', 'downturned'] as const).map((shape) => (
                     <Button
                       key={shape}
                       variant={appearanceSettings.eyes.shape === shape ? "default" : "outline"}
@@ -970,7 +970,7 @@ export default function AppearanceCustomization({
               <div>
                 <Label>Estilo</Label>
                 <div className="grid grid-cols-5 gap-2 mt-2">
-                  {['casual', 'formal', 'sporty', 'elegant', 'creative'].map((style) => (
+                  {(['casual', 'formal', 'sporty', 'elegant', 'creative'] as const).map((style) => (
                     <Button
                       key={style}
                       variant={appearanceSettings.clothing.style === style ? "default" : "outline"}

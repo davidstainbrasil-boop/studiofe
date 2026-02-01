@@ -61,7 +61,7 @@ export class FacialAnimationEngine {
     const enableHeadMovement = config.enableHeadMovement !== false;
 
     logger.info('[FacialAnimationEngine] Creating animation', {
-      phonemeCount: lipSyncResult.phonemes.length,
+      phonemeCount: lipSyncResult.phonemes?.length ?? 0,
       duration: lipSyncResult.duration,
       fps,
       enableBlinks,
@@ -72,7 +72,7 @@ export class FacialAnimationEngine {
 
     // 1. Generate base lip-sync animation
     // Convert LipSyncResult phonemes to format expected by BlendShapeController
-    const phonemesForAnimation = lipSyncResult.phonemes.map(p => ({
+    const phonemesForAnimation = (lipSyncResult.phonemes ?? []).map(p => ({
       time: p.time,
       duration: p.duration,
       phoneme: p.phoneme,
@@ -150,7 +150,7 @@ export class FacialAnimationEngine {
       duration: lipSyncResult.duration,
       fps,
       metadata: {
-        lipSyncSource: lipSyncResult.source,
+        lipSyncSource: (lipSyncResult as LipSyncResult & { source?: string }).source || lipSyncResult.metadata?.provider || 'unknown',
         hasEmotion: !!config.emotion && config.emotion !== 'neutral',
         hasBlinks: enableBlinks,
         hasBreathing: enableBreathing,

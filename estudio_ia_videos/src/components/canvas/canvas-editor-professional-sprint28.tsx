@@ -669,8 +669,7 @@ export default function CanvasEditorProfessionalSprint28({
 
     const zoomFactor = newZoom / 100
     canvas.setZoom(zoomFactor)
-    canvas.setWidth(width * zoomFactor)
-    canvas.setHeight(height * zoomFactor)
+    canvas.setDimensions({ width: width * zoomFactor, height: height * zoomFactor })
     canvas.renderAll()
     setZoom(newZoom)
   }

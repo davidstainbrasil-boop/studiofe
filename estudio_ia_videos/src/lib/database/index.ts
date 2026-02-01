@@ -6,7 +6,7 @@
  * substituindo a dependência do Supabase para operações de banco de dados.
  */
 
-import { Pool, PoolClient, QueryResult } from 'pg';
+import { Pool, PoolClient, QueryResult, QueryResultRow } from 'pg';
 import { logger } from '@lib/logger';
 
 // ============================================
@@ -52,7 +52,7 @@ pool.on('error', (err) => {
 /**
  * Executa uma query SQL
  */
-export async function query<T = unknown>(
+export async function query<T extends QueryResultRow = QueryResultRow>(
   text: string,
   params?: QueryParams
 ): Promise<QueryResult<T>> {
@@ -73,7 +73,7 @@ export async function query<T = unknown>(
 /**
  * Obtém uma única linha
  */
-export async function queryOne<T = unknown>(
+export async function queryOne<T extends QueryResultRow = QueryResultRow>(
   text: string,
   params?: QueryParams
 ): Promise<T | null> {
@@ -84,7 +84,7 @@ export async function queryOne<T = unknown>(
 /**
  * Obtém todas as linhas
  */
-export async function queryAll<T = unknown>(
+export async function queryAll<T extends QueryResultRow = QueryResultRow>(
   text: string,
   params?: QueryParams
 ): Promise<T[]> {
@@ -172,7 +172,7 @@ function validateTableName(table: string): void {
 /**
  * Insere um registro e retorna o resultado
  */
-export async function insert<T = unknown>(
+export async function insert<T extends QueryResultRow = QueryResultRow>(
   table: string,
   data: RecordData
 ): Promise<T> {
@@ -195,7 +195,7 @@ export async function insert<T = unknown>(
 /**
  * Atualiza registros
  */
-export async function update<T = unknown>(
+export async function update<T extends QueryResultRow = QueryResultRow>(
   table: string,
   data: RecordData,
   where: string,
@@ -240,7 +240,7 @@ export async function remove(
  * Busca por ID
  * @throws Error se a tabela não estiver na whitelist
  */
-export async function findById<T = unknown>(
+export async function findById<T extends QueryResultRow = QueryResultRow>(
   table: string,
   id: string
 ): Promise<T | null> {
@@ -252,7 +252,7 @@ export async function findById<T = unknown>(
  * Busca todos com filtros opcionais
  * @throws Error se a tabela não estiver na whitelist
  */
-export async function findAll<T = Record<string, unknown>>(
+export async function findAll<T extends QueryResultRow = QueryResultRow>(
   table: string,
   options?: {
     where?: string;

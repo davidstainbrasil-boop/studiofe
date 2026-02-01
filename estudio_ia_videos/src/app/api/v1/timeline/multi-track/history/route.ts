@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
       count: snapshots.length
     });
 
-    interface SnapshotRecord { id: string; version: number; createdAt: Date; createdBy: string | null; description?: string | null; tracks: unknown[] | unknown; totalDuration: number | null }
+    interface SnapshotRecord { id: string; version: number | null; createdAt: Date | null; userId: string | null; description?: string | null; tracks: unknown[] | unknown; totalDuration: number | null }
     return NextResponse.json({
       success: true,
       data: {
@@ -94,8 +94,8 @@ export async function GET(request: NextRequest) {
         history: snapshots.map((snapshot: SnapshotRecord) => ({
           id: snapshot.id,
           version: snapshot.version,
-          createdAt: snapshot.createdAt.toISOString(),
-          createdBy: snapshot.createdBy,
+          createdAt: snapshot.createdAt?.toISOString() ?? null,
+          createdBy: snapshot.userId,
           description: snapshot.description,
           tracksCount: Array.isArray(snapshot.tracks) ? snapshot.tracks.length : 0,
           totalDuration: snapshot.totalDuration,

@@ -500,7 +500,7 @@ export function NotificationCenter() {
                             <div className="mt-2 flex items-center space-x-4 text-xs text-muted-foreground">
                               <div className="flex items-center space-x-1">
                                 <Clock className="h-3 w-3" />
-                                <span>{formatTimeAgo(notification.createdAt)}</span>
+                                <span>{formatTimeAgo(notification.created_at)}</span>
                               </div>
                               {notification.action_url && (
                                 <Button

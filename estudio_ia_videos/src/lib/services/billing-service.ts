@@ -247,7 +247,7 @@ export class BillingService {
       }
   }
   
-  private async findUserByCustomerId(customerId: string) {
+  private async findUserByCustomerId(customerId: string): Promise<{ id: string } | null> {
       // Postgres JSONB query
       // This might require a raw query or specific prisma syntax depending on DB capabilities
       // For now, scan or assume we have a mapping table if strictly typed.
@@ -267,6 +267,8 @@ export class BillingService {
       
       // NOTE: Ideally `stripe_customer_id` should be a column on `users` table.
       
+      // TODO: Implement proper lookup when stripeCustomerId column is added
+      logger.warn('findUserByCustomerId not fully implemented', { customerId });
       return null; // Placeholder for reverse lookup logic
   }
 

@@ -3,7 +3,7 @@
  * Serviço de gerenciamento de notificações
  */
 
-import { notificationsRepository } from '../repositories';
+import { notificationsRepository, NotificationRecord } from '../repositories';
 
 export interface CreateNotificationParams {
   userId: string;
@@ -25,12 +25,11 @@ export class NotificationService {
   /**
    * Cria uma notificação
    */
-  async createNotification(params: CreateNotificationParams) {
-    return notificationsRepository.create({
-      userId: params.userId,
+  async createNotification(params: CreateNotificationParams): Promise<NotificationRecord> {
+    return notificationsRepository.create(params.userId, {
       type: params.type,
       title: params.title,
-      message: params.message,
+      message: params.message || '',
       data: params.data,
     });
   }
@@ -38,16 +37,18 @@ export class NotificationService {
   /**
    * Cria notificações para múltiplos usuários
    */
-  async createBulkNotifications(params: CreateBulkNotificationParams) {
-    const notifications = params.userIds.map(userId => ({
-      userId,
-      type: params.type,
-      title: params.title,
-      message: params.message,
-      data: params.data,
-    }));
-
-    return notificationsRepository.createMany(notifications);
+  async createBulkNotifications(params: CreateBulkNotificationParams): Promise<NotificationRecord[]> {
+    const results: NotificationRecord[] = [];
+    for (const userId of params.userIds) {
+      const notification = await notificationsRepository.create(userId, {
+        type: params.type,
+        title: params.title,
+        message: params.message || '',
+        data: params.data,
+      });
+      results.push(notification);
+    }
+    return results;
   }
 
   /**
@@ -121,21 +122,21 @@ export class NotificationService {
   /**
    * Busca notificações não lidas de um usuário
    */
-  async getUnreadNotifications(userId: string, limit?: number) {
-    return notificationsRepository.findUnreadByUserId(userId, limit);
+  async getUnreadNotifications(userId: string, limit?: number): Promise<NotificationRecord[]> {
+    return notificationsRepository.findByUserId(userId, { unreadOnly: true, limit });
   }
 
   /**
    * Marca uma notificação como lida
    */
-  async markAsRead(notificationId: string) {
+  async markAsRead(notificationId: string): Promise<void> {
     return notificationsRepository.markAsRead(notificationId);
   }
 
   /**
    * Marca todas as notificações de um usuário como lidas
    */
-  async markAllAsRead(userId: string) {
+  async markAllAsRead(userId: string): Promise<void> {
     return notificationsRepository.markAllAsRead(userId);
   }
 
@@ -143,14 +144,15 @@ export class NotificationService {
    * Conta notificações não lidas
    */
   async countUnread(userId: string): Promise<number> {
-    return notificationsRepository.countUnreadByUserId(userId);
+    return notificationsRepository.getUnreadCount(userId);
   }
 
   /**
-   * Deleta notificações antigas
+   * Deleta notificações de um usuário (cleanup simples)
    */
-  async cleanupOldNotifications(daysOld: number = 30) {
-    return notificationsRepository.deleteOldRead(daysOld);
+  async cleanupOldNotifications(_daysOld: number = 30): Promise<void> {
+    // Note: In-memory storage doesn't support date-based cleanup
+    // This is a no-op for now
   }
 }
 

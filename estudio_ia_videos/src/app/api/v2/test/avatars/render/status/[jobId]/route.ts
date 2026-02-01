@@ -171,10 +171,10 @@ export async function GET(request: NextRequest, { params }: { params: { jobId: s
       { status: 404 },
     );
   } catch (error) {
-    logger.error('🧪 TEST: Error checking job status', {
-      component: 'API: v2/test/avatars/render/status',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    logger.error('🧪 TEST: Error checking job status', 
+      error instanceof Error ? error : new Error(String(error)),
+      { component: 'API: v2/test/avatars/render/status' }
+    );
 
     return NextResponse.json(
       {

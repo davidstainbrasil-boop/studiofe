@@ -204,11 +204,11 @@ export async function DELETE(request: NextRequest) {
         }
     });
     
-    // Also try to update processing_queue if it exists (linked by jobId or jobData)
+    // Also try to update processing_queue if it exists (linked by jobId in payload)
     try {
         await prisma.processing_queue.updateMany({
              where: { 
-                 jobData: { path: ['videoExportId'], equals: jobId },
+                 payload: { path: ['videoExportId'], equals: jobId },
                  status: { in: ['pending', 'processing', 'queued'] }
              },
              data: { status: 'cancelled' }

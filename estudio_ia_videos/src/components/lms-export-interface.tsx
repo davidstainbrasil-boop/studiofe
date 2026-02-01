@@ -27,9 +27,29 @@ import {
   Clock,
   Users
 } from 'lucide-react'
-import { SlideData, VideoConfig } from '../lib/ai-services'
 import { LMSMetadata } from '../lib/lms-integration'
 import { toast } from 'react-hot-toast'
+
+// Local type definitions (compatible with render-utils)
+interface SlideData {
+  id: string;
+  title?: string;
+  content?: string;
+  imageUrl?: string;
+  duration: number;
+  animations?: unknown[];
+  textElements?: unknown[];
+  position?: { x: number; y: number };
+  size?: { width: number; height: number };
+}
+
+interface VideoConfig {
+  resolution: { width: number; height: number };
+  fps: number;
+  quality: 'low' | 'medium' | 'high' | 'ultra';
+  format: 'mp4' | 'webm' | 'mov';
+  background?: string;
+}
 
 interface LMSExportInterfaceProps {
   slides: SlideData[]

@@ -252,8 +252,8 @@ export default function NotificationsCenter() {
             table: 'analytics_events',
             filter: `user_id=eq.${user.id}`,
           },
-          (payload) => {
-            const newEvent = payload.new as { id: string; eventType: string; eventData: { type: string; title: string; message: string; read: boolean; actionUrl?: string }; createdAt: string }
+          (payload: { new: { id: string; eventType: string; eventData: { type: string; title: string; message: string; read: boolean; actionUrl?: string }; createdAt: string } }) => {
+            const newEvent = payload.new
             if (newEvent.eventType === 'notification') {
               const notificationType = newEvent.eventData.type as NotificationType
               const notification: Notification = {

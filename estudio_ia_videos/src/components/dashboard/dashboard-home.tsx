@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { logger } from '@/lib/logger'
 import { useRouter } from 'next/navigation'
 import { createBrowserSupabaseClient } from '@/lib/services'
-import type { User as SupabaseUser } from '@supabase/supabase-js'
+import type { User as SupabaseUser, AuthChangeEvent, Session } from '@supabase/supabase-js'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
@@ -105,7 +105,7 @@ export default function DashboardHome() {
 
     void loadSession()
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
       if (!isMounted) return
       const authUser = session?.user ?? null
       setUser(authUser)

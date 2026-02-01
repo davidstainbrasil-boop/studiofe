@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@components/ui/button';
 import { ArrowLeft, Download, Play, Save, Settings, Loader2, CheckCircle, AlertCircle, ChevronLeft } from 'lucide-react';
 import { Separator } from '@components/ui/separator';
@@ -77,6 +77,10 @@ export function UnifiedTopBar() {
     // If not, the user's provided snippet for `getSaveStatusIcon` would be invalid.
     const { status, saveProject, isSaving, lastSavedAt } = useAutosave({ debounceMs: 3000, enabled: true });
     const router = useRouter();
+
+    const handleSaveClick = () => {
+        saveProject();
+    };
 
     const getSaveStatusIcon = () => {
         switch (status) {
@@ -161,7 +165,7 @@ export function UnifiedTopBar() {
                         variant="outline"
                         size="sm"
                         className="gap-2"
-                        onClick={saveProject}
+                        onClick={handleSaveClick}
                         disabled={status === 'saving'}
                     >
                         {status === 'saving' ? (

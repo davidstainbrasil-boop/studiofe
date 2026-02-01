@@ -87,6 +87,8 @@ interface FabricCanvas {
   getActiveObject: () => FabricObject | null
   renderAll: () => void
   toJSON: () => Record<string, unknown>
+  // Index signature for compatibility with child components
+  [key: string]: unknown
 }
 
 // Type for Canvas from external module (compatible with our local interface and SmartGuides Canvas)
@@ -115,6 +117,15 @@ interface CanvasObject {
   opacity: number
   layer: number
   data?: FabricObject
+  // Methods required by Object type
+  set?: (key: string, value: unknown) => void
+  get?: (key: string) => unknown
+  toObject?: () => Record<string, unknown>
+  toJSON?: () => Record<string, unknown>
+  remove?: () => void
+  bringToFront?: () => void
+  sendToBack?: () => void
+  clone?: (callback: (obj: CanvasObject) => void) => void
 }
 
 interface ProfessionalCanvasEditorProps {
@@ -223,13 +234,16 @@ function ProfessionalCanvasEditorCore({
     if (!canvas) return null
     
     return {
-      objects: canvas.getObjects().map((obj) => ({
-        id: (obj as FabricObject).id || '',
-        type: obj.type || 'unknown',
-        properties: obj.toObject(),
-        visible: obj.visible !== false,
-        locked: !!(obj.lockMovementX || obj.lockMovementY)
-      })),
+      objects: canvas.getObjects().map((obj: unknown) => {
+        const fabricObj = obj as FabricObject
+        return {
+          id: fabricObj.id || '',
+          type: fabricObj.type || 'unknown',
+          properties: fabricObj.toObject(),
+          visible: fabricObj.visible !== false,
+          locked: !!(fabricObj.lockMovementX || fabricObj.lockMovementY)
+        }
+      }),
       dimensions: { width: canvas.getWidth(), height: canvas.getHeight() },
       backgroundColor: canvas.backgroundColor,
       zoom: canvas.getZoom(),
@@ -348,7 +362,7 @@ function ProfessionalCanvasEditorCore({
       <QuickActionsBar
         canvas={canvas}
         onAction={handleQuickAction}
-        selectedObjects={selectedObjects}
+        selectedObjects={selectedObjects as unknown as fabric.Object[]}
         canUndo={canUndo}
         canRedo={canRedo}
         zoomLevel={zoomLevel}

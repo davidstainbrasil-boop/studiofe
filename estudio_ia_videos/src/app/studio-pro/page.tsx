@@ -366,13 +366,14 @@ export default function StudioProPage() {
       },
       textStyle: element.text
         ? {
-            content: element.text,
-            fontSize: 24, // Default
+            fontSize: 24,
             fontFamily: 'Inter',
             fontWeight: 400,
             color: '#ffffff',
-            align: 'left',
+            textAlign: 'left',
+            textDecoration: [],
             lineHeight: 1.2,
+            letterSpacing: 0,
           }
         : undefined,
       animations: [],
@@ -395,7 +396,7 @@ export default function StudioProPage() {
         opacity: properties.transform.opacity,
         width: properties.transform.width,
         height: properties.transform.height,
-        text: properties.textStyle?.content,
+        // Note: text content is stored in CanvasElement.text, not in TextStyle
       };
     },
     [],
@@ -1367,8 +1368,7 @@ export default function StudioProPage() {
           maxSize={30}
           collapsible
           collapsedSize={0}
-          onCollapse={() => setLeftPanelCollapsed(true)}
-          onExpand={() => setLeftPanelCollapsed(false)}
+          onResize={(size) => setLeftPanelCollapsed(size.asPercentage === 0)}
         >
           <div className="h-full flex flex-col bg-muted/30">
             {/* Panel Header */}
@@ -1701,8 +1701,7 @@ export default function StudioProPage() {
           maxSize={30}
           collapsible
           collapsedSize={0}
-          onCollapse={() => setRightPanelCollapsed(true)}
-          onExpand={() => setRightPanelCollapsed(false)}
+          onResize={(size) => setRightPanelCollapsed(size.asPercentage === 0)}
         >
           <div className="h-full flex flex-col bg-muted/30">
             {/* Panel Header */}

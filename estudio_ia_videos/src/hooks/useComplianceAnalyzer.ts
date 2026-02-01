@@ -340,7 +340,7 @@ export const useComplianceAnalyzer = (): UseComplianceAnalyzerReturn => {
       }));
 
       // Broadcast para colaboradores
-      broadcastUpdate('compliance-report', report);
+      broadcastUpdate('compliance-report', report as unknown as Record<string, unknown>);
 
       return report;
     } finally {

@@ -84,16 +84,23 @@ async function main() {
     console.log('✅ System configurations skipped (model not available)')
 
     // Create demo user for testing
-    const demoUser = await prisma.users.upsert({
-      where: { email: 'demo@estudio-ia.com' },
-      update: {},
-      create: {
-        email: 'demo@estudio-ia.com',
-        name: 'Usuário Demo'
-      }
-    })
-
-    console.log('✅ Demo user created:', demoUser.email)
+    // Note: The users table requires a valid auth.users reference (FK constraint)
+    // This will only work if the auth.users entry already exists
+    let demoUser = null;
+    try {
+      demoUser = await prisma.users.upsert({
+        where: { email: 'demo@estudio-ia.com' },
+        update: {},
+        create: {
+          id: '00000000-0000-0000-0000-000000000001', // Must match existing auth.users id
+          email: 'demo@estudio-ia.com',
+          name: 'Usuário Demo'
+        }
+      })
+      console.log('✅ Demo user created:', demoUser.email)
+    } catch (err) {
+      console.log('⚠️ Demo user skipped - auth.users FK constraint requires existing auth user')
+    }
 
     // Create sample templates
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -196,24 +203,26 @@ async function main() {
       resolution: '1080p'
     };
 
-    const sampleProject = await prisma.projects.upsert({
-      where: { id: 'demo-project-nr12' },
-      update: {},
-      create: {
-        id: 'demo-project-nr12',
-        name: 'NR-12: Segurança em Máquinas - Demo',
-        description: 'Projeto de demonstração sobre segurança em máquinas e equipamentos',
-        userId: demoUser.id,
-        status: 'completed',
-        metadata: {
-          slidesData: slidesData,
-          duration: 53,
-          settings: settings
+    if (demoUser) {
+      const sampleProject = await prisma.projects.upsert({
+        where: { id: 'demo-project-nr12' },
+        update: {},
+        create: {
+          id: 'demo-project-nr12',
+          name: 'NR-12: Segurança em Máquinas - Demo',
+          description: 'Projeto de demonstração sobre segurança em máquinas e equipamentos',
+          userId: demoUser.id,
+          status: 'completed',
+          metadata: {
+            slidesData: slidesData,
+            duration: 53,
+            settings: settings
+          }
         }
-      }
-    })
+      })
 
-    console.log('✅ Sample project created:', sampleProject.name)
+      console.log('✅ Sample project created:', sampleProject.name)
+    }
 
     console.log('🎉 Database initialization completed successfully!')
 

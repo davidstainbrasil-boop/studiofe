@@ -16,7 +16,7 @@ interface CacheOptions {
 /**
  * Create a type-safe LRU cache instance
  */
-export function createLRUCache<T>(options: CacheOptions = {}) {
+export function createLRUCache<T extends NonNullable<unknown>>(options: CacheOptions = {}) {
   const {
     maxSize = 500,
     ttlMs = 5 * 60 * 1000, // 5 minutes default
@@ -74,19 +74,19 @@ export function createLRUCache<T>(options: CacheOptions = {}) {
 }
 
 // Pre-configured caches for common use cases
-export const templateCache = createLRUCache<unknown>({
+export const templateCache = createLRUCache<Record<string, unknown>>({
   name: 'templates',
   maxSize: 100,
   ttlMs: 30 * 60 * 1000, // 30 min
 });
 
-export const userSessionCache = createLRUCache<unknown>({
+export const userSessionCache = createLRUCache<Record<string, unknown>>({
   name: 'user-sessions',
   maxSize: 1000,
   ttlMs: 15 * 60 * 1000, // 15 min
 });
 
-export const apiResponseCache = createLRUCache<unknown>({
+export const apiResponseCache = createLRUCache<Record<string, unknown>>({
   name: 'api-responses',
   maxSize: 200,
   ttlMs: 60 * 1000, // 1 min

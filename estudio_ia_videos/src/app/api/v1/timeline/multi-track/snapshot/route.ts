@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
         tracks: timeline.tracks as Prisma.InputJsonValue,
         settings: timeline.settings as Prisma.InputJsonValue,
         totalDuration: timeline.totalDuration,
-        createdBy: session.user.id,
+        userId: session.user.id,
         description: description || `Snapshot v${timeline.version}`,
       },
     });
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
         id: snapshot.id,
         version: snapshot.version,
         description: snapshot.description,
-        createdAt: snapshot.createdAt.toISOString(),
+        createdAt: snapshot.createdAt?.toISOString() ?? null,
         tracksCount: Array.isArray(timeline.tracks) ? timeline.tracks.length : 0,
         totalDuration: timeline.totalDuration,
       },

@@ -17,6 +17,7 @@ import {
 } from '@components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@components/ui/avatar';
 import { toast } from 'sonner';
+import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 
 export function Navbar() {
     const pathname = usePathname();
@@ -31,7 +32,7 @@ export function Navbar() {
         };
         getUser();
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
             setUser(session?.user ?? null);
         });
 

@@ -2,13 +2,22 @@
 import { prisma } from '@lib/prisma';
 import { logger } from '@lib/logger';
 import { videoRenderPipeline } from '@lib/video/video-render-pipeline';
+import type { RenderSettings, RenderJobStatus } from '@/types/rendering';
 
-interface RenderJob {
+/** Represents a render job as retrieved from the database */
+interface RenderJobRecord {
   id: string;
-  status: string;
-  renderSettings: any;
-  userId: string;
+  status: RenderJobStatus;
+  renderSettings: RenderSettings | RenderJobProviderSettings | null;
+  userId: string | null;
+  projectId: string | null;
   progress: number;
+}
+
+/** Extended settings including external providers like HeyGen/DID */
+interface RenderJobProviderSettings extends Partial<RenderSettings> {
+  provider?: 'heygen' | 'did' | 'internal';
+  externalId?: string;
 }
 
 export class RenderJobProcessor {
@@ -63,22 +72,32 @@ export class RenderJobProcessor {
         }
       });
 
-      const settings = job.renderSettings as any;
+      const settings = job.renderSettings as RenderJobProviderSettings | null;
       const provider = settings?.provider;
+
+      // Cast to our internal record type for method calls
+      const jobRecord: RenderJobRecord = {
+        id: job.id,
+        status: job.status as RenderJobStatus,
+        renderSettings: settings,
+        userId: job.userId,
+        projectId: job.projectId,
+        progress: job.progress ?? 0,
+      };
 
       // Real Implementation Routing
       if (provider === 'heygen') {
         // HeyGen jobs are handled via polling usually, but here we might initiate and then poll?
         // Or we might just use the generic pipeline if it supports HeyGen (it does via processHeyGenSlide)
         // Let's use VideoRenderPipeline which unifies logic.
-        await this.processWithPipeline(job);
+        await this.processWithPipeline(jobRecord);
       } else if (provider === 'did') {
         // Legacy or separate DID service
-        await this.processDIDJob(job);
+        await this.processDIDJob(jobRecord);
       } else {
         // Default UE5/Internal pipeline
         // Use the REAL VideoRenderPipeline
-        await this.processWithPipeline(job);
+        await this.processWithPipeline(jobRecord);
       }
 
     } catch (error) {
@@ -88,7 +107,7 @@ export class RenderJobProcessor {
     }
   }
 
-  private async processWithPipeline(job: any) {
+  private async processWithPipeline(job: RenderJobRecord) {
     try {
       // Use the REAL Video Render Pipeline
       // This will handle:
@@ -97,13 +116,31 @@ export class RenderJobProcessor {
       // 3. Uploading
       // 4. Updating job status (completed/failed)
       
+      const settings = job.renderSettings as RenderJobProviderSettings | null;
+      
+      // Map quality values from RenderSettings to RenderPipelineOptions
+      const qualityMap: Record<string, 'low' | 'medium' | 'high'> = {
+        'draft': 'low',
+        'standard': 'medium',
+        'high': 'high',
+        'ultra': 'high',
+      };
+      
+      // Map format values (only mp4/webm supported by pipeline)
+      const formatMap: Record<string, 'mp4' | 'webm'> = {
+        'mp4': 'mp4',
+        'webm': 'webm',
+        'mov': 'mp4',
+        'gif': 'mp4',
+      };
+      
       await videoRenderPipeline.execute({
-        projectId: job.projectId,
+        projectId: job.projectId ?? '',
         jobId: job.id,
-        // Map settings
-        resolution: job.renderSettings?.resolution,
-        quality: job.renderSettings?.quality,
-        outputFormat: job.renderSettings?.format
+        // Map settings with proper type conversion
+        resolution: settings?.resolution,
+        quality: settings?.quality ? qualityMap[settings.quality] : undefined,
+        outputFormat: settings?.format ? formatMap[settings.format] : undefined
       });
       
       // Note: execute() updates the job status to completed/failed internally via jobManager.
@@ -117,13 +154,13 @@ export class RenderJobProcessor {
     }
   }
 
-  private async processDIDJob(job: any) {
+  private async processDIDJob(job: RenderJobRecord) {
     // Keeping DID separate if not integrated into pipeline yet
     try {
       const { DIDServiceReal } = await import('@lib/services/avatar/did-service-real');
       const didService = new DIDServiceReal();
-      const settings = job.renderSettings as any;
-      const talkId = settings.externalId;
+      const settings = job.renderSettings as RenderJobProviderSettings | null;
+      const talkId = settings?.externalId;
 
       if (!talkId) {
            // Maybe initiate? For now assuming it tracks existing talks
@@ -163,7 +200,7 @@ export class RenderJobProcessor {
     }
   }
 
-  private async markJobFailed(jobId: string, error: any) {
+  private async markJobFailed(jobId: string, error: unknown) {
     await prisma.render_jobs.update({
       where: { id: jobId },
       data: {

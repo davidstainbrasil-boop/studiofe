@@ -113,7 +113,7 @@ export class HeyGenAdapter extends BaseAvatarProvider {
    */
   async getStatus(jobId: string): Promise<JobStatus> {
     try {
-      const status = await this.heygenService.getVideoStatus(jobId)
+      const status = await this.heygenService.checkStatus(jobId)
 
       return {
         jobId,

@@ -105,9 +105,10 @@ class AssetsManager {
           take: 20,
           orderBy: { createdAt: 'desc' }
         });
-        localAssets = dbAssets.map(this.mapPrismaToAssetItem);
+        localAssets = dbAssets.map((record) => this.mapPrismaToAssetItem(record));
       } catch (dbError) {
-        logger.warn('Failed to search local assets', dbError);
+        const errContext = dbError instanceof Error ? { error: dbError.message } : undefined;
+        logger.warn('Failed to search local assets', errContext);
       }
       
       // 2. Search External APIs
@@ -154,10 +155,10 @@ class AssetsManager {
                 height: asset.height,
                 duration: asset.duration,
                 favorites: 0,
-                author: {
+                author: asset.author ? {
                     name: asset.author,
                     url: asset.authorUrl
-                },
+                } : undefined,
                 metadata: {
                     downloadUrls: asset.downloadUrls
                 }
@@ -287,6 +288,8 @@ class AssetsManager {
     tags: string[];
     license: string | null;
     source: string | null;
+    category?: string | null;
+    size?: number | null;
   }): AssetItem {
       return {
           id: record.id,

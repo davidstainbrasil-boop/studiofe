@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
         description: description || '',
         category: category || 'custom',
         isPublic: isPublic || false,
-        createdBy: session.user.id,
+        userId: session.user.id,
         tracks: timeline.tracks ?? [],
         settings: timeline.settings ?? {},
         totalDuration: timeline.totalDuration,
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
         isPublic: template.isPublic,
         tracksCount: getJsonProperty<number>(template.metadata, 'tracksCount', 0),
         totalDuration: template.totalDuration,
-        createdAt: template.createdAt.toISOString(),
+        createdAt: template.createdAt?.toISOString() ?? new Date().toISOString(),
       },
       message: 'Template criado com sucesso',
     });
@@ -138,7 +138,7 @@ export async function GET(request: NextRequest) {
       }
 
       // Check access (public or owned by user)
-      if (!template.isPublic && template.createdBy !== session.user.id) {
+      if (!template.isPublic && template.userId !== session.user.id) {
         return NextResponse.json(
           { success: false, message: 'Acesso negado' },
           { status: 403 }
@@ -159,12 +159,12 @@ export async function GET(request: NextRequest) {
           settings: template.settings,
           totalDuration: template.totalDuration,
           metadata: template.metadata,
-          creator: {
+          creator: template.users ? {
             id: template.users.id,
             name: template.users.name,
             image: template.users.avatarUrl,
-          },
-          createdAt: template.createdAt.toISOString(),
+          } : null,
+          createdAt: template.createdAt?.toISOString() ?? new Date().toISOString(),
           usageCount: template.usageCount,
         },
       });
@@ -291,7 +291,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Check access
-    if (!template.isPublic && template.createdBy !== session.user.id) {
+    if (!template.isPublic && template.userId !== session.user.id) {
       return NextResponse.json(
         { success: false, message: 'Acesso negado' },
         { status: 403 }
@@ -402,7 +402,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    if (template.createdBy !== session.user.id) {
+    if (template.userId !== session.user.id) {
       return NextResponse.json(
         { success: false, message: 'Acesso negado - apenas o criador pode deletar' },
         { status: 403 }

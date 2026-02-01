@@ -1,6 +1,8 @@
 
 import JSZip from 'jszip';
 import { XMLParser } from 'fast-xml-parser';
+import { PPTXTextFormattingResult, PPTXHyperlink } from '../types/pptx-xml.types';
+import { logger } from '@/lib/logger';
 
 type XmlNode = Record<string, unknown>;
 
@@ -9,9 +11,9 @@ export interface SlideTextExtractionResult {
   text: string;
   lines: string[];
   wordCount: number;
-  formatting?: any[];
+  formatting?: PPTXTextFormattingResult[];
   bulletPoints?: string[];
-  hyperlinks?: any[];
+  hyperlinks?: PPTXHyperlink[];
 }
 
 export class PPTXTextParser {
@@ -46,7 +48,7 @@ export class PPTXTextParser {
           const result = await this.extractTextFromSlide(zip, slideNumber);
           results.push({ ...result, slideNumber });
         } catch (error) {
-          console.error(`Error parsing slide ${slideNumber}:`, error);
+          logger.warn(`Error parsing slide ${slideNumber}`, { error, slideNumber });
           // Continue to next slide
         }
       }

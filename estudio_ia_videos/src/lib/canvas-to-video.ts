@@ -1,4 +1,4 @@
-import { RenderSettings } from './ffmpeg-service';
+import type { RenderSettings } from '@/types/rendering';
 
 export interface VideoScene {
   id: string;

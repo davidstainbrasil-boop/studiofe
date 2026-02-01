@@ -210,7 +210,7 @@ export default function RenderModule({
 
     try {
       // Step 1: Prepare avatar rendering if enabled
-      if (enableAvatarSync && project.avatar3D) {
+      if (enableAvatarSync && project.avatar) {
         setRenderJob((prev) =>
           prev
             ? {
@@ -230,7 +230,7 @@ export default function RenderModule({
         if (slideTexts.length > 0) {
           logger.info('Generating avatar animation', {
             textLength: slideTexts.length,
-            avatarId: project.avatar3D.id,
+            avatarId: project.avatar.id,
             quality: renderConfig.quality,
           });
 
@@ -240,9 +240,9 @@ export default function RenderModule({
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               text: slideTexts,
-              avatarId: project.avatar3D.id,
+              avatarId: project.avatar.id,
               quality: mapRenderQualityToAvatarQuality(renderConfig.quality),
-              emotion: project.avatar3D.emotion || 'neutral',
+              emotion: project.avatar.customization?.expression_intensity || 'neutral',
               enableBlinks: true,
               enableBreathing: true,
               enableHeadMovement: true,
@@ -777,7 +777,7 @@ export default function RenderModule({
               <div className="flex items-center justify-center">
                 <User className="w-5 h-5 text-green-500" />
               </div>
-              <p className="text-2xl font-bold">{project.avatar3D ? '1' : '0'}</p>
+              <p className="text-2xl font-bold">{project.avatar ? '1' : '0'}</p>
               <p className="text-sm text-gray-500">Avatar</p>
             </div>
 

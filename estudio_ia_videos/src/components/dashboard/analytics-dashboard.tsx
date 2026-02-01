@@ -65,11 +65,12 @@ interface PieLabelProps {
 
 // Render job from stats
 interface RenderJobSummary {
-  status: 'completed' | 'failed' | 'processing' | 'pending';
+  id: string;
+  status: 'completed' | 'failed' | 'processing' | 'pending' | string;
   project_title: string;
   render_type: string;
-  duration?: number;
-  completed_at?: string;
+  duration: number;
+  created_at: string;
 }
 
 export function AnalyticsDashboard() {
@@ -502,7 +503,7 @@ export function AnalyticsDashboard() {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={(props: { name: string; percent: number }) => `${props.name} ${(props.percent * 100).toFixed(0)}%`}
+                      label={(({ name, percent }: { name: string; percent: number }) => `${name} ${(percent * 100).toFixed(0)}%`) as unknown as boolean}
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="value"
@@ -605,7 +606,7 @@ export function AnalyticsDashboard() {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={(props: PieLabelProps) => `${props.name} ${(props.percent * 100).toFixed(0)}%`}
+                      label={(({ name, percent }: PieLabelProps) => `${name} ${(percent * 100).toFixed(0)}%`) as unknown as boolean}
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="value"
@@ -651,7 +652,7 @@ export function AnalyticsDashboard() {
                       </div>
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      {new Date(job.createdAt).toLocaleString()}
+                      {new Date(job.created_at).toLocaleString()}
                     </div>
                   </div>
                 )) || (

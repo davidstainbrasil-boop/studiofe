@@ -78,11 +78,13 @@ export async function POST(request: NextRequest) {
       format: 'mp4',
       codec: 'h264',
       audioCodec: 'aac',
-      bitrate: '5000k',
+      bitrate: 5000,
       audioEnabled: true,
-      audioBitrate: '192k',
+      audioBitrate: 192,
       hardwareAcceleration: false,
-      preset: 'medium'
+      preset: 'medium',
+      includeAudio: true,
+      includeSubtitles: false
     }
     
     const renderSettings: RenderSettings = { ...defaultSettings, ...exportData.renderSettings }

@@ -69,18 +69,18 @@ export function PPTXImportWizard() {
       const data = await uploadPPTX(file);
       setPptxId(data.id);
       // Auto-avançar para análise
-      await handleAnalyze(data.id);
+      await handleAnalyze();
     } catch (error) {
       logger.error('Erro no upload', error instanceof Error ? error : new Error(String(error)), { component: 'PPTXImportWizard' });
     }
   };
 
   // Step 2: Análise
-  const handleAnalyze = async (id: string) => {
+  const handleAnalyze = async () => {
     try {
-      await analyzeSlides(id);
+      await analyzeSlides();
     } catch (error) {
-      logger.error('Erro na análise', error instanceof Error ? error : new Error(String(error)), { component: 'PPTXImportWizard', pptxId: id });
+      logger.error('Erro na análise', error instanceof Error ? error : new Error(String(error)), { component: 'PPTXImportWizard', pptxId });
     }
   };
 
@@ -92,7 +92,7 @@ export function PPTXImportWizard() {
   // Step 4: Conversão
   const handleConvert = async () => {
     try {
-      await convertToTimeline(pptxId, projectName);
+      await convertToTimeline();
     } catch (error) {
       logger.error('Erro na conversão', error instanceof Error ? error : new Error(String(error)), { component: 'PPTXImportWizard', pptxId, projectName });
     }

@@ -72,7 +72,8 @@ interface GuideOptions {
 }
 
 interface SmartGuidesProps {
-  canvas?: Canvas
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  canvas?: any
   options?: Partial<GuideOptions>
   onOptionsChange?: (options: GuideOptions) => void
 }

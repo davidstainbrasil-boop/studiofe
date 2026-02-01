@@ -164,7 +164,7 @@ export class PPTXAdvancedParser {
       const totalImages = slides.reduce((sum, s) => sum + s.images.length, 0);
       const averageSlideDuration = slides.length > 0 ? totalDuration / slides.length : 0;
       const hasAnimations = slides.some(s => s.animations.animations && s.animations.animations.length > 0);
-      const hasSpeakerNotes = slides.some(s => s.notes.wordCount && s.notes.wordCount > 0);
+      const hasSpeakerNotes = slides.some(s => s.notes.notes && s.notes.notes.length > 0);
 
       return {
         success: errors.length === 0,

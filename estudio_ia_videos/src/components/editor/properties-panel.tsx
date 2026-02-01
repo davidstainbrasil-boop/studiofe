@@ -91,7 +91,8 @@ export function PropertiesPanel({
     )
   }
 
-  const updateProperty = (property: string, value: string | number | boolean) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const updateProperty = (property: string, value: string | number | boolean | Record<string, any>) => {
     onUpdateElement(selectedElement.id, { [property]: value })
   }
 

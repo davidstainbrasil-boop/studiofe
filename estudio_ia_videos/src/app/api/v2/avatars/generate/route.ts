@@ -9,6 +9,7 @@ import { logger } from '@/lib/logger';
 import { AvatarLipSyncIntegration } from '@/lib/avatar/avatar-lip-sync-integration';
 import { AvatarRenderOrchestrator } from '@/lib/avatar/avatar-render-orchestrator';
 import { z } from 'zod';
+import type { Json } from '@/types/supabase';
 
 // Request validation schema
 const generateSchema = z.object({
@@ -83,18 +84,20 @@ export async function POST(request: NextRequest) {
       preview: params.preview,
     });
 
-    // 3. Check user credits
-    const { data: userProfile } = await supabase
-      .from('profiles')
-      .select('credits_available, credits_used, credits_limit')
+    // 3. Check user credits - use users table with metadata field
+    const { data: userData } = await supabase
+      .from('users')
+      .select('metadata')
       .eq('id', effectiveUser.id)
       .single();
 
-    const userCredits = userProfile
+    // Extract credits from metadata (stored as JSON)
+    const userMetadata = userData?.metadata as { credits_available?: number; credits_used?: number; credits_limit?: number } | null;
+    const userCredits = userMetadata
       ? {
-          available: userProfile.credits_available || 0,
-          used: userProfile.credits_used || 0,
-          limit: userProfile.credits_limit || 100,
+          available: userMetadata.credits_available || 10,
+          used: userMetadata.credits_used || 0,
+          limit: userMetadata.credits_limit || 100,
         }
       : {
           available: 10, // Default for new users
@@ -160,7 +163,7 @@ export async function POST(request: NextRequest) {
     const validation_result = integration.validateAnimation(animation);
 
     if (!validation_result.isValid) {
-      logger.error('[API: v2/avatars/generate] Animation validation failed', {
+      logger.error('[API: v2/avatars/generate] Animation validation failed', undefined, {
         errors: validation_result.errors,
       });
 
@@ -214,13 +217,17 @@ export async function POST(request: NextRequest) {
       userCredits,
     );
 
-    // 10. Deduct credits (if not PLACEHOLDER)
+    // 10. Deduct credits (if not PLACEHOLDER) - store in metadata
     if (cost.credits > 0) {
+      const updatedMetadata = {
+        ...userMetadata,
+        credits_available: userCredits.available - cost.credits,
+        credits_used: userCredits.used + cost.credits,
+      };
       await supabase
-        .from('profiles')
+        .from('users')
         .update({
-          credits_available: userCredits.available - cost.credits,
-          credits_used: userCredits.used + cost.credits,
+          metadata: updatedMetadata as unknown as Json,
         })
         .eq('id', effectiveUser.id);
 
@@ -284,11 +291,10 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     const totalTime = Date.now() - startTime;
 
-    logger.error('[API: v2/avatars/generate] Generation failed', {
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      processingTime: totalTime,
-    });
+    logger.error('[API: v2/avatars/generate] Generation failed', 
+      error instanceof Error ? error : new Error(String(error)),
+      { processingTime: totalTime }
+    );
 
     return NextResponse.json(
       {

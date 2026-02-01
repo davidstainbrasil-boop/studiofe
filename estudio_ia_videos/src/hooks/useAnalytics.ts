@@ -15,6 +15,7 @@ import { useEffect, useRef, useCallback, useState, useMemo } from 'react';
 import { usePathname } from 'next/navigation';
 import { createClient as createBrowserSupabaseClient } from '@lib/supabase/client';
 import { logger } from '@lib/logger';
+import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 
 export interface AnalyticsEvent {
   category: string;
@@ -62,7 +63,7 @@ export function useAnalytics() {
 
     void loadUser();
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
       if (!isMounted) return;
       setUserId(session?.user?.id ?? null);
     });

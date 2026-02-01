@@ -81,7 +81,8 @@ export class Audio2FaceService {
 
     try {
       // 1. Prepare Audio for A2F (e.g. WAV conversion if needed, or sending raw bytes)
-      // Assuming endpoint expects a file upload or raw body
+      // Convert Buffer to Uint8Array for fetch compatibility
+      const bodyData = new Uint8Array(audioBuffer);
       
       const response = await fetch(`${this.serverUrl}/a2f/audio-stream`, {
           method: 'POST',
@@ -89,7 +90,7 @@ export class Audio2FaceService {
               'Content-Type': 'audio/wav', // Assuming input is wav or handled
               'X-Session-ID': sessionId
           },
-          body: audioBuffer
+          body: bodyData
       });
 
       if (!response.ok) {

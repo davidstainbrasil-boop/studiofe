@@ -46,12 +46,15 @@ export async function POST(req: NextRequest) {
         id: crypto.randomUUID(),
         userId: getUserId(session.user),
         name,
-        description,
         provider: 'elevenlabs',
-        voiceId: result.voiceId || result.id,
-        sampleCount: samples.length,
-        trainingStatus: result.status || 'pending',
-        qualityScore: result.qualityScore || 0
+        externalId: result.voiceId || result.id,
+        sampleUrl: null,
+        status: result.status || 'pending',
+        metadata: {
+          description,
+          sampleCount: samples.length,
+          qualityScore: result.qualityScore || 0
+        }
       }
     })
 

@@ -388,7 +388,9 @@ export default function AnalyticsDashboard() {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ category, percentage }) => `${category} (${percentage}%)`}
+                      label={(props: { payload?: { category?: string; percentage?: number } }) => 
+                        `${props.payload?.category || ''} (${props.payload?.percentage || 0}%)`
+                      }
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="count"
@@ -543,7 +545,9 @@ export default function AnalyticsDashboard() {
                       outerRadius={60}
                       fill="#8884d8"
                       dataKey="count"
-                      label={({ type, count }) => `${type}: ${count}`}
+                      label={(props: { payload?: { type?: string; count?: number } }) => 
+                        `${props.payload?.type || ''}: ${props.payload?.count || 0}`
+                      }
                     >
                       {data.userBehavior.deviceTypes.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

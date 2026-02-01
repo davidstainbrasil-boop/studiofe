@@ -47,7 +47,6 @@ export class TemplatesRepository {
           select: {
             id: true,
             email: true,
-            name: true,
           },
         },
       },
@@ -65,7 +64,6 @@ export class TemplatesRepository {
           select: {
             id: true,
             email: true,
-            name: true,
           },
         },
       },
@@ -102,7 +100,7 @@ export class TemplatesRepository {
           select: {
             id: true,
             email: true,
-            name: true,
+            
           },
         },
       },
@@ -124,7 +122,7 @@ export class TemplatesRepository {
           select: {
             id: true,
             email: true,
-            name: true,
+            
           },
         },
       },
@@ -195,7 +193,7 @@ export class TemplatesRepository {
           select: {
             id: true,
             email: true,
-            name: true,
+            
           },
         },
       },

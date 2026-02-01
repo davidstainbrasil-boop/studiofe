@@ -80,8 +80,10 @@ export async function detectSlowQueries(thresholdMs: number = 1000): Promise<num
       }))
 
       try {
-        const redis = getRedisClient()
-        await redis.setex(cacheKey, 3600, JSON.stringify(queriesData)) // Cache de 1 hora
+        const redis = await getRedisClient()
+        if (redis) {
+          await redis.setex(cacheKey, 3600, JSON.stringify(queriesData)) // Cache de 1 hora
+        }
       } catch (redisError) {
         // Redis não disponível, continuar sem cache
         logger.info('Não foi possível cachear slow queries no Redis', { component: 'SlowQueriesDetector' })
@@ -117,7 +119,8 @@ export async function detectSlowQueries(thresholdMs: number = 1000): Promise<num
  */
 export async function getCachedSlowQueries(): Promise<SlowQuery[]> {
   try {
-    const redis = getRedisClient()
+    const redis = await getRedisClient()
+    if (!redis) return []
     const cacheKey = 'monitoring:slow_queries'
     const cached = await redis.get(cacheKey)
     

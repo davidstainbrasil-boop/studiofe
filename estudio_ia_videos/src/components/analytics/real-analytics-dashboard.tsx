@@ -723,7 +723,9 @@ export default function RealAnalyticsDashboard() {
                       cy="50%"
                       outerRadius={80}
                       dataKey="value"
-                      label={({ name, percent }: { name: string; percent: number }) => `${name} ${(Number(percent) * 100).toFixed(0)}%`}
+                      label={(props: { payload?: { name?: string }; percent?: number }) => 
+                        `${props.payload?.name || ''} ${((props.percent || 0) * 100).toFixed(0)}%`
+                      }
                     >
                       {[
                         { name: 'Construção Civil', value: 35, color: '#3B82F6' },

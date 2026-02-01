@@ -20,9 +20,9 @@ export async function POST(req: NextRequest) {
   try {
     let user;
     
-    // [NON-PROD] Bypass check
+    // [NON-PROD] Bypass check - configurável via env var
     const bypassEnabled = process.env.NODE_ENV !== 'production';
-    const bypassId = '12b21f2e-8ac1-480c-af1e-542a7d9b185a';
+    const bypassId = process.env.DEV_BYPASS_USER_ID; // UUID externalizado
     const headerUserId = req.headers.get('x-user-id');
     let devBypassCookie = false;
     if (bypassEnabled) {
@@ -33,7 +33,8 @@ export async function POST(req: NextRequest) {
       }
     }
     
-    if (bypassEnabled && (devBypassCookie || headerUserId === bypassId)) {
+    // Bypass só funciona se DEV_BYPASS_USER_ID estiver configurado
+    if (bypassEnabled && bypassId && (devBypassCookie || headerUserId === bypassId)) {
         user = { id: bypassId, email: 'admin@estudio.ai' };
     } else {
         const supabase = getSupabaseForRequest(req);

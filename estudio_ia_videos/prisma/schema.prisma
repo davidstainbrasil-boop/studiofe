@@ -210,6 +210,10 @@ model projects {
   transcriptions        transcriptions[]
   slides                slides[]
   timelines             timelines?
+  // Relação para video_exports
+  video_exports         video_exports[]
+  // Relação para track locks de colaboração
+  timeline_track_locks  timeline_track_locks[]
 
   @@index([createdAt], map: "idx_projects_created_at")
   @@index([isPublic], map: "idx_projects_is_public")
@@ -397,6 +401,9 @@ model timelines {
   createdAt     DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt     DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
   projects      projects? @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  // Relações para novos modelos
+  timeline_snapshots timeline_snapshots[]
+  timeline_presence  timeline_presence[]
 
   @@index([projectId], map: "idx_timelines_project_id")
   @@index([updatedAt(sort: Desc)], map: "idx_timelines_updated_at")
@@ -441,6 +448,15 @@ model users {
   user_progress    user_progress[]
   user_usage       user_usage[]
   users            auth_users         @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  // Relações para novos modelos
+  timeline_templates    timeline_templates[]
+  timeline_snapshots    timeline_snapshots[]
+  timeline_presence     timeline_presence[]
+  timeline_track_locks  timeline_track_locks[]
+  voice_models          voice_models[]
+  voice_clones        voice_clones[]
+  video_exports       video_exports[]
+  generated_videos    generated_videos[]
 
   @@index([email], map: "idx_users_email")
   @@schema("public")
@@ -1523,5 +1539,203 @@ enum video_resolution {
   p1440 @map("1440p")
   k4    @map("4k")
 
+  @@schema("public")
+}
+
+// ============================================
+// MODELOS ADICIONADOS PARA COMPLETAR FEATURES
+// ============================================
+
+model timeline_templates {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String    @db.VarChar(255)
+  description String?
+  category    String?   @db.VarChar(100)
+  config      Json      @default("{}")
+  tracks      Json?     @default("[]")
+  settings    Json?     @default("{}")
+  metadata    Json?     @default("{}")
+  thumbnailUrl String?  @map("thumbnail_url")
+  totalDuration Int?    @default(0) @map("total_duration")
+  usageCount  Int?      @default(0) @map("usage_count")
+  isPublic    Boolean   @default(false) @map("is_public")
+  userId      String?   @map("user_id") @db.Uuid
+  createdAt   DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
+  users       users?    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([userId], map: "idx_timeline_templates_user_id")
+  @@index([category], map: "idx_timeline_templates_category")
+  @@schema("public")
+}
+
+model timeline_snapshots {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  timelineId  String    @map("timeline_id") @db.Uuid
+  name        String?   @db.VarChar(255)
+  description String?
+  version     Int?      @default(1)
+  data        Json      @default("{}")
+  tracks      Json?     @default("[]")
+  settings    Json?     @default("{}")
+  totalDuration Int?    @default(0) @map("total_duration")
+  userId      String?   @map("user_id") @db.Uuid
+  createdAt   DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  timelines   timelines @relation(fields: [timelineId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users       users?    @relation(fields: [userId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  @@index([timelineId], map: "idx_timeline_snapshots_timeline_id")
+  @@schema("public")
+}
+
+model timeline_presence {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  timelineId  String    @map("timeline_id") @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  cursorPosition Json?  @map("cursor_position")
+  lastActivity DateTime? @default(now()) @map("last_activity") @db.Timestamptz(6)
+  lastSeenAt  DateTime? @default(now()) @map("last_seen_at") @db.Timestamptz(6)
+  isActive    Boolean   @default(true) @map("is_active")
+  timelines   timelines @relation(fields: [timelineId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users       users     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([timelineId, userId])
+  @@index([timelineId], map: "idx_timeline_presence_timeline_id")
+  @@schema("public")
+}
+
+model timeline_track_locks {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId  String    @map("project_id") @db.Uuid
+  trackId    String    @map("track_id") @db.VarChar(255)
+  userId     String    @map("user_id") @db.Uuid
+  expiresAt  DateTime  @default(dbgenerated("(NOW() + interval '30 minutes')")) @map("expires_at") @db.Timestamptz(6)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  projects   projects  @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users      users     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([projectId, trackId], name: "unique_track_lock")
+  @@index([projectId], map: "idx_timeline_track_locks_project")
+  @@index([userId], map: "idx_timeline_track_locks_user")
+  @@index([expiresAt], map: "idx_timeline_track_locks_expires")
+  @@schema("public")
+}
+
+model voice_models {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name         String    @db.VarChar(255)
+  provider     String    @db.VarChar(100)
+  voiceId      String    @map("voice_id") @db.VarChar(255)
+  language     String?   @default("pt-BR") @db.VarChar(10)
+  gender       String?   @db.VarChar(20)
+  style        String?   @db.VarChar(100)
+  previewUrl   String?   @map("preview_url")
+  isCustom     Boolean   @default(false) @map("is_custom")
+  userId       String?   @map("user_id") @db.Uuid
+  metadata     Json?     @default("{}")
+  createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
+  users        users?    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([provider], map: "idx_voice_models_provider")
+  @@index([userId], map: "idx_voice_models_user_id")
+  @@schema("public")
+}
+
+model voice_clones {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name         String    @db.VarChar(255)
+  userId       String    @map("user_id") @db.Uuid
+  provider     String    @db.VarChar(100)
+  externalId   String?   @map("external_id") @db.VarChar(255)
+  sampleUrl    String?   @map("sample_url")
+  status       String    @default("pending") @db.VarChar(50)
+  metadata     Json?     @default("{}")
+  createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
+  users        users     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([userId], map: "idx_voice_clones_user_id")
+  @@schema("public")
+}
+
+model video_exports {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId    String    @map("project_id") @db.Uuid
+  userId       String    @map("user_id") @db.Uuid
+  format       String    @default("mp4") @db.VarChar(20)
+  resolution   String    @default("1080p") @db.VarChar(20)
+  quality      String    @default("high") @db.VarChar(20)
+  status       String    @default("pending") @db.VarChar(50)
+  progress     Int       @default(0)
+  outputUrl    String?   @map("output_url")
+  fileSize     BigInt?   @map("file_size")
+  duration     Int?
+  errorMessage String?   @map("error_message")
+  startedAt    DateTime? @map("started_at") @db.Timestamptz(6)
+  completedAt  DateTime? @map("completed_at") @db.Timestamptz(6)
+  createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
+  projects     projects  @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users        users     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([projectId], map: "idx_video_exports_project_id")
+  @@index([userId], map: "idx_video_exports_user_id")
+  @@schema("public")
+}
+
+model generated_videos {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId       String    @map("user_id") @db.Uuid
+  title        String    @db.VarChar(500)
+  description  String?
+  thumbnailUrl String?   @map("thumbnail_url")
+  videoUrl     String?   @map("video_url")
+  duration     Int?
+  fileSize     BigInt?   @map("file_size")
+  sourceType   String?   @map("source_type") @db.VarChar(50)
+  sourceId     String?   @map("source_id") @db.Uuid
+  metadata     Json?     @default("{}")
+  createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
+  users        users     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([userId], map: "idx_generated_videos_user_id")
+  @@schema("public")
+}
+
+model system_settings {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  key       String    @unique @db.VarChar(255)
+  value     Json      @default("{}")
+  category  String?   @db.VarChar(100)
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@index([category], map: "idx_system_settings_category")
+  @@schema("public")
+}
+
+model processing_queue {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type         String    @db.VarChar(100)
+  payload      Json      @default("{}")
+  priority     Int       @default(0)
+  status       String    @default("pending") @db.VarChar(50)
+  attempts     Int       @default(0)
+  maxAttempts  Int       @default(3) @map("max_attempts")
+  result       Json?
+  error        String?
+  workerId     String?   @map("worker_id") @db.VarChar(255)
+  scheduledFor DateTime? @map("scheduled_for") @db.Timestamptz(6)
+  startedAt    DateTime? @map("started_at") @db.Timestamptz(6)
+  completedAt  DateTime? @map("completed_at") @db.Timestamptz(6)
+  createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@index([type], map: "idx_processing_queue_type")
+  @@index([status], map: "idx_processing_queue_status")
+  @@index([priority], map: "idx_processing_queue_priority")
   @@schema("public")
 }

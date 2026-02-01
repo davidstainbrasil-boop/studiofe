@@ -33,7 +33,7 @@ import {
 } from 'lucide-react';
 import Avatar3DRenderer from '../avatars/Avatar3DRenderer';
 import { avatarEngine } from '@lib/avatar-engine';
-import avatarsData from '@/data/avatars.json';
+import avatarsData from '@/app/data/avatars.json';
 
 export interface AvatarTimelineClip {
   id: string;

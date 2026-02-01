@@ -218,11 +218,8 @@ export class DIDServiceReal {
    */
   async uploadImage(imageBuffer: Buffer, filename: string): Promise<string> {
     try {
-      const { FormData } = await import('form-data'); // Ensure dynamic import for Node environment compatibility if needed
-      // Or simply: const FormData = require('form-data');
-      // Typescript needs import usually.
-      // We will assume standard import works or use require if strict mode issues.
-      // But let's rely on package.json 'form-data'.
+      const FormDataModule = await import('form-data');
+      const FormData = FormDataModule.default;
       
       const formData = new FormData();
       formData.append('image', imageBuffer, filename);

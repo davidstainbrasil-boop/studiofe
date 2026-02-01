@@ -6,28 +6,28 @@
  */
 
 import { logger } from '@lib/logger';
+import type { RenderSettings as BaseRenderSettings } from '@/types/rendering';
 
-export interface RenderSettings {
-  resolution: '720p' | '1080p' | '1440p';
-  format: 'mp4' | 'mov' | 'webm';
-  quality: 'draft' | 'standard' | 'high' | 'premium';
-  fps: number;
+// Re-export the shared RenderSettings type with additional local properties
+export interface RenderSettings extends BaseRenderSettings {
   codec: 'h264' | 'h265' | 'vp9' | 'prores';
-  bitrate: string;
-  audioEnabled: boolean;
-  audioBitrate: string;
-  hardwareAcceleration: boolean;
-  preset: string;
+  audioEnabled?: boolean;
+  hardwareAcceleration?: boolean;
+  preset?: string;
   width?: number;
   height?: number;
   audioCodec?: string;
 }
 
-export function getResolutionDimensions(resolution: RenderSettings['resolution']): { width: number; height: number } {
+// Local resolution type with additional 1440p option
+type LocalResolution = '720p' | '1080p' | '1440p' | '4k';
+
+export function getResolutionDimensions(resolution: LocalResolution): { width: number; height: number } {
   const dimensions: Record<string, { width: number; height: number }> = {
     '720p': { width: 1280, height: 720 },
     '1080p': { width: 1920, height: 1080 },
     '1440p': { width: 2560, height: 1440 },
+    '4k': { width: 3840, height: 2160 },
   };
   return dimensions[resolution] || dimensions['1080p'];
 }

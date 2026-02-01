@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify user has access
-    if (snapshot.timelines.projects.userId !== session.user.id) {
+    if (snapshot.timelines.projects?.userId !== session.user.id) {
       return NextResponse.json(
         { success: false, message: 'Acesso negado' },
         { status: 403 }
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
         tracks: toJsonValue((currentTimeline.tracks ?? []) as any),
         settings: toJsonValue((currentTimeline.settings ?? {}) as any),
         totalDuration: currentTimeline.totalDuration || 0,
-        createdBy: session.user.id,
+        userId: session.user.id,
         description: `Auto-backup antes de restaurar v${snapshot.version}`,
       },
     });

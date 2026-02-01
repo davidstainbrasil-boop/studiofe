@@ -8,7 +8,8 @@ import { Logger } from '@lib/logger'
 import useSWR from 'swr'
 import { toast } from 'sonner'
 import { createClient as createBrowserSupabaseClient } from '@lib/supabase/client'
-import type { User } from '@supabase/supabase-js'
+import type { User, AuthChangeEvent, Session } from '@supabase/supabase-js'
+import type { RealtimePostgresChangesPayload, REALTIME_SUBSCRIBE_STATES } from '@supabase/supabase-js'
 
 const logger = new Logger('Notifications')
 
@@ -142,7 +143,10 @@ export function useNotifications(filters: NotificationFilters = {}) {
 
     void loadUser()
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((
+      _event: AuthChangeEvent, 
+      session: Session | null
+    ) => {
       if (!isMounted) return
       setUser(session?.user ?? null)
     })
@@ -250,7 +254,7 @@ export function useNotifications(filters: NotificationFilters = {}) {
           table: 'notifications',
           filter: `user_id=eq.${user.id}`
         },
-        (payload) => {
+        (payload: RealtimePostgresChangesPayload<Notification>) => {
           if (payload.eventType === 'INSERT') {
             const notification = payload.new as Notification
             handleNewNotification(notification)
@@ -261,13 +265,13 @@ export function useNotifications(filters: NotificationFilters = {}) {
             )
             refreshNotifications()
           } else if (payload.eventType === 'DELETE') {
-            const deletedId = payload.old.id
+            const deletedId = (payload.old as { id: string }).id
             setRealTimeNotifications(prev => prev.filter(n => n.id !== deletedId))
             refreshNotifications()
           }
         }
       )
-      .subscribe((status) => {
+      .subscribe((status: `${REALTIME_SUBSCRIBE_STATES}`) => {
         setIsConnected(status === 'SUBSCRIBED')
       })
 

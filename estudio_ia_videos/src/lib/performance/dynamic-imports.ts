@@ -2,21 +2,25 @@
  * Performance optimization utilities for dynamic imports and lazy loading
  * Eliminates chunk bloat by loading components on-demand
  */
-import { lazy, ComponentType } from 'react';
+import { lazy, ComponentType, LazyExoticComponent } from 'react';
 import { logger } from '@lib/logger';
 
-// Cache for loaded components
-const componentCache = new Map<string, ComponentType<unknown>>();
+// Cache for loaded components (use 'any' for flexibility with various component types)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const componentCache = new Map<string, LazyExoticComponent<any>>();
 
 /**
  * Creates a dynamic import with retry mechanism and error handling
+ * Note: Using 'any' here to allow components with various prop types
  */
-export function createDynamicImport<T = unknown>(
-  importFn: () => Promise<{ default: ComponentType<T> }>,
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function createDynamicImport<T extends ComponentType<any>>(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  importFn: () => Promise<{ default: T }>,
   componentName: string,
   retryAttempts: number = 3,
   retryDelayMs: number = 1000
-): ComponentType<T> {
+): LazyExoticComponent<T> {
   // Check cache first
   if (componentCache.has(componentName)) {
     return componentCache.get(componentName)!;
@@ -33,13 +37,14 @@ export function createDynamicImport<T = unknown>(
 /**
  * Retry import with exponential backoff
  */
-async function retryImport<T = unknown>(
-  importFn: () => Promise<{ default: ComponentType<T> }>,
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function retryImport<T extends ComponentType<any>>(
+  importFn: () => Promise<{ default: T }>,
   maxRetries: number,
   delayMs: number,
   componentName: string,
   attempt: number = 1
-): Promise<{ default: ComponentType<T> }> {
+): Promise<{ default: T }> {
   try {
     const result = await importFn();
     
@@ -83,7 +88,8 @@ async function retryImport<T = unknown>(
  * Preload a component without rendering
  */
 export function preloadComponent(
-  importFn: () => Promise<{ default: ComponentType<unknown> }>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  importFn: () => Promise<{ default: ComponentType<any> }>,
   componentName: string
 ): void {
   if (!componentCache.has(componentName)) {
@@ -106,12 +112,18 @@ export function preloadComponent(
 export const dynamicComponents = {
   // Editor components (heavy)
   CanvasEditor: () => createDynamicImport(
-    () => import('@components/editor/canvas-editor').then((mod) => ({ default: mod.CanvasEditor })),
+    async () => {
+      const mod = await import('@components/editor/canvas-editor');
+      return { default: mod.CanvasEditor };
+    },
     'CanvasEditor'
   ),
   
   TimelineEditor: () => createDynamicImport(
-    () => import('@components/timeline/timeline-editor'),
+    async () => {
+      const mod = await import('@components/timeline/timeline-editor');
+      return { default: mod.TimelineEditor || mod.default };
+    },
     'TimelineEditor'
   ),
   
@@ -129,12 +141,18 @@ export const dynamicComponents = {
   
   // Admin/settings components
   ComplianceDashboard: () => createDynamicImport(
-    () => import('@components/compliance/compliance-dashboard').then((mod) => ({ default: mod.ComplianceDashboard })),
+    async () => {
+      const mod = await import('@components/compliance/compliance-dashboard');
+      return { default: mod.ComplianceDashboard };
+    },
     'ComplianceDashboard'
   ),
   
   UserSettings: () => createDynamicImport(
-    () => import('@components/user/user-settings').then((mod) => ({ default: mod.UserSettings })),
+    async () => {
+      const mod = await import('@components/user/user-settings');
+      return { default: mod.UserSettings };
+    },
     'UserSettings'
   )
 };
@@ -146,12 +164,18 @@ export function preloadCriticalComponents(): void {
   // Preload commonly used components after initial page load
   setTimeout(() => {
     preloadComponent(
-      () => import('@components/editor/canvas-editor').then((mod) => ({ default: mod.CanvasEditor })),
+      async () => {
+        const mod = await import('@components/editor/canvas-editor');
+        return { default: mod.CanvasEditor as ComponentType<unknown> };
+      },
       'CanvasEditor'
     );
     
     preloadComponent(
-      () => import('@components/timeline/timeline-editor'),
+      async () => {
+        const mod = await import('@components/timeline/timeline-editor');
+        return { default: (mod.TimelineEditor || mod.default) as ComponentType<unknown> };
+      },
       'TimelineEditor'
     );
   }, 2000); // Wait 2s after page load

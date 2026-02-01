@@ -46,6 +46,7 @@ const RenderingTest: React.FC = () => {
         type: 'video',
         visible: true,
         locked: false,
+        items: [],
         elements: [
           {
             id: 'text-1',

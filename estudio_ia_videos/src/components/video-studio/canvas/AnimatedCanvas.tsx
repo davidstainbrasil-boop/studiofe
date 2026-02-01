@@ -53,25 +53,6 @@ export const AnimatedCanvas = memo(forwardRef<AnimatedCanvasRef, AnimatedCanvasP
         });
     };
 
-    useImperativeHandle(ref, () => ({
-        // ... (existing methods)
-        // Update add methods to use emitSelection? Or just keep as is since they set active object
-
-        // New method
-        selectObject: (index: number) => {
-            if (!fabricCanvasRef.current) return;
-            const objects = fabricCanvasRef.current.getObjects();
-            const obj = objects[index];
-            if (obj) {
-                fabricCanvasRef.current.setActiveObject(obj);
-                fabricCanvasRef.current.renderAll();
-                // event listener will catch this
-            }
-        },
-        // ... rest of methods
-    }));
-
-    // ... useEffect ...
     // Event Listeners
     const handleSelection = () => {
         if (!fabricCanvasRef.current) return;
@@ -207,11 +188,11 @@ export const AnimatedCanvas = memo(forwardRef<AnimatedCanvasRef, AnimatedCanvasP
             const objects = fabricCanvasRef.current.getObjects();
             if (index < 0 || index >= objects.length) return;
 
-            const obj = objects[index];
+            const obj = objects[index] as { bringForward?: () => void; sendBackwards?: () => void };
             if (direction === 'up' && index < objects.length - 1) {
-                obj.bringForward();
+                obj.bringForward?.();
             } else if (direction === 'down' && index > 0) {
-                obj.sendBackwards();
+                obj.sendBackwards?.();
             }
             fabricCanvasRef.current.renderAll();
             emitLayers();

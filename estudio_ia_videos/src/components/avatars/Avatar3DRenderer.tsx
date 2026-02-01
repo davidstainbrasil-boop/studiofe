@@ -76,7 +76,7 @@ function AvatarModel({
 }) {
   const meshRef = useRef<THREE.Mesh>(null);
   const headRef = useRef<THREE.Group>(null);
-  const bodyRef = useRef<THREE.Group>(null);
+  const bodyRef = useRef<THREE.Mesh>(null);  // Changed to Mesh since it's used on <mesh>
   const [idleAnimation, setIdleAnimation] = useState({ breathPhase: 0, blinkTimer: 0 });
 
   // Carrega o modelo 3D (fallback para geometria simples se modelo não existir)
@@ -145,9 +145,10 @@ function AvatarModel({
       
       // Movimento sutil da cabeça durante a fala
       if (headRef.current) {
-        const intensity = lipSyncFrame.intensity || 0;
-        headRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 2) * 0.02 * intensity;
-        headRef.current.rotation.y = Math.cos(state.clock.elapsedTime * 1.5) * 0.03 * intensity;
+        // Use jawOpen as proxy for speech intensity (0-1 range)
+        const speechIntensity = lipSyncFrame.jawOpen || 0;
+        headRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 2) * 0.02 * speechIntensity;
+        headRef.current.rotation.y = Math.cos(state.clock.elapsedTime * 1.5) * 0.03 * speechIntensity;
       }
 
       // FASE 4: Gestos Corporais (Se ativado)
@@ -250,7 +251,7 @@ function AvatarModel({
       </mesh>
 
       {/* Boca - muda com lip sync */}
-      <mesh position={[0, 0.4, 0.28]} scale={[1, lipSyncFrame?.intensity || 0.1, 1]}>
+      <mesh position={[0, 0.4, 0.28]} scale={[1, lipSyncFrame?.jawOpen || 0.1, 1]}>
         <sphereGeometry args={[0.06, 16, 8]} />
         <meshStandardMaterial color="#8b0000" />
       </mesh>
@@ -547,7 +548,7 @@ export default function Avatar3DRenderer({
         </p>
         {lipSyncState.currentFrame && (
           <p className="text-xs text-blue-600 mt-1">
-            Phoneme: {lipSyncState.currentFrame.phoneme}
+            Jaw: {Math.round((lipSyncState.currentFrame.jawOpen || 0) * 100)}%
           </p>
         )}
       </div>

@@ -1,21 +1,43 @@
 'use client';
 
 import { GripVertical } from 'lucide-react';
-import { Panel, Group, Separator } from 'react-resizable-panels';
+import { Panel, Group, Separator, type PanelProps } from 'react-resizable-panels';
 
 import { cn } from '@lib/utils';
 
+// Re-export Panel with proper typing
+export type ResizablePanelProps = PanelProps;
+
+// Define our own props type
+export interface ResizablePanelGroupProps {
+  direction?: 'horizontal' | 'vertical';
+  className?: string;
+  children?: React.ReactNode;
+  onLayout?: (sizes: number[]) => void;
+}
+
 const ResizablePanelGroup = ({
   className,
+  direction = 'horizontal',
+  children,
+  onLayout,
   ...props
-}: React.ComponentProps<typeof Group>) => (
+}: ResizablePanelGroupProps) => (
   <Group
+    orientation={direction}
+    onLayoutChanged={onLayout ? (layout) => {
+      // Convert layout object to array of sizes
+      const sizes = Object.values(layout);
+      onLayout(sizes);
+    } : undefined}
     className={cn(
       'flex h-full w-full data-[panel-group-direction=vertical]:flex-col',
       className
     )}
     {...props}
-  />
+  >
+    {children}
+  </Group>
 );
 
 const ResizablePanel = Panel;

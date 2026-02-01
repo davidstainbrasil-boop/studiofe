@@ -1,23 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@lib/prisma'
+import { Prisma } from '@prisma/client'
 import { logger } from '@lib/logger'
 
 interface VoiceLibraryItem {
   id: string
   name: string
-  type: 'custom' | 'professional' | 'few-shot'
+  provider: string
   voiceId: string
-  userId: string
-  quality: number
-  language: string
-  gender: 'male' | 'female' | 'neutral'
-  age: string
-  accent: string
-  sampleUrl?: string
-  sampleDuration: number
-  metadata?: Record<string, any>
-  createdAt: Date
-  updatedAt: Date
+  userId?: string | null
+  language?: string | null
+  gender?: string | null
+  style?: string | null
+  previewUrl?: string | null
+  metadata?: Record<string, unknown>
+  isCustom: boolean
+  createdAt: Date | null
+  updatedAt: Date | null
 }
 
 /**
@@ -27,13 +26,14 @@ interface VoiceLibraryItem {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const userId = searchParams.get('userId') || 'default-user'
-    const type = searchParams.get('type') as VoiceLibraryItem['type'] | null
+    const userId = searchParams.get('userId')
+    const provider = searchParams.get('provider')
     const language = searchParams.get('language')
 
     // Build query filters
-    const where: any = { userId }
-    if (type) where.type = type
+    const where: Prisma.voice_modelsWhereInput = {}
+    if (userId) where.userId = userId
+    if (provider) where.provider = provider
     if (language) where.language = language
 
     // Fetch voices from database
@@ -44,18 +44,16 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      voices: voices.map((v: any) => ({
+      voices: voices.map((v) => ({
         id: v.id,
         name: v.name,
-        type: v.type,
+        provider: v.provider,
         voiceId: v.voiceId,
-        quality: v.quality,
         language: v.language,
         gender: v.gender,
-        age: v.age,
-        accent: v.accent,
-        sampleUrl: v.sampleUrl,
-        sampleDuration: v.sampleDuration,
+        style: v.style,
+        previewUrl: v.previewUrl,
+        isCustom: v.isCustom,
         metadata: v.metadata,
         createdAt: v.createdAt,
         updatedAt: v.updatedAt
@@ -82,16 +80,13 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const {
       name,
-      type = 'custom',
+      provider = 'elevenlabs',
       voiceId,
-      userId = 'default-user',
-      quality = 0.9,
+      userId,
       language = 'pt-BR',
       gender = 'neutral',
-      age = 'adult',
-      accent = 'neutral',
-      sampleUrl,
-      sampleDuration = 0,
+      style = 'default',
+      previewUrl,
       metadata = {}
     } = body
 
@@ -107,19 +102,15 @@ export async function POST(request: NextRequest) {
     const voiceModel = await prisma.voice_models.create({
       data: {
         name,
-        type,
+        provider,
         voiceId,
-        userId,
-        quality,
+        userId: userId || undefined,
         language,
         gender,
-        age,
-        accent,
-        sampleUrl,
-        sampleDuration,
-        metadata: metadata as any,
-        trainingStatus: 'ready',
-        trainingProgress: 100
+        style,
+        previewUrl,
+        metadata: metadata as Prisma.InputJsonValue,
+        isCustom: true
       }
     })
 
@@ -128,15 +119,12 @@ export async function POST(request: NextRequest) {
       voice: {
         id: voiceModel.id,
         name: voiceModel.name,
-        type: voiceModel.type,
+        provider: voiceModel.provider,
         voiceId: voiceModel.voiceId,
-        quality: voiceModel.quality,
         language: voiceModel.language,
         gender: voiceModel.gender,
-        age: voiceModel.age,
-        accent: voiceModel.accent,
-        sampleUrl: voiceModel.sampleUrl,
-        sampleDuration: voiceModel.sampleDuration,
+        style: voiceModel.style,
+        previewUrl: voiceModel.previewUrl,
         createdAt: voiceModel.createdAt
       },
       message: 'Voice model saved successfully'

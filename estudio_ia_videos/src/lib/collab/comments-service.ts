@@ -1,12 +1,28 @@
+/**
+ * Comments Service
+ * Handles project comments and collaboration features
+ */
+
 import { prisma } from '@lib/db';
 import { Prisma } from '@prisma/client';
+
+// Metadata structure stored in the metadata JSON field
+interface CommentMetadata {
+  position?: Record<string, unknown> | null;
+  resolved?: boolean;
+  element_id?: string | null;
+  slideId?: string | null;
+  timestamp?: number | null;
+  resolutionNote?: string | null;
+  reactions?: Array<{ userId: string; emoji: string }>;
+}
 
 export interface Comment {
   id: string;
   userId: string;
   projectId: string;
   slideId?: string;
-  timestamp?: number; // timestamp no vídeo/slide
+  timestamp?: number;
   content: string;
   createdAt: Date;
   updatedAt?: Date;
@@ -17,9 +33,8 @@ export interface Comment {
   position?: Record<string, unknown>;
   parentId?: string | null;
   user?: {
-    name: string | null;
+    id: string;
     email: string | null;
-    image: string | null;
   };
 }
 
@@ -34,34 +49,49 @@ export interface CreateCommentInput {
   parentId?: string;
 }
 
+// Helper to safely parse metadata
+function parseMetadata(metadata: Prisma.JsonValue | null): CommentMetadata {
+  if (!metadata || typeof metadata !== 'object') return {};
+  return metadata as CommentMetadata;
+}
+
+// Helper to create metadata JSON
+function createMetadata(data: CommentMetadata): Prisma.InputJsonValue {
+  return data as Prisma.InputJsonValue;
+}
+
+// User select for includes
+const userSelect = {
+  email: true,
+  id: true
+} as const;
+
 export class CommentsService {
   
   async create(input: CreateCommentInput): Promise<Comment> {
-    const { userId, projectId, content, position, parentId } = input;
+    const { userId, projectId, content, position, parentId, slideId, timestamp, resolutionNote } = input;
     
+    const metadata: CommentMetadata = { 
+      position: position || null, 
+      resolved: false,
+      slideId: slideId || null,
+      timestamp: timestamp || null,
+      resolutionNote: resolutionNote || null,
+    };
+
     const comment = await prisma.project_comments.create({
       data: {
         userId,
         projectId,
         content,
-        metadata: { position: position || null, resolved: false },
+        metadata: createMetadata(metadata),
         parentId: parentId || null,
       },
       include: {
-        users: {
-          select: {
-            email: true,
-            id: true
-          }
-        },
+        users: { select: userSelect },
         other_project_comments: {
           include: {
-            users: {
-              select: {
-                email: true,
-                id: true
-              }
-            }
+            users: { select: userSelect }
           }
         }
       }
@@ -74,22 +104,10 @@ export class CommentsService {
     const comment = await prisma.project_comments.findUnique({
       where: { id: commentId },
       include: {
-        users: {
-          select: {
-            name: true,
-            email: true,
-            avatarUrl: true
-          }
-        },
-        replies: {
+        users: { select: userSelect },
+        other_project_comments: {
           include: {
-            users: {
-              select: {
-                name: true,
-                email: true,
-                avatarUrl: true
-              }
-            }
+            users: { select: userSelect }
           }
         }
       }
@@ -102,8 +120,8 @@ export class CommentsService {
     const where: Prisma.project_commentsWhereInput = {};
     if (filters.projectId) where.projectId = filters.projectId;
     if (filters.userId) where.userId = filters.userId;
-    // slideId is not directly in schema, maybe stored in position or content? 
-    // For now ignoring slideId filter if not in schema, or assuming it's part of position logic which is complex to query.
+    // slideId is stored in metadata, which is complex to query directly
+    // For now, we filter in code if needed
     
     const comments = await prisma.project_comments.findMany({
       where: {
@@ -111,63 +129,60 @@ export class CommentsService {
         parentId: null // Only fetch root comments
       },
       include: {
-        users: {
-          select: {
-            name: true,
-            email: true,
-            avatarUrl: true
-          }
-        },
-        replies: {
+        users: { select: userSelect },
+        other_project_comments: {
           include: {
-            users: {
-              select: {
-                name: true,
-                email: true,
-                avatarUrl: true
-              }
-            }
+            users: { select: userSelect }
           }
         }
       },
       orderBy: { createdAt: 'desc' }
     });
 
-    return comments.map(c => this.mapPrismaComment(c));
+    let results = comments.map(c => this.mapPrismaComment(c));
+    
+    // Filter by slideId if provided (check metadata)
+    if (filters.slideId) {
+      results = results.filter(c => c.slideId === filters.slideId);
+    }
+
+    return results;
   }
   
   async update(commentId: string, updates: Partial<Comment>): Promise<Comment | null> {
     try {
+      // Get existing comment to merge metadata
+      const existing = await prisma.project_comments.findUnique({
+        where: { id: commentId }
+      });
+      
+      if (!existing) return null;
+      
+      const existingMetadata = parseMetadata(existing.metadata);
+      const newMetadata: CommentMetadata = {
+        ...existingMetadata,
+        resolved: updates.resolved ?? existingMetadata.resolved,
+        position: updates.position ?? existingMetadata.position,
+        resolutionNote: updates.resolutionNote ?? existingMetadata.resolutionNote,
+      };
+
       const comment = await prisma.project_comments.update({
         where: { id: commentId },
         data: {
           content: updates.content,
-          resolved: updates.resolved,
-          // position: updates.position ? JSON.stringify(updates.position) : undefined
+          metadata: createMetadata(newMetadata),
         },
         include: {
-          users: {
-            select: {
-              name: true,
-              email: true,
-              avatarUrl: true
-            }
-          },
-          replies: {
+          users: { select: userSelect },
+          other_project_comments: {
             include: {
-              users: {
-                select: {
-                  name: true,
-                  email: true,
-                  avatarUrl: true
-                }
-              }
+              users: { select: userSelect }
             }
           }
         }
       });
       return this.mapPrismaComment(comment);
-    } catch (e) {
+    } catch {
       return null;
     }
   }
@@ -178,45 +193,118 @@ export class CommentsService {
         where: { id: commentId }
       });
       return true;
-    } catch (e) {
+    } catch {
       return false;
     }
   }
   
   async resolve(commentId: string): Promise<boolean> {
     try {
+      const existing = await prisma.project_comments.findUnique({
+        where: { id: commentId }
+      });
+      
+      if (!existing) return false;
+      
+      const existingMetadata = parseMetadata(existing.metadata);
+      const newMetadata: CommentMetadata = {
+        ...existingMetadata,
+        resolved: true,
+      };
+
       await prisma.project_comments.update({
         where: { id: commentId },
-        data: { resolved: true }
+        data: { metadata: createMetadata(newMetadata) }
       });
       return true;
-    } catch (e) {
+    } catch {
       return false;
     }
   }
   
   async resolveComment(input: { commentId: string; userId: string; resolutionNote?: string }): Promise<boolean> {
-    // Note: resolutionNote is not in schema yet, ignoring for now or storing in content?
-    // Assuming just resolving boolean for now.
-    return this.resolve(input.commentId);
+    try {
+      const existing = await prisma.project_comments.findUnique({
+        where: { id: input.commentId }
+      });
+      
+      if (!existing) return false;
+      
+      const existingMetadata = parseMetadata(existing.metadata);
+      const newMetadata: CommentMetadata = {
+        ...existingMetadata,
+        resolved: true,
+        resolutionNote: input.resolutionNote || null,
+      };
+
+      await prisma.project_comments.update({
+        where: { id: input.commentId },
+        data: { metadata: createMetadata(newMetadata) }
+      });
+      return true;
+    } catch {
+      return false;
+    }
   }
   
   async reopenComment(input: { commentId: string; userId: string }): Promise<boolean> {
     try {
+      const existing = await prisma.project_comments.findUnique({
+        where: { id: input.commentId }
+      });
+      
+      if (!existing) return false;
+      
+      const existingMetadata = parseMetadata(existing.metadata);
+      const newMetadata: CommentMetadata = {
+        ...existingMetadata,
+        resolved: false,
+        resolutionNote: null,
+      };
+
       await prisma.project_comments.update({
         where: { id: input.commentId },
-        data: { resolved: false }
+        data: { metadata: createMetadata(newMetadata) }
       });
       return true;
-    } catch (e) {
+    } catch {
       return false;
     }
   }
   
   async addReaction(input: { commentId: string; userId: string; emoji: string }): Promise<boolean> {
-    // Reactions not in schema yet. 
-    // TODO: Add reactions table or field.
-    return true; 
+    try {
+      const existing = await prisma.project_comments.findUnique({
+        where: { id: input.commentId }
+      });
+      
+      if (!existing) return false;
+      
+      const existingMetadata = parseMetadata(existing.metadata);
+      const reactions = existingMetadata.reactions || [];
+      
+      // Add reaction if not already present
+      const hasReaction = reactions.some(
+        r => r.userId === input.userId && r.emoji === input.emoji
+      );
+      
+      if (!hasReaction) {
+        reactions.push({ userId: input.userId, emoji: input.emoji });
+      }
+      
+      const newMetadata: CommentMetadata = {
+        ...existingMetadata,
+        reactions,
+      };
+
+      await prisma.project_comments.update({
+        where: { id: input.commentId },
+        data: { metadata: createMetadata(newMetadata) }
+      });
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   async replyToComment(input: { commentId: string; userId: string; content: string }): Promise<Comment | null> {
@@ -228,16 +316,11 @@ export class CommentsService {
         projectId: parent.projectId,
         userId: input.userId,
         content: input.content,
-        parentId: input.commentId
+        parentId: input.commentId,
+        metadata: createMetadata({ resolved: false }),
       },
       include: {
-        users: {
-          select: {
-            name: true,
-            email: true,
-            avatarUrl: true
-          }
-        }
+        users: { select: userSelect }
       }
     });
 
@@ -247,33 +330,41 @@ export class CommentsService {
   async searchUsersForMention(options: { projectId: string; query: string; limit: number }): Promise<{ id: string; name: string; avatar?: string }[]> {
     const { query, limit } = options;
     
-    const users = await prisma.users.findMany({
+    // Search in auth_users (Supabase auth users)
+    const users = await prisma.auth_users.findMany({
       where: {
-        name: { contains: query, mode: 'insensitive' }
+        email: { contains: query, mode: 'insensitive' }
       },
       take: limit,
       select: {
         id: true,
-        name: true,
-        avatarUrl: true
+        email: true,
       }
     });
     
     return users.map(u => ({
       id: u.id,
-      name: u.name || 'Unknown',
-      avatar: u.avatarUrl || undefined
+      name: u.email || 'Unknown',
+      avatar: undefined
     }));
   }
 
   async getCommentStats(projectId: string): Promise<{ total: number; resolved: number; open: number }> {
-    const total = await prisma.project_comments.count({ where: { projectId } });
-    const resolved = await prisma.project_comments.count({ where: { projectId, resolved: true } });
+    const comments = await prisma.project_comments.findMany({ 
+      where: { projectId },
+      select: { metadata: true }
+    });
+    
+    let resolved = 0;
+    for (const comment of comments) {
+      const meta = parseMetadata(comment.metadata);
+      if (meta.resolved) resolved++;
+    }
     
     return {
-      total,
+      total: comments.length,
       resolved,
-      open: total - resolved
+      open: comments.length - resolved
     };
   }
 
@@ -286,6 +377,10 @@ export class CommentsService {
   }
 
   private mapPrismaComment(c: Record<string, unknown>): Comment {
+    const metadata = parseMetadata(c.metadata as Prisma.JsonValue);
+    const users = c.users as { id: string; email: string | null } | undefined;
+    const replies = c.other_project_comments as Record<string, unknown>[] | undefined;
+    
     return {
       id: c.id as string,
       userId: c.userId as string,
@@ -293,15 +388,18 @@ export class CommentsService {
       content: c.content as string,
       createdAt: c.createdAt as Date,
       updatedAt: c.updatedAt as Date | undefined,
-      resolved: c.resolved as boolean | undefined,
+      resolved: metadata.resolved,
       parentId: c.parentId as string | null | undefined,
-      position: c.position ? JSON.parse(JSON.stringify(c.position)) : undefined,
-      user: c.user ? {
-        name: (c.user as Record<string, unknown>).name as string | null,
-        email: (c.user as Record<string, unknown>).email as string | null,
-        image: (c.user as Record<string, unknown>).avatarUrl as string | null
+      position: metadata.position as Record<string, unknown> | undefined,
+      slideId: metadata.slideId || undefined,
+      timestamp: metadata.timestamp || undefined,
+      resolutionNote: metadata.resolutionNote || undefined,
+      reactions: metadata.reactions || [],
+      user: users ? {
+        id: users.id,
+        email: users.email,
       } : undefined,
-      replies: c.replies ? (c.replies as Record<string, unknown>[]).map((r) => this.mapPrismaComment(r)) : []
+      replies: replies ? replies.map((r) => this.mapPrismaComment(r)) : []
     };
   }
 }

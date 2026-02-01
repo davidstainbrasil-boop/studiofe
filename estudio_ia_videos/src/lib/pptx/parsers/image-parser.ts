@@ -2,12 +2,11 @@
 import JSZip from 'jszip';
 import { XMLParser } from 'fast-xml-parser';
 import { logger } from '@/lib/monitoring/logger';
-
-interface Relationship {
-  Id: string;
-  Type: string;
-  Target: string;
-}
+import { 
+  PPTXRelationship, 
+  PPTXRelationshipsDoc, 
+  toTypedArray 
+} from '../types/pptx-xml.types';
 
 export interface ExtractedImage {
   dataUrl: string;
@@ -53,20 +52,21 @@ export class PPTXImageParser {
       }
 
       const relsXml = await relsFile.async('string');
-      const relsDoc = this.xmlParser.parse(relsXml);
+      const relsDoc = this.xmlParser.parse(relsXml) as PPTXRelationshipsDoc;
       
       // Handle single or multiple relationships
-      const relationships = this.toArray(relsDoc.Relationships?.Relationship);
+      const relationships = toTypedArray(relsDoc.Relationships?.Relationship);
       
       // 2. Filter for image relationships
       // Common image types: http://schemas.openxmlformats.org/officeDocument/2006/relationships/image
-      const imageRels = relationships.filter((rel: any) => 
+      const imageRels = relationships.filter((rel: PPTXRelationship) => 
         rel.Type && rel.Type.endsWith('/image')
       );
 
       // 3. Extract each image
       for (const rel of imageRels) {
-        let target = rel.Target as string;
+        let target = rel.Target;
+        if (!target) continue;
         
         // Target is usually relative like "../media/image1.png"
         // We need to resolve it to "ppt/media/image1.png"
@@ -103,11 +103,6 @@ export class PPTXImageParser {
     }
 
     return images;
-  }
-
-  private toArray(value: any): any[] {
-    if (!value) return [];
-    return Array.isArray(value) ? value : [value];
   }
 
   private getMimeType(extension: string): string {

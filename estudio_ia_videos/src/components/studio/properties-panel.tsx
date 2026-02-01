@@ -18,7 +18,7 @@ export function PropertiesPanel() {
     const { selection, project, updateElement } = useTimelineStore();
     const [properties, setProperties] = useState<PropertyValue>({});
 
-    const selectedElement = selection.elements[0];
+    const selectedElement = selection.elementIds[0];
     const element = project?.layers
         .flatMap((l) => l.elements)
         .find((e) => e.id === selectedElement);

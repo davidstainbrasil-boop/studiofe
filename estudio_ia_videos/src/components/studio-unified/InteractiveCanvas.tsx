@@ -78,7 +78,7 @@ export interface CanvasScene {
 interface CanvasElementNodeProps {
   element: CanvasElement;
   isSelected: boolean;
-  onSelect: (e?: React.MouseEvent | Konva.KonvaEventObject<MouseEvent>) => void;
+  onSelect: () => void;
   onChange: (updates: Partial<CanvasElement>) => void;
   onDoubleClick?: () => void;
   snapConfig?: {
@@ -103,9 +103,18 @@ const CanvasElementNode: React.FC<CanvasElementNodeProps> = ({
   onShowGuides,
   onHideGuides,
 }) => {
-  const shapeRef = useRef<Konva.Shape | Konva.Text | Konva.Image | null>(null);
+  const imageRef = useRef<Konva.Image>(null);
+  const textRef = useRef<Konva.Text>(null);
+  const rectRef = useRef<Konva.Rect>(null);
   const transformerRef = useRef<Konva.Transformer>(null);
   const [image, setImage] = useState<HTMLImageElement | null>(null);
+
+  // Get the appropriate ref based on element type
+  const getCurrentRef = () => {
+    if (element.type === 'image' || element.type === 'avatar') return imageRef;
+    if (element.type === 'text') return textRef;
+    return rectRef;
+  };
 
   // Load image if element has src
   useEffect(() => {
@@ -120,11 +129,12 @@ const CanvasElementNode: React.FC<CanvasElementNodeProps> = ({
 
   // Attach transformer when selected
   useEffect(() => {
-    if (isSelected && transformerRef.current && shapeRef.current) {
-      transformerRef.current.nodes([shapeRef.current]);
+    const currentRef = getCurrentRef();
+    if (isSelected && transformerRef.current && currentRef.current) {
+      transformerRef.current.nodes([currentRef.current]);
       transformerRef.current.getLayer()?.batchDraw();
     }
-  }, [isSelected]);
+  }, [isSelected, element.type]);
 
   const handleDragEnd = (e: Konva.KonvaEventObject<DragEvent>) => {
     let x = e.target.x();
@@ -158,7 +168,7 @@ const CanvasElementNode: React.FC<CanvasElementNodeProps> = ({
   };
 
   const handleTransformEnd = () => {
-    const node = shapeRef.current;
+    const node = getCurrentRef().current;
     if (!node) return;
 
     const scaleX = node.scaleX();
@@ -178,10 +188,9 @@ const CanvasElementNode: React.FC<CanvasElementNodeProps> = ({
   };
 
   const commonProps = {
-    onClick: onSelect,
-    onTap: onSelect,
+    onClick: () => onSelect(),
+    onTap: () => onSelect(),
     onDblClick: element.type === 'text' ? onDoubleClick : undefined,
-    ref: shapeRef,
     draggable: !element.locked && element.draggable,
     visible: element.visible,
     opacity: element.opacity,
@@ -195,6 +204,7 @@ const CanvasElementNode: React.FC<CanvasElementNodeProps> = ({
       {element.type === 'image' || element.type === 'avatar' ? (
         image && (
           <Image
+            ref={imageRef}
             {...commonProps}
             image={image}
             x={element.x}
@@ -206,6 +216,7 @@ const CanvasElementNode: React.FC<CanvasElementNodeProps> = ({
         )
       ) : element.type === 'text' ? (
         <Text
+          ref={textRef}
           {...commonProps}
           text={element.text || ''}
           x={element.x}
@@ -217,6 +228,7 @@ const CanvasElementNode: React.FC<CanvasElementNodeProps> = ({
         />
       ) : element.type === 'shape' ? (
         <Rect
+          ref={rectRef}
           {...commonProps}
           x={element.x}
           y={element.y}

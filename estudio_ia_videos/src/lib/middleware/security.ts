@@ -233,7 +233,7 @@ export function createRateLimiter(options: {
         const success = result.success;
         const limit = result.limit;
         const remaining = result.remaining;
-        const reset = result.resetTime;
+        const reset = Date.now() + globalRateLimiter.windowMs;
         
         if (!success) {
             logger.warn('Rate limit exceeded', {

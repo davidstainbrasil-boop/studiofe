@@ -10,7 +10,8 @@ import useSWR from 'swr'
 import { toast } from 'sonner'
 import { createClient as createBrowserSupabaseClient } from '@lib/supabase/client'
 import { logger } from '@lib/logger'
-import type { User } from '@supabase/supabase-js'
+import type { User, AuthChangeEvent, Session } from '@supabase/supabase-js'
+import type { RealtimePostgresChangesPayload, REALTIME_SUBSCRIBE_STATES } from '@supabase/supabase-js'
 
 // Types and Interfaces
 export interface RenderJob {
@@ -231,7 +232,10 @@ export function useRenderPipeline() {
 
     void loadUser()
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((
+      _event: AuthChangeEvent, 
+      session: Session | null
+    ) => {
       if (!isMounted) return
       setUser(session?.user ?? null)
     })
@@ -259,7 +263,7 @@ export function useRenderPipeline() {
           table: 'render_jobs',
           filter: `user_id=eq.${user.id}`
         },
-        (payload) => {
+        (payload: RealtimePostgresChangesPayload<RenderJob>) => {
           // Refresh data on any change
           mutateQueue()
           mutateStats()
@@ -285,7 +289,7 @@ export function useRenderPipeline() {
           }
         }
       )
-      .subscribe((status) => {
+      .subscribe((status: `${REALTIME_SUBSCRIBE_STATES}`) => {
         setIsConnected(status === 'SUBSCRIBED')
       })
 

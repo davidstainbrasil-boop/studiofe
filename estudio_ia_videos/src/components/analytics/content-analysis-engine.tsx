@@ -459,11 +459,13 @@ export default function ContentAnalysisEngine() {
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie
-                      data={audienceData}
+                      data={audienceData as Array<AudienceInsight & Record<string, unknown>>}
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ segment, percentage }: { segment: string; percentage: number }) => `${segment} ${percentage}%`}
+                      label={(props: { payload?: { segment?: string; percentage?: number } }) => 
+                        `${props.payload?.segment || ''} ${props.payload?.percentage || 0}%`
+                      }
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="percentage"

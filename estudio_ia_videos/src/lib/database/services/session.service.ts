@@ -3,7 +3,7 @@
  * Serviço de gerenciamento de sessões de usuário
  */
 
-import { sessionsRepository } from '../repositories';
+import { sessionsRepository, SessionRecord } from '../repositories';
 import { sign } from 'jsonwebtoken';
 import crypto from 'crypto';
 
@@ -30,40 +30,43 @@ export interface SessionResult {
   };
 }
 
+/**
+ * Converts a SessionRecord to SessionResult
+ */
+function sessionRecordToResult(session: SessionRecord, expiresAtOverride?: Date): SessionResult {
+  const expiresAt = expiresAtOverride || new Date(session.expires_at);
+  return {
+    session: {
+      id: session.id,
+      token: session.token,
+      expiresAt,
+    },
+    user: {
+      id: session.user?.id || session.user_id,
+      email: session.user?.email || '',
+      name: session.user?.name || null,
+      role: session.user?.role || 'user',
+    },
+  };
+}
+
 export class SessionService {
   /**
    * Cria uma nova sessão para um usuário
    */
   async createSession(params: CreateSessionParams): Promise<SessionResult> {
-    // Gera um token único
-    const token = this.generateToken();
-    
     // Calcula data de expiração
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + SESSION_EXPIRES_IN_DAYS);
 
-    // Cria a sessão no banco
-    const session = await sessionsRepository.create({
-      userId: params.userId,
-      token,
+    // Cria a sessão no banco (repository já gera o token)
+    const session = await sessionsRepository.create(params.userId, {
       ipAddress: params.ipAddress,
-      userAgent: params.userAgent,
+      deviceInfo: params.userAgent,
       expiresAt,
     });
 
-    return {
-      session: {
-        id: session.id,
-        token: session.token,
-        expiresAt: session.expiresAt,
-      },
-      user: {
-        id: session.user.id,
-        email: session.user.email,
-        name: session.user.name,
-        role: session.user.role || 'user',
-      },
-    };
+    return sessionRecordToResult(session);
   }
 
   /**
@@ -77,25 +80,13 @@ export class SessionService {
     }
 
     // Verifica se a sessão não expirou
-    if (session.expiresAt < new Date()) {
+    if (new Date(session.expires_at) < new Date()) {
       // Deleta sessão expirada
       await sessionsRepository.deleteByToken(token);
       return null;
     }
 
-    return {
-      session: {
-        id: session.id,
-        token: session.token,
-        expiresAt: session.expiresAt,
-      },
-      user: {
-        id: session.user.id,
-        email: session.user.email,
-        name: session.user.name,
-        role: session.user.role || 'user',
-      },
-    };
+    return sessionRecordToResult(session);
   }
 
   /**
@@ -109,7 +100,7 @@ export class SessionService {
     }
 
     // Verifica se a sessão não expirou
-    if (session.expiresAt < new Date()) {
+    if (new Date(session.expires_at) < new Date()) {
       await sessionsRepository.deleteByToken(token);
       return null;
     }
@@ -120,19 +111,7 @@ export class SessionService {
 
     await sessionsRepository.updateExpiration(token, newExpiresAt);
 
-    return {
-      session: {
-        id: session.id,
-        token: session.token,
-        expiresAt: newExpiresAt,
-      },
-      user: {
-        id: session.user.id,
-        email: session.user.email,
-        name: session.user.name,
-        role: session.user.role || 'user',
-      },
-    };
+    return sessionRecordToResult(session, newExpiresAt);
   }
 
   /**
@@ -152,16 +131,18 @@ export class SessionService {
   /**
    * Lista sessões ativas de um usuário
    */
-  async getUserSessions(userId: string) {
-    return sessionsRepository.findByUserId(userId, { expired: false });
+  async getUserSessions(userId: string): Promise<SessionRecord[]> {
+    const sessions = await sessionsRepository.findByUserId(userId);
+    // Filter out expired sessions
+    const now = new Date();
+    return sessions.filter(s => new Date(s.expires_at) > now);
   }
 
   /**
    * Limpa sessões expiradas
    */
-  async cleanupExpiredSessions(): Promise<number> {
-    const result = await sessionsRepository.deleteExpired();
-    return result.count;
+  async cleanupExpiredSessions(): Promise<void> {
+    await sessionsRepository.deleteExpired();
   }
 
   /**

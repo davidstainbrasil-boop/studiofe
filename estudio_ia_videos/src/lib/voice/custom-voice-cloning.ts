@@ -69,6 +69,21 @@ export interface VoiceSynthesisResult {
   };
 }
 
+/** ElevenLabs API voice response structure */
+interface ElevenLabsVoiceResponse {
+  voice_id: string;
+  name: string;
+  description?: string;
+  quality_score?: number;
+  similarity_score?: number;
+  labels?: Record<string, string>;
+  category?: string;
+  language?: string;
+  samples?: unknown[];
+  created_at?: string;
+  sample_rate?: number;
+}
+
 // ============================================================================
 // VOICE CLONING SYSTEM
 // ============================================================================
@@ -200,7 +215,8 @@ export class CustomVoiceCloningSystem {
   }): Promise<string> {
     
     // We need to construct FormData with streams
-    const { FormData } = await import('form-data'); // Ensure we use node form-data
+    const FormDataModule = await import('form-data');
+    const FormData = FormDataModule.default;
     const formData = new FormData();
     
     formData.append('name', params.name);
@@ -329,22 +345,22 @@ export class CustomVoiceCloningSystem {
       throw new Error('Failed to list voice clones');
     }
 
-    const data = await response.json();
+    const data = await response.json() as { voices: ElevenLabsVoiceResponse[] };
 
-    return data.voices.map((voice: any) => ({
+    return data.voices.map((voice: ElevenLabsVoiceResponse) => ({
       id: voice.voice_id,
       name: voice.name,
       description: voice.description || '',
       voiceId: voice.voice_id,
       provider: this.provider,
-      status: 'ready', // ElevenLabs voices list usually contains ready voices or we check status? assuming ready.
+      status: 'ready' as const, // ElevenLabs voices list usually contains ready voices
       quality: voice.quality_score || 0,
       similarity: voice.similarity_score || 0,
       labels: voice.labels || {},
       category: voice.category || 'professional',
       language: voice.language || 'en',
       sampleCount: voice.samples?.length || 0,
-      createdAt: new Date(voice.created_at),
+      createdAt: voice.created_at ? new Date(voice.created_at) : new Date(),
       metadata: {
         sampleRate: voice.sample_rate || 24000
       }

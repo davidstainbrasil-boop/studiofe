@@ -219,7 +219,7 @@ export default function AIAssistant() {
     const input = userInput.toLowerCase();
     
     let response = '';
-    let context: { confidence: number; relatedTopics?: string[] } = { confidence: 85 };
+    let context: ChatMessage['context'] = { topic: 'general', confidence: 85 };
     let actions: ChatAction[] = [];
 
     if (input.includes('nr-12') || input.includes('máquina')) {

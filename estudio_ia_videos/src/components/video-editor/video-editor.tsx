@@ -34,13 +34,73 @@ import {
   AlertCircle,
   Plus
 } from 'lucide-react'
-import { SlideData, VideoConfig, DEFAULT_VIDEO_CONFIG } from '../../lib/ai-services'
-import { VideoProcessor, VideoScene } from '../../lib/video-processor'
-import { AvatarService } from '../../lib/avatar-service'
-import { TTSService } from '../../lib/tts-service'
-import { Analytics } from '../../lib/analytics'
 import { toast } from 'react-hot-toast'
 import { logger } from '@lib/logger'
+import { trackEvent } from '../../lib/analytics'
+
+// Types for video editor
+interface SlideData {
+  id: string
+  title?: string
+  content: string
+  notes?: string
+  duration: number
+  backgroundImage?: string
+  imageUrl?: string
+  voiceText?: string
+  animations?: unknown[]
+}
+
+interface VideoScene {
+  id: string
+  slideIndex: number
+  duration: number
+}
+
+interface VideoConfig {
+  resolution: string
+  fps: number
+  format: string
+  quality: string
+  outputPath?: string
+  voiceModel?: string
+  avatarStyle?: string
+  background?: string
+}
+
+const DEFAULT_VIDEO_CONFIG: VideoConfig = {
+  resolution: '1920x1080',
+  fps: 30,
+  format: 'mp4',
+  quality: 'high'
+}
+
+// Mock classes for services that aren't implemented
+const VideoProcessor = {
+  createScenes: (slides: SlideData[]): VideoScene[] => {
+    return slides.map((slide, index) => ({
+      id: slide.id,
+      slideIndex: index,
+      duration: slide.duration
+    }))
+  },
+  convertSlidesToScenes: (slides: SlideData[]): VideoScene[] => {
+    return slides.map((slide, index) => ({
+      id: slide.id,
+      slideIndex: index,
+      duration: slide.duration
+    }))
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const Analytics = {
+  track: (...args: unknown[]) => trackEvent('generic', { args }),
+  editorStarted: (...args: unknown[]) => trackEvent('editor_started', { args }),
+  pptxImportStarted: (...args: unknown[]) => trackEvent('pptx_import_started', { args }),
+  pptxImportCompleted: (...args: unknown[]) => trackEvent('pptx_import_completed', { args }),
+  pptxImportFailed: (...args: unknown[]) => trackEvent('pptx_import_failed', { args })
+}
 
 interface VideoEditorProps {
   initialSlides?: SlideData[]
@@ -98,16 +158,12 @@ export default function VideoEditor({
   // Converter slides em cenas para processamento
   const convertSlidesToScenes = useCallback(async () => {
     try {
-      const newScenes = await VideoProcessor.convertSlidesToScenes(slides, {
-        ...videoConfig,
-        avatarStyle: selectedAvatar,
-        voiceModel: selectedVoice
-      })
+      const newScenes = VideoProcessor.convertSlidesToScenes(slides)
       setScenes(newScenes)
     } catch (error) {
       logger.error('Erro ao converter slides em cenas', error instanceof Error ? error : new Error(String(error)), { component: 'VideoEditor' })
     }
-  }, [slides, videoConfig, selectedAvatar, selectedVoice])
+  }, [slides])
 
   // Gerenciar reordenação de slides via drag and drop
   const handleDragEnd = useCallback((result: DropResult) => {

@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Progress } from '@components/ui/progress';
 import { Badge } from '@components/ui/badge';
 import { Loader2, Play, CheckCircle2, XCircle, Download } from 'lucide-react';
-import { useAvatarGeneration } from '@hooks/use-avatar-generation';
+import { useAvatarGeneration, type AvatarJob } from '@hooks/use-avatar-generation';
 import { useAvatarsList } from '@hooks/use-avatars-list';
 
 export function AvatarGenerationDemo() {
@@ -34,19 +34,20 @@ export function AvatarGenerationDemo() {
 
     await generateAvatar({
       avatarId: selectedAvatar,
-      scriptText,
-      voiceProvider,
+      animation: 'talking',
+      text: scriptText,
     });
   };
 
   const getStatusBadge = () => {
     if (!job) return null;
 
-    const statusConfig = {
-      pending: { label: 'Aguardando', color: 'bg-yellow-500' },
+    const statusConfig: Record<AvatarJob['status'], { label: string; color: string }> = {
+      queued: { label: 'Aguardando', color: 'bg-yellow-500' },
       processing: { label: 'Processando', color: 'bg-blue-500' },
       completed: { label: 'Concluído', color: 'bg-green-500' },
       failed: { label: 'Falhou', color: 'bg-red-500' },
+      cancelled: { label: 'Cancelado', color: 'bg-gray-500' },
     };
 
     const config = statusConfig[job.status];
@@ -205,7 +206,7 @@ export function AvatarGenerationDemo() {
               )}
 
               {/* Completed */}
-              {job.status === 'completed' && job.outputUrl && (
+              {job.status === 'completed' && job.output?.videoUrl && (
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 text-green-600">
                     <CheckCircle2 className="h-5 w-5" />
@@ -214,14 +215,14 @@ export function AvatarGenerationDemo() {
 
                   {/* Video Player */}
                   <video
-                    src={job.outputUrl}
+                    src={job.output.videoUrl}
                     controls
                     className="w-full rounded-lg border"
                   />
 
                   {/* Download Button */}
                   <Button
-                    onClick={() => window.open(job.outputUrl, '_blank')}
+                    onClick={() => window.open(job.output?.videoUrl, '_blank')}
                     variant="outline"
                     className="w-full"
                   >

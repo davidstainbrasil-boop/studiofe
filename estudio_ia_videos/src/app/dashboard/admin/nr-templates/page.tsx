@@ -50,7 +50,7 @@ export default function NRTemplatesAdminPage() {
       const query = searchQuery.toLowerCase();
       const filtered = templates.filter(
         t => 
-          t.nr_number.toLowerCase().includes(query) ||
+          (t.nrNumber || t.nr_code || '').toLowerCase().includes(query) ||
           t.title.toLowerCase().includes(query) ||
           t.description?.toLowerCase().includes(query)
       );
@@ -77,12 +77,12 @@ export default function NRTemplatesAdminPage() {
   async function handleCreate(formData: FormData) {
     try {
       const template = {
-        nr_number: formData.get('nr_number') as string,
+        nrNumber: formData.get('nr_number') as string,
         title: formData.get('title') as string,
         description: formData.get('description') as string,
-        slide_count: parseInt(formData.get('slide_count') as string),
-        duration_seconds: parseInt(formData.get('duration_seconds') as string),
-        template_config: JSON.parse(formData.get('template_config') as string || '{}'),
+        slideCount: parseInt(formData.get('slide_count') as string),
+        durationSeconds: parseInt(formData.get('duration_seconds') as string),
+        content: JSON.parse(formData.get('template_config') as string || '{}'),
       };
 
       const response = await fetch('/api/nr-templates', {
@@ -109,9 +109,9 @@ export default function NRTemplatesAdminPage() {
         id: editingTemplate.id,
         title: formData.get('title') as string,
         description: formData.get('description') as string,
-        slide_count: parseInt(formData.get('slide_count') as string),
-        duration_seconds: parseInt(formData.get('duration_seconds') as string),
-        template_config: JSON.parse(formData.get('template_config') as string || '{}'),
+        slideCount: parseInt(formData.get('slide_count') as string),
+        durationSeconds: parseInt(formData.get('duration_seconds') as string),
+        content: JSON.parse(formData.get('template_config') as string || '{}'),
       };
 
       const response = await fetch('/api/nr-templates', {
@@ -205,7 +205,7 @@ export default function NRTemplatesAdminPage() {
           <Card key={template.id}>
             <CardHeader>
               <div className="flex justify-between items-start">
-                <Badge variant="outline">{template.nr_number}</Badge>
+                <Badge variant="outline">{template.nrNumber || template.nr_code}</Badge>
                 <div className="flex gap-2">
                   <Button
                     variant="ghost"
@@ -230,8 +230,8 @@ export default function NRTemplatesAdminPage() {
             </CardHeader>
             <CardContent>
               <div className="flex justify-between text-sm text-gray-600">
-                <span>{template.slide_count} slides</span>
-                <span>{Math.floor(template.duration_seconds / 60)}min</span>
+                <span>{template.slideCount || 0} slides</span>
+                <span>{Math.floor((template.durationSeconds || 0) / 60)}min</span>
               </div>
             </CardContent>
           </Card>
@@ -252,7 +252,7 @@ export default function NRTemplatesAdminPage() {
             <DialogHeader>
               <DialogTitle>Editar Template</DialogTitle>
               <DialogDescription>
-                Atualize os dados do template {editingTemplate.nr_number}
+                Atualize os dados do template {editingTemplate.nrNumber || editingTemplate.nr_code}
               </DialogDescription>
             </DialogHeader>
             <TemplateForm 
@@ -270,7 +270,7 @@ export default function NRTemplatesAdminPage() {
             <AlertDialogHeader>
               <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
               <AlertDialogDescription>
-                Tem certeza que deseja deletar o template <strong>{deletingTemplate.nr_number}</strong>?
+                Tem certeza que deseja deletar o template <strong>{deletingTemplate.nrNumber || deletingTemplate.nr_code}</strong>?
                 Esta ação não pode ser desfeita.
               </AlertDialogDescription>
             </AlertDialogHeader>
@@ -344,7 +344,7 @@ function TemplateForm({
             id="slide_count" 
             name="slide_count" 
             type="number" 
-            defaultValue={template?.slide_count || 5}
+            defaultValue={template?.slideCount || 5}
             min="1"
             required 
           />
@@ -355,7 +355,7 @@ function TemplateForm({
             id="duration_seconds" 
             name="duration_seconds" 
             type="number" 
-            defaultValue={template?.duration_seconds || 300}
+            defaultValue={template?.durationSeconds || 300}
             min="1"
             required 
           />
@@ -367,7 +367,7 @@ function TemplateForm({
         <Textarea 
           id="template_config" 
           name="template_config" 
-          defaultValue={JSON.stringify(template?.template_config || {}, null, 2)}
+          defaultValue={JSON.stringify(template?.content || {}, null, 2)}
           placeholder='{"themeColor": "#1e3a8a", "avatarEnabled": true}'
           rows={6}
           className="font-mono text-sm"

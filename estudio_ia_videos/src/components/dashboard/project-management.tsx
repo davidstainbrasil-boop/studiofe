@@ -421,9 +421,9 @@ export function ProjectManagement() {
                   <div className="flex items-center space-x-1">
                     <Clock className="h-3 w-3" />
                     <span>
-                      {p.updatedAt ? (() => {
+                      {p.updated_at ? (() => {
                         try {
-                          return formatDistanceToNow(new Date(p.updatedAt), { addSuffix: true })
+                          return formatDistanceToNow(new Date(p.updated_at), { addSuffix: true })
                         } catch (e) {
                           return 'Recentemente'
                         }

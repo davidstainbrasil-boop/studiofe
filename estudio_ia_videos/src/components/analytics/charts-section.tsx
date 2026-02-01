@@ -54,11 +54,11 @@ interface CustomTooltipProps {
   label?: string;
 }
 
-// Provider breakdown type
+// Provider breakdown type - alinha com TTSStats.providerBreakdown
 interface ProviderBreakdownItem {
   provider: string;
   count: number;
-  credits: number;
+  credits?: number;  // Optional, não presente em TTSStats
 }
 
 // ==========================================
@@ -156,10 +156,10 @@ export default function ChartsSection({
   ].filter((item) => item.value > 0);
 
   // Preparar dados para gráfico de providers TTS
-  const ttsProvidersData = ttsStats.providerBreakdown.map((provider: ProviderBreakdownItem) => ({
+  const ttsProvidersData = ttsStats.providerBreakdown.map((provider) => ({
     name: provider.provider,
     Gerações: provider.count,
-    Créditos: provider.credits,
+    Créditos: (provider as ProviderBreakdownItem).credits ?? 0,
   }));
 
   // Preparar dados para gráfico de eventos
@@ -321,7 +321,9 @@ export default function ChartsSection({
                 cx="50%"
                 cy="50%"
                 labelLine={false}
-                label={({ name, percentage }) => `${name}: ${percentage}%`}
+                label={(props: { payload?: { name?: string; percentage?: number } }) => 
+                  `${props.payload?.name || ''}: ${props.payload?.percentage || 0}%`
+                }
                 outerRadius={100}
                 fill="#8884d8"
                 dataKey="value"

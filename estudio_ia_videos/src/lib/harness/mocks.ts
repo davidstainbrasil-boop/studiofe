@@ -1,9 +1,7 @@
-
-import { FrameGenerator, FrameGenerationResult, RenderableFrame, PPTXSlideData } from '@/lib/render/frame-generator';
-import { FFmpegExecutor, FFmpegRenderOptions, RenderResult } from '@/lib/render/ffmpeg-executor';
-import { VideoUploader, UploadVideoParams } from '@/lib/storage/video-uploader';
+import { FrameGenerator, FrameGenerationResult, SlideFrame, PPTXSlideData } from '@/lib/render/frame-generator';
+import { FFmpegExecutor, FFmpegOptions, FFmpegResult } from '@/lib/render/ffmpeg-executor';
+import { VideoUploader, VideoUploadOptions } from '@/lib/storage/video-uploader';
 import { logger } from '@/lib/logger';
-import path from 'path';
 
 /**
  * Mock Frame Generator
@@ -11,7 +9,7 @@ import path from 'path';
  */
 export class MockFrameGenerator extends FrameGenerator {
   async generateFrames(
-    slides: RenderableFrame[], 
+    slides: SlideFrame[], 
     outputDir: string
   ): Promise<FrameGenerationResult> {
     logger.info('[Mock] Generating dummy frames...', { count: slides.length });
@@ -23,7 +21,8 @@ export class MockFrameGenerator extends FrameGenerator {
       success: true,
       framesDir: outputDir,
       totalFrames: slides.length * 30, // Mock 30 fps per slide
-      duration: slides.reduce((acc, s) => acc + (s.duration || 5), 0)
+      duration: slides.reduce((acc, s) => acc + (s.duration || 5), 0),
+      errors: []
     };
   }
 }
@@ -41,7 +40,7 @@ export class MockFFmpegExecutor extends FFmpegExecutor {
         if (message) this.failureMessage = message;
     }
 
-    async renderFromFrames(options: FFmpegRenderOptions): Promise<RenderResult> {
+    async renderFromFrames(options: FFmpegOptions): Promise<FFmpegResult> {
         logger.info('[Mock] Rendering video...', { options });
 
         if (this.shouldFail) {
@@ -55,8 +54,7 @@ export class MockFFmpegExecutor extends FFmpegExecutor {
             success: true,
             outputPath: options.outputPath,
             duration: 10, // Mock duration
-            size: 1024 * 1024, // 1MB
-            format: 'mp4'
+            fileSize: 1024 * 1024, // 1MB
         };
     }
 }
@@ -74,8 +72,8 @@ export class MockVideoUploader extends VideoUploader {
         if (message) this.failureMessage = message;
     }
 
-    async uploadVideo(params: UploadVideoParams): Promise<string> {
-        logger.info('[Mock] Uploading video...', { params });
+    async uploadVideo(options: VideoUploadOptions): Promise<string> {
+        logger.info('[Mock] Uploading video...', { options });
 
         if (this.shouldFail) {
             throw new Error(this.failureMessage);
@@ -84,6 +82,6 @@ export class MockVideoUploader extends VideoUploader {
         // Simulate network latency
         await new Promise(resolve => setTimeout(resolve, 200));
 
-        return `https://mock-storage.com/${params.jobId}.mp4`;
+        return `https://mock-storage.com/${options.jobId}.mp4`;
     }
 }

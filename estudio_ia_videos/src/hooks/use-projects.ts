@@ -48,6 +48,9 @@ export interface ProjectMetadata {
   complexity_score?: number
   resources_used?: string[]
   custom_fields?: Record<string, unknown>
+  script?: string
+  avatarId?: string
+  scenes?: unknown[]
   ai_insights?: {
     suggestions: string[]
     optimization_tips: string[]
@@ -113,6 +116,7 @@ export interface CreateProjectData {
   name: string
   type: Project['type']
   description?: string
+  status?: Project['status']
   metadata?: Partial<ProjectMetadata>
   is_template?: boolean
   is_public?: boolean
@@ -239,7 +243,7 @@ export function useProjects(filters?: ProjectFilters, options?: {
           schema: 'public',
           table: 'projects'
         },
-        (payload) => {
+        (payload: { eventType: string }) => {
           logger.debug('Project realtime update', { eventType: payload.eventType })
           mutate() // Revalidate data
           

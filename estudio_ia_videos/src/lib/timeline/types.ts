@@ -13,6 +13,9 @@ export interface TimelineTrack {
   locked: boolean;
   visible: boolean;
   elements: TimelineElement[];
+  muted?: boolean;
+  solo?: boolean;
+  height?: number;
 }
 
 export interface TimelineElement {

@@ -10,11 +10,14 @@ export interface TimelineElement {
     startTime: number; // seconds
     duration: number; // seconds
     content: string | null;
-    properties: Record<string, any>;
+    properties: Record<string, unknown>;
     style?: React.CSSProperties;
     animation?: {
         type: 'fade-in' | 'fade-out' | 'slide-in' | 'slide-out' | 'zoom-in' | 'zoom-out' | 'none';
         duration: number; // seconds
+    };
+    data?: {
+        subtitles?: Array<{ text: string; start: number; end: number }>;
     };
 }
 
@@ -103,8 +106,8 @@ export const TimelineComposition: React.FC<TimelineCompositionProps> = ({ tracks
                                         style={{ width: '100%', height: '100%', objectFit: 'contain', opacity: opacity, transform: transform }}
                                     />
                                 )}
-                                {element.type === 'audio' && (
-                                    <Audio src={element.content} volume={element.properties?.volume ?? 1} />
+                                {element.type === 'audio' && element.content && (
+                                    <Audio src={element.content} volume={(element.properties?.volume as number) ?? 1} />
                                 )}
                                 {element.type === 'text' && (
                                     <>

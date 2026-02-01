@@ -152,9 +152,9 @@ export function AvatarTTSPrototype({ onGenerate }: AvatarTTSPrototypeProps) {
       setGeneratedAudio('mock-audio-url')
       toast.success('Avatar e narração gerados com sucesso!')
       
-      const config = {
-        avatar: selectedAvatar,
-        voice: selectedVoice,
+      const config: TTSConfig = {
+        avatarId: selectedAvatar,
+        voiceId: selectedVoice,
         text: text,
         speed: speed[0],
         pitch: pitch[0],

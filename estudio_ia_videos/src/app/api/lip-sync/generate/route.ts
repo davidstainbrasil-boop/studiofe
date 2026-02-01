@@ -55,18 +55,20 @@ export async function POST(request: NextRequest) {
       forceProvider: provider === 'auto' ? undefined : (provider as any)
     })
 
+    const phonemes = result.result.phonemes || []
+    
     logger.info('Lip-sync generated successfully', {
       userId: user.id,
       provider: result.provider,
       cached: result.cached,
-      phonemeCount: result.result.phonemes.length
+      phonemeCount: phonemes.length
     })
 
     // 5. Retornar resultado
     return NextResponse.json({
       success: true,
       data: {
-        phonemes: result.result.phonemes,
+        phonemes: phonemes,
         duration: result.result.duration,
         metadata: {
           ...result.result.metadata,

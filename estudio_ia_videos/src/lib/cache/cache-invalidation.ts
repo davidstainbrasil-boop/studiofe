@@ -382,7 +382,7 @@ export function cached<T extends (...args: unknown[]) => unknown>(
     // Se descriptor não for fornecido, cria um
     if (!descriptor) {
       descriptor = Object.getOwnPropertyDescriptor(target, propertyKey) || {
-        value: target[propertyKey],
+        value: (target as Record<string, unknown>)[propertyKey],
         writable: true,
         configurable: true,
         enumerable: false

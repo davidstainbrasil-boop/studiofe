@@ -34,22 +34,10 @@ export async function POST(request: NextRequest) {
     const job = await prisma.render_jobs.create({
         data: {
             id: jobId,
-            user_id: userId, // Precisa garantir que esse user existe no banco ou tabela users permite anonimo
-            project_id: projectId || undefined, // Opcional
+            userId: userId || undefined,
+            projectId: projectId || undefined,
             status: 'queued',
-            text_content: JSON.stringify(props), // Salvando props como content
-            provider: 'edge_tts', // Usando um valor default válido do enum TtsProvider, ou ajustar schema
-            // O schema 'render_jobs' não tem campo 'provider' genérico, tem 'provider' enum TtsProvider.
-            // O schema correto para jobs de video parece ser 'render_jobs' mas ele tem campos muito específicos de TTS.
-            // Vou verificar o schema novamente.
-            // Re-checando o schema prisma backup: 'render_jobs' tem relation com avatar_models?
-            // Ah, 'render_jobs' no schema backup é para 'audio2face_sessions'.
-            // Vou usar o 'render_jobs' se ele for genérico, ou criar um registro compatível.
-            // O schema atual 'render_jobs' tem: id, user_id, project_id, status, output_url, etc.
-            // O campo 'provider' é TtsProvider (edge_tts, etc). Isso é estranho para render de vídeo.
-            // Talvez eu deva usar 'video_projects' status?
-            // Vou assumir que 'render_jobs' é a tabela correta mas o enum está limitante.
-            // Vou colocar 'edge_tts' como placeholder se for obrigatório, ou não passar se tiver default.
+            settings: props ? JSON.stringify(props) : undefined,
         }
     });
 
@@ -98,9 +86,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
           id: job.id,
           status: job.status,
-          progress: 0, // Implementar campo de progresso no banco se não tiver
-          outputUrl: job.output_url,
-          error: job.error_message
+          progress: job.progress ?? 0,
+          outputUrl: job.outputUrl,
+          error: job.errorMessage
       });
   }
 

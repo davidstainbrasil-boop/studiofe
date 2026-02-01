@@ -60,6 +60,19 @@ import {
   Volume2
 } from 'lucide-react'
 
+// Definição extendida de Object Fabric com customId
+interface FabricObjectWithCustomId {
+  customId?: string
+  scaleToWidth?: (width: number) => void
+  set: (options: Record<string, unknown>) => void
+  [key: string]: unknown
+}
+
+interface SelectionEvent {
+  selected?: FabricObjectWithCustomId[]
+  deselected?: FabricObjectWithCustomId[]
+}
+
 interface CanvasObject {
   id: string
   type: 'text' | 'image' | 'shape' | 'video'
@@ -137,14 +150,10 @@ function CanvasEditorCore() {
       })
 
       // Event listeners
-      interface SelectionEvent {
-        selected?: Array<fabric.Object & { customId?: string }>
-        deselected?: fabric.Object[]
-      }
-      canvas.on('selection:created', (e: SelectionEvent) => {
-        if (e.selected && e.selected.length > 0) {
-          // @ts-ignore
-          const obj = e.selected[0] as Fabric.Object & { customId?: string }
+      canvas.on('selection:created', (e: unknown) => {
+        const event = e as { selected?: Array<{ customId?: string }> }
+        if (event.selected && event.selected.length > 0) {
+          const obj = event.selected[0]
           setSelectedObject(obj.customId || null)
         }
       })
@@ -174,10 +183,9 @@ function CanvasEditorCore() {
       fontSize: 48,
       fontFamily: 'Arial',
       fill: '#333333'
-    })
-    // @ts-ignore
+    }) as unknown as FabricObjectWithCustomId
     text.customId = 'text-1'
-    canvas.add(text)
+    canvas.add(text as unknown as Fabric.Object)
 
     // Retângulo de exemplo
     const rect = new fabric.Rect({
@@ -290,20 +298,20 @@ function CanvasEditorCore() {
       if (!file || !fabricCanvasRef.current || !fabric) return
 
       const reader = new FileReader()
-      reader.onload = (event) => {
-        // @ts-ignore
-        fabric.Image.fromURL(event.target?.result as string, (img: fabric.Image & { customId?: string }) => {
-          img.scaleToWidth(300)
+      reader.onload = async (event) => {
+        if (!fabric) return
+        try {
+          const img = await fabric.Image.fromURL(event.target?.result as string) as unknown as FabricObjectWithCustomId
+          img.scaleToWidth?.(300)
           const id = `image-${Date.now()}`
-          // @ts-ignore
           img.customId = id
           img.set({
             left: 100,
             top: 100
           })
           
-          fabricCanvasRef.current?.add(img)
-          fabricCanvasRef.current?.setActiveObject(img)
+          fabricCanvasRef.current?.add(img as unknown as Fabric.Object)
+          fabricCanvasRef.current?.setActiveObject(img as unknown as Fabric.Object)
           
           setObjects(prev => [...prev, {
             id,
@@ -314,7 +322,9 @@ function CanvasEditorCore() {
           }])
           
           toast.success('Imagem adicionada')
-        })
+        } catch (err) {
+          toast.error('Erro ao carregar imagem')
+        }
       }
       reader.readAsDataURL(file)
     }

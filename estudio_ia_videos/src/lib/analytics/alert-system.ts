@@ -210,7 +210,7 @@ export class AlertSystem {
       orderBy: { createdAt: 'desc' }
     });
 
-    if (lastAlert) {
+    if (lastAlert && lastAlert.createdAt) {
       const lastAlertTime = lastAlert.createdAt.getTime();
       const cooldownMs = rule.cooldown * 60 * 1000;
       if (Date.now() - lastAlertTime < cooldownMs) {

@@ -126,5 +126,20 @@
   },
   "git.ignoreLimitWarning": true,
   "chat.agent.maxRequests": 300,
-  "prisma.pinToPrisma6": true
+  "prisma.pinToPrisma6": true,
+  "chat.mcp.discovery.enabled": {
+    "claude-desktop": true,
+    "windsurf": true,
+    "cursor-global": true,
+    "cursor-workspace": true
+  },
+  "mcp": {
+    "servers": {
+      "playwright": {
+        "command": "npx",
+        "args": ["@playwright/mcp@latest", "--headless"],
+        "env": {}
+      }
+    }
+  }
 }

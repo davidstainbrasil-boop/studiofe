@@ -42,8 +42,9 @@ import type { Avatar } from '@/types/video-project';
 export interface AvatarLibraryProps {
   avatars: Avatar[];
   selectedAvatarId?: string;
-  onSelectAvatar: (avatar: Avatar) => void;
-  onAddToTimeline: (avatar: Avatar) => void;
+  onSelectAvatar?: (avatar: Avatar) => void;
+  onAvatarSelect?: (avatarId: string) => void;  // Alias for compatibility
+  onAddToTimeline?: (avatar: Avatar) => void;
   className?: string;
 }
 
@@ -141,6 +142,7 @@ export function AvatarLibrary({
   avatars = MOCK_AVATARS,
   selectedAvatarId,
   onSelectAvatar,
+  onAvatarSelect,
   onAddToTimeline,
   className,
 }: AvatarLibraryProps) {
@@ -162,9 +164,14 @@ export function AvatarLibrary({
   // Handle avatar selection
   const handleSelectAvatar = useCallback(
     (avatar: Avatar) => {
-      onSelectAvatar(avatar);
+      if (onSelectAvatar) {
+        onSelectAvatar(avatar);
+      }
+      if (onAvatarSelect) {
+        onAvatarSelect(avatar.id);
+      }
     },
-    [onSelectAvatar]
+    [onSelectAvatar, onAvatarSelect]
   );
 
   // Handle drag start for timeline integration
@@ -276,17 +283,19 @@ export function AvatarLibrary({
 
                     {/* Hover overlay */}
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onAddToTimeline(avatar);
-                        }}
-                      >
-                        <Download className="h-3 w-3 mr-1" />
-                        Add
-                      </Button>
+                      {onAddToTimeline && (
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onAddToTimeline(avatar);
+                          }}
+                        >
+                          <Download className="h-3 w-3 mr-1" />
+                          Add
+                        </Button>
+                      )}
                     </div>
                   </div>
 
@@ -350,7 +359,12 @@ export function AvatarLibrary({
                         ...updates,
                       },
                     };
-                    onSelectAvatar(updatedAvatar);
+                    if (onSelectAvatar) {
+                      onSelectAvatar(updatedAvatar);
+                    }
+                    if (onAvatarSelect) {
+                      onAvatarSelect(updatedAvatar.id);
+                    }
                   }}
                 />
               ) : (

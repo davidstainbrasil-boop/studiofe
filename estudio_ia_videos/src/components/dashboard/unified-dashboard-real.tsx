@@ -75,7 +75,7 @@ import {
   Copy
 } from 'lucide-react'
 import { createBrowserSupabaseClient } from '@/lib/services'
-import type { User as SupabaseUser } from '@supabase/supabase-js'
+import type { User as SupabaseUser, AuthChangeEvent, Session } from '@supabase/supabase-js'
 
 interface Project {
   id: string
@@ -164,7 +164,7 @@ export default function UnifiedDashboardReal() {
 
     void loadSession()
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
       if (!isMounted) return
       const authUser = session?.user ?? null
       setUser(authUser)

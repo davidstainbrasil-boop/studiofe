@@ -1,11 +1,19 @@
 
 import { Script, Scene } from '@/types/video-script';
 import { logger } from '@/lib/monitoring/logger';
+import { 
+  PPTXAstNode, 
+  PPTXPresentationNode,
+  PPTXSlideNode,
+  isSlideNode,
+  extractTextFromNode,
+  findNodeByType
+} from '@/lib/pptx/types/pptx-ast.types';
 
 // Tipos de entrada
 export interface ScriptGeneratorOptions {
   projectId: string;
-  pptxAst: any; // O AST do officeparser
+  pptxAst: PPTXPresentationNode;
 }
 
 /**
@@ -40,22 +48,22 @@ export class ScriptGenerator {
   /**
    * Itera sobre a AST para criar uma cena para cada slide.
    */
-  private createScenesFromAst(ast: any): Scene[] {
+  private createScenesFromAst(ast: PPTXPresentationNode): Scene[] {
     if (!ast.children || !Array.isArray(ast.children)) {
       logger.warn('AST inválida: a propriedade "children" não foi encontrada ou não é um array.');
       return [];
     }
 
-    const slideNodes = ast.children.filter((node: any) => node.type === 'slide');
+    const slideNodes = ast.children.filter((node): node is PPTXSlideNode => isSlideNode(node));
 
-    return slideNodes.map((slideNode: any, index: number) => {
-      const titleNode = this.findNodeByType(slideNode, 'title');
-      const bodyNode = this.findNodeByType(slideNode, 'body');
-      const notesNode = this.findNodeByType(slideNode, 'notes');
+    return slideNodes.map((slideNode: PPTXSlideNode, index: number) => {
+      const titleNode = findNodeByType(slideNode, 'title');
+      const bodyNode = findNodeByType(slideNode, 'body');
+      const notesNode = findNodeByType(slideNode, 'notes');
 
-      const title = titleNode ? this.extractTextFromNode(titleNode) : undefined;
-      const body = bodyNode ? this.extractTextFromNode(bodyNode) : undefined;
-      const speakerNotes = notesNode ? this.extractTextFromNode(notesNode) : undefined;
+      const title = titleNode ? extractTextFromNode(titleNode) : undefined;
+      const body = bodyNode ? extractTextFromNode(bodyNode) : undefined;
+      const speakerNotes = notesNode ? extractTextFromNode(notesNode) : undefined;
 
       // A narração prioriza as notas do apresentador. Se não houver, usa o corpo do slide.
       const narration = speakerNotes || body || title || 'Cena sem texto.';
@@ -68,29 +76,5 @@ export class ScriptGenerator {
         speakerNotes,
       };
     });
-  }
-
-  /**
-   * Extrai todo o texto de um nó e seus filhos, concatenando-o.
-   */
-  private extractTextFromNode(node: any): string {
-    let text = '';
-    if (node.value) {
-      text += node.value;
-    }
-    if (node.children && Array.isArray(node.children)) {
-      text += node.children.map((child: any) => this.extractTextFromNode(child)).join(' ');
-    }
-    return text.trim();
-  }
-
-  /**
-   * Encontra o primeiro nó de um tipo específico dentro de um nó pai.
-   */
-  private findNodeByType(parentNode: any, type: string): any | undefined {
-    if (!parentNode.children || !Array.isArray(parentNode.children)) {
-      return undefined;
-    }
-    return parentNode.children.find((child: any) => child.subtype === type);
   }
 }

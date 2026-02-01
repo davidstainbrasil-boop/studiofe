@@ -18,7 +18,7 @@ export interface RenderJobData {
   userId: string;
   slides: Array<{
     id: string;
-    content: any;
+    content: SlideContent;
     duration?: number;
   }>;
   config: {
@@ -30,6 +30,26 @@ export interface RenderJobData {
     audioEnabled?: boolean;
     transitionsEnabled?: boolean;
   };
+}
+
+/** Content data for a slide */
+export interface SlideContent {
+  title?: string;
+  text?: string;
+  imageUrl?: string;
+  backgroundColor?: string;
+  layout?: string;
+  elements?: SlideElement[];
+  [key: string]: unknown;
+}
+
+/** Element within a slide */
+export interface SlideElement {
+  type: 'text' | 'image' | 'shape' | 'video';
+  position?: { x: number; y: number };
+  size?: { width: number; height: number };
+  content?: string;
+  style?: Record<string, unknown>;
 }
 
 export interface RenderResult {
@@ -69,11 +89,8 @@ export class VideoRenderWorker {
       await this.checkCancellation(jobId);
       
       const framesDir = path.join(os.tmpdir(), `render_${jobId}_frames`);
-      // Convert raw content to PPTXSlideData if structure matches, otherwise mock/default
-      const pptxSlides: PPTXSlideData[] = slides.map(s => {
-          // If content is already compliant or close to it
-          return s.content as PPTXSlideData; 
-      });
+      // Convert SlideContent to PPTXSlideData format
+      const pptxSlides: PPTXSlideData[] = slides.map(s => this.convertToPPTXSlideData(s.content, s.duration));
       // Convert to Frame format
       const renderableSlides = FrameGenerator.convertPPTXSlidesToFrames(pptxSlides);
 
@@ -258,6 +275,34 @@ export class VideoRenderWorker {
 
       throw error;
     }
+  }
+
+  /**
+   * Convert SlideContent to PPTXSlideData format for frame generation
+   */
+  private convertToPPTXSlideData(content: SlideContent, duration?: number): PPTXSlideData {
+    return {
+      estimatedDuration: duration || 5,
+      background: content?.backgroundColor || '#ffffff',
+      images: content?.elements
+        ?.filter(el => el.type === 'image')
+        .map((el, idx) => ({
+          id: `img-${idx}`,
+          url: el.content || '',
+          position: el.position && el.size 
+            ? { x: el.position.x, y: el.position.y, width: el.size.width, height: el.size.height }
+            : undefined,
+        })),
+      textBoxes: content?.elements
+        ?.filter(el => el.type === 'text')
+        .map(el => ({
+          text: el.content || content?.text || '',
+          position: el.position && el.size
+            ? { x: el.position.x, y: el.position.y, width: el.size.width, height: el.size.height }
+            : { x: 100, y: 100, width: 1720, height: 880 },
+          formatting: el.style as PPTXSlideData['textBoxes'] extends Array<infer T> ? T extends { formatting?: infer F } ? F : undefined : undefined,
+        })),
+    };
   }
 
   private async checkCancellation(jobId: string): Promise<void> {

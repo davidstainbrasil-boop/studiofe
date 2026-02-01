@@ -92,15 +92,24 @@ interface QuickAction {
 // Fabric.js canvas interface
 interface FabricCanvas {
   getActiveObjects: () => fabric.Object[]
+  getActiveObject?: () => fabric.Object | null
+  setActiveObject?: (object: fabric.Object) => void
+  discardActiveObject?: () => void
   renderAll: () => void
+  requestRenderAll?: () => void
   setZoom: (zoom: number) => void
   getZoom: () => number
+  setViewportTransform?: (transform: number[]) => void
+  add?: (object: fabric.Object) => void
+  remove?: (object: fabric.Object) => void
   undo?: () => void
   redo?: () => void
+  clipboard?: fabric.Object | null
 }
 
 interface QuickActionsBarProps {
-  canvas?: FabricCanvas | null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  canvas?: any
   onAction?: (actionId: string, params?: unknown) => void
   selectedObjects?: fabric.Object[]
   canUndo?: boolean
@@ -269,10 +278,10 @@ export default function QuickActionsBar({
     },
     {
       id: 'lock',
-      icon: selectedObjects.some((obj: FabricObject) => obj.lockMovementX || obj.lockMovementY) 
+      icon: selectedObjects.some((obj) => (obj as { lockMovementX?: boolean; lockMovementY?: boolean }).lockMovementX || (obj as { lockMovementX?: boolean; lockMovementY?: boolean }).lockMovementY) 
         ? <Unlock className="h-4 w-4" />
         : <Lock className="h-4 w-4" />,
-      label: selectedObjects.some((obj: FabricObject) => obj.lockMovementX || obj.lockMovementY)
+      label: selectedObjects.some((obj) => (obj as { lockMovementX?: boolean; lockMovementY?: boolean }).lockMovementX || (obj as { lockMovementX?: boolean; lockMovementY?: boolean }).lockMovementY)
         ? 'Desbloquear'
         : 'Bloquear',
       category: 'layer',
@@ -350,30 +359,35 @@ export default function QuickActionsBar({
         }
         break
       case 'fit-to-screen':
-        if (canvas) {
+        if (canvas?.setViewportTransform) {
           canvas.setViewportTransform([1, 0, 0, 1, 0, 0])
         }
         break
       case 'copy':
         if (canvas && selectedObjects.length > 0) {
-          canvas.getActiveObject()?.clone((cloned: FabricObject) => {
-            canvas.clipboard = cloned
-          })
+          const activeObj = canvas.getActiveObject?.()
+          if (activeObj && 'clone' in activeObj && typeof activeObj.clone === 'function') {
+            activeObj.clone((cloned: fabric.Object) => {
+              canvas.clipboard = cloned
+            })
+          }
           toast.success(`${selectedObjects.length} objeto(s) copiado(s)`)
         }
         break
       case 'paste':
-        if (canvas?.clipboard) {
-          canvas.clipboard.clone((cloned: FabricObject) => {
-            canvas.discardActiveObject()
-            cloned.set({
-              left: cloned.left + 10,
-              top: cloned.top + 10,
-              evented: true,
-            })
-            canvas.add(cloned)
-            canvas.setActiveObject(cloned)
-            canvas.requestRenderAll()
+        if (canvas?.clipboard && 'clone' in canvas.clipboard && typeof canvas.clipboard.clone === 'function') {
+          canvas.clipboard.clone((cloned: fabric.Object) => {
+            canvas.discardActiveObject?.()
+            if ('set' in cloned && typeof cloned.set === 'function') {
+              cloned.set({
+                left: ((cloned as unknown as { left?: number }).left ?? 0) + 10,
+                top: ((cloned as unknown as { top?: number }).top ?? 0) + 10,
+                evented: true,
+              })
+            }
+            canvas.add?.(cloned)
+            canvas.setActiveObject?.(cloned)
+            canvas.requestRenderAll?.()
           })
           toast.success('Objeto colado')
         }

@@ -138,8 +138,8 @@ export class RenderingPipeline {
       }
 
       // 3. Watermark
-      if (settings.watermark && settings.watermark.enabled && settings.watermark.url) {
-        this.ffmpegCommand.input(settings.watermark.url);
+      if (settings.watermark && settings.watermark.imageUrl && settings.watermark.opacity > 0) {
+        this.ffmpegCommand.input(settings.watermark.imageUrl);
         // Simple overlay centered. Full implementation would respect settings.watermark.position
         videoFilters.push('overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2');
         stages.push({ stage: PipelineStage.WATERMARK, duration: 0, success: true });
@@ -216,7 +216,7 @@ export class RenderingPipeline {
           return;
         }
 
-        logger.error('FFmpeg error', { error: err.message, stderr, service: 'RenderingPipeline' });
+        logger.error('FFmpeg error', err instanceof Error ? err : new Error(String(err)), { stderr, service: 'RenderingPipeline' });
         this.state = PipelineState.FAILED;
         resolve({
           success: false,

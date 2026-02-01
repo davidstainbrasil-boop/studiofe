@@ -26,14 +26,15 @@ async function warmTemplatesCache(): Promise<void> {
     logger.info('Warming templates cache...');
 
     // Check if templates table exists
-    const templatesExist = await prisma.$queryRaw`
+    const templatesExist = await prisma.$queryRaw<Array<{ exists: boolean }>>`
       SELECT EXISTS (
         SELECT FROM information_schema.tables
         WHERE table_name = 'templates'
       ) as exists
     `.catch(() => [{ exists: false }]);
 
-    if (!templatesExist || !templatesExist[0]?.exists) {
+    const tableExists = Array.isArray(templatesExist) && templatesExist.length > 0 && templatesExist[0]?.exists;
+    if (!tableExists) {
       logger.info('Templates table does not exist, skipping cache warming');
       return;
     }
@@ -63,11 +64,8 @@ async function warmActiveUsersCache(): Promise<void> {
   try {
     logger.info('Warming active users cache...');
 
-    const activeCount = await prisma.users.count({
-      where: {
-        status: 'active'
-      }
-    }).catch(() => 0);
+    // Count total users (users table doesn't have status field)
+    const activeCount = await prisma.users.count().catch(() => 0);
 
     await set('users:active:count', activeCount, CacheTier.SHORT);
     logger.info('Active users cache warmed', { count: activeCount });
@@ -275,7 +273,7 @@ export async function warmCacheForUser(userId: string): Promise<void> {
     // Warm user tier
     const user = await prisma.users.findUnique({
       where: { id: userId },
-      select: { subscriptionTier: true }
+      select: { plan_tier: true }
     });
 
     if (user) {
@@ -286,7 +284,7 @@ export async function warmCacheForUser(userId: string): Promise<void> {
         ENTERPRISE: 'enterprise',
       };
 
-      const tier = tierMap[user.subscriptionTier || 'FREE'] || 'free';
+      const tier = tierMap[user.plan_tier || 'FREE'] || 'free';
       await set(`user:${userId}:tier`, tier, CacheTier.SHORT);
     }
 

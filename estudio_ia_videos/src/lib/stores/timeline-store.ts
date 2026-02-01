@@ -3,6 +3,23 @@ import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import { logger } from '../logger';
 import { DragData, TimelineSelection, TimelineProject, TimelineElement, TimelineLayer, TimelineKeyframe } from '../types/timeline-types';
+import type { Template } from '../templates/template-definitions';
+
+// ========================================
+// Snapshot Type for Persistence
+// ========================================
+export interface TimelineSnapshot {
+  currentTime: number;
+  duration: number;
+  zoom: number;
+  volume: number;
+  project: TimelineProject | null;
+  pixelsPerSecond: number;
+  beatMarkers: number[];
+  continuousFlowEnabled: boolean;
+  version?: string;
+  exportedAt?: string;
+}
 
 // ========================================
 // Collaborator Types
@@ -74,8 +91,8 @@ export interface TimelineState {
   projectId: string | null;
   lastSavedAt: Date | null;
   history: {
-    past: any[];
-    future: any[];
+    past: TimelineProject[];
+    future: TimelineProject[];
   };
 }
 
@@ -141,12 +158,12 @@ export interface TimelineStore extends TimelineState {
   addRenderJob: (job: RenderJob) => void;
   
   // Persistence
-  exportSnapshot: () => any;
-  hydrateFromSnapshot: (snapshot: any) => void;
+  exportSnapshot: () => TimelineSnapshot;
+  hydrateFromSnapshot: (snapshot: TimelineSnapshot) => void;
   setProjectId: (id: string | null) => void;
   
   // Templates & Themes
-  applyTemplate: (template: any) => void;
+  applyTemplate: (template: Template) => void;
   setTheme: (themeId: string) => void;
 }
 
@@ -615,7 +632,7 @@ export const useTimelineStore = create<TimelineStore>()(
         saveHistory(state);
 
         // Map updates first to validate locks
-        const updates: { element: any, newStart: number }[] = [];
+        const updates: { element: TimelineElement, newStart: number }[] = [];
         let blocked = false;
 
         state.project.layers.forEach(layer => {
@@ -672,7 +689,7 @@ export const useTimelineStore = create<TimelineStore>()(
         saveHistory(state);
 
         let targetLayerIndex = -1;
-        let targetElement: any = null;
+        let targetElement: TimelineElement | null = null;
         let p = state.project;
 
         // Find element and layer
@@ -771,7 +788,7 @@ export const useTimelineStore = create<TimelineStore>()(
 );
 
 // Helper to push state to history
-const saveHistory = (state: any) => {
+const saveHistory = (state: TimelineState) => {
     if (state.project) {
         // Deep copy project
         const snapshot = JSON.parse(JSON.stringify(state.project));

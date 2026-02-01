@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
         duration: result.duration,
         confidence: result.confidence,
         wordCount: result.wordCount,
-        segments: result.segments as Prisma.InputJsonValue,
+        segments: JSON.parse(JSON.stringify(result.segments)) as Prisma.InputJsonValue,
         karaokeEnabled: enableKaraoke,
         speakerDiarizationEnabled: enableSpeakerDiarization,
         srtUrl: srtUpload.url,
@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
       data: {
         transcriptionId: transcriptionData.id,
         language,
-        segments: result.segments as Prisma.InputJsonValue,
+        segments: JSON.parse(JSON.stringify(result.segments)) as Prisma.InputJsonValue,
         srtUrl: srtUpload.url,
         vttUrl: vttUpload.url,
       },

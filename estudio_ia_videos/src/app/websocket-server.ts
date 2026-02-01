@@ -113,7 +113,7 @@ export function startWebSocketServer() {
   // Eventos da fila
   const queueEvents = createRenderQueueEvents();
 
-  queueEvents.on('completed', (payload) => {
+  queueEvents.on('completed', (payload: { jobId?: string | number; returnvalue?: unknown }) => {
     const jobId = payload?.jobId ? String(payload.jobId) : ''
     if (!jobId) {
       return
@@ -132,7 +132,7 @@ export function startWebSocketServer() {
     });
   });
 
-  queueEvents.on('failed', (payload) => {
+  queueEvents.on('failed', (payload: { jobId?: string | number; failedReason?: string }) => {
     const jobId = payload?.jobId ? String(payload.jobId) : ''
     if (!jobId) {
       return

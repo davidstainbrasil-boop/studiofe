@@ -72,7 +72,7 @@ export async function processCacheInvalidationWebhook(
     });
 
   } catch (error) {
-    logger.error('Failed to process cache invalidation webhook', error, {
+    logger.error('Failed to process cache invalidation webhook', error instanceof Error ? error : new Error(String(error)), {
       component: 'CacheWebhook'
     });
 
@@ -166,7 +166,7 @@ export function withCacheInvalidation(options: {
               data
             });
           } catch (error) {
-            logger.error('Failed to auto-invalidate cache', error, {
+            logger.error('Failed to auto-invalidate cache', error instanceof Error ? error : new Error(String(error)), {
               component: 'CacheMiddleware',
               event
             });

@@ -33,7 +33,6 @@ export function AudioWaveform({
             height,
             barWidth: 2,
             barGap: 1,
-            responsive: true,
             normalize: true,
             cursorWidth: 0, // Hide internal cursor if we use external playhead
             interact: false // Disable interaction if used just for visualization

@@ -318,7 +318,7 @@ export default function ObservabilityDashboard() {
               />
               <Tooltip
                 labelFormatter={(value) => format(new Date(value), 'dd/MM HH:mm')}
-                formatter={(value: number) => [formatDuration(value), 'Média']}
+                formatter={(value: number | undefined) => [formatDuration(value ?? 0), 'Média']}
               />
               <Legend />
               <Line

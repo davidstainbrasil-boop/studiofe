@@ -12,9 +12,8 @@
  */
 
 import React, { Suspense, useRef, useEffect } from 'react';
-import { Canvas, useFrame, useLoader } from '@react-three/fiber';
-import { OrbitControls, PerspectiveCamera, Environment } from '@react-three/drei';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { OrbitControls, PerspectiveCamera, Environment, useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 import { Loader2, AlertCircle } from 'lucide-react';
 import type { Avatar } from '@/types/video-project';
@@ -37,14 +36,14 @@ interface AvatarModelProps {
 function AvatarModel({ glbUrl, customization }: AvatarModelProps) {
   const groupRef = useRef<THREE.Group>(null);
 
-  // Load GLB model
-  const gltf = useLoader(GLTFLoader, glbUrl);
+  // Load GLB model using drei's useGLTF hook
+  const gltf = useGLTF(glbUrl);
 
   // Apply customizations to materials
   useEffect(() => {
     if (!gltf || !customization) return;
 
-    gltf.scene.traverse((child) => {
+    gltf.scene.traverse((child: THREE.Object3D) => {
       if ((child as THREE.Mesh).isMesh) {
         const mesh = child as THREE.Mesh;
 
@@ -151,7 +150,6 @@ export function Avatar3DPreview({
         onCreated={({ gl }) => {
           gl.setClearColor('#f5f5f5');
         }}
-        onError={(err) => setError(err as Error)}
       >
         {/* Camera */}
         <PerspectiveCamera makeDefault position={[0, 1.5, 3]} fov={50} />

@@ -95,7 +95,7 @@ export default function ReportsPage() {
 
     void loadUser();
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((_event: string, session: { user: typeof user } | null) => {
       if (!isMounted) return;
       setUser(session?.user ?? null);
     });

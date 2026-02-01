@@ -2,9 +2,24 @@ import { NextResponse } from 'next/server';
 import { logger } from '@lib/logger';
 import { jobManager } from '@lib/render/job-manager';
 import { getSupabaseForRequest } from '@lib/supabase/server';
+import { isQueueAvailable } from '@lib/queue/render-queue';
 
 export async function POST(request: Request) {
   try {
+    // Verificar disponibilidade da queue antes de processar
+    if (!isQueueAvailable()) {
+      logger.warn('Render queue unavailable - Redis not connected', { component: 'API:Render' });
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Service Unavailable', 
+          message: 'Render queue is temporarily unavailable. Please try again later.',
+          code: 'QUEUE_UNAVAILABLE'
+        },
+        { status: 503 }
+      );
+    }
+
     const body = await request.json();
     const { projectId } = body;
 
@@ -52,6 +67,22 @@ export async function POST(request: Request) {
     });
 
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    
+    // Tratar erro de queue indisponível especificamente
+    if (errorMessage.includes('QUEUE_UNAVAILABLE')) {
+      logger.warn('Render queue unavailable during job creation', { component: 'API:Render' });
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Service Unavailable', 
+          message: 'Render queue is temporarily unavailable. Please try again later.',
+          code: 'QUEUE_UNAVAILABLE'
+        },
+        { status: 503 }
+      );
+    }
+
     logger.error('Error queuing render job', error instanceof Error ? error : new Error(String(error)), {
       component: 'API:Render'
     });

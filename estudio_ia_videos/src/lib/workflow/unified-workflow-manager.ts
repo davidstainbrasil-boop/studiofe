@@ -42,7 +42,7 @@ export interface UnifiedWorkflow {
     userId: string;
     totalDuration?: number;
     outputUrl?: string;
-    [key: string]: any;
+    [key: string]: string | number | boolean | undefined;
   };
 }
 
@@ -387,7 +387,7 @@ export class UnifiedWorkflowManager {
     const jobId = await jobManager.createJob(project.userId, projectId);
     
     // Start job async
-    videoRenderPipeline.execute({ projectId, jobId }).catch((err: any) => 
+    videoRenderPipeline.execute({ projectId, jobId }).catch((err: unknown) => 
         logger.error('Render pipeline failed', err instanceof Error ? err : new Error(String(err)), { projectId, jobId, service: 'UnifiedWorkflow' })
     );
     

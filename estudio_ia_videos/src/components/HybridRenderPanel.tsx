@@ -38,12 +38,14 @@ import { useHybridRendering, HybridRenderSettings } from '@hooks/useHybridRender
 interface TimelineData {
   duration: number;
   tracks: Array<{ id: string; type: string; elements: unknown[] }>;
+  [key: string]: unknown;
 }
 
 interface AssetData {
   images: Array<{ id: string; url: string }>;
   audio: Array<{ id: string; url: string }>;
   video: Array<{ id: string; url: string }>;
+  [key: string]: unknown;
 }
 
 interface HybridRenderPanelProps {

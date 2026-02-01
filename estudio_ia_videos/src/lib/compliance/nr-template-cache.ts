@@ -67,7 +67,9 @@ class NRTemplateCache {
     // Enforce max size (LRU-style: remove oldest)
     if (this.cache.size > this.maxSize) {
       const oldestKey = this.cache.keys().next().value;
-      this.cache.delete(oldestKey);
+      if (oldestKey) {
+        this.cache.delete(oldestKey);
+      }
     }
 
     return result;

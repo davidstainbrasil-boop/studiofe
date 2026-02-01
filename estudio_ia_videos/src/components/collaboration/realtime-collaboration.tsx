@@ -27,7 +27,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import { createBrowserSupabaseClient } from '@lib/services'
-import type { User as SupabaseUser } from '@supabase/supabase-js'
+import type { User as SupabaseUser, AuthChangeEvent, Session } from '@supabase/supabase-js'
 
 interface Collaborator {
   id: string
@@ -155,7 +155,7 @@ export default function RealtimeCollaboration({ projectId }: { projectId: string
 
     void loadSession()
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
       if (!isMounted) return
       setUser(session?.user ?? null)
     })

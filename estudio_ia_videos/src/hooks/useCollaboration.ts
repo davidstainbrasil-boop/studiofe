@@ -127,7 +127,8 @@ export function useCollaboration({
         });
       });
       
-      wsRef.current.on('comment_reply', ({ commentId, reply }) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      wsRef.current.on('comment_reply', ({ commentId, reply }: any) => {
         setComments(prev => prev.map(comment => 
           comment.id === commentId 
             ? { ...comment, replies: [...comment.replies, reply] }
@@ -218,9 +219,10 @@ export function useCollaboration({
 
   // Send real-time event
   const sendEvent = useCallback(
-    <T extends WebSocketEventType>(type: T, payload: WebSocketEventPayloadMap[T]) => {
-      if (wsRef.current?.isConnected()) {
-        wsRef.current.send(type, payload);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    <T extends WebSocketEventType>(type: T, payload: any) => {
+      if (wsRef.current?.isConnected) {
+        wsRef.current.emit(type, payload);
       }
     },
     [],

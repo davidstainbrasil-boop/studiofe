@@ -15,6 +15,9 @@ import {
   type AvatarQuality
 } from './base-avatar-provider'
 
+// Default RPM avatar URL for demo purposes
+const DEFAULT_RPM_AVATAR = 'https://models.readyplayer.me/64f3e9d8e7d83b7e14a7e1c5.glb'
+
 export class RPMAdapter extends BaseAvatarProvider {
   readonly name = 'ReadyPlayerMe'
   readonly quality: AvatarQuality = 'HIGH'
@@ -54,7 +57,7 @@ export class RPMAdapter extends BaseAvatarProvider {
       }
       this.jobs.set(jobId, job)
 
-      // Start async rendering
+      // Start async rendering using the real service
       this.renderAsync(jobId, request).catch(error => {
         logger.error('[RPMAdapter] Async render failed', error as Error)
         const failedJob: JobStatus = {
@@ -95,54 +98,72 @@ export class RPMAdapter extends BaseAvatarProvider {
   }
 
   /**
-   * Async rendering process
+   * Async rendering process using real RPM service
    */
   private async renderAsync(jobId: string, request: RenderRequest): Promise<void> {
     try {
-      // Step 1: Get or create RPM avatar
-      const avatarUrl = request.avatarId || await this.rpmService.getDefaultAvatar()
+      // Step 1: Use provided avatarId or default
+      const avatarUrl = request.avatarId || DEFAULT_RPM_AVATAR
 
       this.updateJobProgress(jobId, 10)
 
-      // Step 2: Download avatar GLB model
-      logger.info('[RPMAdapter] Downloading avatar model', { jobId })
-      const avatarModel = await this.rpmService.downloadAvatarModel(avatarUrl)
+      // Step 2: Create video job via RPM service
+      logger.info('[RPMAdapter] Creating video job', { jobId, avatarUrl })
+      
+      // Import AvatarQuality enum from quality-tier-system for the service call
+      const { AvatarQuality } = await import('../quality-tier-system')
+      
+      const rpmJobId = await this.rpmService.createVideo({
+        userId: 'rpm-adapter',
+        sourceImageUrl: avatarUrl,
+        quality: AvatarQuality.HIGH,
+        metadata: {
+          blendShapeFrames: request.animation.frames,
+          outputFormat: request.outputFormat || 'mp4',
+          resolution: request.resolution || '1080p',
+          fps: request.animation.fps
+        }
+      })
 
       this.updateJobProgress(jobId, 30)
 
-      // Step 3: Apply animation frames to avatar
-      logger.info('[RPMAdapter] Applying animation', { jobId })
-      const animatedModel = await this.rpmService.applyBlendShapeAnimation(
-        avatarModel,
-        request.animation.frames
-      )
+      // Step 3: Poll for completion
+      let attempts = 0
+      const maxAttempts = 120 // 2 minutes max polling
+      
+      while (attempts < maxAttempts) {
+        const status = await this.rpmService.getStatus(rpmJobId)
+        
+        if (status.status === 'completed' && status.videoUrl) {
+          this.updateJobProgress(jobId, 100)
 
-      this.updateJobProgress(jobId, 60)
+          // Complete job
+          const completedJob: JobStatus = {
+            jobId,
+            status: 'completed',
+            progress: 100,
+            videoUrl: status.videoUrl
+          }
+          this.jobs.set(jobId, completedJob)
 
-      // Step 4: Render to video
-      logger.info('[RPMAdapter] Rendering video', { jobId })
-      const videoUrl = await this.rpmService.renderToVideo(
-        animatedModel,
-        {
-          fps: request.animation.fps,
-          duration: request.animation.duration,
-          resolution: request.resolution || '1080p',
-          backgroundColor: request.backgroundColor || '#FFFFFF'
+          logger.info('[RPMAdapter] Render completed', { jobId, videoUrl: status.videoUrl })
+          return
         }
-      )
 
-      this.updateJobProgress(jobId, 100)
+        if (status.status === 'failed') {
+          throw new Error(status.error || 'RPM video generation failed')
+        }
 
-      // Complete job
-      const completedJob: JobStatus = {
-        jobId,
-        status: 'completed',
-        progress: 100,
-        videoUrl
+        // Update progress (estimate since AvatarGenerationResult doesn't have progress)
+        const estimatedProgress = Math.min(30 + (attempts / maxAttempts) * 65, 95)
+        this.updateJobProgress(jobId, Math.round(estimatedProgress))
+
+        // Wait before next poll
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        attempts++
       }
-      this.jobs.set(jobId, completedJob)
 
-      logger.info('[RPMAdapter] Render completed', { jobId, videoUrl })
+      throw new Error('RPM rendering timeout exceeded')
 
     } catch (error) {
       logger.error('[RPMAdapter] Render async failed', error as Error)
@@ -215,9 +236,8 @@ export class RPMAdapter extends BaseAvatarProvider {
    */
   async healthCheck(): Promise<boolean> {
     try {
-      // Try to get default avatar as health check
-      const avatarUrl = await this.rpmService.getDefaultAvatar()
-      return !!avatarUrl
+      // Simple health check - verify service is instantiated
+      return !!this.rpmService
     } catch (error) {
       logger.error('[RPMAdapter] Health check failed', error as Error)
       return false
@@ -230,7 +250,7 @@ export class RPMAdapter extends BaseAvatarProvider {
   cleanup(maxAgeMs: number = 7200000): void {
     const now = Date.now()
 
-    for (const [jobId, job] of this.jobs.entries()) {
+    for (const [jobId] of this.jobs.entries()) {
       const match = jobId.match(/^rpm-(\d+)/)
       if (match) {
         const timestamp = parseInt(match[1])

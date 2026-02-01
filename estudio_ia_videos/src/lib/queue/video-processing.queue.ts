@@ -113,7 +113,8 @@ const worker = new Worker<JobData, unknown, JobType>(
 
         case 'scene-export':
           await job.updateProgress({ progress: 20, status: 'Exporting scenes...' } as JobProgress)
-          result = await processSceneExport(videoUrl, options.scenes as unknown[], options.selectedIds as string[], job)
+          const selectedIdNumbers = (options.selectedIds as (string | number)[]).map(id => Number(id))
+          result = await processSceneExport(videoUrl, options.scenes as VideoScene[], selectedIdNumbers, job)
           break
 
         default:
@@ -210,7 +211,17 @@ async function processSceneDetection(videoUrl: string, sensitivity: number, job:
   }
 }
 
-async function processSceneExport(videoUrl: string, scenes: any[], selectedIds: number[], job: Job) {
+/** Scene data for video export - compatible with scene-detection.service.ts Scene type */
+interface VideoScene {
+  id: number;
+  startTime: number;
+  endTime: number;
+  thumbnail?: string;
+  description: string;
+  confidence: number;
+}
+
+async function processSceneExport(videoUrl: string, scenes: VideoScene[], selectedIds: number[], job: Job) {
   const localPath = await VideoUtils.downloadVideo(videoUrl);
   try {
       const results = await sceneDetectionService.exportScenes(localPath, scenes, selectedIds);

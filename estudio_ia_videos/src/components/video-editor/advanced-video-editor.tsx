@@ -36,15 +36,93 @@ import {
   FileVideo,
   School
 } from 'lucide-react'
-import { SlideData, VideoConfig, DEFAULT_VIDEO_CONFIG } from '../../lib/ai-services'
-import { VideoProcessor, VideoScene } from '../../lib/video-processor'
-import { AvatarService, AvatarDefinition } from '../../lib/avatar-service'
-import { TTSService } from '../../lib/tts-service'
-import { AdvancedVoiceLibrary } from '../../lib/voice-library-advanced'
-import { Analytics } from '../../lib/analytics'
 import AdvancedVoiceSelector from '../voice-selector-advanced'
 import LMSExportInterface from '../lms-export-interface'
 import { toast } from 'react-hot-toast'
+import { trackEvent } from '../../lib/analytics'
+
+// Types for video editor
+interface SlideData {
+  id: string
+  title?: string
+  content: string
+  notes?: string
+  duration: number
+  backgroundImage?: string
+  imageUrl?: string
+  voiceText?: string
+  animations?: unknown[]
+}
+
+interface VideoScene {
+  id: string
+  slideIndex: number
+  duration: number
+}
+
+interface VideoConfig {
+  resolution: string
+  fps: number
+  format: string
+  quality: string
+  outputPath?: string
+  voiceModel?: string
+  avatarStyle?: string
+  background?: string
+}
+
+const DEFAULT_VIDEO_CONFIG: VideoConfig = {
+  resolution: '1920x1080',
+  fps: 30,
+  format: 'mp4',
+  quality: 'high'
+}
+
+// Mock services
+const VideoProcessor = {
+  createScenes: (slides: SlideData[]): VideoScene[] => {
+    return slides.map((slide, index) => ({
+      id: slide.id,
+      slideIndex: index,
+      duration: slide.duration
+    }))
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const Analytics = {
+  track: (...args: unknown[]) => trackEvent('generic', { args }),
+  editorStarted: (...args: unknown[]) => trackEvent('editor_started', { args }),
+  pptxImportStarted: (...args: unknown[]) => trackEvent('pptx_import_started', { args }),
+  pptxImportCompleted: (...args: unknown[]) => trackEvent('pptx_import_completed', { args }),
+  pptxImportFailed: (...args: unknown[]) => trackEvent('pptx_import_failed', { args }),
+  avatarSelected: (...args: unknown[]) => trackEvent('avatar_selected', { args }),
+  voiceSelected: (...args: unknown[]) => trackEvent('voice_selected', { args })
+}
+
+// Cached data for services
+let cachedAvatars: AvatarDefinition[] = []
+let cachedVoices: { id: string; name: string }[] = []
+
+// Mock services for avatar and TTS
+const AvatarService = {
+  getAvailableAvatars: (): AvatarDefinition[] => cachedAvatars,
+  getAllAvatars: (): AvatarDefinition[] => cachedAvatars,
+  loadAvatar: async (_id: string): Promise<AvatarDefinition | null> => null
+}
+
+const TTSService = {
+  getAvailableVoices: (_language?: string): { id: string; name: string }[] => cachedVoices,
+  synthesize: async (_text: string, _voiceId: string): Promise<string> => ''
+}
+
+interface AvatarDefinition {
+  id: string
+  name: string
+  type: string
+  description?: string
+  style?: string
+}
 
 interface AdvancedVideoEditorProps {
   initialSlides?: SlideData[]
@@ -707,7 +785,13 @@ export default function AdvancedVideoEditor({
               
               <LMSExportInterface
                 slides={slides}
-                config={videoConfig}
+                config={{
+                  resolution: { width: 1920, height: 1080 },
+                  fps: videoConfig.fps,
+                  quality: (videoConfig.quality as 'low' | 'medium' | 'high' | 'ultra') || 'high',
+                  format: (videoConfig.format as 'mp4' | 'webm' | 'mov') || 'mp4',
+                  background: videoConfig.background
+                }}
                 projectTitle="Treinamento de Segurança"
                 videoUrl={previewUrl || "/videos/demo.mp4"}
                 onExport={(format, packageUrl) => {

@@ -136,9 +136,10 @@ export function validateEnvVarsForEnvironment(): void {
       throw error;
     } else {
       // Em desenvolvimento, apenas logar warning
-      logger.warn('Environment validation failed (development mode)', error instanceof Error ? error : new Error(String(error)), {
+      logger.warn('Environment validation failed (development mode)', {
         component: 'env-validator',
-        mode: 'development'
+        mode: 'development',
+        error: error instanceof Error ? error.message : String(error)
       });
     }
   }

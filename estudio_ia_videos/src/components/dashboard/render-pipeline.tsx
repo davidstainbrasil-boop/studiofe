@@ -79,7 +79,7 @@ const priorityColors = {
 }
 
 interface RenderJobFormData {
-  projectId: string
+  project_id: string
   render_type: string
   quality_preset: string
   priority: "low" | "normal" | "high" | "urgent"
@@ -114,7 +114,7 @@ export function RenderPipeline() {
   const [selectedStatus, setSelectedStatus] = useState<string>('all')
   const [selectedPriority, setSelectedPriority] = useState<string>('all')
   const [formData, setFormData] = useState<RenderJobFormData>({
-    projectId: '',
+    project_id: '',
     render_type: 'video',
     quality_preset: 'high',
     priority: 'normal',
@@ -123,7 +123,7 @@ export function RenderPipeline() {
 
   // Filter render jobs
   const filteredJobs = renderJobs?.filter(job => {
-    const matchesSearch = job.projectId?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const matchesSearch = job.project_id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          job.id.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesStatus = selectedStatus === 'all' || job.status === selectedStatus
     const matchesPriority = selectedPriority === 'all' || job.priority === selectedPriority
@@ -136,7 +136,7 @@ export function RenderPipeline() {
       await createRenderJob(formData)
       setIsCreateDialogOpen(false)
       setFormData({
-        projectId: '',
+        project_id: '',
         render_type: 'video',
         quality_preset: 'high',
         priority: 'normal',
@@ -298,8 +298,8 @@ export function RenderPipeline() {
                   <Label htmlFor="project-id">Project ID</Label>
                   <Input
                     id="project-id"
-                    value={formData.projectId}
-                    onChange={(e) => setFormData({ ...formData, projectId: e.target.value })}
+                    value={formData.project_id}
+                    onChange={(e) => setFormData({ ...formData, project_id: e.target.value })}
                     placeholder="Enter project ID"
                   />
                 </div>
@@ -338,7 +338,7 @@ export function RenderPipeline() {
                 <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
                   Cancel
                 </Button>
-                <Button onClick={handleCreateRenderJob} disabled={!formData.projectId}>
+                <Button onClick={handleCreateRenderJob} disabled={!formData.project_id}>
                   Create Job
                 </Button>
               </DialogFooter>
@@ -555,7 +555,7 @@ export function RenderPipeline() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between">
                               <div>
-                                <h4 className="text-sm font-medium">{job.projectId || job.id}</h4>
+                                <h4 className="text-sm font-medium">{job.project_id || job.id}</h4>
                                 <div className="flex items-center space-x-2 mt-1">
                                   <Badge variant="outline">{job.type || 'video'}</Badge>
                                   <Badge variant="outline">{job.metadata?.quality || 'standard'}</Badge>
@@ -575,7 +575,7 @@ export function RenderPipeline() {
                                     <div>
                                       <div>ETA: {getEstimatedTime(job)}</div>
                                       <div className="text-xs">
-                                        Created: {new Date(job.createdAt).toLocaleString()}
+                                        Created: {new Date(job.created_at).toLocaleString()}
                                       </div>
                                     </div>
                                   )}

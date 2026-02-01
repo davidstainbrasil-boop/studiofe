@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, CSSProperties } from 'react';
 import { cn } from '@lib/utils';
 import Avatar3DRenderer from '../avatars/Avatar3DRenderer';
 
@@ -8,7 +8,10 @@ interface ClipContent {
   src?: string;
   text?: string;
   avatarId?: string;
+  audioUrl?: string;
   color?: string;
+  thumbnail?: string;
+  style?: CSSProperties;
   [key: string]: unknown;
 }
 
@@ -17,7 +20,7 @@ interface TimelineClip {
   name: string;
   startTime: number;
   duration: number;
-  content: ClipContent;
+  content: ClipContent | string;
   effects?: string[];
   transition?: string;
 }
@@ -30,6 +33,25 @@ interface TimelineTrack {
   visible: boolean;
   locked: boolean;
   clips: TimelineClip[];
+}
+
+interface UnifiedPreviewPlayerProps {
+  currentTime: number;
+  tracks: TimelineTrack[];
+  isPlaying: boolean;
+  className?: string;
+}
+
+// Helper to extract URL from content
+function getContentUrl(content: ClipContent | string): string | undefined {
+  if (typeof content === 'string') return content;
+  return content?.url || content?.src || content?.audioUrl;
+}
+
+// Helper to extract object content
+function getContentObject(content: ClipContent | string): ClipContent {
+  if (typeof content === 'string') return { url: content };
+  return content || {};
 }
 
 interface UnifiedPreviewPlayerProps {
@@ -109,7 +131,7 @@ export function UnifiedPreviewPlayer({
 
 interface ClipRendererProps {
   type: TimelineTrack['type'];
-  content: ClipContent;
+  content: ClipContent | string;
   time: number;
   isPlaying: boolean;
 }
@@ -118,6 +140,10 @@ function ClipRenderer({ type, content, time, isPlaying }: ClipRendererProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
+
+  // Normalize content to object
+  const contentObj = getContentObject(content);
+  const url = getContentUrl(content);
 
   // Sync media time
   useEffect(() => {
@@ -142,14 +168,12 @@ function ClipRenderer({ type, content, time, isPlaying }: ClipRendererProps) {
     }
   }, [time, isPlaying]);
 
-  const isVideoFile = (url: string) => /\.(mp4|webm|mov)$/i.test(url);
-  const isAudioFile = (url: string) => /\.(mp3|wav|ogg)$/i.test(url);
+  const isVideoFile = (testUrl: string) => /\.(mp4|webm|mov)$/i.test(testUrl);
+  const isAudioFile = (testUrl: string) => /\.(mp3|wav|ogg)$/i.test(testUrl);
 
   switch (type) {
     case 'video':
     case 'avatar':
-      const url = typeof content === 'string' ? content : (content?.url || content?.audioUrl);
-      
       if (url && isVideoFile(url)) {
         return (
           <video
@@ -167,8 +191,9 @@ function ClipRenderer({ type, content, time, isPlaying }: ClipRendererProps) {
           <div className="relative w-full h-full flex items-center justify-center">
             <audio 
               ref={(el) => {
-                // @ts-ignore
-                audioRef.current = el;
+                if (audioRef.current !== el) {
+                  (audioRef as React.MutableRefObject<HTMLAudioElement | null>).current = el;
+                }
                 if (el !== audioElement) {
                   setAudioElement(el);
                 }
@@ -179,8 +204,8 @@ function ClipRenderer({ type, content, time, isPlaying }: ClipRendererProps) {
              {/* Ritmo Continuo: Avatar 3D Hyper-Realista */}
              {audioElement && (
                <Avatar3DRenderer
-                 avatarId={content?.avatarId || 'sarah_executive'}
-                 text={content?.text || ''}
+                 avatarId={contentObj.avatarId || 'sarah_executive'}
+                 text={contentObj.text || ''}
                  audioUrl={url}
                  autoPlay={false} // Controlado pelo audioRef via useLipSync
                  showControls={false}
@@ -203,7 +228,7 @@ function ClipRenderer({ type, content, time, isPlaying }: ClipRendererProps) {
         return (
           <div className="relative w-full h-full flex items-center justify-center">
              <img 
-               src={content?.thumbnail || "/avatars/avatar-placeholder.png"} 
+               src={contentObj.thumbnail || "/avatars/avatar-placeholder.png"} 
                alt="Avatar"
                className="h-[80%] object-contain drop-shadow-xl"
              />
@@ -218,7 +243,7 @@ function ClipRenderer({ type, content, time, isPlaying }: ClipRendererProps) {
     case 'image':
       return (
         <img 
-          src={content?.url || content} 
+          src={url || "/placeholder.png"} 
           alt="Clip" 
           className="w-full h-full object-contain"
         />
@@ -226,8 +251,8 @@ function ClipRenderer({ type, content, time, isPlaying }: ClipRendererProps) {
 
     case 'text':
       return (
-        <div className="text-white text-4xl font-bold drop-shadow-md" style={content?.style}>
-          {content?.text || content || "Texto"}
+        <div className="text-white text-4xl font-bold drop-shadow-md" style={contentObj.style}>
+          {contentObj.text || (typeof content === 'string' ? content : "Texto")}
         </div>
       );
 
@@ -238,7 +263,7 @@ function ClipRenderer({ type, content, time, isPlaying }: ClipRendererProps) {
           style={{ 
             width: '100px', 
             height: '100px', 
-            ...content?.style 
+            ...(contentObj.style || {})
           }} 
         />
       );

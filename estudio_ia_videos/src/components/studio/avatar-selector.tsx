@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useTimelineStore } from '@lib/stores/timeline-store';
+import type { TimelineElement, TimelineElementType } from '@lib/types/timeline-types';
 
 interface Avatar {
     id: string;
@@ -34,13 +35,15 @@ export function AvatarSelector() {
 
         try {
             // Create avatar element
-            const avatarElement = {
+            const avatarElement: TimelineElement = {
                 id: `avatar-${Date.now()}`,
                 name: `${selectedAvatar.name} Avatar`,
-                type: 'avatar',
-                layer: 'video',
+                type: 'avatar' as TimelineElementType,
+                layer: 0,
+                layerId: 'video',
                 start: currentTime,
                 duration: 5000, // 5 seconds default
+                source: `avatar://${selectedAvatar.id}`,
                 data: {
                     avatarId: selectedAvatar.id,
                     provider: selectedAvatar.provider,
@@ -55,7 +58,8 @@ export function AvatarSelector() {
                     opacity: 1,
                     visible: true,
                     locked: false
-                }
+                },
+                keyframes: []
             };
 
             addElement(avatarElement);

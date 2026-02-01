@@ -13,7 +13,7 @@ import { PublicOnboarding } from '@components/onboarding/public-onboarding';
 import { ProductTour, editorTourSteps } from '@components/tour/product-tour';
 import { OfflineIndicator } from '@components/pwa/offline-indicator';
 import { createClient as createBrowserSupabaseClient } from '@lib/supabase/client';
-import type { User as SupabaseUser } from '@supabase/supabase-js';
+import type { User as SupabaseUser, AuthChangeEvent, Session } from '@supabase/supabase-js';
 
 export function PWAProvider({ children }: { children: React.ReactNode }) {
   const supabase = useMemo(() => createBrowserSupabaseClient(), []);
@@ -35,7 +35,7 @@ export function PWAProvider({ children }: { children: React.ReactNode }) {
 
     void loadSession();
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
       if (!isMounted) return;
       setUser(session?.user ?? null);
     });

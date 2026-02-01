@@ -284,7 +284,9 @@ export default function BusinessIntelligenceDashboard() {
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        label={({ nr, value }) => `${nr}: ${value}`}
+                        label={(props: { payload?: { nr?: string; value?: number } }) => 
+                          `${props.payload?.nr || ''}: ${props.payload?.value || 0}`
+                        }
                         outerRadius={80}
                         fill="#8884d8"
                         dataKey="projetos"

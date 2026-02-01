@@ -107,23 +107,40 @@ const sliderValueToIntensity = (
   return 'moderado'
 }
 
-const mapToAvatar3D = (def: { id: string; name: string; gender?: string; engine?: string; metadata?: Record<string, unknown> }): Avatar3D => ({
-  id: def.id,
-  name: def.name,
-  category: (def.metadata?.category as string) || 'business',
-  gender: def.gender === 'male' ? 'male' : 'female',
-  ethnicity: (def.metadata?.ethnicity as string) || 'caucasian',
-  age: 'adult',
-  quality: def.engine === 'ue5' || def.engine === 'heygen' ? 'hyperreal' : 'standard',
-  features: {
-    facialDetails: 'high',
-    skinTexture: 'scanned',
-    hairSystem: 'strand',
-    lipSyncAccuracy: 95
-  },
-  model_quality: 'High',
-  appearance: def.metadata
-})
+const mapToAvatar3D = (def: { id: string; name: string; gender?: string; engine?: string; metadata?: Record<string, unknown> }): Avatar3D => {
+  const categoryRaw = (def.metadata?.category as string) || 'business'
+  const ethnicityRaw = (def.metadata?.ethnicity as string) || 'caucasian'
+  
+  // Type-safe category mapping
+  const validCategories = ['casual', 'business', 'safety', 'education', 'healthcare'] as const
+  const category: Avatar3D['category'] = validCategories.includes(categoryRaw as typeof validCategories[number]) 
+    ? categoryRaw as typeof validCategories[number]
+    : 'business'
+  
+  // Type-safe ethnicity mapping  
+  const validEthnicities = ['caucasian', 'afro', 'asian', 'latino', 'mixed'] as const
+  const ethnicity: Avatar3D['ethnicity'] = validEthnicities.includes(ethnicityRaw as typeof validEthnicities[number])
+    ? ethnicityRaw as typeof validEthnicities[number]
+    : 'caucasian'
+    
+  return {
+    id: def.id,
+    name: def.name,
+    category,
+    gender: def.gender === 'male' ? 'male' : 'female',
+    ethnicity,
+    age: 'adult',
+    quality: def.engine === 'ue5' || def.engine === 'heygen' ? 'hyperreal' : 'standard',
+    features: {
+      facialDetails: 'high',
+      skinTexture: 'scanned',
+      hairSystem: 'strand',
+      lipSyncAccuracy: 95
+    },
+    model_quality: 'High',
+    appearance: def.metadata
+  }
+}
 
 export default function Avatar3DSelector({ onAvatarSelect, selectedAvatar, contentType = 'general' }: Avatar3DSelectorProps) {
   const [avatars, setAvatars] = useState<Avatar3D[]>([])

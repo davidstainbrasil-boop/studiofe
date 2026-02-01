@@ -1,7 +1,33 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createClient } from './lib/supabase/middleware';
-// import { logger } from './lib/logger' // Logger removed to avoid Edge Runtime issues
 import { isE2ETestMode } from './lib/auth/e2e-test-auth';
+
+/**
+ * Edge-compatible logger (não usa Node.js APIs)
+ * Em produção, emite JSON estruturado para observabilidade
+ */
+const edgeLog = {
+  warn: (message: string, context?: Record<string, unknown>) => {
+    if (process.env.NODE_ENV === 'production') {
+      console.warn(JSON.stringify({ level: 'warn', message, ...context, timestamp: new Date().toISOString() }));
+    } else {
+      console.warn(`[MIDDLEWARE WARN] ${message}`, context);
+    }
+  },
+  error: (message: string, error?: Error, context?: Record<string, unknown>) => {
+    if (process.env.NODE_ENV === 'production') {
+      console.error(JSON.stringify({ 
+        level: 'error', 
+        message, 
+        error: error ? { name: error.name, message: error.message } : undefined,
+        ...context, 
+        timestamp: new Date().toISOString() 
+      }));
+    } else {
+      console.error(`[MIDDLEWARE ERROR] ${message}`, error, context);
+    }
+  },
+};
 
 // Simple in-memory rate limiter for Edge Runtime (basic DDoS protection)
 // For production-grade rate limiting, use Redis-backed limiter in API routes
@@ -104,7 +130,7 @@ export async function middleware(request: NextRequest) {
     // Check if Supabase is configured before attempting to create client
     if (!isSupabaseConfigured()) {
       if (!hasLoggedConfigError) {
-        console.warn('Supabase not configured - running in anonymous mode.', {
+        edgeLog.warn('Supabase not configured - running in anonymous mode', {
           missingEnv: ['NEXT_PUBLIC_SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_ANON_KEY'],
           scope: 'middleware',
         });
@@ -167,7 +193,7 @@ export async function middleware(request: NextRequest) {
       }
     } catch (sessionError) {
       // On error, continue without session (will redirect to login if protected route)
-      console.warn('Session fetch error', {
+      edgeLog.warn('Session fetch error', {
         scope: 'middleware',
         error: sessionError instanceof Error ? sessionError.message : 'Unknown error',
       });
@@ -250,8 +276,7 @@ export async function middleware(request: NextRequest) {
     return response;
   } catch (e) {
     const error = e instanceof Error ? e : new Error(String(e));
-    // Replaced logger with console.error
-    console.error('Middleware error', error);
+    edgeLog.error('Middleware error', error, { scope: 'middleware' });
 
     if (isApiRoute) {
       return new NextResponse(

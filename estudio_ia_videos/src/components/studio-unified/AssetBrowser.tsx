@@ -119,11 +119,17 @@ export function AssetBrowser() {
             duration: 10,
             layerId: crypto.randomUUID(),
             source: videoUrl,
-            x: 0, y: 0, width: 1, height: 1,
-            opacity: 1, rotation: 0, scale: 1,
-            playbackRate: 1, volume: 1,
-            visible: true,
-            locked: false
+            layer: 0,
+            properties: {
+                visible: true,
+                locked: false
+            },
+            keyframes: [],
+            data: {
+                x: 0, y: 0, width: 1, height: 1,
+                opacity: 1, rotation: 0, scale: 1,
+                playbackRate: 1, volume: 1
+            }
         };
         addElement(newClip);
         setAvatarModalOpen(false);

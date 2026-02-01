@@ -64,23 +64,23 @@ async function getUserProjectStats(userId: string, timeRange: Date) {
 
     const projectsList = projects;
     const total = projectsList.length;
-    const completed = projectsList.filter((p: any) => p.status === 'completed').length;
-    const active = projectsList.filter((p: any) => p.status === 'active' || p.status === 'in-progress').length;
+    const completed = projectsList.filter((p) => p.status === 'completed').length;
+    const active = projectsList.filter((p) => p.status === 'active' || p.status === 'in-progress').length;
 
     // Calculate average project duration for completed projects
-    const completedProjects = projectsList.filter((p: any) => p.status === 'completed');
-    const durations = completedProjects.map((p: any) => {
+    const completedProjects = projectsList.filter((p) => p.status === 'completed');
+    const durations = completedProjects.map((p) => {
       const start = new Date(p.createdAt).getTime();
       const end = new Date(p.updatedAt).getTime();
       return (end - start) / (1000 * 60 * 60 * 24); // Convert to days
     });
 
     const avgDuration = durations.length > 0 
-      ? durations.reduce((sum: number, duration: number) => sum + duration, 0) / durations.length 
+      ? durations.reduce((sum, duration) => sum + duration, 0) / durations.length 
       : 0;
 
     // Get favorite project types
-    const projectTypeCounts = projectsList.reduce((acc: Record<string, number>, project: any) => {
+    const projectTypeCounts = projectsList.reduce((acc: Record<string, number>, project) => {
       const type = project.type || 'unknown';
       acc[type] = (acc[type] || 0) + 1;
       return acc;

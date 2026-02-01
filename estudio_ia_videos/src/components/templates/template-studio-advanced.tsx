@@ -54,6 +54,49 @@ import { useAdvancedTemplates } from '@hooks/useAdvancedTemplates';
 import { Template, NRCategory, TemplateFilter, TemplateSort } from '@/types/templates';
 import { toast } from 'sonner';
 
+// Local type definitions matching useAdvancedTemplates return types
+interface ComplianceIssue {
+  id: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  category: string;
+  description: string;
+  location: string;
+  autoFixAvailable: boolean;
+}
+
+interface ComplianceResult {
+  isCompliant: boolean;
+  score: number;
+  issues: ComplianceIssue[];
+  suggestions: unknown[];
+  certificationStatus: unknown;
+}
+
+interface TemplateAnalytics {
+  usage: {
+    views: number;
+    downloads: number;
+    completions: number;
+    averageTime: number;
+  };
+  performance: {
+    loadTime: number;
+    renderTime: number;
+    interactionRate: number;
+    dropoffRate: number;
+  };
+  compliance: {
+    score: number;
+    trend: number[];
+    lastAudit: Date;
+  };
+  feedback: {
+    rating: number;
+    reviews: number;
+    sentiment: 'positive' | 'neutral' | 'negative';
+  };
+}
+
 interface TemplateStudioAdvancedProps {
   onTemplateSelect?: (template: Template) => void;
   onTemplateEdit?: (template: Template) => void;
@@ -100,8 +143,8 @@ export const TemplateStudioAdvanced: React.FC<TemplateStudioAdvancedProps> = ({
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [activeTab, setActiveTab] = useState('browse');
   const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
-  const [complianceResults, setComplianceResults] = useState<Record<string, unknown>>({});
-  const [analytics, setAnalytics] = useState<Record<string, unknown>>({});
+  const [complianceResults, setComplianceResults] = useState<Record<string, ComplianceResult | undefined>>({});
+  const [analytics, setAnalytics] = useState<Record<string, TemplateAnalytics | undefined>>({});
   const [recommendations, setRecommendations] = useState<Template[]>([]);
 
   // Load analytics and compliance data
@@ -118,7 +161,10 @@ export const TemplateStudioAdvanced: React.FC<TemplateStudioAdvancedProps> = ({
       });
       
       const analyticsResults = await Promise.all(analyticsPromises);
-      const analyticsData = analyticsResults.reduce((acc, curr) => ({ ...acc, ...curr }), {});
+      const analyticsData = analyticsResults.reduce<Record<string, TemplateAnalytics | undefined>>(
+        (acc, curr) => ({ ...acc, ...curr }), 
+        {}
+      );
       setAnalytics(analyticsData);
     } catch (error) {
       logger.error('Failed to load template data', error instanceof Error ? error : new Error(String(error)), { component: 'TemplateStudioAdvanced' });
@@ -558,18 +604,7 @@ export const TemplateStudioAdvanced: React.FC<TemplateStudioAdvancedProps> = ({
   );
 };
 
-// Template Card Component
-interface TemplateAnalytics {
-  views?: number;
-  uses?: number;
-  rating?: number;
-}
-
-interface ComplianceResult {
-  isCompliant: boolean;
-  score?: number;
-  issues?: string[];
-}
+// Template Card Component - uses same interfaces defined at top of file
 
 interface TemplateCardProps {
   template: Template;
@@ -647,7 +682,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
                 {analytics && (
                   <span className="flex items-center gap-1">
                     <Eye className="w-3 h-3" />
-                    {analytics.usage.views} visualizações
+                    {analytics.usage?.views ?? 0} visualizações
                   </span>
                 )}
               </div>
@@ -780,7 +815,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
           {analytics && (
             <span className="flex items-center gap-1">
               <Eye className="w-3 h-3" />
-              {analytics.usage.views}
+              {analytics.usage?.views ?? 0}
             </span>
           )}
         </div>

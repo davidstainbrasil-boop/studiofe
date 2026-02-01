@@ -8,12 +8,10 @@
 import React, { useState, useRef } from 'react'
 import {
   WatermarkConfig,
-  WatermarkType,
   WatermarkPosition,
-  WatermarkAnimation,
+  WatermarkPositionValues,
   DEFAULT_WATERMARK_PRESETS,
   DEFAULT_TEXT_STYLE,
-  DEFAULT_PADDING,
   ImageWatermarkConfig,
   TextWatermarkConfig,
 } from '@/types/watermark.types'
@@ -30,16 +28,12 @@ interface WatermarkSettingsProps {
 }
 
 export function WatermarkSettings({ config, onChange, compact = false }: WatermarkSettingsProps) {
-  const [watermarkType, setWatermarkType] = useState<WatermarkType>(
-    config?.type || WatermarkType.IMAGE
-  )
   const [showPresets, setShowPresets] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Handle preset selection
-  const handlePresetSelect = (preset: typeof DEFAULT_WATERMARK_PRESETS[0]) => {
-    onChange(preset.config)
-    setWatermarkType(preset.config.type)
+  const handlePresetSelect = (preset: WatermarkConfig) => {
+    onChange(preset)
     setShowPresets(false)
   }
 
@@ -53,14 +47,12 @@ export function WatermarkSettings({ config, onChange, compact = false }: Waterma
       const imageUrl = event.target?.result as string
       
       const newConfig: ImageWatermarkConfig = {
-        type: WatermarkType.LOGO,
-        imageUrl,
-        width: 150,
-        height: 'auto',
-        maintainAspectRatio: true,
-        position: WatermarkPosition.BOTTOM_RIGHT,
-        opacity: 0.7,
-        padding: { ...DEFAULT_PADDING },
+        type: 'image',
+        url: imageUrl,
+        position: 'bottom-right',
+        scale: 0.2,
+        opacity: 0.8,
+        margin: 20,
       }
       
       onChange(newConfig)
@@ -71,32 +63,27 @@ export function WatermarkSettings({ config, onChange, compact = false }: Waterma
   // Handle text watermark creation
   const handleCreateTextWatermark = () => {
     const newConfig: TextWatermarkConfig = {
-      type: WatermarkType.TEXT,
+      type: 'text',
       text: 'Sua Marca Aqui',
       style: { ...DEFAULT_TEXT_STYLE },
-      position: WatermarkPosition.BOTTOM_RIGHT,
+      position: 'bottom-right',
       opacity: 0.8,
-      padding: { ...DEFAULT_PADDING },
+      margin: 20,
     }
     
     onChange(newConfig)
-    setWatermarkType(WatermarkType.TEXT)
-  }
-
-  // Handle config updates
-  const updateConfig = <K extends keyof WatermarkConfig>(key: K, value: WatermarkConfig[K]) => {
-    if (!config) return
-    onChange({ ...config, [key]: value })
   }
 
   // Handle opacity change
   const handleOpacityChange = (value: number) => {
-    updateConfig('opacity', value / 100)
+    if (!config) return
+    onChange({ ...config, opacity: value / 100 })
   }
 
   // Handle position change
   const handlePositionChange = (position: WatermarkPosition) => {
-    updateConfig('position', position)
+    if (!config) return
+    onChange({ ...config, position })
   }
 
   // Remove watermark
@@ -104,11 +91,14 @@ export function WatermarkSettings({ config, onChange, compact = false }: Waterma
     onChange(null)
   }
 
+  // Type guard for text watermark
+  const isTextWatermark = (c: WatermarkConfig): c is TextWatermarkConfig => c.type === 'text'
+
   if (!config) {
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold">Marca D'água</h3>
+          <h3 className="text-sm font-semibold">Marca D&apos;água</h3>
           <span className="text-xs text-gray-500">Desabilitado</span>
         </div>
 
@@ -165,7 +155,7 @@ export function WatermarkSettings({ config, onChange, compact = false }: Waterma
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold">Marca D'água</h3>
+        <h3 className="text-sm font-semibold">Marca D&apos;água</h3>
         <button
           onClick={handleRemoveWatermark}
           className="text-xs text-red-600 hover:text-red-700 dark:text-red-400"
@@ -177,19 +167,19 @@ export function WatermarkSettings({ config, onChange, compact = false }: Waterma
       {/* Type indicator */}
       <div className="flex items-center gap-2 text-xs">
         <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded">
-          {config.type === WatermarkType.TEXT ? '📝 Texto' : '📷 Imagem'}
+          {config.type === 'text' ? '📝 Texto' : '📷 Imagem'}
         </span>
       </div>
 
       {/* Text Content (if text watermark) */}
-      {config.type === WatermarkType.TEXT && (
+      {isTextWatermark(config) && (
         <div>
           <label className="block text-xs font-medium mb-1">Texto</label>
           <input
             type="text"
             value={config.text}
             onChange={(e) => {
-              const newConfig = { ...config, text: e.target.value } as TextWatermarkConfig
+              const newConfig: TextWatermarkConfig = { ...config, text: e.target.value }
               onChange(newConfig)
             }}
             className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm"
@@ -199,7 +189,7 @@ export function WatermarkSettings({ config, onChange, compact = false }: Waterma
       )}
 
       {/* Font Size (if text watermark) */}
-      {config.type === WatermarkType.TEXT && (
+      {isTextWatermark(config) && (
         <div>
           <label className="block text-xs font-medium mb-1">
             Tamanho da Fonte: {config.style.fontSize}px
@@ -211,7 +201,8 @@ export function WatermarkSettings({ config, onChange, compact = false }: Waterma
             value={config.style.fontSize}
             onChange={(e) => {
               const newStyle = { ...config.style, fontSize: parseInt(e.target.value) }
-              onChange({ ...config, style: newStyle })
+              const newConfig: TextWatermarkConfig = { ...config, style: newStyle }
+              onChange(newConfig)
             }}
             className="w-full"
           />
@@ -222,17 +213,7 @@ export function WatermarkSettings({ config, onChange, compact = false }: Waterma
       <div>
         <label className="block text-xs font-medium mb-2">Posição</label>
         <div className="grid grid-cols-3 gap-1">
-          {[
-            WatermarkPosition.TOP_LEFT,
-            WatermarkPosition.TOP_CENTER,
-            WatermarkPosition.TOP_RIGHT,
-            WatermarkPosition.CENTER_LEFT,
-            WatermarkPosition.CENTER,
-            WatermarkPosition.CENTER_RIGHT,
-            WatermarkPosition.BOTTOM_LEFT,
-            WatermarkPosition.BOTTOM_CENTER,
-            WatermarkPosition.BOTTOM_RIGHT,
-          ].map((position) => (
+          {WatermarkPositionValues.map((position) => (
             <button
               key={position}
               onClick={() => handlePositionChange(position)}
@@ -245,7 +226,7 @@ export function WatermarkSettings({ config, onChange, compact = false }: Waterma
                 }
               `}
             >
-              {position.split('-').map(w => w[0].toUpperCase() + w.slice(1)).join(' ')}
+              {position.split('-').map((w: string) => w[0].toUpperCase() + w.slice(1)).join(' ')}
             </button>
           ))}
         </div>
@@ -266,81 +247,23 @@ export function WatermarkSettings({ config, onChange, compact = false }: Waterma
         />
       </div>
 
-      {/* Width (if image watermark) */}
-      {(config.type === WatermarkType.IMAGE || config.type === WatermarkType.LOGO) &&
-        config.width !== 'auto' && (
-          <div>
-            <label className="block text-xs font-medium mb-1">
-              Largura: {config.width}px
-            </label>
-            <input
-              type="range"
-              min="50"
-              max="500"
-              value={config.width}
-              onChange={(e) => {
-                const newConfig = { ...config, width: parseInt(e.target.value) } as ImageWatermarkConfig
-                onChange(newConfig)
-              }}
-              className="w-full"
-            />
-          </div>
-        )}
-
-      {/* Padding */}
-      {!compact && (
+      {/* Scale (if image watermark) */}
+      {config.type === 'image' && (
         <div>
-          <label className="block text-xs font-medium mb-2">Margens</label>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <input
-                type="number"
-                value={config.padding.top}
-                onChange={(e) => {
-                  const newPadding = { ...config.padding, top: parseInt(e.target.value) || 0 }
-                  updateConfig('padding', newPadding)
-                }}
-                className="w-full px-2 py-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-xs"
-                placeholder="Top"
-              />
-            </div>
-            <div>
-              <input
-                type="number"
-                value={config.padding.right}
-                onChange={(e) => {
-                  const newPadding = { ...config.padding, right: parseInt(e.target.value) || 0 }
-                  updateConfig('padding', newPadding)
-                }}
-                className="w-full px-2 py-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-xs"
-                placeholder="Right"
-              />
-            </div>
-            <div>
-              <input
-                type="number"
-                value={config.padding.bottom}
-                onChange={(e) => {
-                  const newPadding = { ...config.padding, bottom: parseInt(e.target.value) || 0 }
-                  updateConfig('padding', newPadding)
-                }}
-                className="w-full px-2 py-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-xs"
-                placeholder="Bottom"
-              />
-            </div>
-            <div>
-              <input
-                type="number"
-                value={config.padding.left}
-                onChange={(e) => {
-                  const newPadding = { ...config.padding, left: parseInt(e.target.value) || 0 }
-                  updateConfig('padding', newPadding)
-                }}
-                className="w-full px-2 py-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-xs"
-                placeholder="Left"
-              />
-            </div>
-          </div>
+          <label className="block text-xs font-medium mb-1">
+            Escala: {Math.round(config.scale * 100)}%
+          </label>
+          <input
+            type="range"
+            min="10"
+            max="100"
+            value={Math.round(config.scale * 100)}
+            onChange={(e) => {
+              const newConfig: ImageWatermarkConfig = { ...config, scale: parseInt(e.target.value) / 100 }
+              onChange(newConfig)
+            }}
+            className="w-full"
+          />
         </div>
       )}
 
@@ -358,10 +281,10 @@ export function WatermarkSettings({ config, onChange, compact = false }: Waterma
           className="absolute text-white text-sm"
           style={{
             opacity: config.opacity,
-            ...getPreviewPosition(config.position, config.padding),
+            ...getPreviewPosition(config.position, config.margin),
           }}
         >
-          {config.type === WatermarkType.TEXT ? (
+          {isTextWatermark(config) ? (
             <span style={{ fontSize: `${config.style.fontSize / 4}px` }}>
               {config.text}
             </span>
@@ -379,53 +302,21 @@ export function WatermarkSettings({ config, onChange, compact = false }: Waterma
  */
 function getPreviewPosition(
   position: WatermarkPosition,
-  padding: { top: number; right: number; bottom: number; left: number }
-) {
-  const styles: React.CSSProperties = {}
-
-  switch (position) {
-    case WatermarkPosition.TOP_LEFT:
-      styles.top = `${padding.top / 4}px`
-      styles.left = `${padding.left / 4}px`
-      break
-    case WatermarkPosition.TOP_CENTER:
-      styles.top = `${padding.top / 4}px`
-      styles.left = '50%'
-      styles.transform = 'translateX(-50%)'
-      break
-    case WatermarkPosition.TOP_RIGHT:
-      styles.top = `${padding.top / 4}px`
-      styles.right = `${padding.right / 4}px`
-      break
-    case WatermarkPosition.CENTER_LEFT:
-      styles.top = '50%'
-      styles.left = `${padding.left / 4}px`
-      styles.transform = 'translateY(-50%)'
-      break
-    case WatermarkPosition.CENTER:
-      styles.top = '50%'
-      styles.left = '50%'
-      styles.transform = 'translate(-50%, -50%)'
-      break
-    case WatermarkPosition.CENTER_RIGHT:
-      styles.top = '50%'
-      styles.right = `${padding.right / 4}px`
-      styles.transform = 'translateY(-50%)'
-      break
-    case WatermarkPosition.BOTTOM_LEFT:
-      styles.bottom = `${padding.bottom / 4}px`
-      styles.left = `${padding.left / 4}px`
-      break
-    case WatermarkPosition.BOTTOM_CENTER:
-      styles.bottom = `${padding.bottom / 4}px`
-      styles.left = '50%'
-      styles.transform = 'translateX(-50%)'
-      break
-    case WatermarkPosition.BOTTOM_RIGHT:
-      styles.bottom = `${padding.bottom / 4}px`
-      styles.right = `${padding.right / 4}px`
-      break
+  margin: number
+): React.CSSProperties {
+  const m = margin / 4
+  
+  const positionMap: Record<WatermarkPosition, React.CSSProperties> = {
+    'top-left': { top: m, left: m },
+    'top-center': { top: m, left: '50%', transform: 'translateX(-50%)' },
+    'top-right': { top: m, right: m },
+    'center-left': { top: '50%', left: m, transform: 'translateY(-50%)' },
+    'center': { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' },
+    'center-right': { top: '50%', right: m, transform: 'translateY(-50%)' },
+    'bottom-left': { bottom: m, left: m },
+    'bottom-center': { bottom: m, left: '50%', transform: 'translateX(-50%)' },
+    'bottom-right': { bottom: m, right: m },
   }
 
-  return styles
+  return positionMap[position] || {}
 }

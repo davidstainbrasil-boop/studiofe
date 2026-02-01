@@ -2,7 +2,7 @@
  * Core puro de métricas de render para facilitar testes unitários.
  */
 
-import type { RenderJobSettings } from '../queue/setup'
+import type { RenderJobSettings } from '../video/video-render-engine'
 
 export interface BasicRenderJob {
   id: string

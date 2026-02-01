@@ -11,7 +11,7 @@
 
 'use client';
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, ComponentType } from 'react';
 import { Player } from '@remotion/player';
 import { Button } from '@components/ui/button';
 import { Input } from '@components/ui/input';
@@ -241,8 +241,8 @@ export const PPTXPreRenderEditor: React.FC<PPTXPreRenderEditorProps> = ({
           {/* Remotion Preview */}
           <div className="flex-1 bg-black flex items-center justify-center p-4">
             <Player
-              component={UniversalSlideComposition}
-              inputProps={{ slide: selectedSlide }}
+              component={UniversalSlideComposition as unknown as ComponentType<Record<string, unknown>>}
+              inputProps={{ slide: selectedSlide } as unknown as Record<string, unknown>}
               durationInFrames={Math.round(selectedSlide.duration * fps)}
               fps={fps}
               compositionWidth={960}

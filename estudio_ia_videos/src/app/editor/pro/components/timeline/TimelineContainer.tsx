@@ -246,7 +246,7 @@ const TimelineClip = ({ element, zoom, onUpdate }: { element: CanvasElement, zoo
                 borderColor: 'rgba(255,255,255,0.3)',
                 opacity: 0.9
             }}
-            title={`${element.name || element.type} (${(element.duration / 1000).toFixed(1)}s)`}
+            title={`${element.type} (${(element.duration / 1000).toFixed(1)}s)`}
         >
             <div className="px-2 py-1 text-xs text-white font-medium truncate drop-shadow-md">
                 {element.text || element.type}

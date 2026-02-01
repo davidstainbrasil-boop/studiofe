@@ -39,6 +39,13 @@ export interface TrainVoiceOptions {
   userId?: string;
 }
 
+/** Alignment data for word-level timestamps from TTS */
+export interface VoiceAlignmentData {
+  characters: string[];
+  character_start_times_seconds: number[];
+  character_end_times_seconds: number[];
+}
+
 export class VoiceCloning {
   /**
    * Cria um perfil de voz clonada na ElevenLabs (Instant Voice Cloning)
@@ -110,7 +117,7 @@ export class VoiceCloning {
     return result.audio;
   }
 
-  async synthesizeWithTimestamps(options: CloneOptions): Promise<{ audio: Buffer, alignment?: any }> {
+  async synthesizeWithTimestamps(options: CloneOptions): Promise<{ audio: Buffer, alignment?: VoiceAlignmentData }> {
     logger.info('Synthesizing voice', { component: 'VoiceCloning', options });
 
     if (!ELEVENLABS_API_KEY) {

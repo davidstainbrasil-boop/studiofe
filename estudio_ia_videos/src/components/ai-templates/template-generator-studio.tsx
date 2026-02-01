@@ -60,14 +60,55 @@ interface TemplateModule {
   title: string;
   duration: number;
   keyPoints: string[];
+  content?: string[];
+  [key: string]: unknown;
+}
+
+interface TemplateIntro {
+  title?: string;
+  hook?: string;
+  hooks?: string[];
+  objectives?: string[];
+  duration: number;
+}
+
+interface TemplateConclusion {
+  summary: string | string[];
+  callToAction: string;
+  duration: number;
+}
+
+interface GeneratedTemplateStructure {
+  modules: TemplateModule[];
+  intro?: TemplateIntro;
+  conclusion?: TemplateConclusion;
+  [key: string]: unknown;
+}
+
+interface GeneratedTemplateAnalytics {
+  expectedEngagement: number;
+  difficultyLevel: number;
+  retentionScore: number;
+  completionTime?: number;
+  [key: string]: unknown;
+}
+
+interface GeneratedTemplateMetadata {
+  confidence: number;
+  usage?: number;
+  generatedAt: string;
+  aiModel?: string;
   [key: string]: unknown;
 }
 
 interface GeneratedTemplate {
-  structure: {
-    modules: TemplateModule[];
-    [key: string]: unknown;
-  };
+  id?: string;
+  name?: string;
+  description?: string;
+  category?: string;
+  structure: GeneratedTemplateStructure;
+  analytics: GeneratedTemplateAnalytics;
+  metadata: GeneratedTemplateMetadata;
   [key: string]: unknown;
 }
 
@@ -673,33 +714,39 @@ export default function TemplateGeneratorStudio() {
 
                       <TabsContent value="structure" className="space-y-4">
                         {/* Intro */}
-                        <div className="border rounded-lg p-4">
-                          <h4 className="font-semibold mb-2">🚀 Introdução ({generatedTemplate.structure.intro.duration}s)</h4>
-                          <div className="space-y-2">
-                            <div>
-                              <span className="text-xs font-medium text-gray-600">Objetivos:</span>
-                              <ul className="text-sm mt-1 space-y-1">
-                                {generatedTemplate.structure.intro.objectives.map((obj: string, i: number) => (
-                                  <li key={i} className="flex items-start space-x-2">
-                                    <span className="text-blue-600">•</span>
-                                    <span>{obj}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                            <div>
-                              <span className="text-xs font-medium text-gray-600">Ganchos de Engajamento:</span>
-                              <ul className="text-sm mt-1 space-y-1">
-                                {generatedTemplate.structure.intro.hooks.map((hook: string, i: number) => (
-                                  <li key={i} className="flex items-start space-x-2">
-                                    <span className="text-orange-600">🎣</span>
-                                    <span>{hook}</span>
-                                  </li>
-                                ))}
-                              </ul>
+                        {generatedTemplate.structure.intro && (
+                          <div className="border rounded-lg p-4">
+                            <h4 className="font-semibold mb-2">🚀 Introdução ({generatedTemplate.structure.intro.duration}s)</h4>
+                            <div className="space-y-2">
+                              {generatedTemplate.structure.intro.objectives && (
+                                <div>
+                                  <span className="text-xs font-medium text-gray-600">Objetivos:</span>
+                                  <ul className="text-sm mt-1 space-y-1">
+                                    {generatedTemplate.structure.intro.objectives.map((obj: string, i: number) => (
+                                      <li key={i} className="flex items-start space-x-2">
+                                        <span className="text-blue-600">•</span>
+                                        <span>{obj}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                              {generatedTemplate.structure.intro.hooks && (
+                                <div>
+                                  <span className="text-xs font-medium text-gray-600">Ganchos de Engajamento:</span>
+                                  <ul className="text-sm mt-1 space-y-1">
+                                    {generatedTemplate.structure.intro.hooks.map((hook: string, i: number) => (
+                                      <li key={i} className="flex items-start space-x-2">
+                                        <span className="text-orange-600">🎣</span>
+                                        <span>{hook}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
                             </div>
                           </div>
-                        </div>
+                        )}
 
                         {/* Modules */}
                         {generatedTemplate.structure.modules.map((module: TemplateModule, index: number) => (
@@ -724,26 +771,31 @@ export default function TemplateGeneratorStudio() {
                         ))}
 
                         {/* Conclusion */}
-                        <div className="border rounded-lg p-4">
-                          <h4 className="font-semibold mb-2">Conclusão ({generatedTemplate.structure.conclusion.duration}s)</h4>
-                          <div className="space-y-2 text-sm">
-                            <div>
-                              <span className="font-medium text-gray-600">Resumo:</span>
-                              <ul className="mt-1 space-y-1">
-                                {generatedTemplate.structure.conclusion.summary.map((point: string, i: number) => (
-                                  <li key={i} className="flex items-start space-x-2">
-                                    <span className="text-purple-600">📝</span>
-                                    <span>{point}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                            <div className="mt-3 p-3 bg-blue-50 rounded-lg">
-                              <span className="font-medium text-blue-800">Call to Action:</span>
-                              <p className="text-blue-700 mt-1">{generatedTemplate.structure.conclusion.callToAction}</p>
+                        {generatedTemplate.structure.conclusion && (
+                          <div className="border rounded-lg p-4">
+                            <h4 className="font-semibold mb-2">Conclusão ({generatedTemplate.structure.conclusion.duration}s)</h4>
+                            <div className="space-y-2 text-sm">
+                              <div>
+                                <span className="font-medium text-gray-600">Resumo:</span>
+                                <ul className="mt-1 space-y-1">
+                                  {(Array.isArray(generatedTemplate.structure.conclusion.summary) 
+                                    ? generatedTemplate.structure.conclusion.summary 
+                                    : [generatedTemplate.structure.conclusion.summary]
+                                  ).map((point: string, i: number) => (
+                                    <li key={i} className="flex items-start space-x-2">
+                                      <span className="text-purple-600">📝</span>
+                                      <span>{point}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                              <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+                                <span className="font-medium text-blue-800">Call to Action:</span>
+                                <p className="text-blue-700 mt-1">{generatedTemplate.structure.conclusion.callToAction}</p>
+                              </div>
                             </div>
                           </div>
-                        </div>
+                        )}
                       </TabsContent>
 
                       <TabsContent value="analytics" className="space-y-4">
@@ -762,7 +814,7 @@ export default function TemplateGeneratorStudio() {
                           
                           <div className="text-center p-4 border rounded-lg">
                             <Clock className="h-6 w-6 mx-auto mb-2 text-orange-600" />
-                            <div className="text-lg font-bold">{(generatedTemplate.analytics.completionTime * 100).toFixed(0)}%</div>
+                            <div className="text-lg font-bold">{((generatedTemplate.analytics.completionTime ?? 0) * 100).toFixed(0)}%</div>
                             <p className="text-xs text-gray-600">Tempo Conclusão</p>
                           </div>
                           

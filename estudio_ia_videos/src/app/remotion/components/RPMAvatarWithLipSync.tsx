@@ -72,12 +72,12 @@ function AvatarMesh({
   // Extract morph target dictionary from the loaded model
   useEffect(() => {
     if (gltf && gltf.scene) {
-      gltf.scene.traverse((child) => {
+      gltf.scene.traverse((child: THREE.Object3D) => {
         if ((child as THREE.Mesh).isMesh) {
           const mesh = child as THREE.Mesh;
           if (mesh.morphTargetDictionary) {
             setMorphTargetDictionary(mesh.morphTargetDictionary);
-            meshRef.current = mesh;
+            (meshRef as React.MutableRefObject<THREE.Mesh | null>).current = mesh;
           }
         }
       });

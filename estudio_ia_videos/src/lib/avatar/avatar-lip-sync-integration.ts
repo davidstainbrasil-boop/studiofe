@@ -5,14 +5,19 @@
  */
 
 import { logger } from '@/lib/logger'
-import { LipSyncOrchestrator } from '@/lib/sync/lip-sync-orchestrator'
-import { FacialAnimationEngine, type AnimationConfig, type FacialAnimation } from './facial-animation-engine'
+import { LipSyncOrchestrator, LipSyncProvider } from '@/lib/sync/lip-sync-orchestrator'
+import { FacialAnimationEngine, type AnimationConfig, type FacialAnimation, type EnhancedBlendShapeFrame } from './facial-animation-engine'
 import type { LipSyncResult } from '@/lib/sync/types/phoneme.types'
+
+// Valid emotion types that match the AnimationConfig
+type SupportedEmotion = 'neutral' | 'happy' | 'sad' | 'angry' | 'surprised' | 'fear' | 'disgust';
+
+export type { SupportedEmotion };
 
 export interface AvatarConfig {
   avatarId?: string
   quality: 'PLACEHOLDER' | 'STANDARD' | 'HIGH' | 'HYPERREAL'
-  emotion?: 'neutral' | 'happy' | 'sad' | 'angry' | 'surprised' | 'fear' | 'disgust'
+  emotion?: SupportedEmotion
   emotionIntensity?: number
   voice?: string
   enableBlinks?: boolean
@@ -22,12 +27,7 @@ export interface AvatarConfig {
 }
 
 export interface AvatarAnimation {
-  frames: Array<{
-    time: number
-    weights: Record<string, number>
-    headRotation?: { x: number; y: number; z: number }
-    eyeGaze?: { x: number; y: number }
-  }>
+  frames: EnhancedBlendShapeFrame[]
   duration: number
   fps: number
   metadata: {
@@ -41,6 +41,17 @@ export interface AvatarAnimation {
     phonemeCount: number
     quality: string
   }
+}
+
+// Map string providers to enum
+function getProviderEnum(provider?: 'rhubarb' | 'azure' | 'mock'): LipSyncProvider | undefined {
+  if (!provider) return undefined;
+  const map: Record<string, LipSyncProvider> = {
+    rhubarb: LipSyncProvider.RHUBARB,
+    azure: LipSyncProvider.AZURE,
+    mock: LipSyncProvider.MOCK,
+  };
+  return map[provider];
 }
 
 export interface GenerationOptions {
@@ -80,20 +91,28 @@ export class AvatarLipSyncIntegration {
         text,
         audioPath,
         voice: avatarConfig.voice,
-        forceProvider
+        forceProvider: getProviderEnum(forceProvider)
       })
 
+      const phonemeCount = lipSyncResult.result.phonemes?.length || 0;
+      
       logger.info('[AvatarLipSyncIntegration] Lip-sync generated', {
         provider: lipSyncResult.provider,
         cached: lipSyncResult.cached,
-        phonemeCount: lipSyncResult.result.phonemes.length,
+        phonemeCount,
         duration: lipSyncResult.result.duration
       })
 
       // Step 2: Convert to facial animation (Phase 2)
+      // Map emotions that aren't supported to neutral
+      const supportedAnimationEmotions = ['neutral', 'happy', 'sad', 'angry', 'surprised'] as const;
+      const mappedEmotion = avatarConfig.emotion && supportedAnimationEmotions.includes(avatarConfig.emotion as typeof supportedAnimationEmotions[number])
+        ? (avatarConfig.emotion as typeof supportedAnimationEmotions[number])
+        : 'neutral';
+      
       const animationConfig: AnimationConfig = {
         fps: avatarConfig.fps || 30,
-        emotion: avatarConfig.emotion || 'neutral',
+        emotion: mappedEmotion,
         emotionIntensity: avatarConfig.emotionIntensity || 0.5,
         enableBlinks: avatarConfig.enableBlinks !== false,
         enableBreathing: avatarConfig.enableBreathing !== false,
@@ -117,13 +136,13 @@ export class AvatarLipSyncIntegration {
         fps: facialAnimation.fps,
         metadata: {
           provider: lipSyncResult.provider,
-          lipSyncSource: lipSyncResult.result.metadata.recognizer,
+          lipSyncSource: lipSyncResult.result.metadata?.recognizer || 'unknown',
           cached: lipSyncResult.cached,
           hasEmotion: facialAnimation.metadata.hasEmotion,
           hasBlinks: facialAnimation.metadata.hasBlinks,
           hasBreathing: facialAnimation.metadata.hasBreathing,
           hasHeadMovement: facialAnimation.metadata.hasHeadMovement,
-          phonemeCount: lipSyncResult.result.phonemes.length,
+          phonemeCount: lipSyncResult.result.phonemes?.length || 0,
           quality: avatarConfig.quality
         }
       }

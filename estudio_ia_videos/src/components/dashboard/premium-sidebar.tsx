@@ -166,17 +166,18 @@ function UserAvatar() {
 }
 
 import { getBrowserClient } from '@lib/supabase/browser'
+import type { User } from '@supabase/supabase-js'
 
 function UserProfileInfo() {
     const [user, setUser] = useState<{ name: string; email: string } | null>(null)
 
     React.useEffect(() => {
         const supabase = getBrowserClient()
-        supabase.auth.getUser().then(({ data: { user } }) => {
-            if (user) {
+        supabase.auth.getUser().then(({ data: { user: authUser } }: { data: { user: User | null } }) => {
+            if (authUser) {
                 // Fetch profile name if stored in metadata or separate table
-                supabase.from('users').select('name').eq('id', user.id).single().then(({ data }) => {
-                    setUser({ name: data?.name || user.email?.split('@')[0] || 'User', email: user.email || '' })
+                supabase.from('users').select('name').eq('id', authUser.id).single().then(({ data: profileData }: { data: { name?: string } | null }) => {
+                    setUser({ name: profileData?.name || authUser.email?.split('@')[0] || 'User', email: authUser.email || '' })
                 })
             }
         })

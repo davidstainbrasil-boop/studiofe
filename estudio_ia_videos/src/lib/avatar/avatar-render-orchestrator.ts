@@ -43,13 +43,12 @@ export class AvatarRenderOrchestrator {
     }
 
     // Initialize providers
-    this.providers = new Map([
-      ['PLACEHOLDER', new PlaceholderAdapter()],
-      ['STANDARD', new DIDAdapter()],
-      // Can use either D-ID or HeyGen for STANDARD, HeyGen is backup
-      // ['STANDARD', new HeyGenAdapter()],
-      ['HIGH', new RPMAdapter()]
-    ])
+    this.providers = new Map<AvatarQuality, BaseAvatarProvider>()
+    this.providers.set('PLACEHOLDER', new PlaceholderAdapter())
+    this.providers.set('STANDARD', new DIDAdapter() as BaseAvatarProvider)
+    // Can use either D-ID or HeyGen for STANDARD, HeyGen is backup
+    // this.providers.set('STANDARD', new HeyGenAdapter() as BaseAvatarProvider)
+    this.providers.set('HIGH', new RPMAdapter() as BaseAvatarProvider)
 
     // Initialize health checks
     this.initializeHealthChecks()
@@ -137,9 +136,9 @@ export class AvatarRenderOrchestrator {
       return result
 
     } catch (error) {
-      logger.error('[AvatarRenderOrchestrator] Provider render failed', {
+      logger.error('[AvatarRenderOrchestrator] Provider render failed', error instanceof Error ? error : undefined, {
         provider: provider.name,
-        error: (error as Error).message,
+        errorMessage: (error as Error).message,
         retryCount
       })
 
@@ -323,9 +322,9 @@ export class AvatarRenderOrchestrator {
       this.providerHealth.set(provider.name, isHealthy)
       return isHealthy
     } catch (error) {
-      logger.error('[AvatarRenderOrchestrator] Health check failed', {
+      logger.error('[AvatarRenderOrchestrator] Health check failed', error instanceof Error ? error : undefined, {
         provider: provider.name,
-        error: (error as Error).message
+        errorMessage: (error as Error).message
       })
       this.providerHealth.set(provider.name, false)
       return false
@@ -349,9 +348,9 @@ export class AvatarRenderOrchestrator {
           isHealthy
         })
       } catch (error) {
-        logger.error('[AvatarRenderOrchestrator] Health check failed', {
+        logger.error('[AvatarRenderOrchestrator] Health check failed', error instanceof Error ? error : undefined, {
           provider: provider.name,
-          error: (error as Error).message
+          errorMessage: (error as Error).message
         })
         this.providerHealth.set(provider.name, false)
       }

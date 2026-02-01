@@ -65,28 +65,11 @@ export async function POST(request: NextRequest) {
             data: {
                 name: cloneResponse.voice_id ? name : `Clone - ${name}`, // Fallback name logic
                 display_name: name,
-                description: description,
+                description: `${description} [ElevenLabs ID: ${cloneResponse.voice_id}]`,
                 language: 'pt_BR', // Default
-                gender: 'NEUTRAL', // Default enum, precisa ajustar conforme input se tiver
+                gender: 'neutral', // Default enum lowercase
                 sample_audio_url: 'https://api.elevenlabs.io/v1/voices/' + cloneResponse.voice_id, // Link para API como ref
-                voice_id: cloneResponse.voice_id, // Campo deve existir no schema se foi adicionado, ou mapeamos para 'external_id'
-                // Como o schema voice_profiles não tem voice_id explícito na visualização anterior (tem id uuid),
-                // talvez ele use o ID do banco como referência interna e o ID externo em outro lugar.
-                // Mas espere, o schema voice_profiles NÃO TEM campo 'voice_id' (external ID) listado explicitamente no read anterior,
-                // tem 'id' (UUID). Se não tiver onde guardar o ID da ElevenLabs, teremos problema.
-                // O schema backup tinha 'voice_clones' com 'voice_id'.
-                // O schema atual tem 'voice_profiles'. Vamos verificar se tem campo para ID externo ou se usamos 'metadata'.
-                // Vou salvar no 'metadata' se existir ou assumir que o 'id' do banco é diferente do 'voice_id' da elevenlabs.
-                // Re-checando schema: voice_profiles tem 'sample_audio_url', mas não vi 'voice_id' (external).
-                // Ah, vi 'voice_clones' no backup, mas não no ativo.
-                // Vou salvar o ID da elevenlabs na descrição ou criar um campo se der erro, 
-                // mas para agora vou assumir que posso salvar.
-                
-                // Ajuste: O schema voice_profiles não parece ter campo para o ID da ElevenLabs (external id).
-                // Vou usar o 'training_data_url' para guardar o ID por enquanto ou assumir que precisamos criar a tabela voice_clones.
-                // Porem, para não quebrar o build, vou apenas retornar o sucesso da API.
-                // A persistência no banco local pode falhar se o schema não bater.
-                // Vou retornar o JSON da ElevenLabs direto.
+                training_data_url: cloneResponse.voice_id, // Store ElevenLabs voice_id here
             }
         }).catch(err => {
             logger.error('Erro ao salvar voice_profile no banco local', err);

@@ -1,6 +1,10 @@
 import { prisma } from '@lib/prisma';
 import { logger } from '@lib/logger';
 import { avatarRegistry } from './avatars/avatar-registry';
+import { Avatar3D } from '@lib/supabase/types';
+
+// Re-export for consumers
+export type { Avatar3D };
 
 type AvatarConfig = Record<string, unknown>;
 type AvatarCustomization = Record<string, unknown>;
@@ -153,7 +157,7 @@ export const avatar3DPipeline = {
         progress: job.progress || 0,
         avatarId: settings.avatarId as string | undefined,
         userId: job.userId || undefined,
-        startTime: job.createdAt.getTime(),
+        startTime: job.createdAt?.getTime() ?? Date.now(),
         endTime: job.completedAt?.getTime(),
         outputThumbnail: job.thumbnailUrl || undefined,
         lipSyncAccuracy: 95,
@@ -163,8 +167,8 @@ export const avatar3DPipeline = {
         rayTracingEnabled: settings.rayTracing,
         realTimeLipSync: settings.realTimeLipSync,
         language: settings.language,
-        createdAt: job.createdAt,
-        updatedAt: job.updatedAt
+        createdAt: job.createdAt ?? undefined,
+        updatedAt: job.updatedAt ?? undefined
       };
     } catch (error) {
       logger.error('Error fetching job status', error instanceof Error ? error : new Error(String(error)), { component: 'Avatar3dPipeline' });

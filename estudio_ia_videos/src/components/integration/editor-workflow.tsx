@@ -48,7 +48,7 @@ interface WorkflowStep {
   progress: number;
   estimatedTime: string;
   icon: React.ComponentType<{ className?: string }>;
-  data?: Record<string, unknown>;
+  data?: Record<string, unknown> | null;
 }
 
 interface WorkflowProject {

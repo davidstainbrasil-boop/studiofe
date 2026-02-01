@@ -119,12 +119,28 @@ export class ErrorAlertingService {
       ? 'error' 
       : alert.severity === 'warning' ? 'warn' : 'info';
     
-    logger[logMethod](`[ALERT] ${alert.service}: ${alert.message}`, { 
-      component: 'ErrorAlerting',
-      alertId: alert.id,
-      severity: alert.severity,
-      details: alert.details
-    });
+    if (logMethod === 'error') {
+      logger.error(`[ALERT] ${alert.service}: ${alert.message}`, undefined, { 
+        component: 'ErrorAlerting',
+        alertId: alert.id,
+        severity: alert.severity,
+        details: alert.details
+      });
+    } else if (logMethod === 'warn') {
+      logger.warn(`[ALERT] ${alert.service}: ${alert.message}`, { 
+        component: 'ErrorAlerting',
+        alertId: alert.id,
+        severity: alert.severity,
+        details: alert.details
+      });
+    } else {
+      logger.info(`[ALERT] ${alert.service}: ${alert.message}`, { 
+        component: 'ErrorAlerting',
+        alertId: alert.id,
+        severity: alert.severity,
+        details: alert.details
+      });
+    }
 
     // Store in memory
     this.recentAlerts.unshift(alert);
@@ -137,14 +153,14 @@ export class ErrorAlertingService {
       await prisma.analytics_events.create({
         data: {
           eventType: 'system_alert',
-          eventData: {
+          eventData: JSON.parse(JSON.stringify({
             alertId: alert.id,
             severity: alert.severity,
             service: alert.service,
             message: alert.message,
             details: alert.details,
             acknowledged: alert.acknowledged
-          }
+          }))
         }
       });
     } catch (dbError) {

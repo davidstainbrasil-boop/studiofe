@@ -60,11 +60,11 @@ export async function POST(request: NextRequest) {
       data: {
         eventType: 'project_analysis_completed',
         userId: project.userId,
-        eventData: {
+        eventData: JSON.parse(JSON.stringify({
           projectId,
           analysisType,
           result: analysisResults
-        }
+        }))
       }
     });
 

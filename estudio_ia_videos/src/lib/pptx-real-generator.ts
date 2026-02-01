@@ -127,32 +127,33 @@ export const generateRealPptxFromProject = async (
       throw new Error(`Project ${projectId} not found`);
     }
 
-    // 2. Map Slides
+    // 2. Map Slides from database
     const generatorSlides: GeneratorSlide[] = [];
     
     if (project.slides && project.slides.length > 0) {
       for (const dbSlide of project.slides) {
-         // Map json fields cautiously
-         const content = dbSlide.content as Record<string, any> || {};
+         // Content is a plain text string in our schema
+         const content = dbSlide.content || '';
          generatorSlides.push({
-           title: dbSlide.title || content.title || '',
-           content: content.text || content.body || '', // Adapt based on actual content structure
-           notes: dbSlide.notes || '',
+           title: dbSlide.title || '',
+           content: content,
+           notes: '', // notes field doesn't exist in schema, use empty
            backgroundColor: dbSlide.backgroundColor || undefined,
-           // Layout logic could be mapped from dbSlide.layoutType
          });
       }
     }
 
-    // If no slides in specific table, fall back to slidesData JSON if exists
-    if (generatorSlides.length === 0 && project.slidesData) {
-       const sData = project.slidesData as any[];
-       if (Array.isArray(sData)) {
-         sData.forEach(s => {
+    // If no slides, try to extract from project metadata
+    if (generatorSlides.length === 0 && project.metadata) {
+       const meta = project.metadata as Record<string, unknown>;
+       const slidesData = meta['slidesData'] as unknown[];
+       if (Array.isArray(slidesData)) {
+         slidesData.forEach((s: unknown) => {
+           const slide = s as Record<string, unknown>;
            generatorSlides.push({
-             title: s.title || '',
-             content: s.content || s.text || '',
-             notes: s.notes || ''
+             title: String(slide.title || ''),
+             content: String(slide.content || slide.text || ''),
+             notes: String(slide.notes || '')
            });
          });
        }
@@ -164,7 +165,7 @@ export const generateRealPptxFromProject = async (
 
     // 3. Generate PPTX
     const buffer = await pptxRealGenerator.generate(generatorSlides, {
-      author: 'Estúdio IA', // Could use user name if fetched
+      author: 'Estúdio IA',
       ...options
     });
 
@@ -177,12 +178,14 @@ export const generateRealPptxFromProject = async (
       contentType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
     });
 
+    // Update project metadata with pptx info (pptxUrl field doesn't exist in schema)
+    const currentMetadata = (project.metadata as Record<string, unknown>) || {};
     await prisma.projects.update({
       where: { id: projectId },
       data: {
-        pptxUrl,
         metadata: {
-          ...(project.metadata as object),
+          ...currentMetadata,
+          pptxUrl,
           pptxGenerated: true,
           generatedAt: new Date().toISOString(),
           slideCount: generatorSlides.length,

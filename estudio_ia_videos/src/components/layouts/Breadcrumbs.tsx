@@ -227,7 +227,7 @@ export default function Breadcrumbs() {
 
   return (
     <nav className="flex items-center space-x-1 text-sm text-text-muted" aria-label="Breadcrumb">
-      {breadcrumbs.map((item: { href: string; label: string; icon?: React.ElementType }, index: number) => {
+      {breadcrumbs.map((item: BreadcrumbItem, index: number) => {
         const isLast = index === breadcrumbs.length - 1
         const Icon = item.icon
         

@@ -34,10 +34,10 @@ export function NotificationList() {
             <div className="flex items-center justify-between p-3 border-b">
                 <h4 className="font-semibold text-sm">Notificações</h4>
                 <div className="flex gap-1">
-                    <Button variant="ghost" size="xs" onClick={markAllAsRead} className="h-6 text-[10px]">
+                    <Button variant="ghost" size="sm" onClick={markAllAsRead} className="h-6 text-[10px]">
                         Lidar todas
                     </Button>
-                    <Button variant="ghost" size="xs" onClick={clearAll} className="h-6 text-[10px]">
+                    <Button variant="ghost" size="sm" onClick={clearAll} className="h-6 text-[10px]">
                         Limpar
                     </Button>
                 </div>

@@ -209,10 +209,13 @@ export function ConversionFunnelChart({ data, height = 300, className }: ChartPr
           <XAxis dataKey="stage" />
           <YAxis />
           <Tooltip 
-            formatter={(value: string | number, name: string) => [
-              `${value} usuários`, 
-              name === 'users' ? 'Usuários' : name
-            ]}
+            formatter={(value, name) => {
+              if (value === undefined) return ['--', ''];
+              return [
+                `${value} usuários`, 
+                name === 'users' ? 'Usuários' : String(name)
+              ];
+            }}
           />
           <Bar dataKey="users" fill="#8884d8" />
           <Bar dataKey="conversion" fill="#82ca9d" />

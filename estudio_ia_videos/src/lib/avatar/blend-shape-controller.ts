@@ -121,11 +121,11 @@ export class BlendShapeController {
     // Mapear viseme para blend shapes
     const mapping = this.getVisemeBlendShapeMapping(viseme)
 
-    Object.entries(mapping).forEach(([shapeName, weight]) => {
+    for (const [shapeName, weight] of Object.entries(mapping) as [keyof BlendShapeWeights, number | undefined][]) {
       if (typeof weight === 'number') {
-        this.weights[shapeName as keyof BlendShapeWeights] = weight * intensity
+        this.weights[shapeName] = weight * intensity
       }
-    })
+    }
   }
 
   /**
@@ -428,15 +428,15 @@ ${blendShapes}
     }
 
     const overlay = emotionOverlays[emotion] || {}
-    const result: any = { ...weights }
+    const result: Record<string, number> = { ...weights as unknown as Record<string, number> }
 
     // Aplicar overlay com intensidade
-    Object.entries(overlay).forEach(([key, value]) => {
+    for (const [key, value] of Object.entries(overlay) as [string, number][]) {
       const currentValue = result[key] || 0
-      result[key] = Math.min(1.0, currentValue + (value as number) * intensity)
-    })
+      result[key] = Math.min(1.0, currentValue + value * intensity)
+    }
 
-    return result as BlendShapeWeights
+    return result as unknown as BlendShapeWeights
   }
 
   /**

@@ -1,10 +1,10 @@
 'use client';
 
-import { TimelineTrack } from '@/app/lib/timeline/types';
+import type { TimelineTrack as TimelineTrackType } from '@lib/timeline/types';
 import { useDroppable } from '@dnd-kit/core';
 import { TimelineElement } from './TimelineElement';
 
-export function TimelineTrack({ track, zoom }: { track: TimelineTrack; zoom: number }) {
+export function TimelineTrack({ track, zoom }: { track: TimelineTrackType; zoom: number }) {
     const { setNodeRef } = useDroppable({
         id: track.id,
     });

@@ -6,7 +6,7 @@ import { logger } from '@/lib/logger'
 import { Video, User, LogOut, Settings, Shield } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'react-hot-toast'
-import type { User as SupabaseUser } from '@supabase/supabase-js'
+import type { User as SupabaseUser, AuthChangeEvent, Session } from '@supabase/supabase-js'
 import { isAdminUser } from '@/lib/auth/admin-middleware'
 import { createBrowserSupabaseClient } from '@/lib/services'
 import { useRouter } from 'next/navigation'
@@ -70,7 +70,7 @@ export default function DashboardHeader() {
 
     void init()
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
       if (!isMounted) return
       const authUser = session?.user ?? null
       setUser(authUser)

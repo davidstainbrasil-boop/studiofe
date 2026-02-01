@@ -134,7 +134,7 @@ export function useComments({ projectId, enableRealtime = true }: UseCommentsOpt
           table: 'comments',
           filter: `project_id=eq.${projectId}`
         },
-        (payload) => {
+        (payload: { eventType: string; new: Comment; old: { id: string } }) => {
           if (payload.eventType === 'INSERT') {
             setComments((prev) => [...prev, payload.new as Comment])
           } else if (payload.eventType === 'UPDATE') {

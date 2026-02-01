@@ -17,7 +17,7 @@ import { logger } from '@lib/logger';
 // TYPES
 // ============================================================================
 
-interface AvatarJob {
+export interface AvatarJob {
   id: string;
   status: 'queued' | 'processing' | 'completed' | 'failed' | 'cancelled';
   progress: number;
@@ -34,6 +34,7 @@ interface GenerateAvatarOptions {
   text?: string;
   audioFile?: File;
   voiceCloning?: boolean;
+  voiceId?: string;
 }
 
 interface UseAvatarGenerationReturn {

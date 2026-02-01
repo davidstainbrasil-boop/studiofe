@@ -464,7 +464,7 @@ export const useBackupSystem = (projectId: string): UseBackupSystemReturn => {
       });
 
       // Broadcast para colaboradores
-      broadcastUpdate('backup-created', newVersion);
+      broadcastUpdate('backup-created', newVersion as unknown as Record<string, unknown>);
 
       updateStats();
       

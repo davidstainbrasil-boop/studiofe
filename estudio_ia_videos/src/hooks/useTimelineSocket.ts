@@ -152,21 +152,21 @@ export function useTimelineSocket({
       channel
         // Presence
         .on('presence', { event: 'sync' }, () => {
-          const state = channel.presenceState<UserPresence>()
+          const state = channel.presenceState()
           const users: UserPresence[] = []
           
-          Object.values(state).forEach(presences => {
-            presences.forEach(p => users.push(p))
+          Object.values(state).forEach((presences) => {
+            (presences as UserPresence[]).forEach((p: UserPresence) => users.push(p))
           })
           
           setActiveUsers(users)
         })
-        .on('presence', { event: 'join' }, ({ key, newPresences }) => {
-          newPresences.forEach(p => {
+        .on('presence', { event: 'join' }, ({ key, newPresences }: { key: string; newPresences: UserPresence[] }) => {
+          newPresences.forEach((p: UserPresence) => {
             dispatchEvent('user-joined', p)
           })
         })
-        .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+        .on('presence', { event: 'leave' }, ({ key, leftPresences }: { key: string; leftPresences: { userName?: string }[] }) => {
           leftPresences.forEach((p: { userName?: string }) => {
             const userName = p.userName || 'Usuário'
             dispatchEvent('user-left', { userId: key, userName })
@@ -174,25 +174,25 @@ export function useTimelineSocket({
         })
 
         // Broadcast Events
-        .on('broadcast', { event: 'cursor-move' }, ({ payload }) => {
+        .on('broadcast', { event: 'cursor-move' }, ({ payload }: { payload: CursorMovePayload }) => {
           dispatchEvent('cursor-move', payload)
         })
-        .on('broadcast', { event: 'track-locked' }, ({ payload }) => {
+        .on('broadcast', { event: 'track-locked' }, ({ payload }: { payload: TrackLockedPayload }) => {
           dispatchEvent('track-locked', payload)
         })
-        .on('broadcast', { event: 'track-unlocked' }, ({ payload }) => {
+        .on('broadcast', { event: 'track-unlocked' }, ({ payload }: { payload: TrackUnlockedPayload }) => {
           dispatchEvent('track-unlocked', payload)
         })
-        .on('broadcast', { event: 'timeline-updated' }, ({ payload }) => {
+        .on('broadcast', { event: 'timeline-updated' }, ({ payload }: { payload: TimelineUpdatePayload }) => {
           dispatchEvent('timeline-updated', payload)
         })
-        .on('broadcast', { event: 'notification' }, ({ payload }) => {
+        .on('broadcast', { event: 'notification' }, ({ payload }: { payload: NotificationPayload }) => {
           dispatchEvent('notification', payload)
         })
-        .on('broadcast', { event: 'element-locked' }, ({ payload }) => {
+        .on('broadcast', { event: 'element-locked' }, ({ payload }: { payload: { elementId: string; userId: string } }) => {
           dispatchEvent('element-locked', payload)
         })
-        .on('broadcast', { event: 'element-unlocked' }, ({ payload }) => {
+        .on('broadcast', { event: 'element-unlocked' }, ({ payload }: { payload: { elementId: string; userId: string } }) => {
           dispatchEvent('element-unlocked', payload)
         })
 

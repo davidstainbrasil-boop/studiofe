@@ -10,6 +10,13 @@ import { createClient } from '@lib/supabase/server';
 import { logger } from '@lib/logger';
 
 /**
+ * Cria cliente Supabase a partir da requisição
+ */
+function getSupabaseForRequest(_request: NextRequest) {
+  return createClient();
+}
+
+/**
  * Verifica se o usuário autenticado é admin
  * 
  * @param request - NextRequest da rota

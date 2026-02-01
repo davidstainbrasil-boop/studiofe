@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
         where: whereClause,
         skip: (page - 1) * limit,
         take: limit,
-        orderBy: { updatedAt: 'desc' } // Ordenar por mais recente
+        orderBy: { updated_at: 'desc' } // Ordenar por mais recente
     });
 
     const totalCount = await prisma.avatar_models.count({ where: whereClause });
@@ -92,7 +92,7 @@ export async function GET(request: NextRequest) {
     // Obter categorias e qualidades disponíveis
     // Usando distinct do Prisma
     const categoriesData = await prisma.avatar_models.findMany({
-      where: { isActive: true },
+      where: { is_active: true },
       select: { avatar_type: true },
       distinct: ['avatar_type']
     })

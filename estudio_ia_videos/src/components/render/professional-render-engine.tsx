@@ -68,11 +68,13 @@ export default function ProfessionalRenderEngine() {
     quality: 'high',
     fps: 30,
     codec: 'h264',
-    bitrate: '5000k',
+    bitrate: 5000,
     audioEnabled: true,
-    audioBitrate: '128k',
+    audioBitrate: 128,
     hardwareAcceleration: true,
-    preset: 'medium'
+    preset: 'medium',
+    includeAudio: true,
+    includeSubtitles: false
   })
 
   const converterRef = useRef<CanvasToVideoConverter | null>(null)

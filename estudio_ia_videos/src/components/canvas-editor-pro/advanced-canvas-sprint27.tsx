@@ -192,13 +192,14 @@ export default function AdvancedCanvasEditorSprint27({
     try {
       // Load background
       if (slide.backgroundImage && typeof slide.backgroundImage === 'string') {
-        fabric.Image.fromURL(slide.backgroundImage, (img) => {
-          (img as FabricImageWithId).scaleToWidth(width);
-          (img as FabricImageWithId).scaleToHeight(height);
-          (img as FabricImageWithId).selectable = false;
+        fabric.Image.fromURL(slide.backgroundImage, { crossOrigin: 'anonymous' }).then((img: Fabric.Image) => {
+          const imgWithId = img as FabricImageWithId;
+          imgWithId.scaleToWidth(width);
+          imgWithId.scaleToHeight(height);
+          imgWithId.selectable = false;
           canvas.add(img);
           canvas.sendObjectToBack(img);
-        }, {}, { crossOrigin: 'anonymous' });
+        });
       }
 
       // Load objects
@@ -215,7 +216,7 @@ export default function AdvancedCanvasEditorSprint27({
             text.id = element.id || generateId();
             canvas.add(text);
           } else if (element.type === 'image' && element.src) {
-            fabric!.Image.fromURL(element.src, (img) => {
+            fabric!.Image.fromURL(element.src, { crossOrigin: 'anonymous' }).then((img: Fabric.Image) => {
               const imgWithId = img as FabricImageWithId;
               imgWithId.set({
                 left: element.x || 100,
@@ -225,7 +226,7 @@ export default function AdvancedCanvasEditorSprint27({
               });
               imgWithId.id = element.id || generateId();
               canvas.add(img);
-            }, {}, { crossOrigin: 'anonymous' });
+            });
           }
         })
       }
@@ -244,7 +245,7 @@ export default function AdvancedCanvasEditorSprint27({
   const saveHistory = useCallback(() => {
     if (!canvas) return
 
-    const json = JSON.stringify(canvas.toJSON(['id']))
+    const json = JSON.stringify(canvas.toJSON())
 
     setHistory(prev => {
       const newHistory = prev.slice(0, historyIndex + 1)
@@ -268,7 +269,7 @@ export default function AdvancedCanvasEditorSprint27({
     const newIndex = historyIndex - 1
     setHistoryIndex(newIndex)
 
-    canvas.loadFromJSON(history[newIndex], () => {
+    canvas.loadFromJSON(history[newIndex]).then(() => {
       canvas.renderAll()
       updateLayers()
       toast.success('Desfeito')
@@ -284,7 +285,7 @@ export default function AdvancedCanvasEditorSprint27({
     const newIndex = historyIndex + 1
     setHistoryIndex(newIndex)
 
-    canvas.loadFromJSON(history[newIndex], () => {
+    canvas.loadFromJSON(history[newIndex]).then(() => {
       canvas.renderAll()
       updateLayers()
       toast.success('Refeito')
@@ -355,7 +356,7 @@ export default function AdvancedCanvasEditorSprint27({
       const reader = new FileReader()
       reader.onload = (event: ProgressEvent<FileReader>) => {
         if (event.target?.result && typeof event.target.result === 'string') {
-          fabric!.Image.fromURL(event.target.result, (img) => {
+          fabric!.Image.fromURL(event.target.result, { crossOrigin: 'anonymous' }).then((img: Fabric.Image) => {
             const imgWithId = img as FabricImageWithId;
             imgWithId.scaleToWidth(400);
             imgWithId.set({
@@ -368,7 +369,7 @@ export default function AdvancedCanvasEditorSprint27({
             canvas.renderAll();
             saveHistory();
             toast.success('Imagem adicionada');
-          }, {}, { crossOrigin: 'anonymous' });
+          });
         }
       }
       reader.readAsDataURL(file)
@@ -448,8 +449,8 @@ export default function AdvancedCanvasEditorSprint27({
     if (!canvas) return
 
     const data = {
-      json: canvas.toJSON(['id']),
-      png: canvas.toDataURL({ format: 'png', quality: 1 }),
+      json: canvas.toJSON(),
+      png: canvas.toDataURL({ format: 'png', multiplier: 1 }),
       svg: canvas.toSVG()
     }
 

@@ -130,10 +130,10 @@ export async function POST(request: NextRequest) {
       { status: 202 },
     );
   } catch (error) {
-    logger.error('🧪 TEST: Error processing avatar render request', {
-      component: 'API: v2/test/avatars/render',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    logger.error('🧪 TEST: Error processing avatar render request', 
+      error instanceof Error ? error : new Error(String(error)),
+      { component: 'API: v2/test/avatars/render' }
+    );
 
     return NextResponse.json(
       {

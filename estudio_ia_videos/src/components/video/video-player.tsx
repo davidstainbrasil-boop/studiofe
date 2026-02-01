@@ -184,7 +184,6 @@ export function VideoPlayer({
         spaceKeyToPlayOrPause
         renderLoading={renderLoading}
         errorFallback={errorFallback}
-        volume={isMuted ? 0 : volume}
       />
 
       {/* Custom Controls */}

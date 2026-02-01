@@ -168,7 +168,8 @@ export class SceneDetectionService {
              scene.thumbnail = url;
              await fs.unlink(thumbPath).catch(() => {});
          } catch (e) {
-             logger.warn(`Failed to generate thumbnail for scene ${scene.id}`, e);
+             const errorContext = e instanceof Error ? { error: e.message } : undefined;
+             logger.warn(`Failed to generate thumbnail for scene ${scene.id}`, errorContext);
          }
      }
      return enriched;

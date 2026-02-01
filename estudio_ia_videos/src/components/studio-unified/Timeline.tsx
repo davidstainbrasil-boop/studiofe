@@ -40,11 +40,11 @@ import type {
 
 export interface TimelineProps {
   scenes: Scene[];
-  currentScene: Scene;
+  currentScene: Scene | null;
   timelineState: TimelineState;
   onTimeUpdate: (time: number) => void;
   onSceneChange: (sceneId: string) => void;
-  onTrackUpdate: (sceneId: string, track: Track) => void;
+  onTrackUpdate: (track: Track) => void;
   onElementSelect: (elementIds: string[]) => void;
   onElementUpdate: (elementId: string, updates: Partial<TimelineElement>) => void;
   onPlayPause: () => void;
@@ -83,20 +83,24 @@ export function Timeline({
   const containerRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(timelineState.zoom);
 
+  // Safe access to currentScene with fallback values
+  const sceneDuration = currentScene?.duration ?? 0;
+  const sceneTracks = currentScene?.tracks ?? [];
+
   // Calculate total timeline width
-  const timelineWidth = currentScene.duration * zoom;
+  const timelineWidth = sceneDuration * zoom;
 
   // Render timeline tracks on canvas
   const renderTimeline = useCallback(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas || !currentScene) return;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     // Set canvas size
     canvas.width = timelineWidth + TRACK_HEADER_WIDTH;
-    canvas.height = currentScene.tracks.length * TRACK_HEIGHT + RULER_HEIGHT;
+    canvas.height = sceneTracks.length * TRACK_HEIGHT + RULER_HEIGHT;
 
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -105,14 +109,14 @@ export function Timeline({
     renderTimeRuler(ctx);
 
     // Render each track
-    currentScene.tracks.forEach((track, trackIndex) => {
+    sceneTracks.forEach((track, trackIndex) => {
       const y = trackIndex * TRACK_HEIGHT + RULER_HEIGHT;
       renderTrack(ctx, track, trackIndex, y);
     });
 
     // Render playback head
     renderPlaybackHead(ctx);
-  }, [currentScene, timelineWidth, zoom, timelineState.currentTime]);
+  }, [currentScene, sceneTracks, timelineWidth, zoom, timelineState.currentTime]);
 
   // Render time ruler (top bar with time markers)
   const renderTimeRuler = useCallback(
@@ -126,7 +130,7 @@ export function Timeline({
       ctx.fillStyle = '#a1a1a1';
 
       // Draw time markers every second
-      for (let i = 0; i <= currentScene.duration; i++) {
+      for (let i = 0; i <= sceneDuration; i++) {
         const x = TRACK_HEADER_WIDTH + i * zoom;
 
         // Major marker every 5 seconds
@@ -149,7 +153,7 @@ export function Timeline({
         }
       }
     },
-    [currentScene.duration, zoom, timelineWidth],
+    [sceneDuration, zoom, timelineWidth],
   );
 
   // Render single track
@@ -295,7 +299,7 @@ export function Timeline({
   const handleCanvasClick = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement>) => {
       const canvas = canvasRef.current;
-      if (!canvas) return;
+      if (!canvas || !currentScene) return;
 
       const rect = canvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
@@ -304,13 +308,13 @@ export function Timeline({
       // Click on ruler - seek to time
       if (y < RULER_HEIGHT) {
         const time = Math.max(0, (x - TRACK_HEADER_WIDTH) / zoom);
-        onTimeUpdate(Math.min(time, currentScene.duration));
+        onTimeUpdate(Math.min(time, sceneDuration));
         return;
       }
 
       // Click on track element - select element
       const trackIndex = Math.floor((y - RULER_HEIGHT) / TRACK_HEIGHT);
-      const track = currentScene.tracks[trackIndex];
+      const track = sceneTracks[trackIndex];
 
       if (track) {
         const clickTime = (x - TRACK_HEADER_WIDTH) / zoom;
@@ -348,43 +352,46 @@ export function Timeline({
   // Toggle track lock
   const toggleTrackLock = useCallback(
     (trackId: string) => {
-      const track = currentScene.tracks.find((t) => t.id === trackId);
+      if (!currentScene) return;
+      const track = sceneTracks.find((t) => t.id === trackId);
       if (track) {
-        onTrackUpdate(currentScene.id, {
+        onTrackUpdate({
           ...track,
           locked: !track.locked,
         });
       }
     },
-    [currentScene, onTrackUpdate],
+    [currentScene, sceneTracks, onTrackUpdate],
   );
 
   // Toggle track visibility
   const toggleTrackVisibility = useCallback(
     (trackId: string) => {
-      const track = currentScene.tracks.find((t) => t.id === trackId);
+      if (!currentScene) return;
+      const track = sceneTracks.find((t) => t.id === trackId);
       if (track) {
-        onTrackUpdate(currentScene.id, {
+        onTrackUpdate({
           ...track,
           visible: !track.visible,
         });
       }
     },
-    [currentScene, onTrackUpdate],
+    [currentScene, sceneTracks, onTrackUpdate],
   );
 
   // Toggle track mute
   const toggleTrackMute = useCallback(
     (trackId: string) => {
-      const track = currentScene.tracks.find((t) => t.id === trackId);
+      if (!currentScene) return;
+      const track = sceneTracks.find((t) => t.id === trackId);
       if (track && (track.type === 'audio' || track.type === 'video')) {
-        onTrackUpdate(currentScene.id, {
+        onTrackUpdate({
           ...track,
           muted: !track.muted,
         });
       }
     },
-    [currentScene, onTrackUpdate],
+    [currentScene, sceneTracks, onTrackUpdate],
   );
 
   // Re-render canvas when dependencies change
@@ -424,8 +431,8 @@ export function Timeline({
           {Math.floor((timelineState.currentTime % 1) * 100)
             .toString()
             .padStart(2, '0')}{' '}
-          / {Math.floor(currentScene.duration / 60)}:
-          {Math.floor(currentScene.duration % 60)
+          / {Math.floor(sceneDuration / 60)}:
+          {Math.floor(sceneDuration % 60)
             .toString()
             .padStart(2, '0')}
         </div>
@@ -471,7 +478,7 @@ export function Timeline({
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-400">Scene:</span>
           <select
-            value={currentScene.id}
+            value={currentScene?.id ?? ''}
             onChange={(e) => onSceneChange(e.target.value)}
             className="bg-gray-900 border border-gray-700 rounded px-2 py-1 text-xs text-white"
           >
@@ -495,7 +502,7 @@ export function Timeline({
 
       {/* Track Controls (Overlaid on left side) */}
       <div className="absolute left-0 mt-[50px] pointer-events-none" style={{ top: RULER_HEIGHT }}>
-        {currentScene.tracks.map((track, index) => (
+        {sceneTracks.map((track, index) => (
           <div
             key={track.id}
             className="flex items-center gap-1 px-2 pointer-events-auto"

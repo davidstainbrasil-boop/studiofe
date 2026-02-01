@@ -360,15 +360,18 @@ export default function AssetsManagerPremium({
         )}>
           
           {/* Thumbnail */}
-          {asset.type === 'image' && (
-            <Image
-              src={asset.thumbnailUrl || asset.url}
-              alt={asset.title}
-              fill
-              className="object-cover rounded-t-lg"
-              sizes={viewMode === 'grid' ? "300px" : "128px"}
-            />
-          )}
+          {asset.type === 'image' && (() => {
+            const imgSrc = asset.thumbnailUrl ?? asset.url;
+            return imgSrc ? (
+              <Image
+                src={imgSrc}
+                alt={asset.title ?? 'Asset'}
+                fill
+                className="object-cover rounded-t-lg"
+                sizes={viewMode === 'grid' ? "300px" : "128px"}
+              />
+            ) : null;
+          })()}
           
           {asset.type === 'audio' && (
             <div className="w-full h-full bg-gradient-to-br from-purple-400 to-purple-600 rounded-t-lg flex items-center justify-center">
@@ -415,11 +418,14 @@ export default function AssetsManagerPremium({
             <Button
               size="sm"
               variant="secondary"
+              disabled={!asset.url}
               onClick={(e) => {
                 e.stopPropagation()
+                const url = asset.url
+                if (!url) return
                 const a = document.createElement('a')
-                a.href = asset.url
-                a.download = asset.title
+                a.href = url
+                a.download = asset.title ?? 'asset'
                 a.click()
               }}
             >

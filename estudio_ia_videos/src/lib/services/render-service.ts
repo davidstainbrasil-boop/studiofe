@@ -1,4 +1,4 @@
-import { VideoRenderWorker, RenderJobData } from '@lib/workers/video-render-worker';
+import { VideoRenderWorker, RenderJobData, SlideContent } from '@lib/workers/video-render-worker';
 import { logger } from '@/lib/logger';
 import { Slide } from '@lib/types';
 import { prisma } from '@lib/prisma';
@@ -15,12 +15,21 @@ export const RenderService = {
     
     const jobId = uuidv4();
 
-    // Mock config for now, should be passed from the client
-    const normalizedSlides = slides.map((slide) => ({
-      id: slide.id,
-      content: slide.content ?? slide,
-      duration: slide.duration,
-    }));
+    // Convert Slide to SlideContent for the worker
+    const normalizedSlides = slides.map((slide) => {
+      const content: SlideContent = {
+        title: slide.title,
+        text: slide.content,
+        backgroundColor: slide.visualSettings?.backgroundColor,
+        imageUrl: slide.visualSettings?.backgroundImageUrl,
+        elements: slide.elements,
+      };
+      return {
+        id: slide.id,
+        content,
+        duration: slide.duration,
+      };
+    });
 
     const jobData: RenderJobData = {
       id: jobId,

@@ -54,7 +54,7 @@ export function FabricCanvasEditor({
   height = 600,
   onCanvasUpdate,
   initialData,
-  projectName: _projectName = "Projeto Canvas",
+  projectName = "Projeto Canvas",
   onSelectionChange,
   selectedElement
 }: FabricCanvasEditorProps) {

@@ -10,9 +10,9 @@ export default async function BrowsePage() {
   // Transform templates to Netflix items
   const nrItems = templates.map(t => ({
     id: t.id,
-    title: `${t.nr_number} - ${t.title}`,
+    title: `${t.nrNumber || t.nr_code || 'NR'} - ${t.title}`,
     image: '', // TODO: Add thumbnail URL to NRTemplate or use a placeholder generator
-    duration: `${Math.floor(t.duration_seconds / 60)} min`,
+    duration: `${Math.floor((t.durationSeconds || 0) / 60)} min`,
     description: t.description || 'Sem descrição',
     match: 98,
     year: 2024,

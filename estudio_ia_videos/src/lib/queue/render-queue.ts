@@ -6,10 +6,14 @@
 import { Queue, QueueEvents, Worker, type Job, type WorkerOptions, type ConnectionOptions } from 'bullmq';
 import Redis from 'ioredis';
 import { logger } from '@lib/logger';
+import type { RenderTaskPayload } from './types';
 
 // Configuração Redis
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
 const QUEUE_NAME = process.env.RENDER_QUEUE_NAME || 'render-jobs';
+
+// Estado de conexão Redis
+let isRedisConnected = false;
 
 // Criar conexão Redis
 const redisClient = new Redis(REDIS_URL, {
@@ -24,14 +28,33 @@ const redisClient = new Redis(REDIS_URL, {
 // Cast para ConnectionOptions (ioredis versões são compatíveis em runtime)
 const connection = redisClient as unknown as ConnectionOptions;
 
-// Log de conexão
+// Log de conexão e tracking de estado
 redisClient.on('connect', () => {
+  isRedisConnected = true;
   logger.info('Redis connected for render queue', { service: 'RenderQueue', url: REDIS_URL });
 });
 
+redisClient.on('ready', () => {
+  isRedisConnected = true;
+});
+
 redisClient.on('error', (error) => {
+  isRedisConnected = false;
   logger.error('Redis connection error', error instanceof Error ? error : new Error(String(error)));
 });
+
+redisClient.on('close', () => {
+  isRedisConnected = false;
+  logger.warn('Redis connection closed', { service: 'RenderQueue' });
+});
+
+/**
+ * Verifica se Redis está conectado e disponível
+ * @returns true se Redis está pronto para aceitar comandos
+ */
+export function isQueueAvailable(): boolean {
+  return isRedisConnected && redisClient.status === 'ready';
+}
 
 // Criar Queue BullMQ
 export const videoQueue = new Queue(QUEUE_NAME, {
@@ -60,7 +83,7 @@ const queueEvents = new QueueEvents(QUEUE_NAME, { connection });
 // Interface para compatibilidade com código anterior
 export interface RenderQueueEvents {
   on(event: string, handler: Function): void;
-  emit(event: string, data: any): void;
+  emit(event: string, data: unknown): void;
   removeListener(event: string, handler: Function): void;
   close(): Promise<void>;
 }
@@ -108,8 +131,19 @@ export function createRenderWorker<TPayload = unknown, TResult = unknown>(
  *
  * @param jobData - Dados do job (projectId, userId, slides, config)
  * @returns Job ID do BullMQ
+ * @throws Error se Redis não estiver disponível
  */
-export async function addVideoJob(jobData: any): Promise<string> {
+export async function addVideoJob(jobData: RenderTaskPayload): Promise<string> {
+  // Verificar disponibilidade do Redis antes de enfileirar
+  if (!isQueueAvailable()) {
+    logger.error('Cannot add job - Redis queue unavailable', new Error('REDIS_UNAVAILABLE'), {
+      service: 'RenderQueue',
+      projectId: jobData.projectId,
+      redisStatus: redisClient.status
+    });
+    throw new Error('QUEUE_UNAVAILABLE: Redis is not connected. Please try again later.');
+  }
+
   try {
     logger.info('Adding video render job to queue', {
       service: 'RenderQueue',

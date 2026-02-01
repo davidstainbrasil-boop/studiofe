@@ -183,14 +183,14 @@ export class ReadyPlayerMeService {
             quality: params.quality,
             voiceId: params.voiceId,
           },
-          settings: {
+          settings: JSON.parse(JSON.stringify({
             type: 'rpm-avatar-render',
             avatarUrl: normalizedUrl,
             audioUrl: params.audioUrl,
             text: params.text,
             blendShapeFrames,
             glbMetadata,
-          },
+          })),
         },
       });
 
@@ -198,7 +198,8 @@ export class ReadyPlayerMeService {
       const bullmqJobId = await addVideoJob({
         jobId,
         userId: params.userId,
-        type: 'rpm-avatar',
+        projectId: jobId, // Use jobId as projectId for RPM renders
+        type: 'render',
         composition: 'RPMAvatar',
         inputProps: {
           avatarUrl: normalizedUrl,
@@ -304,7 +305,7 @@ export class ReadyPlayerMeService {
         jobId,
         status,
         videoUrl,
-        error: bullmqStatus.error || (metadata?.error as string | undefined),
+        error: bullmqStatus.error || (settings?.error as string | undefined),
         cost: 3,
       };
     } catch (error) {

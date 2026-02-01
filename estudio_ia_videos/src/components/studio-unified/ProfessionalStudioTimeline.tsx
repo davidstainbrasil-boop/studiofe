@@ -854,7 +854,7 @@ export default function ProfessionalStudioTimeline() {
           <div className="flex-1 flex flex-col overflow-hidden">
             {/* Ruler */}
             <div className="h-12 bg-gray-900 border-b border-gray-800 relative overflow-hidden">
-              <ScrollArea orientation="horizontal" className="h-full">
+              <ScrollArea className="h-full">
                 <div className="relative" style={{ width: timelineWidth }}>
                   {Array.from({ length: Math.ceil(state.duration) }).map((_, i) => (
                     <div

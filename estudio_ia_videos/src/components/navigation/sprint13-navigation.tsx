@@ -398,14 +398,18 @@ export default function Sprint13Navigation() {
 
                     {/* Feature Stats */}
                     <div className="grid grid-cols-3 gap-2 pt-3 border-t border-gray-100">
-                      {Object.entries(feature.stats).map(([key, value], index) => (
-                        <div key={index} className="text-center">
-                          <div className={`text-sm font-bold ${getIconColor(feature.color)}`}>
-                            {value}
+                      {Object.entries(feature.stats || {}).map((entry, index) => {
+                        if (!entry) return null;
+                        const [key, value] = entry;
+                        return (
+                          <div key={index} className="text-center">
+                            <div className={`text-sm font-bold ${getIconColor(feature.color)}`}>
+                              {value}
+                            </div>
+                            <div className="text-xs text-gray-500 capitalize">{key}</div>
                           </div>
-                          <div className="text-xs text-gray-500 capitalize">{key}</div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
 

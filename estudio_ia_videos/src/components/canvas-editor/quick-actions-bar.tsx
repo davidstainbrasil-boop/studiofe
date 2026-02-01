@@ -297,8 +297,15 @@ export function QuickActionsBar({
 interface CanvasLike {
   getActiveObjects?: () => CanvasObject[];
   getZoom?: () => number;
+  setZoom?: (zoom: number) => void;
   on?: (event: string, handler: () => void) => void;
   off?: (event: string, handler: () => void) => void;
+  undo?: () => void;
+  redo?: () => void;
+  centerObject?: (object?: unknown) => void;
+  renderAll?: () => void;
+  group?: (objects?: CanvasObject[]) => void;
+  ungroup?: (group?: unknown) => void;
 }
 
 // Hook para integrar com canvas
@@ -346,13 +353,13 @@ export function useQuickActions(canvas: CanvasLike | null) {
       if (canvas?.redo) canvas.redo()
     },
     onZoomIn: () => {
-      if (canvas?.setZoom) {
+      if (canvas?.setZoom && canvas?.getZoom) {
         const currentZoom = canvas.getZoom() || 1
         canvas.setZoom(Math.min(currentZoom * 1.1, 5))
       }
     },
     onZoomOut: () => {
-      if (canvas?.setZoom) {
+      if (canvas?.setZoom && canvas?.getZoom) {
         const currentZoom = canvas.getZoom() || 1
         canvas.setZoom(Math.max(currentZoom * 0.9, 0.1))
       }

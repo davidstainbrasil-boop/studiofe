@@ -106,7 +106,7 @@ export class StorageServiceReal {
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
     if (!supabaseUrl || !supabaseKey) {
-      logger.error('Supabase credentials not configured', { component: 'StorageService' })
+      logger.error('Supabase credentials not configured', undefined, { component: 'StorageService' })
       throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required')
     }
 

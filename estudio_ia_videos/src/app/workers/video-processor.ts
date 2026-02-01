@@ -10,10 +10,11 @@ import os from 'os';
 import path from 'path';
 import { promises as fs, createWriteStream } from 'fs';
 import { pipeline } from 'stream/promises';
+import { Readable } from 'stream';
 import type { ExportSettings } from '@/types/export.types';
 import { RESOLUTION_CONFIGS } from '@/types/export.types';
 
-interface ExportJobPayload extends RenderTaskPayload {
+interface ExportJobPayload extends Omit<RenderTaskPayload, 'type'> {
   type: 'export';
   userId: string;
   sourceUrl: string;
@@ -32,9 +33,9 @@ export const workerHandler = async (job: Job<RenderTaskPayload, RenderTaskResult
   });
 
   try {
-    if ((job.data as ExportJobPayload).type === 'export') {
+    if ((job.data as unknown as ExportJobPayload).type === 'export') {
       const result = await handleExportJob(
-        job as Job<ExportJobPayload, RenderTaskResult>,
+        job as unknown as Job<ExportJobPayload, RenderTaskResult>,
         startTime,
       );
       return result;
@@ -81,16 +82,21 @@ const downloadToFile = async (url: string, filePath: string) => {
     throw new Error(`Falha ao baixar arquivo: ${response.status} ${response.statusText}`);
   }
   await fs.mkdir(path.dirname(filePath), { recursive: true });
-  await pipeline(response.body, createWriteStream(filePath));
+  // Convert Web ReadableStream to Node.js Readable
+  const nodeStream = Readable.fromWeb(response.body as import('stream/web').ReadableStream<Uint8Array>);
+  await pipeline(nodeStream, createWriteStream(filePath));
 };
 
 const handleExportJob = async (job: Job<ExportJobPayload, RenderTaskResult>, startTime: number) => {
-  const jobId = job.id?.toString();
-  if (!jobId) {
+  const rawJobId = job.id;
+  if (!rawJobId) {
     throw new Error('Job ID ausente');
   }
+  const jobId: string = rawJobId.toString();
 
-  const { projectId, userId, sourceUrl, exportSettings, subtitleUrl } = job.data;
+  const { sourceUrl, exportSettings, subtitleUrl } = job.data;
+  const projectId = typeof job.data.projectId === 'string' ? job.data.projectId : '';
+  const userId = typeof job.data.userId === 'string' ? job.data.userId : '';
   if (!projectId || !userId || !sourceUrl || !exportSettings) {
     throw new Error('Dados de exportação incompletos');
   }

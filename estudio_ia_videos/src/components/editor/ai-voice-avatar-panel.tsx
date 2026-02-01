@@ -94,7 +94,7 @@ export function AIVoiceAvatarPanel({ onContentGenerated, onAddToSlide }: AIVoice
         type: 'tts' as const,
         data: {
           text,
-          voice: selectedVoice,
+          voiceId: selectedVoice,
           audioUrl: `/api/tts/generated/${Date.now()}.mp3`,
           duration: Math.ceil(text.length * 0.1), // Estimativa
         }
@@ -132,8 +132,7 @@ export function AIVoiceAvatarPanel({ onContentGenerated, onAddToSlide }: AIVoice
         type: 'avatar' as const,
         data: {
           text,
-          avatar: selectedAvatar,
-          voice: selectedVoice,
+          avatarId: selectedAvatar,
           videoUrl: `/api/avatar/generated/${Date.now()}.mp4`,
           duration: Math.ceil(text.length * 0.12), // Estimativa
         }

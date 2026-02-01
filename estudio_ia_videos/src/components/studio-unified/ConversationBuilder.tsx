@@ -48,9 +48,11 @@ import type { Avatar, Conversation, Dialogue, AvatarEmotion } from '@/types/vide
 
 export interface ConversationBuilderProps {
   avatars: Avatar[];
+  availableAvatars?: Avatar[];  // Alias for avatars
+  existingConversations?: Conversation[];  // For reference
   conversation?: Conversation;
   onSave: (conversation: Conversation) => void;
-  onCancel: () => void;
+  onCancel?: () => void;
   className?: string;
 }
 
@@ -511,9 +513,11 @@ export function ConversationBuilder({
 
       {/* Actions */}
       <div className="border-t p-4 flex items-center justify-between">
-        <Button variant="outline" onClick={onCancel}>
-          Cancel
-        </Button>
+        {onCancel && (
+          <Button variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+        )}
         <div className="flex items-center gap-2">
           <Badge variant="secondary">
             <Clock className="h-3 w-3 mr-1" />

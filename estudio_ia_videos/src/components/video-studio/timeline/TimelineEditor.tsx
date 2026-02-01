@@ -2,11 +2,19 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { DndContext, DragEndEvent } from '@dnd-kit/core';
-import type { TimelineProject, TimelineTrack } from '@lib/timeline/types';
+import type { TimelineTrack } from '@lib/timeline/types';
 import { TimelineTrack as TrackComponent } from './TimelineTrack';
 import { TimelineRuler } from './TimelineRuler';
 import { Button } from '@components/ui/button';
 import { Play, Pause, ZoomIn, ZoomOut, Plus, Settings } from 'lucide-react';
+
+// Local interface for project since TimelineState doesn't quite match
+interface TimelineProject {
+  id: string;
+  duration: number;
+  fps: number;
+  tracks: TimelineTrack[];
+}
 
 export function TimelineEditor({ projectId }: { projectId: string }) {
     const [project, setProject] = useState<TimelineProject | null>(null);
@@ -28,13 +36,16 @@ export function TimelineEditor({ projectId }: { projectId: string }) {
                     name: 'Video 1',
                     locked: false,
                     visible: true,
+                    muted: false,
+                    solo: false,
+                    height: 80,
                     elements: [
                         {
                             id: 'el-1',
                             trackId: 't1',
                             startTime: 0,
                             duration: 10,
-                            properties: { x: 0, y: 0 },
+                            properties: { opacity: 1 },
                             keyframes: []
                         }
                     ]
@@ -45,6 +56,9 @@ export function TimelineEditor({ projectId }: { projectId: string }) {
                     name: 'Audio 1',
                     locked: false,
                     visible: true,
+                    muted: false,
+                    solo: false,
+                    height: 60,
                     elements: [
                         {
                             id: 'el-2',
@@ -75,6 +89,9 @@ export function TimelineEditor({ projectId }: { projectId: string }) {
             name: `${type.charAt(0).toUpperCase() + type.slice(1)} ${project.tracks.length + 1}`,
             locked: false,
             visible: true,
+            muted: false,
+            solo: false,
+            height: 60,
             elements: []
         };
         setProject({

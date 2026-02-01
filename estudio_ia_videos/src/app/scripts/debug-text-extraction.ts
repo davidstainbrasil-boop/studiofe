@@ -5,7 +5,7 @@
 
 import PptxGenJS from 'pptxgenjs'
 import JSZip from 'jszip'
-import { PPTXTextParser } from '../lib/pptx/parsers/text-parser'
+import { PPTXTextParser } from '@/lib/pptx/parsers/text-parser'
 
 async function debugTextExtraction() {
   console.log('🔍 DEBUGANDO EXTRAÇÃO DE TEXTO')
@@ -66,24 +66,14 @@ async function debugTextExtraction() {
     const textResult = await parser.extractTextFromSlide(zip, 1)
     
     console.log('📊 Resultado do parser:')
-    console.log(`- Sucesso: ${textResult.success}`)
-    console.log(`- Texto plano: "${textResult.plainText}"`)
-    // console.log(`- Texto formatado: "${textResult.formattedText}"`) // Removed as it doesn't exist
-    console.log(`- Caixas de texto: ${textResult.textBoxes?.length || 0}`)
+    console.log(`- Texto: "${textResult.text}"`)
+    console.log(`- Linhas: ${textResult.lines.length}`)
     console.log(`- Contagem de palavras: ${textResult.wordCount}`)
-    console.log(`- Contagem de caracteres: ${textResult.characterCount}`)
+    console.log(`- Bullet points: ${textResult.bulletPoints?.length || 0}`)
     
-    if (textResult.error) {
-      console.log(`❌ Erro: ${textResult.error}`)
-    }
-    
-    textResult.textBoxes?.forEach((box, index) => {
-      console.log(`\n📝 Caixa de texto ${index + 1}:`)
-      console.log(`  Texto: "${box.text}"`)
-      if (box.position) {
-        console.log(`  Posição: x=${box.position.x}, y=${box.position.y}`)
-        console.log(`  Tamanho: w=${box.position.width}, h=${box.position.height}`)
-      }
+    textResult.lines.forEach((line: string, index: number) => {
+      console.log(`\n📝 Linha ${index + 1}:`)
+      console.log(`  Texto: "${line}"`)
     })
     
   } catch (error) {

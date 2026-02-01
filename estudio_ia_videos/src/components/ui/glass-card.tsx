@@ -1,7 +1,6 @@
 "use client";
 
 import { cn } from "@lib/utils"
-// import { motion, HTMLMotionProps } from "framer-motion"
 import React from "react"
 import dynamic from "next/dynamic"
 
@@ -12,14 +11,14 @@ const MotionDiv = dynamic(() => import("framer-motion").then((mod) => mod.motion
 })
 
 // Use standard HTML props for the interface since we are wrapping it
-interface GlassCardProps extends React.HTMLAttributes<HTMLDivElement> {
+interface GlassCardProps {
     children: React.ReactNode
     className?: string
     gradient?: boolean
 }
 
 export const GlassCard = React.forwardRef<HTMLDivElement, GlassCardProps>(
-    ({ children, className, gradient = false, ...props }, ref) => {
+    ({ children, className, gradient = false }, ref) => {
         return (
             <MotionDiv
                 ref={ref}
@@ -31,7 +30,6 @@ export const GlassCard = React.forwardRef<HTMLDivElement, GlassCardProps>(
                     gradient && "bg-gradient-to-br from-white/10 to-white/5 dark:from-white/5 dark:to-transparent",
                     className
                 )}
-                {...props}
             >
                 {gradient && (
                     <div className="absolute -left-32 -top-32 h-64 w-64 rounded-full bg-primary/20 blur-3xl" />

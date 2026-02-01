@@ -33,7 +33,7 @@ type ExportData = string;
 /** Resultado de validação de template */
 interface ValidationResult {
   index: number;
-  template: Template;
+  template: Partial<Template>;
   valid: boolean;
   errors: string[];
   warnings: string[];
@@ -170,7 +170,7 @@ export const TemplateImportExport: React.FC<TemplateImportExportProps> = ({
 
     setValidationResults(results);
     
-    const validTemplates = results.filter(r => r.valid).map(r => r.template);
+    const validTemplates = results.filter(r => r.valid && r.template.id).map(r => r.template as Template);
     
     if (validTemplates.length > 0) {
       setStatus('success');

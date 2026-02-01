@@ -2,7 +2,7 @@
 
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { logger } from '@lib/logger'
 import { Button } from '../ui/button'
 import { Card, CardContent } from '../ui/card'
@@ -34,6 +34,7 @@ export default function PWAInstallPrompt() {
   const [isInstalled, setIsInstalled] = useState(false)
   const [supportsPWA, setSupportsPWA] = useState(false)
   const [hasDismissed, setHasDismissed] = useState(false)
+  const autoPromptTriggered = useRef(false)
 
   useEffect(() => {
     if (typeof window === 'undefined') {

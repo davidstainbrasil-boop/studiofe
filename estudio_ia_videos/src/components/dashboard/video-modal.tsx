@@ -67,12 +67,12 @@ export function VideoModal({ template, isOpen, onClose }: VideoModalProps) {
                     className="h-full w-full bg-cover bg-center transition-opacity duration-500"
                     style={{ 
                         backgroundImage: `url('/images/placeholders/nr-hero.jpg')`, // Fallback
-                        backgroundColor: template.template_config.themeColor || '#1e3a8a'
+                        backgroundColor: '#1e3a8a'
                     }}
                 >
                     {/* Simulated Video Content */}
                     <div className="flex h-full w-full items-center justify-center bg-black/20">
-                        <h1 className="text-6xl font-bold text-white/10 select-none">{template.nr_number}</h1>
+                        <h1 className="text-6xl font-bold text-white/10 select-none">{template.nrNumber || template.nr_code}</h1>
                     </div>
                 </div>
                 
@@ -128,24 +128,24 @@ export function VideoModal({ template, isOpen, onClose }: VideoModalProps) {
               <div className="space-y-4">
                 <div className="flex items-center gap-2 text-sm font-semibold text-green-500">
                   <span>98% Match</span>
-                  <span className="text-gray-400">{new Date(template.updatedAt).getFullYear()}</span>
+                  <span className="text-gray-400">{new Date(template.createdAt).getFullYear()}</span>
                   <Badge variant="outline" className="border-gray-600 text-gray-300">HD</Badge>
                   <Badge variant="outline" className="border-gray-600 text-gray-300">5.1</Badge>
                 </div>
                 
                 <p className="text-lg leading-relaxed text-gray-300">
-                  {template.description || `Experience the comprehensive guide to ${template.title}. This training module covers all essential safety protocols and compliance requirements defined in ${template.nr_number}.`}
+                  {template.description || `Experience the comprehensive guide to ${template.title}. This training module covers all essential safety protocols and compliance requirements defined in ${template.nrNumber || template.nr_code || 'this NR'}.`}
                 </p>
               </div>
 
               <div className="space-y-4 text-sm text-gray-400">
                 <div>
                   <span className="text-gray-500">Duration:</span>{' '}
-                  <span className="text-white">{Math.floor(template.duration_seconds / 60)}m</span>
+                  <span className="text-white">{Math.floor((template.durationSeconds || 0) / 60)}m</span>
                 </div>
                 <div>
                   <span className="text-gray-500">Slides:</span>{' '}
-                  <span className="text-white">{template.slide_count}</span>
+                  <span className="text-white">{template.slideCount || 0}</span>
                 </div>
                 <div>
                   <span className="text-gray-500">Genres:</span>{' '}

@@ -610,7 +610,12 @@ export default function AvatarStudioComplete({
               <TabsContent value="export" className="h-full m-0 p-6">
                 <AvatarExportSystem
                   avatarId={currentProject?.avatar?.id || 'default'}
-                  avatarData={currentProject}
+                  avatarData={currentProject ? {
+                    id: currentProject.id,
+                    name: currentProject.name,
+                    model: currentProject.avatar?.name,
+                    settings: currentProject.settings as Record<string, unknown>
+                  } : undefined}
                   onExportComplete={(job) => {
                     logger.info('Exporting job complete', { component: 'AvatarStudioComplete', jobId: job.id, status: job.status });
                     toast.success(`Export ${job.status === 'completed' ? 'concluído' : 'em processamento'}...`);

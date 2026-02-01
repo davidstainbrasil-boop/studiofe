@@ -49,10 +49,19 @@ export class AvatarClientHelper {
     const totalFrames = Math.floor(duration * fps);
     
     for (let i = 0; i < totalFrames; i++) {
+      const intensity = Math.random() * 0.5 + 0.2;
       frames.push({
         timestampMs: (i / fps) * 1000,
-        phoneme: 'X',
-        intensity: Math.random() * 0.5 + 0.2
+        jawOpen: intensity * 0.3,
+        mouthClose: 0,
+        mouthFunnel: intensity * 0.1,
+        mouthPucker: 0,
+        mouthLeft: 0,
+        mouthRight: 0,
+        mouthRollLower: 0,
+        mouthSmile: 0,
+        mouthShrugUpper: 0,
+        tongueOut: 0
       });
     }
     return frames;

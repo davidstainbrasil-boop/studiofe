@@ -228,24 +228,24 @@ export const useRealTimeCollaboration = (projectId?: string) => {
       channel
         // Presence
         .on('presence', { event: 'sync' }, () => {
-          const state = channel.presenceState<CollaborationUser>();
+          const state = channel.presenceState();
           const users: CollaborationUser[] = [];
           
-          Object.values(state).forEach(presences => {
-            presences.forEach(p => users.push(p));
+          Object.values(state).forEach((presences) => {
+            (presences as CollaborationUser[]).forEach((p: CollaborationUser) => users.push(p));
           });
           
           setSession(prev => prev ? { ...prev, users } : null);
         })
-        .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+        .on('presence', { event: 'join' }, ({ key, newPresences }: { key: string; newPresences: CollaborationUser[] }) => {
            // Handle join
         })
-        .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+        .on('presence', { event: 'leave' }, ({ key, leftPresences }: { key: string; leftPresences: CollaborationUser[] }) => {
            // Handle leave
         })
 
         // Broadcast Events
-        .on('broadcast', { event: 'cursor-move' }, ({ payload }) => {
+        .on('broadcast', { event: 'cursor-move' }, ({ payload }: { payload: { userId: string; cursor: CursorPosition } }) => {
           setSession(prev => prev ? {
             ...prev,
             users: prev.users.map(u => 
@@ -255,13 +255,13 @@ export const useRealTimeCollaboration = (projectId?: string) => {
             )
           } : null);
         })
-        .on('broadcast', { event: 'comment-added' }, ({ payload }) => {
+        .on('broadcast', { event: 'comment-added' }, ({ payload }: { payload: { comment: Comment } }) => {
           setSession(prev => prev ? {
             ...prev,
             comments: [...prev.comments, payload.comment]
           } : null);
         })
-        .on('broadcast', { event: 'comment-updated' }, ({ payload }) => {
+        .on('broadcast', { event: 'comment-updated' }, ({ payload }: { payload: { comment: Comment } }) => {
           setSession(prev => prev ? {
             ...prev,
             comments: prev.comments.map(c => 
@@ -269,13 +269,13 @@ export const useRealTimeCollaboration = (projectId?: string) => {
             )
           } : null);
         })
-        .on('broadcast', { event: 'version-created' }, ({ payload }) => {
+        .on('broadcast', { event: 'version-created' }, ({ payload }: { payload: { version: ProjectVersion } }) => {
           setSession(prev => prev ? {
             ...prev,
             versions: [...prev.versions, payload.version]
           } : null);
         })
-        .on('broadcast', { event: 'element-changed' }, ({ payload }) => {
+        .on('broadcast', { event: 'element-changed' }, ({ payload }: { payload: { change?: unknown } }) => {
            if (payload.change) {
             window.dispatchEvent(new CustomEvent('collaboration:element_changed', {
               detail: payload.change
@@ -283,7 +283,7 @@ export const useRealTimeCollaboration = (projectId?: string) => {
           }
         })
 
-        .subscribe(async (status) => {
+        .subscribe(async (status: 'SUBSCRIBED' | 'CHANNEL_ERROR' | 'TIMED_OUT' | 'CLOSED') => {
           if (status === 'SUBSCRIBED') {
             setIsConnected(true);
             setError(null);

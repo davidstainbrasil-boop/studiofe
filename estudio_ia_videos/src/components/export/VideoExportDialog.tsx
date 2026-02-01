@@ -128,6 +128,15 @@ export function VideoExportDialog({
       setErrorMessage(null)
       setDownloadUrl(null)
 
+      // Convert WatermarkConfig to WatermarkSettings format
+      const watermarkSettings = watermark && watermark.type === 'image' ? {
+        imageUrl: watermark.url,
+        position: watermark.position,
+        scale: watermark.scale,
+        opacity: watermark.opacity,
+        margin: watermark.margin,
+      } : undefined
+
       const settings: ExportSettings = {
         format,
         resolution,
@@ -135,15 +144,15 @@ export function VideoExportDialog({
         fps,
         includeWatermark: watermark !== null,
         // Advanced settings (Sprint 48)
-        watermark: watermark || undefined,
+        watermark: watermarkSettings,
         videoFilters: videoFilters.length > 0 ? videoFilters : undefined,
         audioEnhancements: audioEnhancements.length > 0 ? audioEnhancements : undefined,
         subtitle: subtitle || undefined,
       }
 
       const job = await createRenderJob({
-        projectId: projectId,
-        userId: userId,
+        project_id: projectId,
+        user_id: userId,
         type: 'video',
         priority: 'normal',
         status: 'pending',

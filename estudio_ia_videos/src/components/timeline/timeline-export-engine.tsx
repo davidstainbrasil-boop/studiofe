@@ -109,7 +109,7 @@ import {
   Navigation,
   Compass,
   Globe,
-  Earth,
+  Globe2 as Earth,
   Sun,
   Moon,
   Star as StarIcon,

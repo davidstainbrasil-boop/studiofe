@@ -47,7 +47,10 @@ import {
   Bold,
   Italic,
   Underline,
+  Plus,
+  X,
 } from 'lucide-react';
+import { Card } from '@components/ui/card';
 import { cn } from '@lib/utils';
 
 // ============================================================================

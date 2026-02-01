@@ -7,8 +7,7 @@ import { Button } from '@components/ui/button';
 import { Layers, Plus, Scissors, ZoomIn, ZoomOut, Type, Image as ImageIcon, Square, Hand, MousePointer, Lock, Unlock } from 'lucide-react';
 import { useTimelineStore } from '@lib/stores/timeline-store';
 import { cn } from '@lib/utils';
-import { TimelineElement, DragData } from '@lib/types/timeline-types';
-import { TimelineElement, DragData } from '@lib/types/timeline-types';
+import type { TimelineElement, DragData, TimelineElementType } from '@lib/types/timeline-types';
 import { AudioWaveform } from '@components/video-studio/timeline/AudioWaveform';
 import { calculateSnapTime, getSnapPoints } from '@lib/utils/snap-utils';
 import { useCollaboration } from '@components/collaboration/CollaborationProvider';
@@ -55,10 +54,12 @@ export function ProfessionalTimelineWrapper() {
 
         const newElement: TimelineElement = {
             id,
-            type: type as any,
+            type: type as TimelineElementType,
             name: `New ${type}`,
             start: useTimelineStore.getState().currentTime, // Start at playhead
             duration: 5, // 5s default
+            source: '', // Empty source for new elements
+            layer: 0, // Default layer
             layerId,
             properties: type === 'text' ? { text: 'Hello' } : {}
         };
@@ -141,9 +142,10 @@ export function ProfessionalTimelineWrapper() {
 
                 const newElement: TimelineElement = {
                     id: crypto.randomUUID(),
-                    type: assetData.type as any,
+                    type: assetData.type as TimelineElementType,
                     name: assetData.name as string,
                     source: assetData.source as string, // Blob URL
+                    layer: 0, // Default layer index
                     start: time,
                     duration: assetData.type === 'audio' ? 10 : 5,
                     layerId: targetLayerId,
@@ -504,8 +506,8 @@ const TimelineClip = React.memo(function TimelineClip({ element, pixelsPerSecond
                 const proposedStart = Math.max(0, startStateTime + totalDeltaTime);
 
                 if (proposedStart !== element.start) {
-                    const snappedTime = calculateSnapTime(proposedStart, pixelsPerSecond, snapPointsRef.current);
-                    onUpdate({ start: snappedTime });
+                    const snapResult = calculateSnapTime(proposedStart, snapPointsRef.current, pixelsPerSecond);
+                    onUpdate({ start: snapResult.snappedTime });
                 }
             }
         };

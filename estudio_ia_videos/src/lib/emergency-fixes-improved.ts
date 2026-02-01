@@ -4,7 +4,6 @@
 
 declare global {
   interface Window {
-    fabric?: unknown
     fabricLoaded?: boolean
     gc?: () => void
   }

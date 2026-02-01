@@ -49,7 +49,7 @@ export class ReportScheduler {
         lastRun: data.lastRun ? new Date(data.lastRun as string) : undefined,
         nextRun: data.nextRun ? new Date(data.nextRun as string) : undefined,
         organizationId: (data.organizationId as string) || undefined,
-        createdAt: r.createdAt
+        createdAt: r.createdAt ?? new Date()
       };
     });
   }
@@ -81,7 +81,7 @@ export class ReportScheduler {
     return {
       totalScheduled: reports.length,
       activeReports: reports.filter(r => r.isActive).length,
-      lastExecution: executions[0]?.createdAt,
+      lastExecution: executions[0]?.createdAt ?? undefined,
       failedExecutions
     };
   }

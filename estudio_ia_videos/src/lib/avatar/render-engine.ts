@@ -159,7 +159,7 @@ export class Avatar3DRenderEngine {
         }
       };
     } catch (error) {
-      logger.error('HeyGen API Failed', error, { component: 'RenderEngine' });
+      logger.error('HeyGen API Failed', error instanceof Error ? error : undefined, { component: 'RenderEngine' });
       throw error;
     }
   }

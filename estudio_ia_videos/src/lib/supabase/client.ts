@@ -9,6 +9,9 @@ export const supabase = getBrowserClient();
 // Facilita importar o cliente em componentes client-side sem ambiguidade de tipos.
 export const createClient = () => getBrowserClient();
 
+// Alias for legacy compatibility
+export const createBrowserSupabaseClient = createClient;
+
 // Função auxiliar para obter o usuário atual
 export const getCurrentUser = async () => {
   const { data: { session } } = await supabase.auth.getSession();

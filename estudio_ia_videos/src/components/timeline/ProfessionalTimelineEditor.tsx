@@ -73,6 +73,7 @@ interface TimelineElement {
   duration: number;
   content: string | null;
   properties: {
+    src?: string;
     volume?: number;
     opacity?: number;
     x?: number;
@@ -961,7 +962,7 @@ export default function ProfessionalTimelineEditor({ projectId }: { projectId?: 
   const handleRender = useCallback(async () => {
     try {
       setIsLoading(true); // Reuse existing loading state or add specific one
-      toast.info('Iniciando exportação...');
+      toast('Iniciando exportação...', { icon: 'ℹ️' });
       setIsExportOpen(false);
 
       // Map resolution string to actual dimensions
@@ -1154,13 +1155,12 @@ export default function ProfessionalTimelineEditor({ projectId }: { projectId?: 
     : null;
 
   // Helper to convert tracks for preview player
-  const getPreviewTracks = useCallback(() => {
-    const validTypes = ['video', 'audio', 'text', 'image', 'shape', 'avatar'] as const
-    type ValidType = typeof validTypes[number]
+  const getPreviewTracks = useCallback((): PreviewTrack[] => {
+    const validTypes: PreviewTrack['type'][] = ['video', 'audio', 'text', 'image', 'shape', 'avatar', 'avatar-3d']
 
     return project.tracks.map(track => {
-      const trackType: ValidType = validTypes.includes(track.type as ValidType)
-        ? (track.type as ValidType)
+      const trackType: PreviewTrack['type'] = validTypes.includes(track.type as PreviewTrack['type'])
+        ? (track.type as PreviewTrack['type'])
         : 'video'
 
       return {
@@ -1170,13 +1170,19 @@ export default function ProfessionalTimelineEditor({ projectId }: { projectId?: 
         color: track.color,
         visible: track.visible,
         locked: track.locked,
+        muted: track.muted,
+        volume: track.volume,
         clips: track.elements.map(el => ({
           id: el.id,
           name: el.name,
+          type: el.type,
           startTime: el.startTime,
           duration: el.duration,
           content: el.content,
-          effects: [] as string[]
+          properties: el.properties,
+          animation: el.animation,
+          muted: false,
+          volume: 1
         }))
       }
     })
@@ -1236,35 +1242,39 @@ export default function ProfessionalTimelineEditor({ projectId }: { projectId?: 
       if (!project) return
 
       const ttsTrack = project.tracks.find(t => t.type === 'audio' && t.id.includes('tts'))
-      if (!ttsTrack || ttsTrack.clips.length === 0) {
-        toast.warning('Gere a narração (TTS) primeiro antes das legendas.')
+      if (!ttsTrack || ttsTrack.elements.length === 0) {
+        toast('Gere a narração (TTS) primeiro antes das legendas.', { icon: '⚠️' })
         return
       }
 
       setIsLoading(true)
-      toast.info('Gerando legendas automáticas...')
+      toast('Gerando legendas automáticas...', { icon: 'ℹ️' })
 
       const transcriptionService = TranscriptionService.getInstance()
-      const newClips: Clip[] = []
+      const newElements: TimelineElement[] = []
 
-      for (const audioClip of ttsTrack.clips) {
-        const matchingVideoClip = project.tracks.find(t => t.type === 'video')?.elements.find(c => Math.abs(c.startTime - audioClip.startTime) < 0.5)
-        const slideText = matchingVideoClip?.content // Assuming content holds text for video clips or need metadata check
+      for (const audioElement of ttsTrack.elements) {
+        const matchingVideoClip = project.tracks.find(t => t.type === 'video')?.elements.find(c => Math.abs(c.startTime - audioElement.startTime) < 0.5)
+        const slideText = typeof matchingVideoClip?.content === 'string' ? matchingVideoClip.content : null
 
         const subtitles = await transcriptionService.generateSubtitles(
-          audioClip.contentRef,
-          audioClip.duration,
+          typeof audioElement.content === 'string' ? audioElement.content : '',
+          audioElement.duration,
           slideText
         )
 
-        subtitles.forEach(sub => {
-          newClips.push({
+        subtitles.forEach((sub: { id: string; text: string; startTime: number; endTime: number }) => {
+          newElements.push({
             id: sub.id,
-            trackId: 'subtitles-track',
-            startTime: audioClip.startTime + sub.startTime,
-            duration: sub.endTime - sub.startTime,
+            name: sub.text.slice(0, 30),
             type: 'text',
-            contentRef: sub.text,
+            startTime: audioElement.startTime + sub.startTime,
+            duration: sub.endTime - sub.startTime,
+            content: sub.text,
+            properties: {},
+            keyframes: [],
+            locked: false,
+            visible: true,
             style: {
               top: '80%',
               left: '50%',
@@ -1284,23 +1294,27 @@ export default function ProfessionalTimelineEditor({ projectId }: { projectId?: 
         })
       }
 
-      let updatedTracks = [...project.tracks]
-      let subTrack = updatedTracks.find(t => t.type === 'text' && t.name === 'Legendas')
+      const updatedTracks = [...project.tracks]
+      let subTrack = updatedTracks.find(t => t.name === 'Legendas')
 
       if (!subTrack) {
         subTrack = {
           id: 'subtitles-track',
           name: 'Legendas',
-          type: 'text',
-          clips: [],
-          isMuted: false,
-          isLocked: false,
-          volume: 1
+          type: 'composite' as const,
+          elements: [],
+          height: 60,
+          color: '#F59E0B',
+          muted: false,
+          locked: false,
+          visible: true,
+          volume: 1,
+          collapsed: false
         }
         updatedTracks.push(subTrack)
       }
 
-      subTrack.clips = newClips
+      subTrack.elements = newElements
 
       setProject({
         ...project,
@@ -1467,8 +1481,12 @@ export default function ProfessionalTimelineEditor({ projectId }: { projectId?: 
             <div className="aspect-video w-full max-h-full bg-gray-900 rounded-lg overflow-hidden shadow-2xl border border-gray-800 relative">
               <UnifiedPreviewPlayer
                 currentTime={project.currentTime}
+                duration={project.duration}
                 tracks={getPreviewTracks()}
                 isPlaying={project.isPlaying}
+                resolution={project.resolution}
+                limitEnabled={false}
+                limitSeconds={60}
               />
 
               {/* Safe Area Guides (Optional) */}

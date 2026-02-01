@@ -40,6 +40,7 @@ import {
 } from 'lucide-react';
 
 interface AvatarUpdate {
+  avatarId?: string;
   pose?: string;
   expression?: string;
   clothing?: string;

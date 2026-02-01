@@ -4,9 +4,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import { logger } from "@/lib/logger";
 import { FabricManager } from "@/lib/fabric-singleton";
+import type { Canvas as FabricCanvasType } from 'fabric';
 
 // Fabric canvas type for refs and callbacks
-type FabricCanvas = InstanceType<typeof import('fabric').fabric.Canvas>
+type FabricCanvas = FabricCanvasType;
 
 interface CanvasClientProps {
   width?: number;

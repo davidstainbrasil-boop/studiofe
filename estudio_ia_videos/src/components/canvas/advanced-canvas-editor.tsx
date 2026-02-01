@@ -102,14 +102,16 @@ export default function AdvancedCanvasEditor({
 
         // Load initial data
         if (initialData) {
-          canvas.loadFromJSON(initialData, () => {
+          canvas.loadFromJSON(initialData).then(() => {
             canvas.renderAll();
           });
         }
 
-        // Event listeners
-        canvas.on('selection:created', handleSelection);
-        canvas.on('selection:updated', handleSelection);
+        // Event listeners - use type assertions for fabric.js v7
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        canvas.on('selection:created', handleSelection as any);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        canvas.on('selection:updated', handleSelection as any);
         canvas.on('selection:cleared', () => setSelectedObject(null));
         canvas.on('object:modified', saveState);
         canvas.on('object:added', saveState);
@@ -133,9 +135,9 @@ export default function AdvancedCanvasEditor({
   }, []);
 
   // Handle object selection
-  const handleSelection = useCallback((e: { selected?: fabric.Object[] }) => {
+  const handleSelection = useCallback((e: { selected?: Fabric.FabricObject[] }) => {
     if (e.selected && e.selected.length > 0) {
-      setSelectedObject(e.selected[0]);
+      setSelectedObject(e.selected[0] as Fabric.FabricObject);
     } else {
       setSelectedObject(null);
     }
@@ -243,12 +245,13 @@ export default function AdvancedCanvasEditor({
 
     const reader = new FileReader();
     reader.onload = (e) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Fabric.js Image.fromURL callback typing limitation
-      fabric?.Image.fromURL(e.target?.result as string, (img: fabric.Image) => {
+      const url = e.target?.result as string;
+      // Fabric.js v7: Image.fromURL returns a Promise
+      fabric!.Image.fromURL(url, { crossOrigin: 'anonymous' }).then((img) => {
         img.scaleToWidth(300);
         img.set({ left: 100, top: 100 });
-        fabricRef.current?.add(img);
-        fabricRef.current?.setActiveObject(img);
+        fabricRef.current?.add(img as unknown as Fabric.FabricObject);
+        fabricRef.current?.setActiveObject(img as unknown as Fabric.FabricObject);
         fabricRef.current?.renderAll();
         toast.success('Imagem adicionada');
       });

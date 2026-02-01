@@ -204,7 +204,7 @@ export async function POST(request: NextRequest) {
       userId: session.user.id,
       type: 'export',
       sourceUrl: latestRender.outputUrl,
-      exportSettings,
+      exportSettings: exportSettings as unknown as Record<string, unknown>,
       subtitleUrl,
     });
 

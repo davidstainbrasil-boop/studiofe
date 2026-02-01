@@ -7,7 +7,8 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import useSWR from 'swr'
 import { createClient as createBrowserSupabaseClient } from '@lib/supabase/client'
 import { logger } from '@lib/logger'
-import type { User } from '@supabase/supabase-js'
+import type { User, AuthChangeEvent, Session } from '@supabase/supabase-js'
+import type { RealtimePostgresChangesPayload, REALTIME_SUBSCRIBE_STATES } from '@supabase/supabase-js'
 
 // Types for analytics data
 export interface SystemMetrics {
@@ -200,7 +201,10 @@ export function useAnalytics(filters: AnalyticsFilters = { timeRange: '24h' }) {
 
     void loadUser()
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((
+      _event: AuthChangeEvent, 
+      session: Session | null
+    ) => {
       if (!isMounted) return
       setUser(session?.user ?? null)
     })
@@ -282,7 +286,7 @@ export function useAnalytics(filters: AnalyticsFilters = { timeRange: '24h' }) {
           table: 'analytics_events',
           filter: `user_id=eq.${user.id}`
         },
-        (payload) => {
+        (payload: RealtimePostgresChangesPayload<{ [key: string]: unknown }>) => {
           const event = payload.new as unknown as AnalyticsEvent
           
           setRealTimeEvents(prev => [event, ...prev.slice(0, 99)])
@@ -298,7 +302,7 @@ export function useAnalytics(filters: AnalyticsFilters = { timeRange: '24h' }) {
           }
         }
       )
-      .subscribe((status) => {
+      .subscribe((status: `${REALTIME_SUBSCRIBE_STATES}`) => {
         setIsConnected(status === 'SUBSCRIBED')
       })
 

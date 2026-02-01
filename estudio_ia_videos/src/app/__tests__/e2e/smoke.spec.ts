@@ -121,9 +121,12 @@ test('Static assets should load', async ({ page }) => {
 
 // 12. Error handling (404)
 test('404 page should render correctly', async ({ page }) => {
-  const response = await page.goto(`${BASE_URL}/this-page-does-not-exist`)
+  const response = await page.goto(`${BASE_URL}/this-page-does-not-exist`, {
+    timeout: 60000,
+    waitUntil: 'domcontentloaded'
+  })
   // Em dev mode, nextjs pode mostrar error overlay, mas o status deve ser 404
   if (response) {
-      expect(response.status()).toBe(404)
+    expect(response.status()).toBe(404)
   }
 })

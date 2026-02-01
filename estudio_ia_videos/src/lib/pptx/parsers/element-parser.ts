@@ -10,6 +10,7 @@ import { XMLParser } from 'fast-xml-parser';
 import { PPTXThemeParser, PPTXTheme } from './theme-parser';
 import { PPTXAnimationParser, AnimationEffect, SlideTransition } from './animation-parser';
 import { logger } from '@lib/logger';
+import { PPTXRelationship } from '../types/pptx-xml.types';
 
 // ===== EMU (English Metric Units) to Pixels Conversion =====
 // PowerPoint uses EMUs internally (914400 EMUs = 1 inch, 1 inch = 96 pixels at standard DPI)
@@ -623,9 +624,9 @@ export class UniversalElementParser {
         if (relsFile) {
           const relsXml = await relsFile.async('string');
           const relsData = this.xmlParser.parse(relsXml);
-          const relationships = this.toArray(relsData?.['Relationships']?.['Relationship']);
+          const relationships = this.toArray(relsData?.['Relationships']?.['Relationship']) as unknown as PPTXRelationship[];
           
-          const imageRel = relationships.find((r: any) => r['@_Id'] === embedId);
+          const imageRel = relationships.find((r) => r['@_Id'] === embedId);
           if (imageRel) {
             const target = imageRel['@_Target'] as string;
             imageSrc = target.replace('../', '/ppt/');

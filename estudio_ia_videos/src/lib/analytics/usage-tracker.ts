@@ -36,11 +36,11 @@ export async function trackUsage(
       });
 
     if (error) {
-      logger.error('UsageTracker', 'Failed to track usage event', error);
+      logger.error('UsageTracker: Failed to track usage event', error);
     } else {
-      logger.info('UsageTracker', 'Usage event tracked', { eventType, userId });
+      logger.info('UsageTracker: Usage event tracked', { eventType, userId });
     }
   } catch (error) {
-    logger.error('UsageTracker', 'Exception tracking usage event', error as Error);
+    logger.error('UsageTracker: Exception tracking usage event', error as Error);
   }
 }

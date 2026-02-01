@@ -36,7 +36,8 @@ export class VisemeCache {
 
     this.redis.connect().catch((error: unknown) => {
       this.stats.errors++
-      logger.error('Failed to connect to Redis cache', { error: error instanceof Error ? error.message : String(error) })
+      const err = error instanceof Error ? error : new Error(String(error))
+      logger.error('Failed to connect to Redis cache', err, { originalError: String(error) })
     })
   }
 

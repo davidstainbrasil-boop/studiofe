@@ -2,6 +2,15 @@
 import JSZip from 'jszip';
 import { XMLParser } from 'fast-xml-parser';
 import { logger } from '@/lib/monitoring/logger';
+import { 
+  PPTXRelationship, 
+  PPTXRelationshipsDoc, 
+  PPTXNotesDoc,
+  PPTXShape,
+  PPTXParagraph,
+  PPTXTextRun,
+  toTypedArray 
+} from '../types/pptx-xml.types';
 
 export class PPTXNotesParser {
   private xmlParser: XMLParser;
@@ -30,17 +39,17 @@ export class PPTXNotesParser {
       if (!relsFile) return '';
 
       const relsXml = await relsFile.async('string');
-      const relsDoc = this.xmlParser.parse(relsXml);
-      const relationships = this.toArray(relsDoc.Relationships?.Relationship);
+      const relsDoc = this.xmlParser.parse(relsXml) as PPTXRelationshipsDoc;
+      const relationships = toTypedArray(relsDoc.Relationships?.Relationship);
 
-      const notesRel = relationships.find((rel: any) => 
+      const notesRel = relationships.find((rel: PPTXRelationship) => 
         rel.Type && rel.Type.endsWith('/notesSlide')
       );
 
       if (!notesRel || !notesRel.Target) return '';
 
       // Resolve target path
-      let target = notesRel.Target as string;
+      let target = notesRel.Target;
       if (target.startsWith('../')) {
         target = target.replace('../', 'ppt/');
       }
@@ -50,7 +59,7 @@ export class PPTXNotesParser {
       if (!notesFile) return '';
 
       const notesXml = await notesFile.async('string');
-      const notesDoc = this.xmlParser.parse(notesXml);
+      const notesDoc = this.xmlParser.parse(notesXml) as PPTXNotesDoc;
 
       // 3. Extract text from the notes slide
       return this.extractTextFromNotes(notesDoc);
@@ -61,7 +70,7 @@ export class PPTXNotesParser {
     }
   }
 
-  private extractTextFromNotes(doc: any): string {
+  private extractTextFromNotes(doc: PPTXNotesDoc): string {
     const texts: string[] = [];
     
     // Notes are usually in p:notes -> p:cSld -> p:spTree -> p:sp -> p:txBody
@@ -71,7 +80,7 @@ export class PPTXNotesParser {
     const spTree = doc?.notes?.cSld?.spTree;
     if (!spTree) return '';
 
-    const shapes = this.toArray(spTree.sp);
+    const shapes = toTypedArray(spTree.sp);
     
     for (const shape of shapes) {
       // Check if it's a body text placeholder (usually type="body")
@@ -79,11 +88,11 @@ export class PPTXNotesParser {
       const textBody = shape.txBody;
       if (!textBody) continue;
 
-      const paragraphs = this.toArray(textBody.p);
+      const paragraphs = toTypedArray(textBody.p);
       for (const p of paragraphs) {
-        const runs = this.toArray(p.r);
+        const runs = toTypedArray(p.r);
         for (const r of runs) {
-          if (r.t) {
+          if (r.t !== undefined) {
             texts.push(String(r.t));
           }
         }
@@ -92,11 +101,6 @@ export class PPTXNotesParser {
     }
 
     return texts.join('').trim();
-  }
-
-  private toArray(value: any): any[] {
-    if (!value) return [];
-    return Array.isArray(value) ? value : [value];
   }
 }
 

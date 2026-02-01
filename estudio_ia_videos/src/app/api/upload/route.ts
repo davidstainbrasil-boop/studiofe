@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
     let thumbnailUrl: string | null = null;
 
     try {
-      const extraction = await PPTXProcessorReal.extract(buffer);
+      const extraction = await PPTXProcessorReal.extract(buffer, projectId);
       
       if (extraction.success) {
         slidesData = extraction.slides || [];

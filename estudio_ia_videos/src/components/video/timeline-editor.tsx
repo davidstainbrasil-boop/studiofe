@@ -367,5 +367,3 @@ export function TimelineEditor({
     </div>
   )
 }
-
-export type { TimelineItem, TimelineTrack }

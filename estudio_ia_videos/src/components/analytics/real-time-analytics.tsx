@@ -418,7 +418,7 @@ export default function RealTimeAnalytics() {
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value: number) => [value.toLocaleString(), 'Usuários']} />
+                <Tooltip formatter={(value) => value !== undefined ? [Number(value).toLocaleString(), 'Usuários'] : ['--', 'Usuários']} />
               </PieChart>
             </ResponsiveContainer>
           </div>

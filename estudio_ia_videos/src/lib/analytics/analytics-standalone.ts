@@ -38,8 +38,10 @@ export class AnalyticsStandalone {
     if (!filters) return [...this.events];
     
     return this.events.filter(event => {
-      return Object.entries(filters).every(([key, value]) => {
-        return event[key as keyof AnalyticsEvent] === value;
+      const filterEntries = Object.entries(filters) as [keyof AnalyticsEvent, unknown][];
+      return filterEntries.every(([key, value]) => {
+        if (value === undefined) return true;
+        return event[key] === value;
       });
     });
   }

@@ -10,7 +10,7 @@ import useSWR from 'swr'
 import { toast } from 'sonner'
 import { createClient as createBrowserSupabaseClient } from '@lib/supabase/client'
 import { logger } from '@lib/logger'
-import type { User } from '@supabase/supabase-js'
+import type { User, AuthChangeEvent, Session } from '@supabase/supabase-js'
 
 // Types and Interfaces
 export interface TTSProvider {
@@ -219,7 +219,7 @@ export function useExternalAPIs() {
 
     void loadUser()
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
       if (!isMounted) return
       setUser(session?.user ?? null)
     })

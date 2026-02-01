@@ -289,7 +289,7 @@ const AdvancedVideoPipeline: React.FC = () => {
         resolution: '1080x1080',
         fps: 30,
         duration: 180,
-        fileSize: 156000000,
+        file_size: 156000000,
         createdAt: new Date(Date.now() - 3600000),
         started_at: new Date(Date.now() - 3300000),
         completed_at: new Date(Date.now() - 3000000),
@@ -362,7 +362,7 @@ const AdvancedVideoPipeline: React.FC = () => {
               progress: 100, 
               status: 'completed' as const,
               completed_at: new Date(),
-              fileSize: Math.floor(Math.random() * 500000000 + 100000000)
+              file_size: Math.floor(Math.random() * 500000000 + 100000000)
             }
           }
           return { ...job, progress: Math.min(newProgress, 100) }
@@ -773,8 +773,8 @@ const AdvancedVideoPipeline: React.FC = () => {
                         <span>{job.resolution}</span>
                         <span>{job.format}</span>
                         <span>{formatDuration(job.duration)}</span>
-                        {job.fileSize && (
-                          <span>{formatFileSize(job.fileSize)}</span>
+                        {job.file_size && (
+                          <span>{formatFileSize(job.file_size)}</span>
                         )}
                       </div>
                     </div>

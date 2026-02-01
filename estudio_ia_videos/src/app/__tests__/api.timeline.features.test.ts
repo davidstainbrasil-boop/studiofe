@@ -46,10 +46,15 @@ jest.mock('@/lib/prisma', () => {
     prisma: {
       projects: {
         findUnique: jest.fn().mockResolvedValue({ id: 'p1', userId: 'u1' }),
-        findFirst: jest.fn().mockResolvedValue({ id: 'p1', userId: 'u1' })
+        findFirst: jest.fn().mockImplementation(async ({ where }: any) => {
+          // For collaboration tests, both users can access the project
+          // In real app, this would be a project with collaborator permissions
+          return { id: where?.id || 'p1', userId: 'u1' };
+        })
       },
       timelines: {
         findUnique: jest.fn().mockResolvedValue(mockTimeline),
+        findFirst: jest.fn().mockResolvedValue(mockTimeline),
         update: jest.fn().mockImplementation(async ({ data }: any) => ({
           ...mockTimeline,
           ...data,
@@ -62,18 +67,35 @@ jest.mock('@/lib/prisma', () => {
       },
       timeline_track_locks: {
         findFirst: jest.fn().mockResolvedValue(null),
+        findUnique: jest.fn().mockImplementation(async ({ where }: any) => {
+          // Simulate existing lock for conflict test
+          if (where?.unique_track_lock?.trackId === 'track-conflict') {
+            return {
+              id: 'lock-conflict',
+              projectId: 'p-conflict',
+              trackId: 'track-conflict',
+              userId: 'u1',
+              expiresAt: new Date(Date.now() + 30 * 60 * 1000),
+              createdAt: new Date()
+            };
+          }
+          return null;
+        }),
         upsert: jest.fn().mockImplementation(async ({ create }: any) => ({
           id: 'lock1',
           ...create,
-          createdAt: new Date()
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          expiresAt: create.expiresAt || new Date(Date.now() + 30 * 60 * 1000)
         })),
         deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
         findMany: jest.fn().mockResolvedValue([{
           id: 'lock1',
           trackId: 'track1',
           userId: 'u1',
-          users: { name: 'User 1', avatarUrl: null },
-          createdAt: new Date()
+          expiresAt: new Date(Date.now() + 30 * 60 * 1000),
+          createdAt: new Date(),
+          users: { id: 'u1', name: 'User 1', email: 'user@test.com', avatarUrl: null }
         }])
       },
       timeline_presence: {
@@ -83,8 +105,9 @@ jest.mock('@/lib/prisma', () => {
         })),
         findMany: jest.fn().mockResolvedValue([{
           userId: 'u1',
-          users: { name: 'User 1', avatarUrl: null },
+          users: { id: 'u1', name: 'User 1', email: 'user@test.com', avatarUrl: null },
           lastSeenAt: new Date(),
+          cursorPosition: null,
           currentTrackId: 'track1'
         }])
       },
@@ -100,6 +123,7 @@ jest.mock('@/lib/prisma', () => {
             id: 'tpl1',
             name: 'Template Test',
             isPublic: true,
+            userId: 'u1',
             createdBy: 'u1',
             tracks: mockTimeline.tracks,
             settings: mockTimeline.settings,
