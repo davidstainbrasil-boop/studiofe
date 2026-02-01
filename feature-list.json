@@ -507,20 +507,68 @@
         "Busca em todo o Drive"
       ],
       "passes": true
+    },
+    {
+      "id": "p2-006",
+      "category": "testing",
+      "description": "K6 Performance Testing Scripts",
+      "steps": [
+        "k6-load-tests.js com 4 tipos de teste",
+        "k6-api-tests.js por endpoint",
+        "k6-spike-test.js para picos de carga",
+        "Thresholds e relatórios JSON"
+      ],
+      "passes": true
+    },
+    {
+      "id": "p3-001",
+      "category": "core",
+      "description": "Quiz Interativo no Vídeo",
+      "steps": [
+        "API CRUD de quizzes completa",
+        "Quiz Engine com 4 tipos de questão",
+        "Markers para pausar vídeo",
+        "Tracking de tentativas e certificados"
+      ],
+      "passes": true
+    },
+    {
+      "id": "p3-002",
+      "category": "api",
+      "description": "Tradução Automática Multi-idioma",
+      "steps": [
+        "20 idiomas suportados",
+        "Detecção automática de idioma",
+        "Tradução de slides em batch",
+        "Glossário de termos técnicos"
+      ],
+      "passes": true
+    },
+    {
+      "id": "p2-007",
+      "category": "core",
+      "description": "Timeline Editor Avançado",
+      "steps": [
+        "Snap to grid com magnetic snap",
+        "Undo/Redo com histórico",
+        "35+ keyboard shortcuts",
+        "Multi-track editing"
+      ],
+      "passes": true
     }
   ],
   "summary": {
-    "total": 41,
-    "passing": 41,
+    "total": 45,
+    "passing": 45,
     "failing": 0,
     "categories": {
-      "core": { "total": 4, "passing": 4 },
+      "core": { "total": 6, "passing": 6 },
       "pptx": { "total": 6, "passing": 6 },
       "render": { "total": 9, "passing": 9 },
       "auth": { "total": 7, "passing": 7 },
-      "api": { "total": 7, "passing": 7 },
+      "api": { "total": 8, "passing": 8 },
       "database": { "total": 3, "passing": 3 },
-      "testing": { "total": 3, "passing": 3 },
+      "testing": { "total": 4, "passing": 4 },
       "infra": { "total": 2, "passing": 2 }
     }
   }
