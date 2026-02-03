@@ -3,8 +3,8 @@ import { defineConfig, devices } from '@playwright/test';
 import dotenv from 'dotenv';
 import path from 'path';
 
-// Load envs if needed (optional for production test since we use hardcoded URL)
-// dotenv.config({ path: path.resolve(process.cwd(), '.env.production') });
+// Load envs if needed (mandatory for DB helpers)
+dotenv.config({ path: path.resolve(process.cwd(), '.env.production') });
 
 export default defineConfig({
   testDir: './src/app/e2e',

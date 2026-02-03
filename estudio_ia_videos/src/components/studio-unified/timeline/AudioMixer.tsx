@@ -87,10 +87,10 @@ interface AudioMixerProps {
 }
 
 // ============================================================================
-// MOCK DATA
+// DEFAULT EMPTY TRACKS (usado quando não há tracks no projeto)
 // ============================================================================
 
-const MOCK_TRACKS: AudioTrack[] = [
+const DEFAULT_EMPTY_TRACKS: AudioTrack[] = [
   {
     id: 'track-video',
     name: 'Vídeo Principal',
@@ -544,7 +544,7 @@ export function AudioMixer({
   onTrackChange,
   onMasterChange,
 }: AudioMixerProps) {
-  const [tracks, setTracks] = useState<AudioTrack[]>(initialTracks || MOCK_TRACKS);
+  const [tracks, setTracks] = useState<AudioTrack[]>(initialTracks || DEFAULT_EMPTY_TRACKS);
   const [masterSettings, setMasterSettings] = useState<MasterSettings>(DEFAULT_MASTER);
   const [expandedTracks, setExpandedTracks] = useState<Set<string>>(new Set());
   const [isLinked, setIsLinked] = useState(false);

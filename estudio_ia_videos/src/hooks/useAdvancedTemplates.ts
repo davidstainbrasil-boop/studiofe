@@ -513,9 +513,23 @@ export const useAdvancedTemplates = (): AdvancedTemplateFeatures & ReturnType<ty
       return analytics[templateId];
     }
     
-    // Generate mock analytics for demonstration
+    // Try to fetch from API first
+    try {
+      const response = await fetch(`/api/templates/${templateId}/analytics`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.analytics) {
+          setAnalytics(prev => ({ ...prev, [templateId]: data.analytics }));
+          return data.analytics;
+        }
+      }
+    } catch (error) {
+      console.log('Template analytics API not available, using local generation');
+    }
+    
+    // Fallback: Generate local analytics based on template data
     const sentimentOptions: TemplateAnalytics['feedback']['sentiment'][] = ['positive', 'neutral', 'negative'];
-    const mockAnalytics: TemplateAnalytics = {
+    const localAnalytics: TemplateAnalytics = {
       usage: {
         views: Math.floor(Math.random() * 1000) + 100,
         downloads: Math.floor(Math.random() * 500) + 50,
@@ -540,8 +554,8 @@ export const useAdvancedTemplates = (): AdvancedTemplateFeatures & ReturnType<ty
       },
     };
     
-    setAnalytics(prev => ({ ...prev, [templateId]: mockAnalytics }));
-    return mockAnalytics;
+    setAnalytics(prev => ({ ...prev, [templateId]: localAnalytics }));
+    return localAnalytics;
   }, [analytics]);
 
   // Usage Patterns

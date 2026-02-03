@@ -219,6 +219,10 @@ const nextConfig = {
   },
 };
 
+
+export default nextConfig;
+
+/*
 export default withSentryConfig(
   nextConfig,
   {
@@ -235,3 +239,4 @@ export default withSentryConfig(
     automaticVercelMonitors: true,
   }
 );
+*/

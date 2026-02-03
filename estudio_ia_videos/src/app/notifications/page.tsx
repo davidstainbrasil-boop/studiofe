@@ -1,10 +1,11 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@components/ui/card'
 import { Button } from '@components/ui/button'
 import { Badge } from '@components/ui/badge'
 import { ScrollArea } from '@components/ui/scroll-area'
+import { Skeleton } from '@components/ui/skeleton'
 import {
     Bell,
     CheckCircle,
@@ -14,81 +15,61 @@ import {
     AlertCircle,
     Trash2,
     Check,
-    X
+    X,
+    RefreshCw,
+    Loader2
 } from 'lucide-react'
 import { toast } from 'sonner'
-
-interface Notification {
-    id: string
-    type: 'success' | 'error' | 'info' | 'warning'
-    title: string
-    message: string
-    timestamp: Date
-    read: boolean
-    actionUrl?: string
-}
+import { useNotifications, type Notification } from '@hooks/use-notifications'
 
 export default function NotificationsPage() {
-    const [notifications, setNotifications] = useState<Notification[]>([
-        {
-            id: '1',
-            type: 'success',
-            title: 'Vídeo processado com sucesso',
-            message: 'O vídeo "Tutorial React.mp4" foi processado e as legendas estão prontas.',
-            timestamp: new Date(Date.now() - 5 * 60000),
-            read: false,
-            actionUrl: '/auto-subtitles'
-        },
-        {
-            id: '2',
-            type: 'info',
-            title: 'Novo preset criado',
-            message: 'Preset "4K Ultra HD" foi criado e está disponível para uso.',
-            timestamp: new Date(Date.now() - 30 * 60000),
-            read: false,
-            actionUrl: '/presets'
-        },
-        {
-            id: '3',
-            type: 'warning',
-            title: 'Limite de processamento',
-            message: 'Você usou 80% do seu limite mensal de processamento.',
-            timestamp: new Date(Date.now() - 2 * 60 * 60000),
-            read: true
-        },
-        {
-            id: '4',
-            type: 'error',
-            title: 'Falha no upload',
-            message: 'O arquivo "video_large.mp4" excedeu o limite de 500MB.',
-            timestamp: new Date(Date.now() - 24 * 60 * 60000),
-            read: true
-        }
-    ])
-
+    const {
+        notifications,
+        unreadCount,
+        isLoading,
+        error,
+        markAsRead,
+        markAllAsRead,
+        deleteNotification,
+        deleteAllRead,
+        refreshNotifications
+    } = useNotifications()
+    
     const [filter, setFilter] = useState<'all' | 'unread'>('all')
+    const [actionLoading, setActionLoading] = useState<string | null>(null)
 
-    const unreadCount = notifications.filter(n => !n.read).length
-
-    const markAsRead = (id: string) => {
-        setNotifications(prev => prev.map(n =>
-            n.id === id ? { ...n, read: true } : n
-        ))
+    const handleMarkAsRead = async (id: string) => {
+        setActionLoading(id)
+        const result = await markAsRead(id)
+        if (result.success) {
+            toast.success('Notificação marcada como lida')
+        }
+        setActionLoading(null)
     }
 
-    const markAllAsRead = () => {
-        setNotifications(prev => prev.map(n => ({ ...n, read: true })))
-        toast.success('Todas as notificações marcadas como lidas')
+    const handleMarkAllAsRead = async () => {
+        setActionLoading('all')
+        const result = await markAllAsRead()
+        if (result.success) {
+            toast.success('Todas as notificações marcadas como lidas')
+        }
+        setActionLoading(null)
     }
 
-    const deleteNotification = (id: string) => {
-        setNotifications(prev => prev.filter(n => n.id !== id))
-        toast.success('Notificação removida')
+    const handleDeleteNotification = async (id: string) => {
+        setActionLoading(id)
+        const result = await deleteNotification(id)
+        if (result.success) {
+            toast.success('Notificação removida')
+        }
+        setActionLoading(null)
     }
 
-    const clearAll = () => {
-        setNotifications([])
-        toast.success('Todas as notificações removidas')
+    const handleClearAll = async () => {
+        setActionLoading('clear')
+        await deleteAllRead()
+        toast.success('Notificações lidas removidas')
+        setActionLoading(null)
     }
 
     const getIcon = (type: Notification['type']) => {
@@ -97,6 +78,10 @@ export default function NotificationsPage() {
             case 'error': return <XCircle className="w-5 h-5 text-red-500" />
             case 'warning': return <AlertCircle className="w-5 h-5 text-yellow-500" />
             case 'info': return <Info className="w-5 h-5 text-blue-500" />
+            case 'render': return <CheckCircle className="w-5 h-5 text-purple-500" />
+            case 'collaboration': return <Info className="w-5 h-5 text-cyan-500" />
+            case 'system': return <AlertCircle className="w-5 h-5 text-gray-500" />
+            default: return <Info className="w-5 h-5 text-blue-500" />
         }
     }
 
@@ -106,6 +91,10 @@ export default function NotificationsPage() {
             case 'error': return 'border-red-200 bg-red-50'
             case 'warning': return 'border-yellow-200 bg-yellow-50'
             case 'info': return 'border-blue-200 bg-blue-50'
+            case 'render': return 'border-purple-200 bg-purple-50'
+            case 'collaboration': return 'border-cyan-200 bg-cyan-50'
+            case 'system': return 'border-gray-200 bg-gray-50'
+            default: return 'border-blue-200 bg-blue-50'
         }
     }
 
@@ -125,6 +114,53 @@ export default function NotificationsPage() {
     const filteredNotifications = filter === 'unread'
         ? notifications.filter(n => !n.read)
         : notifications
+
+    // Loading state
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-6">
+                <div className="max-w-4xl mx-auto">
+                    <div className="mb-8">
+                        <div className="flex items-center gap-3">
+                            <Skeleton className="w-14 h-14 rounded-xl" />
+                            <div>
+                                <Skeleton className="h-8 w-48 mb-2" />
+                                <Skeleton className="h-4 w-32" />
+                            </div>
+                        </div>
+                    </div>
+                    <div className="space-y-4">
+                        {[...Array(4)].map((_, i) => (
+                            <Skeleton key={i} className="h-32 w-full rounded-lg" />
+                        ))}
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
+    // Error state  
+    if (error) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-6">
+                <div className="max-w-4xl mx-auto">
+                    <Card className="border-red-200 bg-red-50">
+                        <CardContent className="p-12 text-center">
+                            <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+                            <h3 className="text-lg font-semibold text-red-700 mb-2">
+                                Erro ao carregar notificações
+                            </h3>
+                            <p className="text-red-600 mb-4">{error.message}</p>
+                            <Button onClick={() => refreshNotifications()} variant="outline">
+                                <RefreshCw className="w-4 h-4 mr-2" />
+                                Tentar novamente
+                            </Button>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+        )
+    }
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-6">
@@ -150,16 +186,39 @@ export default function NotificationsPage() {
                                 </p>
                             </div>
                         </div>
-                        <div className="flex gap2">
+                        <div className="flex gap-2">
+                            <Button onClick={() => refreshNotifications()} variant="outline" size="sm">
+                                <RefreshCw className="w-4 h-4 mr-2" />
+                                Atualizar
+                            </Button>
                             {unreadCount > 0 && (
-                                <Button onClick={markAllAsRead} variant="outline" size="sm">
-                                    <Check className="w-4 h-4 mr-2" />
+                                <Button 
+                                    onClick={handleMarkAllAsRead} 
+                                    variant="outline" 
+                                    size="sm"
+                                    disabled={actionLoading === 'all'}
+                                >
+                                    {actionLoading === 'all' ? (
+                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    ) : (
+                                        <Check className="w-4 h-4 mr-2" />
+                                    )}
                                     Marcar todas como lidas
                                 </Button>
                             )}
                             {notifications.length > 0 && (
-                                <Button onClick={clearAll} variant="outline" size="sm" className="ml-2">
-                                    <Trash2 className="w-4 h-4 mr-2" />
+                                <Button 
+                                    onClick={handleClearAll} 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className="ml-2"
+                                    disabled={actionLoading === 'clear'}
+                                >
+                                    {actionLoading === 'clear' ? (
+                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    ) : (
+                                        <Trash2 className="w-4 h-4 mr-2" />
+                                    )}
                                     Limpar tudo
                                 </Button>
                             )}
@@ -227,12 +286,17 @@ export default function NotificationsPage() {
                                                         </p>
                                                     </div>
                                                     <Button
-                                                        onClick={() => deleteNotification(notification.id)}
+                                                        onClick={() => handleDeleteNotification(notification.id)}
                                                         variant="ghost"
                                                         size="sm"
                                                         className="ml-2"
+                                                        disabled={actionLoading === notification.id}
                                                     >
-                                                        <X className="w-4 h-4" />
+                                                        {actionLoading === notification.id ? (
+                                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                                        ) : (
+                                                            <X className="w-4 h-4" />
+                                                        )}
                                                     </Button>
                                                 </div>
 
@@ -245,18 +309,19 @@ export default function NotificationsPage() {
                                                     <div className="flex gap-2">
                                                         {!notification.read && (
                                                             <Button
-                                                                onClick={() => markAsRead(notification.id)}
+                                                                onClick={() => handleMarkAsRead(notification.id)}
                                                                 variant="outline"
                                                                 size="sm"
+                                                                disabled={actionLoading === notification.id}
                                                             >
                                                                 Marcar como lida
                                                             </Button>
                                                         )}
-                                                        {notification.actionUrl && (
+                                                        {notification.action_url && (
                                                             <Button
                                                                 onClick={() => {
-                                                                    markAsRead(notification.id)
-                                                                    window.location.href = notification.actionUrl!
+                                                                    handleMarkAsRead(notification.id)
+                                                                    window.location.href = notification.action_url!
                                                                 }}
                                                                 size="sm"
                                                                 className="bg-blue-600 hover:bg-blue-700"

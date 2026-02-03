@@ -19,9 +19,9 @@ cd "$APP_DIR"
 
 # 1. Corrigir server_name do Nginx
 if [ -f nginx/conf.d/app.conf ]; then
-    if grep -q "tecnicocursos.com" nginx/conf.d/app.conf 2>/dev/null; then
+    if grep -q "cursostecno.com.br" nginx/conf.d/app.conf 2>/dev/null; then
         echo "📝 Corrigindo server_name do Nginx..."
-        sed -i 's/server_name tecnicocursos.com www.tecnicocursos.com;/server_name _;/' nginx/conf.d/app.conf
+        sed -i 's/server_name cursostecno.com.br www.cursostecno.com.br;/server_name _;/' nginx/conf.d/app.conf
         echo "✅ Nginx configurado"
     fi
 fi

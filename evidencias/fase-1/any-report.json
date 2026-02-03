@@ -1,11 +1,89 @@
 {
-  "generatedAt": "2026-01-30T00:24:20.477Z",
-  "totalFilesScanned": 2479,
-  "totalFindings": 6551,
-  "anyCount": 6550,
+  "generatedAt": "2026-02-02T01:22:50.164Z",
+  "totalFilesScanned": 2668,
+  "totalFindings": 6935,
+  "anyCount": 6934,
   "tsNoCheckCount": 1,
   "findings": [
     {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/(marketing)/ajuda/page.ts",
+      "line": 20,
+      "snippet": "metadata?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/(marketing)/ajuda/page.ts",
+      "line": 22,
+      "snippet": "viewport?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/(marketing)/ajuda/page.ts",
+      "line": 45,
+      "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/(marketing)/ajuda/page.ts",
+      "line": 48,
+      "snippet": "type PageParams = any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/(marketing)/ajuda/page.ts",
+      "line": 50,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/(marketing)/ajuda/page.ts",
+      "line": 51,
+      "snippet": "searchParams?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/(marketing)/ajuda/page.ts",
+      "line": 56,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/(marketing)/ajuda/page.ts",
+      "line": 61,
+      "snippet": "type RevalidateRange<T> = T extends { revalidate: any } ? NonNegative<T['revalidate']> : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/(marketing)/ajuda/page.ts",
+      "line": 63,
+      "snippet": "// If T is unknown or any, it will be an empty {} type. Otherwise, it will be the same as Omit<T, keyof Base>.",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/(marketing)/ajuda/page.ts",
+      "line": 64,
+      "snippet": "type OmitWithTag<T, K extends keyof any, _M> = Omit<T, K>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/(marketing)/ajuda/page.ts",
+      "line": 67,
+      "snippet": "type FirstArg<T extends Function> = T extends (...args: [infer T, any]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/(marketing)/ajuda/page.ts",
+      "line": 68,
+      "snippet": "type SecondArg<T extends Function> = T extends (...args: [any, infer T]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/(marketing)/ajuda/page.ts",
+      "line": 73,
+      "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
+      "type": "any"
+    },
+    {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/(marketing)/layout.ts",
       "line": 20,
       "snippet": "metadata?: any",
@@ -157,6 +235,84 @@
     },
     {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/(marketing)/page.ts",
+      "line": 73,
+      "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/(marketing)/pricing/page.ts",
+      "line": 20,
+      "snippet": "metadata?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/(marketing)/pricing/page.ts",
+      "line": 22,
+      "snippet": "viewport?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/(marketing)/pricing/page.ts",
+      "line": 45,
+      "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/(marketing)/pricing/page.ts",
+      "line": 48,
+      "snippet": "type PageParams = any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/(marketing)/pricing/page.ts",
+      "line": 50,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/(marketing)/pricing/page.ts",
+      "line": 51,
+      "snippet": "searchParams?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/(marketing)/pricing/page.ts",
+      "line": 56,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/(marketing)/pricing/page.ts",
+      "line": 61,
+      "snippet": "type RevalidateRange<T> = T extends { revalidate: any } ? NonNegative<T['revalidate']> : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/(marketing)/pricing/page.ts",
+      "line": 63,
+      "snippet": "// If T is unknown or any, it will be an empty {} type. Otherwise, it will be the same as Omit<T, keyof Base>.",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/(marketing)/pricing/page.ts",
+      "line": 64,
+      "snippet": "type OmitWithTag<T, K extends keyof any, _M> = Omit<T, K>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/(marketing)/pricing/page.ts",
+      "line": 67,
+      "snippet": "type FirstArg<T extends Function> = T extends (...args: [infer T, any]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/(marketing)/pricing/page.ts",
+      "line": 68,
+      "snippet": "type SecondArg<T extends Function> = T extends (...args: [any, infer T]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/(marketing)/pricing/page.ts",
       "line": 73,
       "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
       "type": "any"
@@ -4098,6 +4254,72 @@
       "type": "any"
     },
     {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/ai/chat/route.ts",
+      "line": 305,
+      "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/ai/chat/route.ts",
+      "line": 308,
+      "snippet": "type PageParams = any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/ai/chat/route.ts",
+      "line": 310,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/ai/chat/route.ts",
+      "line": 311,
+      "snippet": "searchParams?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/ai/chat/route.ts",
+      "line": 316,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/ai/chat/route.ts",
+      "line": 321,
+      "snippet": "type RevalidateRange<T> = T extends { revalidate: any } ? NonNegative<T['revalidate']> : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/ai/chat/route.ts",
+      "line": 323,
+      "snippet": "// If T is unknown or any, it will be an empty {} type. Otherwise, it will be the same as Omit<T, keyof Base>.",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/ai/chat/route.ts",
+      "line": 324,
+      "snippet": "type OmitWithTag<T, K extends keyof any, _M> = Omit<T, K>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/ai/chat/route.ts",
+      "line": 327,
+      "snippet": "type FirstArg<T extends Function> = T extends (...args: [infer T, any]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/ai/chat/route.ts",
+      "line": 328,
+      "snippet": "type SecondArg<T extends Function> = T extends (...args: [any, infer T]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/ai/chat/route.ts",
+      "line": 337,
+      "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
+      "type": "any"
+    },
+    {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/ai/detect-scenes/route.ts",
       "line": 305,
       "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
@@ -4291,6 +4513,72 @@
     },
     {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/ai/generate/route.ts",
+      "line": 337,
+      "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/ai/generate-narration/route.ts",
+      "line": 305,
+      "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/ai/generate-narration/route.ts",
+      "line": 308,
+      "snippet": "type PageParams = any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/ai/generate-narration/route.ts",
+      "line": 310,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/ai/generate-narration/route.ts",
+      "line": 311,
+      "snippet": "searchParams?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/ai/generate-narration/route.ts",
+      "line": 316,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/ai/generate-narration/route.ts",
+      "line": 321,
+      "snippet": "type RevalidateRange<T> = T extends { revalidate: any } ? NonNegative<T['revalidate']> : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/ai/generate-narration/route.ts",
+      "line": 323,
+      "snippet": "// If T is unknown or any, it will be an empty {} type. Otherwise, it will be the same as Omit<T, keyof Base>.",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/ai/generate-narration/route.ts",
+      "line": 324,
+      "snippet": "type OmitWithTag<T, K extends keyof any, _M> = Omit<T, K>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/ai/generate-narration/route.ts",
+      "line": 327,
+      "snippet": "type FirstArg<T extends Function> = T extends (...args: [infer T, any]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/ai/generate-narration/route.ts",
+      "line": 328,
+      "snippet": "type SecondArg<T extends Function> = T extends (...args: [any, infer T]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/ai/generate-narration/route.ts",
       "line": 337,
       "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
       "type": "any"
@@ -5286,6 +5574,72 @@
       "type": "any"
     },
     {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/analytics/overview/route.ts",
+      "line": 305,
+      "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/analytics/overview/route.ts",
+      "line": 308,
+      "snippet": "type PageParams = any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/analytics/overview/route.ts",
+      "line": 310,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/analytics/overview/route.ts",
+      "line": 311,
+      "snippet": "searchParams?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/analytics/overview/route.ts",
+      "line": 316,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/analytics/overview/route.ts",
+      "line": 321,
+      "snippet": "type RevalidateRange<T> = T extends { revalidate: any } ? NonNegative<T['revalidate']> : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/analytics/overview/route.ts",
+      "line": 323,
+      "snippet": "// If T is unknown or any, it will be an empty {} type. Otherwise, it will be the same as Omit<T, keyof Base>.",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/analytics/overview/route.ts",
+      "line": 324,
+      "snippet": "type OmitWithTag<T, K extends keyof any, _M> = Omit<T, K>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/analytics/overview/route.ts",
+      "line": 327,
+      "snippet": "type FirstArg<T extends Function> = T extends (...args: [infer T, any]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/analytics/overview/route.ts",
+      "line": 328,
+      "snippet": "type SecondArg<T extends Function> = T extends (...args: [any, infer T]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/analytics/overview/route.ts",
+      "line": 337,
+      "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
+      "type": "any"
+    },
+    {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/analytics/performance/route.ts",
       "line": 305,
       "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
@@ -5413,6 +5767,72 @@
     },
     {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/analytics/realtime/route.ts",
+      "line": 337,
+      "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/analytics/render-jobs/route.ts",
+      "line": 305,
+      "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/analytics/render-jobs/route.ts",
+      "line": 308,
+      "snippet": "type PageParams = any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/analytics/render-jobs/route.ts",
+      "line": 310,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/analytics/render-jobs/route.ts",
+      "line": 311,
+      "snippet": "searchParams?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/analytics/render-jobs/route.ts",
+      "line": 316,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/analytics/render-jobs/route.ts",
+      "line": 321,
+      "snippet": "type RevalidateRange<T> = T extends { revalidate: any } ? NonNegative<T['revalidate']> : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/analytics/render-jobs/route.ts",
+      "line": 323,
+      "snippet": "// If T is unknown or any, it will be an empty {} type. Otherwise, it will be the same as Omit<T, keyof Base>.",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/analytics/render-jobs/route.ts",
+      "line": 324,
+      "snippet": "type OmitWithTag<T, K extends keyof any, _M> = Omit<T, K>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/analytics/render-jobs/route.ts",
+      "line": 327,
+      "snippet": "type FirstArg<T extends Function> = T extends (...args: [infer T, any]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/analytics/render-jobs/route.ts",
+      "line": 328,
+      "snippet": "type SecondArg<T extends Function> = T extends (...args: [any, infer T]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/analytics/render-jobs/route.ts",
       "line": 337,
       "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
       "type": "any"
@@ -6078,6 +6498,72 @@
       "type": "any"
     },
     {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/assets/folders/route.ts",
+      "line": 305,
+      "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/assets/folders/route.ts",
+      "line": 308,
+      "snippet": "type PageParams = any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/assets/folders/route.ts",
+      "line": 310,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/assets/folders/route.ts",
+      "line": 311,
+      "snippet": "searchParams?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/assets/folders/route.ts",
+      "line": 316,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/assets/folders/route.ts",
+      "line": 321,
+      "snippet": "type RevalidateRange<T> = T extends { revalidate: any } ? NonNegative<T['revalidate']> : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/assets/folders/route.ts",
+      "line": 323,
+      "snippet": "// If T is unknown or any, it will be an empty {} type. Otherwise, it will be the same as Omit<T, keyof Base>.",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/assets/folders/route.ts",
+      "line": 324,
+      "snippet": "type OmitWithTag<T, K extends keyof any, _M> = Omit<T, K>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/assets/folders/route.ts",
+      "line": 327,
+      "snippet": "type FirstArg<T extends Function> = T extends (...args: [infer T, any]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/assets/folders/route.ts",
+      "line": 328,
+      "snippet": "type SecondArg<T extends Function> = T extends (...args: [any, infer T]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/assets/folders/route.ts",
+      "line": 337,
+      "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
+      "type": "any"
+    },
+    {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/assets/list/route.ts",
       "line": 305,
       "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
@@ -6139,6 +6625,72 @@
     },
     {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/assets/list/route.ts",
+      "line": 337,
+      "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/assets/route.ts",
+      "line": 305,
+      "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/assets/route.ts",
+      "line": 308,
+      "snippet": "type PageParams = any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/assets/route.ts",
+      "line": 310,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/assets/route.ts",
+      "line": 311,
+      "snippet": "searchParams?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/assets/route.ts",
+      "line": 316,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/assets/route.ts",
+      "line": 321,
+      "snippet": "type RevalidateRange<T> = T extends { revalidate: any } ? NonNegative<T['revalidate']> : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/assets/route.ts",
+      "line": 323,
+      "snippet": "// If T is unknown or any, it will be an empty {} type. Otherwise, it will be the same as Omit<T, keyof Base>.",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/assets/route.ts",
+      "line": 324,
+      "snippet": "type OmitWithTag<T, K extends keyof any, _M> = Omit<T, K>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/assets/route.ts",
+      "line": 327,
+      "snippet": "type FirstArg<T extends Function> = T extends (...args: [infer T, any]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/assets/route.ts",
+      "line": 328,
+      "snippet": "type SecondArg<T extends Function> = T extends (...args: [any, infer T]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/assets/route.ts",
       "line": 337,
       "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
       "type": "any"
@@ -6271,6 +6823,72 @@
     },
     {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/audio/batch-generate/route.ts",
+      "line": 337,
+      "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/audio/upload/route.ts",
+      "line": 305,
+      "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/audio/upload/route.ts",
+      "line": 308,
+      "snippet": "type PageParams = any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/audio/upload/route.ts",
+      "line": 310,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/audio/upload/route.ts",
+      "line": 311,
+      "snippet": "searchParams?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/audio/upload/route.ts",
+      "line": 316,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/audio/upload/route.ts",
+      "line": 321,
+      "snippet": "type RevalidateRange<T> = T extends { revalidate: any } ? NonNegative<T['revalidate']> : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/audio/upload/route.ts",
+      "line": 323,
+      "snippet": "// If T is unknown or any, it will be an empty {} type. Otherwise, it will be the same as Omit<T, keyof Base>.",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/audio/upload/route.ts",
+      "line": 324,
+      "snippet": "type OmitWithTag<T, K extends keyof any, _M> = Omit<T, K>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/audio/upload/route.ts",
+      "line": 327,
+      "snippet": "type FirstArg<T extends Function> = T extends (...args: [infer T, any]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/audio/upload/route.ts",
+      "line": 328,
+      "snippet": "type SecondArg<T extends Function> = T extends (...args: [any, infer T]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/audio/upload/route.ts",
       "line": 337,
       "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
       "type": "any"
@@ -8454,6 +9072,72 @@
       "type": "any"
     },
     {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/brand-kit/route.ts",
+      "line": 305,
+      "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/brand-kit/route.ts",
+      "line": 308,
+      "snippet": "type PageParams = any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/brand-kit/route.ts",
+      "line": 310,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/brand-kit/route.ts",
+      "line": 311,
+      "snippet": "searchParams?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/brand-kit/route.ts",
+      "line": 316,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/brand-kit/route.ts",
+      "line": 321,
+      "snippet": "type RevalidateRange<T> = T extends { revalidate: any } ? NonNegative<T['revalidate']> : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/brand-kit/route.ts",
+      "line": 323,
+      "snippet": "// If T is unknown or any, it will be an empty {} type. Otherwise, it will be the same as Omit<T, keyof Base>.",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/brand-kit/route.ts",
+      "line": 324,
+      "snippet": "type OmitWithTag<T, K extends keyof any, _M> = Omit<T, K>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/brand-kit/route.ts",
+      "line": 327,
+      "snippet": "type FirstArg<T extends Function> = T extends (...args: [infer T, any]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/brand-kit/route.ts",
+      "line": 328,
+      "snippet": "type SecondArg<T extends Function> = T extends (...args: [any, infer T]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/brand-kit/route.ts",
+      "line": 337,
+      "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
+      "type": "any"
+    },
+    {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/cache/intelligent/route.ts",
       "line": 305,
       "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
@@ -8652,6 +9336,72 @@
       "type": "any"
     },
     {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/certificate/generate/route.ts",
+      "line": 305,
+      "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/certificate/generate/route.ts",
+      "line": 308,
+      "snippet": "type PageParams = any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/certificate/generate/route.ts",
+      "line": 310,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/certificate/generate/route.ts",
+      "line": 311,
+      "snippet": "searchParams?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/certificate/generate/route.ts",
+      "line": 316,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/certificate/generate/route.ts",
+      "line": 321,
+      "snippet": "type RevalidateRange<T> = T extends { revalidate: any } ? NonNegative<T['revalidate']> : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/certificate/generate/route.ts",
+      "line": 323,
+      "snippet": "// If T is unknown or any, it will be an empty {} type. Otherwise, it will be the same as Omit<T, keyof Base>.",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/certificate/generate/route.ts",
+      "line": 324,
+      "snippet": "type OmitWithTag<T, K extends keyof any, _M> = Omit<T, K>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/certificate/generate/route.ts",
+      "line": 327,
+      "snippet": "type FirstArg<T extends Function> = T extends (...args: [infer T, any]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/certificate/generate/route.ts",
+      "line": 328,
+      "snippet": "type SecondArg<T extends Function> = T extends (...args: [any, infer T]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/certificate/generate/route.ts",
+      "line": 337,
+      "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
+      "type": "any"
+    },
+    {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/certificates/route.ts",
       "line": 305,
       "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
@@ -8713,6 +9463,72 @@
     },
     {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/certificates/route.ts",
+      "line": 337,
+      "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/certificates/validate/route.ts",
+      "line": 305,
+      "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/certificates/validate/route.ts",
+      "line": 308,
+      "snippet": "type PageParams = any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/certificates/validate/route.ts",
+      "line": 310,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/certificates/validate/route.ts",
+      "line": 311,
+      "snippet": "searchParams?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/certificates/validate/route.ts",
+      "line": 316,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/certificates/validate/route.ts",
+      "line": 321,
+      "snippet": "type RevalidateRange<T> = T extends { revalidate: any } ? NonNegative<T['revalidate']> : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/certificates/validate/route.ts",
+      "line": 323,
+      "snippet": "// If T is unknown or any, it will be an empty {} type. Otherwise, it will be the same as Omit<T, keyof Base>.",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/certificates/validate/route.ts",
+      "line": 324,
+      "snippet": "type OmitWithTag<T, K extends keyof any, _M> = Omit<T, K>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/certificates/validate/route.ts",
+      "line": 327,
+      "snippet": "type FirstArg<T extends Function> = T extends (...args: [infer T, any]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/certificates/validate/route.ts",
+      "line": 328,
+      "snippet": "type SecondArg<T extends Function> = T extends (...args: [any, infer T]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/certificates/validate/route.ts",
       "line": 337,
       "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
       "type": "any"
@@ -10236,6 +11052,72 @@
       "type": "any"
     },
     {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/embed/generate/route.ts",
+      "line": 305,
+      "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/embed/generate/route.ts",
+      "line": 308,
+      "snippet": "type PageParams = any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/embed/generate/route.ts",
+      "line": 310,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/embed/generate/route.ts",
+      "line": 311,
+      "snippet": "searchParams?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/embed/generate/route.ts",
+      "line": 316,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/embed/generate/route.ts",
+      "line": 321,
+      "snippet": "type RevalidateRange<T> = T extends { revalidate: any } ? NonNegative<T['revalidate']> : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/embed/generate/route.ts",
+      "line": 323,
+      "snippet": "// If T is unknown or any, it will be an empty {} type. Otherwise, it will be the same as Omit<T, keyof Base>.",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/embed/generate/route.ts",
+      "line": 324,
+      "snippet": "type OmitWithTag<T, K extends keyof any, _M> = Omit<T, K>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/embed/generate/route.ts",
+      "line": 327,
+      "snippet": "type FirstArg<T extends Function> = T extends (...args: [infer T, any]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/embed/generate/route.ts",
+      "line": 328,
+      "snippet": "type SecondArg<T extends Function> = T extends (...args: [any, infer T]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/embed/generate/route.ts",
+      "line": 337,
+      "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
+      "type": "any"
+    },
+    {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/export/create/route.ts",
       "line": 305,
       "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
@@ -10429,6 +11311,72 @@
     },
     {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/export/quick/route.ts",
+      "line": 337,
+      "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/export/scorm/route.ts",
+      "line": 305,
+      "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/export/scorm/route.ts",
+      "line": 308,
+      "snippet": "type PageParams = any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/export/scorm/route.ts",
+      "line": 310,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/export/scorm/route.ts",
+      "line": 311,
+      "snippet": "searchParams?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/export/scorm/route.ts",
+      "line": 316,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/export/scorm/route.ts",
+      "line": 321,
+      "snippet": "type RevalidateRange<T> = T extends { revalidate: any } ? NonNegative<T['revalidate']> : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/export/scorm/route.ts",
+      "line": 323,
+      "snippet": "// If T is unknown or any, it will be an empty {} type. Otherwise, it will be the same as Omit<T, keyof Base>.",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/export/scorm/route.ts",
+      "line": 324,
+      "snippet": "type OmitWithTag<T, K extends keyof any, _M> = Omit<T, K>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/export/scorm/route.ts",
+      "line": 327,
+      "snippet": "type FirstArg<T extends Function> = T extends (...args: [infer T, any]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/export/scorm/route.ts",
+      "line": 328,
+      "snippet": "type SecondArg<T extends Function> = T extends (...args: [any, infer T]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/export/scorm/route.ts",
       "line": 337,
       "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
       "type": "any"
@@ -14460,6 +15408,72 @@
       "type": "any"
     },
     {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/quiz/results/route.ts",
+      "line": 305,
+      "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/quiz/results/route.ts",
+      "line": 308,
+      "snippet": "type PageParams = any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/quiz/results/route.ts",
+      "line": 310,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/quiz/results/route.ts",
+      "line": 311,
+      "snippet": "searchParams?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/quiz/results/route.ts",
+      "line": 316,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/quiz/results/route.ts",
+      "line": 321,
+      "snippet": "type RevalidateRange<T> = T extends { revalidate: any } ? NonNegative<T['revalidate']> : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/quiz/results/route.ts",
+      "line": 323,
+      "snippet": "// If T is unknown or any, it will be an empty {} type. Otherwise, it will be the same as Omit<T, keyof Base>.",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/quiz/results/route.ts",
+      "line": 324,
+      "snippet": "type OmitWithTag<T, K extends keyof any, _M> = Omit<T, K>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/quiz/results/route.ts",
+      "line": 327,
+      "snippet": "type FirstArg<T extends Function> = T extends (...args: [infer T, any]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/quiz/results/route.ts",
+      "line": 328,
+      "snippet": "type SecondArg<T extends Function> = T extends (...args: [any, infer T]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/quiz/results/route.ts",
+      "line": 337,
+      "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
+      "type": "any"
+    },
+    {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/quotas/route.ts",
       "line": 305,
       "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
@@ -17034,6 +18048,138 @@
       "type": "any"
     },
     {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/stripe/checkout/route.ts",
+      "line": 305,
+      "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/stripe/checkout/route.ts",
+      "line": 308,
+      "snippet": "type PageParams = any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/stripe/checkout/route.ts",
+      "line": 310,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/stripe/checkout/route.ts",
+      "line": 311,
+      "snippet": "searchParams?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/stripe/checkout/route.ts",
+      "line": 316,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/stripe/checkout/route.ts",
+      "line": 321,
+      "snippet": "type RevalidateRange<T> = T extends { revalidate: any } ? NonNegative<T['revalidate']> : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/stripe/checkout/route.ts",
+      "line": 323,
+      "snippet": "// If T is unknown or any, it will be an empty {} type. Otherwise, it will be the same as Omit<T, keyof Base>.",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/stripe/checkout/route.ts",
+      "line": 324,
+      "snippet": "type OmitWithTag<T, K extends keyof any, _M> = Omit<T, K>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/stripe/checkout/route.ts",
+      "line": 327,
+      "snippet": "type FirstArg<T extends Function> = T extends (...args: [infer T, any]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/stripe/checkout/route.ts",
+      "line": 328,
+      "snippet": "type SecondArg<T extends Function> = T extends (...args: [any, infer T]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/stripe/checkout/route.ts",
+      "line": 337,
+      "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/stripe/webhook/route.ts",
+      "line": 305,
+      "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/stripe/webhook/route.ts",
+      "line": 308,
+      "snippet": "type PageParams = any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/stripe/webhook/route.ts",
+      "line": 310,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/stripe/webhook/route.ts",
+      "line": 311,
+      "snippet": "searchParams?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/stripe/webhook/route.ts",
+      "line": 316,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/stripe/webhook/route.ts",
+      "line": 321,
+      "snippet": "type RevalidateRange<T> = T extends { revalidate: any } ? NonNegative<T['revalidate']> : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/stripe/webhook/route.ts",
+      "line": 323,
+      "snippet": "// If T is unknown or any, it will be an empty {} type. Otherwise, it will be the same as Omit<T, keyof Base>.",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/stripe/webhook/route.ts",
+      "line": 324,
+      "snippet": "type OmitWithTag<T, K extends keyof any, _M> = Omit<T, K>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/stripe/webhook/route.ts",
+      "line": 327,
+      "snippet": "type FirstArg<T extends Function> = T extends (...args: [infer T, any]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/stripe/webhook/route.ts",
+      "line": 328,
+      "snippet": "type SecondArg<T extends Function> = T extends (...args: [any, infer T]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/stripe/webhook/route.ts",
+      "line": 337,
+      "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
+      "type": "any"
+    },
+    {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/studio/convert-pptx/route.ts",
       "line": 305,
       "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
@@ -17298,6 +18444,270 @@
       "type": "any"
     },
     {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/studio/state/[projectId]/route.ts",
+      "line": 305,
+      "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/studio/state/[projectId]/route.ts",
+      "line": 308,
+      "snippet": "type PageParams = any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/studio/state/[projectId]/route.ts",
+      "line": 310,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/studio/state/[projectId]/route.ts",
+      "line": 311,
+      "snippet": "searchParams?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/studio/state/[projectId]/route.ts",
+      "line": 316,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/studio/state/[projectId]/route.ts",
+      "line": 321,
+      "snippet": "type RevalidateRange<T> = T extends { revalidate: any } ? NonNegative<T['revalidate']> : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/studio/state/[projectId]/route.ts",
+      "line": 323,
+      "snippet": "// If T is unknown or any, it will be an empty {} type. Otherwise, it will be the same as Omit<T, keyof Base>.",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/studio/state/[projectId]/route.ts",
+      "line": 324,
+      "snippet": "type OmitWithTag<T, K extends keyof any, _M> = Omit<T, K>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/studio/state/[projectId]/route.ts",
+      "line": 327,
+      "snippet": "type FirstArg<T extends Function> = T extends (...args: [infer T, any]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/studio/state/[projectId]/route.ts",
+      "line": 328,
+      "snippet": "type SecondArg<T extends Function> = T extends (...args: [any, infer T]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/studio/state/[projectId]/route.ts",
+      "line": 337,
+      "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/studio/state/snapshot/route.ts",
+      "line": 305,
+      "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/studio/state/snapshot/route.ts",
+      "line": 308,
+      "snippet": "type PageParams = any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/studio/state/snapshot/route.ts",
+      "line": 310,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/studio/state/snapshot/route.ts",
+      "line": 311,
+      "snippet": "searchParams?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/studio/state/snapshot/route.ts",
+      "line": 316,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/studio/state/snapshot/route.ts",
+      "line": 321,
+      "snippet": "type RevalidateRange<T> = T extends { revalidate: any } ? NonNegative<T['revalidate']> : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/studio/state/snapshot/route.ts",
+      "line": 323,
+      "snippet": "// If T is unknown or any, it will be an empty {} type. Otherwise, it will be the same as Omit<T, keyof Base>.",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/studio/state/snapshot/route.ts",
+      "line": 324,
+      "snippet": "type OmitWithTag<T, K extends keyof any, _M> = Omit<T, K>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/studio/state/snapshot/route.ts",
+      "line": 327,
+      "snippet": "type FirstArg<T extends Function> = T extends (...args: [infer T, any]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/studio/state/snapshot/route.ts",
+      "line": 328,
+      "snippet": "type SecondArg<T extends Function> = T extends (...args: [any, infer T]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/studio/state/snapshot/route.ts",
+      "line": 337,
+      "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/studio/state/sync/route.ts",
+      "line": 305,
+      "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/studio/state/sync/route.ts",
+      "line": 308,
+      "snippet": "type PageParams = any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/studio/state/sync/route.ts",
+      "line": 310,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/studio/state/sync/route.ts",
+      "line": 311,
+      "snippet": "searchParams?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/studio/state/sync/route.ts",
+      "line": 316,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/studio/state/sync/route.ts",
+      "line": 321,
+      "snippet": "type RevalidateRange<T> = T extends { revalidate: any } ? NonNegative<T['revalidate']> : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/studio/state/sync/route.ts",
+      "line": 323,
+      "snippet": "// If T is unknown or any, it will be an empty {} type. Otherwise, it will be the same as Omit<T, keyof Base>.",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/studio/state/sync/route.ts",
+      "line": 324,
+      "snippet": "type OmitWithTag<T, K extends keyof any, _M> = Omit<T, K>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/studio/state/sync/route.ts",
+      "line": 327,
+      "snippet": "type FirstArg<T extends Function> = T extends (...args: [infer T, any]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/studio/state/sync/route.ts",
+      "line": 328,
+      "snippet": "type SecondArg<T extends Function> = T extends (...args: [any, infer T]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/studio/state/sync/route.ts",
+      "line": 337,
+      "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/subscription/route.ts",
+      "line": 305,
+      "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/subscription/route.ts",
+      "line": 308,
+      "snippet": "type PageParams = any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/subscription/route.ts",
+      "line": 310,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/subscription/route.ts",
+      "line": 311,
+      "snippet": "searchParams?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/subscription/route.ts",
+      "line": 316,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/subscription/route.ts",
+      "line": 321,
+      "snippet": "type RevalidateRange<T> = T extends { revalidate: any } ? NonNegative<T['revalidate']> : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/subscription/route.ts",
+      "line": 323,
+      "snippet": "// If T is unknown or any, it will be an empty {} type. Otherwise, it will be the same as Omit<T, keyof Base>.",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/subscription/route.ts",
+      "line": 324,
+      "snippet": "type OmitWithTag<T, K extends keyof any, _M> = Omit<T, K>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/subscription/route.ts",
+      "line": 327,
+      "snippet": "type FirstArg<T extends Function> = T extends (...args: [infer T, any]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/subscription/route.ts",
+      "line": 328,
+      "snippet": "type SecondArg<T extends Function> = T extends (...args: [any, infer T]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/subscription/route.ts",
+      "line": 337,
+      "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
+      "type": "any"
+    },
+    {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/subtitles/generate/route.ts",
       "line": 305,
       "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
@@ -17425,6 +18835,72 @@
     },
     {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/subtitles/transcribe/route.ts",
+      "line": 337,
+      "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/support/ticket/route.ts",
+      "line": 305,
+      "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/support/ticket/route.ts",
+      "line": 308,
+      "snippet": "type PageParams = any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/support/ticket/route.ts",
+      "line": 310,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/support/ticket/route.ts",
+      "line": 311,
+      "snippet": "searchParams?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/support/ticket/route.ts",
+      "line": 316,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/support/ticket/route.ts",
+      "line": 321,
+      "snippet": "type RevalidateRange<T> = T extends { revalidate: any } ? NonNegative<T['revalidate']> : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/support/ticket/route.ts",
+      "line": 323,
+      "snippet": "// If T is unknown or any, it will be an empty {} type. Otherwise, it will be the same as Omit<T, keyof Base>.",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/support/ticket/route.ts",
+      "line": 324,
+      "snippet": "type OmitWithTag<T, K extends keyof any, _M> = Omit<T, K>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/support/ticket/route.ts",
+      "line": 327,
+      "snippet": "type FirstArg<T extends Function> = T extends (...args: [infer T, any]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/support/ticket/route.ts",
+      "line": 328,
+      "snippet": "type SecondArg<T extends Function> = T extends (...args: [any, infer T]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/support/ticket/route.ts",
       "line": 337,
       "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
       "type": "any"
@@ -19938,6 +21414,138 @@
       "type": "any"
     },
     {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/usage/track/route.ts",
+      "line": 305,
+      "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/usage/track/route.ts",
+      "line": 308,
+      "snippet": "type PageParams = any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/usage/track/route.ts",
+      "line": 310,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/usage/track/route.ts",
+      "line": 311,
+      "snippet": "searchParams?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/usage/track/route.ts",
+      "line": 316,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/usage/track/route.ts",
+      "line": 321,
+      "snippet": "type RevalidateRange<T> = T extends { revalidate: any } ? NonNegative<T['revalidate']> : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/usage/track/route.ts",
+      "line": 323,
+      "snippet": "// If T is unknown or any, it will be an empty {} type. Otherwise, it will be the same as Omit<T, keyof Base>.",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/usage/track/route.ts",
+      "line": 324,
+      "snippet": "type OmitWithTag<T, K extends keyof any, _M> = Omit<T, K>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/usage/track/route.ts",
+      "line": 327,
+      "snippet": "type FirstArg<T extends Function> = T extends (...args: [infer T, any]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/usage/track/route.ts",
+      "line": 328,
+      "snippet": "type SecondArg<T extends Function> = T extends (...args: [any, infer T]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/usage/track/route.ts",
+      "line": 337,
+      "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/complete-onboarding/route.ts",
+      "line": 305,
+      "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/complete-onboarding/route.ts",
+      "line": 308,
+      "snippet": "type PageParams = any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/complete-onboarding/route.ts",
+      "line": 310,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/complete-onboarding/route.ts",
+      "line": 311,
+      "snippet": "searchParams?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/complete-onboarding/route.ts",
+      "line": 316,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/complete-onboarding/route.ts",
+      "line": 321,
+      "snippet": "type RevalidateRange<T> = T extends { revalidate: any } ? NonNegative<T['revalidate']> : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/complete-onboarding/route.ts",
+      "line": 323,
+      "snippet": "// If T is unknown or any, it will be an empty {} type. Otherwise, it will be the same as Omit<T, keyof Base>.",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/complete-onboarding/route.ts",
+      "line": 324,
+      "snippet": "type OmitWithTag<T, K extends keyof any, _M> = Omit<T, K>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/complete-onboarding/route.ts",
+      "line": 327,
+      "snippet": "type FirstArg<T extends Function> = T extends (...args: [infer T, any]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/complete-onboarding/route.ts",
+      "line": 328,
+      "snippet": "type SecondArg<T extends Function> = T extends (...args: [any, infer T]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/complete-onboarding/route.ts",
+      "line": 337,
+      "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
+      "type": "any"
+    },
+    {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/delete-account/route.ts",
       "line": 305,
       "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
@@ -20065,6 +21673,336 @@
     },
     {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/export-data/route.ts",
+      "line": 337,
+      "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/increment-video-usage/route.ts",
+      "line": 305,
+      "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/increment-video-usage/route.ts",
+      "line": 308,
+      "snippet": "type PageParams = any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/increment-video-usage/route.ts",
+      "line": 310,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/increment-video-usage/route.ts",
+      "line": 311,
+      "snippet": "searchParams?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/increment-video-usage/route.ts",
+      "line": 316,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/increment-video-usage/route.ts",
+      "line": 321,
+      "snippet": "type RevalidateRange<T> = T extends { revalidate: any } ? NonNegative<T['revalidate']> : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/increment-video-usage/route.ts",
+      "line": 323,
+      "snippet": "// If T is unknown or any, it will be an empty {} type. Otherwise, it will be the same as Omit<T, keyof Base>.",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/increment-video-usage/route.ts",
+      "line": 324,
+      "snippet": "type OmitWithTag<T, K extends keyof any, _M> = Omit<T, K>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/increment-video-usage/route.ts",
+      "line": 327,
+      "snippet": "type FirstArg<T extends Function> = T extends (...args: [infer T, any]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/increment-video-usage/route.ts",
+      "line": 328,
+      "snippet": "type SecondArg<T extends Function> = T extends (...args: [any, infer T]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/increment-video-usage/route.ts",
+      "line": 337,
+      "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/preferences/route.ts",
+      "line": 305,
+      "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/preferences/route.ts",
+      "line": 308,
+      "snippet": "type PageParams = any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/preferences/route.ts",
+      "line": 310,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/preferences/route.ts",
+      "line": 311,
+      "snippet": "searchParams?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/preferences/route.ts",
+      "line": 316,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/preferences/route.ts",
+      "line": 321,
+      "snippet": "type RevalidateRange<T> = T extends { revalidate: any } ? NonNegative<T['revalidate']> : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/preferences/route.ts",
+      "line": 323,
+      "snippet": "// If T is unknown or any, it will be an empty {} type. Otherwise, it will be the same as Omit<T, keyof Base>.",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/preferences/route.ts",
+      "line": 324,
+      "snippet": "type OmitWithTag<T, K extends keyof any, _M> = Omit<T, K>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/preferences/route.ts",
+      "line": 327,
+      "snippet": "type FirstArg<T extends Function> = T extends (...args: [infer T, any]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/preferences/route.ts",
+      "line": 328,
+      "snippet": "type SecondArg<T extends Function> = T extends (...args: [any, infer T]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/preferences/route.ts",
+      "line": 337,
+      "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/profile/route.ts",
+      "line": 305,
+      "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/profile/route.ts",
+      "line": 308,
+      "snippet": "type PageParams = any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/profile/route.ts",
+      "line": 310,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/profile/route.ts",
+      "line": 311,
+      "snippet": "searchParams?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/profile/route.ts",
+      "line": 316,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/profile/route.ts",
+      "line": 321,
+      "snippet": "type RevalidateRange<T> = T extends { revalidate: any } ? NonNegative<T['revalidate']> : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/profile/route.ts",
+      "line": 323,
+      "snippet": "// If T is unknown or any, it will be an empty {} type. Otherwise, it will be the same as Omit<T, keyof Base>.",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/profile/route.ts",
+      "line": 324,
+      "snippet": "type OmitWithTag<T, K extends keyof any, _M> = Omit<T, K>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/profile/route.ts",
+      "line": 327,
+      "snippet": "type FirstArg<T extends Function> = T extends (...args: [infer T, any]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/profile/route.ts",
+      "line": 328,
+      "snippet": "type SecondArg<T extends Function> = T extends (...args: [any, infer T]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/profile/route.ts",
+      "line": 337,
+      "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/sessions/route.ts",
+      "line": 305,
+      "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/sessions/route.ts",
+      "line": 308,
+      "snippet": "type PageParams = any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/sessions/route.ts",
+      "line": 310,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/sessions/route.ts",
+      "line": 311,
+      "snippet": "searchParams?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/sessions/route.ts",
+      "line": 316,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/sessions/route.ts",
+      "line": 321,
+      "snippet": "type RevalidateRange<T> = T extends { revalidate: any } ? NonNegative<T['revalidate']> : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/sessions/route.ts",
+      "line": 323,
+      "snippet": "// If T is unknown or any, it will be an empty {} type. Otherwise, it will be the same as Omit<T, keyof Base>.",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/sessions/route.ts",
+      "line": 324,
+      "snippet": "type OmitWithTag<T, K extends keyof any, _M> = Omit<T, K>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/sessions/route.ts",
+      "line": 327,
+      "snippet": "type FirstArg<T extends Function> = T extends (...args: [infer T, any]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/sessions/route.ts",
+      "line": 328,
+      "snippet": "type SecondArg<T extends Function> = T extends (...args: [any, infer T]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/sessions/route.ts",
+      "line": 337,
+      "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/video-limit/route.ts",
+      "line": 305,
+      "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/video-limit/route.ts",
+      "line": 308,
+      "snippet": "type PageParams = any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/video-limit/route.ts",
+      "line": 310,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/video-limit/route.ts",
+      "line": 311,
+      "snippet": "searchParams?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/video-limit/route.ts",
+      "line": 316,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/video-limit/route.ts",
+      "line": 321,
+      "snippet": "type RevalidateRange<T> = T extends { revalidate: any } ? NonNegative<T['revalidate']> : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/video-limit/route.ts",
+      "line": 323,
+      "snippet": "// If T is unknown or any, it will be an empty {} type. Otherwise, it will be the same as Omit<T, keyof Base>.",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/video-limit/route.ts",
+      "line": 324,
+      "snippet": "type OmitWithTag<T, K extends keyof any, _M> = Omit<T, K>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/video-limit/route.ts",
+      "line": 327,
+      "snippet": "type FirstArg<T extends Function> = T extends (...args: [infer T, any]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/video-limit/route.ts",
+      "line": 328,
+      "snippet": "type SecondArg<T extends Function> = T extends (...args: [any, infer T]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/user/video-limit/route.ts",
       "line": 337,
       "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
       "type": "any"
@@ -23629,6 +25567,138 @@
     },
     {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/v2/test/avatars/render/status/[jobId]/route.ts",
+      "line": 337,
+      "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/versions/project/route.ts",
+      "line": 305,
+      "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/versions/project/route.ts",
+      "line": 308,
+      "snippet": "type PageParams = any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/versions/project/route.ts",
+      "line": 310,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/versions/project/route.ts",
+      "line": 311,
+      "snippet": "searchParams?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/versions/project/route.ts",
+      "line": 316,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/versions/project/route.ts",
+      "line": 321,
+      "snippet": "type RevalidateRange<T> = T extends { revalidate: any } ? NonNegative<T['revalidate']> : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/versions/project/route.ts",
+      "line": 323,
+      "snippet": "// If T is unknown or any, it will be an empty {} type. Otherwise, it will be the same as Omit<T, keyof Base>.",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/versions/project/route.ts",
+      "line": 324,
+      "snippet": "type OmitWithTag<T, K extends keyof any, _M> = Omit<T, K>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/versions/project/route.ts",
+      "line": 327,
+      "snippet": "type FirstArg<T extends Function> = T extends (...args: [infer T, any]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/versions/project/route.ts",
+      "line": 328,
+      "snippet": "type SecondArg<T extends Function> = T extends (...args: [any, infer T]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/versions/project/route.ts",
+      "line": 337,
+      "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/versions/restore/route.ts",
+      "line": 305,
+      "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/versions/restore/route.ts",
+      "line": 308,
+      "snippet": "type PageParams = any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/versions/restore/route.ts",
+      "line": 310,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/versions/restore/route.ts",
+      "line": 311,
+      "snippet": "searchParams?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/versions/restore/route.ts",
+      "line": 316,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/versions/restore/route.ts",
+      "line": 321,
+      "snippet": "type RevalidateRange<T> = T extends { revalidate: any } ? NonNegative<T['revalidate']> : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/versions/restore/route.ts",
+      "line": 323,
+      "snippet": "// If T is unknown or any, it will be an empty {} type. Otherwise, it will be the same as Omit<T, keyof Base>.",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/versions/restore/route.ts",
+      "line": 324,
+      "snippet": "type OmitWithTag<T, K extends keyof any, _M> = Omit<T, K>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/versions/restore/route.ts",
+      "line": 327,
+      "snippet": "type FirstArg<T extends Function> = T extends (...args: [infer T, any]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/versions/restore/route.ts",
+      "line": 328,
+      "snippet": "type SecondArg<T extends Function> = T extends (...args: [any, infer T]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/api/versions/restore/route.ts",
       "line": 337,
       "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
       "type": "any"
@@ -29106,6 +31176,84 @@
       "type": "any"
     },
     {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/embed/[videoId]/page.ts",
+      "line": 20,
+      "snippet": "metadata?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/embed/[videoId]/page.ts",
+      "line": 22,
+      "snippet": "viewport?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/embed/[videoId]/page.ts",
+      "line": 45,
+      "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/embed/[videoId]/page.ts",
+      "line": 48,
+      "snippet": "type PageParams = any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/embed/[videoId]/page.ts",
+      "line": 50,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/embed/[videoId]/page.ts",
+      "line": 51,
+      "snippet": "searchParams?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/embed/[videoId]/page.ts",
+      "line": 56,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/embed/[videoId]/page.ts",
+      "line": 61,
+      "snippet": "type RevalidateRange<T> = T extends { revalidate: any } ? NonNegative<T['revalidate']> : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/embed/[videoId]/page.ts",
+      "line": 63,
+      "snippet": "// If T is unknown or any, it will be an empty {} type. Otherwise, it will be the same as Omit<T, keyof Base>.",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/embed/[videoId]/page.ts",
+      "line": 64,
+      "snippet": "type OmitWithTag<T, K extends keyof any, _M> = Omit<T, K>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/embed/[videoId]/page.ts",
+      "line": 67,
+      "snippet": "type FirstArg<T extends Function> = T extends (...args: [infer T, any]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/embed/[videoId]/page.ts",
+      "line": 68,
+      "snippet": "type SecondArg<T extends Function> = T extends (...args: [any, infer T]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/embed/[videoId]/page.ts",
+      "line": 73,
+      "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
+      "type": "any"
+    },
+    {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/enterprise-integration/page.ts",
       "line": 20,
       "snippet": "metadata?: any",
@@ -33235,6 +35383,84 @@
     },
     {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/trash/page.ts",
+      "line": 73,
+      "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/unified-studio/page.ts",
+      "line": 20,
+      "snippet": "metadata?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/unified-studio/page.ts",
+      "line": 22,
+      "snippet": "viewport?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/unified-studio/page.ts",
+      "line": 45,
+      "snippet": "checkFields<Diff<{ __tag__: 'generateStaticParams', __return_type__: any[] | Promise<any[]> }, { __tag__: 'generateStaticParams', __return_t",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/unified-studio/page.ts",
+      "line": 48,
+      "snippet": "type PageParams = any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/unified-studio/page.ts",
+      "line": 50,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/unified-studio/page.ts",
+      "line": 51,
+      "snippet": "searchParams?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/unified-studio/page.ts",
+      "line": 56,
+      "snippet": "params?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/unified-studio/page.ts",
+      "line": 61,
+      "snippet": "type RevalidateRange<T> = T extends { revalidate: any } ? NonNegative<T['revalidate']> : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/unified-studio/page.ts",
+      "line": 63,
+      "snippet": "// If T is unknown or any, it will be an empty {} type. Otherwise, it will be the same as Omit<T, keyof Base>.",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/unified-studio/page.ts",
+      "line": 64,
+      "snippet": "type OmitWithTag<T, K extends keyof any, _M> = Omit<T, K>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/unified-studio/page.ts",
+      "line": 67,
+      "snippet": "type FirstArg<T extends Function> = T extends (...args: [infer T, any]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/unified-studio/page.ts",
+      "line": 68,
+      "snippet": "type SecondArg<T extends Function> = T extends (...args: [any, infer T]) => any ? unknown extends T ? any : T : never",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/.next/types/app/unified-studio/page.ts",
       "line": 73,
       "snippet": "function checkFields<_ extends { [k in keyof any]: never }>() {}",
       "type": "any"
@@ -33673,19 +35899,19 @@
     },
     {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/api/ai/generate/route.ts",
-      "line": 35,
+      "line": 36,
       "snippet": "let content: any;",
       "type": "any"
     },
     {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/api/ai/generate/route.ts",
-      "line": 114,
+      "line": 115,
       "snippet": "if ((error as any).response) {",
       "type": "any"
     },
     {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/api/ai/generate/route.ts",
-      "line": 116,
+      "line": 117,
       "snippet": "{ error: `Erro no provedor de IA: ${(error as any).response.data.error.message}` },",
       "type": "any"
     },
@@ -34135,36 +36361,6 @@
     },
     {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/api/analytics/user-metrics/route.ts",
-      "line": 67,
-      "snippet": "const completed = projectsList.filter((p: any) => p.status === 'completed').length;",
-      "type": "any"
-    },
-    {
-      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/api/analytics/user-metrics/route.ts",
-      "line": 68,
-      "snippet": "const active = projectsList.filter((p: any) => p.status === 'active' || p.status === 'in-progress').length;",
-      "type": "any"
-    },
-    {
-      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/api/analytics/user-metrics/route.ts",
-      "line": 71,
-      "snippet": "const completedProjects = projectsList.filter((p: any) => p.status === 'completed');",
-      "type": "any"
-    },
-    {
-      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/api/analytics/user-metrics/route.ts",
-      "line": 72,
-      "snippet": "const durations = completedProjects.map((p: any) => {",
-      "type": "any"
-    },
-    {
-      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/api/analytics/user-metrics/route.ts",
-      "line": 83,
-      "snippet": "const projectTypeCounts = projectsList.reduce((acc: Record<string, number>, project: any) => {",
-      "type": "any"
-    },
-    {
-      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/api/analytics/user-metrics/route.ts",
       "line": 128,
       "snippet": "const completedRenders = renders.filter((r: any) => r.status === 'completed');",
       "type": "any"
@@ -34209,6 +36405,30 @@
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/api/analytics/user-metrics/route.ts",
       "line": 248,
       "snippet": "const data = event.eventData as Record<string, any> || {};",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/api/audio/upload/route.ts",
+      "line": 107,
+      "snippet": "const { data: audioRecord, error: dbError } = await (supabase as any)",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/api/audio/upload/route.ts",
+      "line": 168,
+      "snippet": "const { error: updateError } = await (supabase as any)",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/api/audio/upload/route.ts",
+      "line": 205,
+      "snippet": "const { data: audio } = await (supabase as any)",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/api/audio/upload/route.ts",
+      "line": 220,
+      "snippet": "await (supabase as any)",
       "type": "any"
     },
     {
@@ -34401,6 +36621,30 @@
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/api/billing/usage/route.ts",
       "line": 9,
       "snippet": "const supabase = getSupabaseForRequest(request as any);",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/api/certificate/generate/route.ts",
+      "line": 246,
+      "snippet": "const { error: insertError } = await (supabase as any)",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/api/certificate/generate/route.ts",
+      "line": 349,
+      "snippet": "// Look up certificate - using any cast as table is created via migration",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/api/certificate/generate/route.ts",
+      "line": 350,
+      "snippet": "const { data: certificate, error } = await (supabase as any)",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/api/certificate/generate/route.ts",
+      "line": 354,
+      "snippet": ".single() as { data: CertificateRecord | null; error: any };",
       "type": "any"
     },
     {
@@ -34659,6 +36903,78 @@
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/api/dashboard/unified-stats/route.ts",
       "line": 118,
       "snippet": ".in('event_type', ['project_view', 'project_viewed']) as any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/api/embed/generate/route.ts",
+      "line": 215,
+      "snippet": "const { error: analyticsError } = await (supabase as any)",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/api/embed/generate/route.ts",
+      "line": 295,
+      "snippet": "<type>${(oembedResponse as any).type}</type>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/api/embed/generate/route.ts",
+      "line": 296,
+      "snippet": "<version>${(oembedResponse as any).version}</version>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/api/embed/generate/route.ts",
+      "line": 297,
+      "snippet": "<title>${(oembedResponse as any).title}</title>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/api/embed/generate/route.ts",
+      "line": 298,
+      "snippet": "<author_name>${(oembedResponse as any).author_name}</author_name>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/api/embed/generate/route.ts",
+      "line": 299,
+      "snippet": "<provider_name>${(oembedResponse as any).provider_name}</provider_name>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/api/embed/generate/route.ts",
+      "line": 300,
+      "snippet": "<provider_url>${(oembedResponse as any).provider_url}</provider_url>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/api/embed/generate/route.ts",
+      "line": 301,
+      "snippet": "<width>${(oembedResponse as any).width}</width>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/api/embed/generate/route.ts",
+      "line": 302,
+      "snippet": "<height>${(oembedResponse as any).height}</height>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/api/embed/generate/route.ts",
+      "line": 303,
+      "snippet": "<html><![CDATA[${(oembedResponse as any).html}]]></html>",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/api/export/scorm/route.ts",
+      "line": 552,
+      "snippet": "// Track export in analytics - using any cast as table is created via migration",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/api/export/scorm/route.ts",
+      "line": 553,
+      "snippet": "const { error: analyticsError } = await (supabase as any)",
       "type": "any"
     },
     {
@@ -35514,6 +37830,18 @@
       "type": "any"
     },
     {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/api/support/ticket/route.ts",
+      "line": 71,
+      "snippet": "const { data: savedTicket, error: dbError } = await (supabase as any)",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/api/support/ticket/route.ts",
+      "line": 200,
+      "snippet": "const { data: tickets, error } = await (supabase as any)",
+      "type": "any"
+    },
+    {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/api/sync/process/route.ts",
       "line": 123,
       "snippet": "await supabase.from('sync_jobs' as any).update({",
@@ -35958,6 +38286,18 @@
       "type": "any"
     },
     {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/api/versions/project/route.ts",
+      "line": 11,
+      "snippet": "* Note: Uses project metadata JSON for version tracking to work with any schema",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/api/versions/project/route.ts",
+      "line": 41,
+      "snippet": "snapshot: z.any().optional(),",
+      "type": "any"
+    },
+    {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/api/voice/clone/route.ts",
       "line": 13,
       "snippet": "files: z.array(z.any()) // Validaremos se são Blobs/Files manualmente ou via custom refine",
@@ -36252,12 +38592,6 @@
       "type": "any"
     },
     {
-      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/remotion/TimelineComposition.tsx",
-      "line": 13,
-      "snippet": "properties: Record<string, any>;",
-      "type": "any"
-    },
-    {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/remotion/components/RPMAvatarWithLipSync.tsx",
       "line": 146,
       "snippet": "{/* eslint-disable-next-line @typescript-eslint/no-explicit-any -- Three.js position prop requires array casting */}",
@@ -36330,6 +38664,18 @@
       "type": "any"
     },
     {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/unified-studio/page.tsx",
+      "line": 90,
+      "snippet": "] as any;",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/unified-studio/page.tsx",
+      "line": 97,
+      "snippet": "const [lipSyncData, setLipSyncData] = useState<any[]>([]);",
+      "type": "any"
+    },
+    {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/app/voice-cloning-advanced/components/VoiceCloningStudioAdvanced.tsx",
       "line": 133,
       "snippet": "const realVoices: VoiceModel[] = data.voices.map((v: any) => ({",
@@ -36375,6 +38721,30 @@
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/components/ai/content-optimizer.tsx",
       "line": 38,
       "snippet": "const [analysis, setAnalysis] = useState<any>(null)",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/components/annotations/slide-annotations.tsx",
+      "line": 185,
+      "snippet": "// eslint-disable-next-line @typescript-eslint/no-explicit-any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/components/annotations/slide-annotations.tsx",
+      "line": 186,
+      "snippet": "(annotation: Record<string, any>): string => {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/components/annotations/slide-annotations.tsx",
+      "line": 522,
+      "snippet": "// eslint-disable-next-line @typescript-eslint/no-explicit-any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/components/annotations/slide-annotations.tsx",
+      "line": 523,
+      "snippet": "onAddAnnotation: (annotation: Record<string, any>) => string",
       "type": "any"
     },
     {
@@ -36445,8 +38815,32 @@
     },
     {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/components/canvas-editor-pro/core/performance-monitor.tsx",
-      "line": 100,
+      "line": 102,
       "snippet": "// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Fabric.js canvas mutation required for monitoring",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/components/canvas-editor-pro/ui/quick-actions-bar.tsx",
+      "line": 111,
+      "snippet": "// eslint-disable-next-line @typescript-eslint/no-explicit-any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/components/canvas-editor-pro/ui/quick-actions-bar.tsx",
+      "line": 112,
+      "snippet": "canvas?: any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/components/canvas-editor-pro/ui/smart-guides.tsx",
+      "line": 75,
+      "snippet": "// eslint-disable-next-line @typescript-eslint/no-explicit-any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/components/canvas-editor-pro/ui/smart-guides.tsx",
+      "line": 76,
+      "snippet": "canvas?: any",
       "type": "any"
     },
     {
@@ -36457,7 +38851,7 @@
     },
     {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/components/dashboard/dashboard-real.tsx",
-      "line": 774,
+      "line": 819,
       "snippet": "onValueChange={(value) => setEditingProject({ ...editingProject, status: value as any })}",
       "type": "any"
     },
@@ -36522,8 +38916,14 @@
       "type": "any"
     },
     {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/components/embed/embed-generator.tsx",
+      "line": 155,
+      "snippet": "<Tabs value={embedType} onValueChange={(v) => setEmbedType(v as any)}>",
+      "type": "any"
+    },
+    {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/components/layout/navbar.tsx",
-      "line": 24,
+      "line": 25,
       "snippet": "const [user, setUser] = useState<any>(null);",
       "type": "any"
     },
@@ -36739,7 +39139,7 @@
     },
     {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/components/studio-unified/AssetBrowser.tsx",
-      "line": 141,
+      "line": 147,
       "snippet": "const handleGenerateAvatar = (config: any) => {",
       "type": "any"
     },
@@ -37093,25 +39493,25 @@
     },
     {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/components/video-studio/canvas/AnimatedCanvas.tsx",
-      "line": 90,
+      "line": 71,
       "snippet": "id: (obj as any).id || index.toString(),",
       "type": "any"
     },
     {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/components/video-studio/canvas/AnimatedCanvas.tsx",
-      "line": 95,
+      "line": 76,
       "snippet": "name: (obj as any).name || obj.type",
       "type": "any"
     },
     {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/components/video-studio/canvas/AnimatedCanvas.tsx",
-      "line": 185,
+      "line": 166,
       "snippet": "updateSelectedObject: (props: any) => {",
       "type": "any"
     },
     {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/components/video-studio/canvas/AnimatedCanvas.tsx",
-      "line": 339,
+      "line": 320,
       "snippet": "engine.current.animate('Rectangle 1', (values: any) => {",
       "type": "any"
     },
@@ -37194,6 +39594,12 @@
       "type": "any"
     },
     {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/hooks/use-studio.ts",
+      "line": 248,
+      "snippet": "data.suggestions.forEach((s: any) => addAISuggestion(s));",
+      "type": "any"
+    },
+    {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/hooks/useAdvancedAI.ts",
       "line": 285,
       "snippet": "// Cancel any ongoing request",
@@ -37269,24 +39675,6 @@
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/analytics/advanced-analytics-system.ts",
       "line": 98,
       "snippet": "data: Record<string, any>",
-      "type": "any"
-    },
-    {
-      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/analytics/analytics-tracker.ts",
-      "line": 135,
-      "snippet": "const success = jobs.filter((j: any) => j.status === 'completed').length;",
-      "type": "any"
-    },
-    {
-      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/analytics/analytics-tracker.ts",
-      "line": 136,
-      "snippet": "const failed = jobs.filter((j: any) => j.status === 'failed').length;",
-      "type": "any"
-    },
-    {
-      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/analytics/analytics-tracker.ts",
-      "line": 137,
-      "snippet": "const avgLatency = jobs.reduce((acc: number, j: any) => acc + (j.duration_ms || 0), 0) / (total || 1);",
       "type": "any"
     },
     {
@@ -37488,6 +39876,66 @@
       "type": "any"
     },
     {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/audio/custom-audio-upload.ts",
+      "line": 261,
+      "snippet": "// eslint-disable-next-line @typescript-eslint/no-explicit-any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/audio/custom-audio-upload.ts",
+      "line": 262,
+      "snippet": "const { data: dbData, error: dbError } = await (supabase as any)",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/audio/custom-audio-upload.ts",
+      "line": 309,
+      "snippet": "// eslint-disable-next-line @typescript-eslint/no-explicit-any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/audio/custom-audio-upload.ts",
+      "line": 310,
+      "snippet": "const { data, error } = await (supabase as any)",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/audio/custom-audio-upload.ts",
+      "line": 349,
+      "snippet": "// eslint-disable-next-line @typescript-eslint/no-explicit-any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/audio/custom-audio-upload.ts",
+      "line": 350,
+      "snippet": "const { data, error } = await (supabase as any)",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/audio/custom-audio-upload.ts",
+      "line": 390,
+      "snippet": "// eslint-disable-next-line @typescript-eslint/no-explicit-any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/audio/custom-audio-upload.ts",
+      "line": 391,
+      "snippet": "const { data: audio, error: fetchError } = await (supabase as any)",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/audio/custom-audio-upload.ts",
+      "line": 413,
+      "snippet": "// eslint-disable-next-line @typescript-eslint/no-explicit-any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/audio/custom-audio-upload.ts",
+      "line": 414,
+      "snippet": "const { error: dbError } = await (supabase as any)",
+      "type": "any"
+    },
+    {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/audit-logging-real.ts",
       "line": 11,
       "snippet": "metadata?: Record<string, any>;",
@@ -37495,19 +39943,19 @@
     },
     {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/avatar/avatar-render-orchestrator.ts",
-      "line": 276,
+      "line": 275,
       "snippet": "* Get job status from any provider",
       "type": "any"
     },
     {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/avatar/avatar-render-orchestrator.ts",
-      "line": 368,
+      "line": 367,
       "snippet": "capabilities: any",
       "type": "any"
     },
     {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/avatar/avatar-render-orchestrator.ts",
-      "line": 370,
+      "line": 369,
       "snippet": "const statuses: Array<any> = []",
       "type": "any"
     },
@@ -37521,12 +39969,6 @@
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/avatar/blend-shape-controller.ts",
       "line": 225,
       "snippet": "const result: any = {}",
-      "type": "any"
-    },
-    {
-      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/avatar/blend-shape-controller.ts",
-      "line": 431,
-      "snippet": "const result: any = { ...weights }",
       "type": "any"
     },
     {
@@ -37605,6 +40047,24 @@
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/export/audio-processor.ts",
       "line": 32,
       "snippet": "export const DEFAULT_ENHANCEMENT_VALUES: Record<AudioEnhancementType, any> = {",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/export/certificate-generator.ts",
+      "line": 12,
+      "snippet": "// PDF instance type - uses any to avoid jspdf type dependency",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/export/certificate-generator.ts",
+      "line": 32,
+      "snippet": "// eslint-disable-next-line @typescript-eslint/no-explicit-any",
+      "type": "any"
+    },
+    {
+      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/export/certificate-generator.ts",
+      "line": 33,
+      "snippet": "const module = await (Function('moduleName', 'return import(moduleName)')(moduleName) as Promise<any>);",
       "type": "any"
     },
     {
@@ -38011,44 +40471,14 @@
     },
     {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/queue/render-queue.ts",
-      "line": 85,
-      "snippet": "emit(event: string, data: any): void;",
-      "type": "any"
-    },
-    {
-      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/queue/render-queue.ts",
-      "line": 95,
+      "line": 96,
       "snippet": "on: (event, handler) => queueEvents.on(event as any, handler as any),",
       "type": "any"
     },
     {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/queue/render-queue.ts",
-      "line": 100,
+      "line": 101,
       "snippet": "removeListener: (event, handler) => queueEvents.off(event as any, handler as any),",
-      "type": "any"
-    },
-    {
-      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/queue/render-queue.ts",
-      "line": 135,
-      "snippet": "export async function addVideoJob(jobData: any): Promise<string> {",
-      "type": "any"
-    },
-    {
-      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/queue/video-processing.queue.ts",
-      "line": 214,
-      "snippet": "async function processSceneExport(videoUrl: string, scenes: any[], selectedIds: number[], job: Job) {",
-      "type": "any"
-    },
-    {
-      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/queue/video-queue-manager.ts",
-      "line": 23,
-      "snippet": "avatarConfig?: any",
-      "type": "any"
-    },
-    {
-      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/queue/video-queue-manager.ts",
-      "line": 24,
-      "snippet": "timelineState?: any",
       "type": "any"
     },
     {
@@ -38125,13 +40555,13 @@
     },
     {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/services/render-service.ts",
-      "line": 49,
+      "line": 58,
       "snippet": "renderSettings: jobData.config as any,",
       "type": "any"
     },
     {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/services/render-service.ts",
-      "line": 50,
+      "line": 59,
       "snippet": "settings: jobData.config as any, // Populate both for compatibility if needed",
       "type": "any"
     },
@@ -38175,54 +40605,6 @@
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/storage/storage-gc.ts",
       "line": 167,
       "snippet": "const assets = await (prisma as any).media_assets?.findMany({",
-      "type": "any"
-    },
-    {
-      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/stores/timeline-store.ts",
-      "line": 77,
-      "snippet": "past: any[];",
-      "type": "any"
-    },
-    {
-      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/stores/timeline-store.ts",
-      "line": 78,
-      "snippet": "future: any[];",
-      "type": "any"
-    },
-    {
-      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/stores/timeline-store.ts",
-      "line": 144,
-      "snippet": "exportSnapshot: () => any;",
-      "type": "any"
-    },
-    {
-      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/stores/timeline-store.ts",
-      "line": 145,
-      "snippet": "hydrateFromSnapshot: (snapshot: any) => void;",
-      "type": "any"
-    },
-    {
-      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/stores/timeline-store.ts",
-      "line": 149,
-      "snippet": "applyTemplate: (template: any) => void;",
-      "type": "any"
-    },
-    {
-      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/stores/timeline-store.ts",
-      "line": 618,
-      "snippet": "const updates: { element: any, newStart: number }[] = [];",
-      "type": "any"
-    },
-    {
-      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/stores/timeline-store.ts",
-      "line": 675,
-      "snippet": "let targetElement: any = null;",
-      "type": "any"
-    },
-    {
-      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/stores/timeline-store.ts",
-      "line": 774,
-      "snippet": "const saveHistory = (state: any) => {",
       "type": "any"
     },
     {
@@ -38521,13 +40903,13 @@
     },
     {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/timeline/types.ts",
-      "line": 31,
+      "line": 34,
       "snippet": "value: any;",
       "type": "any"
     },
     {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/timeline/types.ts",
-      "line": 48,
+      "line": 51,
       "snippet": "[key: string]: any;",
       "type": "any"
     },
@@ -38611,38 +40993,26 @@
     },
     {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/voice/custom-voice-cloning.ts",
-      "line": 228,
+      "line": 243,
       "snippet": "...(formData.getHeaders() as any)",
       "type": "any"
     },
     {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/voice/custom-voice-cloning.ts",
-      "line": 230,
+      "line": 245,
       "snippet": "body: formData as any",
       "type": "any"
     },
     {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/voice/custom-voice-cloning.ts",
-      "line": 242,
+      "line": 257,
       "snippet": "private async getAudioStream(filePath: string): Promise<any> {",
       "type": "any"
     },
     {
-      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/voice/custom-voice-cloning.ts",
-      "line": 335,
-      "snippet": "return data.voices.map((voice: any) => ({",
-      "type": "any"
-    },
-    {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/voice/voice-cloning.ts",
-      "line": 61,
+      "line": 68,
       "snippet": "const blob = new Blob([buffer as any], { type: 'audio/mpeg' });",
-      "type": "any"
-    },
-    {
-      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/voice/voice-cloning.ts",
-      "line": 113,
-      "snippet": "async synthesizeWithTimestamps(options: CloneOptions): Promise<{ audio: Buffer, alignment?: any }> {",
       "type": "any"
     },
     {
@@ -38659,80 +41029,20 @@
     },
     {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/workers/distributed-video-worker.ts",
-      "line": 289,
+      "line": 291,
       "snippet": ";(enhancedError as any).shouldRetry = shouldRetry",
       "type": "any"
     },
     {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/workers/distributed-video-worker.ts",
-      "line": 290,
+      "line": 292,
       "snippet": ";(enhancedError as any).category = category",
       "type": "any"
     },
     {
-      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/workers/distributed-video-worker.ts",
-      "line": 494,
-      "snippet": "animation: any,",
-      "type": "any"
-    },
-    {
-      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/workers/distributed-video-worker.ts",
-      "line": 514,
-      "snippet": "private async renderTrack(track: any, options: VideoRenderJobData['options']): Promise<string> {",
-      "type": "any"
-    },
-    {
-      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/workers/render-job-processor.ts",
-      "line": 9,
-      "snippet": "renderSettings: any;",
-      "type": "any"
-    },
-    {
-      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/workers/render-job-processor.ts",
-      "line": 66,
-      "snippet": "const settings = job.renderSettings as any;",
-      "type": "any"
-    },
-    {
-      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/workers/render-job-processor.ts",
-      "line": 91,
-      "snippet": "private async processWithPipeline(job: any) {",
-      "type": "any"
-    },
-    {
-      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/workers/render-job-processor.ts",
-      "line": 120,
-      "snippet": "private async processDIDJob(job: any) {",
-      "type": "any"
-    },
-    {
-      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/workers/render-job-processor.ts",
-      "line": 125,
-      "snippet": "const settings = job.renderSettings as any;",
-      "type": "any"
-    },
-    {
-      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/workers/render-job-processor.ts",
-      "line": 166,
-      "snippet": "private async markJobFailed(jobId: string, error: any) {",
-      "type": "any"
-    },
-    {
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/workers/video-render-worker.ts",
-      "line": 21,
-      "snippet": "content: any;",
-      "type": "any"
-    },
-    {
-      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/workers/video-render-worker.ts",
-      "line": 99,
+      "line": 116,
       "snippet": "codec: config.codec as any,",
-      "type": "any"
-    },
-    {
-      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/workflow/unified-workflow-manager.ts",
-      "line": 45,
-      "snippet": "[key: string]: any;",
       "type": "any"
     },
     {
@@ -38757,12 +41067,6 @@
       "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/workflow/unified-workflow-manager.ts",
       "line": 314,
       "snippet": "const audioConfig = slide.audioConfig as any;",
-      "type": "any"
-    },
-    {
-      "file": "/root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/lib/workflow/unified-workflow-manager.ts",
-      "line": 390,
-      "snippet": "videoRenderPipeline.execute({ projectId, jobId }).catch((err: any) =>",
       "type": "any"
     },
     {

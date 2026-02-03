@@ -520,16 +520,25 @@ export function useExternalAPIs() {
       toast.success('Usage data exported')
   }, [])
 
-  // Mock usage stats
-  const usageStats = {
-      total_calls: 1250,
-      calls_today: 45,
-      total_cost: 15.50,
-      cost_today: 0.75,
-      success_rate: 98.5,
+  // Fetch real usage stats from API
+  const { data: apiUsageStats } = useSWR(
+    user ? '/api/analytics/usage-stats' : null,
+    fetcher,
+    { refreshInterval: 60000 } // Refresh every minute
+  )
+
+  // Combine API usage stats with provider counts
+  const usageStats = useMemo(() => ({
+      total_calls: apiUsageStats?.renders?.total || 0,
+      calls_today: apiUsageStats?.renders?.completed || 0,
+      total_cost: (apiUsageStats?.storage?.usedGb || 0) * 0.023, // Estimated storage cost
+      cost_today: 0, // Would need billing integration for real cost
+      success_rate: apiUsageStats?.renders?.total > 0 
+        ? Math.round((apiUsageStats?.renders?.completed / apiUsageStats?.renders?.total) * 100 * 10) / 10 
+        : 100,
       active_providers: (ttsProviders?.filter(p => p.enabled).length || 0) + (mediaProviders?.filter(p => p.enabled).length || 0),
       total_providers: (ttsProviders?.length || 0) + (mediaProviders?.length || 0)
-  }
+  }), [apiUsageStats, ttsProviders, mediaProviders])
 
   return {
     // Data

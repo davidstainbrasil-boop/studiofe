@@ -167,8 +167,77 @@ export function useCollaboration({
       // Connect to WebSocket
       await wsRef.current.connect();
       
-      // Create mock session for demo
-      const mockSession: CollaborationSession = {
+      // Fetch real session from API or create one
+      try {
+        // Try to get existing session
+        const sessionResponse = await fetch(`/api/v1/collaboration/session?sessionId=${projectId}`);
+        
+        if (sessionResponse.ok) {
+          const { data: apiSession } = await sessionResponse.json();
+          
+          // Map API response to CollaborationSession
+          const fetchedSession: CollaborationSession = {
+            id: apiSession.id || `session-${projectId}`,
+            projectId,
+            users: apiSession.participants?.map((p: {
+              id: string;
+              name: string;
+              email: string;
+              role?: string;
+              isOnline?: boolean;
+            }) => ({
+              id: p.id,
+              name: p.name,
+              email: p.email,
+              role: p.role || 'viewer',
+              isOnline: p.isOnline ?? false,
+              lastSeen: new Date(),
+            })) || [{
+              id: userId,
+              name: `User ${userId.slice(-4)}`,
+              email: `user${userId.slice(-4)}@example.com`,
+              role: 'owner',
+              isOnline: true,
+              lastSeen: new Date(),
+            }],
+            activeUsers: apiSession.participants?.filter((p: { isOnline?: boolean }) => p.isOnline).map((p: { id: string }) => p.id) || [userId],
+            comments: [],
+            versions: [],
+            notifications: [],
+            permissions: {
+              owner: apiSession.owner?.id || userId,
+              editors: apiSession.participants?.filter((p: { role?: string }) => p.role === 'editor').map((p: { id: string }) => p.id) || [],
+              viewers: apiSession.participants?.filter((p: { role?: string }) => p.role === 'viewer').map((p: { id: string }) => p.id) || [],
+              public: apiSession.settings?.allowGuests ?? false,
+              allowComments: apiSession.settings?.chatEnabled ?? true,
+              allowVersioning: true,
+              requireApproval: false,
+            },
+            settings: {
+              autoSave: true,
+              autoSaveInterval: 30000,
+              showCursors: true,
+              showComments: apiSession.settings?.chatEnabled ?? true,
+              enableNotifications: true,
+              enableVersioning: true,
+              maxVersions: 50,
+              conflictResolution: 'manual',
+            },
+          };
+          
+          setSession(fetchedSession);
+          setCurrentUser(fetchedSession.users[0]);
+          setComments(fetchedSession.comments);
+          setVersions(fetchedSession.versions);
+          setNotifications(fetchedSession.notifications);
+          return;
+        }
+      } catch {
+        // API not available, fall through to default session
+      }
+
+      // Fallback: Create default session locally
+      const defaultSession: CollaborationSession = {
         id: `session-${projectId}`,
         projectId,
         users: [
@@ -206,11 +275,11 @@ export function useCollaboration({
         },
       };
 
-      setSession(mockSession);
-      setCurrentUser(mockSession.users[0]);
-      setComments(mockSession.comments);
-      setVersions(mockSession.versions);
-      setNotifications(mockSession.notifications);
+      setSession(defaultSession);
+      setCurrentUser(defaultSession.users[0]);
+      setComments(defaultSession.comments);
+      setVersions(defaultSession.versions);
+      setNotifications(defaultSession.notifications);
       
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to initialize session');

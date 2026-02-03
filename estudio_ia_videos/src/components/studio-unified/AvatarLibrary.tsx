@@ -12,7 +12,7 @@
  * - Search functionality
  */
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -35,12 +35,14 @@ import {
   Download,
   Star,
   Filter,
+  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { logger } from '@/lib/logger';
 import type { Avatar } from '@/types/video-project';
 
 export interface AvatarLibraryProps {
-  avatars: Avatar[];
+  avatars?: Avatar[];
   selectedAvatarId?: string;
   onSelectAvatar?: (avatar: Avatar) => void;
   onAvatarSelect?: (avatarId: string) => void;  // Alias for compatibility
@@ -49,9 +51,9 @@ export interface AvatarLibraryProps {
 }
 
 /**
- * Mock avatar data for demonstration
+ * Default avatars for fallback when API is unavailable
  */
-const MOCK_AVATARS: Avatar[] = [
+const DEFAULT_AVATARS: Avatar[] = [
   {
     id: 'avatar-professional-male-1',
     name: 'João Silva',
@@ -139,17 +141,70 @@ const MOCK_AVATARS: Avatar[] = [
 ];
 
 export function AvatarLibrary({
-  avatars = MOCK_AVATARS,
+  avatars: initialAvatars,
   selectedAvatarId,
   onSelectAvatar,
   onAvatarSelect,
   onAddToTimeline,
   className,
 }: AvatarLibraryProps) {
+  const [avatars, setAvatars] = useState<Avatar[]>(initialAvatars || DEFAULT_AVATARS);
+  const [loading, setLoading] = useState(!initialAvatars);
   const [searchQuery, setSearchQuery] = useState('');
   const [genderFilter, setGenderFilter] = useState<'all' | 'male' | 'female' | 'neutral'>('all');
   const [categoryFilter, setCategoryFilter] = useState<'all' | 'professional' | 'casual' | 'character'>('all');
   const [activeTab, setActiveTab] = useState('library');
+
+  // Fetch avatars from API if not provided via props
+  useEffect(() => {
+    if (initialAvatars) return;
+
+    const fetchAvatars = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/avatar-3d/avatars');
+        
+        if (!response.ok) {
+          throw new Error('Falha ao carregar avatares');
+        }
+        
+        const data = await response.json();
+        
+        if (data.avatars && data.avatars.length > 0) {
+          // Transform API response to Avatar type
+          const apiAvatars: Avatar[] = data.avatars.map((a: {
+            id: string;
+            name: string;
+            gender?: string;
+            preview_url?: string;
+            thumbnail_url?: string;
+            category?: string;
+          }) => ({
+            id: a.id,
+            name: a.name,
+            gender: a.gender || 'neutral',
+            glbUrl: a.preview_url || '',
+            thumbnailUrl: a.thumbnail_url || '',
+            category: a.category || 'professional',
+            customization: {
+              skinTone: '#f5d0b5',
+              hairStyle: 'short',
+              hairColor: '#2c1810',
+              outfit: 'business-suit',
+            },
+          }));
+          setAvatars(apiAvatars);
+        }
+      } catch (err) {
+        logger.error('Erro ao carregar avatares', err as Error, { component: 'AvatarLibrary' });
+        // Keep default avatars on error
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAvatars();
+  }, [initialAvatars]);
 
   // Filter avatars based on search and filters
   const filteredAvatars = useMemo(() => {
@@ -187,6 +242,7 @@ export function AvatarLibrary({
         <div className="flex items-center gap-2 mb-4">
           <Users className="h-5 w-5 text-primary" />
           <h2 className="font-semibold text-lg">Avatar Library</h2>
+          {loading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
           <Badge variant="secondary" className="ml-auto">
             {filteredAvatars.length} avatars
           </Badge>

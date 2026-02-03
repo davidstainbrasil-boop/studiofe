@@ -185,8 +185,10 @@ export class PPTXParserAdvanced {
             const relationships = relsObj['Relationships']?.['Relationship'];
             if (relationships) {
                 const relList = Array.isArray(relationships) ? relationships : [relationships];
-                relList.forEach((rel: any) => {
-                    relMap[rel['@_Id']] = rel['@_Target'];
+                relList.forEach((rel: { '@_Id'?: string; '@_Target'?: string }) => {
+                    if (rel['@_Id'] && rel['@_Target']) {
+                      relMap[rel['@_Id']] = rel['@_Target'];
+                    }
                 });
             }
         }

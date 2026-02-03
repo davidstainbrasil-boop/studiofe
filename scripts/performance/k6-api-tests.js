@@ -315,7 +315,8 @@ export function mediaApis() {
 // ============= SETUP E TEARDOWN =============
 
 export function setup() {
-  console.log(`
+  // eslint-disable-next-line no-console
+  console.info(`
 ╔════════════════════════════════════════════════════════════════╗
 ║           K6 API Endpoint Tests - TécnicoCursos               ║
 ╠════════════════════════════════════════════════════════════════╣
@@ -333,5 +334,6 @@ export function setup() {
 }
 
 export function teardown() {
-  console.log('\n✅ API endpoint tests completed\n');
+  // eslint-disable-next-line no-console
+  console.info('\n✅ API endpoint tests completed\n');
 }

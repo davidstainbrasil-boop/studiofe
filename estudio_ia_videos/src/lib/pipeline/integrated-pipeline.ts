@@ -155,7 +155,7 @@ export class IntegratedPipeline {
       
       await new Promise<void>((resolve, reject) => {
           const ffmpeg = spawn('ffmpeg', ffmpegArgs);
-          ffmpeg.stderr.on('data', (d: any) => logger.debug(`FFmpeg: ${d}`, { jobId }));
+          ffmpeg.stderr.on('data', (d: Buffer) => logger.debug(`FFmpeg: ${d.toString()}`, { jobId }));
           ffmpeg.on('close', (code: number) => code === 0 ? resolve() : reject(new Error(`FFmpeg failed with code ${code}`)));
           ffmpeg.on('error', (err: Error) => reject(err));
       });

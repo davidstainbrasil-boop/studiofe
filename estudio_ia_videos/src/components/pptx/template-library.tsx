@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { Button } from '@components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@components/ui/card'
 import { Badge } from '@components/ui/badge'
@@ -18,9 +18,11 @@ import {
   Shield,
   Users,
   Building,
-  Zap
+  Zap,
+  RefreshCw
 } from 'lucide-react'
 import { toast } from 'react-hot-toast'
+import { logger } from '@lib/logger'
 
 interface Template {
   id: string
@@ -37,9 +39,90 @@ interface Template {
   duration: string
 }
 
+interface ApiTemplate {
+  id: string
+  name: string
+  description: string | null
+  category: string
+  type: string
+  thumbnail_url: string | null
+  preview_url: string | null
+  metadata: Record<string, unknown> | null
+  settings: Record<string, unknown> | null
+  usage_count: number
+  is_public: boolean
+  is_featured: boolean
+  created_at: string
+}
+
 interface TemplateLibraryProps {
   onTemplateSelect?: (template: Template) => void
 }
+
+// Transform API response to component format
+function transformApiTemplate(apiTemplate: ApiTemplate): Template {
+  const metadata = apiTemplate.metadata || {}
+  return {
+    id: apiTemplate.id,
+    name: apiTemplate.name,
+    description: apiTemplate.description || '',
+    category: (apiTemplate.category as Template['category']) || 'corporativo',
+    thumbnail: apiTemplate.thumbnail_url || '/templates/default-thumb.jpg',
+    rating: (metadata.rating as number) || 4.5,
+    downloads: apiTemplate.usage_count || 0,
+    isPremium: apiTemplate.is_featured || false,
+    tags: (metadata.tags as string[]) || [],
+    createdAt: apiTemplate.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
+    slides: (metadata.slides as number) || 10,
+    duration: (metadata.duration as string) || '10 min'
+  }
+}
+
+// Default templates as fallback when no data in DB
+const defaultTemplates: Template[] = [
+  {
+    id: 'tpl-001',
+    name: 'NR-35 Trabalho em Altura',
+    description: 'Template completo para treinamento de trabalho em altura conforme NR-35',
+    category: 'seguranca',
+    thumbnail: '/templates/nr35-thumb.jpg',
+    rating: 4.8,
+    downloads: 0,
+    isPremium: true,
+    tags: ['NR-35', 'Altura', 'Segurança', 'Treinamento'],
+    createdAt: '2024-10-01',
+    slides: 45,
+    duration: '25 min'
+  },
+  {
+    id: 'tpl-002',
+    name: 'NR-10 Segurança Elétrica',
+    description: 'Apresentação profissional sobre segurança em instalações elétricas',
+    category: 'seguranca',
+    thumbnail: '/templates/nr10-thumb.jpg',
+    rating: 4.9,
+    downloads: 0,
+    isPremium: true,
+    tags: ['NR-10', 'Elétrica', 'Segurança'],
+    createdAt: '2024-09-28',
+    slides: 38,
+    duration: '20 min'
+  },
+  {
+    id: 'tpl-003',
+    name: 'Integração de Novos Funcionários',
+    description: 'Template para apresentação de boas-vindas e integração corporativa',
+    category: 'treinamento',
+    thumbnail: '/templates/integracao-thumb.jpg',
+    rating: 4.6,
+    downloads: 0,
+    isPremium: false,
+    tags: ['Integração', 'RH', 'Corporativo'],
+    createdAt: '2024-10-05',
+    slides: 28,
+    duration: '15 min'
+  }
+]
 
 export function TemplateLibrary({ onTemplateSelect }: TemplateLibraryProps) {
   const [templates, setTemplates] = useState<Template[]>([])
@@ -47,107 +130,46 @@ export function TemplateLibrary({ onTemplateSelect }: TemplateLibraryProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('todos')
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  // Templates mock data - em produção viria de uma API
-  const mockTemplates: Template[] = [
-    {
-      id: 'tpl-001',
-      name: 'NR-35 Trabalho em Altura',
-      description: 'Template completo para treinamento de trabalho em altura conforme NR-35',
-      category: 'seguranca',
-      thumbnail: '/templates/nr35-thumb.jpg',
-      rating: 4.8,
-      downloads: 1250,
-      isPremium: true,
-      tags: ['NR-35', 'Altura', 'Segurança', 'Treinamento'],
-      createdAt: '2024-10-01',
-      slides: 45,
-      duration: '25 min'
-    },
-    {
-      id: 'tpl-002',
-      name: 'NR-10 Segurança Elétrica',
-      description: 'Apresentação profissional sobre segurança em instalações elétricas',
-      category: 'seguranca',
-      thumbnail: '/templates/nr10-thumb.jpg',
-      rating: 4.9,
-      downloads: 980,
-      isPremium: true,
-      tags: ['NR-10', 'Elétrica', 'Segurança'],
-      createdAt: '2024-09-28',
-      slides: 38,
-      duration: '20 min'
-    },
-    {
-      id: 'tpl-003',
-      name: 'Integração de Novos Funcionários',
-      description: 'Template para apresentação de boas-vindas e integração corporativa',
-      category: 'treinamento',
-      thumbnail: '/templates/integracao-thumb.jpg',
-      rating: 4.6,
-      downloads: 750,
-      isPremium: false,
-      tags: ['Integração', 'RH', 'Corporativo'],
-      createdAt: '2024-10-05',
-      slides: 28,
-      duration: '15 min'
-    },
-    {
-      id: 'tpl-004',
-      name: 'Relatório Executivo Mensal',
-      description: 'Template profissional para relatórios executivos e dashboards',
-      category: 'relatorio',
-      thumbnail: '/templates/relatorio-thumb.jpg',
-      rating: 4.7,
-      downloads: 1100,
-      isPremium: false,
-      tags: ['Relatório', 'Executivo', 'Dashboard'],
-      createdAt: '2024-09-30',
-      slides: 22,
-      duration: '12 min'
-    },
-    {
-      id: 'tpl-005',
-      name: 'Apresentação Corporativa Premium',
-      description: 'Template elegante para apresentações institucionais e comerciais',
-      category: 'corporativo',
-      thumbnail: '/templates/corporativo-thumb.jpg',
-      rating: 4.5,
-      downloads: 650,
-      isPremium: true,
-      tags: ['Corporativo', 'Institucional', 'Premium'],
-      createdAt: '2024-10-03',
-      slides: 35,
-      duration: '18 min'
-    },
-    {
-      id: 'tpl-006',
-      name: 'NR-12 Segurança em Máquinas',
-      description: 'Template especializado para treinamento em segurança de máquinas',
-      category: 'seguranca',
-      thumbnail: '/templates/nr12-thumb.jpg',
-      rating: 4.8,
-      downloads: 890,
-      isPremium: true,
-      tags: ['NR-12', 'Máquinas', 'Segurança'],
-      createdAt: '2024-09-25',
-      slides: 42,
-      duration: '22 min'
-    }
-  ]
-
-  useEffect(() => {
-    // Simular carregamento de templates
-    const loadTemplates = async () => {
-      setIsLoading(true)
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      setTemplates(mockTemplates)
-      setFilteredTemplates(mockTemplates)
+  // Fetch templates from API
+  const fetchTemplates = useCallback(async () => {
+    setIsLoading(true)
+    setError(null)
+    
+    try {
+      const response = await fetch('/api/templates')
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch templates: ${response.statusText}`)
+      }
+      
+      const result = await response.json()
+      
+      if (result.success && result.data && result.data.length > 0) {
+        const transformedTemplates = result.data.map(transformApiTemplate)
+        setTemplates(transformedTemplates)
+        setFilteredTemplates(transformedTemplates)
+      } else {
+        // Use default templates if no data in DB
+        setTemplates(defaultTemplates)
+        setFilteredTemplates(defaultTemplates)
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load templates'
+      setError(errorMessage)
+      logger.error('Template library fetch error', err instanceof Error ? err : new Error(String(err)))
+      // Use default templates on error
+      setTemplates(defaultTemplates)
+      setFilteredTemplates(defaultTemplates)
+    } finally {
       setIsLoading(false)
     }
-
-    loadTemplates()
   }, [])
+
+  useEffect(() => {
+    fetchTemplates()
+  }, [fetchTemplates])
 
   useEffect(() => {
     // Filtrar templates por busca e categoria

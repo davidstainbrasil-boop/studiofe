@@ -87,7 +87,14 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/studio') ||
     pathname.startsWith('/editor') ||
     pathname.startsWith('/projects') ||
-    pathname.startsWith('/create');
+    pathname.startsWith('/create') ||
+    pathname.startsWith('/ppt-to-video') ||
+    pathname.startsWith('/editor-pro') ||
+    pathname.startsWith('/ai-avatars') ||
+    pathname.startsWith('/voice-studio') ||
+    pathname.startsWith('/export-pro') ||
+    pathname.startsWith('/brand-kit') ||
+    pathname.startsWith('/templates');
   const legacyStudioRedirect = getLegacyStudioRedirect(normalizedPath);
   const isE2E = isE2ETestMode();
 

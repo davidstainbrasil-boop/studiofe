@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { logger } from '@lib/logger';
-import { synthesizeToFile, type TTSOptions } from '@lib/tts/tts-service';
+import { logger } from '@/lib/logger';
+import { synthesizeToFile, type TTSOptions } from '@/lib/tts/tts-service';
+import { RhubarbLipSyncEngine } from '@/lib/sync/rhubarb-lip-sync-engine';
+import { writeFile, unlink } from 'fs/promises';
+import { join } from 'path';
+import { randomUUID } from 'crypto';
 
 // Monitoring service for metrics
 class MonitoringService {
@@ -21,6 +25,7 @@ class MonitoringService {
 export async function POST(request: NextRequest) {
   const monitoring = MonitoringService.getInstance();
   const startTime = Date.now();
+  let tempAudioPath: string | null = null;
   
   try {
     // Parse request body
@@ -73,13 +78,61 @@ export async function POST(request: NextRequest) {
 
     const result = await synthesizeToFile(options);
 
+    // ---------------------------------------------------------
+    // GENERATE LIP SYNC DATA (REAL)
+    // ---------------------------------------------------------
+    let lipSyncData = null;
+    
+    try {
+       // Download audio to temp file for Rhubarb processing
+       const response = await fetch(result.fileUrl);
+       if (response.ok) {
+         const buffer = await response.arrayBuffer();
+         const tempDir = process.env.TEMP_PATH || '/tmp';
+         const tempFileName = `${randomUUID()}.${result.format || 'mp3'}`;
+         tempAudioPath = join(tempDir, tempFileName);
+         
+         await writeFile(tempAudioPath, Buffer.from(buffer));
+         
+         // In a real environment, Rhubarb binary must be present.
+         // If it fails (e.g. binary missing), we log and continue without lip sync.
+         const rhubarb = new RhubarbLipSyncEngine();
+         
+         // Use preprocess which converts to WAV 16khz usually required by Rhubarb
+         // Note: Rhubarb might fail if ffmpeg is not present, wrap in try/catch safely
+         let processingPath = tempAudioPath;
+         try {
+            processingPath = await rhubarb.preprocessAudio(tempAudioPath);
+         } catch (preprocessError) {
+            logger.warn('Preprocess audio failed, trying original', { error: preprocessError });
+         }
+
+         lipSyncData = await rhubarb.generatePhonemes(processingPath, text);
+         
+         // Cleanup preprocessed if created
+         if (processingPath !== tempAudioPath) {
+             try { await unlink(processingPath).catch(() => {}); } catch {}
+         }
+       }
+    } catch (lipSyncError) {
+      logger.warn('Failed to generate lip-sync data', { error: lipSyncError });
+      // Continue without lip-sync, don't fail the request
+      // We return empty visemes so frontend doesn't crash
+    } finally {
+      // Cleanup original temp download
+      if (tempAudioPath) {
+        try { await unlink(tempAudioPath).catch(() => {}); } catch {}
+      }
+    }
+
     // Log success
     monitoring.logEvent('tts_generate_success', {
       userId,
       engine: result.provider || engine,
       duration: result.duration,
       processingTime: Date.now() - startTime,
-      audioUrl: result.fileUrl
+      audioUrl: result.fileUrl,
+      hasLipSync: !!lipSyncData
     });
 
     // Return result
@@ -92,6 +145,8 @@ export async function POST(request: NextRequest) {
         voice: result.voiceId,
         language,
         format: result.format,
+        visemes: lipSyncData?.phonemes || [], // Return the phonemes for the frontend
+        lipSyncMetadata: lipSyncData?.metadata,
         performance: {
           processingTime: Date.now() - startTime,
         }

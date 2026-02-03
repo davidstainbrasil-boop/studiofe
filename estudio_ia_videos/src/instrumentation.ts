@@ -5,6 +5,7 @@
 // import { addBreadcrumb, ensureMonitoringReady } from './lib/services/monitoring-service';
 // import { startQueueMetricsPolling } from './lib/services/bullmq-service';
 // import { bullMQMetrics } from './lib/services/bullmq-metrics';
+import * as Sentry from '@sentry/nextjs';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { initSentry } from './lib/monitoring/sentry.server';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -13,6 +14,15 @@ import { validateEnvVarsForEnvironment } from './lib/env-validator';
 // import { logger } from './lib/services/logger-service-centralized';
 
 export async function register() {
+  if (process.env.NEXT_RUNTIME === 'nodejs') {
+      Sentry.init({
+        dsn: process.env.SENTRY_DSN,
+        tracesSampleRate: Number(process.env.SENTRY_TRACES_SAMPLE_RATE ?? '0.1'),
+        profilesSampleRate: Number(process.env.SENTRY_PROFILES_SAMPLE_RATE ?? '0.1'),
+        enabled: !!process.env.SENTRY_DSN,
+      });
+  }
+
   // Validar variáveis de ambiente no startup (fail-fast)
   // Executa apenas no servidor (não no cliente)
   if (typeof window === 'undefined') {

@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateLipSyncVideo, validateLipSyncResources } from '@lib/services/lip-sync-integration';
 import { logger } from '@lib/logger';
+import { withPlanGuard } from '@/middleware/with-plan-guard';
 
 /**
  * POST /api/lip-sync
  * Gera vídeo com lip sync a partir de texto e avatar
  */
-export async function POST(request: NextRequest) {
+const handlePost = async (request: NextRequest) => {
   try {
     // Validação de recursos
     const validation = await validateLipSyncResources();
@@ -52,7 +53,12 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+};
+
+export const POST = withPlanGuard(handlePost, {
+  requiredPlan: 'pro',
+  feature: 'lip_sync',
+});
 
 /**
  * GET /api/lip-sync/validate

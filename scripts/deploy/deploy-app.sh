@@ -84,7 +84,7 @@ OVERRIDE_EOF
 # 7. Ajustar Nginx para aceitar qualquer host
 echo "⚙️ Ajustando Nginx server_name..."
 if [ -f nginx/conf.d/app.conf ]; then
-    sed -i 's/server_name tecnicocursos.com www.tecnicocursos.com;/server_name _;/' nginx/conf.d/app.conf
+    sed -i 's/server_name cursostecno.com.br www.cursostecno.com.br;/server_name _;/' nginx/conf.d/app.conf
     echo "✅ Nginx configurado para aceitar qualquer host"
 else
     echo "⚠️ nginx/conf.d/app.conf não encontrado"
@@ -108,7 +108,7 @@ REDIS_URL=redis://redis:6379
 LOG_LEVEL=info
 
 # Admin Panel
-ADMIN_EMAIL=admin@tecnicocursos.com
+ADMIN_EMAIL=admin@cursostecno.com.br
 ADMIN_PASSWORD=Admin@123
 
 # Supabase (preencher depois no painel admin)
@@ -188,7 +188,7 @@ echo "   • Aplicação:    http://$(curl -s ifconfig.me 2>/dev/null || echo '1
 echo "   • Admin Panel:  http://$(curl -s ifconfig.me 2>/dev/null || echo '168.231.90.64')/admin/login"
 echo ""
 echo "🔐 Credenciais Admin:"
-echo "   • Email: admin@tecnicocursos.com"
+echo "   • Email: admin@cursostecno.com.br"
 echo "   • Senha: Admin@123"
 echo ""
 echo "📝 Próximo passo:"

@@ -28,7 +28,7 @@ Use o header \`Authorization: Bearer <token>\` para endpoints protegidos.
     `,
     contact: {
       name: 'Suporte TécnicoCursos',
-      email: 'suporte@tecnicocursos.com'
+      email: 'suporte@cursostecno.com.br'
     },
     license: {
       name: 'MIT',

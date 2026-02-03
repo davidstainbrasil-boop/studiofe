@@ -192,9 +192,9 @@ if [ -d "$APP_DIR" ]; then
         echo -e "${GREEN}✅ Configuração do Nginx existe${NC}"
         if grep -q "server_name _" "$APP_DIR/nginx/conf.d/app.conf" 2>/dev/null; then
             echo -e "${GREEN}✅ Nginx configurado para aceitar qualquer domínio${NC}"
-        elif grep -q "tecnicocursos.com" "$APP_DIR/nginx/conf.d/app.conf" 2>/dev/null; then
+        elif grep -q "cursostecno.com.br" "$APP_DIR/nginx/conf.d/app.conf" 2>/dev/null; then
             echo -e "${YELLOW}⚠️  Nginx ainda configurado com domínio específico${NC}"
-            echo "Execute: sed -i 's/server_name tecnicocursos.com www.tecnicocursos.com;/server_name _;/' $APP_DIR/nginx/conf.d/app.conf"
+            echo "Execute: sed -i 's/server_name cursostecno.com.br www.cursostecno.com.br;/server_name _;/' $APP_DIR/nginx/conf.d/app.conf"
         fi
     fi
 else
@@ -219,7 +219,7 @@ echo "   docker compose -f docker-compose.prod.yml up -d"
 echo ""
 echo "3. Se Nginx tem erro de configuração:"
 echo "   cd $APP_DIR"
-echo "   sed -i 's/server_name tecnicocursos.com www.tecnicocursos.com;/server_name _;/' nginx/conf.d/app.conf"
+echo "   sed -i 's/server_name cursostecno.com.br www.cursostecno.com.br;/server_name _;/' nginx/conf.d/app.conf"
 echo "   docker compose -f docker-compose.prod.yml restart nginx"
 echo ""
 echo "4. Ver logs completos:"

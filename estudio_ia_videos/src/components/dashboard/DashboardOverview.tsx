@@ -1,4 +1,3 @@
-
 'use client'
 
 /**
@@ -55,113 +54,70 @@ import {
 } from 'lucide-react'
 import { createBrowserSupabaseClient } from '@/lib/services'
 import type { User as SupabaseUser, AuthChangeEvent, Session } from '@supabase/supabase-js'
+import { useDashboardStats } from '@/hooks/use-dashboard-stats'
 
-// Mock data (substituir por dados reais das APIs)
-const mockStats = {
-  overview: {
-    totalProjects: 156,
-    completedProjects: 89,
-    processingProjects: 12,
-    totalViews: 12847,
-    totalDownloads: 3421,
-    avgProcessingTime: 8.4,
-    successRate: 94.2,
-    storageUsed: 67.8
+// Quick actions - static configuration (not mock data, these are UI navigation options)
+const quickActionsConfig = [
+  {
+    id: 'upload-pptx',
+    title: 'Upload PPTX',
+    description: 'Enviar apresentação PowerPoint',
+    icon: Upload,
+    href: '/pptx-upload',
+    color: 'primary',
+    status: 'active'
   },
-  recentProjects: [
-    {
-      id: '1',
-      name: 'NR-12 Segurança em Máquinas',
-      status: 'completed',
-      type: 'pptx',
-      createdAt: '2024-09-24T10:30:00Z',
-      duration: 180,
-      views: 247,
-      thumbnail: '/api/projects/1/thumbnail'
-    },
-    {
-      id: '2', 
-      name: 'Treinamento NR-35 Altura',
-      status: 'processing',
-      type: 'talking-photo',
-      createdAt: '2024-09-24T08:15:00Z',
-      duration: 0,
-      views: 0,
-      thumbnail: '/api/projects/2/thumbnail'
-    },
-    {
-      id: '3',
-      name: 'NR-10 Segurança Elétrica',
-      status: 'draft',
-      type: 'pptx',
-      createdAt: '2024-09-23T16:45:00Z',
-      duration: 0,
-      views: 0,
-      thumbnail: '/api/projects/3/thumbnail'
-    }
-  ],
-  quickActions: [
-    {
-      id: 'upload-pptx',
-      title: 'Upload PPTX',
-      description: 'Enviar apresentação PowerPoint',
-      icon: Upload,
-      href: '/pptx-upload',
-      color: 'primary',
-      status: 'active'
-    },
-    {
-      id: 'canvas-professional',
-      title: 'Canvas Editor Professional',
-      description: 'Editor profissional com Fabric.js + GSAP',
-      icon: Star,
-      href: '/canvas-editor-professional',
-      color: 'primary',
-      status: 'active',
-      featured: true
-    },
-    {
-      id: 'tts-audio-studio',
-      title: 'TTS & Audio Studio Premium',
-      description: 'ElevenLabs + Voice Cloning + Timeline',
-      icon: Mic,
-      href: '/tts-audio-studio',
-      color: 'gradient',
-      status: 'active',
-      featured: true,
-      badge: 'SPRINT 3'
-    },
-    {
-      id: 'talking-photo',
-      title: 'Talking Photo',
-      description: 'Criar avatar falante',
-      icon: Image,
-      href: '/talking-photo',
-      color: 'accent',
-      status: 'active'
-    },
-    {
-      id: 'effects-library',
-      title: 'Effects Library Hollywood',
-      description: 'GSAP + Three.js + Lottie Animations',
-      icon: Sparkles,
-      href: '/effects-library',
-      color: 'gradient',
-      status: 'active',
-      featured: true,
-      badge: 'SPRINT 4'
-    },
-    {
-      id: 'editor',
-      title: 'Editor PPTX',
-      description: 'Editar apresentações',
-      icon: FileVideo,
-      href: '/pptx-editor',
-      color: 'warning',
-      status: 'partial'
-    }
-  ]
-}
+  {
+    id: 'canvas-professional',
+    title: 'Canvas Editor Professional',
+    description: 'Editor profissional com Fabric.js + GSAP',
+    icon: Star,
+    href: '/canvas-editor-professional',
+    color: 'primary',
+    status: 'active',
+    featured: true
+  },
+  {
+    id: 'tts-audio-studio',
+    title: 'TTS & Audio Studio Premium',
+    description: 'ElevenLabs + Voice Cloning + Timeline',
+    icon: Mic,
+    href: '/tts-audio-studio',
+    color: 'gradient',
+    status: 'active',
+    featured: true,
+    badge: 'SPRINT 3'
+  },
+  {
+    id: 'talking-photo',
+    title: 'Talking Photo',
+    description: 'Criar avatar falante',
+    icon: Image,
+    href: '/talking-photo',
+    color: 'accent',
+    status: 'active'
+  },
+  {
+    id: 'effects-library',
+    title: 'Effects Library Hollywood',
+    description: 'GSAP + Three.js + Lottie Animations',
+    icon: Sparkles,
+    href: '/effects-library',
+    color: 'gradient',
+    status: 'active',
+    featured: true,
+    badge: 'SPRINT 4'
+  },
+  {
+    id: 'editor',
+    title: 'Editor PPTX',
+    description: 'Editar apresentações',
+    icon: FileVideo,
+    href: '/pptx-editor',
+    color: 'warning',
+    status: 'partial'
+  }
+]
 
 export default function DashboardOverview() {
   const supabase = useMemo(() => createBrowserSupabaseClient(), [])
@@ -169,6 +125,60 @@ export default function DashboardOverview() {
   const [activeTab, setActiveTab] = useState('overview')
   const [user, setUser] = useState<SupabaseUser | null>(null)
   const [authLoading, setAuthLoading] = useState(true)
+  const [recentProjects, setRecentProjects] = useState<Array<{
+    id: string;
+    name: string;
+    status: string;
+    type: string;
+    createdAt: string;
+    duration: number;
+    views: number;
+    thumbnail: string;
+  }>>([])
+  
+  // Use real dashboard stats from API
+  const { stats: dashboardStats, isLoading: statsLoading, isError: statsError } = useDashboardStats()
+
+  // Calculate derived stats from API data
+  const overviewStats = useMemo(() => ({
+    totalProjects: dashboardStats?.totalProjects || 0,
+    completedProjects: dashboardStats?.completedToday || 0,
+    processingProjects: dashboardStats?.activeRenders || 0,
+    totalViews: dashboardStats?.totalViews || 0,
+    totalDownloads: 0, // Not tracked in current API
+    avgProcessingTime: dashboardStats?.avgRenderTime || 0,
+    successRate: dashboardStats?.systemHealth === 'healthy' ? 95 : dashboardStats?.systemHealth === 'warning' ? 80 : 60,
+    storageUsed: 0 // Would need separate storage API
+  }), [dashboardStats])
+
+  // Fetch recent projects
+  useEffect(() => {
+    const fetchRecentProjects = async () => {
+      try {
+        const res = await fetch('/api/projects?limit=3&sort=updated_at&order=desc')
+        if (res.ok) {
+          const data = await res.json()
+          const projects = (data.data || data.projects || []).map((p: any) => ({
+            id: p.id,
+            name: p.name || p.title || 'Sem nome',
+            status: p.status || 'draft',
+            type: p.type || 'pptx',
+            createdAt: p.created_at || p.createdAt || new Date().toISOString(),
+            duration: p.duration || 0,
+            views: p.views || 0,
+            thumbnail: p.thumbnail || `/api/projects/${p.id}/thumbnail`
+          }))
+          setRecentProjects(projects)
+        }
+      } catch (error) {
+        logger.error('Failed to fetch recent projects', error instanceof Error ? error : new Error(String(error)), { component: 'DashboardOverview' })
+      }
+    }
+    
+    if (user) {
+      fetchRecentProjects()
+    }
+  }, [user])
 
   // Simular carregamento de dados
   useEffect(() => {
@@ -211,7 +221,7 @@ export default function DashboardOverview() {
   const stats = [
     {
       title: 'Total de Projetos',
-      value: mockStats.overview.totalProjects,
+      value: overviewStats.totalProjects,
       description: 'Projetos criados na plataforma',
       icon: FileVideo,
       color: 'primary' as const,
@@ -223,7 +233,7 @@ export default function DashboardOverview() {
     },
     {
       title: 'Projetos Concluídos',
-      value: mockStats.overview.completedProjects,
+      value: overviewStats.completedProjects,
       description: 'Vídeos finalizados e prontos',
       icon: CheckCircle,
       color: 'success' as const,
@@ -235,7 +245,7 @@ export default function DashboardOverview() {
     },
     {
       title: 'Total de Visualizações',
-      value: mockStats.overview.totalViews.toLocaleString(),
+      value: overviewStats.totalViews.toLocaleString(),
       description: 'Visualizações em todos os vídeos',
       icon: Eye,
       color: 'accent' as const,
@@ -247,7 +257,7 @@ export default function DashboardOverview() {
     },
     {
       title: 'Taxa de Sucesso',
-      value: `${mockStats.overview.successRate}%`,
+      value: `${overviewStats.successRate}%`,
       description: 'Processamentos bem-sucedidos',
       icon: Target,
       color: 'warning' as const,
@@ -319,7 +329,7 @@ export default function DashboardOverview() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            {mockStats.quickActions.map((action) => {
+            {quickActionsConfig.map((action) => {
               const Icon = action.icon
               return (
                 <DropdownMenuItem key={action.id} asChild>
@@ -383,7 +393,7 @@ export default function DashboardOverview() {
                 </Button>
               </CardHeader>
               <CardContent className="space-y-4">
-                {mockStats.recentProjects.map((project) => {
+                {recentProjects.map((project) => {
                   const Icon = getProjectIcon(project.type)
                   return (
                     <div key={project.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-bg-hover transition-colors">
@@ -428,32 +438,32 @@ export default function DashboardOverview() {
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">Taxa de Sucesso</span>
                     <span className="text-sm text-success font-semibold">
-                      {mockStats.overview.successRate}%
+                      {overviewStats.successRate}%
                     </span>
                   </div>
-                  <Progress value={mockStats.overview.successRate} className="h-2" />
+                  <Progress value={overviewStats.successRate} className="h-2" />
                 </div>
 
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">Uso de Armazenamento</span>
                     <span className="text-sm text-warning font-semibold">
-                      {mockStats.overview.storageUsed}%
+                      {overviewStats.storageUsed}%
                     </span>
                   </div>
-                  <Progress value={mockStats.overview.storageUsed} className="h-2" />
+                  <Progress value={overviewStats.storageUsed} className="h-2" />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 pt-2">
                   <div className="text-center p-3 rounded-lg bg-bg-secondary">
                     <Clock className="h-5 w-5 mx-auto text-accent mb-1" />
                     <p className="text-xs text-text-muted">Tempo Médio</p>
-                    <p className="font-semibold">{mockStats.overview.avgProcessingTime}min</p>
+                    <p className="font-semibold">{overviewStats.avgProcessingTime}min</p>
                   </div>
                   <div className="text-center p-3 rounded-lg bg-bg-secondary">
                     <CheckCircle className="h-5 w-5 mx-auto text-success mb-1" />
                     <p className="text-xs text-text-muted">Processando</p>
-                    <p className="font-semibold">{mockStats.overview.processingProjects}</p>
+                    <p className="font-semibold">{overviewStats.processingProjects}</p>
                   </div>
                 </div>
               </CardContent>
@@ -507,7 +517,7 @@ export default function DashboardOverview() {
           
           {/* Quick Actions Grid */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {mockStats.quickActions.map((action) => {
+            {quickActionsConfig.map((action) => {
               const Icon = action.icon
               return (
                 <Link key={action.id} href={action.href}>

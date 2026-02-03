@@ -124,10 +124,10 @@ const EASING_OPTIONS: Array<{ value: EasingType; label: string; icon: React.Elem
 ];
 
 // ============================================================================
-// MOCK DATA
+// DEFAULT TRACKS (usado quando não há animações definidas)
 // ============================================================================
 
-const MOCK_TRACKS: KeyframeTrack[] = [
+const DEFAULT_EMPTY_TRACKS: KeyframeTrack[] = [
   {
     id: 'track-pos-x',
     property: 'position.x',
@@ -476,7 +476,7 @@ export function KeyframeEditor({
   onKeyframeUpdate,
   onKeyframeDelete,
 }: KeyframeEditorProps) {
-  const [tracks, setTracks] = useState<KeyframeTrack[]>(MOCK_TRACKS);
+  const [tracks, setTracks] = useState<KeyframeTrack[]>(DEFAULT_EMPTY_TRACKS);
   const [selectedKeyframeId, setSelectedKeyframeId] = useState<string | null>(null);
   const [playheadTime, setPlayheadTime] = useState(currentTime);
   const [isPlaying, setIsPlaying] = useState(false);

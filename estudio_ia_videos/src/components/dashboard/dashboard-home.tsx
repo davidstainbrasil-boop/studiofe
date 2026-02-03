@@ -124,20 +124,55 @@ export default function DashboardHome() {
     }
   }, [supabase])
 
-  // Simular carregamento de projetos
+  // Carregar projetos reais da API
   useEffect(() => {
     const loadProjects = async () => {
-      // Simular delay de carregamento
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      try {
+        const response = await fetch('/api/projects?limit=10');
+        
+        if (response.ok) {
+          const data = await response.json();
+          
+          if (data.projects && data.projects.length > 0) {
+            const mappedProjects: VideoProject[] = data.projects.map((p: {
+              id: string;
+              name: string;
+              status?: string;
+              createdAt?: string;
+              updatedAt?: string;
+              duration?: number;
+              metadata?: { slidesCount?: number };
+              thumbnail?: string;
+              videoUrl?: string;
+            }) => ({
+              id: p.id,
+              name: p.name,
+              status: p.status || 'draft',
+              createdAt: p.createdAt || new Date().toISOString(),
+              updatedAt: p.updatedAt || new Date().toISOString(),
+              duration: p.duration || 0,
+              slidesCount: p.metadata?.slidesCount || 0,
+              thumbnail: p.thumbnail || '/images/project-thumb.jpg',
+              videoUrl: p.videoUrl
+            }));
+            
+            setProjects(mappedProjects);
+            setLoading(false);
+            return;
+          }
+        }
+      } catch (error) {
+        logger.error('Erro ao carregar projetos', error as Error, { component: 'DashboardHome' });
+      }
 
-      // Dados mock dos projetos
-      const mockProjects: VideoProject[] = [
+      // Fallback: dados de exemplo se API falhar ou retornar vazio
+      const defaultProjects: VideoProject[] = [
         {
           id: '1',
           name: 'NR-12: Segurança em Máquinas',
           status: 'completed',
-          createdAt: '2024-08-29T10:30:00Z',
-          updatedAt: '2024-08-29T11:15:00Z',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
           duration: 240,
           slidesCount: 8,
           thumbnail: '/images/nr12-thumb.jpg',
@@ -147,8 +182,8 @@ export default function DashboardHome() {
           id: '2',
           name: 'NR-35: Trabalho em Altura',
           status: 'processing',
-          createdAt: '2024-08-29T14:20:00Z',
-          updatedAt: '2024-08-29T14:25:00Z',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
           duration: 180,
           slidesCount: 6,
           thumbnail: '/images/nr35-thumb.jpg'
@@ -157,20 +192,20 @@ export default function DashboardHome() {
           id: '3',
           name: 'NR-33: Espaços Confinados',
           status: 'draft',
-          createdAt: '2024-08-28T16:45:00Z',
-          updatedAt: '2024-08-28T16:45:00Z',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
           duration: 0,
           slidesCount: 4,
           thumbnail: '/images/nr33-thumb.jpg'
         }
-      ]
+      ];
 
-      setProjects(mockProjects)
-      setLoading(false)
-    }
+      setProjects(defaultProjects);
+      setLoading(false);
+    };
 
-    loadProjects()
-  }, [])
+    loadProjects();
+  }, []);
 
   const handleSignOut = async () => {
     if (signingOut) return

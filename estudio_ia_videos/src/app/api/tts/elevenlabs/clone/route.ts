@@ -2,8 +2,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import ElevenLabsService from '@lib/elevenlabs-service'
 import { logger } from '@lib/logger'
+import { withPlanGuard } from '@/middleware/with-plan-guard'
 
-export async function POST(request: NextRequest) {
+const handlePost = async (request: NextRequest) => {
   try {
     const formData = await request.formData()
     
@@ -77,6 +78,11 @@ export async function POST(request: NextRequest) {
     )
   }
 }
+
+export const POST = withPlanGuard(handlePost, {
+  requiredPlan: 'business',
+  feature: 'tts_advanced',
+})
 
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic';

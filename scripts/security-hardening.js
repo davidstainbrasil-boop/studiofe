@@ -558,8 +558,8 @@ async function setupSecurity() {
     
     try {
         // 1. Generate SSL certificates
-        const certs = generateSSLCertificate('tecnicocursos.com');
-        generateSSLCertificate('staging.tecnicocursos.com');
+        const certs = generateSSLCertificate('cursostecno.com.br');
+        generateSSLCertificate('staging.cursostecno.com.br');
         setupSSLRedirect();
         
         // 2. Generate production secrets

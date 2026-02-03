@@ -5,12 +5,27 @@ import { POST } from '@/app/api/lip-sync/generate/route'
 import { NextRequest } from 'next/server'
 import { describe, it, expect, jest, beforeAll, afterAll } from '@jest/globals'
 
+// Mock do middleware withPlanGuard para bypass de autenticação em testes
+jest.mock('@/middleware/with-plan-guard', () => {
+  return {
+    withPlanGuard: (handler: (req: Request) => Promise<Response>) => handler,
+  }
+})
+
 // Mock Supabase
 jest.mock('@/lib/supabase/server', () => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { jest } = require('@jest/globals')
   return {
   createClient: () => ({
+    auth: {
+      getUser: jest.fn().mockResolvedValue({
+        data: { user: { id: 'test-user' } },
+        error: null
+      })
+    }
+  }),
+  getSupabaseForRequest: () => ({
     auth: {
       getUser: jest.fn().mockResolvedValue({
         data: { user: { id: 'test-user' } },

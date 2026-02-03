@@ -166,25 +166,69 @@ export function useAnalytics(filters: AnalyticsFilters = { timeRange: '24h' }) {
   const [realTimeEvents, setRealTimeEvents] = useState<AnalyticsEvent[]>([])
   const eventBuffer = useRef<AnalyticsEvent[]>([])
   const [timeRange, setTimeRange] = useState<string>(filters.timeRange)
+  const [performanceData, setPerformanceData] = useState<Array<{
+    timestamp: string
+    cpu_usage: number
+    memory_usage: number
+    disk_usage: number
+  }>>([])
+  const [usageData, setUsageData] = useState<Array<{
+    timestamp: string
+    active_users: number
+    renders_completed: number
+  }>>([])
 
-  // Mock performance data
-  const performanceData = useMemo(() => {
-      return Array.from({ length: 24 }, (_, i) => ({
-          timestamp: `${i}:00`,
-          cpu_usage: Math.random() * 100,
-          memory_usage: Math.random() * 100,
-          disk_usage: Math.random() * 100
-      }))
-  }, [])
+  // Fetch performance and usage data from APIs
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch system metrics for performance data
+        const systemResponse = await fetch(`/api/analytics/system-metrics?timeRange=${timeRange}&includeHistory=true`)
+        if (systemResponse.ok) {
+          const systemResult = await systemResponse.json()
+          if (systemResult.success && systemResult.data?.history) {
+            const mapped = systemResult.data.history.slice(0, 24).map((item: {
+              timestamp?: string
+              cpu_usage?: number
+              memory_usage?: number
+              disk_usage?: number
+            }, i: number) => ({
+              timestamp: item.timestamp || `${i}:00`,
+              cpu_usage: item.cpu_usage ?? 0,
+              memory_usage: item.memory_usage ?? 0,
+              disk_usage: item.disk_usage ?? 0
+            }))
+            setPerformanceData(mapped)
+          }
+        }
 
-  // Mock usage data
-  const usageData = useMemo(() => {
-      return Array.from({ length: 7 }, (_, i) => ({
-          timestamp: `Day ${i+1}`,
-          active_users: Math.floor(Math.random() * 100),
-          renders_completed: Math.floor(Math.random() * 50)
-      }))
-  }, [])
+        // Fetch usage stats for usage data
+        const usageResponse = await fetch(`/api/analytics/usage-stats?timeRange=${timeRange}`)
+        if (usageResponse.ok) {
+          const usageResult = await usageResponse.json()
+          if (usageResult.success && usageResult.data?.daily) {
+            const mapped = usageResult.data.daily.slice(0, 7).map((item: {
+              date?: string
+              timestamp?: string
+              active_users?: number
+              renders?: number
+              renders_completed?: number
+            }, i: number) => ({
+              timestamp: item.date || item.timestamp || `Day ${i + 1}`,
+              active_users: item.active_users ?? 0,
+              renders_completed: item.renders ?? item.renders_completed ?? 0
+            }))
+            setUsageData(mapped)
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch analytics data:', error)
+        // Keep empty arrays on error - fallback handled in component
+      }
+    }
+
+    fetchData()
+  }, [timeRange])
   
   useEffect(() => {
     let isMounted = true

@@ -3,7 +3,7 @@ import crypto from 'crypto';
 
 // Configuração do admin (em produção, usar banco de dados)
 export const ADMIN_CONFIG = {
-  email: process.env.ADMIN_EMAIL || 'admin@tecnicocursos.com',
+  email: process.env.ADMIN_EMAIL || 'admin@cursostecno.com',
   // Hash da senha padrão "Admin@123" - em produção, usar bcrypt
   passwordHash: process.env.ADMIN_PASSWORD_HASH || hashPassword(process.env.ADMIN_PASSWORD || 'Admin@123'),
   name: process.env.ADMIN_NAME || 'Administrador'

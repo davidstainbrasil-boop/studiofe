@@ -373,4 +373,4 @@ tail -f logs/app.log | jq 'select(.level == "error")'
 - **Documentação:** `/docs/`
 - **API Docs:** `/docs/api-docs.html`
 - **Issues:** GitHub Issues
-- **Email:** suporte@tecnicocursos.com
+- **Email:** suporte@cursostecno.com.br

@@ -1,11 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@components/ui/card'
 import { Badge } from '@components/ui/badge'
 import { Progress } from '@components/ui/progress'
 import { ScrollArea } from '@components/ui/scroll-area'
-import { Activity, AlertTriangle, CheckCircle, TrendingUp, TrendingDown, Clock } from 'lucide-react'
+import { Activity, AlertTriangle, CheckCircle, TrendingUp, TrendingDown, Clock, RefreshCw } from 'lucide-react'
+import { Button } from '@components/ui/button'
+import { toast } from 'sonner'
+import { logger } from '@lib/logger'
 
 interface RateLimitStatus {
     endpoint: string
@@ -27,15 +30,11 @@ export function RateLimitDashboard() {
     const [limits, setLimits] = useState<RateLimitStatus[]>([])
     const [stats, setStats] = useState<RateLimitStats | null>(null)
     const [loading, setLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
 
-    useEffect(() => {
-        fetchRateLimitData()
-        const interval = setInterval(fetchRateLimitData, 10000) // Refresh every 10s
-        return () => clearInterval(interval)
-    }, [])
-
-    async function fetchRateLimitData() {
+    const fetchRateLimitData = useCallback(async () => {
         try {
+            setError(null)
             const [limitsRes, statsRes] = await Promise.all([
                 fetch('/api/admin/rate-limits/status'),
                 fetch('/api/admin/rate-limits/stats')
@@ -43,21 +42,33 @@ export function RateLimitDashboard() {
 
             if (limitsRes.ok) {
                 const data = await limitsRes.json()
-                setLimits(data.limits || mockLimits)
+                setLimits(data.limits || [])
+            } else if (limitsRes.status === 401) {
+                setError('Authentication required')
             }
 
             if (statsRes.ok) {
                 const data = await statsRes.json()
-                setStats(data.stats || mockStats)
+                setStats(data.stats || { totalRequests: 0, blockedRequests: 0, topEndpoints: [], recentBlocks: [] })
             }
-        } catch (error) {
-            // Use mock data on error
-            setLimits(mockLimits)
-            setStats(mockStats)
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to load rate limit data'
+            setError(errorMessage)
+            logger.error('Rate limit dashboard fetch error', err instanceof Error ? err : new Error(String(err)))
+            toast.error('Falha ao carregar dados de rate limit')
+            // Set empty data on error
+            setLimits([])
+            setStats({ totalRequests: 0, blockedRequests: 0, topEndpoints: [], recentBlocks: [] })
         } finally {
             setLoading(false)
         }
-    }
+    }, [])
+
+    useEffect(() => {
+        fetchRateLimitData()
+        const interval = setInterval(fetchRateLimitData, 10000) // Refresh every 10s
+        return () => clearInterval(interval)
+    }, [fetchRateLimitData])
 
     if (loading) {
         return (
@@ -111,8 +122,16 @@ export function RateLimitDashboard() {
                         <CheckCircle className="h-4 w-4 text-green-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-green-600">Healthy</div>
-                        <p className="text-xs text-muted-foreground mt-1">All limits nominal</p>
+                        <div className={`text-2xl font-bold ${
+                            limits.some(l => l.status === 'critical') ? 'text-red-600' :
+                            limits.some(l => l.status === 'warning') ? 'text-yellow-600' : 'text-green-600'
+                        }`}>
+                            {limits.some(l => l.status === 'critical') ? 'Critical' :
+                             limits.some(l => l.status === 'warning') ? 'Warning' : 'Healthy'}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                            {limits.filter(l => l.status === 'ok').length} of {limits.length} endpoints nominal
+                        </p>
                     </CardContent>
                 </Card>
             </div>
@@ -186,28 +205,27 @@ export function RateLimitDashboard() {
                     </ScrollArea>
                 </CardContent>
             </Card>
+
+            {/* Error Display */}
+            {error && (
+                <Card className="border-yellow-200 bg-yellow-50">
+                    <CardContent className="p-4">
+                        <div className="flex items-center gap-2">
+                            <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                            <p className="text-sm text-yellow-800">{error}</p>
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={fetchRateLimitData}
+                                className="ml-auto"
+                            >
+                                <RefreshCw className="h-3 w-3 mr-1" />
+                                Retry
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
         </div>
     )
-}
-
-// Mock data for development
-const mockLimits: RateLimitStatus[] = [
-    { endpoint: '/api/render', limit: 100, remaining: 85, used: 15, resetAt: new Date(Date.now() + 3600000).toISOString(), status: 'ok' },
-    { endpoint: '/api/pptx/upload', limit: 50, remaining: 35, used: 15, resetAt: new Date(Date.now() + 3600000).toISOString(), status: 'ok' },
-    { endpoint: '/api/tts/generate', limit: 200, remaining: 50, used: 150, resetAt: new Date(Date.now() + 3600000).toISOString(), status: 'warning' },
-    { endpoint: '/api/projects', limit: 1000, remaining: 920, used: 80, resetAt: new Date(Date.now() + 3600000).toISOString(), status: 'ok' },
-]
-
-const mockStats: RateLimitStats = {
-    totalRequests: 12450,
-    blockedRequests: 23,
-    topEndpoints: [
-        { endpoint: '/api/projects', requests: 5200 },
-        { endpoint: '/api/render', requests: 3400 },
-        { endpoint: '/api/tts/generate', requests: 2100 },
-    ],
-    recentBlocks: [
-        { endpoint: '/api/render', userId: 'user-123', timestamp: new Date(Date.now() - 300000).toISOString() },
-        { endpoint: '/api/tts/generate', userId: 'user-456', timestamp: new Date(Date.now() - 600000).toISOString() },
-    ]
 }

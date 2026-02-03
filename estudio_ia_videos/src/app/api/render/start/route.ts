@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@lib/prisma';
-import { getSupabaseForRequest } from '@lib/supabase/server';
+import { getSupabaseForRequest, supabaseAdmin } from '@lib/supabase/server';
 import { addVideoJob } from '@lib/queue/render-queue';
 import { jobManager } from '@lib/render/job-manager';
 import { logger } from '@lib/logger';
@@ -42,6 +42,90 @@ interface RenderSlide {
   title?: string;
   content?: string;
   avatar_config?: Record<string, unknown>;
+}
+
+type PlanTier = 'free' | 'pro' | 'business';
+
+const PLAN_RANK: Record<PlanTier, number> = {
+  free: 0,
+  pro: 1,
+  business: 2,
+};
+
+const QUALITY_RANK: Record<RenderConfig['quality'], number> = {
+  low: 0,
+  medium: 1,
+  high: 2,
+  ultra: 3,
+};
+
+const PLAN_DEFAULTS: Record<PlanTier, Pick<RenderConfig, 'width' | 'height' | 'quality'>> = {
+  free: { width: 1280, height: 720, quality: 'medium' },
+  pro: { width: 1920, height: 1080, quality: 'high' },
+  business: { width: 1920, height: 1080, quality: 'high' },
+};
+
+const PLAN_LIMITS: Record<PlanTier, Pick<RenderConfig, 'width' | 'height' | 'quality'>> = {
+  free: { width: 1280, height: 720, quality: 'medium' },
+  pro: { width: 1920, height: 1080, quality: 'high' },
+  business: { width: 3840, height: 2160, quality: 'ultra' },
+};
+
+function getRequiredPlanForRender(
+  width: number,
+  height: number,
+  quality: RenderConfig['quality']
+): PlanTier {
+  const withinFree =
+    width <= PLAN_LIMITS.free.width &&
+    height <= PLAN_LIMITS.free.height &&
+    QUALITY_RANK[quality] <= QUALITY_RANK[PLAN_LIMITS.free.quality];
+
+  if (withinFree) return 'free';
+
+  const withinPro =
+    width <= PLAN_LIMITS.pro.width &&
+    height <= PLAN_LIMITS.pro.height &&
+    QUALITY_RANK[quality] <= QUALITY_RANK[PLAN_LIMITS.pro.quality];
+
+  if (withinPro) return 'pro';
+
+  return 'business';
+}
+
+async function resolveUserPlan(userId: string): Promise<PlanTier> {
+  try {
+    // Cast to any to bypass Supabase type checking for subscriptions table
+    const { data: subscription, error } = await (supabaseAdmin as any)
+      .from('subscriptions')
+      .select('plan, status')
+      .eq('user_id', userId)
+      .single() as { data: { plan: string; status: string } | null; error: any };
+
+    if (error) {
+      const errorCode = (error as { code?: string }).code;
+      if (errorCode !== 'PGRST116') {
+        logger.warn('Erro ao buscar subscription para render', {
+          userId,
+          error: error.message,
+          code: errorCode,
+        });
+      }
+      return 'free';
+    }
+
+    const plan = (subscription?.plan as PlanTier) || 'free';
+    const status = subscription?.status || 'active';
+    const isActive = status === 'active' || status === 'trialing';
+
+    return isActive ? plan : 'free';
+  } catch (error) {
+    logger.warn('Falha ao resolver plano para render', {
+      userId,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+    return 'free';
+  }
 }
 
 export async function GET(req: NextRequest) {
@@ -121,11 +205,12 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const supabase = getSupabaseForRequest(req);
+
     // Support x-user-id header for local dev (fallback to Supabase auth)
     let userId = req.headers.get('x-user-id');
     
     if (!userId) {
-      const supabase = getSupabaseForRequest(req);
       const { data: { user }, error: authError } = await supabase.auth.getUser();
 
       if (authError || !user) {
@@ -136,6 +221,8 @@ export async function POST(req: NextRequest) {
       }
       userId = user.id;
     }
+
+    const userPlan = await resolveUserPlan(userId);
 
     // ========================================
     // VERIFICAÇÃO DE LIMITE DE VÍDEOS (MONETIZAÇÃO)
@@ -193,6 +280,39 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const validQualities = ['low', 'medium', 'high', 'ultra'] as const;
+    const planDefaults = PLAN_DEFAULTS[userPlan];
+    const rawQuality = config?.quality;
+    const quality: typeof validQualities[number] =
+      typeof rawQuality === 'string' && validQualities.includes(rawQuality as typeof validQualities[number])
+        ? rawQuality as typeof validQualities[number]
+        : planDefaults.quality;
+    const width = config?.width || planDefaults.width;
+    const height = config?.height || planDefaults.height;
+    const requiredPlan = getRequiredPlanForRender(width, height, quality);
+
+    if (PLAN_RANK[userPlan] < PLAN_RANK[requiredPlan]) {
+      logger.warn('Plano insuficiente para qualidade solicitada', {
+        userId,
+        currentPlan: userPlan,
+        requiredPlan,
+        width,
+        height,
+        quality,
+      });
+
+      return NextResponse.json(
+        {
+          error: 'Plano insuficiente para a qualidade solicitada',
+          code: 'PLAN_REQUIRED',
+          currentPlan: userPlan,
+          requiredPlan,
+          upgradeUrl: '/pricing',
+        },
+        { status: 402 }
+      );
+    }
+
     // Verifica se projeto existe e permissões (usando Redis cache)
     // Cache project ownership for 5 minutes - reduces DB load
     logger.info('Searching project', { projectId });
@@ -247,16 +367,9 @@ export async function POST(req: NextRequest) {
     }
 
     // Configuração real do FFmpeg
-    const validQualities = ['low', 'medium', 'high', 'ultra'] as const;
-    const rawQuality = config?.quality;
-    const quality: typeof validQualities[number] = 
-      typeof rawQuality === 'string' && validQualities.includes(rawQuality as typeof validQualities[number])
-        ? rawQuality as typeof validQualities[number]
-        : 'high';
-    
     const renderConfig: RenderConfig = {
-      width: config?.width || 1920,
-      height: config?.height || 1080,
+      width,
+      height,
       fps: config?.fps || 30,
       quality,
       format: config?.format || 'mp4',

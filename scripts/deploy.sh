@@ -335,7 +335,7 @@ main() {
     cleanup
     
     success "🚀 Deployment completed successfully!"
-    log "Application URL: https://tecnicocursos.com"
+    log "Application URL: https://cursostecno.com.br"
     log "Version: ${VERSION}"
     log "Logs: docker-compose -f ${DEPLOY_DIR}/docker-compose.prod.yml logs -f"
 }

@@ -77,62 +77,43 @@ export default function SecurityAnalyticsPage() {
   }, [supabase]);
 
   useEffect(() => {
-    if (!orgId) return;
+    if (!user) return;
 
     loadStatistics();
-  }, [orgId, period]);
+  }, [user, period]);
 
   const loadStatistics = async () => {
-    if (!orgId) return;
-
     setLoading(true);
     try {
-      const days = period === '7d' ? 7 : period === '30d' ? 30 : 90;
-      const endDate = new Date();
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - days);
-
-      // Busca alertas
-      const alertsRes = await fetch(
-        `/api/org/${orgId}/alerts/statistics?` +
-        new URLSearchParams({
-          startDate: startDate.toISOString(),
-          endDate: endDate.toISOString(),
-        })
-      );
-      const alertsData = await alertsRes.json();
-
-      // Mock de outros dados (em produção, buscar de APIs reais)
-      const mockStats: SecurityStats = {
-        logins: {
-          successful: 1250 + Math.floor(Math.random() * 500),
-          failed: 45 + Math.floor(Math.random() * 50),
-          sso: 890 + Math.floor(Math.random() * 300),
-          successRate: 96.5 + Math.random() * 2,
-        },
-        alerts: alertsData.statistics || {
-          total: 0,
-          critical: 0,
-          high: 0,
-          bySeverity: {},
-          byType: {},
-        },
-        usage: {
-          activeUsers: 45 + Math.floor(Math.random() * 20),
-          projects: 123 + Math.floor(Math.random() * 50),
-          renders: 456 + Math.floor(Math.random() * 100),
-          ttsConversions: 789 + Math.floor(Math.random() * 200),
-        },
-        sso: {
-          enabled: true,
-          providers: 2,
-          loginsBySso: 890,
-        },
-      };
-
-      setStats(mockStats);
+      // Fetch real statistics from security API
+      const response = await fetch(`/api/security/stats?period=${period}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch security stats');
+      }
+      
+      const result = await response.json();
+      
+      if (result.success && result.data) {
+        setStats(result.data);
+      } else {
+        // Fallback to empty state
+        setStats({
+          logins: { successful: 0, failed: 0, sso: 0, successRate: 100 },
+          alerts: { total: 0, critical: 0, high: 0, bySeverity: {}, byType: {} },
+          usage: { activeUsers: 0, projects: 0, renders: 0, ttsConversions: 0 },
+          sso: { enabled: false, providers: 0, loginsBySso: 0 },
+        });
+      }
     } catch (error) {
       console.error('Erro ao carregar estatísticas:', error);
+      // Set empty stats on error
+      setStats({
+        logins: { successful: 0, failed: 0, sso: 0, successRate: 100 },
+        alerts: { total: 0, critical: 0, high: 0, bySeverity: {}, byType: {} },
+        usage: { activeUsers: 0, projects: 0, renders: 0, ttsConversions: 0 },
+        sso: { enabled: false, providers: 0, loginsBySso: 0 },
+      });
     } finally {
       setLoading(false);
     }

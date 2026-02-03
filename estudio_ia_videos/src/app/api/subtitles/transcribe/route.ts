@@ -45,7 +45,10 @@ export async function POST(request: NextRequest) {
       const tempDir = path.join(process.cwd(), 'temp', 'uploads');
       await fs.mkdir(tempDir, { recursive: true });
 
-      const fileName = `${Date.now()}_${file.name}`;
+      // SECURITY: Sanitize filename to prevent path traversal
+      const safeOriginalName = path.basename(file.name).replace(/[^a-zA-Z0-9.-]/g, '_');
+      const fileName = `${Date.now()}_${safeOriginalName}`;
+      
       const filePath = path.join(tempDir, fileName);
       const buffer = Buffer.from(await file.arrayBuffer());
       await fs.writeFile(filePath, buffer);

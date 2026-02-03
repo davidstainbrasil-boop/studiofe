@@ -105,3 +105,39 @@ export {
   type VersionHistoryState,
   type UseVersionHistoryOptions,
 } from './use-version-history';
+
+// PPT to Video conversion hooks
+export {
+  usePPTToVideo,
+  type PPTSlide,
+  type PPTParseResult,
+  type PPTRenderParams,
+  type RenderJob,
+} from './use-ppt-to-video';
+
+// AI Avatars hooks
+export {
+  useAIAvatars,
+  type Avatar,
+  type AvatarGenerationParams,
+  type GeneratedAvatarVideo,
+} from './use-ai-avatars';
+
+// Voice Studio hooks
+export {
+  useVoiceStudio,
+  type Voice,
+  type VoiceGenerationParams,
+  type VoiceCloneParams,
+} from './use-voice-studio';
+
+// Export Pro hooks
+export {
+  useExportPro,
+  type SCORMVersion,
+  type ExportFormat,
+  type ExportResolution,
+  type SCORMExportParams,
+  type VideoExportParams,
+  type ExportJob,
+} from './use-export-pro';

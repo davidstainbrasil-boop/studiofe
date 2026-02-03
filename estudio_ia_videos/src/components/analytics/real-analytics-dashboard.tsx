@@ -97,70 +97,144 @@ interface UserBehaviorData {
   conversionRate: number
 }
 
-export default function RealAnalyticsDashboard() {
-  const [analyticsData, setAnalyticsData] = useState<AnalyticsData>({
-    activeUsers: 1247,
-    totalSessions: 3456,
-    avgSessionDuration: 8.5,
-    bounceRate: 23.4,
-    pageViews: 12834,
-    videosCreated: 567,
-    videosCompleted: 489,
-    totalWatchTime: 45230,
-    avgCompletionRate: 86.2,
-    renderTime: 2.3,
-    uploadSuccess: 98.7,
-    errorRate: 1.3,
-    systemUptime: 99.8,
-    conversionRate: 12.4,
-    nrComplianceScore: 94.5,
-    userSatisfaction: 4.7,
-    revenueImpact: 125000
-  })
+// Default analytics data structure
+const DEFAULT_ANALYTICS: AnalyticsData = {
+  activeUsers: 0,
+  totalSessions: 0,
+  avgSessionDuration: 0,
+  bounceRate: 0,
+  pageViews: 0,
+  videosCreated: 0,
+  videosCompleted: 0,
+  totalWatchTime: 0,
+  avgCompletionRate: 0,
+  renderTime: 0,
+  uploadSuccess: 0,
+  errorRate: 0,
+  systemUptime: 99.9,
+  conversionRate: 0,
+  nrComplianceScore: 0,
+  userSatisfaction: 0,
+  revenueImpact: 0
+}
 
-  const [loading, setLoading] = useState(false)
+export default function RealAnalyticsDashboard() {
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsData>(DEFAULT_ANALYTICS)
+  const [loading, setLoading] = useState(true)
   const [dateRange, setDateRange] = useState('7d')
   const [selectedMetric, setSelectedMetric] = useState<string>('engagement')
 
-  // Generate real-time mock data
+  // Fetch analytics data from API
   useEffect(() => {
-    const interval = setInterval(() => {
-      setAnalyticsData(prev => ({
-        ...prev,
-        activeUsers: prev.activeUsers + Math.floor(Math.random() * 10) - 5,
-        totalSessions: prev.totalSessions + Math.floor(Math.random() * 20),
-        pageViews: prev.pageViews + Math.floor(Math.random() * 50),
-        systemUptime: Math.min(99.99, prev.systemUptime + (Math.random() * 0.01))
-      }))
-    }, 5000)
-
-    return () => clearInterval(interval)
-  }, [])
-
-  // Time series data for charts
-  const timeSeriesData = useMemo(() => {
-    const data = []
-    for (let i = 30; i >= 0; i--) {
-      const date = subDays(new Date(), i)
-      data.push({
-        timestamp: format(date, 'dd/MM'),
-        usuarios: Math.floor(Math.random() * 200) + 800,
-        sessoes: Math.floor(Math.random() * 300) + 1000,
-        videos: Math.floor(Math.random() * 50) + 100,
-        tempo: Math.floor(Math.random() * 60) + 30
-      })
+    const fetchAnalytics = async () => {
+      setLoading(true)
+      try {
+        const response = await fetch(`/api/analytics/dashboard?period=${dateRange}`)
+        if (response.ok) {
+          const result = await response.json()
+          if (result.success && result.data) {
+            const d = result.data
+            setAnalyticsData({
+              activeUsers: d.activeUsers ?? d.totalUsers ?? 0,
+              totalSessions: d.totalSessions ?? d.totalEvents ?? 0,
+              avgSessionDuration: d.avgSessionDuration ?? 0,
+              bounceRate: d.bounceRate ?? 0,
+              pageViews: d.pageViews ?? d.totalEvents ?? 0,
+              videosCreated: d.videosCreated ?? d.totalProjects ?? 0,
+              videosCompleted: d.videosCompleted ?? 0,
+              totalWatchTime: d.totalWatchTime ?? 0,
+              avgCompletionRate: d.avgCompletionRate ?? d.completionRate ?? 0,
+              renderTime: d.avgRenderTime ?? d.renderTime ?? 0,
+              uploadSuccess: d.uploadSuccessRate ?? d.uploadSuccess ?? 98,
+              errorRate: d.errorRate ?? 0,
+              systemUptime: d.systemUptime ?? 99.9,
+              conversionRate: d.conversionRate ?? 0,
+              nrComplianceScore: d.nrComplianceScore ?? d.complianceScore ?? 0,
+              userSatisfaction: d.userSatisfaction ?? 0,
+              revenueImpact: d.revenueImpact ?? 0
+            })
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch analytics:', error)
+      } finally {
+        setLoading(false)
+      }
     }
-    return data
+
+    fetchAnalytics()
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchAnalytics, 30000)
+    return () => clearInterval(interval)
   }, [dateRange])
 
-  // User behavior data
-  const userBehaviorData = useMemo(() => [
-    { page: 'Dashboard', sessions: 1247, avgDuration: 4.2, bounceRate: 15.3, conversionRate: 23.1 },
-    { page: 'PPTX Studio', sessions: 856, avgDuration: 12.7, bounceRate: 8.2, conversionRate: 67.4 },
-    { page: 'Avatar Studio', sessions: 634, avgDuration: 8.9, bounceRate: 12.1, conversionRate: 45.2 },
-    { page: 'Templates NR', sessions: 523, avgDuration: 6.3, bounceRate: 18.7, conversionRate: 34.6 },
-    { page: 'Timeline Editor', sessions: 445, avgDuration: 15.4, bounceRate: 5.9, conversionRate: 78.3 }
-  ], [])
+  // Time series data for charts - fetched from API
+  const [timeSeriesData, setTimeSeriesData] = useState<Array<{
+    timestamp: string
+    usuarios: number
+    sessoes: number
+    videos: number
+    tempo: number
+  }>>([])
+
+  // User behavior data - fetched from API
+  const [userBehaviorData, setUserBehaviorData] = useState<UserBehaviorData[]>([])
+
+  // Fetch time series and behavior data
+  useEffect(() => {
+    const fetchDetailedData = async () => {
+      try {
+        // Fetch user behavior data
+        const behaviorRes = await fetch(`/api/analytics/user-behavior?period=${dateRange}`)
+        if (behaviorRes.ok) {
+          const behaviorResult = await behaviorRes.json()
+          if (behaviorResult.success && behaviorResult.data?.pageViews) {
+            const mapped = behaviorResult.data.pageViews.slice(0, 5).map((p: {
+              page?: string
+              views?: number
+              avgDuration?: number
+              bounceRate?: number
+              conversionRate?: number
+            }) => ({
+              page: p.page || 'Unknown',
+              sessions: p.views || 0,
+              avgDuration: p.avgDuration || 0,
+              bounceRate: p.bounceRate || 0,
+              conversionRate: p.conversionRate || 0
+            }))
+            setUserBehaviorData(mapped)
+          }
+        }
+
+        // Fetch overview/timeline data
+        const overviewRes = await fetch(`/api/analytics/overview?period=${dateRange}`)
+        if (overviewRes.ok) {
+          const overviewResult = await overviewRes.json()
+          if (overviewResult.success && overviewResult.data?.timeline) {
+            const mapped = overviewResult.data.timeline.map((t: {
+              date?: string
+              timestamp?: string
+              users?: number
+              sessions?: number
+              videos?: number
+              avgTime?: number
+            }) => ({
+              timestamp: t.date || t.timestamp || '',
+              usuarios: t.users || 0,
+              sessoes: t.sessions || 0,
+              videos: t.videos || 0,
+              tempo: t.avgTime || 0
+            }))
+            setTimeSeriesData(mapped)
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch detailed analytics:', error)
+      }
+    }
+
+    fetchDetailedData()
+  }, [dateRange])
 
   // Performance metrics data
   const performanceData = useMemo(() => [
@@ -170,29 +244,72 @@ export default function RealAnalyticsDashboard() {
     { name: 'User Satisfaction', value: analyticsData.userSatisfaction * 20, color: '#F59E0B' }
   ], [analyticsData])
 
-  // NR Compliance breakdown
-  const nrComplianceData = useMemo(() => [
-    { name: 'NR-12', compliance: 96.2, issues: 3, color: '#10B981' },
-    { name: 'NR-33', compliance: 94.8, issues: 5, color: '#3B82F6' },
-    { name: 'NR-35', compliance: 92.1, issues: 8, color: '#F59E0B' },
-    { name: 'NR-10', compliance: 98.7, issues: 1, color: '#8B5CF6' },
-    { name: 'NR-06', compliance: 91.3, issues: 9, color: '#EF4444' }
-  ], [])
+  // NR Compliance breakdown - fetched from API or defaults
+  const [nrComplianceData, setNrComplianceData] = useState<Array<{
+    name: string
+    compliance: number
+    issues: number
+    color: string
+  }>>([
+    { name: 'NR-12', compliance: 0, issues: 0, color: '#10B981' },
+    { name: 'NR-33', compliance: 0, issues: 0, color: '#3B82F6' },
+    { name: 'NR-35', compliance: 0, issues: 0, color: '#F59E0B' },
+    { name: 'NR-10', compliance: 0, issues: 0, color: '#8B5CF6' },
+    { name: 'NR-06', compliance: 0, issues: 0, color: '#EF4444' }
+  ])
+
+  // Fetch NR compliance data
+  useEffect(() => {
+    const fetchCompliance = async () => {
+      try {
+        const response = await fetch('/api/analytics/render-stats?includeNRBreakdown=true')
+        if (response.ok) {
+          const result = await response.json()
+          if (result.success && result.data?.nrBreakdown) {
+            const colors = ['#10B981', '#3B82F6', '#F59E0B', '#8B5CF6', '#EF4444']
+            const mapped = result.data.nrBreakdown.slice(0, 5).map((nr: {
+              name?: string
+              nr?: string
+              compliance?: number
+              score?: number
+              issues?: number
+            }, i: number) => ({
+              name: nr.name || nr.nr || `NR-${i}`,
+              compliance: nr.compliance ?? nr.score ?? 0,
+              issues: nr.issues ?? 0,
+              color: colors[i % colors.length]
+            }))
+            setNrComplianceData(mapped)
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch NR compliance:', error)
+      }
+    }
+    fetchCompliance()
+  }, [dateRange])
 
   const refreshData = async () => {
     setLoading(true)
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    // Update with new mock data
-    setAnalyticsData(prev => ({
-      ...prev,
-      activeUsers: Math.floor(Math.random() * 500) + 1000,
-      totalSessions: Math.floor(Math.random() * 1000) + 3000,
-      videosCreated: Math.floor(Math.random() * 200) + 500
-    }))
-    
-    setLoading(false)
+    try {
+      const response = await fetch(`/api/analytics/dashboard?period=${dateRange}`)
+      if (response.ok) {
+        const result = await response.json()
+        if (result.success && result.data) {
+          const d = result.data
+          setAnalyticsData(prev => ({
+            ...prev,
+            activeUsers: d.activeUsers ?? d.totalUsers ?? prev.activeUsers,
+            totalSessions: d.totalSessions ?? d.totalEvents ?? prev.totalSessions,
+            videosCreated: d.videosCreated ?? d.totalProjects ?? prev.videosCreated
+          }))
+        }
+      }
+    } catch (error) {
+      console.error('Failed to refresh data:', error)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const MetricCard = ({ 

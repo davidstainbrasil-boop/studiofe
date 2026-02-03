@@ -1,6 +1,7 @@
 
 
 
+
 'use client'
 
 /**
@@ -8,13 +9,14 @@
  * Interface básica para renderização de vídeos
  */
 
-import React, { useState } from 'react'
+import React, { useState, useRef, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { Progress } from '../ui/progress'
 import { Badge } from '../ui/badge'
 import { Alert, AlertDescription } from '../ui/alert'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
+import { logger } from '@lib/logger'
 import { 
   Play, 
   Square, 
@@ -29,6 +31,7 @@ import {
 
 interface FFmpegRenderStudioProps {
   timelineData?: Record<string, unknown>
+  projectId?: string
   onRenderComplete?: (outputUrl: string) => void
 }
 
@@ -36,7 +39,8 @@ type RenderQuality = 'speed' | 'balanced' | 'quality'
 type RenderStatus = 'idle' | 'preparing' | 'rendering' | 'completed' | 'error'
 
 export default function FFmpegRenderStudio({ 
-  timelineData, 
+  timelineData,
+  projectId,
   onRenderComplete 
 }: FFmpegRenderStudioProps) {
   
@@ -45,34 +49,123 @@ export default function FFmpegRenderStudio({
   const [selectedQuality, setSelectedQuality] = useState<RenderQuality>('balanced')
   const [estimatedTime, setEstimatedTime] = useState('--:--')
   const [outputUrl, setOutputUrl] = useState<string | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const jobIdRef = useRef<string | null>(null)
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Simulação básica de renderização
-  const handleStartRender = async () => {
-    setRenderStatus('preparing')
-    setProgress(0)
-    
-    // Simular progresso
-    const progressInterval = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(progressInterval)
-          setRenderStatus('completed')
-          const mockUrl = '/videos/rendered_output.mp4'
-          setOutputUrl(mockUrl)
-          onRenderComplete?.(mockUrl)
-          return 100
+  // Poll for job status
+  const pollJobStatus = useCallback(async (jobId: string) => {
+    try {
+      const response = await fetch(`/api/render/status/${jobId}`);
+      
+      if (!response.ok) {
+        throw new Error('Falha ao verificar status');
+      }
+      
+      const result = await response.json();
+      
+      if (result.success && result.job) {
+        const job = result.job;
+        setProgress(job.progress || 0);
+        
+        if (job.estimated_completion) {
+          const eta = Math.max(0, Math.floor((new Date(job.estimated_completion).getTime() - Date.now()) / 1000));
+          const mins = Math.floor(eta / 60);
+          const secs = eta % 60;
+          setEstimatedTime(`${mins}:${secs.toString().padStart(2, '0')}`);
         }
-        return prev + 2
-      })
-    }, 200)
-    
-    setRenderStatus('rendering')
-  }
+        
+        if (job.status === 'completed' || job.status === 'complete') {
+          setRenderStatus('completed');
+          if (pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current);
+            pollIntervalRef.current = null;
+          }
+          if (job.output_url) {
+            setOutputUrl(job.output_url);
+            onRenderComplete?.(job.output_url);
+          }
+        } else if (job.status === 'failed') {
+          setRenderStatus('error');
+          setErrorMessage(job.error || 'Falha na renderização');
+          if (pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current);
+            pollIntervalRef.current = null;
+          }
+        }
+      }
+    } catch (error) {
+      logger.error('Erro ao verificar status do job', error as Error, { component: 'FFmpegRenderStudio' });
+    }
+  }, [onRenderComplete]);
 
-  const handleStopRender = () => {
-    setRenderStatus('idle')
-    setProgress(0)
-  }
+  // Start real render via API
+  const handleStartRender = async () => {
+    setRenderStatus('preparing');
+    setProgress(0);
+    setErrorMessage(null);
+    setOutputUrl(null);
+    
+    try {
+      // Map quality to API format
+      const qualityMap: Record<RenderQuality, string> = {
+        'speed': 'low',
+        'balanced': 'medium',
+        'quality': 'high'
+      };
+      
+      const response = await fetch('/api/render/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId: projectId || `project-${Date.now()}`,
+          settings: {
+            quality: qualityMap[selectedQuality],
+            format: 'mp4',
+            resolution: selectedQuality === 'quality' ? '1080p' : '720p'
+          },
+          timeline: timelineData
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (result.success && result.jobId) {
+        jobIdRef.current = result.jobId;
+        setRenderStatus('rendering');
+        
+        // Start polling for status
+        pollIntervalRef.current = setInterval(() => {
+          pollJobStatus(result.jobId);
+        }, 2000);
+      } else {
+        throw new Error(result.error || 'Falha ao iniciar renderização');
+      }
+    } catch (error) {
+      logger.error('Erro ao iniciar render', error as Error, { component: 'FFmpegRenderStudio' });
+      setRenderStatus('error');
+      setErrorMessage(error instanceof Error ? error.message : 'Erro desconhecido');
+    }
+  };
+
+  const handleStopRender = async () => {
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
+    }
+    
+    if (jobIdRef.current) {
+      try {
+        await fetch(`/api/render/cancel/${jobIdRef.current}`, { method: 'POST' });
+      } catch (error) {
+        logger.error('Erro ao cancelar render', error as Error, { component: 'FFmpegRenderStudio' });
+      }
+    }
+    
+    setRenderStatus('idle');
+    setProgress(0);
+    jobIdRef.current = null;
+  };
 
   const getStatusColor = (status: RenderStatus) => {
     switch (status) {
@@ -140,6 +233,13 @@ export default function FFmpegRenderStudio({
               <Clock className="h-4 w-4" />
               Tempo estimado: {estimatedTime}
             </div>
+          )}
+
+          {errorMessage && renderStatus === 'error' && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{errorMessage}</AlertDescription>
+            </Alert>
           )}
         </CardContent>
       </Card>

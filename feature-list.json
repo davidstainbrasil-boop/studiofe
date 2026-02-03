@@ -3,7 +3,7 @@
     "project": "MVP Video TécnicoCursos v7",
     "version": "1.0.0",
     "created": "2025-12-20",
-    "lastUpdated": "2025-12-20",
+    "lastUpdated": "2026-02-02",
     "description": "Sistema de produção de vídeos técnicos NR a partir de PPTX"
   },
   "categories": {
@@ -50,6 +50,19 @@
         "Adicionar múltiplas tracks",
         "Arrastar elementos na timeline",
         "Reproduzir preview"
+      ],
+      "passes": true
+    },
+    {
+      "id": "core-004",
+      "category": "core",
+      "description": "WebSocket para colaboração em tempo real na timeline",
+      "steps": [
+        "Conectar 2 usuários ao mesmo projeto via Socket.io",
+        "Verificar presença de usuários (quem está editando qual track)",
+        "Sync de cursores/seleções em <100ms",
+        "Conflito de edição com locks (timeline_track_locks)",
+        "Testes E2E com 2 usuários simultâneos"
       ],
       "passes": true
     },

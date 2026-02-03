@@ -2,7 +2,7 @@
 
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
@@ -21,6 +21,8 @@ import {
   RefreshCw
 } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts'
+import { toast } from 'sonner'
+import { logger } from '@lib/logger'
 
 interface AnalyticsData {
   performance: {
@@ -44,94 +46,57 @@ export default function RenderAnalytics() {
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null)
   const [selectedPeriod, setSelectedPeriod] = useState<'24h' | '7d' | '30d'>('7d')
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  // Mock data for demonstration
-  useEffect(() => {
-    const fetchAnalytics = async () => {
-      setIsLoading(true)
+  // Fetch real analytics data from API
+  const fetchAnalytics = useCallback(async () => {
+    setIsLoading(true)
+    setError(null)
+    
+    try {
+      const response = await fetch(`/api/render/analytics?period=${selectedPeriod}`)
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      const mockData: AnalyticsData = {
-        performance: {
-          daily_renders: [
-            { date: '2024-08-25', count: 23, success_rate: 0.96 },
-            { date: '2024-08-26', count: 31, success_rate: 0.94 },
-            { date: '2024-08-27', count: 28, success_rate: 0.98 },
-            { date: '2024-08-28', count: 35, success_rate: 0.97 },
-            { date: '2024-08-29', count: 42, success_rate: 0.95 },
-            { date: '2024-08-30', count: 38, success_rate: 0.99 },
-            { date: '2024-08-31', count: 47, success_rate: 0.97 }
-          ],
-          cost_analysis: [
-            { date: '2024-08-25', cost: 5.67, renders: 23 },
-            { date: '2024-08-26', cost: 7.12, renders: 31 },
-            { date: '2024-08-27', cost: 6.23, renders: 28 },
-            { date: '2024-08-28', cost: 8.45, renders: 35 },
-            { date: '2024-08-29', cost: 9.78, renders: 42 },
-            { date: '2024-08-30', cost: 8.91, renders: 38 },
-            { date: '2024-08-31', cost: 12.85, renders: 47 }
-          ],
-          quality_metrics: [
-            { date: '2024-08-25', avg_quality: 0.89, satisfaction: 0.92 },
-            { date: '2024-08-26', avg_quality: 0.91, satisfaction: 0.94 },
-            { date: '2024-08-27', avg_quality: 0.94, satisfaction: 0.96 },
-            { date: '2024-08-28', avg_quality: 0.92, satisfaction: 0.95 },
-            { date: '2024-08-29', avg_quality: 0.95, satisfaction: 0.97 },
-            { date: '2024-08-30', avg_quality: 0.93, satisfaction: 0.96 },
-            { date: '2024-08-31', avg_quality: 0.96, satisfaction: 0.98 }
-          ]
-        },
-        usage: {
-          by_user: [
-            { user: 'Maria Silva', renders: 23, cost: 5.67 },
-            { user: 'João Santos', renders: 18, cost: 4.32 },
-            { user: 'Ana Costa', renders: 15, cost: 3.78 },
-            { user: 'Carlos Lima', renders: 12, cost: 2.94 }
-          ],
-          by_project_type: [
-            { type: 'NR Training', count: 35, percentage: 52 },
-            { type: 'Safety Videos', count: 20, percentage: 30 },
-            { type: 'Corporate', count: 12, percentage: 18 }
-          ],
-          by_resolution: [
-            { resolution: '1080p', count: 45, cost: 8.23 },
-            { resolution: '720p', count: 18, cost: 2.45 },
-            { resolution: '1440p', count: 4, cost: 2.17 }
-          ]
-        },
-        system: {
-          resource_usage: [
-            { time: '00:00', cpu: 25, gpu: 15, memory: 45 },
-            { time: '04:00', cpu: 20, gpu: 10, memory: 42 },
-            { time: '08:00', cpu: 65, gpu: 45, memory: 68 },
-            { time: '12:00', cpu: 80, gpu: 60, memory: 75 },
-            { time: '16:00', cpu: 70, gpu: 55, memory: 70 },
-            { time: '20:00', cpu: 45, gpu: 30, memory: 55 }
-          ],
-          queue_performance: [
-            { hour: 8, avg_wait: 15, throughput: 8 },
-            { hour: 10, avg_wait: 25, throughput: 12 },
-            { hour: 12, avg_wait: 35, throughput: 15 },
-            { hour: 14, avg_wait: 45, throughput: 18 },
-            { hour: 16, avg_wait: 30, throughput: 14 },
-            { hour: 18, avg_wait: 20, throughput: 10 }
-          ],
-          error_analysis: [
-            { type: 'Memory Overflow', count: 3, impact: 'medium' },
-            { type: 'Network Timeout', count: 2, impact: 'low' },
-            { type: 'Audio Processing', count: 1, impact: 'high' }
-          ]
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Authentication required')
         }
+        throw new Error(`Failed to fetch analytics: ${response.statusText}`)
       }
       
-      setAnalyticsData(mockData)
+      const data: AnalyticsData = await response.json()
+      setAnalyticsData(data)
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load analytics'
+      setError(errorMessage)
+      logger.error('Render analytics fetch error', err instanceof Error ? err : new Error(String(err)))
+      toast.error('Falha ao carregar analytics de renderização')
+      
+      // Set empty data on error instead of mock
+      setAnalyticsData({
+        performance: {
+          daily_renders: [],
+          cost_analysis: [],
+          quality_metrics: []
+        },
+        usage: {
+          by_user: [],
+          by_project_type: [],
+          by_resolution: []
+        },
+        system: {
+          resource_usage: [],
+          queue_performance: [],
+          error_analysis: []
+        }
+      })
+    } finally {
       setIsLoading(false)
     }
-
-    fetchAnalytics()
   }, [selectedPeriod])
+
+  useEffect(() => {
+    fetchAnalytics()
+  }, [fetchAnalytics])
 
   if (isLoading) {
     return (

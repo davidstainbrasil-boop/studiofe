@@ -18,7 +18,7 @@ services:
       - ./nginx/ssl:/etc/nginx/ssl:ro
       - ./logs/nginx:/var/log/nginx
     environment:
-      - NGINX_HOST=tecnicocursos.com
+      - NGINX_HOST=cursostecno.com.br
       - NGINX_PORT=443
     networks:
       - frontend
@@ -40,7 +40,7 @@ services:
       - "com.centurylinklabs.watchtower.enable=true"
       
   app:
-    image: tecnicocursos/app:latest
+    image: cursostecno/app:latest
     container_name: tecnico_app
     environment:
       - NODE_ENV=production
@@ -85,7 +85,7 @@ services:
     image: postgres:15-alpine
     container_name: tecnico_postgres
     environment:
-      - POSTGRES_DB=tecnicocursos
+      - POSTGRES_DB=cursostecno
       - POSTGRES_USER=app_user
       - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password
       - POSTGRES_INITDB_ARGS=--auth-local=md5 --auth-host=md5
@@ -211,7 +211,7 @@ services:
       - security_reports:/reports
     command: >
       sh -c "
-        trivy image --format json --output /reports/app-scan.json tecnicocursos/app:latest &&
+        trivy image --format json --output /reports/app-scan.json cursostecno/app:latest &&
         trivy image --format json --output /reports/nginx-scan.json nginx:alpine &&
         trivy image --format json --output /reports/postgres-scan.json postgres:15-alpine &&
         trivy image --format json --output /reports/redis-scan.json redis:7-alpine &&
@@ -319,13 +319,13 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: /opt/tecnicocursos/postgres
+      device: /opt/cursostecno/postgres
   redis_data:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: /opt/tecnicocursos/redis
+      device: /opt/cursostecno/redis
   fail2ban_data:
     driver: local
   security_reports:

@@ -18,7 +18,7 @@ groups:
         annotations:
           summary: "High HTTP error rate detected"
           description: "Error rate is {{ $value | humanizePercentage }} for the last 5 minutes"
-          runbook_url: "https://docs.tecnicocursos.com/runbooks/high-error-rate"
+          runbook_url: "https://docs.cursostecno.com.br/runbooks/high-error-rate"
 
       - alert: HighResponseTime
         expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) > 2
@@ -64,7 +64,7 @@ groups:
         annotations:
           summary: "Render queue is backing up"
           description: "{{ $value }} jobs in queue, workers may be overloaded"
-          runbook_url: "https://docs.tecnicocursos.com/runbooks/render-queue-backup"
+          runbook_url: "https://docs.cursostecno.com.br/runbooks/render-queue-backup"
 
       - alert: HighRenderFailureRate
         expr: rate(render_jobs_total{status="failed"}[10m]) / rate(render_jobs_total[10m]) > 0.1
@@ -95,7 +95,7 @@ groups:
         annotations:
           summary: "Render worker is down"
           description: "Render worker {{ $labels.instance }} is not responding"
-          runbook_url: "https://docs.tecnicocursos.com/runbooks/worker-down"
+          runbook_url: "https://docs.cursostecno.com.br/runbooks/worker-down"
 
   # =====================================
   # System Resource Alerts
@@ -141,7 +141,7 @@ groups:
         annotations:
           summary: "Critical disk usage"
           description: "Disk usage is {{ $value | humanizePercentage }} on {{ $labels.mount_point }}"
-          runbook_url: "https://docs.tecnicocursos.com/runbooks/disk-cleanup"
+          runbook_url: "https://docs.cursostecno.com.br/runbooks/disk-cleanup"
 
   # =====================================
   # Redis Alerts
@@ -157,7 +157,7 @@ groups:
         annotations:
           summary: "Redis is down"
           description: "Redis instance {{ $labels.instance }} is not responding"
-          runbook_url: "https://docs.tecnicocursos.com/runbooks/redis-down"
+          runbook_url: "https://docs.cursostecno.com.br/runbooks/redis-down"
 
       - alert: HighRedisMemoryUsage
         expr: redis_memory_usage_bytes > 200000000  # 200MB
@@ -193,7 +193,7 @@ groups:
         annotations:
           summary: "Application is down"
           description: "Main application is not responding"
-          runbook_url: "https://docs.tecnicocursos.com/runbooks/app-down"
+          runbook_url: "https://docs.cursostecno.com.br/runbooks/app-down"
 
       - alert: HealthCheckFailing
         expr: up{job="health-check"} == 0

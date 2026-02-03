@@ -158,6 +158,21 @@ interface QuickAction {
   description?: string
 }
 
+// Helper to map API activity types to component types
+function mapApiTypeToActivityType(apiType: string): ActivityItem['type'] {
+  const typeMap: Record<string, ActivityItem['type']> = {
+    create: 'upload',
+    edit: 'user_action',
+    delete: 'error',
+    share: 'user_action',
+    export: 'render_complete',
+    auth: 'system',
+    settings: 'system',
+    view: 'user_action',
+  }
+  return typeMap[apiType] || 'system'
+}
+
 // ============================================================================
 // Constants
 // ============================================================================
@@ -646,78 +661,132 @@ function ProjectsTable({
 // Main Component
 // ============================================================================
 
+// Default fallback data when APIs are unavailable
+const DEFAULT_ACTIVITIES: ActivityItem[] = [
+  {
+    id: 'default-1',
+    type: 'system',
+    title: 'Sistema inicializado',
+    description: 'Dashboard carregado com sucesso',
+    timestamp: new Date(),
+  },
+]
+
+const DEFAULT_SYSTEM_STATUS: SystemStatus[] = [
+  { name: 'API Principal', status: 'operational', latency: 0 },
+  { name: 'Banco de Dados', status: 'operational', latency: 0 },
+  { name: 'Fila de Render', status: 'operational', load: 0 },
+  { name: 'Storage (Supabase)', status: 'operational', latency: 0 },
+  { name: 'TTS Service', status: 'operational', latency: 0 },
+]
+
 export function ProfessionalDashboard() {
   const [period, setPeriod] = useState<'day' | 'week' | 'month' | 'quarter'>('week')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list')
   const [searchQuery, setSearchQuery] = useState('')
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [activities, setActivities] = useState<ActivityItem[]>(DEFAULT_ACTIVITIES)
+  const [systemStatus, setSystemStatus] = useState<SystemStatus[]>(DEFAULT_SYSTEM_STATUS)
+  const [activitiesLoading, setActivitiesLoading] = useState(true)
+  const [systemLoading, setSystemLoading] = useState(true)
 
   // Data hooks
   const { projects, isLoading: projectsLoading, refresh: refreshProjects } = useProjects()
   const { metrics, loading: metricsLoading, refresh: refreshMetrics } = useMetrics(period)
 
-  // Mocked data for demo (replace with real API calls)
-  const activities: ActivityItem[] = useMemo(
-    () => [
-      {
-        id: '1',
-        type: 'render_complete',
-        title: 'Renderização concluída',
-        description: 'Vídeo NR-35 exportado com sucesso',
-        timestamp: subHours(new Date(), 1),
-        projectName: 'Treinamento NR-35',
-        projectId: 'proj-1',
-        user: { name: 'João Silva' },
-      },
-      {
-        id: '2',
-        type: 'upload',
-        title: 'PPTX importado',
-        description: '24 slides processados',
-        timestamp: subHours(new Date(), 3),
-        projectName: 'Segurança EPI',
-        projectId: 'proj-2',
-        user: { name: 'Maria Santos' },
-      },
-      {
-        id: '3',
-        type: 'render_started',
-        title: 'Renderização iniciada',
-        description: 'Aguardando processamento...',
-        timestamp: subHours(new Date(), 5),
-        projectName: 'Prevenção de Acidentes',
-        projectId: 'proj-3',
-      },
-      {
-        id: '4',
-        type: 'error',
-        title: 'Erro na conversão',
-        description: 'Falha no TTS do slide 12',
-        timestamp: subHours(new Date(), 8),
-        projectName: 'Manual de Procedimentos',
-        projectId: 'proj-4',
-      },
-      {
-        id: '5',
-        type: 'system',
-        title: 'Backup automático',
-        description: 'Backup diário realizado',
-        timestamp: subDays(new Date(), 1),
-      },
-    ],
-    []
-  )
+  // Fetch activities from API
+  const fetchActivities = useCallback(async () => {
+    setActivitiesLoading(true)
+    try {
+      const response = await fetch('/api/activity?limit=10')
+      if (response.ok) {
+        const result = await response.json()
+        if (result.success && result.data?.length > 0) {
+          // Map API response to ActivityItem format
+          const mappedActivities: ActivityItem[] = result.data.map((item: {
+            id: string
+            type: string
+            action: string
+            description: string
+            timestamp: string
+            user?: string
+            metadata?: { resourceType?: string; resourceId?: string }
+          }) => ({
+            id: item.id,
+            type: mapApiTypeToActivityType(item.type),
+            title: item.action,
+            description: item.description,
+            timestamp: new Date(item.timestamp),
+            user: item.user ? { name: item.user } : undefined,
+            projectId: item.metadata?.resourceId,
+            projectName: item.metadata?.resourceType,
+          }))
+          setActivities(mappedActivities)
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch activities:', error)
+      // Keep default activities on error
+    } finally {
+      setActivitiesLoading(false)
+    }
+  }, [])
 
-  const systemStatus: SystemStatus[] = useMemo(
-    () => [
-      { name: 'API Principal', status: 'operational', latency: 45 },
-      { name: 'Banco de Dados', status: 'operational', latency: 12 },
-      { name: 'Fila de Render', status: 'operational', load: 32 },
-      { name: 'Storage (Supabase)', status: 'operational', latency: 89 },
-      { name: 'TTS Service', status: 'operational', latency: 230 },
-    ],
-    []
-  )
+  // Fetch system status from health API
+  const fetchSystemStatus = useCallback(async () => {
+    setSystemLoading(true)
+    try {
+      const response = await fetch('/api/health?full=true')
+      if (response.ok) {
+        const health = await response.json()
+        if (health.checks) {
+          // Map health checks to SystemStatus format
+          const statusMap: Record<string, string> = {
+            api_principal: 'API Principal',
+            database: 'Banco de Dados',
+            supabase: 'Banco de Dados',
+            redis: 'Fila de Render',
+            render_queue: 'Fila de Render',
+            storage: 'Storage (Supabase)',
+            supabase_storage: 'Storage (Supabase)',
+            tts: 'TTS Service',
+            elevenlabs: 'TTS Service',
+          }
+          
+          const mappedStatus: SystemStatus[] = Object.entries(health.checks).map(
+            ([key, value]: [string, unknown]) => {
+              const check = value as { status?: string; latency?: number; load?: number }
+              return {
+                name: statusMap[key] || key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+                status: check.status === 'healthy' || check.status === 'ok' 
+                  ? 'operational' as const
+                  : check.status === 'degraded' 
+                    ? 'degraded' as const 
+                    : 'down' as const,
+                latency: check.latency,
+                load: check.load,
+              }
+            }
+          ).slice(0, 5) // Limit to 5 services
+          
+          if (mappedStatus.length > 0) {
+            setSystemStatus(mappedStatus)
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch system status:', error)
+      // Keep default status on error
+    } finally {
+      setSystemLoading(false)
+    }
+  }, [])
+
+  // Load data on mount
+  useEffect(() => {
+    fetchActivities()
+    fetchSystemStatus()
+  }, [fetchActivities, fetchSystemStatus])
 
   const quickActions: QuickAction[] = useMemo(
     () => [
@@ -781,14 +850,19 @@ export function ProfessionalDashboard() {
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true)
     try {
-      await Promise.all([refreshProjects(), refreshMetrics()])
+      await Promise.all([
+        refreshProjects(), 
+        refreshMetrics(),
+        fetchActivities(),
+        fetchSystemStatus()
+      ])
       toast.success('Dados atualizados!')
     } catch (error) {
       toast.error('Erro ao atualizar dados')
     } finally {
       setIsRefreshing(false)
     }
-  }, [refreshProjects, refreshMetrics])
+  }, [refreshProjects, refreshMetrics, fetchActivities, fetchSystemStatus])
 
   // Project action handler
   const handleProjectAction = useCallback((action: string, project: Project) => {

@@ -1,0 +1,400 @@
+# 🎯 Kubernetes Deployment Configuration
+# MVP Vídeos TécnicoCursos v7
+# Production-ready K8s manifests
+
+---
+# ================================
+# Namespace
+# ================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mvp-videos
+  labels:
+    app.kubernetes.io/name: mvp-videos
+    app.kubernetes.io/part-of: tecnicocursos
+
+---
+# ================================
+# ConfigMap - Application Config
+# ================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mvp-videos-config
+  namespace: mvp-videos
+data:
+  NODE_ENV: "production"
+  NEXT_TELEMETRY_DISABLED: "1"
+  LOG_LEVEL: "info"
+  WORKER_CONCURRENCY: "3"
+  COLLAB_PORT: "3001"
+
+---
+# ================================
+# Secret - Sensitive Data
+# ================================
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mvp-videos-secrets
+  namespace: mvp-videos
+type: Opaque
+stringData:
+  # Replace with actual values via kubectl or sealed-secrets
+  SUPABASE_URL: "https://xxx.supabase.co"
+  SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  SUPABASE_SERVICE_ROLE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  DIRECT_DATABASE_URL: "postgresql://postgres:xxx@db.xxx.supabase.co:5432/postgres"
+  REDIS_URL: "redis://redis-service:6379"
+  ELEVENLABS_API_KEY: ""
+  HEYGEN_API_KEY: ""
+
+---
+# ================================
+# Deployment - Main Application
+# ================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mvp-videos-app
+  namespace: mvp-videos
+  labels:
+    app: mvp-videos
+    component: app
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: mvp-videos
+      component: app
+  template:
+    metadata:
+      labels:
+        app: mvp-videos
+        component: app
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3000"
+        prometheus.io/path: "/api/metrics/custom"
+    spec:
+      serviceAccountName: mvp-videos
+      terminationGracePeriodSeconds: 30
+      
+      containers:
+        - name: app
+          image: ghcr.io/tecnicocursos/mvp-videos:latest
+          imagePullPolicy: Always
+          
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          
+          envFrom:
+            - configMapRef:
+                name: mvp-videos-config
+            - secretRef:
+                name: mvp-videos-secrets
+          
+          env:
+            - name: NEXT_PUBLIC_SUPABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: mvp-videos-secrets
+                  key: SUPABASE_URL
+            - name: NEXT_PUBLIC_SUPABASE_ANON_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: mvp-videos-secrets
+                  key: SUPABASE_ANON_KEY
+          
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "2000m"
+              memory: "2Gi"
+          
+          # Startup probe - wait for app to initialize
+          startupProbe:
+            httpGet:
+              path: /api/health/startup
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 30
+          
+          # Liveness probe - restart if unhealthy
+          livenessProbe:
+            httpGet:
+              path: /api/health/live
+              port: http
+            initialDelaySeconds: 0
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+          
+          # Readiness probe - stop traffic if not ready
+          readinessProbe:
+            httpGet:
+              path: /api/health/ready
+              port: http
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          
+          volumeMounts:
+            - name: uploads
+              mountPath: /app/public/uploads
+            - name: logs
+              mountPath: /app/logs
+      
+      volumes:
+        - name: uploads
+          persistentVolumeClaim:
+            claimName: mvp-videos-uploads
+        - name: logs
+          emptyDir: {}
+      
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - mvp-videos
+                topologyKey: kubernetes.io/hostname
+
+---
+# ================================
+# Deployment - Render Worker
+# ================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mvp-videos-worker
+  namespace: mvp-videos
+  labels:
+    app: mvp-videos
+    component: worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mvp-videos
+      component: worker
+  template:
+    metadata:
+      labels:
+        app: mvp-videos
+        component: worker
+    spec:
+      serviceAccountName: mvp-videos
+      terminationGracePeriodSeconds: 300  # Allow time for video jobs
+      
+      containers:
+        - name: worker
+          image: ghcr.io/tecnicocursos/mvp-videos-worker:latest
+          imagePullPolicy: Always
+          
+          envFrom:
+            - configMapRef:
+                name: mvp-videos-config
+            - secretRef:
+                name: mvp-videos-secrets
+          
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "4000m"
+              memory: "4Gi"
+          
+          livenessProbe:
+            exec:
+              command:
+                - cat
+                - /tmp/worker-healthy
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            failureThreshold: 3
+          
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+      
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: mvp-videos-worker-data
+
+---
+# ================================
+# Service - Application
+# ================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: mvp-videos-service
+  namespace: mvp-videos
+  labels:
+    app: mvp-videos
+spec:
+  type: ClusterIP
+  selector:
+    app: mvp-videos
+    component: app
+  ports:
+    - name: http
+      port: 80
+      targetPort: 3000
+      protocol: TCP
+
+---
+# ================================
+# Ingress - External Access
+# ================================
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mvp-videos-ingress
+  namespace: mvp-videos
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/rate-limit: "60"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+spec:
+  tls:
+    - hosts:
+        - cursostecno.com.br
+        - www.cursostecno.com.br
+      secretName: mvp-videos-tls
+  rules:
+    - host: cursostecno.com.br
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: mvp-videos-service
+                port:
+                  number: 80
+    - host: www.cursostecno.com.br
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: mvp-videos-service
+                port:
+                  number: 80
+
+---
+# ================================
+# HorizontalPodAutoscaler
+# ================================
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: mvp-videos-hpa
+  namespace: mvp-videos
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: mvp-videos-app
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+
+---
+# ================================
+# PodDisruptionBudget
+# ================================
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: mvp-videos-pdb
+  namespace: mvp-videos
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: mvp-videos
+      component: app
+
+---
+# ================================
+# ServiceAccount
+# ================================
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: mvp-videos
+  namespace: mvp-videos
+
+---
+# ================================
+# PersistentVolumeClaim - Uploads
+# ================================
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mvp-videos-uploads
+  namespace: mvp-videos
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 50Gi
+
+---
+# ================================
+# PersistentVolumeClaim - Worker Data
+# ================================
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mvp-videos-worker-data
+  namespace: mvp-videos
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 100Gi

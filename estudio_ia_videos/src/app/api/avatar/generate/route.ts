@@ -5,13 +5,14 @@ import { AvatarRendererFactory } from '@/lib/avatar/avatar-renderer-factory'
 import { CreditManager } from '@/lib/billing/credit-manager'
 import { logger } from '@/lib/logger'
 import { AvatarQuality } from '@/lib/avatar/quality-tier-system'
+import { withPlanGuard } from '@/middleware/with-plan-guard'
 
 // Services
 const negotiator = new AvatarQualityNegotiator()
 const factory = new AvatarRendererFactory()
 const creditManager = new CreditManager()
 
-export async function POST(req: NextRequest) {
+const handlePost = async (req: NextRequest) => {
   try {
     const supabase = createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -95,3 +96,8 @@ export async function POST(req: NextRequest) {
     )
   }
 }
+
+export const POST = withPlanGuard(handlePost, {
+  requiredPlan: 'pro',
+  feature: 'avatar',
+})

@@ -21,11 +21,25 @@ jest.mock('@/lib/services/lip-sync-integration', () => ({
   validateLipSyncResources: jest.fn(),
 }));
 
+// Mock do middleware withPlanGuard para bypass de autenticação em testes
+jest.mock('@/middleware/with-plan-guard', () => ({
+  withPlanGuard: (handler: (req: NextRequest) => Promise<Response>) => handler,
+}));
+
 function createMockRequest(url: string, options: { method?: string, body?: unknown } = {}) {
+  const headers = new Map<string, string>([
+    ['authorization', 'Bearer test-token'],
+    ['content-type', 'application/json'],
+  ]);
+  
   return {
     url,
     method: options.method || 'GET',
-    json: async () => options.body || {}
+    json: async () => options.body || {},
+    headers: {
+      get: (key: string) => headers.get(key.toLowerCase()) || null,
+      has: (key: string) => headers.has(key.toLowerCase()),
+    },
   } as unknown as NextRequest;
 }
 

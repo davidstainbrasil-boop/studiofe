@@ -363,23 +363,132 @@ export default function MarketingPage() {
                 </div>
             </section>
 
-            {/* 8. FINAL CTA */}
-            <section className="px-6 py-32 bg-slate-900 text-white text-center relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-violet-900/40 via-transparent to-transparent pointer-events-none"></div>
-                <div className="max-w-2xl mx-auto space-y-8 relative z-10">
-                    <h2 className="text-4xl font-bold tracking-tight">Pronto para criar?</h2>
-                    <p className="text-slate-300 text-xl font-light">Crie seu primeiro vídeo de treinamento hoje. Sem necessidade de cartão de crédito para teste.</p>
-                    <Link href="/register">
-                        <Button size="lg" className="h-16 px-10 text-xl bg-white text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-200 rounded-full shadow-2xl hover:scale-105 transition-transform">
-                            Crie Seu Primeiro Vídeo
+            {/* 8. PRICING PREVIEW */}
+            <section className="px-6 py-24 bg-gradient-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-950">
+                <div className="max-w-4xl mx-auto text-center">
+                    <Badge variant="outline" className="mb-4 px-4 py-1 text-violet-600 border-violet-200">
+                        Planos Flexíveis
+                    </Badge>
+                    <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                        Comece grátis, escale quando precisar
+                    </h2>
+                    <p className="text-slate-600 dark:text-slate-400 mb-8 text-lg">
+                        Experimente 7 dias grátis do plano Pro. Sem cartão de crédito.
+                    </p>
+
+                    <div className="grid md:grid-cols-3 gap-6 mb-12">
+                        {/* Free */}
+                        <Card className="border border-slate-200 dark:border-slate-800">
+                            <CardContent className="p-6 text-center">
+                                <h3 className="font-semibold text-lg mb-1">Free</h3>
+                                <p className="text-3xl font-bold">R$ 0</p>
+                                <p className="text-slate-500 text-sm mb-4">/mês</p>
+                                <ul className="text-sm text-slate-600 space-y-2 text-left">
+                                    <li className="flex items-center gap-2">
+                                        <CheckCircle2 className="w-4 h-4 text-green-500" />
+                                        1 vídeo/mês
+                                    </li>
+                                    <li className="flex items-center gap-2">
+                                        <CheckCircle2 className="w-4 h-4 text-green-500" />
+                                        720p
+                                    </li>
+                                </ul>
+                            </CardContent>
+                        </Card>
+
+                        {/* Pro */}
+                        <Card className="border-2 border-violet-500 relative">
+                            <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                                <Badge className="bg-violet-600 text-white">Mais Popular</Badge>
+                            </div>
+                            <CardContent className="p-6 text-center">
+                                <h3 className="font-semibold text-lg mb-1">Pro</h3>
+                                <p className="text-3xl font-bold text-violet-600">R$ 97</p>
+                                <p className="text-slate-500 text-sm mb-4">/mês</p>
+                                <ul className="text-sm text-slate-600 space-y-2 text-left">
+                                    <li className="flex items-center gap-2">
+                                        <CheckCircle2 className="w-4 h-4 text-green-500" />
+                                        10 vídeos/mês
+                                    </li>
+                                    <li className="flex items-center gap-2">
+                                        <CheckCircle2 className="w-4 h-4 text-green-500" />
+                                        1080p + Avatar IA
+                                    </li>
+                                </ul>
+                            </CardContent>
+                        </Card>
+
+                        {/* Business */}
+                        <Card className="border border-slate-200 dark:border-slate-800">
+                            <CardContent className="p-6 text-center">
+                                <h3 className="font-semibold text-lg mb-1">Business</h3>
+                                <p className="text-3xl font-bold">R$ 297</p>
+                                <p className="text-slate-500 text-sm mb-4">/mês</p>
+                                <ul className="text-sm text-slate-600 space-y-2 text-left">
+                                    <li className="flex items-center gap-2">
+                                        <CheckCircle2 className="w-4 h-4 text-green-500" />
+                                        Ilimitado
+                                    </li>
+                                    <li className="flex items-center gap-2">
+                                        <CheckCircle2 className="w-4 h-4 text-green-500" />
+                                        4K + White-label
+                                    </li>
+                                </ul>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    <Link href="/pricing">
+                        <Button variant="outline" size="lg" className="h-12 px-8">
+                            Ver todos os planos
+                            <ArrowRight className="w-4 h-4 ml-2" />
                         </Button>
                     </Link>
                 </div>
             </section>
 
+            {/* 9. FINAL CTA */}
+            <section className="px-6 py-32 bg-slate-900 text-white text-center relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-violet-900/40 via-transparent to-transparent pointer-events-none"></div>
+                <div className="max-w-2xl mx-auto space-y-8 relative z-10">
+                    <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
+                        🎉 7 dias grátis do plano Pro
+                    </Badge>
+                    <h2 className="text-4xl font-bold tracking-tight">Pronto para transformar seus treinamentos?</h2>
+                    <p className="text-slate-300 text-xl font-light">
+                        Crie seu primeiro vídeo de treinamento hoje. 
+                        Experimente o plano Pro por 7 dias sem compromisso.
+                    </p>
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                        <Link href="/register?trial=true">
+                            <Button size="lg" className="h-16 px-10 text-xl bg-white text-slate-900 hover:bg-slate-100 rounded-full shadow-2xl hover:scale-105 transition-transform">
+                                Começar Trial Grátis
+                                <ArrowRight className="w-5 h-5 ml-2" />
+                            </Button>
+                        </Link>
+                        <Link href="/pricing">
+                            <Button variant="outline" size="lg" className="h-16 px-8 text-lg border-white/30 text-white hover:bg-white/10 rounded-full">
+                                Ver Planos
+                            </Button>
+                        </Link>
+                    </div>
+                    <p className="text-slate-500 text-sm">
+                        Sem cartão de crédito necessário • Cancele a qualquer momento
+                    </p>
+                </div>
+            </section>
+
             {/* FOOTER */}
-            <footer className="px-6 py-12 bg-slate-950 text-slate-500 text-sm text-center border-t border-slate-900">
-                <p>© 2026 Studio Unified. Todos os direitos reservados.</p>
+            <footer className="px-6 py-12 bg-slate-950 text-slate-500 text-sm border-t border-slate-900">
+                <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+                    <p>© 2026 Studio IA. Todos os direitos reservados.</p>
+                    <div className="flex gap-6">
+                        <Link href="/pricing" className="hover:text-white transition-colors">Preços</Link>
+                        <Link href="/terms" className="hover:text-white transition-colors">Termos de Uso</Link>
+                        <Link href="/privacy" className="hover:text-white transition-colors">Privacidade</Link>
+                        <Link href="mailto:suporte@studioia.com.br" className="hover:text-white transition-colors">Contato</Link>
+                    </div>
+                </div>
             </footer>
         </div>
     );

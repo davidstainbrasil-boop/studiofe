@@ -147,6 +147,7 @@ export default function NRTemplatesEnhanced() {
   });
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState<'relevancia' | 'popularidade' | 'avaliacao' | 'recente'>('relevancia');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadTemplates();
@@ -157,287 +158,90 @@ export default function NRTemplatesEnhanced() {
   }, [templates, searchTerm, filters, sortBy]);
 
   const loadTemplates = async () => {
-    // Simular carregamento de templates avançados
-    const mockTemplates: NRTemplateEnhanced[] = [
-      {
-        id: 'nr06-epi-premium-3d',
-        nome: 'EPIs Premium 3D',
-        nr: 'NR-06',
-        categoria: 'Proteção Individual',
-        setor: ['Construção Civil', 'Industrial', 'Petroquímico'],
-        tipo: '3d-imersivo',
-        duracaoMinutos: 25,
-        complexidade: 4,
-        descricao: 'Treinamento imersivo com avatares 3D demonstrando uso correto de EPIs em diferentes cenários industriais.',
-        objetivos: [
-          'Identificar EPIs adequados para cada atividade',
-          'Demonstrar uso correto dos equipamentos',
-          'Reconhecer situações de risco',
-          'Aplicar procedimentos de segurança'
-        ],
-        recursos: {
-          avatar3D: true,
-          cenarios3D: true,
-          quizInterativo: true,
-          realidadeVirtual: true,
-          narracaoIA: true,
-          legendasAutomaticas: true,
-          certificado: true,
-          mobileFriendly: true
-        },
-        conformidade: {
-          mte: true,
-          certificacao: true,
-          auditoria: true,
-          rastreabilidade: true,
-          score: 98
-        },
-        preview: {
-          thumbnail: '/templates/nr06-premium-thumb.jpg',
-          video: '/templates/nr06-premium-preview.mp4',
-          screenshots: ['/templates/nr06-1.jpg', '/templates/nr06-2.jpg', '/templates/nr06-3.jpg']
-        },
-        estatisticas: {
-          uso: 1247,
-          satisfacao: 4.9,
-          eficacia: 96,
-          tempoMedioCompletude: 23
-        },
-        conteudo: {
-          topicos: ['Tipos de EPIs', 'Uso Correto', 'Manutenção', 'Legislação', 'Casos Práticos'],
-          exerciciosPraticos: 8,
-          estudosCaso: 5,
-          avaliacoes: 3
-        },
-        personalizacao: {
-          cores: true,
-          logo: true,
-          avatar: true,
-          cenarios: true,
-          texto: true
-        },
-        requisitos: {
-          conhecimentoPrevio: 'Conhecimentos básicos sobre segurança',
-          equipamentos: ['Computador', 'Headset (recomendado)', 'Webcam (opcional)'],
-          tempo: '20-30 minutos'
-        },
-        tags: ['3D', 'Interativo', 'Premium', 'Certificado', 'Mobile'],
-        preco: {
-          gratuito: false,
-          premium: true,
-          empresarial: true,
-          valor: 199
-        }
-      },
-      {
-        id: 'nr10-eletrica-basico',
-        nome: 'Segurança Elétrica Essencial',
-        nr: 'NR-10',
-        categoria: 'Segurança Elétrica',
-        setor: ['Elétrico', 'Industrial', 'Manutenção'],
-        tipo: 'video-base',
-        duracaoMinutos: 35,
-        complexidade: 3,
-        descricao: 'Fundamentos da segurança em instalações elétricas com apresentação didática e exemplos práticos.',
-        objetivos: [
-          'Compreender riscos elétricos',
-          'Aplicar medidas de proteção',
-          'Reconhecer procedimentos seguros',
-          'Identificar situações de perigo'
-        ],
-        recursos: {
-          avatar3D: true,
-          cenarios3D: false,
-          quizInterativo: true,
-          realidadeVirtual: false,
-          narracaoIA: true,
-          legendasAutomaticas: true,
-          certificado: true,
-          mobileFriendly: true
-        },
-        conformidade: {
-          mte: true,
-          certificacao: true,
-          auditoria: true,
-          rastreabilidade: true,
-          score: 95
-        },
-        preview: {
-          thumbnail: '/templates/nr10-basico-thumb.jpg',
-          screenshots: ['/templates/nr10-1.jpg', '/templates/nr10-2.jpg']
-        },
-        estatisticas: {
-          uso: 892,
-          satisfacao: 4.7,
-          eficacia: 94,
-          tempoMedioCompletude: 32
-        },
-        conteudo: {
-          topicos: ['Conceitos Básicos', 'Riscos Elétricos', 'EPIs Específicos', 'Procedimentos', 'Emergências'],
-          exerciciosPraticos: 4,
-          estudosCaso: 3,
-          avaliacoes: 2
-        },
-        personalizacao: {
-          cores: true,
-          logo: true,
-          avatar: false,
-          cenarios: false,
-          texto: true
-        },
-        requisitos: {
-          conhecimentoPrevio: 'Nenhum',
-          equipamentos: ['Computador', 'Internet'],
-          tempo: '30-40 minutos'
-        },
-        tags: ['Básico', 'Gratuito', 'Certificado'],
-        preco: {
-          gratuito: true,
-          premium: false,
-          empresarial: false
-        }
-      },
-      {
-        id: 'nr12-maquinas-gamificado',
-        nome: 'Máquinas Seguras Game',
-        nr: 'NR-12',
-        categoria: 'Segurança em Máquinas',
-        setor: ['Metalúrgico', 'Automobilístico', 'Alimentício'],
-        tipo: 'gamificado',
-        duracaoMinutos: 40,
-        complexidade: 5,
-        descricao: 'Experiência gamificada com desafios práticos, simulações de situações reais e sistema de pontuação.',
-        objetivos: [
-          'Dominar procedimentos de segurança',
-          'Identificar dispositivos de proteção',
-          'Aplicar bloqueio e etiquetagem',
-          'Gerenciar riscos operacionais'
-        ],
-        recursos: {
-          avatar3D: true,
-          cenarios3D: true,
-          quizInterativo: true,
-          realidadeVirtual: true,
-          narracaoIA: true,
-          legendasAutomaticas: true,
-          certificado: true,
-          mobileFriendly: false
-        },
-        conformidade: {
-          mte: true,
-          certificacao: true,
-          auditoria: true,
-          rastreabilidade: true,
-          score: 97
-        },
-        preview: {
-          thumbnail: '/templates/nr12-game-thumb.jpg',
-          video: '/templates/nr12-game-preview.mp4',
-          screenshots: ['/templates/nr12-1.jpg', '/templates/nr12-2.jpg', '/templates/nr12-3.jpg', '/templates/nr12-4.jpg']
-        },
-        estatisticas: {
-          uso: 634,
-          satisfacao: 4.8,
-          eficacia: 97,
-          tempoMedioCompletude: 38
-        },
-        conteudo: {
-          topicos: ['Dispositivos de Segurança', 'LOTO', 'Análise de Riscos', 'Manutenção Segura', 'Casos Reais'],
-          exerciciosPraticos: 12,
-          estudosCaso: 8,
-          avaliacoes: 5
-        },
-        personalizacao: {
-          cores: true,
-          logo: true,
-          avatar: true,
-          cenarios: true,
-          texto: true
-        },
-        requisitos: {
-          conhecimentoPrevio: 'Experiência com máquinas industriais',
-          equipamentos: ['Computador de alta performance', 'Headset', 'Controle (opcional)'],
-          tempo: '35-45 minutos'
-        },
-        tags: ['Gamificado', 'VR', 'Avançado', 'Interativo', 'Premium'],
-        preco: {
-          gratuito: false,
-          premium: true,
-          empresarial: true,
-          valor: 299
-        }
-      },
-      {
-        id: 'nr35-altura-micro',
-        nome: 'Altura Express',
-        nr: 'NR-35',
-        categoria: 'Trabalho em Altura',
-        setor: ['Construção Civil', 'Telecomunicações', 'Energia'],
-        tipo: 'micro-learning',
-        duracaoMinutos: 12,
-        complexidade: 2,
-        descricao: 'Módulos rápidos e focados para trabalhadores em altura, com conteúdo essencial e prático.',
-        objetivos: [
-          'Reconhecer riscos de queda',
-          'Usar EPIs corretamente',
-          'Aplicar check-list de segurança',
-          'Seguir procedimentos básicos'
-        ],
-        recursos: {
-          avatar3D: false,
-          cenarios3D: false,
-          quizInterativo: true,
-          realidadeVirtual: false,
-          narracaoIA: true,
-          legendasAutomaticas: true,
-          certificado: false,
-          mobileFriendly: true
-        },
-        conformidade: {
-          mte: true,
-          certificacao: false,
-          auditoria: true,
-          rastreabilidade: true,
-          score: 88
-        },
-        preview: {
-          thumbnail: '/templates/nr35-micro-thumb.jpg',
-          screenshots: ['/templates/nr35-1.jpg', '/templates/nr35-2.jpg']
-        },
-        estatisticas: {
-          uso: 1568,
-          satisfacao: 4.5,
-          eficacia: 89,
-          tempoMedioCompletude: 11
-        },
-        conteudo: {
-          topicos: ['EPIs para Altura', 'Check-list', 'Procedimentos Básicos'],
-          exerciciosPraticos: 2,
-          estudosCaso: 1,
-          avaliacoes: 1
-        },
-        personalizacao: {
-          cores: false,
-          logo: true,
-          avatar: false,
-          cenarios: false,
-          texto: true
-        },
-        requisitos: {
-          conhecimentoPrevio: 'Nenhum',
-          equipamentos: ['Smartphone ou Computador'],
-          tempo: '10-15 minutos'
-        },
-        tags: ['Micro-learning', 'Mobile', 'Rápido', 'Gratuito'],
-        preco: {
-          gratuito: true,
-          premium: false,
-          empresarial: false
+    setLoading(true);
+    try {
+      // Fetch templates from API
+      const response = await fetch('/api/templates/nr?enhanced=true');
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.templates?.length > 0) {
+          // Map API response to NRTemplateEnhanced format
+          const mapped: NRTemplateEnhanced[] = result.templates.map((t: Record<string, unknown>) => ({
+            id: t.id as string,
+            nome: t.name || t.nome as string || 'Template NR',
+            nr: t.nr || t.nrCode as string || 'NR-00',
+            categoria: t.category || t.categoria as string || 'Geral',
+            setor: t.sectors || t.setor as string[] || ['Industrial'],
+            tipo: t.type || t.tipo as string || 'video-base',
+            duracaoMinutos: (t.durationMinutes || t.duracaoMinutos as number) || 30,
+            complexidade: (t.complexity || t.complexidade as number) || 3,
+            descricao: t.description || t.descricao as string || '',
+            objetivos: t.objectives || t.objetivos as string[] || [],
+            recursos: t.resources || t.recursos || {
+              avatar3D: false,
+              cenarios3D: false,
+              quizInterativo: true,
+              realidadeVirtual: false,
+              narracaoIA: true,
+              legendasAutomaticas: true,
+              certificado: true,
+              mobileFriendly: true
+            },
+            conformidade: t.compliance || t.conformidade || {
+              mte: true,
+              certificacao: true,
+              auditoria: true,
+              rastreabilidade: true,
+              score: 90
+            },
+            preview: {
+              thumbnail: (t.preview as Record<string, unknown>)?.thumbnail || t.thumbnailUrl as string || '/templates/default-thumb.jpg',
+              video: (t.preview as Record<string, unknown>)?.video as string,
+              screenshots: (t.preview as Record<string, unknown>)?.screenshots as string[] || []
+            },
+            estatisticas: t.statistics || t.estatisticas || {
+              uso: 0,
+              satisfacao: 0,
+              eficacia: 0,
+              tempoMedioCompletude: 0
+            },
+            conteudo: t.content || t.conteudo || {
+              topicos: [],
+              exerciciosPraticos: 0,
+              estudosCaso: 0,
+              avaliacoes: 0
+            },
+            personalizacao: t.customization || t.personalizacao || {
+              cores: true,
+              logo: true,
+              avatar: false,
+              cenarios: false,
+              texto: true
+            },
+            requisitos: t.requirements || t.requisitos || {
+              conhecimentoPrevio: 'Nenhum',
+              equipamentos: ['Computador'],
+              tempo: '30 minutos'
+            },
+            tags: t.tags as string[] || [],
+            preco: t.pricing || t.preco || {
+              gratuito: true,
+              premium: false,
+              empresarial: false
+            }
+          }));
+          setTemplates(mapped);
+          setLoading(false);
+          return;
         }
       }
-    ];
+    } catch (error) {
+      console.error('Failed to fetch NR templates:', error);
+    }
 
-    setTemplates(mockTemplates);
+    // Fallback: set empty array (UI will show empty state)
+    setTemplates([]);
+    setLoading(false);
   };
 
   const applyFilters = () => {

@@ -189,7 +189,7 @@ docker exec mvp-videos-nginx nginx -t
 **Corrigir server_name:**
 ```bash
 cd /opt/mvp/_MVP_Video_TecnicoCursos_v7
-sed -i 's/server_name tecnicocursos.com www.tecnicocursos.com;/server_name _;/' nginx/conf.d/app.conf
+sed -i 's/server_name cursostecno.com.br www.cursostecno.com.br;/server_name _;/' nginx/conf.d/app.conf
 docker compose -f docker-compose.prod.yml restart nginx
 ```
 

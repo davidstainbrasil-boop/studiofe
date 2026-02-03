@@ -57,6 +57,9 @@ export async function POST(request: NextRequest) {
       case 'google':
         audioResult = await generateGoogleTTS(text, voice, speed, pitch, format, language);
         break;
+      case 'mock':
+        audioResult = await generateMockTTS(text, voice, speed, format);
+        break;
       default:
         throw new Error('Provider TTS não suportado');
     }
@@ -274,9 +277,35 @@ async function generateGoogleTTS(
   }
 }
 
+async function generateMockTTS(text: string, voice?: string, speed?: number, format?: string) {
+  /**
+   * Provider Mock para testes - Gera audio fake mas válido
+   */
+  
+  // Simular processamento
+  await new Promise(resolve => setTimeout(resolve, 100));
+  
+  // Calcular duração estimada (150 palavras por minuto)
+  const wordCount = text.split(' ').length;
+  const estimatedDuration = Math.max((wordCount / 150) * 60, 1); // mínimo 1 segundo
+  
+  const audioUrl = `data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA`;
+  
+  logger.info(`🎭 Mock TTS gerado: ${wordCount} palavras, ${estimatedDuration}s`, {
+    component: 'MockTTS',
+    voice,
+    format
+  });
+
+  return {
+    audioUrl,
+    duration: estimatedDuration
+  };
+}
+
 export async function GET() {
   return NextResponse.json({
-    providers: ['elevenlabs', 'azure', 'google'],
+    providers: ['elevenlabs', 'azure', 'google', 'mock'],
     voices: {
       elevenlabs: [
         { id: 'pNInz6obpgDQGcFmaJgB', name: 'Adam (English)' },

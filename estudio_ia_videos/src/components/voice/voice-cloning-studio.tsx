@@ -54,51 +54,72 @@ export default function VoiceCloningStudio() {
   }, [])
 
   const loadVoiceProfiles = async () => {
-    // Simular carregamento de perfis de voz
-    const mockProfiles: VoiceProfile[] = [
-      {
-        id: 'voice-profile-1',
-        name: 'Minha Voz - João Silva',
-        owner_id: 'current-user',
-        voice_characteristics: {
-          gender: 'masculino',
-          age_range: 'adulto',
-          pitch_average: 125,
-          speech_rate: 160,
-          accent: 'brasileiro-neutro',
-          emotional_range: ['neutral', 'happy', 'serious'],
-          vocal_quality: 'clara'
-        },
-        training_data: {
-          sample_count: 12,
-          total_duration: 380,
-          quality_score: 89,
-          noise_level: 6,
-          consistency_score: 92
-        },
-        model_metrics: {
-          similarity_score: 91,
-          naturalness_score: 87,
-          intelligibility_score: 94,
-          emotional_accuracy: 85,
-          processing_quality: 'professional'
-        },
-        usage_rights: {
-          commercial_use: true,
-          modification_allowed: true,
-          distribution_allowed: false,
-          attribution_required: false
-        },
-        createdAt: '2025-08-28T14:20:00Z',
-        last_updated: '2025-08-29T09:15:00Z',
-        status: 'ready'
+    try {
+      // Fetch voice profiles from API
+      const response = await fetch('/api/voice-library?isCustom=true')
+      if (response.ok) {
+        const result = await response.json()
+        if (result.success && result.voices?.length > 0) {
+          // Map API response to VoiceProfile format
+          const profiles: VoiceProfile[] = result.voices.map((v: {
+            id: string
+            name: string
+            gender?: string | null
+            language?: string | null
+            style?: string | null
+            metadata?: Record<string, unknown>
+            createdAt?: string
+            updatedAt?: string
+          }) => ({
+            id: v.id,
+            name: v.name,
+            owner_id: 'current-user',
+            voice_characteristics: {
+              gender: v.gender || 'desconhecido',
+              age_range: 'adulto',
+              pitch_average: 125,
+              speech_rate: 160,
+              accent: v.language || 'brasileiro-neutro',
+              emotional_range: ['neutral', 'happy', 'serious'],
+              vocal_quality: v.style || 'clara'
+            },
+            training_data: {
+              sample_count: (v.metadata as Record<string, unknown>)?.sample_count as number || 0,
+              total_duration: (v.metadata as Record<string, unknown>)?.total_duration as number || 0,
+              quality_score: (v.metadata as Record<string, unknown>)?.quality_score as number || 0,
+              noise_level: 0,
+              consistency_score: 0
+            },
+            model_metrics: {
+              similarity_score: 0,
+              naturalness_score: 0,
+              intelligibility_score: 0,
+              emotional_accuracy: 0,
+              processing_quality: 'standard' as const
+            },
+            usage_rights: {
+              commercial_use: true,
+              modification_allowed: true,
+              distribution_allowed: false,
+              attribution_required: false
+            },
+            createdAt: v.createdAt || new Date().toISOString(),
+            last_updated: v.updatedAt || new Date().toISOString(),
+            status: 'ready' as const
+          }))
+          setVoiceProfiles(profiles)
+          if (profiles.length > 0) {
+            setSelectedProfile(profiles[0])
+          }
+          return
+        }
       }
-    ]
-    
-    setVoiceProfiles(mockProfiles)
-    if (mockProfiles.length > 0) {
-      setSelectedProfile(mockProfiles[0])
+    } catch (error) {
+      console.error('Failed to fetch voice profiles:', error)
     }
+    
+    // Fallback to default empty state
+    setVoiceProfiles([])
   }
 
   const handleFileUpload = (files: FileList | null) => {

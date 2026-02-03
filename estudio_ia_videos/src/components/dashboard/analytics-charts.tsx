@@ -5,7 +5,7 @@
  * Charts interativos para métricas de vídeos NR
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useState, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -22,6 +22,7 @@ import {
   Download,
   CheckCircle2,
   AlertCircle,
+  RefreshCw,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -40,6 +41,8 @@ import {
   LineChart as RechartsLineChart,
   Line,
 } from 'recharts';
+import { logger } from '@lib/logger';
+import { Button } from '@/components/ui/button';
 
 // ============================================================================
 // Types
@@ -78,51 +81,105 @@ interface TrendMetric {
   engagement: number;
 }
 
+interface DashboardApiResponse {
+  overview: {
+    totalEvents: number;
+    eventsLast7Days: number;
+    errorEvents: number;
+    errorRate: number;
+    activeUsers: number;
+    totalProjects: number;
+  };
+  eventsByCategory: Array<{ category: string; count: number; percentage: string }>;
+  timelineData: Array<{ date: string; events: number; errors: number; users: number }>;
+  performanceMetrics: {
+    avgLoadTime: number;
+    avgRenderTime: number;
+    avgProcessingTime: number;
+    slowestEndpoints: Array<{ endpoint: string; avgTime: number; calls: number }>;
+  };
+}
+
 interface AnalyticsChartsProps {
   data?: Partial<AnalyticsData>;
   period?: 'day' | 'week' | 'month' | 'quarter';
 }
 
 // ============================================================================
-// Demo Data Generator
+// Transform API Response to Chart Data
 // ============================================================================
-function generateDemoData(period: string): AnalyticsData {
-  const days = period === 'day' ? 24 : period === 'week' ? 7 : period === 'month' ? 30 : 90;
-  
-  const production: ProductionMetric[] = Array.from({ length: Math.min(days, 12) }, (_, i) => ({
-    date: period === 'day' 
-      ? `${i * 2}:00` 
-      : period === 'week' 
-        ? ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][i % 7]
-        : `${i + 1}/${new Date().getMonth() + 1}`,
-    videos: Math.floor(Math.random() * 10) + 1,
-    duration: Math.floor(Math.random() * 60) + 10,
-    completed: Math.floor(Math.random() * 8) + 1,
+function transformApiDataToChartData(apiData: DashboardApiResponse): AnalyticsData {
+  // Transform timeline data to production metrics
+  const production: ProductionMetric[] = apiData.timelineData.map(item => ({
+    date: item.date,
+    videos: item.events,
+    duration: Math.round(item.events * 3), // Estimated duration
+    completed: item.events - item.errors,
   }));
 
+  // Calculate performance metrics from API data
+  const successRate = apiData.overview.errorRate ? 100 - apiData.overview.errorRate : 100;
   const performance: PerformanceMetric[] = [
-    { metric: 'Taxa de Sucesso', value: 94.5, target: 95, trend: 'up' },
-    { metric: 'Tempo Médio Render', value: 45, target: 60, trend: 'down' },
-    { metric: 'Qualidade HD', value: 98.2, target: 95, trend: 'up' },
-    { metric: 'Uso de Cache', value: 78.4, target: 80, trend: 'up' },
+    { 
+      metric: 'Taxa de Sucesso', 
+      value: Math.round(successRate * 10) / 10, 
+      target: 95, 
+      trend: successRate >= 95 ? 'up' : 'stable' 
+    },
+    { 
+      metric: 'Tempo Médio Render', 
+      value: Math.round(apiData.performanceMetrics.avgRenderTime / 1000), 
+      target: 60, 
+      trend: apiData.performanceMetrics.avgRenderTime < 60000 ? 'down' : 'up'
+    },
+    { 
+      metric: 'Eventos Totais', 
+      value: apiData.overview.totalEvents, 
+      target: apiData.overview.eventsLast7Days * 4, 
+      trend: 'up' 
+    },
+    { 
+      metric: 'Usuários Ativos', 
+      value: apiData.overview.activeUsers, 
+      target: Math.max(10, apiData.overview.activeUsers), 
+      trend: 'up' 
+    },
   ];
 
-  const categories: CategoryMetric[] = [
-    { name: 'NR-35 Altura', value: 32, color: '#8b5cf6' },
-    { name: 'NR-12 Máquinas', value: 24, color: '#3b82f6' },
-    { name: 'NR-10 Elétrica', value: 18, color: '#10b981' },
-    { name: 'NR-06 EPIs', value: 14, color: '#f59e0b' },
-    { name: 'Outros', value: 12, color: '#6b7280' },
-  ];
+  // Transform categories from API
+  const categoryColors = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#6b7280'];
+  const categories: CategoryMetric[] = apiData.eventsByCategory.slice(0, 5).map((cat, i) => ({
+    name: cat.category || 'Outros',
+    value: cat.count,
+    color: categoryColors[i % categoryColors.length],
+  }));
 
-  const trends: TrendMetric[] = Array.from({ length: 6 }, (_, i) => ({
-    period: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'][i],
-    views: Math.floor(Math.random() * 1000) + 500,
-    downloads: Math.floor(Math.random() * 200) + 50,
-    engagement: Math.floor(Math.random() * 30) + 60,
+  // Generate trends from timeline data
+  const trends: TrendMetric[] = apiData.timelineData.slice(-6).map(item => ({
+    period: item.date,
+    views: item.events * 10,
+    downloads: Math.round(item.events * 1.5),
+    engagement: item.users > 0 ? Math.round((item.events / item.users) * 20) : 50,
   }));
 
   return { production, performance, categories, trends };
+}
+
+// ============================================================================
+// Fallback empty data
+// ============================================================================
+function getEmptyData(): AnalyticsData {
+  return {
+    production: [],
+    performance: [
+      { metric: 'Taxa de Sucesso', value: 0, target: 95, trend: 'stable' },
+      { metric: 'Tempo Médio Render', value: 0, target: 60, trend: 'stable' },
+      { metric: 'Eventos Totais', value: 0, target: 100, trend: 'stable' },
+      { metric: 'Usuários Ativos', value: 0, target: 10, trend: 'stable' },
+    ],
+    categories: [],
+    trends: [],
+  };
 }
 
 // ============================================================================
@@ -141,11 +198,58 @@ const CHART_COLORS = {
 // Main Component
 // ============================================================================
 export function AnalyticsCharts({ data, period = 'month' }: AnalyticsChartsProps) {
+  const [apiData, setApiData] = useState<AnalyticsData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch analytics data from API
+  const fetchAnalyticsData = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const periodMap = {
+        day: '7d',
+        week: '7d', 
+        month: '30d',
+        quarter: '90d'
+      };
+      const apiPeriod = periodMap[period] || '7d';
+      
+      const response = await fetch(`/api/analytics/dashboard?period=${apiPeriod}`);
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Authentication required');
+        }
+        throw new Error(`Failed to fetch analytics: ${response.statusText}`);
+      }
+      
+      const responseData: DashboardApiResponse = await response.json();
+      const transformedData = transformApiDataToChartData(responseData);
+      setApiData(transformedData);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load analytics';
+      setError(errorMessage);
+      logger.error('Analytics charts fetch error', err instanceof Error ? err : new Error(String(err)));
+      setApiData(getEmptyData());
+    } finally {
+      setIsLoading(false);
+    }
+  }, [period]);
+
+  useEffect(() => {
+    // Only fetch if no data prop provided
+    if (!data?.production || !data?.performance || !data?.categories || !data?.trends) {
+      fetchAnalyticsData();
+    }
+  }, [data, fetchAnalyticsData]);
+
   const chartData = useMemo(() => {
     if (data?.production && data?.performance && data?.categories && data?.trends) {
       return data as AnalyticsData;
     }
-    return generateDemoData(period);
+    return apiData || getEmptyData();
   }, [data, period]);
 
   return (

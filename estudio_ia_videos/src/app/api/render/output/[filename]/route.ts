@@ -23,8 +23,18 @@ export async function GET(
       );
     }
 
+    // SECURITY: Sanitize filename to prevent path traversal
+    // Ensure filename contains only safe characters and no path separators
+    const safeFilename = path.basename(filename);
+    if (safeFilename !== filename || filename.includes('/') || filename.includes('\\')) {
+      return NextResponse.json(
+        { error: 'Nome do arquivo inválido' },
+        { status: 400 }
+      );
+    }
+
     // Extrair jobId do filename (formato: jobId.format)
-    const jobId = filename.split('.')[0];
+    const jobId = safeFilename.split('.')[0];
     
     // Verificar se job existe e foi concluído
     const job = await renderJobManager.getJob(jobId);
@@ -36,7 +46,7 @@ export async function GET(
     }
 
     // Caminho do arquivo
-    const filePath = path.join(process.cwd(), 'public', 'renders', filename);
+    const filePath = path.join(process.cwd(), 'public', 'renders', safeFilename);
 
     try {
       // Verificar se arquivo existe

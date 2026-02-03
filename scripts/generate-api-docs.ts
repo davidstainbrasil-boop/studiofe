@@ -215,7 +215,7 @@ class APIDocumentationGenerator {
         `,
         contact: {
           name: 'Suporte TécnicoCursos',
-          email: 'suporte@tecnicocursos.com'
+          email: 'suporte@cursostecno.com.br'
         },
         license: {
           name: 'MIT',

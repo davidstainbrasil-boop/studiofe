@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 import { createClient } from '@/lib/supabase/server';
+import { withPlanGuard } from '@/middleware/with-plan-guard';
 
 // SCORM 1.2 manifest template
 const SCORM_12_MANIFEST = (courseId: string, title: string, description: string) => `<?xml version="1.0" encoding="UTF-8"?>
@@ -464,7 +465,7 @@ function generateCourseId(): string {
   return `course_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 8)}`;
 }
 
-export async function POST(req: NextRequest) {
+const handlePost = async (req: NextRequest) => {
   try {
     const supabase = await createClient();
     
@@ -588,7 +589,12 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-}
+};
+
+export const POST = withPlanGuard(handlePost, {
+  requiredPlan: 'pro',
+  feature: 'scorm_export',
+});
 
 export async function GET(req: NextRequest) {
   // Return supported SCORM versions and documentation

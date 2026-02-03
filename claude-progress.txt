@@ -1,7 +1,213 @@
 # Claude Progress Log - MVP Vídeos TécnicoCursos v7
-# Updated: 2026-02-02 (Session 18 - E2E Pipeline PPTX → Vídeo com TTS)
+# Updated: 2026-02-02 (Session 21 - Real API Integration)
 
-## Session 18 Summary (Current) - E2E Pipeline Complete ✅
+## Session 21 Summary (Current) - Mock → Real API Integration ✅
+
+### ✅ PÁGINAS INTEGRADAS COM APIs REAIS:
+
+**Objetivo: Substituir todos os dados MOCK por chamadas reais às APIs**
+
+1. **Analytics Page** - `src/app/analytics/page.tsx`
+   - Removido: Dados hardcoded (stats, videosByType, dailyUsage, performanceMetrics)
+   - Integrado: `useAnalytics` hook existente que conecta a `/api/analytics/*`
+   - Adicionado: Loading skeleton, error handling, botão de refresh
+
+2. **AI Assistant Component** - `src/components/ai-assistant/ia-content-assistant.tsx`
+   - Removido: `mockAnalysis` com setTimeout simulado
+   - Criado: `src/hooks/use-ai-assistant.ts` (novo hook)
+   - Integrado: `/api/ai/insights`, `/api/ai/analyze`, `/api/ai/generate-script`
+   - Features: analyzeContent, autoOptimize, applySuggestion reais
+
+3. **Landing Page** - `src/app/landing/page.tsx`
+   - Removido: Contador fake com setInterval
+   - Criado: `/api/public/stats/route.ts` (nova API pública)
+   - Integrado: Busca dados reais do Supabase (projects, profiles, render_jobs)
+   - Features: Animação suave de contador após fetch, fallback em caso de erro
+
+### 📋 ARQUIVOS CRIADOS:
+
+| Arquivo | Propósito |
+|---------|-----------|
+| `src/hooks/use-ai-assistant.ts` | Hook para integração com /api/ai/* |
+| `src/app/api/public/stats/route.ts` | API pública de stats (sem auth) |
+
+### 📊 Status das Páginas Competitivas:
+
+| Página | Status | Hook/API |
+|--------|--------|----------|
+| PPT-to-Video | ✅ REAL | usePPTToVideo → /api/pptx, /api/render |
+| Voice Studio | ✅ REAL | useVoiceStudio → /api/voice/* |
+| AI Avatars | ✅ REAL | useAIAvatars → /api/avatars |
+| Export Pro | ✅ REAL | useExportPro → /api/export/* |
+| Brand Kit | ✅ REAL | useBrandKit → /api/brand-kit |
+| Analytics | ✅ REAL | useAnalytics → /api/analytics/* |
+| AI Assistant | ✅ REAL | useAIAssistant → /api/ai/* |
+| Landing Stats | ✅ REAL | fetch → /api/public/stats |
+| Templates | ✅ REAL | useTemplates → /api/templates |
+| Projects | ✅ REAL | useProjects → Supabase direct |
+| Dashboard | ✅ REAL | useAnalytics → /api/analytics/dashboard |
+| Editor Pro | ⚠️ PARCIAL | useEditorStore existe, page usa mocks |
+
+### ✅ VALIDAÇÃO:
+
+- TypeScript: 0 erros em `src/app/` (34 erros apenas em `_app_legacy/`)
+- Todas as integrações testáveis via build
+
+---
+
+## Session 20 Summary - Code Quality Improvements ✅
+
+### ✅ CORREÇÕES DE TYPESCRIPT:
+
+**Erros de TypeScript corrigidos no código principal (de ~40 para 0)**
+
+1. **API Render Start** - `src/app/api/render/start/route.ts`
+   - Corrigido cast de query `subscriptions` (tabela não tipada no Supabase types)
+   - Adicionado type assertion para bypass de tipagem
+
+2. **Plan Guard Middleware** - `src/middleware/with-plan-guard.ts`
+   - Mesmo fix do subscriptions query
+
+3. **AvatarPanel** - `src/components/studio-unified/panels/AvatarPanel.tsx`
+   - Corrigido `classname` → `className` (typo em props de Button)
+   - Corrigido `avatar.style` → `avatar.category || avatar.gender` (propriedade não existente)
+
+4. **PPTX Parser Advanced** - `src/lib/pptx-parser-advanced.ts`
+   - Tipagem correta para XML relationships: `rel: { '@_Id'?: string; '@_Target'?: string }`
+
+5. **Integrated Pipeline** - `src/lib/pipeline/integrated-pipeline.ts`
+   - FFmpeg stderr: `any` → `Buffer` com `.toString()`
+
+6. **E2E Test Script** - `scripts/test-pptx-to-video-e2e.ts`
+   - Buffer para Blob: `new Uint8Array(pptxBuffer)`
+
+### ✅ CORREÇÕES DE BUILD:
+
+1. **Pricing Page** - `src/app/(marketing)/pricing/page.tsx`
+   - Adicionado Suspense boundary para `useSearchParams()`
+   - Criado componente wrapper `PricingContent` + `PricingLoading`
+
+2. **Lock Service** - `src/lib/collaboration/lock-service.ts`
+   - Removido cleanup interval automático no constructor
+   - Adicionado método `initialize()` para evitar erro de tabela inexistente durante build
+
+### ✅ NOVOS TESTES:
+
+1. **Collaboration Tests** - `src/app/__tests__/lib/collaboration/collaboration.test.ts`
+   - 10 testes para tipos e exports do módulo de colaboração
+   - Validação de CollabEvent enum, COLLABORATOR_COLORS, interfaces
+
+### 📊 Estado Final:
+
+| Métrica | Antes | Depois |
+|---------|-------|--------|
+| TypeScript Errors (principal) | ~40 | 0 ✅ |
+| Build Status | FAILED | SUCCESS ✅ |
+| Total Tests | 1698 | 1909 ✅ |
+| Test Suites | 73 | 110+ |
+
+### 🔧 Arquivos Modificados:
+- `src/app/api/render/start/route.ts`
+- `src/middleware/with-plan-guard.ts`
+- `src/components/studio-unified/panels/AvatarPanel.tsx`
+- `src/lib/pptx-parser-advanced.ts`
+- `src/lib/pipeline/integrated-pipeline.ts`
+- `src/lib/collaboration/lock-service.ts`
+- `src/app/(marketing)/pricing/page.tsx`
+- `scripts/test-pptx-to-video-e2e.ts`
+
+### 📁 Arquivos Criados:
+- `src/app/__tests__/lib/collaboration/collaboration.test.ts`
+
+---
+
+## Session 19 Summary (Previous) - Real-time Collaboration ✅
+
+### ✅ WEBSOCKET COLLABORATION SYSTEM COMPLETO:
+
+**Colaboração em tempo real na timeline com Socket.io**
+
+1. **Arquivos Criados** - `src/lib/collaboration/`
+   - `types.ts` (~220 lines) - CollaboratorPresence, TrackLock, TimelineChange, eventos
+   - `lock-service.ts` (~350 lines) - Gerenciamento de locks no DB com Prisma
+   - `collaboration-server.ts` (~500 lines) - Servidor Socket.io completo
+   - `use-collaboration.ts` (~350 lines) - React hook para clientes
+   - `CollaboratorIndicators.tsx` (~280 lines) - UI components (avatars, cursors)
+   - `index.ts` - Exports do módulo
+
+2. **API REST Fallback** - `src/app/api/collaboration/locks/route.ts` (~120 lines)
+   - GET /api/collaboration/locks?projectId=xxx - Lista locks
+   - POST - Adquirir lock
+   - DELETE - Liberar lock
+
+3. **Scripts de Teste** - `scripts/`
+   - `collaboration-server.ts` (~350 lines) - Servidor WebSocket standalone (porta 3001)
+   - `test-collaboration-e2e.ts` (~400 lines) - 10 testes com 2 usuários simultâneos
+
+### 📊 Resultados dos Testes E2E (10/10 PASSED):
+```
+✅ Both users can connect to server                49ms
+✅ Users can join the same project                  7ms
+✅ Cursor updates sync in < 100ms                  14ms  (avg: 2.8ms)
+✅ User can acquire track lock                     10ms
+✅ Lock conflict is properly detected               3ms
+✅ Timeline changes sync in < 100ms                11ms  (sync: 7ms)
+✅ Changes blocked on locked tracks                 2ms
+✅ Lock release works and notifies others           7ms
+✅ User disconnect releases all locks               6ms
+✅ User can reconnect and rejoin                   11ms
+────────────────────────────────────────────────────────────
+Total: 10/10 passed, 0 failed
+Duration: 120ms
+```
+
+### ⚡ Performance Alcançada:
+- Cursor sync: **2.8ms avg** (requisito: <100ms) ✅
+- Change sync: **7ms** (requisito: <100ms) ✅
+- Lock acquisition: **9-10ms**
+- Join room: **0-3ms**
+
+### 🔧 Funcionalidades Implementadas:
+1. **Presença de Usuários** - Quem está no projeto, status (active/idle)
+2. **Cursor em Tempo Real** - Posição X,Y, trackId, seleção atual
+3. **Locks de Track** - 30 min duração, renovação automática em 5 min
+4. **Sync de Alterações** - Broadcast de mudanças com timestamp
+5. **Detecção de Conflitos** - Bloqueia edição em tracks com lock de outros
+6. **Cleanup Automático** - Locks liberados ao desconectar
+
+### 📁 Estrutura Final:
+```
+estudio_ia_videos/
+├── src/lib/collaboration/
+│   ├── types.ts                    # Tipos TS
+│   ├── lock-service.ts             # Serviço de locks (Prisma)
+│   ├── collaboration-server.ts     # Servidor Socket.io
+│   ├── use-collaboration.ts        # Hook React
+│   ├── CollaboratorIndicators.tsx  # Componentes UI
+│   └── index.ts                    # Exports
+├── src/app/api/collaboration/
+│   └── locks/route.ts              # REST API
+└── scripts/
+    ├── collaboration-server.ts     # Servidor standalone
+    └── test-collaboration-e2e.ts   # Testes E2E
+```
+
+### 🚀 Como Usar:
+
+```bash
+# Iniciar servidor de colaboração (porta 3001)
+npx tsx scripts/collaboration-server.ts &
+
+# Verificar saúde
+curl http://localhost:3001/health
+
+# Rodar testes E2E
+npx tsx scripts/test-collaboration-e2e.ts
+```
+
+---
+
+## Session 18 Summary (Previous) - E2E Pipeline Complete ✅
 
 ### ✅ DIFERENCIAL DO PRODUTO IMPLEMENTADO:
 

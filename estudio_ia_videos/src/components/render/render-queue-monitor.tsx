@@ -93,38 +93,79 @@ export default function RenderQueueMonitor() {
 
   const fetchActiveJobs = async () => {
     try {
-      // Simulate fetching user jobs - in production, implement user-specific endpoint
-      const mockJobs: RenderJob[] = [
-        {
-          id: 'job-1',
-          stage: 'processing',
-          progress: 65,
-          current_step: 'Rendering 3D avatar with lip-sync',
-          eta_seconds: 45,
-          cost_so_far: 0.35
-        },
-        {
-          id: 'job-2',
-          stage: 'complete',
-          progress: 100,
-          current_step: 'Render completed successfully',
-          cost_so_far: 0.85,
-          output_url: 'https://cdn.estudio-ia.com/renders/job-2.mp4',
-          thumbnail_url: 'https://miro.medium.com/v2/resize:fit:1400/1*hyTsMqvcXD70uo7jGzrZjQ.png'
-        },
-        {
-          id: 'job-3',
-          stage: 'queued',
-          progress: 0,
-          current_step: 'Waiting in queue (position #2)',
-          cost_so_far: 0
-        }
-      ]
+      // Fetch real jobs from API
+      const response = await fetch('/api/render/jobs?limit=10');
       
-      setJobs(mockJobs)
+      if (response.ok) {
+        const result = await response.json();
+        
+        if (result.success && result.jobs) {
+          // Map API response to RenderJob format
+          const mappedJobs: RenderJob[] = result.jobs.map((job: {
+            id: string;
+            status: string;
+            progress?: number;
+            current_step?: string;
+            estimated_completion?: number;
+            cost?: number;
+            output_url?: string;
+            thumbnail_url?: string;
+          }) => ({
+            id: job.id,
+            stage: mapStatusToStage(job.status),
+            progress: job.progress || 0,
+            current_step: job.current_step || getDefaultStepMessage(job.status),
+            eta_seconds: job.estimated_completion ? 
+              Math.max(0, Math.floor((new Date(job.estimated_completion).getTime() - Date.now()) / 1000)) : 
+              undefined,
+            cost_so_far: job.cost || 0,
+            output_url: job.output_url,
+            thumbnail_url: job.thumbnail_url
+          }));
+          
+          setJobs(mappedJobs);
+          return;
+        }
+      }
     } catch (error) {
-      logger.error('Error fetching jobs', error instanceof Error ? error : new Error(String(error)), { component: 'RenderQueueMonitor' })
+      logger.error('Error fetching jobs', error instanceof Error ? error : new Error(String(error)), { component: 'RenderQueueMonitor' });
     }
+    
+    // Fallback to empty if API fails
+    setJobs([]);
+  }
+
+  // Helper to map API status to UI stage
+  const mapStatusToStage = (status: string): string => {
+    const statusMap: Record<string, string> = {
+      'pending': 'queued',
+      'queued': 'queued',
+      'processing': 'processing',
+      'rendering': 'processing',
+      'composing': 'composing',
+      'uploading': 'uploading',
+      'completed': 'complete',
+      'complete': 'complete',
+      'failed': 'failed',
+      'cancelled': 'failed',
+    };
+    return statusMap[status.toLowerCase()] || 'queued';
+  }
+
+  // Helper to get default step message
+  const getDefaultStepMessage = (status: string): string => {
+    const messages: Record<string, string> = {
+      'pending': 'Aguardando na fila',
+      'queued': 'Aguardando na fila',
+      'processing': 'Processando vídeo',
+      'rendering': 'Renderizando cenas',
+      'composing': 'Compondo vídeo final',
+      'uploading': 'Fazendo upload',
+      'completed': 'Render concluído',
+      'complete': 'Render concluído',
+      'failed': 'Falha no processamento',
+    };
+    return messages[status.toLowerCase()] || 'Processando...';
   }
 
   const handleCancelJob = async (jobId: string) => {

@@ -249,7 +249,102 @@ export default function RenderEngine({
     });
   }, [selectedProject, createRenderJob, toast]);
 
-  // Simulate render process
+  // Render via API with polling, fallback to simulation
+  const renderViaApi = useCallback(async (job: RenderJob): Promise<boolean> => {
+    const updateJob = (updates: Partial<RenderJob>) => {
+      setRenderJobs(prev => prev.map(j => 
+        j.id === job.id ? { ...j, ...updates } : j
+      ));
+    };
+
+    const addLog = (level: RenderLog['level'], message: string, details?: Record<string, unknown>) => {
+      const log: RenderLog = {
+        id: `log-${Date.now()}`,
+        timestamp: new Date(),
+        level,
+        message,
+        details
+      };
+      
+      updateJob({ 
+        logs: [...job.logs, log]
+      });
+    };
+
+    try {
+      // Try to start render via API
+      const response = await fetch('/api/render/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId: job.project.id,
+          settings: job.settings
+        })
+      });
+
+      if (!response.ok) {
+        return false; // Fallback to simulation
+      }
+
+      const result = await response.json();
+      if (!result.success || !result.jobId) {
+        return false;
+      }
+
+      const apiJobId = result.jobId;
+      addLog('info', 'Job iniciado via API', { apiJobId });
+      updateJob({ status: 'preparing', startTime: new Date() });
+
+      // Poll for status
+      let completed = false;
+      while (!completed) {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        const statusRes = await fetch(`/api/render/status/${apiJobId}`);
+        if (!statusRes.ok) break;
+        
+        const statusData = await statusRes.json();
+        if (!statusData.success) break;
+
+        const apiStatus = statusData.status;
+        const progress = statusData.progress ?? 0;
+
+        updateJob({ progress });
+        addLog('info', `Progresso: ${progress}%`, { status: apiStatus });
+
+        if (apiStatus === 'completed') {
+          const output: RenderOutput = {
+            url: statusData.outputUrl || `/renders/${job.id}.mp4`,
+            size: statusData.outputSize || 15 * 1024 * 1024,
+            duration: job.project.settings.duration,
+            format: job.settings.format,
+            thumbnail: statusData.thumbnailUrl || `/renders/${job.id}_thumb.jpg`
+          };
+
+          updateJob({ 
+            status: 'completed', 
+            progress: 100,
+            endTime: new Date(),
+            output 
+          });
+          addLog('success', 'Renderização via API concluída!');
+          completed = true;
+          return true;
+        } else if (apiStatus === 'failed') {
+          throw new Error(statusData.error || 'Render failed');
+        } else if (['rendering', 'processing'].includes(apiStatus)) {
+          updateJob({ status: apiStatus as RenderStatus });
+        }
+      }
+
+      return false;
+    } catch (error) {
+      console.error('API render failed:', error);
+      return false;
+    }
+  }, []);
+
+  // Simulate render process (fallback)
   const simulateRender = useCallback(async (job: RenderJob) => {
     const updateJob = (updates: Partial<RenderJob>) => {
       setRenderJobs(prev => prev.map(j => 
@@ -272,9 +367,8 @@ export default function RenderEngine({
     };
 
     try {
-      setIsRendering(true);
       updateJob({ status: 'preparing', startTime: new Date() });
-      addLog('info', 'Preparando composição Remotion...');
+      addLog('info', 'Preparando composição Remotion (modo local)...');
       
       // Simulate preparation phase
       await new Promise(resolve => setTimeout(resolve, 2000));
@@ -353,18 +447,36 @@ export default function RenderEngine({
       if (onRenderError) {
         onRenderError(job, errorMessage);
       }
-    } finally {
-      setIsRendering(false);
     }
   }, [toast, onRenderComplete, onRenderError]);
 
-  // Start render process
+  // Start render process - API first, fallback to simulation
   const startRender = useCallback(async () => {
     const pendingJob = renderJobs.find(job => job.status === 'pending');
     if (!pendingJob) return;
 
-    await simulateRender(pendingJob);
-  }, [renderJobs, simulateRender]);
+    setIsRendering(true);
+    try {
+      // Try API first
+      const apiSuccess = await renderViaApi(pendingJob);
+      if (apiSuccess) {
+        toast({
+          title: "Renderização completa",
+          description: `${pendingJob.name} foi renderizado com sucesso`
+        });
+        if (onRenderComplete) {
+          const updatedJob = renderJobs.find(j => j.id === pendingJob.id);
+          if (updatedJob) onRenderComplete(updatedJob);
+        }
+        return;
+      }
+
+      // Fallback to local simulation
+      await simulateRender(pendingJob);
+    } finally {
+      setIsRendering(false);
+    }
+  }, [renderJobs, renderViaApi, simulateRender, toast, onRenderComplete]);
 
   // Cancel render
   const cancelRender = useCallback((jobId: string) => {

@@ -153,9 +153,9 @@ EOF
 
 # Ajustar nginx server_name para IP (aceitar qualquer domínio)
 if [ -f nginx/conf.d/app.conf ]; then
-    if grep -q "tecnicocursos.com" nginx/conf.d/app.conf 2>/dev/null; then
+    if grep -q "cursostecno.com.br" nginx/conf.d/app.conf 2>/dev/null; then
         echo "📝 Ajustando nginx server_name para aceitar qualquer domínio..."
-        sed -i 's/server_name tecnicocursos.com www.tecnicocursos.com;/server_name _;/' nginx/conf.d/app.conf
+        sed -i 's/server_name cursostecno.com.br www.cursostecno.com.br;/server_name _;/' nginx/conf.d/app.conf
         echo "✅ Nginx configurado para aceitar qualquer domínio/IP"
     fi
 fi

@@ -1,13 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
-import { Check, X, Zap, Building2, Sparkles, ArrowRight } from 'lucide-react';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Check, X, Zap, Building2, Sparkles, ArrowRight, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 interface PlanFeature {
   name: string;
@@ -38,10 +40,12 @@ const plans = [
     description: 'Para experimentar a plataforma',
     priceMonthly: 0,
     priceYearly: 0,
+    stripePriceIdMonthly: null,
+    stripePriceIdYearly: null,
     icon: Sparkles,
     popular: false,
     cta: 'Começar Grátis',
-    href: '/register',
+    ctaLoggedIn: 'Plano Atual',
   },
   {
     id: 'pro',
@@ -49,10 +53,12 @@ const plans = [
     description: 'Para profissionais e pequenas equipes',
     priceMonthly: 97,
     priceYearly: 930, // ~20% desconto
+    stripePriceIdMonthly: 'pro_monthly',
+    stripePriceIdYearly: 'pro_yearly',
     icon: Zap,
     popular: true,
     cta: 'Assinar Pro',
-    href: '/register?plan=pro',
+    ctaLoggedIn: 'Fazer Upgrade',
   },
   {
     id: 'business',
@@ -60,15 +66,138 @@ const plans = [
     description: 'Para consultorias e empresas',
     priceMonthly: 297,
     priceYearly: 2850, // ~20% desconto
+    stripePriceIdMonthly: 'business_monthly',
+    stripePriceIdYearly: 'business_yearly',
     icon: Building2,
     popular: false,
-    cta: 'Falar com Vendas',
-    href: '/register?plan=business',
+    cta: 'Assinar Business',
+    ctaLoggedIn: 'Fazer Upgrade',
   },
 ];
 
-export default function PricingPage() {
+// Loading component for Suspense
+function PricingLoading() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-950 via-slate-900 to-violet-950">
+      <Loader2 className="w-8 h-8 animate-spin text-violet-500" />
+    </div>
+  );
+}
+
+// Inner component that uses useSearchParams
+function PricingContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const supabase = createClientComponentClient();
+  
   const [isYearly, setIsYearly] = useState(false);
+  const [user, setUser] = useState<{ id: string; email: string } | null>(null);
+  const [currentPlan, setCurrentPlan] = useState<string>('free');
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  // Check auth status and current plan
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (authUser) {
+        setUser({ id: authUser.id, email: authUser.email || '' });
+        
+        // Fetch current subscription
+        try {
+          const response = await fetch(`/api/subscription?userId=${authUser.id}`);
+          if (response.ok) {
+            const data = await response.json();
+            setCurrentPlan(data.plan || 'free');
+          }
+        } catch (e) {
+          console.error('Error fetching subscription:', e);
+        }
+      }
+    };
+    
+    checkUser();
+
+    // Check for success/error in URL params
+    const upgradeStatus = searchParams.get('upgrade');
+    if (upgradeStatus === 'success') {
+      // Show success message
+      setError(null);
+    } else if (upgradeStatus === 'canceled') {
+      setError('Checkout cancelado. Você pode tentar novamente quando quiser.');
+    }
+  }, [supabase, searchParams]);
+
+  // Handle checkout
+  const handleCheckout = async (planId: string, stripePriceId: string | null) => {
+    if (!stripePriceId) {
+      // Free plan - just redirect to register/dashboard
+      router.push(user ? '/dashboard' : '/register');
+      return;
+    }
+
+    if (!user) {
+      // Not logged in - redirect to register with plan param
+      router.push(`/register?plan=${planId}`);
+      return;
+    }
+
+    // Already on this plan or higher
+    if (currentPlan === planId) {
+      return;
+    }
+
+    setLoadingPlan(planId);
+    setError(null);
+
+    try {
+      const priceId = isYearly ? `${planId}_yearly` : `${planId}_monthly`;
+      
+      const response = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          priceId,
+          successUrl: `${window.location.origin}/dashboard?upgrade=success`,
+          cancelUrl: `${window.location.origin}/pricing?upgrade=canceled`,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Erro ao iniciar checkout');
+      }
+
+      // Redirect to Stripe Checkout
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao processar checkout');
+    } finally {
+      setLoadingPlan(null);
+    }
+  };
+
+  // Get button text and state for a plan
+  const getPlanButton = (plan: typeof plans[0]) => {
+    const isCurrentPlan = user && currentPlan === plan.id;
+    const isUpgrade = user && ['free'].includes(currentPlan) && plan.id !== 'free';
+    const isLoading = loadingPlan === plan.id;
+    
+    if (isCurrentPlan) {
+      return { text: 'Plano Atual', disabled: true };
+    }
+    if (isLoading) {
+      return { text: 'Processando...', disabled: true, loading: true };
+    }
+    if (user && isUpgrade) {
+      return { text: plan.ctaLoggedIn, disabled: false };
+    }
+    return { text: plan.cta, disabled: false };
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
@@ -102,6 +231,12 @@ export default function PricingPage() {
             Comece grátis e faça upgrade quando precisar. Cancele a qualquer momento.
           </p>
           
+          {error && (
+            <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400">
+              {error}
+            </div>
+          )}
+          
           {/* Toggle Mensal/Anual */}
           <div className="flex items-center justify-center gap-4 pt-4">
             <span className={cn("text-sm font-medium", !isYearly && "text-violet-600")}>
@@ -129,19 +264,30 @@ export default function PricingPage() {
             const Icon = plan.icon;
             const price = isYearly ? plan.priceYearly : plan.priceMonthly;
             const monthlyEquivalent = isYearly ? Math.round(plan.priceYearly / 12) : plan.priceMonthly;
+            const buttonState = getPlanButton(plan);
+            const priceId = isYearly ? plan.stripePriceIdYearly : plan.stripePriceIdMonthly;
             
             return (
               <Card 
                 key={plan.id}
                 className={cn(
                   "relative flex flex-col transition-all hover:shadow-xl",
-                  plan.popular && "border-violet-500 border-2 shadow-lg scale-105"
+                  plan.popular && "border-violet-500 border-2 shadow-lg scale-105",
+                  user && currentPlan === plan.id && "ring-2 ring-green-500"
                 )}
               >
                 {plan.popular && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2">
                     <Badge className="bg-violet-600 text-white px-4 py-1">
                       Mais Popular
+                    </Badge>
+                  </div>
+                )}
+                
+                {user && currentPlan === plan.id && (
+                  <div className="absolute -top-4 right-4">
+                    <Badge className="bg-green-600 text-white px-4 py-1">
+                      Seu Plano
                     </Badge>
                   </div>
                 )}
@@ -203,18 +349,22 @@ export default function PricingPage() {
                 </CardContent>
                 
                 <CardFooter>
-                  <Link href={plan.href} className="w-full">
-                    <Button 
-                      className={cn(
-                        "w-full h-12 text-base",
-                        plan.popular && "bg-violet-600 hover:bg-violet-700"
-                      )}
-                      variant={plan.popular ? "default" : "outline"}
-                    >
-                      {plan.cta}
+                  <Button 
+                    onClick={() => handleCheckout(plan.id, priceId)}
+                    disabled={buttonState.disabled}
+                    className={cn(
+                      "w-full h-12 text-base",
+                      plan.popular && !buttonState.disabled && "bg-violet-600 hover:bg-violet-700",
+                      buttonState.disabled && "opacity-50 cursor-not-allowed"
+                    )}
+                    variant={plan.popular ? "default" : "outline"}
+                  >
+                    {buttonState.loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                    {buttonState.text}
+                    {!buttonState.disabled && !buttonState.loading && (
                       <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
-                  </Link>
+                    )}
+                  </Button>
                 </CardFooter>
               </Card>
             );
@@ -350,5 +500,14 @@ export default function PricingPage() {
         </div>
       </footer>
     </div>
+  );
+}
+
+// Main export with Suspense boundary
+export default function PricingPage() {
+  return (
+    <Suspense fallback={<PricingLoading />}>
+      <PricingContent />
+    </Suspense>
   );
 }

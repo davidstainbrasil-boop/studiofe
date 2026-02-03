@@ -5,6 +5,8 @@ import { NextResponse } from 'next/server'
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
+  const trial = searchParams.get('trial') === 'true'
+  const plan = searchParams.get('plan')
   // if "next" is in param, use it as the redirect URL
   const next = searchParams.get('next') ?? '/dashboard'
 
@@ -27,7 +29,38 @@ export async function GET(request: Request) {
         },
       }
     )
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+    
+    if (!error && data.user) {
+      // Se trial ou plan especificado, inicializar subscription
+      if (trial || plan) {
+        try {
+          const response = await fetch(`${origin}/api/billing/init-trial`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: data.user.id,
+              plan: plan || 'pro',
+              trialDays: 7,
+            }),
+          });
+          
+          if (!response.ok) {
+            console.error('Failed to init trial:', await response.text());
+          }
+        } catch (e) {
+          console.error('Error initializing trial:', e);
+        }
+      }
+      
+      // Redirect with success param if trial was activated
+      const redirectUrl = trial 
+        ? `${origin}${next}?trial=activated`
+        : `${origin}${next}`;
+        
+      return NextResponse.redirect(redirectUrl)
+    }
+    
     if (!error) {
       return NextResponse.redirect(`${origin}${next}`)
     }

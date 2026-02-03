@@ -3,6 +3,7 @@ import { LipSyncOrchestrator } from '@/lib/sync/lip-sync-orchestrator'
 import { logger } from '@/lib/logger'
 import { createClient } from '@/lib/supabase/server'
 import { z } from 'zod'
+import { withPlanGuard } from '@/middleware/with-plan-guard'
 
 const requestSchema = z.object({
   text: z.string().optional(),
@@ -14,7 +15,7 @@ const requestSchema = z.object({
   { message: 'Either text or audioUrl must be provided' }
 )
 
-export async function POST(request: NextRequest) {
+const handlePost = async (request: NextRequest) => {
   try {
     // 1. Autenticar usuário
     const supabase = createClient()
@@ -90,6 +91,11 @@ export async function POST(request: NextRequest) {
     )
   }
 }
+
+export const POST = withPlanGuard(handlePost, {
+  requiredPlan: 'pro',
+  feature: 'lip_sync',
+})
 
 async function downloadAudio(url: string): Promise<string> {
   const response = await fetch(url)

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable no-console, @typescript-eslint/no-var-requires */
 
 /**
  * 💾 Automated Backup Script - Supabase & Redis
@@ -14,7 +15,7 @@
  * - Notificações de status
  */
 
-const { execSync, spawn } = require('child_process');
+const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');

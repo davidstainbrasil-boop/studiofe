@@ -24,126 +24,56 @@ import {
   RefreshCw
 } from 'lucide-react'
 import { toast } from 'react-hot-toast'
-
-interface ContentSuggestion {
-  id: string
-  type: 'layout' | 'color' | 'content' | 'engagement'
-  title: string
-  description: string
-  impact: 'high' | 'medium' | 'low'
-  confidence: number
-  action: () => void
-}
-
-interface AnalysisResult {
-  score: number
-  category: string
-  suggestions: ContentSuggestion[]
-  insights: {
-    strengths: string[]
-    improvements: string[]
-    compliance: {
-      nr: string
-      status: 'compliant' | 'needs-review' | 'non-compliant'
-      details: string
-    }
-  }
-}
+import { useAIAssistant, type ContentSuggestion, type AnalysisResult } from '@hooks/use-ai-assistant'
 
 export default function IAContentAssistant() {
-  const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [analysis, setAnalysis] = useState<AnalysisResult | null>(null)
+  const {
+    isAnalyzing,
+    analysis,
+    error,
+    analyzeContent,
+    applySuggestion,
+    autoOptimize
+  } = useAIAssistant()
+  
   const [activeTab, setActiveTab] = useState('suggestions')
-  const [autoMode, setAutoMode] = useState(false)
 
-  // Simulação de análise IA do conteúdo
-  const analyzeContent = async () => {
-    setIsAnalyzing(true)
-    
-    // Simulação de delay para análise
-    await new Promise(resolve => setTimeout(resolve, 3000))
-
-    const mockAnalysis: AnalysisResult = {
-      score: 87,
-      category: 'Treinamento de Segurança - NR12',
-      suggestions: [
-        {
-          id: '1',
-          type: 'layout',
-          title: 'Otimizar Layout Visual',
-          description: 'Reorganizar elementos para melhor hierarquia visual e foco',
-          impact: 'high',
-          confidence: 94,
-          action: () => toast.success('Layout otimizado aplicado!')
-        },
-        {
-          id: '2', 
-          type: 'color',
-          title: 'Harmonização de Cores',
-          description: 'Aplicar paleta de cores para compliance NR12',
-          impact: 'medium',
-          confidence: 89,
-          action: () => toast.success('Cores NR12 aplicadas!')
-        },
-        {
-          id: '3',
-          type: 'content',
-          title: 'Melhorar Clareza do Texto',
-          description: 'Simplificar linguagem técnica para melhor compreensão',
-          impact: 'high',
-          confidence: 91,
-          action: () => toast.success('Texto simplificado!')
-        },
-        {
-          id: '4',
-          type: 'engagement',
-          title: 'Adicionar Elementos Interativos',
-          description: 'Incluir pontos de interação para maior engajamento',
-          impact: 'medium',
-          confidence: 85,
-          action: () => toast.success('Interatividade adicionada!')
-        }
-      ],
-      insights: {
-        strengths: [
-          'Excelente uso de avatares 3D',
-          'Conteúdo técnico bem estruturado',
-          'Boa qualidade de áudio TTS'
-        ],
-        improvements: [
-          'Aumentar contraste visual',
-          'Incluir mais casos práticos',
-          'Otimizar duração dos slides'
-        ],
-        compliance: {
-          nr: 'NR-12 (Máquinas e Equipamentos)',
-          status: 'compliant',
-          details: 'Conteúdo está 94% em conformidade com NR-12'
-        }
-      }
+  // Handle analysis
+  const handleAnalyze = async () => {
+    try {
+      await analyzeContent()
+      toast.success('Análise IA concluída!')
+    } catch {
+      toast.error('Erro ao analisar conteúdo')
     }
-
-    setAnalysis(mockAnalysis)
-    setIsAnalyzing(false)
-    toast.success('Análise IA concluída!')
   }
 
-  // Auto-otimização baseada em IA
-  const autoOptimize = async () => {
+  // Handle auto-optimization
+  const handleAutoOptimize = async () => {
     if (!analysis) return
 
-    setIsAnalyzing(true)
-    
-    // Aplicar todas as sugestões automaticamente
-    for (const suggestion of analysis.suggestions) {
-      if (suggestion.impact === 'high') {
-        suggestion.action()
-        await new Promise(resolve => setTimeout(resolve, 500))
+    try {
+      const result = await autoOptimize()
+      if (result.applied > 0) {
+        toast.success(`${result.applied} otimizações aplicadas!`)
+      } else {
+        toast('Nenhuma otimização de alto impacto disponível')
       }
+    } catch {
+      toast.error('Erro na auto-otimização')
     }
+  }
 
-    setIsAnalyzing(false)
-    toast.success('Auto-otimização IA aplicada!')
+  // Handle suggestion application
+  const handleApplySuggestion = async (suggestion: ContentSuggestion) => {
+    try {
+      const success = await applySuggestion(suggestion.id)
+      if (success) {
+        toast.success(`${suggestion.title} aplicado!`)
+      }
+    } catch {
+      toast.error('Erro ao aplicar sugestão')
+    }
   }
 
   const getImpactColor = (impact: string) => {
@@ -185,7 +115,7 @@ export default function IAContentAssistant() {
             </div>
             <div className="flex items-center space-x-2">
               <Button 
-                onClick={analyzeContent}
+                onClick={handleAnalyze}
                 disabled={isAnalyzing}
                 className="bg-purple-600 hover:bg-purple-700"
               >
@@ -198,7 +128,7 @@ export default function IAContentAssistant() {
               </Button>
               {analysis && (
                 <Button 
-                  onClick={autoOptimize}
+                  onClick={handleAutoOptimize}
                   variant="outline"
                   disabled={isAnalyzing}
                   className="border-purple-300 text-purple-600 hover:bg-purple-50"
@@ -302,7 +232,7 @@ export default function IAContentAssistant() {
                         </div>
                       </div>
                       <Button 
-                        onClick={suggestion.action}
+                        onClick={() => handleApplySuggestion(suggestion)}
                         size="sm"
                         className="ml-4"
                       >

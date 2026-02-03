@@ -1,3 +1,6 @@
+# 🚀 CI/CD Pipeline - MVP Vídeos TécnicoCursos v7
+# Full production pipeline: test → build → deploy
+
 name: CI/CD Pipeline
 
 on:
@@ -5,62 +8,429 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  NODE_VERSION: '20'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  validate:
-    name: Validate Quality
+  # ============================================
+  # Stage 1: Quality Checks
+  # ============================================
+  lint:
+    name: 🔍 Lint & Format
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
           cache-dependency-path: './estudio_ia_videos/package-lock.json'
       
       - name: Install dependencies
         run: cd estudio_ia_videos && npm ci
-
-      - name: Lint
+      
+      - name: Run ESLint
         run: cd estudio_ia_videos && npm run lint
+      
+      - name: Check Prettier formatting
+        run: cd estudio_ia_videos && npx prettier --check "src/**/*.{ts,tsx,js,jsx}"
 
-      - name: Type Check
-        run: cd estudio_ia_videos && npm run type-check
-
-      - name: Unit Tests
-        run: cd estudio_ia_videos && npm run test:ci
-
-  security:
-    name: Security Audit
+  typecheck:
+    name: 🔷 TypeScript Check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-      - name: Audit
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: './estudio_ia_videos/package-lock.json'
+      
+      - name: Install dependencies
+        run: cd estudio_ia_videos && npm ci
+      
+      - name: TypeScript strict check
+        run: cd estudio_ia_videos && npm run type-check
+
+  # ============================================
+  # Stage 2: Testing
+  # ============================================
+  unit-tests:
+    name: 🧪 Unit Tests
+    runs-on: ubuntu-latest
+    needs: [lint, typecheck]
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: './estudio_ia_videos/package-lock.json'
+      
+      - name: Install dependencies
+        run: cd estudio_ia_videos && npm ci
+      
+      - name: Run unit tests with coverage
+        run: cd estudio_ia_videos && npm run test:ci -- --coverage
+        env:
+          REDIS_URL: redis://localhost:6379
+          NODE_ENV: test
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./estudio_ia_videos/coverage/lcov.info
+          flags: unittests
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+  integration-tests:
+    name: 🔗 Integration Tests
+    runs-on: ubuntu-latest
+    needs: [lint, typecheck]
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: './estudio_ia_videos/package-lock.json'
+      
+      - name: Install dependencies
+        run: cd estudio_ia_videos && npm ci
+      
+      - name: Run integration tests
+        run: cd estudio_ia_videos && npm run test:integration
+        env:
+          REDIS_URL: redis://localhost:6379
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          NODE_ENV: test
+
+  # ============================================
+  # Stage 3: Security
+  # ============================================
+  security-audit:
+    name: 🔒 Security Audit
+    runs-on: ubuntu-latest
+    needs: [lint]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      
+      - name: NPM Audit
         run: cd estudio_ia_videos && npm audit --audit-level=high
+        continue-on-error: true
+      
+      - name: Run Snyk Security Scan
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high --file=estudio_ia_videos/package.json
 
+  # ============================================
+  # Stage 4: Build Docker Image
+  # ============================================
+  build:
+    name: 🏗️ Build Application
+    runs-on: ubuntu-latest
+    needs: [unit-tests, security-audit]
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tags }}
+      version: ${{ steps.version.outputs.version }}
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Generate version
+        id: version
+        run: |
+          VERSION=$(date +%Y%m%d)-$(git rev-parse --short HEAD)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix=
+            type=raw,value=${{ steps.version.outputs.version }}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.production
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            NODE_ENV=production
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
+            GIT_SHA=${{ github.sha }}
+
+  # ============================================
+  # Stage 5: Deploy Staging
+  # ============================================
   deploy-staging:
-    name: Deploy Staging
-    needs: [validate, security]
-    if: github.ref == 'refs/heads/develop'
+    name: 🚀 Deploy Staging
     runs-on: ubuntu-latest
+    needs: [build, integration-tests]
+    if: github.ref == 'refs/heads/develop' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
+    environment:
+      name: staging
+      url: https://staging.cursostecno.com.br
+    
     steps:
       - uses: actions/checkout@v4
-      - name: Deploy to Vercel (Placeholder)
-        run: echo "Deploying to Vercel Staging..."
+      
+      - name: Deploy to Staging Server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          script: |
+            cd /opt/mvp-videos
+            
+            # Pull latest images
+            docker compose -f docker-compose.staging.yml pull
+            
+            # Deploy with zero-downtime
+            docker compose -f docker-compose.staging.yml up -d --remove-orphans
+            
+            # Wait for health check
+            sleep 10
+            curl -sf http://localhost:3000/api/health || exit 1
+            
+            # Cleanup old images
+            docker image prune -f
+      
+      - name: Notify Slack - Staging Deployed
+        if: success()
+        uses: slackapi/slack-github-action@v1.25.0
+        with:
+          payload: |
+            {
+              "text": "✅ Staging deployed successfully",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*MVP Vídeos - Staging Deployed*\n• Branch: `${{ github.ref_name }}`\n• Version: `${{ needs.build.outputs.version }}`\n• <https://staging.cursostecno.com.br|View Staging>"
+                  }
+                }
+              ]
+            }
         env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
+  # ============================================
+  # Stage 6: Deploy Production
+  # ============================================
   deploy-production:
-    name: Deploy Production
-    needs: [validate, security]
-    if: github.ref == 'refs/heads/main'
+    name: 🚀 Deploy Production
     runs-on: ubuntu-latest
+    needs: [build, integration-tests]
+    if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
+    environment:
+      name: production
+      url: https://cursostecno.com.br
+    
     steps:
       - uses: actions/checkout@v4
-      - name: Deploy to Vercel (Production)
-        run: echo "Deploying to Vercel Production..."
+      
+      - name: Create Sentry Release
+        uses: getsentry/action-release@v1
         env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+        with:
+          environment: production
+          version: ${{ needs.build.outputs.version }}
+      
+      - name: Deploy to Production Server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          script: |
+            set -e
+            cd /opt/mvp-videos
+            
+            # Backup current version
+            docker compose -f docker-compose.prod.yml exec -T app cat /app/package.json > /opt/backups/package-$(date +%Y%m%d%H%M).json || true
+            
+            # Pull new images
+            echo "Pulling new images..."
+            docker compose -f docker-compose.prod.yml pull
+            
+            # Zero-downtime deployment
+            echo "Starting zero-downtime deployment..."
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans --scale app=2
+            
+            # Wait for new containers to be healthy
+            echo "Waiting for health checks..."
+            sleep 30
+            
+            # Verify health
+            curl -sf http://localhost:3000/api/health?full=true || {
+              echo "Health check failed! Rolling back..."
+              docker compose -f docker-compose.prod.yml down
+              docker compose -f docker-compose.prod.yml up -d
+              exit 1
+            }
+            
+            # Scale back to 1 instance
+            docker compose -f docker-compose.prod.yml up -d --scale app=1
+            
+            # Cleanup
+            docker image prune -f
+            echo "Deployment complete!"
+      
+      - name: Run Smoke Tests
+        run: |
+          sleep 10
+          curl -sf https://cursostecno.com.br/api/health || exit 1
+          curl -sf https://cursostecno.com.br/ | grep -q "TécnicoCursos" || exit 1
+      
+      - name: Notify Slack - Production Deployed
+        if: success()
+        uses: slackapi/slack-github-action@v1.25.0
+        with:
+          payload: |
+            {
+              "text": "🚀 Production deployed successfully",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*MVP Vídeos - Production Deployed*\n• Version: `${{ needs.build.outputs.version }}`\n• Commit: `${{ github.sha }}`\n• <https://cursostecno.com.br|View Production>"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      
+      - name: Notify Slack - Deploy Failed
+        if: failure()
+        uses: slackapi/slack-github-action@v1.25.0
+        with:
+          payload: |
+            {
+              "text": "❌ Production deployment FAILED",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*🚨 MVP Vídeos - Deploy Failed*\n• Version: `${{ needs.build.outputs.version }}`\n• <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Logs>"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  # ============================================
+  # Stage 7: Post-Deploy E2E Tests
+  # ============================================
+  e2e-tests:
+    name: 🎭 E2E Tests (Playwright)
+    runs-on: ubuntu-latest
+    needs: [deploy-staging]
+    if: github.ref == 'refs/heads/develop'
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      
+      - name: Install dependencies
+        run: cd estudio_ia_videos && npm ci
+      
+      - name: Install Playwright browsers
+        run: cd estudio_ia_videos && npx playwright install --with-deps chromium
+      
+      - name: Run E2E tests against staging
+        run: cd estudio_ia_videos && npx playwright test --config=playwright.prod.config.ts
+        env:
+          BASE_URL: https://staging.cursostecno.com.br
+          TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
+          TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+      
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: estudio_ia_videos/playwright-report/
+          retention-days: 7

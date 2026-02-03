@@ -6,6 +6,7 @@ import { Button } from '@components/ui/button'
 import { Badge } from '@components/ui/badge'
 import { Input } from '@components/ui/input'
 import { ScrollArea } from '@components/ui/scroll-area'
+import { Skeleton } from '@components/ui/skeleton'
 import {
     Activity,
     Search,
@@ -22,100 +23,28 @@ import {
     LogIn,
     LogOut,
     Key,
-    Shield
+    Shield,
+    RefreshCw,
+    AlertCircle,
+    Loader2
 } from 'lucide-react'
-
-interface ActivityLog {
-    id: string
-    action: string
-    description: string
-    user: string
-    userAvatar: string
-    timestamp: Date
-    type: 'create' | 'edit' | 'delete' | 'share' | 'export' | 'auth' | 'settings'
-    metadata?: Record<string, any>
-}
+import { useActivity, type ActivityType } from '@hooks/use-activity'
 
 export default function ActivityPage() {
     const [searchQuery, setSearchQuery] = useState('')
-    const [filterType, setFilterType] = useState<'all' | ActivityLog['type']>('all')
+    const [filterType, setFilterType] = useState<ActivityType | 'all'>('all')
 
-    const activities: ActivityLog[] = [
-        {
-            id: '1',
-            action: 'Projeto criado',
-            description: 'Criou o projeto "Tutorial React Hooks"',
-            user: 'João Silva',
-            userAvatar: 'JS',
-            timestamp: new Date(Date.now() - 15 * 60000),
-            type: 'create'
-        },
-        {
-            id: '2',
-            action: 'Vídeo exportado',
-            description: 'Exportou "Marketing Q4.mp4" em 4K',
-            user: 'Maria Santos',
-            userAvatar: 'MS',
-            timestamp: new Date(Date.now() - 45 * 60000),
-            type: 'export'
-        },
-        {
-            id: '3',
-            action: 'Projeto compartilhado',
-            description: 'Compartilhou "Podcast Ep. 15" com pedro@example.com',
-            user: 'João Silva',
-            userAvatar: 'JS',
-            timestamp: new Date(Date.now() - 2 * 60 * 60000),
-            type: 'share'
-        },
-        {
-            id: '4',
-            action: 'Login realizado',
-            description: 'Fez login a partir de São Paulo, BR',
-            user: 'Ana Costa',
-            userAvatar: 'AC',
-            timestamp: new Date(Date.now() - 3 * 60 * 60000),
-            type: 'auth'
-        },
-        {
-            id: '5',
-            action: 'Configurações alteradas',
-            description: 'Alterou configurações de notificação',
-            user: 'João Silva',
-            userAvatar: 'JS',
-            timestamp: new Date(Date.now() - 5 * 60 * 60000),
-            type: 'settings'
-        },
-        {
-            id: '6',
-            action: 'Projeto editado',
-            description: 'Editou "Tutorial CSS Grid"',
-            user: 'Pedro Oliveira',
-            userAvatar: 'PO',
-            timestamp: new Date(Date.now() - 8 * 60 * 60000),
-            type: 'edit'
-        },
-        {
-            id: '7',
-            action: 'Arquivo excluído',
-            description: 'Excluiu "video_antigo.mp4" da biblioteca',
-            user: 'Maria Santos',
-            userAvatar: 'MS',
-            timestamp: new Date(Date.now() - 24 * 60 * 60000),
-            type: 'delete'
-        },
-        {
-            id: '8',
-            action: 'API Key criada',
-            description: 'Criou nova API Key "Production"',
-            user: 'João Silva',
-            userAvatar: 'JS',
-            timestamp: new Date(Date.now() - 48 * 60 * 60000),
-            type: 'settings'
-        }
-    ]
+    const {
+        activities,
+        loading,
+        error,
+        refresh
+    } = useActivity({
+        type: filterType,
+        search: searchQuery
+    })
 
-    const getTypeIcon = (type: ActivityLog['type']) => {
+    const getTypeIcon = (type: ActivityType) => {
         switch (type) {
             case 'create': return <Upload className="w-4 h-4 text-green-500" />
             case 'edit': return <Edit className="w-4 h-4 text-blue-500" />
@@ -124,10 +53,11 @@ export default function ActivityPage() {
             case 'export': return <Download className="w-4 h-4 text-orange-500" />
             case 'auth': return <LogIn className="w-4 h-4 text-indigo-500" />
             case 'settings': return <Settings className="w-4 h-4 text-gray-500" />
+            case 'view': return <Eye className="w-4 h-4 text-cyan-500" />
         }
     }
 
-    const getTypeColor = (type: ActivityLog['type']) => {
+    const getTypeColor = (type: ActivityType) => {
         switch (type) {
             case 'create': return 'bg-green-100 text-green-800'
             case 'edit': return 'bg-blue-100 text-blue-800'
@@ -136,10 +66,12 @@ export default function ActivityPage() {
             case 'export': return 'bg-orange-100 text-orange-800'
             case 'auth': return 'bg-indigo-100 text-indigo-800'
             case 'settings': return 'bg-gray-100 text-gray-800'
+            case 'view': return 'bg-cyan-100 text-cyan-800'
         }
     }
 
-    const formatTimestamp = (date: Date) => {
+    const formatTimestamp = (dateStr: string) => {
+        const date = new Date(dateStr)
         const now = new Date()
         const diff = now.getTime() - date.getTime()
         const minutes = Math.floor(diff / 60000)
@@ -152,20 +84,67 @@ export default function ActivityPage() {
         return 'Agora'
     }
 
-    const filteredActivities = activities.filter(activity => {
-        const matchesSearch = activity.action.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            activity.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            activity.user.toLowerCase().includes(searchQuery.toLowerCase())
-        const matchesType = filterType === 'all' || activity.type === filterType
-        return matchesSearch && matchesType
-    })
+    // Loading skeleton
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 p-6">
+                <div className="max-w-4xl mx-auto">
+                    <div className="mb-8">
+                        <Skeleton className="h-12 w-64 mb-2" />
+                        <Skeleton className="h-4 w-48" />
+                    </div>
+                    <div className="flex gap-4 mb-6">
+                        <Skeleton className="h-10 flex-1" />
+                        <Skeleton className="h-10 w-32" />
+                    </div>
+                    <Card>
+                        <CardContent className="p-4">
+                            <div className="space-y-4">
+                                {[1, 2, 3, 4, 5].map(i => (
+                                    <div key={i} className="flex gap-3 items-start">
+                                        <Skeleton className="w-10 h-10 rounded-full" />
+                                        <div className="flex-1 space-y-2">
+                                            <Skeleton className="h-4 w-48" />
+                                            <Skeleton className="h-3 w-64" />
+                                        </div>
+                                        <Skeleton className="h-4 w-16" />
+                                    </div>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+        )
+    }
+
+    // Error state
+    if (error) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 p-6">
+                <div className="max-w-4xl mx-auto">
+                    <Card className="border-red-200 bg-red-50">
+                        <CardContent className="p-6 text-center">
+                            <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+                            <h3 className="font-semibold text-red-700 mb-2">Erro ao carregar atividades</h3>
+                            <p className="text-red-600 mb-4">{error}</p>
+                            <Button onClick={() => refresh()} variant="outline">
+                                <RefreshCw className="w-4 h-4 mr-2" />
+                                Tentar novamente
+                            </Button>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+        )
+    }
 
     const stats = {
         total: activities.length,
         today: activities.filter(a => {
             const today = new Date()
             today.setHours(0, 0, 0, 0)
-            return a.timestamp >= today
+            return new Date(a.timestamp) >= today
         }).length,
         users: new Set(activities.map(a => a.user)).size
     }
@@ -175,16 +154,22 @@ export default function ActivityPage() {
             <div className="max-w-6xl mx-auto">
                 {/* Header */}
                 <div className="mb-8">
-                    <div className="flex items-center gap-3">
-                        <div className="p-3 bg-gradient-to-r from-slate-600 to-gray-700 rounded-xl">
-                            <Activity className="w-8 h-8 text-white" />
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="p-3 bg-gradient-to-r from-slate-600 to-gray-700 rounded-xl">
+                                <Activity className="w-8 h-8 text-white" />
+                            </div>
+                            <div>
+                                <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-600 to-gray-700 bg-clip-text text-transparent">
+                                    Log de Atividades
+                                </h1>
+                                <p className="text-gray-600">Acompanhe todas as ações na plataforma</p>
+                            </div>
                         </div>
-                        <div>
-                            <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-600 to-gray-700 bg-clip-text text-transparent">
-                                Log de Atividades
-                            </h1>
-                            <p className="text-gray-600">Acompanhe todas as ações na plataforma</p>
-                        </div>
+                        <Button variant="outline" onClick={() => refresh()}>
+                            <RefreshCw className="w-4 h-4 mr-2" />
+                            Atualizar
+                        </Button>
                     </div>
                 </div>
 
@@ -243,12 +228,12 @@ export default function ActivityPage() {
                 <Card>
                     <CardHeader>
                         <CardTitle>Atividades Recentes</CardTitle>
-                        <CardDescription>{filteredActivities.length} atividades</CardDescription>
+                        <CardDescription>{activities.length} atividades</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <ScrollArea className="h-[500px]">
                             <div className="space-y-4">
-                                {filteredActivities.map(activity => (
+                                {activities.map(activity => (
                                     <div
                                         key={activity.id}
                                         className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
@@ -279,10 +264,11 @@ export default function ActivityPage() {
                                     </div>
                                 ))}
 
-                                {filteredActivities.length === 0 && (
+                                {activities.length === 0 && (
                                     <div className="text-center py-12 text-gray-500">
                                         <Activity className="w-16 h-16 mx-auto mb-4 text-gray-300" />
                                         <p>Nenhuma atividade encontrada</p>
+                                        <p className="text-sm mt-2">Suas atividades aparecerão aqui quando você usar a plataforma</p>
                                     </div>
                                 )}
                             </div>

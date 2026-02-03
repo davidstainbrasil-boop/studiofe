@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /**
  * K6 Load Testing Suite - MVP Vídeos TécnicoCursos v7
  * 
@@ -24,8 +25,10 @@ const TEST_TYPE = __ENV.TEST_TYPE || 'load';
 // Métricas customizadas
 const errorRate = new Rate('errors');
 const renderJobCreated = new Counter('render_jobs_created');
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const renderJobCompleted = new Counter('render_jobs_completed');
 const apiLatency = new Trend('api_latency', true);
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const dbLatency = new Trend('db_latency', true);
 const activeJobs = new Gauge('active_jobs');
 
@@ -248,6 +251,7 @@ function testNRTemplates() {
 }
 
 // Teste de upload PPTX (simulado - não envia arquivo real)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function testPPTXUploadEndpoint(token) {
   group('PPTX Upload Endpoint', () => {
     // Apenas verifica se o endpoint responde (não faz upload real)
@@ -352,7 +356,7 @@ function testCreateRenderJob(token, projectId) {
     });
     
     // Pode retornar 201 (criado), 200 (ok), ou 400/401/403 se não tiver permissão
-    const success = check(res, {
+    check(res, {
       'Create Job - valid response': (r) => [200, 201, 400, 401, 403].includes(r.status),
     });
     
@@ -549,7 +553,7 @@ export function handleSummary(data) {
   };
 }
 
-function textSummary(data, options) {
+function textSummary(data, _options) {
   const metrics = data.metrics;
   
   return `

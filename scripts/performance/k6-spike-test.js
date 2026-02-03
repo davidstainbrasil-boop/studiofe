@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /**
  * K6 Spike Test - Teste de picos de carga
  * 
@@ -14,6 +15,7 @@ const BASE_URL = __ENV.BASE_URL || 'http://localhost:3000';
 // Métricas
 const errorRate = new Rate('spike_errors');
 const latencyTrend = new Trend('spike_latency');
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const recoveryCounter = new Counter('spike_recovery_checks');
 
 export const options = {

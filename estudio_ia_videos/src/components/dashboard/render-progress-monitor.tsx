@@ -1,15 +1,26 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Activity, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { Activity, Clock, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
 import { useRenderPipeline } from '../../hooks/use-render-pipeline';
+import { formatDistanceToNow } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+
+interface RecentJob {
+  id: string;
+  projectName: string;
+  status: 'completed' | 'failed' | 'cancelled';
+  completedAt: Date;
+}
 
 export function RenderProgressMonitor() {
   const { renderQueue } = useRenderPipeline();
+  const [recentJobs, setRecentJobs] = useState<RecentJob[]>([]);
+  const [loadingRecent, setLoadingRecent] = useState(true);
   
   const activeJob = renderQueue?.processing?.[0];
   const isRendering = !!activeJob;
@@ -19,6 +30,72 @@ export function RenderProgressMonitor() {
     progress: activeJob.progress,
     status: activeJob.status
   } : null;
+
+  // Fetch recent completed/failed jobs from API
+  const fetchRecentJobs = useCallback(async () => {
+    setLoadingRecent(true);
+    try {
+      const response = await fetch('/api/render/jobs?status=completed,failed&limit=5');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.jobs && Array.isArray(data.jobs)) {
+          const mapped: RecentJob[] = data.jobs.map((job: {
+            id: string;
+            projectId?: string;
+            name?: string;
+            status: string;
+            updatedAt?: string;
+            completedAt?: string;
+            createdAt: string;
+          }) => ({
+            id: job.id,
+            projectName: job.name || `Projeto ${job.projectId?.slice(0, 8) || 'N/A'}`,
+            status: job.status as RecentJob['status'],
+            completedAt: new Date(job.completedAt || job.updatedAt || job.createdAt),
+          }));
+          setRecentJobs(mapped);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch recent jobs:', error);
+      // Keep empty on error
+    } finally {
+      setLoadingRecent(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchRecentJobs();
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchRecentJobs, 30000);
+    return () => clearInterval(interval);
+  }, [fetchRecentJobs]);
+
+  const getStatusIcon = (status: RecentJob['status']) => {
+    switch (status) {
+      case 'completed':
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'failed':
+        return <AlertCircle className="h-4 w-4 text-red-500" />;
+      case 'cancelled':
+        return <AlertCircle className="h-4 w-4 text-amber-500" />;
+      default:
+        return <CheckCircle className="h-4 w-4 text-gray-500" />;
+    }
+  };
+
+  const getStatusBadge = (status: RecentJob['status']) => {
+    switch (status) {
+      case 'completed':
+        return <Badge variant="outline" className="text-green-600">Concluído</Badge>;
+      case 'failed':
+        return <Badge variant="outline" className="text-red-600">Falhou</Badge>;
+      case 'cancelled':
+        return <Badge variant="outline" className="text-amber-600">Cancelado</Badge>;
+      default:
+        return <Badge variant="outline">Desconhecido</Badge>;
+    }
+  };
 
   return (
     <Card>
@@ -71,24 +148,35 @@ export function RenderProgressMonitor() {
               </div>
             )}
             
-            {/* Mock completed jobs for demonstration */}
+            {/* Recent completed jobs from API */}
             <div className="space-y-3 pt-4 border-t">
               <h4 className="text-sm font-medium text-muted-foreground">Trabalhos Recentes</h4>
               
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <div>
-                      <p className="text-sm font-medium">Projeto {i}</p>
-                      <p className="text-xs text-muted-foreground">
-                        Concluído há {i * 5} minutos
-                      </p>
-                    </div>
-                  </div>
-                  <Badge variant="outline">Concluído</Badge>
+              {loadingRecent ? (
+                <div className="flex items-center justify-center py-4">
+                  <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />
+                  <span className="ml-2 text-sm text-muted-foreground">Carregando...</span>
                 </div>
-              ))}
+              ) : recentJobs.length > 0 ? (
+                recentJobs.map((job) => (
+                  <div key={job.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center gap-3">
+                      {getStatusIcon(job.status)}
+                      <div>
+                        <p className="text-sm font-medium">{job.projectName}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatDistanceToNow(job.completedAt, { addSuffix: true, locale: ptBR })}
+                        </p>
+                      </div>
+                    </div>
+                    {getStatusBadge(job.status)}
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  Nenhum trabalho recente encontrado
+                </p>
+              )}
             </div>
           </div>
         </ScrollArea>

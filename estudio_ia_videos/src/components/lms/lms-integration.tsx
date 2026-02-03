@@ -81,8 +81,47 @@ export default function LMSIntegration() {
   }, [])
 
   const loadAvailableProjects = async () => {
-    // Simular carregamento de projetos
-    const mockProjects = [
+    try {
+      // Fetch real projects from API
+      const response = await fetch('/api/projects?limit=20');
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        if (data.projects && data.projects.length > 0) {
+          // Map API response to expected format
+          const mappedProjects: Project[] = data.projects.map((p: {
+            id: string;
+            name: string;
+            description?: string;
+            duration?: number;
+            metadata?: { scenes?: number; quiz_questions?: unknown[] };
+            createdAt?: string;
+            updatedAt?: string;
+          }) => ({
+            id: p.id,
+            title: p.name,
+            description: p.description || 'Projeto de vídeo',
+            duration_minutes: p.duration ? Math.ceil(p.duration / 60) : 15,
+            scenes: p.metadata?.scenes || 5,
+            quiz_questions: p.metadata?.quiz_questions || [],
+            completion_rate: 0,
+            last_updated: p.updatedAt || p.createdAt || new Date().toISOString()
+          }));
+          
+          setProjects(mappedProjects);
+          if (mappedProjects.length > 0) {
+            setSelectedProject(mappedProjects[0]);
+          }
+          return;
+        }
+      }
+    } catch (error) {
+      logger.error('Erro ao carregar projetos', error as Error, { component: 'LMSIntegration' });
+    }
+
+    // Fallback: Use default examples if API fails or returns empty
+    const defaultProjects: Project[] = [
       {
         id: 'nr12-safety',
         title: 'NR-12: Segurança em Máquinas',
@@ -102,7 +141,7 @@ export default function LMSIntegration() {
           }
         ],
         completion_rate: 87,
-        last_updated: '2025-08-30'
+        last_updated: new Date().toISOString().split('T')[0]
       },
       {
         id: 'nr35-height',
@@ -118,13 +157,13 @@ export default function LMSIntegration() {
           }
         ],
         completion_rate: 92,
-        last_updated: '2025-08-29'
+        last_updated: new Date().toISOString().split('T')[0]
       }
-    ]
+    ];
     
-    setProjects(mockProjects)
-    if (mockProjects.length > 0) {
-      setSelectedProject(mockProjects[0])
+    setProjects(defaultProjects);
+    if (defaultProjects.length > 0) {
+      setSelectedProject(defaultProjects[0]);
     }
   }
 

@@ -157,31 +157,88 @@ export const useRealTimeCollaboration = (projectId?: string) => {
       setIsLoading(true);
       setError(null);
 
-      // Mock initial session data since we don't have a backend for it yet
-      // In a real implementation, this would fetch from Supabase tables
-      const initialSession: CollaborationSession = {
-        id: `session_${projectId}`,
-        projectId,
-        users: [],
-        comments: [],
-        versions: [],
-        notifications: [],
-        currentVersion: 'v1',
-        isRecording: false,
-        settings: {
-          autoSave: true,
-          autoSaveInterval: 30000,
-          allowComments: true,
-          allowVersioning: true,
-          maxVersions: 50,
-          notificationSettings: {
-            comments: true,
-            mentions: true,
-            userActivity: true,
-            versionChanges: true
+      // Try to fetch session from API
+      let initialSession: CollaborationSession;
+      
+      try {
+        const response = await fetch(`/api/v1/collaboration/session?sessionId=${projectId}`);
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && result.data) {
+            // Map API response to CollaborationSession format
+            initialSession = {
+              id: result.data.id,
+              projectId,
+              users: (result.data.participants || []).map((p: { 
+                id: string
+                name: string
+                email: string
+                role?: string
+                isOnline?: boolean
+                avatar?: string
+                lastActivity?: string
+              }) => ({
+                id: p.id,
+                name: p.name,
+                email: p.email,
+                role: p.role || 'viewer',
+                isOnline: p.isOnline ?? false,
+                lastSeen: p.lastActivity ? new Date(p.lastActivity) : new Date(),
+                color: '#' + Math.floor(Math.random()*16777215).toString(16),
+                avatar: p.avatar
+              })),
+              comments: [],
+              versions: [],
+              notifications: [],
+              currentVersion: 'v1',
+              isRecording: result.data.settings?.recordSession ?? false,
+              settings: {
+                autoSave: true,
+                autoSaveInterval: 30000,
+                allowComments: result.data.settings?.chatEnabled ?? true,
+                allowVersioning: true,
+                maxVersions: 50,
+                notificationSettings: {
+                  comments: true,
+                  mentions: true,
+                  userActivity: true,
+                  versionChanges: true
+                }
+              }
+            };
+          } else {
+            throw new Error('Invalid API response');
           }
+        } else {
+          throw new Error('API request failed');
         }
-      };
+      } catch (apiError) {
+        console.log('Collaboration API not available, using local session');
+        // Fallback to local session
+        initialSession = {
+          id: `session_${projectId}`,
+          projectId,
+          users: [],
+          comments: [],
+          versions: [],
+          notifications: [],
+          currentVersion: 'v1',
+          isRecording: false,
+          settings: {
+            autoSave: true,
+            autoSaveInterval: 30000,
+            allowComments: true,
+            allowVersioning: true,
+            maxVersions: 50,
+            notificationSettings: {
+              comments: true,
+              mentions: true,
+              userActivity: true,
+              versionChanges: true
+            }
+          }
+        };
+      }
       
       setSession(initialSession);
       

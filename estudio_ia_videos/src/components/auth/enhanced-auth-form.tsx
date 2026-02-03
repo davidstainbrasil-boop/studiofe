@@ -118,6 +118,20 @@ export function EnhancedAuthForm({ mode = 'login' }: EnhancedAuthFormProps) {
 
   const isDev = process.env.NODE_ENV === 'development';
   const redirectUrl = searchParams.get('redirect') || '/dashboard';
+  const trialParam = searchParams.get('trial') === 'true';
+  const planParam = searchParams.get('plan');
+  
+  // Build callback URL with trial params
+  const buildCallbackUrl = () => {
+    let url = `${window.location.origin}/auth/callback`;
+    const params = new URLSearchParams();
+    
+    if (trialParam) params.set('trial', 'true');
+    if (planParam) params.set('plan', planParam);
+    params.set('next', redirectUrl);
+    
+    return `${url}?${params.toString()}`;
+  };
 
   // Form para login
   const loginForm = useForm<LoginFormData>({
@@ -191,7 +205,7 @@ export function EnhancedAuthForm({ mode = 'login' }: EnhancedAuthFormProps) {
           data: {
             full_name: data.fullName,
           },
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: buildCallbackUrl(),
         },
       });
 
@@ -200,11 +214,28 @@ export function EnhancedAuthForm({ mode = 'login' }: EnhancedAuthFormProps) {
       if (authData.user && !authData.session) {
         // Email de confirmação enviado
         setSuccess('Conta criada! Verifique seu email para confirmar o cadastro.');
-      } else {
+      } else if (authData.user && authData.session) {
         // Conta criada e já logado (confirmação de email desabilitada)
+        // Inicializar trial se parâmetros existirem
+        if (trialParam || planParam) {
+          try {
+            await fetch('/api/billing/init-trial', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                userId: authData.user.id,
+                plan: planParam || 'pro',
+                trialDays: 7,
+              }),
+            });
+          } catch (e) {
+            console.error('Error initializing trial:', e);
+          }
+        }
+        
         setSuccess('Conta criada com sucesso!');
         setTimeout(() => {
-          router.push('/dashboard');
+          router.push(trialParam ? '/dashboard?trial=activated' : '/dashboard');
           router.refresh();
         }, 1000);
       }
@@ -225,7 +256,7 @@ export function EnhancedAuthForm({ mode = 'login' }: EnhancedAuthFormProps) {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: buildCallbackUrl(),
         },
       });
 
@@ -246,7 +277,7 @@ export function EnhancedAuthForm({ mode = 'login' }: EnhancedAuthFormProps) {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: buildCallbackUrl(),
         },
       });
 

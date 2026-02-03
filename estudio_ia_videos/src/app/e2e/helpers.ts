@@ -13,7 +13,7 @@ import { Page, expect } from '@playwright/test';
 
 export const TEST_USERS = {
   admin: {
-    email: 'test-admin@tecnicocursos.local',
+    email: 'test-admin@cursostecno.local',
     password: 'Admin@Test2024!',
     role: 'admin',
   },
