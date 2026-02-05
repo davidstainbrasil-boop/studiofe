@@ -1,0 +1,364 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Avatar System - Compute Resources'
+
+Parameters:
+  ProjectName:
+    Type: String
+    Description: Project name for resource tagging
+  Environment:
+    Type: String
+    AllowedValues: [dev, staging, production]
+  InstanceType:
+    Type: String
+    Default: c6g.2xlarge
+    AllowedValues: [c6g.large, c6g.xlarge, c6g.2xlarge, c6g.4xlarge]
+  DesiredCapacity:
+    Type: Number
+    Default: 3
+    MinValue: 1
+    MaxValue: 20
+  MaxCapacity:
+    Type: Number
+    Default: 10
+    MinValue: 1
+    MaxValue: 50
+
+Resources:
+  # ECS Cluster
+  AvatarCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Sub '${ProjectName}-${Environment}-cluster'
+      CapacityProviders:
+        - FARGATE
+        - FARGATE_SPOT
+      DefaultCapacityProviderStrategy:
+        - CapacityProvider: FARGATE
+          Weight: 1
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-${Environment}-cluster'
+        - Key: Environment
+          Value: !Ref Environment
+
+  # Application Load Balancer
+  AvatarLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub '${ProjectName}-${Environment}-alb'
+      Scheme: internet-facing
+      Type: application
+      Subnets:
+        - !ImportValue 
+          Fn::Sub: '${ProjectName}-vpc-id-${Environment}'
+      SecurityGroups:
+        - !Ref AvatarALBSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-${Environment}-alb'
+        - Key: Environment
+          Value: !Ref Environment
+
+  # Target Groups
+  AvatarTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub '${ProjectName}-${Environment}-tg'
+      Port: 3000
+      Protocol: HTTP
+      VpcId: !ImportValue 
+        Fn::Sub: '${ProjectName}-vpc-id-${Environment}'
+      HealthCheckPath: /api/health
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+      Matcher:
+        HttpCode: 200
+      TargetType: ip
+
+  # Listeners
+  AvatarListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref AvatarLoadBalancer
+      Port: 443
+      Protocol: HTTPS
+      Certificates:
+        - CertificateArn: !Ref AvatarSSLCertificate
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref AvatarTargetGroup
+
+  # Task Definition
+  AvatarTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub '${ProjectName}-${Environment}-task'
+      Cpu: 1024
+      Memory: 2048
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn: !Ref AvatarExecutionRole
+      TaskRoleArn: !Ref AvatarTaskRole
+      ContainerDefinitions:
+        - Name: avatar-app
+          Image: !Sub '${AWS_ACCOUNT_ID}.dkr.ecr.${AWS::Region}.amazonaws.com/avatar-app:latest'
+          PortMappings:
+            - ContainerPort: 3000
+              Protocol: tcp
+          Environment:
+            - Name: NODE_ENV
+              Value: !Ref Environment
+            - Name: DATABASE_URL
+              Value: !Join ['', ['arn:aws:secretsmanager:', !Ref 'AWS::Region', ':', !Ref 'AWS::AccountId', ':secret:', !Sub '${ProjectName}-${Environment}-db-url']]
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Sub '/aws/ecs/${ProjectName}-${Environment}'
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: ecs
+          HealthCheck:
+            Command: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+            Interval: 30
+            Timeout: 5
+            Retries: 3
+            StartPeriod: 60
+          ResourceRequirements:
+            - Type: GPU
+              Value: 1
+
+  # ECS Service
+  AvatarService:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: !Sub '${ProjectName}-${Environment}-service'
+      Cluster: !Ref AvatarCluster
+      TaskDefinition: !Ref AvatarTaskDefinition
+      DesiredCount: !Ref DesiredCapacity
+      LaunchType: FARGATE
+      PlatformVersion: LATEST
+      DeploymentController:
+        Type: ECS
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 50
+        DeploymentCircuitBreaker:
+          Enable: true
+          Rollback: true
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          SecurityGroups:
+            - !Ref AvatarServiceSecurityGroup
+          Subnets:
+            - !ImportValue 
+              Fn::Sub: '${ProjectName}-public-subnet-ids-${Environment}'
+      LoadBalancers:
+        - TargetGroupArn: !Ref AvatarTargetGroup
+          ContainerName: avatar-app
+          ContainerPort: 3000
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-${Environment}-service'
+        - Key: Environment
+          Value: !Ref Environment
+
+  # Auto Scaling
+  AvatarScalingTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MaxCapacity: !Ref MaxCapacity
+      MinCapacity: 1
+      ResourceId: !Sub 'service/${AvatarCluster.Name}/${AvatarService.Name}'
+      RoleARN: !GetAtt AvatarAutoScalingRole.Arn
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+
+  # Scale Out Policy
+  AvatarScaleOutPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: !Sub '${ProjectName}-${Environment}-scale-out'
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref AvatarScalingTarget
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 70.0
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        ScaleOutCooldown: 300
+        ScaleInCooldown: 300
+
+  # Scale In Policy
+  AvatarScaleInPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: !Sub '${ProjectName}-${Environment}-scale-in'
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref AvatarScalingTarget
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 20.0
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        ScaleOutCooldown: 300
+        ScaleInCooldown: 600
+
+  # IAM Roles
+  AvatarExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ProjectName}-${Environment}-ecs-execution-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+        - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-${Environment}-ecs-execution-role'
+        - Key: Environment
+          Value: !Ref Environment
+
+  AvatarTaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ProjectName}-${Environment}-ecs-task-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: !Sub '${ProjectName}-${Environment}-task-policy'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                Resource: !Sub 'arn:aws:s3:::${ProjectName}-storage-${Environment}/*'
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource: !Sub 'arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${ProjectName}-${Environment}-*'
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-${Environment}-ecs-task-role'
+        - Key: Environment
+          Value: !Ref Environment
+
+  AvatarAutoScalingRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ProjectName}-${Environment}-ecs-autoscaling-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: application-autoscaling.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceAutoscaleRole
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-${Environment}-ecs-autoscaling-role'
+        - Key: Environment
+          Value: !Ref Environment
+
+  # Security Groups
+  AvatarALBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for Application Load Balancer
+      VpcId: !ImportValue 
+        Fn::Sub: '${ProjectName}-vpc-id-${Environment}'
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-${Environment}-alb-sg'
+        - Key: Environment
+          Value: !Ref Environment
+
+  AvatarServiceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for ECS service
+      VpcId: !ImportValue 
+        Fn::Sub: '${ProjectName}-vpc-id-${Environment}'
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3000
+          ToPort: 3000
+          SourceSecurityGroupId: !Ref AvatarALBSecurityGroup
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-${Environment}-service-sg'
+        - Key: Environment
+          Value: !Ref Environment
+
+  # SSL Certificate
+  AvatarSSLCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: !Ref DomainName
+      SubjectAlternativeNames:
+        - !Join ['.', ['*', !Ref DomainName]]
+      ValidationMethod: DNS
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-${Environment}-ssl-cert'
+        - Key: Environment
+          Value: !Ref Environment
+
+Parameters:
+  DomainName:
+    Type: String
+    Description: Primary domain name for the application
+
+Outputs:
+  ClusterName:
+    Description: ECS Cluster Name
+    Value: !Ref AvatarCluster
+    Export:
+      Name: !Sub '${ProjectName}-${Environment}-cluster-name'
+
+  LoadBalancerDNS:
+    Description: Load Balancer DNS Name
+    Value: !GetAtt AvatarLoadBalancer.DNSName
+    Export:
+      Name: !Sub '${ProjectName}-${Environment}-alb-dns'
+
+  ServiceArn:
+    Description: ECS Service ARN
+    Value: !Ref AvatarService
+    Export:
+      Name: !Sub '${ProjectName}-${Environment}-service-arn'

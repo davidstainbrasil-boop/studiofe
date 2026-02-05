@@ -48,6 +48,7 @@ export interface RenderSettings {
   format?: string;
   includeAudio?: boolean;
   includeSubtitles?: boolean;
+  avatarId?: string;
 }
 
 export interface RenderTaskResult {

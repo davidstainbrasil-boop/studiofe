@@ -1,17 +1,14 @@
-import './globals.css'
-import { ThemeProvider } from '@/components/theme-provider'
-import { Toaster } from 'sonner'
+import './globals.css';
+import { ThemeProvider } from '@/components/theme-provider';
+import { Toaster } from 'sonner';
+import { SentryProvider } from '@/components/monitoring/sentry-provider';
 
 export const metadata = {
   title: 'MVP Video Técnico Cursos',
   description: 'Sistema integrado para criação de vídeos educacionais com IA',
-}
+};
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <head>
@@ -19,6 +16,7 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
       <body className="min-h-screen bg-background font-sans antialiased">
+        <SentryProvider />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -30,5 +28,5 @@ export default function RootLayout({
         </ThemeProvider>
       </body>
     </html>
-  )
+  );
 }

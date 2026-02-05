@@ -33,7 +33,7 @@ export interface DecodedToken {
   session_id: string;
 }
 
-export const verifyJWT = (token: string): DecodedToken | null => {
+export const verifyJWT = async (token: string): Promise<DecodedToken | null> => {
   if (!process.env.SUPABASE_JWT_SECRET) {
     logger.error('SUPABASE_JWT_SECRET not set', new Error('Environment variable missing'), { component: 'Auth' });
     return null;

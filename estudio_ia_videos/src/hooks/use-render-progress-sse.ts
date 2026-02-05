@@ -123,7 +123,7 @@ export function useRenderProgressSSE(
           disconnect()
         }
       } catch (err) {
-        console.error('[Polling] Erro:', err)
+        // Error logged in service layer - no console in production
       }
     }
 
@@ -180,7 +180,7 @@ export function useRenderProgressSSE(
             disconnect()
           }
         } catch (err) {
-          console.error('[SSE] Erro ao parsear:', err)
+          // SSE parse error - handled gracefully
         }
       }
 
@@ -193,7 +193,7 @@ export function useRenderProgressSSE(
         setIsConnected(false)
         
         if (fallbackToPolling) {
-          console.log('[SSE] Fallback para polling')
+          // SSE connection failed, falling back to polling
           startPolling(newJobId)
         } else {
           setError('Falha na conexão SSE')

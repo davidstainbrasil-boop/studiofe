@@ -11,6 +11,7 @@ import * as Sentry from '@sentry/nextjs';
 
 const SENTRY_DSN = process.env.NEXT_PUBLIC_SENTRY_DSN;
 const ENVIRONMENT = process.env.NEXT_PUBLIC_ENVIRONMENT || 'development';
+const SENTRY_DISABLED = process.env.NEXT_PUBLIC_SENTRY_DISABLED === 'true' || process.env.SENTRY_DISABLED === 'true';
 
 let sentryInitialized = false;
 
@@ -19,6 +20,11 @@ let sentryInitialized = false;
  */
 export function initSentry() {
   if (sentryInitialized) {
+    return;
+  }
+
+  if (SENTRY_DISABLED) {
+    console.log('ℹ️ Sentry desabilitado via SENTRY_DISABLED=true');
     return;
   }
 

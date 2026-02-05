@@ -22,7 +22,7 @@ const nextConfig = {
     optimizePackageImports: ['lucide-react', 'date-fns', 'recharts'],
   },
   webpack: (config) => {
-    config.externals = [...(config.externals || []), { canvas: "canvas" }];
+    config.externals = [...(config.externals || []), { canvas: 'canvas' }];
 
     // NUCLEAR FIX: Disable ALL minification.
     // This avoids Terser 'token_error' (build time) AND SWC 'TypeError' (runtime).
@@ -40,6 +40,19 @@ const nextConfig = {
   },
   async headers() {
     return [
+      {
+        source: '/_next/static/css/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+          {
+            key: 'Content-Type',
+            value: 'text/css',
+          },
+        ],
+      },
       {
         source: '/_next/static/:path*',
         headers: [
@@ -219,24 +232,28 @@ const nextConfig = {
   },
 };
 
-
-export default nextConfig;
-
-/*
 export default withSentryConfig(
   nextConfig,
   {
     silent: true,
-    org: "cursostecno",
-    project: "estudio-ia-videos",
+    org: 'cursostecno',
+    project: 'estudio-ia-videos',
   },
   {
+    // Disable Sentry temporarily to fix 403 errors
+    enabled: process.env.NODE_ENV !== 'development',
     widenClientFileUpload: true,
     transpileClientSDK: true,
-    tunnelRoute: "/monitoring",
+    tunnelRoute: '/monitoring',
     hideSourceMaps: true,
-    disableLogger: true,
-    automaticVercelMonitors: true,
-  }
+    disableLogger: false,
+    automaticVercelMonitors: false,
+    // Add error handling for failed requests
+    clientInitOptions: {
+      environment: process.env.NODE_ENV,
+      tracesSampleRate: 0.1,
+      replaysOnErrorSampleRate: 0.1,
+      replaysSessionSampleRate: 0,
+    },
+  },
 );
-*/

@@ -66,12 +66,12 @@ export async function POST(
       format: format as 'pdf' | 'csv',
     });
 
-    // Lê arquivo
-    const fileBuffer = fs.readFileSync(filePath);
+    // Lê arquivo de forma assíncrona
+    const fileBuffer = await fs.promises.readFile(filePath);
     const fileName = filePath.split('/').pop() || `report.${format}`;
 
-    // Remove arquivo temporário após leitura
-    fs.unlinkSync(filePath);
+    // Remove arquivo temporário após leitura de forma assíncrona
+    await fs.promises.unlink(filePath);
 
     // Retorna arquivo
     return new NextResponse(fileBuffer, {

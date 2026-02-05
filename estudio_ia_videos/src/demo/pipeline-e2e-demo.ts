@@ -3,7 +3,9 @@
  * Teste funcional completo do diferencial do produto
  */
 
-import { logger } from '@/lib/monitoring/logger';
+import { createLogger } from '../lib/monitoring/logger';
+
+const logger = createLogger('PipelineE2EDemo');
 
 // Mock simples para teste
 interface MockSlide {

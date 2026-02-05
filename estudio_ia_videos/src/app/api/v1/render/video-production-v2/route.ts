@@ -213,8 +213,8 @@ async function processRenderJob(
       logger.info(`☁️ [Video Render v2] Fazendo upload para S3 do job ${jobId}...`, { component: 'API: v1/render/video-production-v2' });
       const s3Key = `rendered-videos/${jobId}.${settings.format}`;
       
-      // Ler arquivo do disco
-      const fileBuffer = fs.readFileSync(outputPath);
+      // Ler arquivo do disco de forma assíncrona
+      const fileBuffer = await fs.promises.readFile(outputPath);
       
       const uploadUrl = await S3StorageService.uploadFile(
         s3Key,

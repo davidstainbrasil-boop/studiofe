@@ -1,5 +1,7 @@
 'use client'
 
+import { logger } from '@lib/logger';
+
 /**
  * 🔌 Offline Support Hooks
  * 
@@ -435,7 +437,7 @@ export function useOfflineProjects(): {
         const allProjects = await storage.getAll()
         setProjects(allProjects)
       } catch (error) {
-        console.error('Failed to load offline projects:', error)
+        logger.error('Failed to load offline projects', error instanceof Error ? error : new Error(String(error)));
       } finally {
         setIsLoading(false)
       }
@@ -539,7 +541,7 @@ export function useBackgroundSync(): {
         await (registration as ServiceWorkerRegistration & { sync: { register: (tag: string) => Promise<void> } })
           .sync.register(`sync-${item.type}`)
       } catch (error) {
-        console.warn('Background sync registration failed:', error)
+        logger.warn('Background sync registration failed', { error: error instanceof Error ? error.message : String(error) });
       }
     }
   }, [storage])
@@ -650,7 +652,7 @@ export function useStorageEstimate(): StorageEstimate | null {
             : 0
         })
       } catch (error) {
-        console.error('Failed to get storage estimate:', error)
+        logger.error('Failed to get storage estimate', error instanceof Error ? error : new Error(String(error)));
       }
     }
 

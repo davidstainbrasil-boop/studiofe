@@ -20,6 +20,11 @@ export function initSentry() {
     return;
   }
 
+  if (process.env.SENTRY_DISABLED === 'true') {
+    console.log('ℹ️ Sentry desabilitado via SENTRY_DISABLED=true');
+    return;
+  }
+
   if (!SENTRY_DSN) {
     console.warn('⚠️ SENTRY_DSN não configurado - monitoramento desabilitado');
     return;

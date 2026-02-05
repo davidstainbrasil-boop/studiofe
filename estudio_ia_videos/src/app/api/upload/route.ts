@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { writeFile, mkdir, readFile } from 'fs/promises';
 import { join } from 'path';
-import { existsSync } from 'fs';
+import { access } from 'fs/promises';
 import { randomUUID } from 'crypto';
 import PPTXProcessorReal from '@lib/pptx/pptx-processor-real';
 import { logger } from '@lib/logger';
@@ -20,10 +20,15 @@ const THUMBNAILS_DIR = join(process.cwd(), 'public', 'thumbnails');
 
 // Garantir diretórios existem
 async function ensureDirectories() {
-  if (!existsSync(UPLOADS_DIR)) {
+  try {
+    await access(UPLOADS_DIR);
+  } catch {
     await mkdir(UPLOADS_DIR, { recursive: true });
   }
-  if (!existsSync(THUMBNAILS_DIR)) {
+  
+  try {
+    await access(THUMBNAILS_DIR);
+  } catch {
     await mkdir(THUMBNAILS_DIR, { recursive: true });
   }
 }

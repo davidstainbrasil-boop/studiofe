@@ -1,0 +1,16 @@
+{
+  "environment": "development",
+  "skipAuth": false,
+  "skipRateLimit": false,
+  "bypassUserId": "dev-user-123",
+  "sentryDisabled": false,
+  "uploadDir": "/root/_MVP_Video_TecnicoCursos_v7/uploads/pptx",
+  "maxFileSize": "50MB",
+  "allowedTypes": [
+    ".pptx",
+    ".ppt",
+    ".pdf"
+  ],
+  "debugMode": true,
+  "loggingLevel": "debug"
+}

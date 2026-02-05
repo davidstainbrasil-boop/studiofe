@@ -110,6 +110,20 @@ export class PptxToVideoService {
       // Converter File para Buffer
       const buffer = Buffer.from(await file.arrayBuffer());
       
+      // Criar projeto no banco primeiro
+      const project = await prisma.projects.create({
+        data: {
+          name: projectName,
+          userId,
+          status: 'in_progress',
+          metadata: {
+            slideCount: 0,
+            originalFile: file.name,
+            createdVia: 'pptx_pipeline'
+          }
+        }
+      });
+
       // Processar PPTX
       const extractionResult = await PPTXProcessorReal.extract(buffer, project.id);
       
@@ -117,16 +131,16 @@ export class PptxToVideoService {
         throw new Error('Falha na extração PPTX');
       }
 
-      // Criar projeto no banco
-      const project = await prisma.project.create({
+      // Atualizar metadata do projeto com slideCount real
+      await prisma.projects.update({
+        where: { id: project.id },
         data: {
-          name: projectName,
-          userId,
-          status: 'processing',
           metadata: {
+            tags: [],
+            category: "general", 
+            priority: "medium",
+            custom_fields: {},
             slideCount: extractionResult.slides?.length || 0,
-            originalFile: file.name,
-            createdVia: 'pptx_pipeline'
           }
         }
       });
@@ -243,12 +257,12 @@ export class PptxToVideoService {
 
     try {
       // Criar job no banco
-      const renderJob = await prisma.renderJob.create({
+      const renderJob = await prisma.render_jobs.create({
         data: {
           projectId,
           userId: '', // Será preenchido no endpoint
           status: 'pending',
-          config: {
+          renderSettings: {
             resolution: renderOptions.resolution,
             avatarId: renderOptions.avatarId,
             generateSubtitles: renderOptions.generateSubtitles || false,
@@ -258,12 +272,46 @@ export class PptxToVideoService {
               audioUrl: slide.audioUrl,
               duration: slide.duration || 5
             }))
-          }
+          },
+          settings: {}
         }
       });
 
-      // TODO: Adicionar à fila BullMQ
-      // await renderQueue.add('process-video', { jobId: renderJob.id });
+      // Adicionar à fila BullMQ - IMPLEMENTAÇÃO REAL
+      try {
+        const { addVideoJob } = await import('@/lib/queue/render-queue');
+        const jobId = await addVideoJob({
+          jobId: renderJob.id,
+          projectId,
+          userId: '', // Será preenchido no endpoint
+          slides: slides.map(slide => ({
+            id: slide.id,
+            content: slide.content,
+            audioUrl: slide.audioUrl,
+            duration: slide.duration || 5
+          })),
+          config: {
+            resolution: renderOptions.resolution,
+            includeSubtitles: renderOptions.generateSubtitles || false
+          },
+          settings: {
+            avatarId: renderOptions.avatarId
+          },
+          priority: 10
+        });
+        
+        logger.info('✅ Job adicionado à fila BullMQ com sucesso', {
+          component: 'PptxToVideoService',
+          renderJobId: renderJob.id,
+          bullmqJobId: jobId
+        });
+      } catch (queueError) {
+        logger.error('❌ Falha ao adicionar job à fila BullMQ', queueError instanceof Error ? queueError : new Error(String(queueError)), {
+          component: 'PptxToVideoService',
+          renderJobId: renderJob.id
+        });
+        // Não falhar completamente - o job fica no banco para processamento manual
+      }
 
       return renderJob;
 
@@ -276,26 +324,46 @@ export class PptxToVideoService {
   }
 
   /**
-   * Gera TTS usando o provider configurado
+   * Gera TTS usando o provider configurado - REAL IMPLEMENTATION
    */
   private async generateTTS(text: string, options: { voiceId?: string; provider: string }) {
     const { voiceId, provider } = options;
     
-    // Simular chamada para API TTS
-    if (provider === 'mock') {
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      const wordCount = text.split(' ').length;
-      const duration = Math.max((wordCount / 150) * 60, 1);
+    // Import REAL TTS service
+    const { synthesizeToFile } = await import('@/lib/tts/tts-service');
+    
+    try {
+      const result = await synthesizeToFile({
+        text,
+        voiceId: voiceId || 'pt-BR-FranciscaNeural',
+        language: 'pt-BR',
+        format: 'mp3'
+      });
       
       return {
-        audioUrl: `data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4`,
-        duration
+        audioUrl: result.fileUrl,
+        duration: result.duration
       };
+    } catch (error) {
+      logger.error('TTS generation failed', error instanceof Error ? error : new Error(String(error)), {
+        component: 'PptxToVideoService',
+        provider,
+        text: text.substring(0, 50)
+      });
+      
+      // Only in development, fallback to mock - NEVER in production
+      if (process.env.NODE_ENV === 'development') {
+        const wordCount = text.split(' ').length;
+        const duration = Math.max((wordCount / 150) * 60, 1);
+        
+        return {
+          audioUrl: 'mock-audio-url',
+          duration
+        };
+      }
+      
+      throw new Error(`TTS generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-
-    // TODO: Implementar chamadas reais para providers
-    throw new Error(`Provider ${provider} não implementado`);
   }
 
   /**

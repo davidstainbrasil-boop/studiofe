@@ -18,15 +18,17 @@ export async function POST(req: NextRequest) {
   logger.info('🚀 Pipeline PPTX → Vídeo iniciado', { component: 'API: pipeline/pptx-to-video' });
 
   try {
-    // Autenticação
+    // Autenticação - PRODUCTION READY
     let user;
-    const bypassEnabled = process.env.NODE_ENV !== 'production';
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    const explicitBypass = process.env.SKIP_AUTH === 'true' && isDevelopment;
     const bypassId = process.env.DEV_BYPASS_USER_ID || '00000000-0000-0000-0000-000000000000';
-    const devBypassCookie = bypassEnabled && req.cookies.get('dev_bypass')?.value === 'true';
+    const devBypassCookie = explicitBypass && req.cookies.get('dev_bypass')?.value === 'true';
     const headerUserId = req.headers.get('x-user-id');
     
-    if (bypassEnabled && (devBypassCookie || headerUserId === bypassId || headerUserId)) {
+    if (explicitBypass && (devBypassCookie || headerUserId === bypassId)) {
       user = { id: headerUserId || bypassId, email: 'admin@estudio.ai' };
+      logger.warn('Development authentication bypass ENABLED', { userId: user.id, bypassType: devBypassCookie ? 'cookie' : 'header' });
     } else {
       const supabase = getSupabaseForRequest(req);
       const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();

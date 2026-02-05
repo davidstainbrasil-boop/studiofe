@@ -693,7 +693,8 @@ export const useComplianceAnalyzer = (): UseComplianceAnalyzerReturn => {
   }, [history]);
 
   const implementRecommendation = useCallback(async (recommendationId: string): Promise<boolean> => {
-    console.info('Implementação pendente para recomendação:', recommendationId);
+    // TODO: Implement recommendation acceptance
+    logger.info('Recommendation acceptance not implemented', { recommendationId });
     return true;
   }, []);
 

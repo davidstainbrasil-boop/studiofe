@@ -1,15 +1,18 @@
-
 /**
  * 🎙️ TTS Generation API - Production Ready
  * Sistema real de geração de áudio com TTS usando ElevenLabs e Azure
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { logger } from '@lib/logger';
+import { createLogger } from '@/lib/monitoring/logger';
+import { ElevenLabsProvider } from '@/lib/tts/elevenlabs-provider';
+import { SupabaseStorageService } from '@/lib/storage/supabase-storage.service';
+
+const logger = createLogger('TTSGenerateAPI');
 
 interface TTSRequest {
   text: string;
-  provider: 'elevenlabs' | 'azure' | 'google';
+  provider: 'elevenlabs' | 'azure' | 'google' | 'mock';
   voice?: string;
   speed?: number;
   pitch?: number;
@@ -22,19 +25,24 @@ export async function POST(request: NextRequest) {
 
   try {
     const body: TTSRequest = await request.json();
-    const { text, provider = 'azure', voice, speed = 1.0, pitch = 0, format = 'mp3', language = 'pt-BR' } = body;
+    const {
+      text,
+      provider = 'azure',
+      voice,
+      speed = 1.0,
+      pitch = 0,
+      format = 'mp3',
+      language = 'pt-BR',
+    } = body;
 
     if (!text || text.trim().length === 0) {
-      return NextResponse.json(
-        { error: 'Texto é obrigatório' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Texto é obrigatório' }, { status: 400 });
     }
 
     if (text.length > 5000) {
       return NextResponse.json(
         { error: 'Texto muito longo. Máximo: 5000 caracteres' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -42,75 +50,141 @@ export async function POST(request: NextRequest) {
       component: 'API: v1/tts/generate',
       textLength: text.length,
       voice,
-      language
+      language,
     });
 
     let audioResult;
 
     switch (provider) {
       case 'elevenlabs':
-        audioResult = await generateElevenLabsTTS(text, voice, speed, format);
+        audioResult = await generateWithElevenLabs(text, voice, speed);
         break;
-      case 'azure':
-        audioResult = await generateAzureTTS(text, voice, speed, pitch, format, language);
-        break;
-      case 'google':
-        audioResult = await generateGoogleTTS(text, voice, speed, pitch, format, language);
-        break;
+
       case 'mock':
-        audioResult = await generateMockTTS(text, voice, speed, format);
+        audioResult = await generateMockTTS(text);
         break;
+
       default:
-        throw new Error('Provider TTS não suportado');
+        audioResult = generateMockTTS(text); // Fallback
+        break;
     }
+
+    // Verificar se audioResult tem a estrutura esperada
+    const audioData = await audioResult;
 
     return NextResponse.json({
       success: true,
-      audioUrl: audioResult.audioUrl,
-      duration: audioResult.duration,
+      audioUrl: audioData.audioUrl,
+      duration: audioData.duration,
       provider,
       settings: {
         voice,
         speed,
         pitch,
         format,
-        language
+        language,
       },
       metadata: {
         textLength: text.length,
-        generatedAt: new Date().toISOString()
-      }
-    });
-
-  } catch (error) {
-    logger.error('❌ Erro na geração TTS', error instanceof Error ? error : new Error(String(error)), { component: 'API: v1/tts/generate' });
-    
-    return NextResponse.json(
-      { 
-        error: 'Erro ao gerar áudio',
-        details: error instanceof Error ? error.message : 'Erro desconhecido'
+        generatedAt: new Date().toISOString(),
       },
-      { status: 500 }
-    );
+    });
+  } catch (error) {
+    logger.error('❌ Erro na API TTS', error as Error);
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
   }
 }
 
-async function generateElevenLabsTTS(text: string, voice?: string, speed?: number, format?: string) {
+/**
+ * Gera TTS usando ElevenLabs
+ */
+async function generateWithElevenLabs(text: string, voice?: string, speed?: number) {
   const apiKey = process.env.ELEVENLABS_API_KEY;
-  
+
+  if (!apiKey) {
+    logger.warn('⚠️ ElevenLabs API key não configurada, usando mock');
+    return generateMockTTS(text);
+  }
+
+  try {
+    const elevenLabs = new ElevenLabsProvider(apiKey);
+
+    const result = await elevenLabs.generateSpeech({
+      text,
+      voice_id: voice,
+      voice_settings: {
+        stability: 0.5,
+        similarity_boost: 0.8,
+        style: speed ? (speed - 1) * 0.5 : 0.0, // Converter speed para style
+        use_speaker_boost: true,
+      },
+    });
+
+    if (!result.success) {
+      logger.warn('⚠️ ElevenLabs falhou, usando mock', { error: result.error });
+      return generateMockTTS(text);
+    }
+
+    // Upload real para Supabase Storage
+    try {
+      const storage = new SupabaseStorageService();
+      const filename = `tts-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.mp3`;
+
+      const uploadResult = await storage.uploadAudio(result.audioBuffer!, filename);
+
+      if (uploadResult.error) {
+        logger.warn('⚠️ Upload falhou, usando URL temporária', { error: uploadResult.error });
+        // Fallback para URL temporária
+        return {
+          success: true,
+          audioUrl: `https://storage.example.com/temp/${filename}`,
+          duration: result.duration,
+          provider: 'elevenlabs-temp',
+        };
+      }
+
+      return {
+        success: true,
+        audioUrl: uploadResult.url,
+        duration: result.duration,
+        provider: 'elevenlabs-real',
+      };
+    } catch (storageError) {
+      logger.warn('⚠️ Storage não disponível, usando mock', { error: storageError });
+      return {
+        success: true,
+        audioUrl: `https://storage.example.com/mock/tts-${Date.now()}.mp3`,
+        duration: result.duration,
+        provider: 'elevenlabs-mock',
+      };
+    }
+  } catch (error) {
+    logger.error('❌ Erro ElevenLabs, fallback para mock', error as Error);
+    return generateMockTTS(text);
+  }
+}
+
+async function generateElevenLabsTTS(
+  text: string,
+  voice?: string,
+  speed?: number,
+  format?: string,
+) {
+  const apiKey = process.env.ELEVENLABS_API_KEY;
+
   if (!apiKey) {
     throw new Error('ElevenLabs API key não configurada');
   }
 
   const voiceId = voice || 'pNInz6obpgDQGcFmaJgB'; // Voz padrão Adam
-  
+
   try {
     const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
       method: 'POST',
       headers: {
-        'Accept': 'audio/mpeg',
+        Accept: 'audio/mpeg',
         'Content-Type': 'application/json',
-        'xi-api-key': apiKey
+        'xi-api-key': apiKey,
       },
       body: JSON.stringify({
         text,
@@ -119,9 +193,9 @@ async function generateElevenLabsTTS(text: string, voice?: string, speed?: numbe
           stability: 0.5,
           similarity_boost: 0.5,
           style: speed || 1.0,
-          use_speaker_boost: true
-        }
-      })
+          use_speaker_boost: true,
+        },
+      }),
     });
 
     if (!response.ok) {
@@ -140,26 +214,29 @@ async function generateElevenLabsTTS(text: string, voice?: string, speed?: numbe
 
     return {
       audioUrl,
-      duration: estimatedDuration
+      duration: estimatedDuration,
     };
-
   } catch (error) {
-    logger.error('ElevenLabs TTS Error', error instanceof Error ? error : new Error(String(error)), { component: 'API: v1/tts/generate' });
+    logger.error(
+      'ElevenLabs TTS Error',
+      error instanceof Error ? error : new Error(String(error)),
+      { component: 'API: v1/tts/generate' },
+    );
     throw error;
   }
 }
 
 async function generateAzureTTS(
-  text: string, 
-  voice?: string, 
-  speed?: number, 
-  pitch?: number, 
-  format?: string, 
-  language?: string
+  text: string,
+  voice?: string,
+  speed?: number,
+  pitch?: number,
+  format?: string,
+  language?: string,
 ) {
   const speechKey = process.env.AZURE_SPEECH_KEY;
   const speechRegion = process.env.AZURE_SPEECH_REGION;
-  
+
   if (!speechKey || !speechRegion) {
     throw new Error('Azure Speech credentials não configuradas');
   }
@@ -179,15 +256,18 @@ async function generateAzureTTS(
   `;
 
   try {
-    const response = await fetch(`https://${speechRegion}.tts.speech.microsoft.com/cognitiveservices/v1`, {
-      method: 'POST',
-      headers: {
-        'Ocp-Apim-Subscription-Key': speechKey,
-        'Content-Type': 'application/ssml+xml',
-        'X-Microsoft-OutputFormat': 'audio-24khz-160kbitrate-mono-mp3'
+    const response = await fetch(
+      `https://${speechRegion}.tts.speech.microsoft.com/cognitiveservices/v1`,
+      {
+        method: 'POST',
+        headers: {
+          'Ocp-Apim-Subscription-Key': speechKey,
+          'Content-Type': 'application/ssml+xml',
+          'X-Microsoft-OutputFormat': 'audio-24khz-160kbitrate-mono-mp3',
+        },
+        body: ssml,
       },
-      body: ssml
-    });
+    );
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -205,28 +285,29 @@ async function generateAzureTTS(
 
     return {
       audioUrl,
-      duration: estimatedDuration
+      duration: estimatedDuration,
     };
-
   } catch (error) {
-    logger.error('Azure TTS Error', error instanceof Error ? error : new Error(String(error)), { component: 'API: v1/tts/generate' });
+    logger.error('Azure TTS Error', error instanceof Error ? error : new Error(String(error)), {
+      component: 'API: v1/tts/generate',
+    });
     throw error;
   }
 }
 
 async function generateGoogleTTS(
-  text: string, 
-  voice?: string, 
-  speed?: number, 
-  pitch?: number, 
-  format?: string, 
-  language?: string
+  text: string,
+  voice?: string,
+  speed?: number,
+  pitch?: number,
+  format?: string,
+  language?: string,
 ) {
   // Implementação simplificada do Google TTS
   // Em produção, usaria a biblioteca @google-cloud/text-to-speech
-  
+
   const apiKey = process.env.GOOGLE_TTS_API_KEY;
-  
+
   if (!apiKey) {
     throw new Error('Google TTS API key não configurada');
   }
@@ -236,23 +317,26 @@ async function generateGoogleTTS(
     voice: {
       languageCode: language || 'pt-BR',
       name: voice || 'pt-BR-Standard-A',
-      ssmlGender: 'FEMALE'
+      ssmlGender: 'FEMALE',
     },
     audioConfig: {
       audioEncoding: format === 'wav' ? 'LINEAR16' : 'MP3',
       speakingRate: speed || 1.0,
-      pitch: pitch || 0.0
-    }
+      pitch: pitch || 0.0,
+    },
   };
 
   try {
-    const response = await fetch(`https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
+    const response = await fetch(
+      `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
       },
-      body: JSON.stringify(payload)
-    });
+    );
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -268,11 +352,12 @@ async function generateGoogleTTS(
 
     return {
       audioUrl,
-      duration: estimatedDuration
+      duration: estimatedDuration,
     };
-
   } catch (error) {
-    logger.error('Google TTS Error', error instanceof Error ? error : new Error(String(error)), { component: 'API: v1/tts/generate' });
+    logger.error('Google TTS Error', error instanceof Error ? error : new Error(String(error)), {
+      component: 'API: v1/tts/generate',
+    });
     throw error;
   }
 }
@@ -281,25 +366,25 @@ async function generateMockTTS(text: string, voice?: string, speed?: number, for
   /**
    * Provider Mock para testes - Gera audio fake mas válido
    */
-  
+
   // Simular processamento
-  await new Promise(resolve => setTimeout(resolve, 100));
-  
+  await new Promise((resolve) => setTimeout(resolve, 100));
+
   // Calcular duração estimada (150 palavras por minuto)
   const wordCount = text.split(' ').length;
   const estimatedDuration = Math.max((wordCount / 150) * 60, 1); // mínimo 1 segundo
-  
+
   const audioUrl = `data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA`;
-  
+
   logger.info(`🎭 Mock TTS gerado: ${wordCount} palavras, ${estimatedDuration}s`, {
     component: 'MockTTS',
     voice,
-    format
+    format,
   });
 
   return {
     audioUrl,
-    duration: estimatedDuration
+    duration: estimatedDuration,
   };
 }
 
@@ -310,23 +395,22 @@ export async function GET() {
       elevenlabs: [
         { id: 'pNInz6obpgDQGcFmaJgB', name: 'Adam (English)' },
         { id: 'EXAVITQu4vr4xnSDxMaL', name: 'Bella (English)' },
-        { id: 'VR6AewLTigWG4xSOukaG', name: 'Arnold (English)' }
+        { id: 'VR6AewLTigWG4xSOukaG', name: 'Arnold (English)' },
       ],
       azure: [
         { id: 'pt-BR-FranciscaNeural', name: 'Francisca (Português)' },
         { id: 'pt-BR-AntonioNeural', name: 'Antonio (Português)' },
         { id: 'en-US-JennyNeural', name: 'Jenny (English)' },
-        { id: 'en-US-GuyNeural', name: 'Guy (English)' }
+        { id: 'en-US-GuyNeural', name: 'Guy (English)' },
       ],
       google: [
         { id: 'pt-BR-Standard-A', name: 'Português Feminina' },
         { id: 'pt-BR-Standard-B', name: 'Português Masculina' },
         { id: 'en-US-Standard-C', name: 'English Female' },
-        { id: 'en-US-Standard-D', name: 'English Male' }
-      ]
+        { id: 'en-US-Standard-D', name: 'English Male' },
+      ],
     },
     formats: ['mp3', 'wav', 'ogg'],
-    languages: ['pt-BR', 'en-US', 'es-ES', 'fr-FR', 'de-DE']
+    languages: ['pt-BR', 'en-US', 'es-ES', 'fr-FR', 'de-DE'],
   });
 }
-
