@@ -7,6 +7,7 @@ import { logger } from '@/lib/monitoring/logger';
 import { prisma } from '@/lib/prisma';
 import { PptxUploader } from '@/lib/storage/pptx-uploader';
 import PPTXProcessorReal from '@/lib/pptx/pptx-processor-real';
+import { RealTTSService } from '@/lib/tts/real-tts-service';
 
 interface PptxToVideoOptions {
   userId: string;
@@ -34,28 +35,13 @@ interface PipelineResult {
 }
 
 export class PptxToVideoService {
-  
-  /**
-   * Executa o pipeline completo PPTX → Vídeo
-   */
-  async processPptxToVideo(options: PptxToVideoOptions): Promise<PipelineResult> {
-    const { userId, file, projectName, voiceId, ttsProvider = 'mock', avatarId, resolution = '1080p' } = options;
-    
-    logger.info('🎬 Iniciando pipeline PPTX → Vídeo', {
-      component: 'PptxToVideoService',
-      userId,
-      projectName,
-      fileSize: file.size,
-      ttsProvider
-    });
+  private pptxUploader = new PptxUploader();
+  private pptxProcessor = new PPTXProcessorReal();
+  private realTSService: RealTTSService;
 
-    try {
-      // Fase 1: Upload e extração dos slides
-      const uploadResult = await this.uploadAndExtractSlides(userId, file, projectName);
-      
-      if (!uploadResult.success || !uploadResult.slides) {
-        throw new Error('Falha na extração dos slides');
-      }
+  constructor() {
+    this.realTSService = new RealTTSService();
+  }
 
       // Fase 2: Geração de TTS para cada slide
       const slidesWithAudio = await this.generateTTSForSlides(
@@ -180,16 +166,27 @@ export class PptxToVideoService {
   }
 
   /**
-   * Fase 2: Gerar TTS para cada slide
+   * Fase 2: Gerar TTS para cada slide usando serviço real
    */
   private async generateTTSForSlides(
     slides: Array<{ id: string; content: string; notes?: string }>,
     ttsOptions: { voiceId?: string; provider: string }
   ) {
-    logger.info('🎙️ Fase 2: Geração de TTS', { 
+    logger.info('🎙️ Fase 2: Geração de TTS Real', { 
       component: 'PptxToVideoService',
       slidesCount: slides.length,
       provider: ttsOptions.provider
+    });
+
+    // Inicializar serviço TTS real
+    await this.realTSService.initialize({
+      elevenlabs: {
+        apiKey: process.env.ELEVENLABS_API_KEY,
+      },
+      googleCloud: {
+        credentials: process.env.GOOGLE_CLOUD_CREDENTIALS ? JSON.parse(process.env.GOOGLE_CLOUD_CREDENTIALS) : undefined,
+        projectId: process.env.GOOGLE_CLOUD_PROJECT_ID,
+      },
     });
 
     const slidesWithAudio = [];
@@ -207,8 +204,17 @@ export class PptxToVideoService {
           continue;
         }
 
-        // Gerar TTS
-        const ttsResult = await this.generateTTS(textToNarrate, ttsOptions);
+        // Gerar TTS usando serviço real
+        const ttsResult = await this.realTSService.generateSpeechForSlide(
+          slide.content,
+          slide.notes,
+          {
+            provider: ttsOptions.provider as any,
+            voiceId: ttsOptions.voiceId,
+            projectId: 'pptx-project',
+            slideId: slide.id
+          }
+        );
         
         slidesWithAudio.push({
           ...slide,
