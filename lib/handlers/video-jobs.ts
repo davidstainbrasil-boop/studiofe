@@ -12,10 +12,10 @@ function isErr(r: ParseResult): r is ParseErr {
 export function parseVideoJobInput(json: unknown): ParseResult {
   const res = VideoJobInputSchema.safeParse(json);
   if (!res.success) {
-    const err = res as z.SafeParseError<unknown>;
+    const err = res as { success: false; error: z.ZodError<unknown> };
     return { ok: false, issues: err.error.issues };
   }
-  const ok = res as z.SafeParseSuccess<VideoJobInput>;
+  const ok = res as { success: true; data: VideoJobInput };
   return { ok: true, data: ok.data };
 }
 
