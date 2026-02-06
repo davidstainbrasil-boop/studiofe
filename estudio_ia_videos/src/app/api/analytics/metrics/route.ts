@@ -135,6 +135,9 @@ export async function GET(req: NextRequest) {
 
     const avgDuration = avgRenderTimeResult[0]?.avg_duration || 0;
 
+    interface RenderJobGroup { status: string; _count: { id: number }; }
+    interface EventByDay { date: Date; count: bigint; }
+    
     return NextResponse.json({
       period,
       metrics: {
@@ -146,12 +149,12 @@ export async function GET(req: NextRequest) {
           ? Math.round(avgDuration / 1000) // ms para segundos
           : null
       },
-      renderJobs: renderJobs.map((item: any) => ({
+      renderJobs: renderJobs.map((item: RenderJobGroup) => ({
         status: item.status || 'unknown',
         count: item._count.id
       })),
       recentProjects,
-      eventsByDay: eventsByDay.map((e: any) => ({
+      eventsByDay: eventsByDay.map((e: EventByDay) => ({
         ...e,
         count: Number(e.count) // Serializar bigint para JSON
       }))

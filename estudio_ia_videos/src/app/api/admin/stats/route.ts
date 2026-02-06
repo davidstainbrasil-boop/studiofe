@@ -118,10 +118,12 @@ async function getBillingStats() {
         }
     });
 
+    interface PlanGroup { plan_tier: string | null; _count: { id: number }; }
+    
     return {
         totalRenders: usageAgg._sum.rendersCount || 0,
         totalStorageUsed: usageAgg._sum.storageUsedBytes || 0,
-        plans: userPlans.reduce((acc: any, curr: any) => {
+        plans: userPlans.reduce((acc: Record<string, number>, curr: PlanGroup) => {
             acc[curr.plan_tier || 'free'] = curr._count.id;
             return acc;
         }, {})

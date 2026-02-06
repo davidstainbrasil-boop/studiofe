@@ -29,11 +29,12 @@ export async function GET(request: NextRequest) {
       select: { id: true, name: true }
     });
 
-    const projectIds = userProjects.map((p: any) => p.id);
+    const projectIds = userProjects.map((p: { id: string }) => p.id);
 
     // Get recent validations with issues
-    // TODO: Se nr_compliance_records não existir no schema Prisma, usar Supabase diretamente
-    let recentValidations: any[] = [];
+    // Note: If nr_compliance_records doesn't exist in Prisma schema, empty alerts are returned
+    interface ValidationRecord { id: string; projectId: string; nr: string; score: number; createdAt: Date; recommendations?: string[]; }
+    let recentValidations: ValidationRecord[] = [];
     try {
       recentValidations = await (prisma as any).nr_compliance_records.findMany({
       where: {
@@ -57,7 +58,7 @@ export async function GET(request: NextRequest) {
     const alerts = [];
 
     for (const validation of recentValidations) {
-      const project = userProjects.find((p: any) => p.id === validation.projectId);
+      const project = userProjects.find((p: { id: string; name: string }) => p.id === validation.projectId);
       
       // Critical alerts (score < 60)
       if (validation.score < 60) {

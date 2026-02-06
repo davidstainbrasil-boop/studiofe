@@ -6,6 +6,21 @@ import { authOptions } from '@lib/auth';
 import { prisma } from '@lib/prisma';
 import { logger } from '@lib/logger';
 
+// Type definitions for compliance metrics
+interface NRComplianceRecord {
+  id: string;
+  projectId: string;
+  nr: string;
+  score: number;
+  createdAt: Date;
+  recommendations?: string[];
+}
+
+interface ComplianceGroup {
+  total: number;
+  scores: number[];
+}
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -28,11 +43,11 @@ export async function GET(request: NextRequest) {
       select: { id: true }
     });
 
-    const projectIds = userProjects.map((p: any) => p.id);
+    const projectIds = userProjects.map((p: { id: string }) => p.id);
 
     // Get NR compliance records
-    // TODO: Se nr_compliance_records não existir no schema Prisma, usar Supabase diretamente
-    let nrRecords: any[] = [];
+    // Note: If nr_compliance_records doesn't exist in Prisma schema, empty metrics are returned
+    let nrRecords: NRComplianceRecord[] = [];
     try {
       nrRecords = await (prisma as any).nr_compliance_records.findMany({
       where: {
@@ -55,11 +70,11 @@ export async function GET(request: NextRequest) {
     // Calculate metrics
     const totalValidations = nrRecords.length;
     const averageScore = nrRecords.length > 0 
-      ? nrRecords.reduce((sum: number, v: any) => sum + v.score, 0) / nrRecords.length 
+      ? nrRecords.reduce((sum: number, v: NRComplianceRecord) => sum + v.score, 0) / nrRecords.length 
       : 0;
 
     // Compliance by NR type
-    const complianceByNR = nrRecords.reduce((acc: any, validation: any) => {
+    const complianceByNR = nrRecords.reduce((acc: Record<string, ComplianceGroup>, validation: NRComplianceRecord) => {
       const nr = validation.nr;
       if (!acc[nr]) {
         acc[nr] = { total: 0, scores: [] };
@@ -67,13 +82,13 @@ export async function GET(request: NextRequest) {
       acc[nr].total++;
       acc[nr].scores.push(validation.score);
       return acc;
-    }, {} as Record<string, { total: number; scores: number[] }>);
+    }, {} as Record<string, ComplianceGroup>);
 
-    const nrMetrics = Object.entries(complianceByNR).map(([nr, data]: [string, any]) => ({
+    const nrMetrics = Object.entries(complianceByNR).map(([nr, data]: [string, ComplianceGroup]) => ({
       nr,
       total: data.total,
       averageScore: data.scores.reduce((sum: number, score: number) => sum + score, 0) / data.scores.length,
-      lastValidation: nrRecords.find((v: any) => v.nr === nr)?.createdAt
+      lastValidation: nrRecords.find((v: NRComplianceRecord) => v.nr === nr)?.createdAt
     }));
 
     // Trend data (last 7 days)
@@ -84,7 +99,7 @@ export async function GET(request: NextRequest) {
       const dayStart = new Date(date.setHours(0, 0, 0, 0));
       const dayEnd = new Date(date.setHours(23, 59, 59, 999));
 
-      const dayValidations = nrRecords.filter((v: any) => 
+      const dayValidations = nrRecords.filter((v: NRComplianceRecord) => 
         v.createdAt >= dayStart && v.createdAt <= dayEnd
       );
 
@@ -92,16 +107,16 @@ export async function GET(request: NextRequest) {
         date: dayStart.toISOString().split('T')[0],
         validations: dayValidations.length,
         averageScore: dayValidations.length > 0 
-          ? dayValidations.reduce((sum: number, v: any) => sum + v.score, 0) / dayValidations.length 
+          ? dayValidations.reduce((sum: number, v: NRComplianceRecord) => sum + v.score, 0) / dayValidations.length 
           : 0
       });
     }
 
     // Critical issues (scores below 70)
-    const criticalIssues = nrRecords.filter((v: any) => v.score < 70).length;
+    const criticalIssues = nrRecords.filter((v: NRComplianceRecord) => v.score < 70).length;
 
     // Recent validations
-    const recentValidations = nrRecords.slice(0, 10).map((v: any) => ({
+    const recentValidations = nrRecords.slice(0, 10).map((v: NRComplianceRecord) => ({
       id: v.id,
       projectId: v.projectId,
       nrType: v.nr,
@@ -115,7 +130,7 @@ export async function GET(request: NextRequest) {
         totalValidations,
         averageScore: Math.round(averageScore),
         criticalIssues,
-        complianceRate: Math.round((nrRecords.filter((v: any) => v.score >= 80).length / Math.max(totalValidations, 1)) * 100)
+        complianceRate: Math.round((nrRecords.filter((v: NRComplianceRecord) => v.score >= 80).length / Math.max(totalValidations, 1)) * 100)
       },
       nrMetrics,
       trendData,

@@ -7,6 +7,14 @@ import { withAnalytics } from '@lib/analytics/api-performance-middleware';
 import { Prisma } from '@prisma/client';
 import { logger } from '@lib/logger';
 
+// Type definitions for raw query results
+interface DistributionItem { range: string; count: bigint; }
+interface EndpointPerfItem { endpoint: string; avg_time: number; requests: bigint; }
+interface ThroughputItem { minute: string; requests: bigint; }
+interface ErrorStatusItem { status: string; count: bigint; }
+interface ErrorCategoryItem { category: string; error_code: string; count: bigint; }
+interface CacheStatItem { action: string; count: bigint; }
+
 /**
  * GET /api/analytics/performance
  * Retorna métricas detalhadas de performance do sistema
@@ -60,7 +68,7 @@ async function getHandler(req: NextRequest) {
         FROM "AnalyticsEvent"
         WHERE created_at >= ${startDate}
         AND event_data->>'duration' IS NOT NULL
-        ${endpoint ? (Prisma as any).sql`AND event_data->'metadata'->>'endpoint' LIKE ${'%' + endpoint + '%'}` : (Prisma as any).sql``}
+        ${endpoint ? Prisma.sql`AND event_data->'metadata'->>'endpoint' LIKE ${'%' + endpoint + '%'}` : Prisma.empty}
       `;
 
       const stats = responseTimeStats[0] || { avg: 0, max: 0, min: 0, count: 0 };
@@ -80,7 +88,7 @@ async function getHandler(req: NextRequest) {
         FROM "AnalyticsEvent" 
         WHERE created_at >= ${startDate} 
         AND event_data->>'duration' IS NOT NULL
-        ${endpoint ? (Prisma as any).sql`AND event_data->'metadata'->>'endpoint' LIKE ${'%' + endpoint + '%'}` : (Prisma as any).sql``}
+        ${endpoint ? Prisma.sql`AND event_data->'metadata'->>'endpoint' LIKE ${'%' + endpoint + '%'}` : Prisma.empty}
         GROUP BY range
         ORDER BY 
           CASE range
@@ -115,8 +123,8 @@ async function getHandler(req: NextRequest) {
           min: Number(stats.min || 0),
           count: Number(stats.count || 0)
         },
-        distribution: responseTimeDistribution.map((item: any) => ({ range: item.range, count: Number(item.count) })),
-        byEndpoint: endpointPerformance.map((item: any) => ({
+        distribution: responseTimeDistribution.map((item: DistributionItem) => ({ range: item.range, count: Number(item.count) })),
+        byEndpoint: endpointPerformance.map((item: EndpointPerfItem) => ({
           endpoint: item.endpoint || 'Unknown',
           avgTime: Math.round(Number(item.avg_time || 0)),
           requests: Number(item.requests)
@@ -145,7 +153,7 @@ async function getHandler(req: NextRequest) {
 
       performanceData.throughput = {
         avgRequestsPerMinute: Math.round(avgThroughput / minutesInPeriod),
-        timeline: throughputData.map((item: any) => ({ minute: item.minute, requests: Number(item.requests) })),
+        timeline: throughputData.map((item: ThroughputItem) => ({ minute: item.minute, requests: Number(item.requests) })),
         totalRequests: avgThroughput
       };
     }
@@ -181,16 +189,16 @@ async function getHandler(req: NextRequest) {
         }
       });
 
-      const totalErrors = errorStats.reduce((sum: number, item: any) => sum + Number(item.count), 0);
+      const totalErrors = errorStats.reduce((sum: number, item: ErrorStatusItem) => sum + Number(item.count), 0);
 
       performanceData.errors = {
         errorRate: totalRequests > 0 ? ((totalErrors / totalRequests) * 100).toFixed(2) : '0',
         totalErrors,
-        byStatus: errorStats.map((item: any) => ({
+        byStatus: errorStats.map((item: ErrorStatusItem) => ({
           status: item.status || 'Unknown',
           count: Number(item.count)
         })),
-        byCategory: errorsByCategory.map((item: any) => ({
+        byCategory: errorsByCategory.map((item: ErrorCategoryItem) => ({
           category: item.category || 'Unknown',
           errorCode: item.error_code || 'Unknown',
           count: Number(item.count)
@@ -235,9 +243,9 @@ async function getHandler(req: NextRequest) {
         GROUP BY event_data->>'action'
       `;
 
-      const totalHits = Number(cacheStats.find((s: any) => s.action === 'hit')?.count || 0);
-      const totalMisses = Number(cacheStats.find((s: any) => s.action === 'miss')?.count || 0);
-      const evictions = Number(cacheStats.find((s: any) => s.action === 'eviction')?.count || 0);
+      const totalHits = Number(cacheStats.find((s: CacheStatItem) => s.action === 'hit')?.count || 0);
+      const totalMisses = Number(cacheStats.find((s: CacheStatItem) => s.action === 'miss')?.count || 0);
+      const evictions = Number(cacheStats.find((s: CacheStatItem) => s.action === 'eviction')?.count || 0);
       const total = totalHits + totalMisses;
 
       const hitRate = total > 0 ? ((totalHits / total) * 100).toFixed(1) : '0';

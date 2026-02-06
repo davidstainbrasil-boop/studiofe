@@ -176,7 +176,13 @@ async function getHandler(req: NextRequest) {
     ]);
 
     // Map recent events
-    const recentEvents = recentEventsRaw.map((e: any) => {
+    interface RawAnalyticsEvent {
+      id: string;
+      eventData: Record<string, unknown> | null;
+      createdAt: Date;
+    }
+    
+    const recentEvents = recentEventsRaw.map((e: RawAnalyticsEvent) => {
       const data = e.eventData as Record<string, unknown> || {};
       return {
         id: e.id,
@@ -194,13 +200,17 @@ async function getHandler(req: NextRequest) {
     const errorRate = totalEvents > 0 ? ((errorEvents / totalEvents) * 100).toFixed(2) : '0';
     
     // Processar dados de categoria com percentuais
-    const eventsByCategoryList = eventsByCategory.map((item: any) => ({
+    interface CategoryCount { category: string; count: bigint; }
+    interface ActionCount { action: string; count: bigint; }
+    interface CountItem { category: string; count: number; }
+    
+    const eventsByCategoryList = eventsByCategory.map((item: CategoryCount) => ({
       category: item.category || 'Unknown',
       count: Number(item.count)
     }));
     
-    const totalCategoryEvents = eventsByCategoryList.reduce((sum: number, item: any) => sum + item.count, 0);
-    const processedEventsByCategory = eventsByCategoryList.map((item: any) => ({
+    const totalCategoryEvents = eventsByCategoryList.reduce((sum: number, item: CountItem) => sum + item.count, 0);
+    const processedEventsByCategory = eventsByCategoryList.map((item: CountItem) => ({
       category: item.category,
       count: item.count,
       percentage: totalCategoryEvents > 0 ? 
@@ -208,7 +218,7 @@ async function getHandler(req: NextRequest) {
     }));
 
     // Processar dados de ação
-    const processedEventsByAction = eventsByAction.map((item: any) => ({
+    const processedEventsByAction = eventsByAction.map((item: ActionCount) => ({
       action: item.action || 'Unknown',
       count: Number(item.count)
     }));
@@ -238,7 +248,9 @@ async function getHandler(req: NextRequest) {
         LIMIT 5
       `;
 
-    const slowestEndpoints = endpointPerformance.map((item: any) => ({
+    interface EndpointPerf { endpoint: string; avg_time: number; calls: bigint; }
+    
+    const slowestEndpoints = endpointPerformance.map((item: EndpointPerf) => ({
         endpoint: item.endpoint || 'Unknown',
         avgTime: Math.round(Number(item.avg_time)),
         calls: Number(item.calls)
@@ -259,7 +271,9 @@ async function getHandler(req: NextRequest) {
         LIMIT 5
       `;
 
-    const topPages = pageViews.map((item: any) => ({
+    interface PageView { page: string; views: bigint; avg_time: number | null; }
+    
+    const topPages = pageViews.map((item: PageView) => ({
         page: item.page || 'Unknown',
         views: Number(item.views),
         avgTimeOnPage: Math.round(Number(item.avg_time || 0))
@@ -277,7 +291,9 @@ async function getHandler(req: NextRequest) {
         ORDER BY count DESC
       `;
 
-    const deviceTypes = deviceData.map((item: any) => ({
+    interface DeviceCount { type: string; count: bigint; }
+    
+    const deviceTypes = deviceData.map((item: DeviceCount) => ({
         type: item.type || 'Unknown',
         count: Number(item.count)
     }));
@@ -295,13 +311,17 @@ async function getHandler(req: NextRequest) {
         LIMIT 5
       `;
 
-    const browserStats = browserData.map((item: any) => ({
+    interface BrowserCount { browser: string; count: bigint; }
+    
+    const browserStats = browserData.map((item: BrowserCount) => ({
         browser: item.browser || 'Unknown',
         count: Number(item.count)
     }));
 
     // Montar resposta
     const perf = performanceData[0] || { avg_duration: 0, max_duration: 0, min_duration: 0 };
+    
+    interface TimelineItem { date: Date; events: bigint; errors: bigint; users: bigint; }
     
     const dashboardData = {
       overview: {
@@ -316,7 +336,7 @@ async function getHandler(req: NextRequest) {
       },
       eventsByCategory: processedEventsByCategory,
       eventsByAction: processedEventsByAction,
-      timelineData: timelineData.map((item: any) => ({
+      timelineData: timelineData.map((item: TimelineItem) => ({
         date: String(item.date),
         events: Number(item.events),
         errors: Number(item.errors),

@@ -88,10 +88,15 @@ export async function PATCH(request: NextRequest) {
       }, { status: 400 })
     }
 
-    const updates: any = {}
+    interface CommentUpdate {
+      content?: string;
+      is_resolved?: boolean;
+      updated_at: string;
+    }
+    
+    const updates: CommentUpdate = { updated_at: new Date().toISOString() }
     if (body.content !== undefined) updates.content = body.content
     if (body.isResolved !== undefined) updates.is_resolved = body.isResolved
-    updates.updated_at = new Date().toISOString()
 
     const { data, error } = await supabase
       .from('comments')

@@ -1,2 +1,1 @@
-export { checkRateLimit } from '../../estudio_ia_videos/app/lib/utils/rate-limit'
-export type { RateLimitResult } from '../../estudio_ia_videos/app/lib/utils/rate-limit'
+export { checkRateLimit, type RateLimitDecision as RateLimitResult } from '../../estudio_ia_videos/src/lib/rate-limit'

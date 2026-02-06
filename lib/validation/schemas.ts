@@ -131,7 +131,7 @@ export const AnalyticsEventSchema = z.object({
     'user_login',
     'user_logout',
   ]),
-  eventData: z.record(z.unknown()),
+  eventData: z.record(z.string(), z.unknown()),
   userId: z.string().uuid('ID de usuário inválido').optional(),
   sessionId: z.string().optional(),
   timestamp: z.coerce.date().default(() => new Date()),
@@ -230,7 +230,7 @@ export const VideoJobResponseSchema = z.object({
   updated_at: z.string().datetime().optional(),
   completed_at: z.string().datetime().nullable(),
   duration_ms: z.number().nonnegative().nullable(),
-  render_settings: z.record(z.unknown()).nullable(),
+  render_settings: z.record(z.string(), z.unknown()).nullable(),
   error_message: z.string().nullable(),
 });
 

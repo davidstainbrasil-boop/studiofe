@@ -92,9 +92,18 @@ export async function GET(request: NextRequest) {
           take: limit,
           skip: offset
         })
+        interface ExportJob {
+          id: string;
+          status: string;
+          progress: number | null;
+          videoUrl: string | null;
+          errorMessage: string | null;
+          createdAt: Date;
+          updatedAt: Date;
+        }
         return NextResponse.json({
           success: true,
-          history: jobs.map((j: any) => ({
+          history: jobs.map((j: ExportJob) => ({
             id: j.id,
             status: j.status,
             progress: j.progress,

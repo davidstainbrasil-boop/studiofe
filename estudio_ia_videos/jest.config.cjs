@@ -7,7 +7,21 @@ module.exports = {
   testEnvironment: 'jsdom',
 
   transform: {
-    '^.+\\.(js|jsx|ts|tsx)$': ['babel-jest', { presets: [require.resolve('next/babel', { paths: [__dirname] })] }],
+    '^.+\\.(ts|tsx)$': ['ts-jest', {
+      tsconfig: {
+        jsx: 'react-jsx',
+        esModuleInterop: true,
+        allowSyntheticDefaultImports: true,
+        module: 'commonjs',
+        moduleResolution: 'node',
+        strict: false,
+        skipLibCheck: true,
+        noEmit: true,
+        paths: compilerOptions.paths,
+        baseUrl: '.',
+      },
+    }],
+    '^.+\\.(js|jsx)$': ['babel-jest', { presets: [require.resolve('next/babel', { paths: [__dirname] })] }],
   },
 
   moduleNameMapper: {

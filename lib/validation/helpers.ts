@@ -36,7 +36,7 @@ export function validateSchema<T>(
         error: {
           code: 'VALIDATION_ERROR',
           message: 'Dados de entrada inválidos',
-          issues: err.errors,
+          issues: err.issues,
         },
       };
     }
@@ -68,7 +68,7 @@ export function safeValidate<T>(
     error: {
       code: 'VALIDATION_ERROR',
       message: 'Dados de entrada inválidos',
-      issues: result.error.errors,
+      issues: result.error.issues,
     },
   };
 }

@@ -187,7 +187,14 @@ export async function POST(req: NextRequest) {
         getRequiredEnv('SUPABASE_SERVICE_ROLE_KEY'),
       );
 
-      const slidesToInsert = extraction.slides.map((slide: any, index: number) => ({
+      interface ExtractedSlide {
+        title?: string;
+        content?: string;
+        duration?: number;
+        images?: string[];
+      }
+
+      const slidesToInsert = extraction.slides.map((slide: ExtractedSlide, index: number) => ({
         project_id: projectId,
         order_index: index,
         title: slide.title?.substring(0, 100),

@@ -107,7 +107,7 @@ async function renderVideoAsync(jobId: string, project: VideoProject, outputDir:
     await updateJobStatus(jobId, 'processing', 90);
 
     // Etapa 5: Upload para storage
-    let videoUrl = null;
+    let videoUrl: string | null = null;
     if (process.env.AWS_S3_BUCKET) {
       videoUrl = await uploadToStorage(videoPath, jobId);
     } else {
@@ -163,7 +163,7 @@ async function generateSlideImage(slide: any, outputDir: string): Promise<string
   return new Promise((resolve, reject) => {
     const pythonScript = path.join(process.cwd(), 'scripts', 'generate_slide_image.py');
 
-    const process = spawn('python3', [
+    const childProcess = spawn('python3', [
       pythonScript,
       '--title',
       slide.title || '',
@@ -175,7 +175,7 @@ async function generateSlideImage(slide: any, outputDir: string): Promise<string
       slide.template || 'modern',
     ]);
 
-    process.on('close', (code: number) => {
+    childProcess.on('close', (code: number) => {
       if (code === 0) {
         resolve(imagePath);
       } else {
@@ -192,22 +192,76 @@ async function generateAudios(slides: any[], outputDir: string): Promise<any[]> 
         if (!slide.voiceSettings?.text) return null;
 
         try {
-          // Importar ElevenLabs service
-          const elevenLabsService = require('@/lib/audio/elevenlabs-service').default;
+          // Implementação real com ElevenLabs
+          const { ElevenLabsClient } = require('elevenlabs');
+          const fs = require('fs').promises;
+          const path = require('path');
 
-          const result = await elevenLabsService.generateAudio(
-            slide.voiceSettings,
-            `${outputDir}/audio_${slide.index}.mp3`,
-          );
+          const client = new ElevenLabsClient({
+            apiKey: process.env.ELEVENLABS_API_KEY,
+          });
+
+          // Mapear voice settings para IDs reais
+          const voiceMap: Record<string, string> = {
+            'professional-male': 'adam',
+            'professional-female': 'bella',
+            'male': 'josh',
+            'female': 'rachel',
+            'child': 'sam',
+          };
+
+          const voiceId = voiceMap[slide.voiceSettings.voiceType] || 'adam';
+
+          // Gerar áudio real
+          const audio = await client.generate({
+            voice: voiceId,
+            text: slide.voiceSettings.text,
+            model_id: 'eleven_monolingual_v1',
+          });
+
+          // Salvar áudio
+          const audioPath = path.join(outputDir, `audio_${slide.index}.mp3`);
+          await fs.writeFile(audioPath, audio);
 
           return {
             slideIndex: slide.index,
-            audioPath: result.audioPath,
-            duration: result.duration,
+            audioPath,
+            duration: await getAudioDuration(audioPath),
           };
         } catch (error) {
           console.error('Erro ao gerar áudio para slide', slide.index, error);
-          return null;
+          
+          // Fallback para TTS local
+          try {
+            const { spawn } = require('child_process');
+            const path = require('path');
+            
+            const audioPath = path.join(outputDir, `audio_${slide.index}.mp3`);
+            const pythonScript = path.join(process.cwd(), 'scripts', 'tts_fallback.py');
+
+            await new Promise((resolve, reject) => {
+              const childProcess = spawn('python3', [
+                pythonScript,
+                '--text', slide.voiceSettings.text,
+                '--voice', slide.voiceSettings.voiceType || 'male',
+                '--output', audioPath
+              ]);
+
+              childProcess.on('close', (code: number) => {
+                if (code === 0) resolve(code);
+                else reject(new Error(`TTS fallback failed with code ${code}`));
+              });
+            });
+
+            return {
+              slideIndex: slide.index,
+              audioPath,
+              duration: await getAudioDuration(audioPath),
+            };
+          } catch (fallbackError) {
+            console.error('Fallback TTS também falhou:', fallbackError);
+            return null;
+          }
         }
       })
       .filter(Boolean),
@@ -414,4 +468,30 @@ async function getFileSize(filePath: string): Promise<number> {
   const fs = require('fs').promises;
   const stats = await fs.stat(filePath);
   return stats.size;
+}
+
+async function getAudioDuration(audioPath: string): Promise<number> {
+  const { spawn } = require('child_process');
+
+  return new Promise((resolve, reject) => {
+    const ffprobe = spawn('ffprobe', [
+      '-v',
+      'error',
+      '-show_entries',
+      'format=duration',
+      '-of',
+      'default=noprint_wrappers=1:nokey=1',
+      audioPath,
+    ]);
+
+    let output = '';
+    ffprobe.stdout.on('data', (data: Buffer) => {
+      output += data.toString();
+    });
+
+    ffprobe.on('close', () => {
+      const duration = parseFloat(output.trim());
+      resolve(duration || 0);
+    });
+  });
 }

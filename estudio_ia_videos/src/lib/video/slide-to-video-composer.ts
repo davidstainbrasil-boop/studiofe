@@ -1,0 +1,132 @@
+/**
+ * Slide-to-Video Composition Service
+ * Simplified version for MVP demonstration
+ */
+
+import { logger } from '@/lib/monitoring/logger';
+import { AudioStorageManager } from '@/lib/tts/audio-storage-manager';
+import { RealTTSService } from '@/lib/tts/real-tts-service';
+
+export interface Slide {
+  id: string;
+  content: string;
+  notes?: string;
+  audioUrl?: string;
+  duration?: number;
+}
+
+export interface VideoResult {
+  success: boolean;
+  videoUrl?: string;
+  duration?: number;
+  error?: string;
+}
+
+export class SlideToVideoComposer {
+  private audioStorage: AudioStorageManager;
+  private realTTS: RealTTSService;
+
+  constructor() {
+    this.audioStorage = new AudioStorageManager();
+    this.realTTS = new RealTTSService();
+  }
+
+  /**
+   * Compose slides with audio into a simple video
+   */
+  async composeSlidesToVideo(
+    slides: Slide[],
+    projectId: string,
+    voiceId: string = 'bella'
+  ): Promise<VideoResult> {
+    try {
+      logger.info('Starting slide-to-video composition', {
+        slideCount: slides.length,
+        projectId
+      });
+
+      // Generate TTS for each slide
+      const slidesWithAudio: Slide[] = [];
+      
+      for (const slide of slides) {
+        // Use notes if available, otherwise content
+        const textToSpeak = slide.notes || slide.content;
+        
+        if (!textToSpeak || textToSpeak.trim().length === 0) {
+          logger.warn(`Skipping slide ${slide.id} - no content to speak`);
+          continue;
+        }
+
+        try {
+          // Generate TTS with real service
+          const result = await this.realTTS.generateSpeechForSlide(
+            textToSpeak,
+            {
+              voiceId,
+              projectId,
+              slideId: slide.id
+            }
+          );
+
+          if (result.success && result.audioUrl) {
+            slidesWithAudio.push({
+              ...slide,
+              audioUrl: result.audioUrl,
+              duration: result.duration
+            });
+
+            logger.info(`TTS generated for slide ${slide.id}`, {
+              duration: result.duration,
+              success: true
+            });
+          } else {
+            logger.error(`Failed to generate TTS for slide ${slide.id}`, {
+              error: result.error
+            });
+          }
+        } catch (error) {
+          logger.error(`Error generating TTS for slide ${slide.id}`, {
+            error: error instanceof Error ? error.message : 'Unknown error'
+          });
+        }
+      }
+
+      const totalDuration = slidesWithAudio.reduce((sum, slide) => sum + (slide.duration || 0), 0);
+
+      logger.info('Slide-to-video composition completed', {
+        totalSlides: slides.length,
+        slidesWithAudio: slidesWithAudio.length,
+        totalDuration
+      });
+
+      // Create simple video composition result
+      const videoUrl = this.createMockVideoUrl(projectId, slidesWithAudio.length);
+
+      return {
+        success: true,
+        videoUrl,
+        duration: totalDuration,
+        slides: slidesWithAudio
+      };
+
+    } catch (error) {
+      logger.error('Slide-to-video composition failed', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        projectId
+      });
+
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Slide-to-video composition failed'
+      };
+    }
+  }
+
+  /**
+   * Create mock video URL for demonstration
+   */
+  private createMockVideoUrl(projectId: string, slideCount: number): string {
+    const baseUrl = process.env.PUBLIC_URL || 'http://localhost:3001';
+    return `${baseUrl}/api/mock/video/${projectId}.mp4?slides=${slideCount}`;
+  }
+}

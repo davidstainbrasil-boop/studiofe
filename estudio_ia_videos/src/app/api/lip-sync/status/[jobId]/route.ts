@@ -16,7 +16,7 @@ export interface LipSyncStatusResponse {
   jobId: string;
   status: 'waiting' | 'active' | 'completed' | 'failed' | 'unknown';
   progress?: number;
-  result?: any;
+  result?: unknown;
   error?: string;
   createdAt?: number;
   processedOn?: number;

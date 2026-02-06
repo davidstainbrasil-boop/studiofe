@@ -5,7 +5,7 @@ interface Template {
   downloads: number;
   isCustom?: boolean;
   updatedAt?: Date;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 import { logger } from '@lib/logger';
 

@@ -45,8 +45,9 @@ export async function GET(request: NextRequest) {
     ]);
 
     // Calculate total render hours
+    interface RenderDuration { duration: number | null; }
     const completedRendersArray = Array.isArray(completedRenders) ? completedRenders : [];
-    const totalSeconds = completedRendersArray.reduce((acc: number, curr: any) => acc + (curr?.duration || 0), 0);
+    const totalSeconds = completedRendersArray.reduce((acc: number, curr: RenderDuration) => acc + (curr?.duration || 0), 0);
     const renderHours = (totalSeconds / 3600).toFixed(1);
 
     // Collaborators count

@@ -223,6 +223,67 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponse) => {
         storeChatMessage(socket.currentProject, messageData);
       });
 
+      // WebRTC signaling
+      socket.on('offer', (data: { to: string; offer: RTCSessionDescriptionInit }) => {
+        console.log(`Forwarding offer from ${socket.userId} to ${data.to}`);
+        socket.to(data.to).emit('offer', {
+          from: socket.userId,
+          offer: data.offer
+        });
+      });
+
+      socket.on('answer', (data: { to: string; answer: RTCSessionDescriptionInit }) => {
+        console.log(`Forwarding answer from ${socket.userId} to ${data.to}`);
+        socket.to(data.to).emit('answer', {
+          from: socket.userId,
+          answer: data.answer
+        });
+      });
+
+      socket.on('ice-candidate', (data: { to: string; candidate: RTCIceCandidateInit }) => {
+        console.log(`Forwarding ICE candidate from ${socket.userId} to ${data.to}`);
+        socket.to(data.to).emit('ice-candidate', {
+          from: socket.userId,
+          candidate: data.candidate
+        });
+      });
+
+      // Screen sharing
+      socket.on('screen-share-started', () => {
+        if (!socket.currentProject) return;
+        
+        console.log(`Screen share started in ${socket.currentProject} by ${socket.userId}`);
+        
+        socket.to(socket.currentProject).emit('screen-share-started', socket.userId);
+      });
+
+      socket.on('screen-share-stopped', () => {
+        if (!socket.currentProject) return;
+        
+        console.log(`Screen share stopped in ${socket.currentProject} by ${socket.userId}`);
+        
+        socket.to(socket.currentProject).emit('screen-share-stopped', socket.userId);
+      });
+
+      // Speaking detection
+      socket.on('speaking-started', () => {
+        if (!socket.currentProject) return;
+        
+        socket.to(socket.currentProject).emit('user-speaking', {
+          userId: socket.userId,
+          isSpeaking: true
+        });
+      });
+
+      socket.on('speaking-stopped', () => {
+        if (!socket.currentProject) return;
+        
+        socket.to(socket.currentProject).emit('user-speaking', {
+          userId: socket.userId,
+          isSpeaking: false
+        });
+      });
+
       // Handle typing indicators
       socket.on('typing_start', () => {
         if (!socket.currentProject) return;

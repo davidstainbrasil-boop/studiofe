@@ -113,6 +113,12 @@ async function getUserProjectStats(userId: string, timeRange: Date) {
 // Get user render statistics
 async function getUserRenderStats(userId: string, timeRange: Date) {
   try {
+    interface RenderJob {
+      id: string;
+      status: string;
+      durationMs: number | null;
+    }
+    
     const renders = await prisma.render_jobs.findMany({
       where: {
         userId: userId,
@@ -125,8 +131,8 @@ async function getUserRenderStats(userId: string, timeRange: Date) {
       }
     });
 
-    const completedRenders = renders.filter((r: any) => r.status === 'completed');
-    const totalRenderTime = completedRenders.reduce((sum: number, render: any) => {
+    const completedRenders = renders.filter((r: RenderJob) => r.status === 'completed');
+    const totalRenderTime = completedRenders.reduce((sum: number, render: RenderJob) => {
       return sum + ((render.durationMs || 0) / 1000); // Convert ms to seconds
     }, 0);
 
@@ -198,15 +204,22 @@ async function getRecentActivity(userId: string, timeRange: Date, limit: number 
       }
     });
 
-    return activities.map((activity: any) => {
-      const data = activity.eventData as Record<string, any> || {};
+    interface ActivityEvent {
+      id: string;
+      eventType: string;
+      eventData: Record<string, unknown> | null;
+      createdAt: Date;
+    }
+
+    return activities.map((activity: ActivityEvent) => {
+      const data = activity.eventData as Record<string, unknown> || {};
       return {
         id: activity.id,
         type: activity.eventType,
-        action: data.action || activity.eventType,
+        action: (data.action as string) || activity.eventType,
         timestamp: activity.createdAt,
         metadata: data,
-        projectId: data.projectId || null
+        projectId: (data.projectId as string) || null
       };
     });
   } catch (error) {
@@ -218,6 +231,12 @@ async function getRecentActivity(userId: string, timeRange: Date, limit: number 
 // Get usage patterns (if requested)
 async function getUsagePatterns(userId: string, timeRange: Date) {
   try {
+    interface UsageEvent {
+      createdAt: Date;
+      eventType: string;
+      eventData: Record<string, unknown> | null;
+    }
+    
     const events = await prisma.analytics_events.findMany({
       where: {
         userId: userId,
@@ -232,21 +251,23 @@ async function getUsagePatterns(userId: string, timeRange: Date) {
 
     // Calculate most active hours
     const hourCounts = new Array(24).fill(0);
-    events.forEach((event: any) => {
+    events.forEach((event: UsageEvent) => {
       const hour = new Date(event.createdAt).getHours();
       hourCounts[hour]++;
     });
 
+    interface HourCount { hour: number; count: number; }
+    
     const mostActiveHours = hourCounts
       .map((count: number, hour: number) => ({ hour, count }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 3)
-      .map((item: any) => item.hour);
+      .map((item: HourCount) => item.hour);
 
     // Calculate preferred features
-    const featureCounts = events.reduce((acc: Record<string, number>, event: any) => {
-      const data = event.eventData as Record<string, any> || {};
-      const action = data.action || 'unknown';
+    const featureCounts = events.reduce((acc: Record<string, number>, event: UsageEvent) => {
+      const data = event.eventData as Record<string, unknown> || {};
+      const action = (data.action as string) || 'unknown';
       const feature = `${event.eventType}_${action}`;
       acc[feature] = (acc[feature] || 0) + 1;
       return acc;

@@ -141,10 +141,10 @@ async function processPPTXAsync(jobId: string, filepath: string, settings: any) 
     await updateJobStatus(jobId, 'processing', 40);
 
     // Gerar áudio para cada slide
-    const audioFiles = [];
+    const audioFiles: string[] = [];
     for (let i = 0; i < slidesData.slides.length; i++) {
       const slide = slidesData.slides[i];
-      const audioFile = await generateAudioForSlide(slide.text, settings.voiceType, jobId, i);
+      const audioFile = await generateAudioForSlide(slide.text || '', settings.voiceType, jobId, i);
       audioFiles.push(audioFile);
 
       // Atualizar progresso
@@ -166,7 +166,7 @@ async function processPPTXAsync(jobId: string, filepath: string, settings: any) 
     await updateJobStatus(jobId, 'processing', 90);
 
     // Fazer upload para o storage (se configurado)
-    let videoUrl = null;
+    let videoUrl: string | null = null;
     if (process.env.AWS_S3_BUCKET) {
       videoUrl = await uploadToStorage(videoPath, jobId);
     } else {
@@ -196,31 +196,67 @@ async function generateAudioForSlide(
   jobId: string,
   slideIndex: number,
 ): Promise<string> {
-  // Integração com ElevenLabs ou similar
+  // Implementação real com ElevenLabs
   const { spawn } = require('child_process');
+  const fs = require('fs').promises;
   const path = require('path');
 
-  return new Promise((resolve, reject) => {
-    const pythonScript = path.join(process.cwd(), 'scripts', 'generate_audio.py');
-
-    const process = spawn('python3', [
-      pythonScript,
-      '--text',
-      text,
-      '--voice',
-      voiceType,
-      '--output',
-      path.join(process.cwd(), 'temp', jobId, `audio_${slideIndex}.mp3`),
-    ]);
-
-    process.on('close', (code: number) => {
-      if (code === 0) {
-        resolve(path.join(process.cwd(), 'temp', jobId, `audio_${slideIndex}.mp3`));
-      } else {
-        reject(new Error('Falha na geração de áudio'));
-      }
+  try {
+    // Usar ElevenLabs SDK real
+    const { ElevenLabsClient } = require('elevenlabs');
+    
+    const client = new ElevenLabsClient({
+      apiKey: process.env.ELEVENLABS_API_KEY,
     });
-  });
+
+    // Mapear voice types para IDs ElevenLabs reais
+    const voiceMap: Record<string, string> = {
+      professional: 'adam',
+      female: 'bella', 
+      male: 'josh',
+      child: 'sam',
+    };
+
+    const voiceId = voiceMap[voiceType] || 'adam';
+
+    // Gerar áudio real
+    const audio = await client.generate({
+      voice: voiceId,
+      text: text,
+      model_id: 'eleven_monolingual_v1',
+    });
+
+    // Salvar áudio
+    const audioPath = path.join(process.cwd(), 'temp', jobId, `audio_${slideIndex}.mp3`);
+    await fs.writeFile(audioPath, audio);
+
+    return audioPath;
+  } catch (error) {
+    console.error('Erro na geração de áudio com ElevenLabs:', error);
+    
+    // Fallback para TTS local (gTTS ou similar)
+    const pythonScript = path.join(process.cwd(), 'scripts', 'generate_audio_fallback.py');
+
+    return new Promise((resolve, reject) => {
+      const childProcess = spawn('python3', [
+        pythonScript,
+        '--text',
+        text,
+        '--voice',
+        voiceType,
+        '--output',
+        path.join(process.cwd(), 'temp', jobId, `audio_${slideIndex}.mp3`),
+      ]);
+
+      childProcess.on('close', (code: number) => {
+        if (code === 0) {
+          resolve(path.join(process.cwd(), 'temp', jobId, `audio_${slideIndex}.mp3`));
+        } else {
+          reject(new Error('Falha na geração de áudio'));
+        }
+      });
+    });
+  }
 }
 
 async function createVideoFromSlides(

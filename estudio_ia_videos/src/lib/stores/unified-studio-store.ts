@@ -141,6 +141,15 @@ export interface ProjectMetadata {
 // State Interface
 // ========================================
 
+// History snapshot type for undo/redo
+export interface HistorySnapshot {
+  tracks: TimelineTrack[];
+  clips: TimelineClip[];
+  canvasElements: CanvasElement[];
+  timestamp: number;
+  action: string;
+}
+
 export interface UnifiedStudioState {
   // Project
   projectId: string | null;
@@ -198,6 +207,9 @@ export interface UnifiedStudioState {
   // History (Undo/Redo)
   canUndo: boolean;
   canRedo: boolean;
+  historyStack: HistorySnapshot[];
+  historyIndex: number;
+  maxHistorySize: number;
 }
 
 // ========================================
@@ -284,6 +296,8 @@ export interface UnifiedStudioActions {
   // History Actions
   undo: () => void;
   redo: () => void;
+  pushHistory: (action: string) => void;
+  clearHistory: () => void;
 
   // Utility Actions
   reset: () => void;
@@ -350,6 +364,9 @@ const initialState: UnifiedStudioState = {
   // History
   canUndo: false,
   canRedo: false,
+  historyStack: [],
+  historyIndex: -1,
+  maxHistorySize: 50,
 };
 
 // ========================================
@@ -459,6 +476,8 @@ export const useUnifiedStudioStore = create<UnifiedStudioState & UnifiedStudioAc
           // ================================
           addTrack: (trackData) => {
             const id = `track-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            // Push history before change
+            get().pushHistory('Add Track');
             set((state) => {
               const order = state.tracks.length;
               state.tracks.push({ ...trackData, id, order });
@@ -467,7 +486,9 @@ export const useUnifiedStudioStore = create<UnifiedStudioState & UnifiedStudioAc
             return id;
           },
 
-          removeTrack: (trackId) =>
+          removeTrack: (trackId) => {
+            // Push history before change
+            get().pushHistory('Remove Track');
             set((state) => {
               state.tracks = state.tracks.filter((t) => t.id !== trackId);
               state.clips = state.clips.filter((c) => c.trackId !== trackId);
@@ -475,7 +496,8 @@ export const useUnifiedStudioStore = create<UnifiedStudioState & UnifiedStudioAc
                 state.selectedTrackId = null;
               }
               state.isDirty = true;
-            }),
+            });
+          },
 
           updateTrack: (trackId, updates) =>
             set((state) => {
@@ -496,6 +518,8 @@ export const useUnifiedStudioStore = create<UnifiedStudioState & UnifiedStudioAc
 
           addClip: (clipData) => {
             const id = `clip-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            // Push history before change
+            get().pushHistory('Add Clip');
             set((state) => {
               state.clips.push({ ...clipData, id });
               // Update duration if needed
@@ -508,12 +532,15 @@ export const useUnifiedStudioStore = create<UnifiedStudioState & UnifiedStudioAc
             return id;
           },
 
-          removeClip: (clipId) =>
+          removeClip: (clipId) => {
+            // Push history before change
+            get().pushHistory('Remove Clip');
             set((state) => {
               state.clips = state.clips.filter((c) => c.id !== clipId);
               state.selectedClipIds = state.selectedClipIds.filter((id) => id !== clipId);
               state.isDirty = true;
-            }),
+            });
+          },
 
           updateClip: (clipId, updates) =>
             set((state) => {
@@ -661,6 +688,8 @@ export const useUnifiedStudioStore = create<UnifiedStudioState & UnifiedStudioAc
           // ================================
           addCanvasElement: (elementData) => {
             const id = `element-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            // Push history before change
+            get().pushHistory('Add Canvas Element');
             set((state) => {
               state.canvasElements.push({ ...elementData, id });
               state.isDirty = true;
@@ -668,12 +697,15 @@ export const useUnifiedStudioStore = create<UnifiedStudioState & UnifiedStudioAc
             return id;
           },
 
-          removeCanvasElement: (elementId) =>
+          removeCanvasElement: (elementId) => {
+            // Push history before change
+            get().pushHistory('Remove Canvas Element');
             set((state) => {
               state.canvasElements = state.canvasElements.filter((e) => e.id !== elementId);
               state.selectedElementIds = state.selectedElementIds.filter((id) => id !== elementId);
               state.isDirty = true;
-            }),
+            });
+          },
 
           updateCanvasElement: (elementId, updates) =>
             set((state) => {
@@ -830,15 +862,99 @@ export const useUnifiedStudioStore = create<UnifiedStudioState & UnifiedStudioAc
           // ================================
           // History Actions
           // ================================
-          undo: () => {
-            // TODO: Implement with proper history management
-            logger.info('Undo action triggered');
-          },
+          pushHistory: (action: string) =>
+            set((state) => {
+              // Create snapshot of current undoable state
+              const snapshot: HistorySnapshot = {
+                tracks: JSON.parse(JSON.stringify(state.tracks)),
+                clips: JSON.parse(JSON.stringify(state.clips)),
+                canvasElements: JSON.parse(JSON.stringify(state.canvasElements)),
+                timestamp: Date.now(),
+                action
+              };
 
-          redo: () => {
-            // TODO: Implement with proper history management
-            logger.info('Redo action triggered');
-          },
+              // Remove any redo history (we're on a new branch)
+              const newStack = state.historyStack.slice(0, state.historyIndex + 1);
+              newStack.push(snapshot);
+
+              // Limit history size
+              if (newStack.length > state.maxHistorySize) {
+                newStack.shift();
+              }
+
+              state.historyStack = newStack;
+              state.historyIndex = newStack.length - 1;
+              state.canUndo = state.historyIndex > 0;
+              state.canRedo = false;
+              state.isDirty = true;
+
+              logger.info('History pushed', { action, historySize: newStack.length });
+            }),
+
+          undo: () =>
+            set((state) => {
+              if (state.historyIndex <= 0) {
+                logger.warn('Nothing to undo');
+                return;
+              }
+
+              // Move back in history
+              state.historyIndex -= 1;
+              const snapshot = state.historyStack[state.historyIndex];
+
+              if (snapshot) {
+                // Restore state from snapshot
+                state.tracks = JSON.parse(JSON.stringify(snapshot.tracks));
+                state.clips = JSON.parse(JSON.stringify(snapshot.clips));
+                state.canvasElements = JSON.parse(JSON.stringify(snapshot.canvasElements));
+                state.isDirty = true;
+
+                logger.info('Undo performed', { 
+                  action: snapshot.action, 
+                  historyIndex: state.historyIndex 
+                });
+              }
+
+              state.canUndo = state.historyIndex > 0;
+              state.canRedo = state.historyIndex < state.historyStack.length - 1;
+            }),
+
+          redo: () =>
+            set((state) => {
+              if (state.historyIndex >= state.historyStack.length - 1) {
+                logger.warn('Nothing to redo');
+                return;
+              }
+
+              // Move forward in history
+              state.historyIndex += 1;
+              const snapshot = state.historyStack[state.historyIndex];
+
+              if (snapshot) {
+                // Restore state from snapshot
+                state.tracks = JSON.parse(JSON.stringify(snapshot.tracks));
+                state.clips = JSON.parse(JSON.stringify(snapshot.clips));
+                state.canvasElements = JSON.parse(JSON.stringify(snapshot.canvasElements));
+                state.isDirty = true;
+
+                logger.info('Redo performed', { 
+                  action: snapshot.action, 
+                  historyIndex: state.historyIndex 
+                });
+              }
+
+              state.canUndo = state.historyIndex > 0;
+              state.canRedo = state.historyIndex < state.historyStack.length - 1;
+            }),
+
+          clearHistory: () =>
+            set((state) => {
+              state.historyStack = [];
+              state.historyIndex = -1;
+              state.canUndo = false;
+              state.canRedo = false;
+              logger.info('History cleared');
+            }),
 
           // ================================
           // Utility Actions

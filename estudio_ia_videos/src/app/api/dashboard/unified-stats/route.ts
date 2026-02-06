@@ -98,8 +98,10 @@ export async function GET(request: NextRequest) {
 
       if (recentJobsError) throw recentJobsError
 
+      interface RenderJobTime { started_at: string | null; completed_at: string | null; }
+      
       if (recentJobs && recentJobs.length > 0) {
-        const totalDurationMs = recentJobs.reduce((acc: number, job: any) => {
+        const totalDurationMs = recentJobs.reduce((acc: number, job: RenderJobTime) => {
           if (!job.started_at || !job.completed_at) return acc
           const start = new Date(job.started_at).getTime()
           const end = new Date(job.completed_at).getTime()

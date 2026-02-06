@@ -156,10 +156,15 @@ export async function PUT(request: NextRequest) {
       )
     }
 
-    const updateData: any = {}
+    interface VoiceUpdateData {
+      name?: string;
+      metadata?: Record<string, unknown>;
+      updatedAt: Date;
+    }
+    
+    const updateData: VoiceUpdateData = { updatedAt: new Date() }
     if (name) updateData.name = name
     if (metadata) updateData.metadata = metadata
-    updateData.updatedAt = new Date()
 
     const voiceModel = await prisma.voice_models.update({
       where: { id },

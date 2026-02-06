@@ -5,6 +5,13 @@ import { logger } from '@lib/logger';
 import { prisma } from '@lib/prisma';
 import { Prisma } from '@prisma/client';
 
+// Type definitions for raw query results
+interface SessionDataRow { user_id: string; date: Date; session_start: Date; session_end: Date; events: bigint; session_duration: number; }
+interface PageViewRow { page: string; views: bigint; }
+interface InteractionRow { action: string; count: bigint; }
+interface NavigationFlowRow { from_page: string; to_page: string; transitions: bigint; }
+interface PageCountRow { page: string; entries?: bigint; exits?: bigint; }
+
 
 // Utilitários locais para normalização
 const toNumber = (v: unknown): number => (typeof v === 'number' ? v : Number(v ?? 0));
@@ -51,10 +58,10 @@ async function getHandler(req: NextRequest) {
         FROM analytics_events 
         WHERE created_at >= ${startDate}
         AND user_id IS NOT NULL
-        ${targetUserId ? (Prisma as any).sql`AND user_id = ${targetUserId}::uuid` : (Prisma as any).sql``}
+        ${targetUserId ? Prisma.sql`AND user_id = ${targetUserId}::uuid` : Prisma.empty}
         GROUP BY user_id, DATE(created_at)
         HAVING EXTRACT(EPOCH FROM (MAX(created_at) - MIN(created_at))) > 0
-      ` as any[];
+      ` as SessionDataRow[];
 
       // Page Views (Top 10)
       const pageViews = await prisma.$queryRaw`
@@ -65,11 +72,11 @@ async function getHandler(req: NextRequest) {
         WHERE created_at >= ${startDate}
         AND event_type = 'page_view'
         AND event_data->>'label' IS NOT NULL
-        ${targetUserId ? (Prisma as any).sql`AND user_id = ${targetUserId}::uuid` : (Prisma as any).sql``}
+        ${targetUserId ? Prisma.sql`AND user_id = ${targetUserId}::uuid` : Prisma.empty}
         GROUP BY event_data->>'label'
         ORDER BY views DESC
         LIMIT 10
-      ` as any[];
+      ` as PageViewRow[];
 
       // Interactions
       const interactions = await prisma.$queryRaw`
@@ -79,20 +86,20 @@ async function getHandler(req: NextRequest) {
         FROM analytics_events
         WHERE created_at >= ${startDate}
         AND event_type IN ('click', 'scroll', 'form', 'download')
-        ${targetUserId ? (Prisma as any).sql`AND user_id = ${targetUserId}::uuid` : (Prisma as any).sql``}
+        ${targetUserId ? Prisma.sql`AND user_id = ${targetUserId}::uuid` : Prisma.empty}
         GROUP BY event_data->>'action'
         ORDER BY count DESC
-      ` as any[];
+      ` as InteractionRow[];
 
       const sessionRows = sessionData;
-      const avgSessionDuration = sessionRows.reduce((sum: number, s: any) => sum + toNumber(s.session_duration), 0) / Math.max(1, sessionRows.length);
-      const avgEventsPerSession = sessionRows.reduce((sum: number, s: any) => sum + toNumber(s.events), 0) / Math.max(1, sessionRows.length);
+      const avgSessionDuration = sessionRows.reduce((sum: number, s: SessionDataRow) => sum + toNumber(s.session_duration), 0) / Math.max(1, sessionRows.length);
+      const avgEventsPerSession = sessionRows.reduce((sum: number, s: SessionDataRow) => sum + toNumber(s.events), 0) / Math.max(1, sessionRows.length);
 
       behaviorData.engagement = {
         avgSessionDuration: Math.round(avgSessionDuration),
         avgEventsPerSession: Math.round(avgEventsPerSession),
         totalSessions: sessionRows.length,
-        uniqueUsers: new Set(sessionRows.map((s: any) => s.userId)).size,
+        uniqueUsers: new Set(sessionRows.map((s: SessionDataRow) => s.user_id)).size,
         pageViews: pageViews,
         interactions: interactions
       };
@@ -117,11 +124,11 @@ async function getHandler(req: NextRequest) {
         AND curr.eventType = 'page_view'
         AND prev.eventData->>'label' IS NOT NULL
         AND curr.eventData->>'label' IS NOT NULL
-        ${targetUserId ? (Prisma as any).sql`AND prev.userId = ${targetUserId}::uuid` : (Prisma as any).sql``}
+        ${targetUserId ? Prisma.sql`AND prev.userId = ${targetUserId}::uuid` : Prisma.empty}
         GROUP BY prev.eventData->>'label', curr.eventData->>'label'
         ORDER BY transitions DESC
         LIMIT 20
-      ` as any[];
+      ` as NavigationFlowRow[];
 
       // Entry Pages
       const entryPages = await prisma.$queryRaw`
@@ -137,13 +144,13 @@ async function getHandler(req: NextRequest) {
           WHERE created_at >= ${startDate}
           AND event_type = 'page_view'
           AND event_data->>'label' IS NOT NULL
-          ${targetUserId ? (Prisma as any).sql`AND user_id = ${targetUserId}::uuid` : (Prisma as any).sql``}
+          ${targetUserId ? Prisma.sql`AND user_id = ${targetUserId}::uuid` : Prisma.empty}
         ) first_pages
         WHERE rn = 1
         GROUP BY page
         ORDER BY entries DESC
         LIMIT 10
-      ` as any[];
+      ` as PageCountRow[];
 
       // Exit Pages
       const exitPages = await prisma.$queryRaw`
@@ -159,13 +166,13 @@ async function getHandler(req: NextRequest) {
           WHERE created_at >= ${startDate}
           AND event_type = 'page_view'
           AND event_data->>'label' IS NOT NULL
-          ${targetUserId ? (Prisma as any).sql`AND user_id = ${targetUserId}::uuid` : (Prisma as any).sql``}
+          ${targetUserId ? Prisma.sql`AND user_id = ${targetUserId}::uuid` : Prisma.empty}
         ) last_pages
         WHERE rn = 1
         GROUP BY page
         ORDER BY exits DESC
         LIMIT 10
-      ` as any[];
+      ` as PageCountRow[];
 
       behaviorData.navigation = {
         flow: navigationFlow,
@@ -186,7 +193,13 @@ async function getHandler(req: NextRequest) {
 
       const funnelData = await Promise.all(
         funnelSteps.map(async (step) => {
-          const where: any = {
+          interface FunnelWhere {
+            createdAt: { gte: Date };
+            eventType: string;
+            userId?: string;
+            eventData?: { path: string[]; equals: string };
+          }
+          const where: FunnelWhere = {
             createdAt: { gte: startDate },
             eventType: step.type,
             ...(targetUserId && { userId: targetUserId })
@@ -219,7 +232,9 @@ async function getHandler(req: NextRequest) {
       );
 
       // Calculate rates
-      const conversionRates = funnelData.map((current: any, index: number) => {
+      interface FunnelStep { step: string; events: number; users: number; conversionRate?: number; }
+      
+      const conversionRates = funnelData.map((current: FunnelStep, index: number) => {
         if (index === 0) return { ...current, conversionRate: 100 };
         const previous = funnelData[index - 1];
         const rate = previous.users > 0 ? ((current.users / previous.users) * 100).toFixed(1) : '0';
@@ -251,13 +266,13 @@ async function getHandler(req: NextRequest) {
           FROM analytics_events
           WHERE created_at >= ${startDate}
           AND user_id IS NOT NULL
-          ${targetUserId ? (Prisma as any).sql`AND user_id = ${targetUserId}::uuid` : (Prisma as any).sql``}
+          ${targetUserId ? Prisma.sql`AND user_id = ${targetUserId}::uuid` : Prisma.empty}
           GROUP BY user_id, DATE(created_at)
         ) user_visits
         GROUP BY DATE(first_visit)
         ORDER BY cohort_date DESC
         LIMIT 30
-      ` as any[];
+      ` as Array<{ cohort_date: Date; total_users: bigint; day_1: bigint; day_7: bigint; day_30: bigint }>;
 
       const activeUsers = await prisma.$queryRaw`
         SELECT 'daily' as period, COUNT(DISTINCT user_id) as count FROM analytics_events WHERE created_at >= NOW() - interval '1 day' AND user_id IS NOT NULL
@@ -265,7 +280,7 @@ async function getHandler(req: NextRequest) {
         SELECT 'weekly' as period, COUNT(DISTINCT user_id) as count FROM analytics_events WHERE created_at >= NOW() - interval '7 days' AND user_id IS NOT NULL
         UNION ALL
         SELECT 'monthly' as period, COUNT(DISTINCT user_id) as count FROM analytics_events WHERE created_at >= NOW() - interval '30 days' AND user_id IS NOT NULL
-      ` as any[];
+      ` as Array<{ period: string; count: bigint }>;
 
       behaviorData.retention = {
         cohorts: retentionData,

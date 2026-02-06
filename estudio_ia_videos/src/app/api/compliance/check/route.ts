@@ -47,9 +47,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
     }
 
+    // Define slide type for mapping
+    interface ProjectSlide {
+      orderIndex: number;
+      title: string;
+      content: string;
+      duration?: number;
+      backgroundImage?: string;
+    }
+    
     // Prepara conteúdo para análise
     const projectContent = {
-      slides: project.slides.map((slide: any) => ({
+      slides: project.slides.map((slide: ProjectSlide) => ({
         number: slide.orderIndex,
         title: slide.title,
         content: slide.content,
@@ -57,8 +66,8 @@ export async function POST(req: NextRequest) {
         imageUrls: slide.backgroundImage ? [slide.backgroundImage] : [],
         audioPath: null // TODO: Extract from audioConfig if needed
       })),
-      totalDuration: (project as any).duration || 0,
-      imageUrls: project.slides.map((slide: any) => slide.backgroundImage).filter(Boolean),
+      totalDuration: (project as { duration?: number }).duration || 0,
+      imageUrls: project.slides.map((slide: ProjectSlide) => slide.backgroundImage).filter(Boolean),
       audioFiles: []
     }
 

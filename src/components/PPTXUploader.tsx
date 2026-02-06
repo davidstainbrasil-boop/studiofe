@@ -95,17 +95,22 @@ export default function PPTXUploader() {
       }
     }, 2000); // Verificar a cada 2 segundos
 
-    // Parar polling após 10 minutos
-    setTimeout(
-      () => {
-        clearInterval(pollInterval);
-        if (uploading) {
-          setStatus('Timeout: Processamento demorou demais');
-          setUploading(false);
-        }
-      },
-      10 * 60 * 1000,
-    );
+    // Parar polling após 10 minutos - usar AbortController para produção
+    const timeoutController = new AbortController();
+    const timeoutId = setTimeout(() => {
+      timeoutController.abort();
+      clearInterval(pollInterval);
+      if (uploading) {
+        setStatus('Timeout: Processamento demorou demais');
+        setUploading(false);
+      }
+    }, 10 * 60 * 1000);
+
+    // Limpar timeout quando completar
+    const originalCleanup = () => {
+      clearTimeout(timeoutId);
+      timeoutController.abort();
+    };
   };
 
   const getStatusMessage = (status: string): string => {

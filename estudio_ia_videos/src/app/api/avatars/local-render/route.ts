@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
               errorDetails: { stack: error.stack }
             } as any
           }
-        }).catch((err: any) => logger.error('Erro ao atualizar job falho', err instanceof Error ? err : new Error(String(err)), { component: 'API: avatars/local-render' }));
+        }).catch((err: unknown) => logger.error('Erro ao atualizar job falho', err instanceof Error ? err : new Error(String(err)), { component: 'API: avatars/local-render' }));
       });
 
     return NextResponse.json({
@@ -224,7 +224,13 @@ async function processAvatarRendering(
   const renderer = new LocalAvatarRenderer();
 
   // Helper para atualizar job com fallback
-  const updateJob = async (data: any) => {
+  interface JobUpdateData {
+    status?: string;
+    progress?: number;
+    jobData?: Record<string, unknown>;
+    errorMessage?: string | null;
+  }
+  const updateJob = async (data: JobUpdateData) => {
     try {
       await (prisma as any).processing_queue.update({
         where: { id: jobId },

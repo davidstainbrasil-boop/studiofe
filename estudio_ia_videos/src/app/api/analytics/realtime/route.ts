@@ -7,6 +7,11 @@ import { withAnalytics } from '@lib/analytics/api-performance-middleware';
 import { Prisma } from '@prisma/client';
 import { logger } from '@lib/logger';
 
+// Type definitions
+interface TimelineItem { minute: string; events: bigint; errors: bigint; }
+interface CategoryGroup { eventType: string; _count: { id: number }; }
+interface RecentEventRaw { id: string; eventType: string; eventData: Record<string, unknown> | null; createdAt: Date; userId: string | null; }
+
 /**
  * GET /api/analytics/realtime
  * Retorna métricas em tempo real do sistema
@@ -44,7 +49,7 @@ async function getHandler(req: NextRequest) {
         startTime.setMinutes(now.getMinutes() - 15);
     }
 
-    const whereClause: any = {
+    const whereClause: Prisma.analytics_eventsWhereInput = {
       createdAt: { gte: startTime },
       ...(organizationId && { 
         eventData: {
@@ -111,7 +116,7 @@ async function getHandler(req: NextRequest) {
           COUNT(CASE WHEN event_data->>'status' = 'error' THEN 1 END) as errors
         FROM "AnalyticsEvent" 
         WHERE created_at >= ${startTime}
-        ${organizationId ? (Prisma as any).sql`AND event_data->>'organizationId' = ${organizationId}` : (Prisma as any).sql``}
+        ${organizationId ? Prisma.sql`AND event_data->>'organizationId' = ${organizationId}` : Prisma.empty}
         GROUP BY minute
         ORDER BY minute DESC
         LIMIT 60
@@ -136,7 +141,7 @@ async function getHandler(req: NextRequest) {
           FROM "AnalyticsEvent"
           WHERE created_at >= ${startTime}
           AND event_data->>'duration' IS NOT NULL
-          ${organizationId ? (Prisma as any).sql`AND event_data->>'organizationId' = ${organizationId}` : (Prisma as any).sql``}
+          ${organizationId ? Prisma.sql`AND event_data->>'organizationId' = ${organizationId}` : Prisma.empty}
         `;
         
         const avgDuration = avgDurationResult[0]?.avg_duration || 0;
@@ -175,7 +180,7 @@ async function getHandler(req: NextRequest) {
     const errorRate = totalEvents > 0 ? (errorEvents / totalEvents * 100).toFixed(2) : '0';
 
     // Processar dados de timeline
-    const timeline = (eventsByMinute as unknown as Array<Record<string, unknown>>).map((item: any) => ({
+    const timeline = (eventsByMinute as unknown as Array<TimelineItem>).map((item: TimelineItem) => ({
       time: String(item.minute),
       events: Number(item.events),
       errors: Number(item.errors)
@@ -184,7 +189,7 @@ async function getHandler(req: NextRequest) {
     // Calcular tendências (comparar com período anterior)
     const previousStartTime = new Date(startTime.getTime() - (now.getTime() - startTime.getTime()));
     
-    const previousWhereClause: any = {
+    const previousWhereClause: Prisma.analytics_eventsWhereInput = {
       createdAt: { 
         gte: previousStartTime,
         lt: startTime
@@ -273,7 +278,7 @@ async function getHandler(req: NextRequest) {
         }
       },
       timeline,
-      topCategories: topCategories.map((item: any) => ({
+      topCategories: topCategories.map((item: CategoryGroup) => ({
         category: item.eventType,
         count: item._count.id,
         percentage: totalEvents > 0 ? ((item._count.id / totalEvents) * 100).toFixed(1) : '0'
@@ -285,15 +290,15 @@ async function getHandler(req: NextRequest) {
         responseTime: Math.round(systemHealth.responseTime),
         throughput: systemHealth.throughput
       },
-      recentEvents: recentEvents.map((event: any) => {
+      recentEvents: recentEvents.map((event: RecentEventRaw) => {
         const data = (event.eventData as Record<string, unknown>) || {};
         return {
           id: event.id,
           category: event.eventType,
-          action: data.action || 'unknown',
-          label: data.label || '',
-          status: data.status || 'success',
-          duration: data.duration || 0,
+          action: (data.action as string) || 'unknown',
+          label: (data.label as string) || '',
+          status: (data.status as string) || 'success',
+          duration: (data.duration as number) || 0,
           createdAt: event.createdAt,
           userId: event.userId,
           timeAgo: Math.round((now.getTime() - new Date(event.createdAt).getTime()) / 1000) // segundos atrás
@@ -345,7 +350,21 @@ async function postHandler(req: NextRequest) {
     const organizationId = session?.user ? getOrgId(session.user) : null;
 
     // Processar eventos em lote
-    const processedEvents = (events as unknown as Array<Record<string, unknown>>).map((event: any) => ({
+    interface RealtimeEventInput {
+      userId?: string;
+      category?: string;
+      action?: string;
+      label?: string;
+      duration?: number;
+      fileSize?: number;
+      value?: number;
+      status?: string;
+      errorCode?: string;
+      errorMessage?: string;
+      metadata?: Record<string, unknown>;
+    }
+    
+    const processedEvents = (events as unknown as RealtimeEventInput[]).map((event: RealtimeEventInput) => ({
       id: crypto.randomUUID(),
       userId: (event.userId as string) || userId,
       eventType: (event.category as string) || 'realtime',

@@ -46,8 +46,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Prepare minimal slides for test
+    interface SlideInput {
+      id?: string;
+      elements?: SlideElement[];
+      content?: string;
+      title?: string;
+      duration?: number;
+    }
     const testSlides: Slide[] = slides?.length > 0 
-      ? slides.map((s: any, index: number) => ({
+      ? slides.map((s: SlideInput, index: number) => ({
           id: s.id || `test-slide-${index}`,
           number: index + 1,
           order_index: index,

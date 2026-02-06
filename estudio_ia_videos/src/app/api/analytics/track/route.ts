@@ -107,7 +107,9 @@ async function getHandler(req: NextRequest) {
       }
     });
 
-    const formattedStats = stats.reduce((acc: Record<string, number>, curr: any) => {
+    interface EventTypeGroup { eventType: string; _count: { id: number }; }
+    
+    const formattedStats = stats.reduce((acc: Record<string, number>, curr: EventTypeGroup) => {
       acc[curr.eventType] = curr._count.id;
       return acc;
     }, {} as Record<string, number>);

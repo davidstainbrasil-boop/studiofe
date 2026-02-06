@@ -160,7 +160,7 @@ async function callWhisperAPI(
 /**
  * Helper function to parse transcription into subtitles
  */
-function parseTranscription(transcription: any): Array<{
+function parseTranscription(transcription: unknown): Array<{
   id: number
   startTime: number
   endTime: number

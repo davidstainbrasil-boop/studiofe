@@ -67,7 +67,7 @@ async function getHandler(req: NextRequest) {
     }
 
     // Listar alertas
-    const whereClause: any = {
+    const whereClause: Prisma.analytics_eventsWhereInput = {
       eventType: 'alert',
       ...(organizationId && { 
         eventData: {
@@ -80,7 +80,7 @@ async function getHandler(req: NextRequest) {
     if (status !== 'all') {
       // We need to be careful with merging filters on eventData
       // Using AND is safer when multiple filters on the same JSON field are needed
-      const statusFilter: any = {
+      const statusFilter: Prisma.analytics_eventsWhereInput = {
         eventData: {
           path: ['status'],
           equals: status
@@ -89,9 +89,9 @@ async function getHandler(req: NextRequest) {
       
       if (whereClause.AND) {
         if (Array.isArray(whereClause.AND)) {
-          (whereClause.AND as any[]).push(statusFilter);
+          (whereClause.AND as Prisma.analytics_eventsWhereInput[]).push(statusFilter);
         } else {
-          whereClause.AND = [whereClause.AND as any, statusFilter];
+          whereClause.AND = [whereClause.AND as Prisma.analytics_eventsWhereInput, statusFilter];
         }
       } else {
         whereClause.AND = [statusFilter];
@@ -99,7 +99,7 @@ async function getHandler(req: NextRequest) {
     }
 
     if (severity !== 'all') {
-      const severityFilter: any = {
+      const severityFilter: Prisma.analytics_eventsWhereInput = {
         eventData: {
           path: ['severity'],
           equals: severity
@@ -108,9 +108,9 @@ async function getHandler(req: NextRequest) {
 
       if (whereClause.AND) {
         if (Array.isArray(whereClause.AND)) {
-          (whereClause.AND as any[]).push(severityFilter);
+          (whereClause.AND as Prisma.analytics_eventsWhereInput[]).push(severityFilter);
         } else {
-          whereClause.AND = [whereClause.AND as any, severityFilter];
+          whereClause.AND = [whereClause.AND as Prisma.analytics_eventsWhereInput, severityFilter];
         }
       } else {
         whereClause.AND = [severityFilter];
@@ -199,7 +199,14 @@ async function getHandler(req: NextRequest) {
       })
     ]);
 
-    const formattedAlerts = alerts.map((alert: any) => {
+    interface AlertRecord {
+      id: string;
+      eventData: Record<string, unknown> | null;
+      userId: string | null;
+      createdAt: Date;
+    }
+    
+    const formattedAlerts = alerts.map((alert: AlertRecord) => {
       const data = (alert.eventData as unknown as AlertEventData) || {};
 
       const valueFromData = typeof data.value === 'number'

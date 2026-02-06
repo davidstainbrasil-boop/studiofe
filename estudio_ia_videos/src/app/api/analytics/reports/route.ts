@@ -57,8 +57,10 @@ async function getHandler(req: NextRequest) {
         }
       });
 
+      interface ReportEvent { id: string; eventData: Record<string, unknown>; createdAt: Date; }
+      
       return NextResponse.json({
-        reports: reports.map((report: any) => {
+        reports: reports.map((report: ReportEvent) => {
           const data = report.eventData as Record<string, unknown>;
           return {
             id: report.id,

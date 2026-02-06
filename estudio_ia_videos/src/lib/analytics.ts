@@ -1,9 +1,13 @@
 /**
  * Analytics Service Module
- * Handles tracking and analytics
+ * Handles tracking and analytics with REAL backend integration
  * 
- * TODO: Implement real analytics with proper backend
+ * Uses the analytics metrics system for persistent tracking
  */
+
+import { Analytics as RealAnalytics } from './analytics/analytics';
+import { metricsSystem } from './analytics/analytics-metrics-system';
+import { logger } from './logger';
 
 export interface AnalyticsEvent {
   name: string;
@@ -33,45 +37,73 @@ class AnalyticsService {
   private isInitialized = false;
   private userId?: string;
   private sessionId?: string;
+  private debug = false;
 
   init(options: { apiKey?: string; debug?: boolean } = {}): void {
-    console.warn('[Analytics] init called', options);
+    this.debug = options.debug || false;
     this.isInitialized = true;
-    this.sessionId = `session_${Date.now()}`;
+    this.sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    if (this.debug) {
+      logger.info('Analytics initialized', { sessionId: this.sessionId });
+    }
   }
 
   identify(identity: UserIdentity): void {
     if (!this.isInitialized) {
-      console.warn('[Analytics] Not initialized');
-      return;
+      this.init();
     }
     this.userId = identity.userId;
-    console.warn('[Analytics] identify not implemented', identity);
+    
+    // Track user identification
+    RealAnalytics.trackEvent('user_identified', {
+      userId: identity.userId,
+      email: identity.email,
+      name: identity.name,
+      ...identity.traits
+    });
+    
+    if (this.debug) {
+      logger.info('User identified', { userId: identity.userId });
+    }
   }
 
   track(event: AnalyticsEvent): void {
     if (!this.isInitialized) {
-      console.warn('[Analytics] Not initialized');
-      return;
+      this.init();
     }
-    console.warn('[Analytics] track not implemented', {
-      ...event,
+    
+    // Use real analytics backend
+    RealAnalytics.trackEvent(event.name, {
+      category: event.category,
+      ...event.properties,
       userId: this.userId,
       sessionId: this.sessionId,
-      timestamp: event.timestamp || new Date()
+      timestamp: (event.timestamp || new Date()).toISOString()
     });
+    
+    if (this.debug) {
+      logger.info('Event tracked', { event: event.name, category: event.category });
+    }
   }
 
   page(pageView: PageView): void {
     if (!this.isInitialized) {
-      console.warn('[Analytics] Not initialized');
-      return;
+      this.init();
     }
-    console.warn('[Analytics] page not implemented', {
-      ...pageView,
+    
+    // Track page view as event
+    RealAnalytics.trackEvent('page_view', {
+      path: pageView.path,
+      title: pageView.title,
+      referrer: pageView.referrer,
       userId: this.userId,
       sessionId: this.sessionId
     });
+    
+    if (this.debug) {
+      logger.info('Page view tracked', { path: pageView.path });
+    }
   }
 
   trackEvent(name: string, properties?: Record<string, unknown>): void {
@@ -105,9 +137,18 @@ class AnalyticsService {
     });
   }
 
+  // Real metrics access
+  async getMetrics(filters: { startDate?: Date; endDate?: Date; eventTypes?: string[] } = {}) {
+    return metricsSystem.getMetrics(filters);
+  }
+
   reset(): void {
     this.userId = undefined;
-    console.warn('[Analytics] reset called');
+    this.sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    if (this.debug) {
+      logger.info('Analytics session reset', { newSessionId: this.sessionId });
+    }
   }
 }
 

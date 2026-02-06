@@ -58,7 +58,17 @@ export async function GET(request: NextRequest) {
     
     // Buscar avatares usando Prisma em vez de Supabase Client direto
     // para garantir tipagem e consistência
-    const whereClause: any = { isActive: true };
+    interface AvatarWhereClause {
+      isActive: boolean;
+      avatar_type?: string;
+      OR?: Array<{
+        name?: { contains: string; mode: 'insensitive' };
+        displayName?: { contains: string; mode: 'insensitive' };
+        description?: { contains: string; mode: 'insensitive' };
+      }>;
+    }
+    
+    const whereClause: AvatarWhereClause = { isActive: true };
 
     if (category && category !== 'all') {
       whereClause.avatar_type = category; // Ajustado para campo correto no schema (avatar_type)

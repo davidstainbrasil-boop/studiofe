@@ -3,6 +3,28 @@ import { z } from 'zod'
 import { getSupabaseForRequest } from '@lib/supabase/server'
 import { logger } from '@lib/logger'
 
+// Type definitions for PPTX slides and timeline elements
+interface PptxSlide {
+  id: string;
+  content: string | { text?: string };
+  durationSeconds?: number;
+  background_image?: string;
+  backgroundImage?: string;
+  order_index?: number;
+}
+
+interface TimelineElement {
+  id: string;
+  type: string;
+  name: string;
+  startTime: number;
+  duration: number;
+  content: string;
+  properties: Record<string, unknown>;
+  locked: boolean;
+  visible: boolean;
+}
+
 // Schema de validação para atualização de projetos
 const UpdateProjectSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório').max(255, 'Nome muito longo').optional(),
@@ -67,10 +89,10 @@ export async function GET(
 
     // --- PPTX IMPORT ADAPTER ---
     // If project is PPTX import and no timeline exists, generate one from slides
-    // Cast to any to get around strict type checks for adapter logic
-    const projectAny = project as any;
-    const isPptxProject = projectAny.type === 'pptx' || projectAny.type === 'pptx_import';
-    let pptxSlides: any[] = [];
+    // Cast to Record to get around strict type checks for adapter logic
+    const projectRecord = project as Record<string, unknown>;
+    const isPptxProject = projectRecord.type === 'pptx' || projectRecord.type === 'pptx_import';
+    let pptxSlides: PptxSlide[] = [];
 
     if (isPptxProject) {
       const { data: slides, error: slidesError } = await supabase
@@ -82,18 +104,18 @@ export async function GET(
       if (slidesError) {
         logger.warn('Erro ao carregar slides do projeto PPTX', { error: slidesError, projectId: params.id });
       } else if (slides) {
-        pptxSlides = slides;
-        projectAny.slides = slides;
+        pptxSlides = slides as PptxSlide[];
+        projectRecord.slides = slides;
       }
     }
 
-    if (isPptxProject && (!projectAny.timeline || projectAny.timeline.length === 0) && pptxSlides.length > 0) {
+    if (isPptxProject && (!projectRecord.timeline || (projectRecord.timeline as unknown[]).length === 0) && pptxSlides.length > 0) {
       // Convert to Timeline Structure
-      const elements: any[] = [];
-      const imageElements: any[] = [];
+      const elements: TimelineElement[] = [];
+      const imageElements: TimelineElement[] = [];
       let currentTime = 0;
 
-      pptxSlides.forEach((slide: any, index: number) => {
+      pptxSlides.forEach((slide: PptxSlide, index: number) => {
         const duration = slide.durationSeconds || 5;
         const slideContent = typeof slide.content === 'object' ? slide.content?.text : slide.content;
 
@@ -160,12 +182,12 @@ export async function GET(
       });
 
       // Mock a timeline object attached to project for the frontend
-      projectAny.timeline = [{
+      projectRecord.timeline = [{
         id: 'virtual-timeline',
         projectId: project.id,
         tracks: tracks,
         totalDuration: currentTime,
-        settings: projectAny.settings || { resolution: { width: 1920, height: 1080 }, fps: 30 }
+        settings: projectRecord.settings || { resolution: { width: 1920, height: 1080 }, fps: 30 }
       }];
     }
 

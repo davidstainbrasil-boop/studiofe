@@ -347,11 +347,12 @@ export async function GET(req: NextRequest) {
     const supabase = await createClient();
 
     // Look up certificate - using any cast as table is created via migration
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase dynamic table query
     const { data: certificate, error } = await (supabase as any)
       .from('certificates')
       .select('*')
       .eq('certificate_number', certificateNumber)
-      .single() as { data: CertificateRecord | null; error: any };
+      .single() as { data: CertificateRecord | null; error: { message?: string; code?: string } | null };
 
     if (error || !certificate) {
       return NextResponse.json(

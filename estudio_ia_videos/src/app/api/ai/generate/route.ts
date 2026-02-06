@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     const openai = new OpenAI({ apiKey });
     const model = parameters?.model || 'gpt-4o'; // Usar modelo mais recente se disponível
 
-    let content: any;
+    let content: string | null = null;
     let analysis = {
         quality: 0,
         engagement: 0,
