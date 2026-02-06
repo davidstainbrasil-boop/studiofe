@@ -44,6 +44,19 @@ export interface SlideData {
   audioUrl?: string;
   backgroundColor?: string;
   backgroundImage?: string;
+  avatarVideoPath?: string;
+}
+
+export type PIPPosition = 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
+
+export interface PIPConfig {
+  position: PIPPosition;
+  /** Size as fraction of canvas width (0.0 - 1.0). Default: 0.25 */
+  size: number;
+  /** Margin in pixels from canvas edge. Default: 30 */
+  margin: number;
+  /** Apply circular crop mask. Default: true */
+  circularMask: boolean;
 }
 
 export interface RenderResult {
@@ -111,13 +124,119 @@ async function generateSlideImage(
   }
 }
 
+const DEFAULT_PIP: PIPConfig = {
+  position: 'bottom-right',
+  size: 0.25,
+  margin: 30,
+  circularMask: true,
+};
+
+/**
+ * Composite a talking-head avatar video as PIP overlay on a slide image.
+ * Outputs a video segment for this slide (slide background + avatar PIP + audio).
+ */
+async function compositeSlideWithAvatar(
+  slideImagePath: string,
+  avatarVideoPath: string,
+  audioPath: string | null,
+  duration: number,
+  outputPath: string,
+  config: RenderConfig,
+  pip: PIPConfig = DEFAULT_PIP,
+): Promise<boolean> {
+  try {
+    const { width, height } = config;
+    const pipSize = Math.round(width * pip.size);
+    const margin = pip.margin;
+
+    // Calculate PIP position
+    let xPos: number;
+    let yPos: number;
+    switch (pip.position) {
+      case 'bottom-right':
+        xPos = width - pipSize - margin;
+        yPos = height - pipSize - margin;
+        break;
+      case 'bottom-left':
+        xPos = margin;
+        yPos = height - pipSize - margin;
+        break;
+      case 'top-right':
+        xPos = width - pipSize - margin;
+        yPos = margin;
+        break;
+      case 'top-left':
+        xPos = margin;
+        yPos = margin;
+        break;
+    }
+
+    // Build FFmpeg filter for PIP overlay
+    // Input 0: slide image (looped), Input 1: avatar video
+    let filterComplex: string;
+
+    if (pip.circularMask) {
+      // Circular mask: scale avatar, create circle mask, apply mask, overlay on slide
+      const radius = Math.round(pipSize / 2);
+      filterComplex = [
+        // Loop slide image for the duration
+        `[0:v]loop=loop=-1:size=1:start=0,trim=duration=${duration},setpts=PTS-STARTPTS,scale=${width}:${height},format=yuv420p[bg]`,
+        // Scale avatar video and crop to square
+        `[1:v]scale=${pipSize}:${pipSize}:force_original_aspect_ratio=decrease,pad=${pipSize}:${pipSize}:(ow-iw)/2:(oh-ih)/2,setpts=PTS-STARTPTS[avatar_scaled]`,
+        // Create circular mask
+        `color=black:s=${pipSize}x${pipSize},format=yuva420p,` +
+          `geq=lum='lum(X,Y)':a='if(lt(pow(X-${radius},2)+pow(Y-${radius},2),pow(${radius}-4,2)),255,0)'[circle_mask]`,
+        // Apply mask to avatar
+        `[avatar_scaled][circle_mask]alphamerge[avatar_circle]`,
+        // White border circle (slightly larger)
+        `color=white:s=${pipSize}x${pipSize},format=yuva420p,` +
+          `geq=lum='lum(X,Y)':a='if(lt(pow(X-${radius},2)+pow(Y-${radius},2),pow(${radius},2)),if(lt(pow(X-${radius},2)+pow(Y-${radius},2),pow(${radius}-4,2)),0,255),0)'[border]`,
+        // Overlay border then avatar on background
+        `[bg][border]overlay=${xPos}:${yPos}:shortest=1[with_border]`,
+        `[with_border][avatar_circle]overlay=${xPos}:${yPos}:shortest=1[out]`,
+      ].join(';');
+    } else {
+      // Rectangular PIP (simpler)
+      filterComplex = [
+        `[0:v]loop=loop=-1:size=1:start=0,trim=duration=${duration},setpts=PTS-STARTPTS,scale=${width}:${height},format=yuv420p[bg]`,
+        `[1:v]scale=${pipSize}:-1,setpts=PTS-STARTPTS[avatar_scaled]`,
+        `[bg][avatar_scaled]overlay=${xPos}:${yPos}:shortest=1[out]`,
+      ].join(';');
+    }
+
+    let cmd = `ffmpeg -y -i '${slideImagePath}' -i '${avatarVideoPath}' `;
+
+    if (audioPath && existsSync(audioPath)) {
+      cmd += `-i '${audioPath}' `;
+    }
+
+    cmd += `-filter_complex "${filterComplex}" -map "[out]" `;
+
+    if (audioPath && existsSync(audioPath)) {
+      cmd += `-map 2:a -c:a aac -b:a ${config.audioBitrate} `;
+    } else {
+      cmd += `-an `;
+    }
+
+    cmd += `-c:v libx264 -preset medium -b:v ${config.videoBitrate} `;
+    cmd += `-t ${duration} -movflags +faststart '${outputPath}'`;
+
+    await execAsync(cmd, { timeout: PIPELINE_TIMEOUTS.slideComposition });
+    return existsSync(outputPath);
+  } catch (error) {
+    console.error('[Render] PIP compositing error:', error);
+    return false;
+  }
+}
+
 /**
  * Renderiza um vídeo a partir de slides
  */
 export async function renderVideo(
   slides: SlideData[],
   projectId: string,
-  config: Partial<RenderConfig> = {}
+  config: Partial<RenderConfig> = {},
+  pipConfig?: Partial<PIPConfig>
 ): Promise<RenderResult> {
   await ensureDirectories();
   
@@ -148,78 +267,158 @@ export async function renderVideo(
       throw new Error('Nenhum slide foi gerado');
     }
 
-    // 2. Criar arquivo de input para concat
-    const concatFilePath = join(jobDir, 'concat.txt');
-    let concatContent = '';
-    
-    for (let i = 0; i < slideImages.length; i++) {
-      const duration = slideDurations[i];
-      concatContent += `file '${slideImages[i]}'\n`;
-      concatContent += `duration ${duration}\n`;
-    }
-    // Adicionar último frame novamente para evitar corte
-    concatContent += `file '${slideImages[slideImages.length - 1]}'\n`;
-    
-    await writeFile(concatFilePath, concatContent);
+    const hasAnyAvatar = slides.some((s) => s.avatarVideoPath);
+    const mergedPip = { ...DEFAULT_PIP, ...pipConfig };
 
-    // 3. Combinar áudios se existirem
-    const audioUrls = slides.filter(s => s.audioUrl).map(s => s.audioUrl);
-    let audioPath: string | null = null;
-    
-    if (audioUrls.length > 0) {
-      // Criar lista de áudios para concat
-      const audioListPath = join(jobDir, 'audio_list.txt');
-      const audioPaths: string[] = [];
-      
-      for (let i = 0; i < audioUrls.length; i++) {
-        const audioUrl = audioUrls[i]!;
-        if (audioUrl.startsWith('/')) {
-          const localAudioPath = join(process.cwd(), 'public', audioUrl);
-          if (existsSync(localAudioPath)) {
-            audioPaths.push(localAudioPath);
-          }
-        }
+    // Resolve per-slide audio paths
+    const resolveAudioPath = (audioUrl?: string): string | null => {
+      if (!audioUrl) return null;
+      if (audioUrl.startsWith('/')) {
+        const localPath = join(process.cwd(), 'public', audioUrl);
+        return existsSync(localPath) ? localPath : null;
       }
-
-      if (audioPaths.length > 0) {
-        const audioListContent = audioPaths.map(p => `file '${p}'`).join('\n');
-        await writeFile(audioListPath, audioListContent);
-        
-        audioPath = join(jobDir, 'combined_audio.mp3');
-        const audioConcatCmd = `ffmpeg -y -f concat -safe 0 -i '${audioListPath}' -c copy '${audioPath}'`;
-        
-        try {
-          await execAsync(audioConcatCmd, { timeout: 120000 });
-        } catch {
-          audioPath = null;
-        }
-      }
-    }
+      return null;
+    };
 
     // 4. Renderizar vídeo final
     const outputFileName = `${projectId}_${Date.now()}.${finalConfig.format}`;
     const outputPath = join(OUTPUT_DIR, outputFileName);
     const outputUrl = `/videos/${outputFileName}`;
 
-    let ffmpegCmd = `ffmpeg -y -f concat -safe 0 -i '${concatFilePath}' `;
-    
-    if (audioPath && existsSync(audioPath)) {
-      ffmpegCmd += `-i '${audioPath}' `;
-    }
-    
-    ffmpegCmd += `-vf "scale=${finalConfig.width}:${finalConfig.height}:force_original_aspect_ratio=decrease,pad=${finalConfig.width}:${finalConfig.height}:(ow-iw)/2:(oh-ih)/2,format=yuv420p" `;
-    ffmpegCmd += `-c:v libx264 -preset medium -b:v ${finalConfig.videoBitrate} `;
-    
-    if (audioPath && existsSync(audioPath)) {
-      ffmpegCmd += `-c:a aac -b:a ${finalConfig.audioBitrate} `;
-    } else {
-      ffmpegCmd += `-an `;
-    }
-    
-    ffmpegCmd += `-movflags +faststart '${outputPath}'`;
+    if (hasAnyAvatar) {
+      // === PIP PATH: render per-slide segments, then concatenate ===
+      console.log(`[Render] PIP mode: rendering ${slides.length} slide segments with avatar overlay`);
 
-    console.log(`[Render] Executando FFmpeg...`);
-    await execAsync(ffmpegCmd, { timeout: PIPELINE_TIMEOUTS.slideComposition }); // Centralized timeout
+      const segmentPaths: string[] = [];
+
+      for (let i = 0; i < slides.length; i++) {
+        const slide = slides[i];
+        const segmentPath = join(jobDir, `segment_${i.toString().padStart(3, '0')}.mp4`);
+        const slideAudioPath = resolveAudioPath(slide.audioUrl);
+
+        if (slide.avatarVideoPath && existsSync(slide.avatarVideoPath)) {
+          // Render slide + avatar PIP
+          const success = await compositeSlideWithAvatar(
+            slideImages[i],
+            slide.avatarVideoPath,
+            slideAudioPath,
+            slideDurations[i],
+            segmentPath,
+            finalConfig,
+            mergedPip,
+          );
+
+          if (success) {
+            segmentPaths.push(segmentPath);
+            continue;
+          }
+          // Fall through to static rendering if compositing fails
+          console.warn(`[Render] PIP compositing failed for slide ${i}, using static fallback`);
+        }
+
+        // Static slide (no avatar or compositing failed)
+        let staticCmd = `ffmpeg -y -loop 1 -i '${slideImages[i]}' `;
+        if (slideAudioPath) {
+          staticCmd += `-i '${slideAudioPath}' `;
+        }
+        staticCmd += `-vf "scale=${finalConfig.width}:${finalConfig.height}:force_original_aspect_ratio=decrease,pad=${finalConfig.width}:${finalConfig.height}:(ow-iw)/2:(oh-ih)/2,format=yuv420p" `;
+        staticCmd += `-c:v libx264 -preset medium -b:v ${finalConfig.videoBitrate} `;
+        if (slideAudioPath) {
+          staticCmd += `-c:a aac -b:a ${finalConfig.audioBitrate} -shortest `;
+        } else {
+          staticCmd += `-t ${slideDurations[i]} -an `;
+        }
+        staticCmd += `-movflags +faststart '${segmentPath}'`;
+
+        await execAsync(staticCmd, { timeout: PIPELINE_TIMEOUTS.slideComposition });
+        if (existsSync(segmentPath)) {
+          segmentPaths.push(segmentPath);
+        }
+      }
+
+      if (segmentPaths.length === 0) {
+        throw new Error('Nenhum segmento foi gerado');
+      }
+
+      // Concatenate all segments
+      const segConcatPath = join(jobDir, 'segments_concat.txt');
+      const segConcatContent = segmentPaths.map((p) => `file '${p}'`).join('\n');
+      await writeFile(segConcatPath, segConcatContent);
+
+      const concatCmd = `ffmpeg -y -f concat -safe 0 -i '${segConcatPath}' -c copy -movflags +faststart '${outputPath}'`;
+      console.log(`[Render] Concatenating ${segmentPaths.length} segments...`);
+      await execAsync(concatCmd, { timeout: PIPELINE_TIMEOUTS.slideComposition });
+
+    } else {
+      // === ORIGINAL PATH: static slide concat (unchanged behavior) ===
+
+      // 2. Criar arquivo de input para concat
+      const concatFilePath = join(jobDir, 'concat.txt');
+      let concatContent = '';
+
+      for (let i = 0; i < slideImages.length; i++) {
+        const duration = slideDurations[i];
+        concatContent += `file '${slideImages[i]}'\n`;
+        concatContent += `duration ${duration}\n`;
+      }
+      // Adicionar último frame novamente para evitar corte
+      concatContent += `file '${slideImages[slideImages.length - 1]}'\n`;
+
+      await writeFile(concatFilePath, concatContent);
+
+      // 3. Combinar áudios se existirem
+      const audioUrls = slides.filter(s => s.audioUrl).map(s => s.audioUrl);
+      let audioPath: string | null = null;
+
+      if (audioUrls.length > 0) {
+        const audioListPath = join(jobDir, 'audio_list.txt');
+        const audioPaths: string[] = [];
+
+        for (let i = 0; i < audioUrls.length; i++) {
+          const audioUrl = audioUrls[i]!;
+          if (audioUrl.startsWith('/')) {
+            const localAudioPath = join(process.cwd(), 'public', audioUrl);
+            if (existsSync(localAudioPath)) {
+              audioPaths.push(localAudioPath);
+            }
+          }
+        }
+
+        if (audioPaths.length > 0) {
+          const audioListContent = audioPaths.map(p => `file '${p}'`).join('\n');
+          await writeFile(audioListPath, audioListContent);
+
+          audioPath = join(jobDir, 'combined_audio.mp3');
+          const audioConcatCmd = `ffmpeg -y -f concat -safe 0 -i '${audioListPath}' -c copy '${audioPath}'`;
+
+          try {
+            await execAsync(audioConcatCmd, { timeout: 120000 });
+          } catch {
+            audioPath = null;
+          }
+        }
+      }
+
+      let ffmpegCmd = `ffmpeg -y -f concat -safe 0 -i '${concatFilePath}' `;
+
+      if (audioPath && existsSync(audioPath)) {
+        ffmpegCmd += `-i '${audioPath}' `;
+      }
+
+      ffmpegCmd += `-vf "scale=${finalConfig.width}:${finalConfig.height}:force_original_aspect_ratio=decrease,pad=${finalConfig.width}:${finalConfig.height}:(ow-iw)/2:(oh-ih)/2,format=yuv420p" `;
+      ffmpegCmd += `-c:v libx264 -preset medium -b:v ${finalConfig.videoBitrate} `;
+
+      if (audioPath && existsSync(audioPath)) {
+        ffmpegCmd += `-c:a aac -b:a ${finalConfig.audioBitrate} `;
+      } else {
+        ffmpegCmd += `-an `;
+      }
+
+      ffmpegCmd += `-movflags +faststart '${outputPath}'`;
+
+      console.log(`[Render] Executando FFmpeg...`);
+      await execAsync(ffmpegCmd, { timeout: PIPELINE_TIMEOUTS.slideComposition });
+    }
 
     // 5. Verificar resultado
     if (!existsSync(outputPath)) {
@@ -334,6 +533,7 @@ export const FFmpegRenderer = {
   checkFFmpeg,
   getVideoInfo,
   DEFAULT_CONFIG,
+  DEFAULT_PIP,
 };
 
 export default FFmpegRenderer;

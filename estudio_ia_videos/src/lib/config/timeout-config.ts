@@ -14,6 +14,8 @@ interface TimeoutConfig {
   slideComposition: number;
   ttsPerSlide: number;
   ttsBatch: number;
+  avatarPerSlide: number;
+  avatarBatch: number;
   storageUpload: number;
   storageDownload: number;
 }
@@ -51,6 +53,8 @@ const DEFAULT_TIMEOUTS: TimeoutConfig = {
   slideComposition: 5 * 60 * 1000,  // 5 minutes - FFmpeg slide composition
   ttsPerSlide: 60 * 1000,            // 60 seconds - single TTS request
   ttsBatch: 3 * 60 * 1000,           // 3 minutes - batch TTS processing
+  avatarPerSlide: 180 * 1000,        // 3 minutes - single talking head generation
+  avatarBatch: 20 * 60 * 1000,       // 20 minutes - batch avatar processing
   storageUpload: 10 * 60 * 1000,     // 10 minutes - video file upload
   storageDownload: 5 * 60 * 1000,    // 5 minutes - file download
 };
@@ -63,6 +67,8 @@ export const PIPELINE_TIMEOUTS: TimeoutConfig = {
   slideComposition: parseTimeout('SLIDE_COMPOSITION_TIMEOUT_MS', DEFAULT_TIMEOUTS.slideComposition, 'Slide Composition'),
   ttsPerSlide: parseTimeout('TTS_PER_SLIDE_TIMEOUT_MS', DEFAULT_TIMEOUTS.ttsPerSlide, 'TTS Per Slide'),
   ttsBatch: parseTimeout('TTS_BATCH_TIMEOUT_MS', DEFAULT_TIMEOUTS.ttsBatch, 'TTS Batch'),
+  avatarPerSlide: parseTimeout('AVATAR_PER_SLIDE_TIMEOUT_MS', DEFAULT_TIMEOUTS.avatarPerSlide, 'Avatar Per Slide'),
+  avatarBatch: parseTimeout('AVATAR_BATCH_TIMEOUT_MS', DEFAULT_TIMEOUTS.avatarBatch, 'Avatar Batch'),
   storageUpload: parseTimeout('STORAGE_UPLOAD_TIMEOUT_MS', DEFAULT_TIMEOUTS.storageUpload, 'Storage Upload'),
   storageDownload: parseTimeout('STORAGE_DOWNLOAD_TIMEOUT_MS', DEFAULT_TIMEOUTS.storageDownload, 'Storage Download'),
 };
