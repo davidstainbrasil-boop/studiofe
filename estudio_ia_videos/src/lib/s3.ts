@@ -1,9 +1,11 @@
 /**
- * S3 Client
- * Cliente para interação com S3 ou storage compatível
+ * Storage Client
+ * Abstração de upload sobre Supabase Storage.
+ * Substitui antigo S3 placeholder por integração real.
  */
 
 import { logger } from '@lib/logger';
+import { supabaseAdmin } from '@lib/supabase/server';
 
 export interface S3UploadOptions {
   bucket: string;
@@ -15,25 +17,90 @@ export interface S3UploadOptions {
 
 export class S3Client {
   async upload(options: S3UploadOptions): Promise<string> {
-    const { bucket, key } = options;
-    logger.info(`Uploading to ${bucket}/${key}`, { component: 'S3' });
-    
-    // Placeholder - implementar com AWS SDK ou Supabase Storage
-    return `https://storage.example.com/${bucket}/${key}`;
+    const { bucket, key, body, contentType } = options;
+    logger.info('Uploading to storage', { bucket, key, component: 'Storage' });
+
+    try {
+      const buffer = typeof body === 'string' ? Buffer.from(body) : body;
+      const { error } = await supabaseAdmin
+        .storage
+        .from(bucket)
+        .upload(key, buffer, {
+          contentType: contentType || 'application/octet-stream',
+          upsert: true,
+        });
+
+      if (error) {
+        logger.error('Storage upload failed', { error: error.message, bucket, key });
+        throw new Error(`Storage upload failed: ${error.message}`);
+      }
+
+      const { data: urlData } = supabaseAdmin
+        .storage
+        .from(bucket)
+        .getPublicUrl(key);
+
+      return urlData.publicUrl;
+    } catch (err) {
+      logger.error('Storage upload error', { error: err, bucket, key });
+      throw err;
+    }
   }
-  
+
   async download(bucket: string, key: string): Promise<Buffer> {
-    logger.info(`Downloading from ${bucket}/${key}`, { component: 'S3' });
-    return Buffer.from('');
+    logger.info('Downloading from storage', { bucket, key, component: 'Storage' });
+
+    try {
+      const { data, error } = await supabaseAdmin
+        .storage
+        .from(bucket)
+        .download(key);
+
+      if (error || !data) {
+        logger.error('Storage download failed', { error: error?.message, bucket, key });
+        return Buffer.from('');
+      }
+
+      const arrayBuffer = await data.arrayBuffer();
+      return Buffer.from(arrayBuffer);
+    } catch (err) {
+      logger.error('Storage download error', { error: err, bucket, key });
+      return Buffer.from('');
+    }
   }
-  
+
   async delete(bucket: string, key: string): Promise<boolean> {
-    logger.info(`Deleting ${bucket}/${key}`, { component: 'S3' });
-    return true;
+    logger.info('Deleting from storage', { bucket, key, component: 'Storage' });
+
+    try {
+      const { error } = await supabaseAdmin
+        .storage
+        .from(bucket)
+        .remove([key]);
+
+      if (error) {
+        logger.error('Storage delete failed', { error: error.message, bucket, key });
+        return false;
+      }
+      return true;
+    } catch (err) {
+      logger.error('Storage delete error', { error: err, bucket, key });
+      return false;
+    }
   }
-  
+
   async exists(bucket: string, key: string): Promise<boolean> {
-    return false;
+    try {
+      const { data } = await supabaseAdmin
+        .storage
+        .from(bucket)
+        .list(key.split('/').slice(0, -1).join('/'), {
+          search: key.split('/').pop(),
+        });
+      return (data?.length ?? 0) > 0;
+    } catch {
+      return false;
+    }
   }
 }
 

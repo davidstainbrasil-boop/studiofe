@@ -212,6 +212,10 @@ export class TaggedCache {
     this.cleanupTimer = setInterval(() => {
       this.cleanup();
     }, this.config.cleanupInterval);
+    // Prevent this timer from keeping the Node.js process alive (important for tests)
+    if (this.cleanupTimer && typeof this.cleanupTimer.unref === 'function') {
+      this.cleanupTimer.unref();
+    }
   }
 
   /**

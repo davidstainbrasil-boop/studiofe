@@ -16,7 +16,7 @@ export const POST = withRateLimit(RATE_LIMITS.UPLOAD, 'user')(async function POS
   try {
     const session = await getServerSession();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
     }
 
     const formData = await req.formData();
@@ -25,7 +25,7 @@ export const POST = withRateLimit(RATE_LIMITS.UPLOAD, 'user')(async function POS
     const bucket = formData.get('bucket') as string || DEFAULT_BUCKET;
 
     if (!file) {
-      return NextResponse.json({ error: 'No file provided' }, { status: 400 });
+      return NextResponse.json({ error: 'No file provided', code: 'FILE_MISSING' }, { status: 400 });
     }
 
     // Generate path with userId for isolation
@@ -40,7 +40,7 @@ export const POST = withRateLimit(RATE_LIMITS.UPLOAD, 'user')(async function POS
     const limitCheck = await checkLimit(session.user.id, 'storage', file.size);
 
     if (!limitCheck.allowed) {
-      return NextResponse.json({ error: 'Storage limit exceeded' }, { status: 402 });
+      return NextResponse.json({ error: 'Storage limit exceeded', code: 'STORAGE_LIMIT_EXCEEDED' }, { status: 402 });
     }
 
     const publicUrl = await storageSystem.upload({
@@ -71,7 +71,7 @@ export const POST = withRateLimit(RATE_LIMITS.UPLOAD, 'user')(async function POS
       size: file.size 
     });
   } catch (error: unknown) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : String(error) }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : String(error), code: 'UPLOAD_FAILED' }, { status: 500 });
   }
 });
 
@@ -79,7 +79,7 @@ export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
     }
 
     const { searchParams } = new URL(req.url);
@@ -89,7 +89,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ files });
   } catch (error: unknown) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : String(error) }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : String(error), code: 'LIST_FILES_FAILED' }, { status: 500 });
   }
 }
 

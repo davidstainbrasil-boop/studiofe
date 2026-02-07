@@ -1,9 +1,10 @@
 /**
- * S3 Upload Engine
- * Motor de upload para armazenamento (S3, Supabase Storage, etc)
+ * Storage Upload Engine
+ * Motor de upload via Supabase Storage (substitui placeholder S3).
  */
 
 import { logger } from '@lib/logger';
+import { supabaseAdmin } from '@lib/supabase/server';
 
 export interface UploadOptions {
   bucket: string;
@@ -23,28 +24,67 @@ export interface UploadResult {
 export class S3UploadEngine {
   async upload(options: UploadOptions): Promise<UploadResult> {
     const { bucket, key, buffer, contentType = 'application/octet-stream' } = options;
-    
-    // Placeholder - integrar com S3 SDK ou Supabase Storage
-    logger.info(`[Upload] Uploading to ${bucket}/${key}`, { component: 'S3UploadEngine', size: buffer.length });
-    
-    return {
-      url: `https://storage.example.com/${bucket}/${key}`,
-      key,
-      size: buffer.length,
-    };
+
+    logger.info('Uploading to storage', { bucket, key, size: buffer.length, component: 'UploadEngine' });
+
+    try {
+      const { error } = await supabaseAdmin
+        .storage
+        .from(bucket)
+        .upload(key, buffer, {
+          contentType,
+          upsert: true,
+        });
+
+      if (error) {
+        logger.error('Upload failed', { error: error.message, bucket, key });
+        throw new Error(`Upload failed: ${error.message}`);
+      }
+
+      const { data: urlData } = supabaseAdmin
+        .storage
+        .from(bucket)
+        .getPublicUrl(key);
+
+      return {
+        url: urlData.publicUrl,
+        key,
+        size: buffer.length,
+      };
+    } catch (err) {
+      logger.error('Upload engine error', { error: err, bucket, key });
+      throw err;
+    }
   }
-  
+
   async uploadMultiple(items: UploadOptions[]): Promise<UploadResult[]> {
     return Promise.all(items.map(item => this.upload(item)));
   }
-  
+
   async delete(bucket: string, key: string): Promise<boolean> {
-    logger.info(`[Upload] Deleting ${bucket}/${key}`, { component: 'S3UploadEngine' });
-    return true;
+    logger.info('Deleting from storage', { bucket, key, component: 'UploadEngine' });
+    try {
+      const { error } = await supabaseAdmin.storage.from(bucket).remove([key]);
+      if (error) {
+        logger.error('Delete failed', { error: error.message, bucket, key });
+        return false;
+      }
+      return true;
+    } catch {
+      return false;
+    }
   }
-  
+
   async exists(bucket: string, key: string): Promise<boolean> {
-    return false;
+    try {
+      const { data } = await supabaseAdmin
+        .storage
+        .from(bucket)
+        .list(key.split('/').slice(0, -1).join('/'), { search: key.split('/').pop() });
+      return (data?.length ?? 0) > 0;
+    } catch {
+      return false;
+    }
   }
 }
 

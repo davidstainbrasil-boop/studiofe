@@ -13,19 +13,16 @@ const PRIVATE_KEY = process.env.CLOUDFRONT_PRIVATE_KEY
  * @param expiresInSeconds Duration in seconds until expiration (default: 1 hour)
  */
 export function getCloudFrontUrl(s3Key: string, expiresInSeconds: number = 3600): string {
-  // Fallback if CloudFront is not configured
+  // Fallback if CloudFront is not configured — use Supabase Storage public URL
   if (!CLOUDFRONT_DOMAIN || !KEY_PAIR_ID || !PRIVATE_KEY) {
-    logger.warn('CloudFront not configured. Returning fallback S3/Mock URL.')
-    const bucket = process.env.S3_BUCKET_NAME || 'mvp-video-storage'
-    const region = process.env.AWS_REGION || 'us-east-1'
-    
-    // If running in storage mock mode
-    if (s3Key.startsWith('mock-uploads/')) {
-        return `/api/mock-storage/${s3Key}`
+    logger.warn('CloudFront not configured. Using Supabase Storage URL.')
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    if (supabaseUrl) {
+      const bucket = 'videos'
+      return `${supabaseUrl}/storage/v1/object/public/${bucket}/${s3Key}`
     }
-
-    // Return S3 direct URL (public read assumed if no CDN) - Not ideal for prod but works for fallback
-    return `https://${bucket}.s3.${region}.amazonaws.com/${s3Key}`
+    // Absolute fallback — return path-relative URL for local dev
+    return `/api/storage/files/${encodeURIComponent(s3Key)}`
   }
 
   try {

@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     const validation = ttsSchema.safeParse(body);
 
     if (!validation.success) {
-      return NextResponse.json({ error: validation.error.format() }, { status: 400 });
+      return NextResponse.json({ error: 'Dados inválidos', code: 'VALIDATION_ERROR', details: validation.error.format() }, { status: 400 });
     }
 
     const { text, slideId } = validation.data;
@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     const ttsResponse = await TTSService.synthesize({ text });
 
     if (!ttsResponse.fileUrl) {
-      return NextResponse.json({ error: 'TTS generation failed.' }, { status: 500 });
+      return NextResponse.json({ error: 'Falha na geração TTS', code: 'TTS_GENERATION_FAILED' }, { status: 500 });
     }
 
     return NextResponse.json({
@@ -34,7 +34,7 @@ export async function POST(request: Request) {
   } catch (error) {
     logger.error('TTS API Error', error instanceof Error ? error : new Error(String(error))
 , { component: 'API: tts' });
-    return NextResponse.json({ error: 'An unexpected error occurred.' }, { status: 500 });
+    return NextResponse.json({ error: 'Erro interno do servidor', code: 'INTERNAL_ERROR' }, { status: 500 });
   }
 }
 // Force dynamic rendering for this API route

@@ -16,7 +16,7 @@ export async function GET(
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 })
       }
       userId = user.id;
     }
@@ -34,7 +34,7 @@ export async function GET(
     });
 
     if (!job) {
-      return NextResponse.json({ error: 'Job not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Job not found', code: 'JOB_NOT_FOUND' }, { status: 404 })
     }
 
     // Verify ownership
@@ -53,7 +53,7 @@ export async function GET(
     }
 
     if (!hasPermission) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      return NextResponse.json({ error: 'Forbidden', code: 'FORBIDDEN' }, { status: 403 })
     }
 
     // Remove project data from response
@@ -63,7 +63,7 @@ export async function GET(
 
   } catch (error) {
     logger.error('Error fetching render job', error instanceof Error ? error : new Error(String(error)), { component: 'API: render/jobs/[jobId]' })
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: 'Erro interno do servidor', code: 'INTERNAL_ERROR' }, { status: 500 })
   }
 }
 
@@ -80,7 +80,7 @@ export async function DELETE(
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 })
       }
       userId = user.id;
     }
@@ -94,7 +94,7 @@ export async function DELETE(
     });
 
     if (!job) {
-      return NextResponse.json({ error: 'Job not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Job not found', code: 'JOB_NOT_FOUND' }, { status: 404 })
     }
 
     // Verify ownership via project
@@ -104,7 +104,7 @@ export async function DELETE(
     });
 
     if (!project) {
-      return NextResponse.json({ error: 'Project not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Project not found', code: 'PROJECT_NOT_FOUND' }, { status: 404 })
     }
 
     let hasPermission = project.userId === userId
@@ -123,7 +123,7 @@ export async function DELETE(
     }
 
     if (!hasPermission) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      return NextResponse.json({ error: 'Forbidden', code: 'FORBIDDEN' }, { status: 403 })
     }
 
     // Delete job
@@ -135,6 +135,6 @@ export async function DELETE(
 
   } catch (error) {
     logger.error('Error deleting render job', error instanceof Error ? error : new Error(String(error)), { component: 'API: render/jobs/[jobId]' })
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: 'Erro interno do servidor', code: 'INTERNAL_ERROR' }, { status: 500 })
   }
 }

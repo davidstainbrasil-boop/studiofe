@@ -11,7 +11,7 @@ export async function PATCH(
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 })
     }
 
     const { jobId } = params
@@ -24,7 +24,7 @@ export async function PATCH(
       .single()
 
     if (jobError || !job) {
-      return NextResponse.json({ error: 'Job not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Job not found', code: 'JOB_NOT_FOUND' }, { status: 404 })
     }
 
     const { data: project, error: projectError } = await supabase
@@ -34,11 +34,11 @@ export async function PATCH(
       .single()
 
     if (projectError || !project) {
-      return NextResponse.json({ error: 'Project not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Project not found', code: 'PROJECT_NOT_FOUND' }, { status: 404 })
     }
 
     if (project.userId !== user.id) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      return NextResponse.json({ error: 'Forbidden', code: 'FORBIDDEN' }, { status: 403 })
     }
 
     // Cancel job
@@ -52,7 +52,8 @@ export async function PATCH(
     return NextResponse.json({ success: true })
 
   } catch (error) {
-    logger.error('Error cancelling render job', error instanceof Error ? error : new Error(String(error)), { component: 'API: render/jobs/[jobId]/cancel' })
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    logger.error('Error cancelling render job', error instanceof Error ? error : new Error(String(error))
+, { component: 'API: render/jobs/[jobId]/cancel' })
+    return NextResponse.json({ error: 'Internal server error', code: 'INTERNAL_ERROR' }, { status: 500 })
   }
 }

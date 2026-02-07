@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
         } = await supabase.auth.getUser();
         if (authError || !authUser) {
           logger.warn('Authentication failed', { error: authError });
-          return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
+          return NextResponse.json({ error: 'Não autenticado', code: 'AUTH_REQUIRED' }, { status: 401 });
         }
         user = authUser;
         logger.info('User authenticated', { userId: user.id });
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
           'Authentication error',
           authError instanceof Error ? authError : new Error(String(authError)),
         );
-        return NextResponse.json({ error: 'Erro de autenticação' }, { status: 401 });
+        return NextResponse.json({ error: 'Erro de autenticação', code: 'AUTH_ERROR' }, { status: 401 });
       }
     }
 
@@ -73,12 +73,12 @@ export async function POST(req: NextRequest) {
 
     if (!file) {
       logger.warn('No file found in the upload request');
-      return NextResponse.json({ error: 'Nenhum arquivo encontrado.' }, { status: 400 });
+      return NextResponse.json({ error: 'Nenhum arquivo encontrado.', code: 'FILE_MISSING' }, { status: 400 });
     }
 
     if (file.size === 0) {
       logger.warn('Empty file uploaded', { userId: user.id });
-      return NextResponse.json({ error: 'O arquivo está vazio.' }, { status: 400 });
+      return NextResponse.json({ error: 'O arquivo está vazio.', code: 'FILE_EMPTY' }, { status: 400 });
     }
 
     // Upload File first
@@ -175,7 +175,7 @@ export async function POST(req: NextRequest) {
         logger.info('Created new project for upload', { projectId, userId: user.id });
       } catch (dbError) {
         logger.error('Failed to create project record', dbError as Error);
-        return NextResponse.json({ error: 'Erro ao criar registro do projeto.' }, { status: 500 });
+        return NextResponse.json({ error: 'Erro ao criar registro do projeto.', code: 'DB_CREATE_FAILED' }, { status: 500 });
       }
     }
 

@@ -10,6 +10,7 @@ import { existsSync } from 'fs';
 import { join } from 'path';
 import { randomUUID } from 'crypto';
 import { PIPELINE_TIMEOUTS } from '../config/timeout-config';
+import { logger } from '@/lib/logger';
 
 const execAsync = promisify(exec);
 
@@ -246,7 +247,7 @@ export async function renderVideo(
   
   try {
     await mkdir(jobDir, { recursive: true });
-    console.log(`[Render] Iniciando renderização: ${renderJobId}`);
+    logger.info('Iniciando renderização', { renderJobId });
 
     // 1. Gerar imagens dos slides
     const slideImages: string[] = [];
@@ -287,7 +288,7 @@ export async function renderVideo(
 
     if (hasAnyAvatar) {
       // === PIP PATH: render per-slide segments, then concatenate ===
-      console.log(`[Render] PIP mode: rendering ${slides.length} slide segments with avatar overlay`);
+      logger.info('PIP mode: rendering slide segments with avatar overlay', { slideCount: slides.length });
 
       const segmentPaths: string[] = [];
 
@@ -346,7 +347,7 @@ export async function renderVideo(
       await writeFile(segConcatPath, segConcatContent);
 
       const concatCmd = `ffmpeg -y -f concat -safe 0 -i '${segConcatPath}' -c copy -movflags +faststart '${outputPath}'`;
-      console.log(`[Render] Concatenating ${segmentPaths.length} segments...`);
+      logger.info('Concatenating segments', { segmentCount: segmentPaths.length });
       await execAsync(concatCmd, { timeout: PIPELINE_TIMEOUTS.slideComposition });
 
     } else {
@@ -416,7 +417,7 @@ export async function renderVideo(
 
       ffmpegCmd += `-movflags +faststart '${outputPath}'`;
 
-      console.log(`[Render] Executando FFmpeg...`);
+      logger.info('Executando FFmpeg');
       await execAsync(ffmpegCmd, { timeout: PIPELINE_TIMEOUTS.slideComposition });
     }
 
@@ -444,7 +445,7 @@ export async function renderVideo(
       // Ignore cleanup errors
     }
 
-    console.log(`[Render] Vídeo gerado com sucesso: ${outputUrl}`);
+    logger.info('Vídeo gerado com sucesso', { outputUrl });
 
     return {
       success: true,

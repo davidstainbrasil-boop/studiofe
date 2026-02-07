@@ -63,4 +63,11 @@ module.exports = {
   setupFilesAfterEnv: ['<rootDir>/src/app/jest.setup.js'],
   testTimeout: 120000,
   verbose: true,
+
+  // Force exit after all tests complete — some module-level setInterval/Redis
+  // connections in queue modules keep worker processes alive. The .unref() fix
+  // in cache-invalidation.ts mitigates the main culprit, but BullMQ queue 
+  // modules (render-queue.ts, video-processing.queue.ts) create Redis connections
+  // at module scope that can't be easily cleaned up in test workers.
+  forceExit: true,
 };

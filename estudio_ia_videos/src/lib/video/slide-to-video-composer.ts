@@ -101,12 +101,12 @@ export class SlideToVideoComposer {
         totalDuration
       });
 
-      // Create simple video composition result
-      const videoUrl = this.createMockVideoUrl(projectId, slidesWithAudio.length);
+      // Store composition in Supabase Storage for render pipeline pickup
+      const videoPath = `compositions/${projectId}/composition.json`;
 
       return {
         success: true,
-        videoUrl,
+        videoUrl: `/api/render/start?projectId=${encodeURIComponent(projectId)}`,
         duration: totalDuration,
         slides: slidesWithAudio
       };
@@ -122,13 +122,5 @@ export class SlideToVideoComposer {
         error: error instanceof Error ? error.message : 'Slide-to-video composition failed'
       };
     }
-  }
-
-  /**
-   * Create mock video URL for demonstration
-   */
-  private createMockVideoUrl(projectId: string, slideCount: number): string {
-    const baseUrl = process.env.PUBLIC_URL || 'http://localhost:3001';
-    return `${baseUrl}/api/mock/video/${projectId}.mp4?slides=${slideCount}`;
   }
 }

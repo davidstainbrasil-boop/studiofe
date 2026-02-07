@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
     const err = error instanceof Error ? error : new Error(String(error))
     logger.error('Get render jobs API error', err, { component: 'API: render/jobs' })
     return NextResponse.json(
-      { success: false, error: 'Failed to retrieve render jobs', jobs: [] },
+      { success: false, error: 'Failed to retrieve render jobs', code: 'FETCH_JOBS_FAILED', jobs: [] },
       { status: 500 }
     )
   }
@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
 
     if (!project) {
       return NextResponse.json(
-        { success: false, error: 'Project not found' },
+        { success: false, error: 'Project not found', code: 'PROJECT_NOT_FOUND' },
         { status: 404 }
       )
     }
@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
 
     if (activeRender) {
       return NextResponse.json(
-        { success: false, error: 'An active render job already exists for this project' },
+        { success: false, error: 'An active render job already exists for this project', code: 'ACTIVE_RENDER_EXISTS' },
         { status: 409 }
       )
     }

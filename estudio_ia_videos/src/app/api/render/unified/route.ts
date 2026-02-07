@@ -408,7 +408,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 })
     }
 
     const body: RenderRequest = await request.json()
@@ -416,7 +416,8 @@ export async function POST(request: NextRequest) {
     // Validate request
     if (!body.projectId || !body.slides || body.slides.length === 0) {
       return NextResponse.json({ 
-        error: 'Project ID and slides are required' 
+        error: 'Project ID and slides are required',
+        code: 'VALIDATION_ERROR'
       }, { status: 400 })
     }
 
@@ -438,6 +439,7 @@ export async function POST(request: NextRequest) {
     logger.error('Render API error:', error instanceof Error ? error : new Error(String(error)), { component: 'API: render/unified' })
     return NextResponse.json({ 
       error: 'Internal server error',
+      code: 'INTERNAL_ERROR',
       details: error instanceof Error ? error.message : String(error) 
     }, { status: 500 })
   }
@@ -447,7 +449,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 })
     }
 
     const { searchParams } = new URL(request.url)
@@ -455,7 +457,8 @@ export async function GET(request: NextRequest) {
 
     if (!jobId) {
       return NextResponse.json({ 
-        error: 'Job ID is required' 
+        error: 'Job ID is required',
+        code: 'VALIDATION_ERROR'
       }, { status: 400 })
     }
 
@@ -463,7 +466,8 @@ export async function GET(request: NextRequest) {
 
     if (!renderJob) {
       return NextResponse.json({ 
-        error: 'Render job not found' 
+        error: 'Render job not found',
+        code: 'JOB_NOT_FOUND'
       }, { status: 404 })
     }
 
@@ -487,6 +491,7 @@ export async function GET(request: NextRequest) {
     logger.error('Render status API error:', error instanceof Error ? error : new Error(String(error)), { component: 'API: render/unified' })
     return NextResponse.json({ 
       error: 'Internal server error',
+      code: 'INTERNAL_ERROR',
       details: error instanceof Error ? error.message : String(error) 
     }, { status: 500 })
   }

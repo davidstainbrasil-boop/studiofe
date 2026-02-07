@@ -8,8 +8,14 @@ import {
   CacheInvalidationHandlers, 
   DEFAULT_CACHE_CONFIG,
   createCacheKey,
-  cached
+  cached,
+  globalTaggedCache
 } from '@/lib/cache/cache-invalidation';
+
+// Cleanup global cache instance to prevent setInterval from keeping the worker alive
+afterAll(() => {
+  globalTaggedCache.destroy();
+});
 
 describe('TaggedCache', () => {
   let cache: TaggedCache;

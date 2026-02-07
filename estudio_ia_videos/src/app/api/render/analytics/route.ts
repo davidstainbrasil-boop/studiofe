@@ -107,7 +107,7 @@ export async function GET(req: NextRequest) {
     // Check authentication
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 })
     }
 
     // Get period from query params
@@ -138,7 +138,7 @@ export async function GET(req: NextRequest) {
 
     if (jobsError) {
       logger.error('Failed to fetch render jobs', jobsError)
-      return NextResponse.json({ error: 'Failed to fetch render data' }, { status: 500 })
+      return NextResponse.json({ error: 'Failed to fetch render data', code: 'FETCH_DATA_FAILED' }, { status: 500 })
     }
 
     const jobs = (renderJobsData || []) as unknown as RenderJobRow[]
@@ -323,7 +323,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(response)
   } catch (error) {
     logger.error('Render analytics error', error instanceof Error ? error : new Error(String(error)))
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: 'Internal server error', code: 'INTERNAL_ERROR' }, { status: 500 })
   }
 }
 

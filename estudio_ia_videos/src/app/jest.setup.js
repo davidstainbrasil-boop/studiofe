@@ -187,3 +187,8 @@ global.WebSocket = jest.fn().mockImplementation(() => ({
   addEventListener: jest.fn(),
   removeEventListener: jest.fn(),
 }))
+
+// Global teardown: clear any remaining timers/handles to prevent worker leak
+afterAll(() => {
+  jest.clearAllTimers();
+})
