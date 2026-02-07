@@ -1,8 +1,17 @@
 // Debug route para testar Next.js Image API
+// SECURITY: Restricted to development only + requires authentication
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@lib/logger'
+import { requireAuth, unauthorizedResponse } from '@lib/api/auth-middleware'
 
 export async function GET(request: NextRequest) {
+  // Block in production - this is a debug-only endpoint
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not available in production' }, { status: 404 });
+  }
+
+  const auth = await requireAuth(request);
+  if (!auth) return unauthorizedResponse();
   const searchParams = request.nextUrl.searchParams
   const url = searchParams.get('url')
   const w = searchParams.get('w')

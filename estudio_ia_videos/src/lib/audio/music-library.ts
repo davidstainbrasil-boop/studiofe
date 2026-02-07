@@ -485,16 +485,196 @@ export class MusicLibrary {
 }
 
 // =============================================================================
+// Pixabay Audio API Integration
+// =============================================================================
+
+interface PixabayAudioResult {
+  id: number;
+  pageURL: string;
+  type: string;
+  tags: string;
+  duration: number;
+  audio_path: string;
+  downloads: number;
+  likes: number;
+  user: string;
+}
+
+interface PixabaySearchResponse {
+  total: number;
+  totalHits: number;
+  hits: PixabayAudioResult[];
+}
+
+/**
+ * Fetch tracks from Pixabay Audio API
+ * Requires PIXABAY_API_KEY environment variable
+ */
+async function fetchPixabayTracks(options: {
+  category?: string;
+  query?: string;
+  perPage?: number;
+}): Promise<MusicTrack[]> {
+  const apiKey = process.env.PIXABAY_API_KEY;
+  if (!apiKey) {
+    logger.warn('Pixabay API key not configured');
+    return [];
+  }
+
+  try {
+    const { category = '', query = '', perPage = 50 } = options;
+    const searchQuery = query || category || 'corporate background';
+
+    const url = new URL('https://pixabay.com/api/');
+    url.searchParams.set('key', apiKey);
+    url.searchParams.set('q', searchQuery);
+    url.searchParams.set('media_type', 'music');
+    url.searchParams.set('per_page', perPage.toString());
+    url.searchParams.set('safesearch', 'true');
+
+    const response = await fetch(url.toString());
+    if (!response.ok) {
+      throw new Error(`Pixabay API error: ${response.status}`);
+    }
+
+    const data: PixabaySearchResponse = await response.json();
+
+    // Map Pixabay results to our MusicTrack format
+    return data.hits.map((hit) => ({
+      id: `pixabay-${hit.id}`,
+      title: hit.tags.split(',')[0]?.trim() || `Track ${hit.id}`,
+      artist: hit.user,
+      category: mapPixabayCategory(hit.tags) as MusicCategory,
+      mood: mapPixabayMoods(hit.tags),
+      duration: hit.duration,
+      bpm: 100, // Pixabay doesn't provide BPM, use default
+      url: hit.audio_path,
+      previewUrl: hit.audio_path,
+      license: 'royalty-free' as const,
+      tags: hit.tags.split(',').map((t) => t.trim()),
+      isLoop: hit.duration < 300, // Assume shorter tracks are loops
+    }));
+  } catch (error) {
+    logger.error('Failed to fetch Pixabay tracks', error instanceof Error ? error : new Error(String(error)));
+    return [];
+  }
+}
+
+function mapPixabayCategory(tags: string): MusicCategory {
+  const lowerTags = tags.toLowerCase();
+  if (lowerTags.includes('corporate') || lowerTags.includes('business')) return 'corporate';
+  if (lowerTags.includes('training') || lowerTags.includes('education')) return 'training';
+  if (lowerTags.includes('motivational') || lowerTags.includes('inspiring')) return 'motivational';
+  if (lowerTags.includes('ambient') || lowerTags.includes('background')) return 'ambient';
+  if (lowerTags.includes('technology') || lowerTags.includes('tech')) return 'technology';
+  if (lowerTags.includes('documentary') || lowerTags.includes('cinematic')) return 'documentary';
+  if (lowerTags.includes('uplifting') || lowerTags.includes('happy')) return 'uplifting';
+  if (lowerTags.includes('calm') || lowerTags.includes('relaxing')) return 'calm';
+  return 'ambient';
+}
+
+function mapPixabayMoods(tags: string): MusicMood[] {
+  const lowerTags = tags.toLowerCase();
+  const moods: MusicMood[] = [];
+
+  if (lowerTags.includes('professional') || lowerTags.includes('corporate')) moods.push('professional');
+  if (lowerTags.includes('energetic') || lowerTags.includes('upbeat')) moods.push('energetic');
+  if (lowerTags.includes('calm') || lowerTags.includes('peaceful')) moods.push('calm');
+  if (lowerTags.includes('inspiring') || lowerTags.includes('motivational')) moods.push('inspiring');
+  if (lowerTags.includes('serious') || lowerTags.includes('dramatic')) moods.push('serious');
+  if (lowerTags.includes('friendly') || lowerTags.includes('warm')) moods.push('friendly');
+  if (lowerTags.includes('modern') || lowerTags.includes('contemporary')) moods.push('modern');
+  if (lowerTags.includes('classic') || lowerTags.includes('traditional')) moods.push('classic');
+  if (lowerTags.includes('minimal') || lowerTags.includes('simple')) moods.push('minimal');
+  if (lowerTags.includes('dramatic') || lowerTags.includes('cinematic')) moods.push('dramatic');
+
+  return moods.length > 0 ? moods : ['professional'];
+}
+
+// =============================================================================
+// Extended Music Library with Pixabay
+// =============================================================================
+
+export class ExtendedMusicLibrary extends MusicLibrary {
+  private pixabayTracks: Map<string, MusicTrack> = new Map();
+  private pixabayLoaded = false;
+
+  /**
+   * Load additional tracks from Pixabay
+   */
+  async loadPixabayTracks(categories: string[] = ['corporate', 'training', 'ambient']): Promise<void> {
+    if (this.pixabayLoaded) return;
+
+    const allTracks: MusicTrack[] = [];
+
+    for (const category of categories) {
+      const tracks = await fetchPixabayTracks({ category, perPage: 30 });
+      allTracks.push(...tracks);
+    }
+
+    // Add unique tracks
+    for (const track of allTracks) {
+      if (!this.pixabayTracks.has(track.id)) {
+        this.pixabayTracks.set(track.id, track);
+      }
+    }
+
+    this.pixabayLoaded = true;
+    logger.info(`Loaded ${this.pixabayTracks.size} tracks from Pixabay`);
+  }
+
+  /**
+   * Get all tracks including Pixabay
+   */
+  override getAllTracks(): MusicTrack[] {
+    const defaultTracks = super.getAllTracks();
+    const pixabayTracks = Array.from(this.pixabayTracks.values());
+    return [...defaultTracks, ...pixabayTracks];
+  }
+
+  /**
+   * Get track by ID (including Pixabay)
+   */
+  override getTrack(id: string): MusicTrack | undefined {
+    const defaultTrack = super.getTrack(id);
+    if (defaultTrack) return defaultTrack;
+    return this.pixabayTracks.get(id);
+  }
+
+  /**
+   * Search tracks from Pixabay on-demand
+   */
+  async searchPixabay(query: string): Promise<MusicTrack[]> {
+    const tracks = await fetchPixabayTracks({ query, perPage: 20 });
+
+    // Cache results
+    for (const track of tracks) {
+      this.pixabayTracks.set(track.id, track);
+    }
+
+    return tracks;
+  }
+}
+
+// =============================================================================
 // Singleton Instance
 // =============================================================================
 
 let musicLibraryInstance: MusicLibrary | null = null;
+let extendedMusicLibraryInstance: ExtendedMusicLibrary | null = null;
 
 export function getMusicLibrary(): MusicLibrary {
   if (!musicLibraryInstance) {
     musicLibraryInstance = new MusicLibrary();
   }
   return musicLibraryInstance;
+}
+
+export function getExtendedMusicLibrary(): ExtendedMusicLibrary {
+  if (!extendedMusicLibraryInstance) {
+    extendedMusicLibraryInstance = new ExtendedMusicLibrary();
+  }
+  return extendedMusicLibraryInstance;
 }
 
 // =============================================================================

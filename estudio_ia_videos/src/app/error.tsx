@@ -4,6 +4,7 @@
 import { useEffect } from 'react'
 import { Button } from '@components/ui/button'
 import { AlertTriangle } from 'lucide-react'
+import * as Sentry from '@sentry/nextjs'
 
 export default function Error({
     error,
@@ -13,8 +14,10 @@ export default function Error({
     reset: () => void
 }) {
     useEffect(() => {
-        // Log the error to an error reporting service
-        console.error('Application Error:', error)
+        Sentry.captureException(error, {
+            tags: { boundary: 'root-error' },
+            extra: { digest: error.digest },
+        })
     }, [error])
 
     return (

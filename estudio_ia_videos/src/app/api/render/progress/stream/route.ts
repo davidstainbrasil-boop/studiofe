@@ -7,6 +7,7 @@
 
 import { NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -148,7 +149,9 @@ export async function GET(request: NextRequest) {
             }, 1000);
           }
         } catch (err) {
-          console.error('[SSE Progress] Erro:', err);
+          logger.error('[SSE Progress] Erro no polling', err instanceof Error ? err : new Error(String(err)), {
+            component: 'API: render/progress/stream',
+          });
         }
       };
 

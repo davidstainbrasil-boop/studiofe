@@ -6,7 +6,7 @@
 import ffmpeg from 'fluent-ffmpeg';
 import { logger } from '@/lib/monitoring/logger';
 import { AudioStorageManager } from '@/lib/tts/audio-storage-manager';
-import { TTSRequest, TTSResponse } from '@/lib/tts/tts-provider-abstraction';
+import type { VideoProject } from '@/types/video-project';
 
 export interface Slide {
   id: string;
@@ -71,16 +71,25 @@ export class VideoRendererService {
   /**
    * Compose slides with audio and images into video timeline
    */
-  private composeTimeline(slides: Slide[]): {
+  private composeTimeline(slides: Slide[]): Array<{
+    startTime: number;
+    endTime: number;
+    slideId: string;
+    audioUrl?: string;
+    transition?: string;
+  }> {
     const fps = 30; // 30 FPS for smooth video
     const frameDuration = 1 / fps; // Duration of each frame in seconds
-    
+
+    // Suppress unused variable warning
+    void frameDuration;
+
     // Create timeline with slide transitions
     const timeline: Array<{
       startTime: number;
       endTime: number;
       slideId: string;
-      audioUrl: string;
+      audioUrl?: string;
       transition?: string;
     }> = [];
 
@@ -90,7 +99,7 @@ export class VideoRendererService {
       const slideDuration = slide.duration || 5; // Default 5 seconds per slide
       const startTime = currentTime;
       const endTime = startTime + slideDuration;
-      
+
       timeline.push({
         startTime,
         endTime,
@@ -109,21 +118,21 @@ export class VideoRendererService {
    * Create FFmpeg command for video rendering
    */
   private createFFmpegCommand(composition: VideoComposition, options: RenderingOptions): string[] {
-    const { slides, resolution = '1080p', frameRate = 30, format = 'mp4' } = options;
-    
+    const { resolution = '1080p', frameRate = 30, format = 'mp4' } = options;
+    const slides = composition.slides;
+
     // Calculate video dimensions
     const width = resolution === '4k' ? 3840 : resolution === '720p' ? 1280 : 1920;
     const height = resolution === '4k' ? 2160 : resolution === '720p' ? 720 : 1080;
-    
+
     const commands: string[] = [];
-    
+
     // Create background slides
     const backgroundColor = options.backgroundColor || '#ffffff';
-    
+
     for (const [index, slide] of slides.entries()) {
       const slideInput = `slide_${index}_input.png`;
-      const slideOutput = `slide_${index}.png`;
-      
+
       // Generate background image command
       if (slide.imageUrl) {
         commands.push(
@@ -132,8 +141,7 @@ export class VideoRendererService {
           '-filter_complex',
           `[0:v]scale=${width}:${height},format=rgb,draw=text=text='Slide ${index + 1}':font=Arial:fontsize=48:fontcolor=black:x=(w-text_w+10):y=(h-10)`,
           `-metadata:s:v:0:title=Slide ${index + 1}`,
-          `-metadata:s:v:0:duration=${slide.duration || 5}`,
-        ]
+          `-metadata:s:v:0:duration=${slide.duration || 5}`
         );
       } else {
         commands.push(
@@ -144,8 +152,7 @@ export class VideoRendererService {
           '-filter_complex',
           `[0:v]draw=text=text='Slide ${index + 1}':font=Arial:fontsize=48:fontcolor=black:x=(w-text_w+10):y=(h-10)`,
           `-metadata:s:v:0:title=Slide ${index + 1}`,
-          `-metadata:s:v:0:duration=${slide.duration || 5}`,
-        ]
+          `-metadata:s:v:0:duration=${slide.duration || 5}`
         );
       }
     }
@@ -163,13 +170,15 @@ export class VideoRendererService {
     // Add transitions
     for (let i = 0; i < slides.length - 1; i++) {
       const transition = slides[i].transition || 'fade';
+      void transition;
       commands.push(
         '-filter_complex',
-        `[${i}:v]format=yuv420p[${i+1}:v]format=yuv420p[${i+2}];[${i+1}:v]${i+2}]blend=all_expression=A-if(gte(t\\,${slides[i].duration || 5});`
+        `[${i}:v]format=yuv420p[${i+1}:v]format=yuv420p[${i+2}];[${i+1}:v]${i+2}]blend=all_expression=A-if(gte(t\\,${slides[i].duration || 5}))`
       );
     }
 
     // Add output settings
+    const bitrateStr = options.bitrate ? `${options.bitrate}k` : '2000k';
     commands.push(
       '-map', '[v]', // Map the first video stream
       '-c:v', 'libx264', // Use H.264 codec
@@ -177,7 +186,7 @@ export class VideoRendererService {
       '-crf', '23', // Constant Rate Factor (lower = better quality)
       '-pix_fmt', 'yuv420p', // Pixel format for compatibility
       '-r', frameRate.toString(),
-      '-b:v', options.bitrate || '2000k', // Target bitrate
+      '-b:v', bitrateStr // Target bitrate
     );
 
     // Add audio settings
@@ -204,49 +213,45 @@ export class VideoRendererService {
   /**
    * Execute FFmpeg command and monitor progress
    */
-  private async executeFFmpeg(commands: string[]): Promise<{ success: boolean; videoPath?: string; duration?: number; size?: number }> {
+  private async executeFFmpeg(commands: string[]): Promise<{ success: boolean; videoPath?: string; duration?: number; size?: number; error?: string }> {
     return new Promise((resolve, reject) => {
-      logger.info('Starting FFmpeg rendering', { 
+      logger.info('Starting FFmpeg rendering', {
         commandCount: commands.length,
         component: 'VideoRendererService'
       });
 
       const startTime = Date.now();
-      
-      const process = ffmpeg(commands);
-      
+
+      // fluent-ffmpeg expects a source string, not an array of commands.
+      // Pass the first command element as the input source and add the rest as options.
+      const cmd = ffmpeg(commands[0])
+        .addOptions(commands.slice(1));
+
       let videoPath = '';
       let duration = 0;
       let size = 0;
 
-      process.on('start', (commandLine) => {
+      cmd.on('start', (commandLine: string) => {
         logger.debug('FFmpeg started:', { commandLine });
       });
 
-      process.on('progress', (progress) => {
+      cmd.on('progress', (progress: Record<string, unknown>) => {
         logger.debug('FFmpeg progress:', { progress });
       });
 
-      process.on('end', () => {
-        logger.info('FFmpeg completed', { 
-          duration: process.duration || 0,
-          size: process.size || 0
-        });
+      cmd.on('error', (error: Error) => {
+        logger.error('FFmpeg error:', error);
+        reject(error);
       });
 
-      process.on('error', (error) => {
-        logger.error('FFmpeg error:', error instanceof Error ? error : new Error(String(error)));
-        reject(error instanceof Error ? error : new Error('FFmpeg rendering failed'));
-      });
-
-      process.on('end', () => {
+      cmd.on('end', () => {
         const endTime = Date.now();
         const processingTime = endTime - startTime;
-        
+
         // Extract output path from command
-        const outputCommand = commands.find(cmd => cmd.includes(this.outputDir));
+        const outputCommand = commands.find(c => c.includes(this.outputDir));
         if (outputCommand) {
-          const match = outputCommand.match(/([^\/]+)\.(\w+)$/);
+          const match = outputCommand.match(/([^/]+)\.(\w+)$/);
           if (match) {
             videoPath = `${this.outputDir}/${match[1]}.${match[2]}`;
           }
@@ -261,6 +266,8 @@ export class VideoRendererService {
 
         resolve({ success: true, videoPath, duration, size });
       });
+
+      cmd.run();
     });
   }
 
@@ -269,7 +276,7 @@ export class VideoRendererService {
    */
   async renderVideo(composition: VideoComposition, options: RenderingOptions = {}): Promise<RenderResult> {
     const startTime = Date.now();
-    
+
     try {
       logger.info('Starting video rendering', {
         projectId: composition.projectId,
@@ -305,7 +312,7 @@ export class VideoRendererService {
           videoPath: result.videoPath,
           duration: result.duration,
           size: result.size,
-          resolution: { 
+          resolution: {
             width: options.resolution === '4k' ? 3840 : options.resolution === '720p' ? 1280 : 1920,
             height: options.resolution === '4k' ? 2160 : options.resolution === '720p' ? 720 : 1080,
           },
@@ -313,14 +320,14 @@ export class VideoRendererService {
             renderTime: processingTime,
             frameCount: Math.floor((result.duration || 0) * 30), // 30 FPS
             encoding: options.format || 'mp4',
-            bitrate: options.bitrate || '2000k',
+            bitrate: options.bitrate || 2000,
           }
         };
 
       } else {
         const errorProcessingTime = Date.now() - startTime;
-        
-        logger.error('Video rendering failed', {
+
+        logger.error('Video rendering failed', undefined, {
           projectId: composition.projectId,
           processingTime: errorProcessingTime,
           component: 'VideoRendererService'
@@ -337,7 +344,7 @@ export class VideoRendererService {
 
     } catch (error) {
       const processingTime = Date.now() - startTime;
-      
+
       logger.error('Video rendering service error', error instanceof Error ? error : new Error(String(error)), {
         projectId: composition.projectId,
         processingTime,
@@ -349,7 +356,7 @@ export class VideoRendererService {
         error: error instanceof Error ? error.message : 'Unknown video rendering error',
         metadata: {
           renderTime: processingTime,
-          }
+        }
       };
     }
   }
@@ -366,16 +373,16 @@ export class VideoRendererService {
    * Estimate rendering time and cost
    */
   estimateRenderingTime(
-    slides: Slide[], 
+    slides: Slide[],
     resolution?: RenderingOptions['resolution']
   ): { time: number; cost: number } {
     // Rough estimation: ~10 seconds per slide + 2 seconds per slide transition
     const baseTime = slides.length * 12;
-    
+
     // Add complexity factors
     const resolutionMultiplier = resolution === '4k' ? 3 : resolution === '720p' ? 1.5 : 1;
     const estimatedTime = Math.ceil(baseTime * resolutionMultiplier);
-    
+
     // Rough cost estimation (based on cloud rendering costs)
     const estimatedCost = Math.ceil(estimatedTime * 0.01); // $0.01 per second
 
@@ -390,34 +397,35 @@ export class VideoRendererService {
    */
   async cleanupOldVideos(daysOld: number = 7): Promise<number> {
     try {
-      const fs = await import('node:fs/promises');
-      
-      if (!fs.existsSync(this.outputDir)) {
+      const fsPromises = await import('node:fs/promises');
+      const fsSync = await import('node:fs');
+
+      if (!fsSync.existsSync(this.outputDir)) {
         return 0;
       }
 
-      const entries = await fs.readdir(this.outputDir);
+      const entries = await fsPromises.readdir(this.outputDir);
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - daysOld);
 
       let deletedCount = 0;
 
       for (const entry of entries) {
-        if (entry.isFile && (entry.endsWith('.mp4') || entry.endsWith('.webm'))) {
+        if (entry.endsWith('.mp4') || entry.endsWith('.webm')) {
           const fullPath = `${this.outputDir}/${entry}`;
-          const stats = await fs.stat(fullPath);
-          
+          const stats = await fsPromises.stat(fullPath);
+
           if (stats.mtime < cutoffDate) {
-            await fs.unlink(fullPath);
+            await fsPromises.unlink(fullPath);
             deletedCount++;
-            
+
             logger.debug('Deleted old video', { filename: entry });
           }
         }
       }
 
       logger.info('Video cleanup completed', { deletedCount });
-      
+
       return deletedCount;
 
     } catch (error) {
@@ -436,40 +444,41 @@ export class VideoRendererService {
     newestVideo?: Date;
   }> {
     try {
-      const fs = await import('node:fs/promises');
-      
-      if (!fs.existsSync(this.outputDir)) {
+      const fsPromises = await import('node:fs/promises');
+      const fsSync = await import('node:fs');
+
+      if (!fsSync.existsSync(this.outputDir)) {
         return {
           totalVideos: 0,
           totalSize: 0,
         };
       }
 
-      const entries = await fs.readdir(this.outputDir);
-      const videoEntries = entries.filter(entry => 
-        entry.isFile && (entry.endsWith('.mp4') || entry.endsWith('.webm'))
+      const entries = await fsPromises.readdir(this.outputDir);
+      const videoEntries = entries.filter(entry =>
+        entry.endsWith('.mp4') || entry.endsWith('.webm')
       );
 
       let totalSize = 0;
-      let oldestDate: Date;
-      let newestDate: Date;
+      let oldestDate: Date | undefined;
+      let newestDate: Date | undefined;
 
       for (const entry of videoEntries) {
         const fullPath = `${this.outputDir}/${entry}`;
-        const stats = await fs.stat(fullPath);
-        
+        const stats = await fsPromises.stat(fullPath);
+
         totalSize += stats.size;
-        
+
         const fileDate = stats.mtime;
-        if (!oldestDate || fileDate < oldestDate)oldestDate = fileDate;
-        if (!newestDate || fileDate > newestDate)newestDate = fileDate;
+        if (!oldestDate || fileDate < oldestDate) oldestDate = fileDate;
+        if (!newestDate || fileDate > newestDate) newestDate = fileDate;
       }
 
       return {
         totalVideos: videoEntries.length,
         totalSize,
         oldestVideo: oldestDate,
-        newestVideo,
+        newestVideo: newestDate,
       };
 
     } catch (error) {
@@ -479,5 +488,127 @@ export class VideoRendererService {
         totalSize: 0,
       };
     }
+  }
+}
+
+/**
+ * Render progress information reported during video rendering
+ */
+export interface RenderProgress {
+  progress: number;
+  message: string;
+  currentFrame?: number;
+  totalFrames?: number;
+}
+
+/**
+ * Options for the VideoRenderer client-side renderer
+ */
+export interface RenderOptions {
+  quality?: 'low' | 'medium' | 'high';
+  fps?: number;
+  width?: number;
+  height?: number;
+  format?: string;
+  onProgress?: (progress: RenderProgress) => void;
+}
+
+/**
+ * Client-side VideoRenderer used by UI components to render a VideoProject
+ */
+export class VideoRenderer {
+  private options: RenderOptions;
+  private aborted: boolean;
+
+  constructor(options?: Partial<RenderOptions>) {
+    this.options = {
+      quality: 'medium',
+      fps: 30,
+      width: 1920,
+      height: 1080,
+      format: 'mp4',
+      ...options,
+    };
+    this.aborted = false;
+  }
+
+  /**
+   * Render a VideoProject to a video file
+   */
+  async render(project: VideoProject): Promise<{ success: boolean; url?: string; duration: number; error?: string }> {
+    const startTime = Date.now();
+
+    try {
+      if (this.aborted) {
+        return { success: false, duration: 0, error: 'Rendering was aborted' };
+      }
+
+      const totalFrames = project.scenes.reduce((sum, scene) => sum + scene.duration, 0) * (this.options.fps || 30);
+
+      // Report initial progress
+      this.options.onProgress?.({
+        progress: 0,
+        message: 'Starting render...',
+        currentFrame: 0,
+        totalFrames,
+      });
+
+      // Delegate to server-side rendering service
+      const service = new VideoRendererService();
+
+      const composition: VideoComposition = {
+        projectId: project.id,
+        slides: project.scenes.map(scene => ({
+          id: scene.id,
+          content: scene.name,
+          duration: scene.duration,
+          imageUrl: scene.thumbnail,
+        })),
+        totalDuration: project.scenes.reduce((sum, scene) => sum + scene.duration, 0),
+        resolution: {
+          width: this.options.width || 1920,
+          height: this.options.height || 1080,
+        },
+        provider: 'ffmpeg',
+      };
+
+      const renderingOptions: RenderingOptions = {
+        quality: this.options.quality,
+        frameRate: this.options.fps,
+        format: (this.options.format === 'mp4' || this.options.format === 'webm') ? this.options.format : 'mp4',
+      };
+
+      const result = await service.renderVideo(composition, renderingOptions);
+
+      const duration = (Date.now() - startTime) / 1000;
+
+      if (result.success) {
+        this.options.onProgress?.({
+          progress: 100,
+          message: 'Render complete',
+          currentFrame: totalFrames,
+          totalFrames,
+        });
+
+        return { success: true, url: result.videoUrl, duration };
+      }
+
+      return { success: false, duration, error: result.error || 'Rendering failed' };
+
+    } catch (error) {
+      const duration = (Date.now() - startTime) / 1000;
+      return {
+        success: false,
+        duration,
+        error: error instanceof Error ? error.message : 'Unknown rendering error',
+      };
+    }
+  }
+
+  /**
+   * Abort the current rendering process
+   */
+  abort(): void {
+    this.aborted = true;
   }
 }

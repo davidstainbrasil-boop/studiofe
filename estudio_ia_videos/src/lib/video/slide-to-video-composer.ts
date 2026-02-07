@@ -20,6 +20,7 @@ export interface VideoResult {
   videoUrl?: string;
   duration?: number;
   error?: string;
+  slides?: Slide[];
 }
 
 export class SlideToVideoComposer {
@@ -61,33 +62,34 @@ export class SlideToVideoComposer {
           // Generate TTS with real service
           const result = await this.realTTS.generateSpeechForSlide(
             textToSpeak,
+            slide.notes,
             {
               voiceId,
               projectId,
-              slideId: slide.id
+              slideId: slide.id,
+              provider: 'elevenlabs' as any
             }
           );
 
-          if (result.success && result.audioUrl) {
+          const ttsResult = result as any;
+          if (ttsResult.success && ttsResult.audioUrl) {
             slidesWithAudio.push({
               ...slide,
-              audioUrl: result.audioUrl,
-              duration: result.duration
+              audioUrl: ttsResult.audioUrl,
+              duration: ttsResult.duration
             });
 
             logger.info(`TTS generated for slide ${slide.id}`, {
-              duration: result.duration,
+              duration: ttsResult.duration,
               success: true
             });
           } else {
-            logger.error(`Failed to generate TTS for slide ${slide.id}`, {
-              error: result.error
-            });
+            logger.error(`Failed to generate TTS for slide ${slide.id}`,
+              new Error(ttsResult.error || 'TTS generation failed'));
           }
         } catch (error) {
-          logger.error(`Error generating TTS for slide ${slide.id}`, {
-            error: error instanceof Error ? error.message : 'Unknown error'
-          });
+          logger.error(`Error generating TTS for slide ${slide.id}`,
+            error instanceof Error ? error : new Error('Unknown error'));
         }
       }
 
@@ -110,10 +112,10 @@ export class SlideToVideoComposer {
       };
 
     } catch (error) {
-      logger.error('Slide-to-video composition failed', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        projectId
-      });
+      logger.error('Slide-to-video composition failed',
+        error instanceof Error ? error : new Error('Slide-to-video composition failed'),
+        { projectId }
+      );
 
       return {
         success: false,

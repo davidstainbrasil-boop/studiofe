@@ -15,9 +15,10 @@ import {
 } from './tts-provider-abstraction';
 
 interface GoogleTTSVoice {
-  name: string[];
-  ssmlGender: string;
-  naturalSampleRateHertz: number;
+  name?: string;
+  languageCodes?: string[];
+  ssmlGender?: string;
+  naturalSampleRateHertz?: number;
 }
 
 interface GoogleAudioConfig {
@@ -55,10 +56,10 @@ export class GoogleCloudProviderReal implements TTSProvider {
       }
 
       return response.voices
-        .filter(voice => voice.languageCodes?.includes('pt-BR') || voice.languageCodes?.includes('en-US'))
-        .map((voice: GoogleTTSVoice): TTSVoice => ({
-          id: voice.name?.[0] || 'default',
-          name: voice.name?.[0] || 'Unknown Voice',
+        .filter((voice: any) => voice.languageCodes?.includes('pt-BR') || voice.languageCodes?.includes('en-US'))
+        .map((voice: any): TTSVoice => ({
+          id: voice.name || 'default',
+          name: voice.name || 'Unknown Voice',
           language: voice.languageCodes?.[0] || 'en',
           gender: this.mapSsmlGender(voice.ssmlGender),
           preview_url: undefined, // Google doesn't provide preview URLs
@@ -73,6 +74,7 @@ export class GoogleCloudProviderReal implements TTSProvider {
 
   async generateSpeech(request: TTSRequest): Promise<TTSResponse> {
     const startTime = Date.now();
+    let selectedVoice = request.voiceId;
     
     try {
       // Validate request
@@ -84,7 +86,6 @@ export class GoogleCloudProviderReal implements TTSProvider {
       }
 
       // Get voice info if voiceId provided
-      let selectedVoice = request.voiceId;
       if (request.voiceId) {
         const voices = await this.getAvailableVoices();
         const voiceInfo = voices.find(v => v.id === request.voiceId);
@@ -122,7 +123,7 @@ export class GoogleCloudProviderReal implements TTSProvider {
       };
 
       // Make API request
-      const [response] = await this.client.synthesizeSpeech(synthesisRequest);
+      const [response] = await (this.client.synthesizeSpeech as any)(synthesisRequest);
       
       const processingTime = Date.now() - startTime;
 
@@ -133,14 +134,18 @@ export class GoogleCloudProviderReal implements TTSProvider {
         };
       }
 
+      const audioBuffer = Buffer.isBuffer(response.audio)
+        ? response.audio
+        : Buffer.from(response.audio as Uint8Array);
+
       // Calculate duration estimation
       const duration = this.estimateDuration(request.text);
 
       return {
         success: true,
-        audioBuffer: response.audio,
+        audioBuffer,
         duration,
-        size: response.audio.length,
+        size: audioBuffer.length,
         cost: this.estimateCost(request.text),
         metadata: {
           provider: this.name,

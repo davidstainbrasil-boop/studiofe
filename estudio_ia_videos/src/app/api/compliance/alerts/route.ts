@@ -94,8 +94,8 @@ export async function GET(request: NextRequest) {
       }
 
       // Check for missing critical topics
-      if (validation.criticalPoints) {
-        const missingPoints = toStringArray(validation.criticalPoints);
+      if ((validation as any).criticalPoints) {
+        const missingPoints = toStringArray((validation as any).criticalPoints);
         if (Array.isArray(missingPoints) && missingPoints.length > 0) {
           alerts.push({
             id: `missing-${validation.id}`,

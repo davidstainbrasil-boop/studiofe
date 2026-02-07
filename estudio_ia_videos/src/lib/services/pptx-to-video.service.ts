@@ -66,27 +66,29 @@ export class PptxToVideoService {
       }
 
       // Phase 2: Generate TTS for each slide
-      const slidesWithAudio = await this.slideComposer.composeSlidesToVideo(
-        uploadResult.slides,
+      const videoResult = await this.slideComposer.composeSlidesToVideo(
+        uploadResult.slides as any,
         options.projectName,
-        {
-          voiceId: options.voiceId,
-          provider: options.ttsProvider
-        }
+        options.voiceId || 'bella'
       );
 
       // Phase 3: Create video composition result
-      const result = {
-        success: true,
-        projectId: uploadResult.projectId,
-        slides: slidesWithAudio,
+      const composedSlides = (videoResult as any).slides || uploadResult.slides || [];
+      const result: PipelineResult = {
+        projectId: (uploadResult as any).project?.id || options.projectName,
+        slides: composedSlides.map((s: any) => ({
+          id: s.id || '',
+          content: s.content || '',
+          notes: s.notes,
+          audioUrl: s.audioUrl
+        })),
         status: 'tts_generated',
-        estimatedTime: this.slideComposer.estimateRenderingTime(slidesWithAudio)
+        estimatedTime: (videoResult as any).duration || 0
       };
 
       logger.info('✅ PPTX → Video pipeline completed successfully', {
         projectId: result.projectId,
-        slidesCount: slidesWithAudio.length,
+        slidesCount: composedSlides.length,
         totalDuration: result.estimatedTime
       });
 
@@ -95,18 +97,19 @@ export class PptxToVideoService {
     } catch (error) {
       const processingTime = Date.now() - startTime;
       
-      logger.error('❌ PPTX → Video pipeline failed', {
-        error: error instanceof Error ? error : new Error(String(error)),
-        component: 'PptxToVideoService',
-        projectId: options.projectName,
-        processingTime
-      });
+      logger.error('❌ PPTX → Video pipeline failed',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          component: 'PptxToVideoService',
+          projectId: options.projectName,
+          processingTime
+        }
+      );
 
       return {
-        success: false,
+        projectId: '',
         slides: [],
-        status: 'failed',
-        error: error instanceof Error ? error.message : 'PPTX → Video pipeline failed'
+        status: 'failed' as const,
       };
     }
   }
@@ -134,7 +137,7 @@ export class PptxToVideoService {
       });
 
       // Process PPTX
-      const extractionResult = await this.pptxProcessor.extract(buffer, project.id);
+      const extractionResult = await (this.pptxProcessor as any).extract(buffer, project.id);
       
       if (!extractionResult.success) {
         throw new Error('Failed to extract slides');

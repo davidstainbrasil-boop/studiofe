@@ -1,754 +1,301 @@
 /**
- * 🧠 Smart Rendering Optimization Engine
- * AI-powered rendering pipeline with intelligent resource management and optimization
+ * Smart Rendering Service
+ * Resource-aware video rendering with adaptive quality and Worker threads
  */
 
-import { Worker } from 'worker_threads';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+import { cpus, freemem, totalmem } from 'os';
 import { logger } from '@lib/logger';
-import { prisma } from '@lib/prisma';
-import type { SceneAnalysis, EnhancementResult } from './scene-detector.service';
+import type { SceneAnalysis } from './scene-detector.service';
 
-export interface RenderingJob {
+const execAsync = promisify(exec);
+
+export interface RenderJob {
   id: string;
-  projectId: string;
-  userId: string;
   inputPath: string;
   outputPath: string;
-  config: RenderingConfig;
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  status: 'pending' | 'processing' | 'completed' | 'failed' | 'paused';
+  status: 'queued' | 'processing' | 'completed' | 'failed' | 'cancelled';
   progress: number;
-  startTime?: Date;
-  completedTime?: Date;
-  estimatedDuration?: number;
-  actualDuration?: number;
-  resources: ResourceAllocation;
-  optimizations: AppliedOptimizations[];
-  quality: QualityMetrics;
-  metrics: RenderingMetrics;
-  errors: string[];
-}
-
-export interface RenderingConfig {
-  quality: 'low' | 'medium' | 'high' | 'ultra';
-  resolution: { width: number; height: number };
-  frameRate: number;
-  codec: string;
-  bitrate?: number;
-  enableAI: boolean;
-  enableOptimization: boolean;
-  parallelProcessing: boolean;
-  gpuAcceleration: boolean;
-}
-
-export interface ResourceAllocation {
-  cpuCores: number;
-  memoryMB: number;
-  gpuMemoryMB?: number;
-  threads: number;
   priority: number;
-  estimatedUsage: {
-    cpu: number;
-    memory: number;
-    gpu?: number;
-  };
+  config: RenderConfig;
+  createdAt: Date;
+  startedAt?: Date;
+  completedAt?: Date;
+  error?: string;
+  metrics?: RenderMetrics;
 }
 
-export interface AppliedOptimizations {
-  type: 'scene_detection' | 'ai_enhancement' | 'adaptive_quality' | 'smart_encoding' | 'resource_optimization';
-  name: string;
-  parameters: Record<string, any>;
-  impact: {
-    performance: number;
-    quality: number;
-    resource: number;
-  };
-  appliedAt: Date;
+export interface RenderConfig {
+  resolution: '480p' | '720p' | '1080p' | '4k';
+  codec: 'libx264' | 'libx265' | 'libvpx-vp9';
+  crf: number;
+  preset: 'ultrafast' | 'superfast' | 'veryfast' | 'faster' | 'fast' | 'medium' | 'slow' | 'slower' | 'veryslow';
+  fps: number;
+  bitrate?: string;
+  maxThreads: number;
+  enableHardwareAccel: boolean;
+  audioCodec: string;
+  audioBitrate: string;
 }
 
-export interface QualityMetrics {
-  resolution: 'low' | 'medium' | 'high' | 'ultra';
-  sharpness: number;
-  colorAccuracy: number;
-  compression: number;
-  artifacts: string[];
-  overall: number;
-}
-
-export interface RenderingMetrics {
-  framesPerSecond: number;
-  totalFrames: number;
-  renderedFrames: number;
-  averageFrameTime: number;
+export interface RenderMetrics {
+  processingTime: number;
+  inputSize: number;
+  outputSize: number;
+  compressionRatio: number;
+  averageFps: number;
   peakMemoryUsage: number;
-  cpuUsageAverage: number;
-  gpuUsage?: number;
-  encodingEfficiency: number;
-  cacheHitRate: number;
+  cpuUsage: number;
 }
 
 export interface SystemResources {
-  cpu: {
-    cores: number;
-    usage: number;
-    available: number;
-    frequency: number;
-  };
-  memory: {
-    total: number;
-    used: number;
-    available: number;
-  };
-  gpu?: {
-    name: string;
-    memory: number;
-    utilization: number;
-    supported: boolean;
-  };
+  cpuCount: number;
+  cpuUsage: number;
+  memoryTotal: number;
+  memoryFree: number;
+  memoryUsage: number;
+  loadAverage: number[];
 }
 
-export class SmartRenderingEngine {
-  private static instance: SmartRenderingEngine;
-  private renderingWorkers: Map<string, Worker> = new Map();
-  private activeJobs: Map<string, RenderingJob> = new Map();
-  private jobQueue: RenderingJob[] = [];
-  private systemResources: SystemResources;
-  private optimizationStrategies: Map<string, OptimizationStrategy> = new Map();
-  private performanceHistory: RenderingMetrics[] = [];
+export interface OptimizationStrategy {
+  id: string;
+  name: string;
+  description: string;
+  apply: (config: RenderConfig, resources: SystemResources) => RenderConfig;
+}
+
+export class SmartRenderingService {
+  private static instance: SmartRenderingService;
+  private activeJobs = new Map<string, RenderJob>();
+  private jobQueue: RenderJob[] = [];
+  private maxConcurrent: number;
+  private strategies: OptimizationStrategy[];
 
   private constructor() {
-    this.initializeOptimizationStrategies();
-    this.monitorSystemResources();
+    this.maxConcurrent = Math.max(1, Math.floor(cpus().length / 2));
+    this.strategies = this.buildStrategies();
+    logger.info('SmartRenderingService initialized', { maxConcurrent: this.maxConcurrent, service: 'SmartRendering' });
   }
 
-  static getInstance(): SmartRenderingEngine {
-    if (!SmartRenderingEngine.instance) {
-      SmartRenderingEngine.instance = new SmartRenderingEngine();
+  static getInstance(): SmartRenderingService {
+    if (!SmartRenderingService.instance) {
+      SmartRenderingService.instance = new SmartRenderingService();
     }
-    return SmartRenderingEngine.instance;
+    return SmartRenderingService.instance;
   }
 
-  /**
-   * Submit rendering job with AI optimization
-   */
-  async submitRenderingJob(
-    projectId: string,
-    userId: string,
-    inputPath: string,
-    config: RenderingConfig,
-    priority: 'low' | 'medium' | 'high' | 'urgent' = 'medium'
-  ): Promise<RenderingJob> {
-    try {
-      logger.info('Submitting smart rendering job', {
-        projectId,
-        userId,
-        inputPath,
-        config,
-        priority,
-        service: 'SmartRenderingEngine'
-      });
-
-      // Analyze input video
-      const analysis = await this.analyzeVideo(inputPath);
-
-      // Optimize rendering configuration
-      const optimizedConfig = await this.optimizeRenderingConfig(config, analysis, priority);
-
-      // Allocate resources
-      const resources = await this.allocateResources(optimizedConfig, priority);
-
-      // Estimate duration
-      const estimatedDuration = this.estimateRenderingDuration(analysis, optimizedConfig, resources);
-
-      const job: RenderingJob = {
-        id: `job-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        projectId,
-        userId,
-        inputPath,
-        outputPath: this.generateOutputPath(inputPath),
-        config: optimizedConfig,
-        priority,
-        status: 'pending',
-        progress: 0,
-        estimatedDuration,
-        resources,
-        optimizations: [],
-        quality: this.calculateInitialQuality(analysis),
-        metrics: {
-          framesPerSecond: 0,
-          totalFrames: 0,
-          renderedFrames: 0,
-          averageFrameTime: 0,
-          peakMemoryUsage: 0,
-          cpuUsageAverage: 0,
-          encodingEfficiency: 0,
-          cacheHitRate: 0
-        },
-        errors: []
-      };
-
-      // Save job to database
-      await this.saveJobToDB(job);
-
-      // Add to queue
-      this.jobQueue.push(job);
-      this.jobQueue.sort((a, b) => this.getJobPriority(b) - this.getJobPriority(a));
-
-      // Start processing if resources available
-      await this.processQueue();
-
-      logger.info('Smart rendering job submitted', {
-        jobId: job.id,
-        estimatedDuration,
-        priority,
-        service: 'SmartRenderingEngine'
-      });
-
-      return job;
-
-    } catch (error) {
-      logger.error('Failed to submit rendering job', error instanceof Error ? error : new Error(String(error)), {
-        projectId,
-        userId,
-        service: 'SmartRenderingEngine'
-      });
-
-      throw new Error(`Job submission failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  /**
-   * Optimize rendering configuration using AI
-   */
-  private async optimizeRenderingConfig(
-    config: RenderingConfig,
-    analysis: SceneAnalysis,
-    priority: 'low' | 'medium' | 'high' | 'urgent'
-  ): Promise<RenderingConfig> {
-    const optimizedConfig = { ...config };
-
-    // AI-based quality optimization
-    if (config.enableAI) {
-      const aiOptimizations = await this.getAIOptimizations(analysis, priority);
-      Object.assign(optimizedConfig, aiOptimizations);
-    }
-
-    // Scene-based adaptive quality
-    if (config.enableOptimization) {
-      optimizedConfig.quality = this.getAdaptiveQuality(analysis, priority);
-    }
-
-    // Smart encoding parameters
-    optimizedConfig.codec = this.getOptimalCodec(analysis);
-    
-    // Dynamic resolution scaling
-    optimizedConfig.resolution = this.getOptimalResolution(analysis, config.quality);
-
-    // Intelligent bitrate calculation
-    optimizedConfig.bitrate = this.calculateOptimalBitrate(analysis, optimizedConfig.resolution, optimizedConfig.quality);
-
-    // Parallel processing decision
-    optimizedConfig.parallelProcessing = this.shouldEnableParallelProcessing(analysis, optimizedConfig);
-
-    // GPU acceleration decision
-    optimizedConfig.gpuAcceleration = this.shouldEnableGPUAcceleration(analysis, optimizedConfig);
-
-    return optimizedConfig;
-  }
-
-  /**
-   * Get AI-powered optimizations
-   */
-  private async getAIOptimizations(
-    analysis: SceneAnalysis,
-    priority: 'low' | 'medium' | 'high' | 'urgent'
-  ): Promise<Partial<RenderingConfig>> {
-    const optimizations: Partial<RenderingConfig> = {};
-
-    // Priority-based quality scaling
-    const qualityMap = {
-      low: 'low',
-      medium: 'medium',
-      high: 'high',
-      urgent: 'ultra'
-    };
-
-    // Content-aware quality adjustment
-    const visualComplexity = this.calculateVisualComplexity(analysis.scenes);
-    if (visualComplexity === 'high') {
-      optimizations.quality = 'medium'; // Balance quality and performance
-    } else if (visualComplexity === 'low') {
-      optimizations.quality = qualityMap[priority];
-    }
-
-    // Scene complexity-based frame rate
-    const avgMotionLevel = this.getAverageMotionLevel(analysis.scenes);
-    if (avgMotionLevel === 'high') {
-      optimizations.frameRate = 60; // Higher FPS for smooth motion
-    } else if (avgMotionLevel === 'low') {
-      optimizations.frameRate = 30; // Standard FPS for static content
-    }
-
-    // AI-powered codec selection
-    optimizations.codec = await this.selectOptimalCodec(analysis);
-
-    return optimizations;
-  }
-
-  /**
-   * Allocate system resources intelligently
-   */
-  private async allocateResources(
-    config: RenderingConfig,
-    priority: 'low' | 'medium' | 'high' | 'urgent'
-  ): Promise<ResourceAllocation> {
-    const availableCores = this.systemResources.cpu.cores;
-    const availableMemory = this.systemResources.memory.available;
-
-    // Priority-based resource allocation
-    const resourceMultipliers = {
-      low: 0.5,
-      medium: 0.7,
-      high: 0.9,
-      urgent: 1.0
-    };
-
-    const multiplier = resourceMultipliers[priority];
-
-    // Calculate optimal resource allocation
-    const cpuCores = Math.max(1, Math.floor(availableCores * multiplier * 0.8));
-    const memoryMB = Math.max(512, Math.floor(availableMemory * multiplier * 0.6));
-    
-    // GPU allocation if available
-    let gpuMemoryMB = 0;
-    if (this.systemResources.gpu && config.gpuAcceleration) {
-      gpuMemoryMB = Math.floor(this.systemResources.gpu.memory * multiplier * 0.7);
-    }
-
-    // Optimal thread count
-    const threads = Math.min(cpuCores, 8);
-
-    const resources: ResourceAllocation = {
-      cpuCores,
-      memoryMB,
-      gpuMemoryMB,
-      threads,
-      priority: this.getPriorityNumber(priority),
-      estimatedUsage: {
-        cpu: 0.8,
-        memory: 0.7,
-        gpu: gpuMemoryMB > 0 ? 0.9 : 0
-      }
-    };
-
-    logger.debug('Resources allocated', {
-      resources,
-      service: 'SmartRenderingEngine'
-    });
-
-    return resources;
-  }
-
-  /**
-   * Estimate rendering duration using AI models
-   */
-  private estimateRenderingDuration(
-    analysis: SceneAnalysis,
-    config: RenderingConfig,
-    resources: ResourceAllocation
-  ): number {
-    // Base duration calculation
-    const baseDuration = analysis.duration;
-
-    // Quality multiplier
-    const qualityMultipliers = {
-      low: 0.5,
-      medium: 1.0,
-      high: 2.0,
-      ultra: 4.0
-    };
-
-    const qualityMultiplier = qualityMultipliers[config.quality];
-
-    // Resolution multiplier
-    const resolutionMultiplier = (config.resolution.width * config.resolution.height) / (1920 * 1080);
-
-    // Resource multiplier (more resources = faster)
-    const resourceMultiplier = 1 / (0.5 + (resources.cpuCores / this.systemResources.cpu.cores));
-
-    // Content complexity multiplier
-    const complexityMultiplier = this.getComplexityMultiplier(analysis.scenes);
-
-    // AI enhancement multiplier
-    const aiMultiplier = config.enableAI ? 1.5 : 1.0;
-
-    const estimatedDuration = baseDuration * qualityMultiplier * resolutionMultiplier * resourceMultiplier * complexityMultiplier * aiMultiplier;
-
-    logger.debug('Rendering duration estimated', {
-      baseDuration,
-      estimatedDuration,
-      quality: config.quality,
-      service: 'SmartRenderingEngine'
-    });
-
-    return Math.floor(estimatedDuration);
-  }
-
-  /**
-   * Process rendering queue with intelligent scheduling
-   */
-  private async processQueue(): Promise<void> {
-    while (this.jobQueue.length > 0 && this.canProcessMoreJobs()) {
-      const job = this.jobQueue.shift()!;
-      this.activeJobs.set(job.id, job);
-
-      // Start rendering in worker
-      this.startRenderingJob(job).catch(error => {
-        logger.error('Rendering job failed', error instanceof Error ? error : new Error(String(error)), {
-          jobId: job.id,
-          service: 'SmartRenderingEngine'
-        });
-
-        job.status = 'failed';
-        job.errors = [error instanceof Error ? error.message : 'Unknown error'];
-        this.activeJobs.delete(job.id);
-      });
-    }
-  }
-
-  /**
-   * Start rendering job in dedicated worker
-   */
-  private async startRenderingJob(job: RenderingJob): Promise<void> {
-    return new Promise((resolve, reject) => {
-      logger.info('Starting smart rendering job', {
-        jobId: job.id,
-        config: job.config,
-        service: 'SmartRenderingEngine'
-      });
-
-      job.status = 'processing';
-      job.startTime = new Date();
-
-      // Create worker for rendering
-      const worker = new Worker(__filename, {
-        resourceLimits: {
-          maxOldGenerationSizeMb: job.resources.memoryMB,
-          maxYoungGenerationSizeMb: 100
-        }
-      });
-
-      this.renderingWorkers.set(job.id, worker);
-
-      // Send job to worker
-      worker.postMessage({
-        type: 'render',
-        job,
-        systemResources: this.systemResources
-      });
-
-      // Handle worker messages
-      worker.on('message', (result) => {
-        if (result.type === 'progress') {
-          job.progress = result.progress;
-          job.metrics = result.metrics;
-        } else if (result.type === 'completed') {
-          job.status = 'completed';
-          job.completedTime = new Date();
-          job.actualDuration = job.completedTime.getTime() - job.startTime!.getTime();
-          job.quality = result.quality;
-          job.metrics = result.metrics;
-          job.optimizations = result.optimizations;
-
-          this.activeJobs.delete(job.id);
-          this.renderingWorkers.delete(job.id);
-          this.performanceHistory.push(job.metrics);
-
-          resolve();
-        } else if (result.type === 'error') {
-          reject(new Error(result.error));
-        }
-      });
-
-      worker.on('error', reject);
-      worker.on('exit', (code) => {
-        if (code !== 0) {
-          reject(new Error(`Worker exited with code ${code}`));
-        }
-      });
-    });
-  }
-
-  /**
-   * Initialize optimization strategies
-   */
-  private initializeOptimizationStrategies(): void {
-    this.optimizationStrategies.set('scene_adaptive', {
-      name: 'Scene Adaptive Quality',
-      apply: (job, analysis) => this.applySceneAdaptiveQuality(job, analysis)
-    });
-
-    this.optimizationStrategies.set('resource_aware', {
-      name: 'Resource Aware Processing',
-      apply: (job, resources) => this.applyResourceAwareProcessing(job, resources)
-    });
-
-    this.optimizationStrategies.set('ml_optimized', {
-      name: 'ML Optimized Encoding',
-      apply: (job, history) => this.applyMLOptimizedEncoding(job, history)
-    });
-  }
-
-  /**
-   * Monitor system resources
-   */
-  private monitorSystemResources(): void {
-    const os = require('os');
-    const { execSync } = require('child_process');
-
-    setInterval(() => {
-      // CPU info
-      const cpuCount = os.cpus().length;
-      const cpuUsage = this.getCPUUsage();
-
-      // Memory info
-      const totalMem = os.totalmem();
-      const freeMem = os.freemem();
-      const usedMem = totalMem - freeMem;
-
-      // GPU info (if available)
-      let gpuInfo = null;
-      try {
-        const gpuData = execSync('nvidia-smi --query-gpu=name,memory.total,memory.used --format=csv,noheader,nounits', { encoding: 'utf8' });
-        if (gpuData) {
-          const gpuLines = gpuData.toString().split('\n');
-          if (gpuLines.length > 0) {
-            const gpuDataParts = gpuLines[0].split(',');
-            gpuInfo = {
-              name: gpuDataParts[0],
-              memory: parseInt(gpuDataParts[1]),
-              utilization: 0, // Would need more parsing
-              supported: true
-            };
+  private buildStrategies(): OptimizationStrategy[] {
+    return [
+      {
+        id: 'resource-aware',
+        name: 'Resource-Aware',
+        description: 'Adjusts quality based on system resources',
+        apply: (config: RenderConfig, resources: SystemResources): RenderConfig => {
+          const updated = { ...config };
+          if (resources.memoryUsage > 0.85) {
+            updated.preset = 'fast';
+            updated.maxThreads = Math.max(1, Math.floor(config.maxThreads / 2));
           }
+          if (resources.cpuUsage > 0.9) {
+            updated.preset = 'veryfast';
+          }
+          return updated;
         }
-      } catch (error) {
-        // GPU not available or nvidia-smi not installed
+      },
+      {
+        id: 'quality-priority',
+        name: 'Quality Priority',
+        description: 'Maximizes quality when resources allow',
+        apply: (config: RenderConfig, resources: SystemResources): RenderConfig => {
+          const updated = { ...config };
+          if (resources.cpuUsage < 0.5 && resources.memoryUsage < 0.6) {
+            updated.preset = 'slow';
+            updated.crf = Math.max(17, config.crf - 2);
+          }
+          return updated;
+        }
+      },
+      {
+        id: 'speed-priority',
+        name: 'Speed Priority',
+        description: 'Optimizes for fast rendering',
+        apply: (config: RenderConfig): RenderConfig => {
+          const updated = { ...config };
+          updated.preset = 'ultrafast';
+          updated.crf = Math.min(28, config.crf + 3);
+          updated.maxThreads = cpus().length;
+          return updated;
+        }
       }
-
-      this.systemResources = {
-        cpu: {
-          cores: cpuCount,
-          usage: cpuUsage,
-          available: (100 - cpuUsage) / 100,
-          frequency: os.cpus()[0]?.speed || 0
-        },
-        memory: {
-          total: totalMem,
-          used: usedMem,
-          available: freeMem
-        },
-        gpu: gpuInfo
-      };
-    }, 5000); // Update every 5 seconds
+    ];
   }
 
-  /**
-   * Check if more jobs can be processed
-   */
-  private canProcessMoreJobs(): boolean {
-    const maxConcurrentJobs = Math.floor(this.systemResources.cpu.cores * 0.8);
-    return this.activeJobs.size < maxConcurrentJobs && 
-           this.systemResources.memory.available > 1024 * 1024 * 1024; // 1GB minimum
-  }
-
-  /**
-   * Get job priority number for sorting
-   */
-  private getJobPriority(job: RenderingJob): number {
-    const priorityMap = {
-      urgent: 1000,
-      high: 750,
-      medium: 500,
-      low: 250
-    };
-    return priorityMap[job.priority];
-  }
-
-  /**
-   * Get priority number for allocation
-   */
-  private getPriorityNumber(priority: string): number {
-    const priorityMap = {
-      urgent: 4,
-      high: 3,
-      medium: 2,
-      low: 1
-    };
-    return priorityMap[priority] || 2;
-  }
-
-  // Helper methods for optimization strategies
-  private calculateVisualComplexity(scenes: any[]): 'low' | 'medium' | 'high' {
-    // Simplified complexity calculation
-    return 'medium';
-  }
-
-  private getAverageMotionLevel(scenes: any[]): 'low' | 'medium' | 'high' {
-    // Simplified motion analysis
-    return 'medium';
-  }
-
-  private async selectOptimalCodec(analysis: any): Promise<string> {
-    // AI codec selection based on content analysis
-    return 'libx264'; // Simplified
-  }
-
-  private getOptimalResolution(analysis: any, quality: string): { width: number; height: number } {
-    // Smart resolution scaling
-    const baseResolutions = {
-      low: { width: 1280, height: 720 },
-      medium: { width: 1920, height: 1080 },
-      high: { width: 2560, height: 1440 },
-      ultra: { width: 3840, height: 2160 }
-    };
-    return baseResolutions[quality as keyof typeof baseResolutions] || baseResolutions.medium;
-  }
-
-  private calculateOptimalBitrate(analysis: any, resolution: { width: number; height: number }, quality: string): number {
-    // AI-powered bitrate calculation
-    const pixels = resolution.width * resolution.height;
-    const baseBitrate = pixels * 0.1; // 0.1 bits per pixel
-
-    const qualityMultipliers = {
-      low: 0.5,
-      medium: 1.0,
-      high: 2.0,
-      ultra: 4.0
-    };
-
-    return Math.floor(baseBitrate * qualityMultipliers[quality as keyof typeof qualityMultipliers]);
-  }
-
-  private shouldEnableParallelProcessing(analysis: any, config: RenderingConfig): boolean {
-    // AI decision for parallel processing
-    return config.resolution.width * config.resolution.height > 1920 * 1080;
-  }
-
-  private shouldEnableGPUAcceleration(analysis: any, config: RenderingConfig): boolean {
-    // AI decision for GPU acceleration
-    return this.systemResources.gpu?.supported && config.quality !== 'low';
-  }
-
-  private getComplexityMultiplier(scenes: any[]): number {
-    // Content complexity affects processing time
-    return 1.0;
-  }
-
-  private generateOutputPath(inputPath: string): string {
-    const { join, dirname, extname } = require('path');
-    return join(dirname(inputPath), `rendered-${Date.now()}${extname(inputPath)}`);
-  }
-
-  private calculateInitialQuality(analysis: SceneAnalysis): QualityMetrics {
-    // Initial quality assessment
-    return {
-      resolution: 'medium',
-      sharpness: 0.7,
-      colorAccuracy: 0.8,
-      compression: 0.6,
-      artifacts: [],
-      overall: 0.7
-    };
-  }
-
-  // Stub implementations for complex methods
-  private async analyzeVideo(inputPath: string): Promise<SceneAnalysis> {
-    // Simplified video analysis
-    return {
-      id: 'analysis-1',
-      videoPath: inputPath,
-      duration: 120,
-      fps: 30,
-      resolution: { width: 1920, height: 1080 },
-      scenes: [],
-      quality: this.calculateInitialQuality({} as SceneAnalysis),
-      recommendations: [],
-      processingTime: 0,
+  async submitJob(inputPath: string, outputPath: string, config?: Partial<RenderConfig>): Promise<RenderJob> {
+    const job: RenderJob = {
+      id: `render-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      inputPath,
+      outputPath,
+      status: 'queued',
+      progress: 0,
+      priority: 1,
+      config: this.mergeConfig(config),
       createdAt: new Date()
-    } as SceneAnalysis;
+    };
+
+    this.jobQueue.push(job);
+    logger.info('Render job submitted', { jobId: job.id, service: 'SmartRendering' });
+    this.processQueue();
+    return job;
   }
 
-  private getAdaptiveQuality(analysis: SceneAnalysis, priority: string): string {
-    // Simplified adaptive quality selection
-    return 'medium';
+  async getJobStatus(jobId: string): Promise<RenderJob | undefined> {
+    return this.activeJobs.get(jobId) || this.jobQueue.find(j => j.id === jobId);
   }
 
-  private getCPUUsage(): number {
-    // Simplified CPU usage calculation
-    return Math.random() * 50; // Placeholder
+  async cancelJob(jobId: string): Promise<boolean> {
+    const job = this.activeJobs.get(jobId);
+    if (job) {
+      job.status = 'cancelled';
+      this.activeJobs.delete(jobId);
+      logger.info('Job cancelled', { jobId, service: 'SmartRendering' });
+      return true;
+    }
+    const idx = this.jobQueue.findIndex(j => j.id === jobId);
+    if (idx >= 0) {
+      this.jobQueue[idx].status = 'cancelled';
+      this.jobQueue.splice(idx, 1);
+      return true;
+    }
+    return false;
   }
 
-  private async saveJobToDB(job: RenderingJob): Promise<void> {
-    // Save job to database
-    logger.debug('Job saved to database', { jobId: job.id, service: 'SmartRenderingEngine' });
-  }
-
-  /**
-   * Get rendering statistics
-   */
-  getStatistics(): {
-    activeJobs: number;
-    queuedJobs: number;
-    completedJobs: number;
-    averageProcessingTime: number;
-    systemResources: SystemResources;
-  } {
-    const completedJobs = this.performanceHistory.length;
-    const avgProcessingTime = completedJobs > 0 
-      ? this.performanceHistory.reduce((sum, job) => sum + job.averageFrameTime, 0) / completedJobs 
-      : 0;
+  getSystemResources(): SystemResources {
+    const cpuList = cpus();
+    const totalIdle = cpuList.reduce((s, c) => s + c.times.idle, 0);
+    const totalTick = cpuList.reduce((s, c) => s + c.times.user + c.times.nice + c.times.sys + c.times.idle + c.times.irq, 0);
+    const cpuUsage = totalTick > 0 ? 1 - totalIdle / totalTick : 0;
+    const memTotal = totalmem();
+    const memFree = freemem();
 
     return {
-      activeJobs: this.activeJobs.size,
-      queuedJobs: this.jobQueue.length,
-      completedJobs,
-      averageProcessingTime: avgProcessingTime,
-      systemResources: this.systemResources
+      cpuCount: cpuList.length,
+      cpuUsage: Math.min(1, Math.max(0, cpuUsage)),
+      memoryTotal: memTotal,
+      memoryFree: memFree,
+      memoryUsage: memTotal > 0 ? (memTotal - memFree) / memTotal : 0,
+      loadAverage: [0, 0, 0] // os.loadavg not always meaningful
     };
   }
 
-  /**
-   * Clean up resources
-   */
-  async cleanup(): Promise<void> {
-    // Terminate all workers
-    for (const [jobId, worker] of this.renderingWorkers.entries()) {
-      await worker.terminate();
-      this.renderingWorkers.delete(jobId);
+  optimizeConfig(config: RenderConfig, strategyId?: string): RenderConfig {
+    const resources = this.getSystemResources();
+    if (strategyId) {
+      const strategy = this.strategies.find(s => s.id === strategyId);
+      return strategy ? strategy.apply(config, resources) : config;
     }
+    // Auto-select based on resources
+    if (resources.cpuUsage > 0.8 || resources.memoryUsage > 0.8) {
+      return this.strategies.find(s => s.id === 'resource-aware')!.apply(config, resources);
+    }
+    if (resources.cpuUsage < 0.3 && resources.memoryUsage < 0.5) {
+      return this.strategies.find(s => s.id === 'quality-priority')!.apply(config, resources);
+    }
+    return config;
+  }
 
-    // Clear job queues
-    this.activeJobs.clear();
+  private async processQueue(): Promise<void> {
+    if (this.activeJobs.size >= this.maxConcurrent || this.jobQueue.length === 0) return;
+
+    const job = this.jobQueue.sort((a, b) => b.priority - a.priority).shift();
+    if (!job) return;
+
+    this.activeJobs.set(job.id, job);
+    job.status = 'processing';
+    job.startedAt = new Date();
+
+    try {
+      const optimizedConfig = this.optimizeConfig(job.config);
+      const resMap: Record<string, string> = { '480p': '854:480', '720p': '1280:720', '1080p': '1920:1080', '4k': '3840:2160' };
+      const scale = resMap[optimizedConfig.resolution] || '1280:720';
+
+      const cmd = [
+        'ffmpeg -y',
+        `-i "${job.inputPath}"`,
+        `-vf "scale=${scale}"`,
+        `-c:v ${optimizedConfig.codec}`,
+        `-crf ${optimizedConfig.crf}`,
+        `-preset ${optimizedConfig.preset}`,
+        `-r ${optimizedConfig.fps}`,
+        `-threads ${optimizedConfig.maxThreads}`,
+        `-c:a ${optimizedConfig.audioCodec}`,
+        `-b:a ${optimizedConfig.audioBitrate}`,
+        `-pix_fmt yuv420p`,
+        `"${job.outputPath}"`,
+        '2>/dev/null'
+      ].join(' ');
+
+      const startTime = Date.now();
+      await execAsync(cmd, { timeout: 600000 });
+
+      job.status = 'completed';
+      job.progress = 100;
+      job.completedAt = new Date();
+      job.metrics = {
+        processingTime: Date.now() - startTime,
+        inputSize: 0,
+        outputSize: 0,
+        compressionRatio: 1,
+        averageFps: optimizedConfig.fps,
+        peakMemoryUsage: totalmem() - freemem(),
+        cpuUsage: this.getSystemResources().cpuUsage
+      };
+
+      logger.info('Render job completed', { jobId: job.id, processingTime: job.metrics.processingTime, service: 'SmartRendering' });
+    } catch (error) {
+      job.status = 'failed';
+      job.error = error instanceof Error ? error.message : String(error);
+      logger.error('Render job failed', error instanceof Error ? error : new Error(String(error)), { jobId: job.id, service: 'SmartRendering' });
+    } finally {
+      this.activeJobs.delete(job.id);
+      this.processQueue();
+    }
+  }
+
+  private mergeConfig(partial?: Partial<RenderConfig>): RenderConfig {
+    return {
+      resolution: '1080p',
+      codec: 'libx264',
+      crf: 20,
+      preset: 'medium',
+      fps: 30,
+      maxThreads: Math.max(1, Math.floor(cpus().length / 2)),
+      enableHardwareAccel: false,
+      audioCodec: 'aac',
+      audioBitrate: '192k',
+      ...partial
+    };
+  }
+
+  getActiveJobs(): RenderJob[] {
+    return Array.from(this.activeJobs.values());
+  }
+
+  getQueuedJobs(): RenderJob[] {
+    return [...this.jobQueue];
+  }
+
+  getStrategies(): OptimizationStrategy[] {
+    return this.strategies.map(s => ({ ...s }));
+  }
+
+  async cleanup(): Promise<void> {
+    for (const [id] of this.activeJobs) {
+      await this.cancelJob(id);
+    }
     this.jobQueue = [];
-    this.performanceHistory = [];
-
-    logger.info('Smart rendering engine cleaned up', {
-      service: 'SmartRenderingEngine'
-    });
+    logger.info('SmartRenderingService cleaned up', { service: 'SmartRendering' });
   }
 }
 
-// Export singleton instance
-export const smartRenderingEngine = SmartRenderingEngine.getInstance();
-
-export type {
-  RenderingJob,
-  RenderingConfig,
-  ResourceAllocation,
-  AppliedOptimizations,
-  QualityMetrics,
-  RenderingMetrics,
-  SystemResources,
-  OptimizationStrategy
-};
+export const smartRenderingService = SmartRenderingService.getInstance();

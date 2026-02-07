@@ -1,11 +1,18 @@
 'use client';
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { useEditorStore } from '../stores/useEditorStore';
 import { Button } from '@components/ui/button';
 import { Textarea } from '@components/ui/textarea';
 import { ScrollArea } from '@components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs';
-import { Type, Sparkles, Trash2, Clock } from 'lucide-react';
+import { Type, Sparkles, Trash2, Clock, Loader2, AlertCircle } from 'lucide-react';
+import { logger } from '@/lib/logger';
+
+interface TranscriptionSegment {
+  text: string;
+  start: number;
+  end: number;
+}
 
 const SubtitlesPanel = () => {
     const subtitles = useEditorStore(state => state.subtitles);
@@ -13,13 +20,17 @@ const SubtitlesPanel = () => {
     const updateSubtitle = useEditorStore(state => state.updateSubtitle);
     const deleteSubtitle = useEditorStore(state => state.deleteSubtitle);
     const currentTime = useEditorStore(state => state.currentTime);
+    const elements = useEditorStore(state => state.elements);
+
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     const handleAddManual = () => {
         addSubtitle({
             id: `sub-${Date.now()}`,
             text: 'New Subtitle',
             startTime: currentTime,
-            endTime: currentTime + 3000, // 3s default
+            endTime: currentTime + 3000,
             style: {
                 fontSize: 24,
                 fontFamily: 'Arial',
@@ -29,23 +40,69 @@ const SubtitlesPanel = () => {
         });
     };
 
-    const handleAutoGenerate = () => {
-        // Mock API Call
-        setTimeout(() => {
-            const mockSubs = [
-                { id: 'auto-1', text: "Welcome to this tutorial.", startTime: 500, endTime: 2500 },
-                { id: 'auto-2', text: "Today we will learn Konva.", startTime: 2600, endTime: 4500 },
-                { id: 'auto-3', text: "It is very powerful.", startTime: 4600, endTime: 6000 },
-            ];
+    const handleAutoGenerate = useCallback(async () => {
+        setIsGenerating(true);
+        setError(null);
 
-            mockSubs.forEach(sub => {
+        try {
+            // Find audio/video elements to extract subtitles from
+            const mediaElements = elements.filter(
+                (el) => el.type === 'video' && el.src
+            );
+
+            if (mediaElements.length === 0) {
+                setError('Add a video to the timeline first to generate subtitles.');
+                setIsGenerating(false);
+                return;
+            }
+
+            const response = await fetch('/api/subtitles/transcribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    mediaUrl: mediaElements[0].src,
+                    language: 'pt-BR',
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || `Transcription failed (${response.status})`);
+            }
+
+            const data = await response.json();
+            const segments: TranscriptionSegment[] = data.segments || data.subtitles || [];
+
+            if (segments.length === 0) {
+                setError('No speech detected in the media. Try adding subtitles manually.');
+                setIsGenerating(false);
+                return;
+            }
+
+            segments.forEach((segment, index) => {
                 addSubtitle({
-                    ...sub,
-                    style: { fontSize: 24, fontFamily: 'Arial', fill: 'white', align: 'center' }
+                    id: `auto-${Date.now()}-${index}`,
+                    text: segment.text,
+                    startTime: Math.round(segment.start * 1000),
+                    endTime: Math.round(segment.end * 1000),
+                    style: {
+                        fontSize: 24,
+                        fontFamily: 'Arial',
+                        fill: 'white',
+                        align: 'center',
+                    },
                 });
             });
-        }, 1000);
-    };
+
+            logger.info('Subtitles generated', { count: segments.length });
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Failed to generate subtitles';
+            setError(message);
+            logger.error('Subtitle generation failed', { error: message });
+        } finally {
+            setIsGenerating(false);
+        }
+    }, [elements, addSubtitle]);
 
     return (
         <div className="flex flex-col h-full bg-background">
@@ -73,9 +130,23 @@ const SubtitlesPanel = () => {
                         <p className="text-xs text-muted-foreground">
                             Automatically generate subtitles from your video audio using AI.
                         </p>
-                        <Button onClick={handleAutoGenerate} className="w-full bg-gradient-to-r from-blue-600 to-purple-600">
-                            Generate Subtitles (Mock)
+                        <Button
+                            onClick={handleAutoGenerate}
+                            className="w-full bg-gradient-to-r from-blue-600 to-purple-600"
+                            disabled={isGenerating}
+                        >
+                            {isGenerating ? (
+                                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating...</>
+                            ) : (
+                                'Generate Subtitles'
+                            )}
                         </Button>
+                        {error && (
+                            <div className="flex items-start gap-2 text-xs text-red-500 bg-red-50 dark:bg-red-900/20 p-2 rounded">
+                                <AlertCircle className="w-3 h-3 mt-0.5 shrink-0" />
+                                <span>{error}</span>
+                            </div>
+                        )}
                     </div>
                 </TabsContent>
 

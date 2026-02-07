@@ -141,7 +141,7 @@ export class WebGPUAvatarRenderer {
       });
 
       // Get canvas context
-      this.context = this.config.canvas.getContext('webgpu');
+      this.context = this.config.canvas.getContext('webgpu') as GPUCanvasContext | null;
       if (!this.context) {
         throw new Error('Failed to get WebGPU canvas context');
       }
@@ -656,7 +656,7 @@ export class WebGPUAvatarRenderer {
         },
       ],
       depthStencilAttachment: {
-        view: this.depthTexture.createView(),
+        view: this.depthTexture!.createView(),
         depthClearValue: 1.0,
         depthLoadOp: 'clear',
         depthStoreOp: 'store',
@@ -726,7 +726,7 @@ export class WebGPUAvatarRenderer {
     if (!this.device) throw new Error('Device not initialized');
 
     return this.device.createBindGroup({
-      layout: this.renderPipeline.getBindGroupLayout(0),
+      layout: this.renderPipeline!.getBindGroupLayout(0),
       entries: [
         {
           binding: 0,

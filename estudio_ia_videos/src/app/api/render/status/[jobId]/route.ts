@@ -4,46 +4,63 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-
-// Importar o mesmo Map do route.ts principal
-// Em produção, isso seria Redis ou DB
-const renderJobs = new Map<string, {
-  status: 'queued' | 'processing' | 'completed' | 'failed';
-  progress: number;
-  videoUrl?: string;
-  error?: string;
-  createdAt: number;
-}>();
+import { createClient } from '@/lib/supabase/server';
+import { logger } from '@/lib/logger';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ jobId: string }> }
 ) {
-  const { jobId } = await params;
+  try {
+    const { jobId } = await params;
 
-  // Tentar buscar o job
-  // Nota: Em produção, isso seria Redis/DB compartilhado
-  const job = renderJobs.get(jobId);
+    if (!jobId) {
+      return NextResponse.json({
+        success: false,
+        error: 'jobId is required',
+        code: 'MISSING_JOB_ID',
+      }, { status: 400 });
+    }
 
-  if (!job) {
-    // Simular job em progresso para demo
+    const supabase = await createClient();
+
+    const { data: job, error } = await supabase
+      .from('render_jobs')
+      .select('id, status, progress, output_url, error_message, created_at, started_at, completed_at, render_settings')
+      .eq('id', jobId)
+      .single();
+
+    if (error || !job) {
+      return NextResponse.json({
+        success: false,
+        error: 'Render job not found',
+        code: 'JOB_NOT_FOUND',
+      }, { status: 404 });
+    }
+
     return NextResponse.json({
       success: true,
-      jobId,
-      status: 'processing',
-      progress: 50,
-      message: 'Renderização em andamento...',
+      jobId: job.id,
+      status: job.status,
+      progress: job.progress ?? 0,
+      videoUrl: job.output_url || undefined,
+      error: job.error_message || undefined,
+      createdAt: job.created_at,
+      startedAt: job.started_at,
+      completedAt: job.completed_at,
     });
+  } catch (error) {
+    logger.error('Failed to fetch render status', error instanceof Error ? error : new Error(String(error)), {
+      component: 'API: render/status/[jobId]',
+    });
+    return NextResponse.json({
+      success: false,
+      error: 'Internal server error',
+      code: 'RENDER_STATUS_ERROR',
+      details: process.env.NODE_ENV === 'development'
+        ? (error instanceof Error ? error.message : 'Unknown error')
+        : undefined,
+    }, { status: 500 });
   }
-
-  return NextResponse.json({
-    success: true,
-    jobId,
-    status: job.status,
-    progress: job.progress,
-    videoUrl: job.videoUrl,
-    error: job.error,
-    createdAt: job.createdAt,
-  });
 }
 

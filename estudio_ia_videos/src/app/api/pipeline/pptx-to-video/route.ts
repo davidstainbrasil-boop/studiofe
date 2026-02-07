@@ -41,11 +41,11 @@ export async function POST(req: NextRequest) {
     // Rate limiting (opcional para desenvolvimento)
     try {
       const tier = await getUserTier(user.id);
-      const rateLimitResponse = await rateLimit(req, user.id, tier);
-      if (!rateLimitResponse.success) {
+      const rateLimitResponse = await rateLimit(req, user.id, tier) as any;
+      if (rateLimitResponse && !rateLimitResponse.success) {
         return NextResponse.json({ 
           error: 'Rate limit excedido',
-          retryAfter: rateLimitResponse.retryAfter 
+          retryAfter: rateLimitResponse?.retryAfter 
         }, { status: 429 });
       }
     } catch (rateLimitError) {
@@ -123,7 +123,7 @@ export async function POST(req: NextRequest) {
       estimatedTime: result.estimatedTime,
       summary: {
         slidesProcessed: result.slides.length,
-        totalDuration: result.slides.reduce((acc, slide) => acc + (slide.duration || 0), 0),
+        totalDuration: result.slides.reduce((acc, slide) => acc + ((slide as any).duration || 0), 0),
         hasAudio: result.slides.some(slide => slide.audioUrl),
         nextStep: result.jobId ? 'Renderização iniciada' : 'TTS gerado, iniciar renderização'
       }

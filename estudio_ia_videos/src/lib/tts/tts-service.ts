@@ -120,6 +120,91 @@ async function generateWithAzure(text: string, voice: string, language: string):
 }
 
 /**
+ * Generate audio using Google Cloud TTS
+ */
+async function generateWithGoogleTTS(text: string, voice: string, language: string): Promise<Buffer> {
+  const credentials = process.env.GOOGLE_TTS_CREDENTIALS;
+  const apiKey = process.env.GOOGLE_TTS_API_KEY;
+
+  if (!credentials && !apiKey) {
+    throw new Error('Google TTS credentials not configured');
+  }
+
+  const requestBody = {
+    input: { text },
+    voice: {
+      languageCode: language,
+      name: voice,
+    },
+    audioConfig: {
+      audioEncoding: 'MP3',
+      sampleRateHertz: 24000,
+      speakingRate: 1.0,
+      pitch: 0,
+    },
+  };
+
+  const url = apiKey
+    ? `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`
+    : 'https://texttospeech.googleapis.com/v1/text:synthesize';
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  if (!apiKey && credentials) {
+    // Use service account token
+    const parsed = JSON.parse(credentials);
+    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+        assertion: await createGoogleJWT(parsed),
+      }),
+    });
+    if (!tokenResponse.ok) throw new Error('Failed to get Google access token');
+    const tokenData = await tokenResponse.json();
+    headers['Authorization'] = `Bearer ${tokenData.access_token}`;
+  }
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(requestBody),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Google TTS error ${response.status}: ${error}`);
+  }
+
+  const data = await response.json();
+  return Buffer.from(data.audioContent, 'base64');
+}
+
+/**
+ * Create JWT for Google service account auth
+ */
+async function createGoogleJWT(credentials: { client_email: string; private_key: string }): Promise<string> {
+  const crypto = await import('crypto');
+  const header = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url');
+  const now = Math.floor(Date.now() / 1000);
+  const payload = Buffer.from(JSON.stringify({
+    iss: credentials.client_email,
+    scope: 'https://www.googleapis.com/auth/cloud-platform',
+    aud: 'https://oauth2.googleapis.com/token',
+    iat: now,
+    exp: now + 3600,
+  })).toString('base64url');
+  const signInput = `${header}.${payload}`;
+  const sign = crypto.createSign('RSA-SHA256');
+  sign.update(signInput);
+  const signature = sign.sign(credentials.private_key, 'base64url');
+  return `${signInput}.${signature}`;
+}
+
+/**
  * Upload audio buffer to Supabase Storage
  */
 async function uploadAudioToStorage(buffer: Buffer, fileName: string): Promise<string> {
@@ -176,9 +261,12 @@ async function generateTTSInternal(options: TTSOptions): Promise<TTSResult> {
     if (provider === 'elevenlabs' && process.env.ELEVENLABS_API_KEY) {
       audioBuffer = await generateWithElevenLabs(text, voiceId);
       usedProvider = 'elevenlabs';
-    } else if (provider === 'azure' && process.env.AZURE_TTS_KEY) {
+    } else if (provider === 'azure' && (process.env.AZURE_TTS_KEY || process.env.AZURE_SPEECH_KEY)) {
       audioBuffer = await generateWithAzure(text, voiceId, language);
       usedProvider = 'azure';
+    } else if (provider === 'google' && (process.env.GOOGLE_TTS_CREDENTIALS || process.env.GOOGLE_TTS_API_KEY)) {
+      audioBuffer = await generateWithGoogleTTS(text, voiceId, language);
+      usedProvider = 'google';
     } else {
       // Fallback to edge-tts (free)
       const tempPath = join(process.env.TEMP_PATH || '/tmp', fileName);

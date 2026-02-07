@@ -157,7 +157,7 @@ export class FFmpegRenderer {
       try {
         await this.cleanup(jobDir);
       } catch (cleanupError) {
-        logger.warn('⚠️ Erro na limpeza', cleanupError as Error);
+        logger.warn('⚠️ Erro na limpeza', { error: cleanupError instanceof Error ? cleanupError.message : String(cleanupError) });
       }
       
       onProgress?.({

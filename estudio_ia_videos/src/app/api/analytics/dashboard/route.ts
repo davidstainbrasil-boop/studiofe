@@ -182,7 +182,7 @@ async function getHandler(req: NextRequest) {
       createdAt: Date;
     }
     
-    const recentEvents = recentEventsRaw.map((e: RawAnalyticsEvent) => {
+    const recentEvents = (recentEventsRaw as any[]).map((e: any) => {
       const data = e.eventData as Record<string, unknown> || {};
       return {
         id: e.id,

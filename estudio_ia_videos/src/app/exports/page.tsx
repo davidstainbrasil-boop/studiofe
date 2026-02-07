@@ -36,46 +36,52 @@ interface ExportJob {
 }
 
 export default function ExportQueuePage() {
-    const [jobs, setJobs] = useState<ExportJob[]>([
-        {
-            id: '1',
-            projectName: 'Tutorial React Avançado',
-            format: 'MP4',
-            resolution: '1080p',
-            status: 'processing',
-            progress: 67,
-            startedAt: new Date(Date.now() - 10 * 60000)
-        },
-        {
-            id: '2',
-            projectName: 'Video Marketing Q4',
-            format: 'MP4',
-            resolution: '4K',
-            status: 'queued',
-            progress: 0
-        },
-        {
-            id: '3',
-            projectName: 'Podcast Episode 15',
-            format: 'MP4',
-            resolution: '1080p',
-            size: '245 MB',
-            status: 'completed',
-            progress: 100,
-            startedAt: new Date(Date.now() - 60 * 60000),
-            completedAt: new Date(Date.now() - 45 * 60000),
-            downloadUrl: '#'
-        },
-        {
-            id: '4',
-            projectName: 'Social Media Reel',
-            format: 'MP4',
-            resolution: '1080p (Vertical)',
-            status: 'failed',
-            progress: 34,
-            error: 'Erro de codificação no frame 1245'
+    const [jobs, setJobs] = useState<ExportJob[]>([])
+    const [loading, setLoading] = useState(true)
+
+    // Fetch real export/render jobs from API
+    React.useEffect(() => {
+        async function fetchJobs() {
+            try {
+                const response = await fetch('/api/render/jobs')
+                if (response.ok) {
+                    const data = await response.json()
+                    const renderJobs = (data.jobs || data.data || []).map((job: Record<string, unknown>) => ({
+                        id: String(job.id || job.job_id),
+                        projectName: String(job.project_name || job.projectName || 'Projeto'),
+                        format: String(job.format || 'MP4'),
+                        resolution: String(job.resolution || '1080p'),
+                        size: job.file_size ? `${Math.round(Number(job.file_size) / (1024 * 1024))} MB` : undefined,
+                        status: mapRenderStatus(String(job.status)),
+                        progress: Number(job.progress || 0),
+                        startedAt: job.started_at ? new Date(String(job.started_at)) : undefined,
+                        completedAt: job.completed_at ? new Date(String(job.completed_at)) : undefined,
+                        downloadUrl: job.output_url ? String(job.output_url) : undefined,
+                        error: job.error ? String(job.error) : undefined,
+                    }))
+                    setJobs(renderJobs)
+                }
+            } catch (error) {
+                console.error('Failed to fetch export jobs:', error)
+            } finally {
+                setLoading(false)
+            }
         }
-    ])
+        fetchJobs()
+        // Poll every 5 seconds for active jobs
+        const interval = setInterval(fetchJobs, 5000)
+        return () => clearInterval(interval)
+    }, [])
+
+    function mapRenderStatus(status: string): ExportJob['status'] {
+        switch (status) {
+            case 'completed': return 'completed'
+            case 'failed': case 'error': return 'failed'
+            case 'processing': case 'rendering': return 'processing'
+            case 'paused': return 'paused'
+            default: return 'queued'
+        }
+    }
 
     const getStatusIcon = (status: ExportJob['status']) => {
         switch (status) {

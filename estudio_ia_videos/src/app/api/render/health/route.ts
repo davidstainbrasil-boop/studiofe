@@ -5,6 +5,7 @@
 
 import { NextResponse } from 'next/server';
 import { ffmpegServiceServer } from '@lib/video/ffmpeg-service-server';
+import { logger } from '@/lib/logger';
 
 export async function GET() {
   try {
@@ -16,6 +17,9 @@ export async function GET() {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
+    logger.error('Render health check failed', error instanceof Error ? error : new Error(String(error)), {
+      component: 'API: render/health',
+    });
     return NextResponse.json({
       status: 'error',
       ffmpegAvailable: false,

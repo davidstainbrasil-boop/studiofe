@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
     
     // Prepara conteúdo para análise
     const projectContent = {
-      slides: project.slides.map((slide: ProjectSlide) => ({
+      slides: (project.slides as any[]).map((slide: any) => ({
         number: slide.orderIndex,
         title: slide.title,
         content: slide.content,
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
         audioPath: null // TODO: Extract from audioConfig if needed
       })),
       totalDuration: (project as { duration?: number }).duration || 0,
-      imageUrls: project.slides.map((slide: ProjectSlide) => slide.backgroundImage).filter(Boolean),
+      imageUrls: (project.slides as any[]).map((slide: any) => slide.backgroundImage).filter(Boolean),
       audioFiles: []
     }
 

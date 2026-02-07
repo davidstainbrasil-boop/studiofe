@@ -3,7 +3,7 @@
  * WebSocket server for multi-user project editing
  */
 
-import { Server as SocketIOServer } from 'socket.io';
+import { Server as SocketIOServer, Socket } from 'socket.io';
 import { Server as HTTPServer } from 'http';
 import { logger } from '@lib/logger';
 import { prisma } from '@lib/prisma';
@@ -12,6 +12,8 @@ import { verifyJWT } from '@lib/auth/jwt';
 interface AuthenticatedSocket extends Socket {
   userId: string;
   userEmail: string;
+  userName?: string;
+  userAvatar?: string;
   projectId?: string;
   roomId?: string;
 }
@@ -100,9 +102,13 @@ class CollaborationServer {
         }
 
         const payload = await verifyJWT(token);
+        if (!payload) {
+          return next(new Error('Invalid token'));
+        }
+
         const user = await prisma.users.findUnique({
-          where: { id: payload.userId },
-          select: { id: true, email: true, name: true, avatar: true }
+          where: { id: payload.sub },
+          select: { id: true, email: true, name: true, avatarUrl: true }
         });
 
         if (!user) {
@@ -111,8 +117,8 @@ class CollaborationServer {
 
         socket.userId = user.id;
         socket.userEmail = user.email;
-        socket.userName = user.name;
-        socket.userAvatar = user.avatar;
+        socket.userName = user.name ?? undefined;
+        socket.userAvatar = user.avatarUrl ?? undefined;
 
         logger.info('User authenticated for collaboration', {
           userId: user.id,
@@ -134,7 +140,7 @@ class CollaborationServer {
    * Setup main event handlers
    */
   private setupEventHandlers() {
-    this.io.on('connection', (socket: AuthenticatedSocket) => {
+    (this.io as any).on('connection', (socket: AuthenticatedSocket) => {
       logger.info('User connected to collaboration server', {
         userId: socket.userId,
         socketId: socket.id,
@@ -197,8 +203,8 @@ class CollaborationServer {
             { 
               project_collaborators: {
                 some: {
-                  userId: socket.userId,
-                  status: 'active'
+                  user_id: socket.userId,
+                  accepted_at: { not: null }
                 }
               }
             }

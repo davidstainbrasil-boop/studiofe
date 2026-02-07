@@ -207,7 +207,7 @@ class QueueManager {
     if (!this.queue) return [];
 
     const bullStatus = this.mapStatusToBull(status);
-    const jobs = await this.queue.getJobs([bullStatus]);
+    const jobs = await this.queue.getJobs([bullStatus as any]);
 
     return Promise.all(jobs.map(async (job) => {
       const state = await job.getState();

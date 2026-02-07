@@ -43,62 +43,56 @@ export default function MediaLibraryPage() {
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
     const [searchQuery, setSearchQuery] = useState('')
     const [selectedType, setSelectedType] = useState<'all' | MediaItem['type']>('all')
+    const [loading, setLoading] = useState(true)
 
-    const [mediaItems, setMediaItems] = useState<MediaItem[]>([
-        {
-            id: '1',
-            name: 'intro_animacao.mp4',
-            type: 'video',
-            size: '45 MB',
-            thumbnail: '🎬',
-            duration: '0:15',
-            uploadedAt: new Date(Date.now() - 7 * 24 * 60 * 60000),
-            favorite: true,
-            usedIn: 12
-        },
-        {
-            id: '2',
-            name: 'background_music.mp3',
-            type: 'audio',
-            size: '8 MB',
-            thumbnail: '🎵',
-            duration: '3:45',
-            uploadedAt: new Date(Date.now() - 14 * 24 * 60 * 60000),
-            favorite: true,
-            usedIn: 8
-        },
-        {
-            id: '3',
-            name: 'logo_empresa.png',
-            type: 'image',
-            size: '2 MB',
-            thumbnail: '🖼️',
-            uploadedAt: new Date(Date.now() - 30 * 24 * 60 * 60000),
-            favorite: false,
-            usedIn: 24
-        },
-        {
-            id: '4',
-            name: 'roteiro_tutorial.pdf',
-            type: 'document',
-            size: '1 MB',
-            thumbnail: '📄',
-            uploadedAt: new Date(Date.now() - 2 * 24 * 60 * 60000),
-            favorite: false,
-            usedIn: 1
-        },
-        {
-            id: '5',
-            name: 'cena_produto.mp4',
-            type: 'video',
-            size: '120 MB',
-            thumbnail: '🎥',
-            duration: '0:45',
-            uploadedAt: new Date(Date.now() - 5 * 24 * 60 * 60000),
-            favorite: false,
-            usedIn: 5
+    const [mediaItems, setMediaItems] = useState<MediaItem[]>([])
+
+    // Fetch real media from Supabase Storage
+    React.useEffect(() => {
+        async function fetchMedia() {
+            try {
+                const response = await fetch('/api/media/list')
+                if (response.ok) {
+                    const data = await response.json()
+                    if (data.items) {
+                        setMediaItems(data.items.map((item: Record<string, unknown>) => ({
+                            id: String(item.id || item.name),
+                            name: String(item.name),
+                            type: detectMediaType(String(item.name)),
+                            size: formatFileSize(Number(item.metadata && typeof item.metadata === 'object' ? (item.metadata as Record<string, unknown>).size : 0)),
+                            thumbnail: String(item.thumbnail || item.url || ''),
+                            duration: item.duration ? String(item.duration) : undefined,
+                            uploadedAt: item.created_at ? new Date(String(item.created_at)) : new Date(),
+                            favorite: Boolean(item.favorite),
+                            usedIn: Number(item.used_in || 0),
+                        })))
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to fetch media:', error)
+            } finally {
+                setLoading(false)
+            }
         }
-    ])
+        fetchMedia()
+    }, [])
+
+    function detectMediaType(filename: string): MediaItem['type'] {
+        const ext = filename.split('.').pop()?.toLowerCase() || ''
+        if (['mp4', 'mov', 'avi', 'webm', 'mkv'].includes(ext)) return 'video'
+        if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) return 'image'
+        if (['mp3', 'wav', 'ogg', 'aac', 'flac'].includes(ext)) return 'audio'
+        return 'document'
+    }
+
+    function formatFileSize(bytes: number): string {
+        if (bytes === 0) return '—'
+        const units = ['B', 'KB', 'MB', 'GB']
+        let i = 0
+        let size = bytes
+        while (size >= 1024 && i < units.length - 1) { size /= 1024; i++ }
+        return `${size.toFixed(1)} ${units[i]}`
+    }
 
     const getTypeIcon = (type: MediaItem['type']) => {
         switch (type) {

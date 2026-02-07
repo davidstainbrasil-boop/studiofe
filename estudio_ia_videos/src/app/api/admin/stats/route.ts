@@ -123,10 +123,10 @@ async function getBillingStats() {
     return {
         totalRenders: usageAgg._sum.rendersCount || 0,
         totalStorageUsed: usageAgg._sum.storageUsedBytes || 0,
-        plans: userPlans.reduce((acc: Record<string, number>, curr: PlanGroup) => {
+        plans: (userPlans as PlanGroup[]).reduce((acc: Record<string, number>, curr: PlanGroup) => {
             acc[curr.plan_tier || 'free'] = curr._count.id;
             return acc;
-        }, {})
+        }, {} as Record<string, number>)
     };
 }
 

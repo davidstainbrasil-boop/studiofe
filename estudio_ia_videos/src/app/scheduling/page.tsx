@@ -35,42 +35,37 @@ interface ScheduledPost {
 }
 
 export default function SchedulingPage() {
-    const [posts, setPosts] = useState<ScheduledPost[]>([
-        {
-            id: '1',
-            projectName: 'Tutorial React Hooks',
-            platforms: ['youtube', 'instagram'],
-            scheduledAt: new Date(Date.now() + 2 * 60 * 60000),
-            status: 'scheduled',
-            caption: 'Aprenda React Hooks de forma simples! 🚀 #react #javascript #tutorial',
-            thumbnail: '🎬'
-        },
-        {
-            id: '2',
-            projectName: 'Dica Rápida CSS',
-            platforms: ['instagram', 'tiktok'],
-            scheduledAt: new Date(Date.now() + 24 * 60 * 60000),
-            status: 'scheduled',
-            caption: 'CSS Grid ou Flexbox? 🤔 Veja quando usar cada um!',
-            thumbnail: '📱'
-        },
-        {
-            id: '3',
-            projectName: 'Review Produto',
-            platforms: ['youtube'],
-            scheduledAt: new Date(Date.now() - 48 * 60 * 60000),
-            status: 'published',
-            thumbnail: '📦'
-        },
-        {
-            id: '4',
-            projectName: 'Podcast Ep. 15',
-            platforms: ['youtube', 'spotify'],
-            scheduledAt: new Date(Date.now() - 24 * 60 * 60000),
-            status: 'failed',
-            thumbnail: '🎙️'
+    const [posts, setPosts] = useState<ScheduledPost[]>([])
+    const [loading, setLoading] = useState(true)
+
+    // Fetch scheduled posts from API
+    React.useEffect(() => {
+        async function fetchScheduledPosts() {
+            try {
+                const response = await fetch('/api/scheduling/posts')
+                if (response.ok) {
+                    const data = await response.json()
+                    if (data.posts) {
+                        setPosts(data.posts.map((p: Record<string, unknown>) => ({
+                            id: String(p.id),
+                            projectName: String(p.project_name || p.projectName || 'Projeto'),
+                            platforms: Array.isArray(p.platforms) ? p.platforms.map(String) : [],
+                            scheduledAt: new Date(String(p.scheduled_at || p.scheduledAt)),
+                            status: String(p.status || 'draft') as ScheduledPost['status'],
+                            caption: p.caption ? String(p.caption) : undefined,
+                            thumbnail: p.thumbnail ? String(p.thumbnail) : undefined,
+                        })))
+                    }
+                }
+            } catch (error) {
+                // If API doesn't exist yet, start with empty state
+                console.debug('Scheduling API not available yet')
+            } finally {
+                setLoading(false)
+            }
         }
-    ])
+        fetchScheduledPosts()
+    }, [])
 
     const [showScheduleForm, setShowScheduleForm] = useState(false)
 

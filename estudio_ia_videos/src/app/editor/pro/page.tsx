@@ -4,6 +4,7 @@ import React, { useRef } from 'react';
 import dynamic from 'next/dynamic';
 import Sidebar from './components/Sidebar';
 import TimelineContainer from './components/timeline/TimelineContainer';
+import PropertiesPanel from './components/PropertiesPanel';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useExport } from './hooks/useExport';
 import { Button } from '@components/ui/button';
@@ -80,15 +81,8 @@ export default function ProEditorPage() {
                 </div>
             </div>
 
-            {/* Properties Panel - Placeholder */}
-            <div className="w-72 border-l bg-background flex flex-col z-10 hidden lg:flex">
-                <div className="p-4 border-b">
-                    <h2 className="font-semibold text-sm">Properties</h2>
-                </div>
-                <div className="p-4 text-xs text-muted-foreground">
-                    Select an element to edit properties.
-                </div>
-            </div>
+            {/* Properties Panel */}
+            <PropertiesPanel />
         </div>
     );
 }

@@ -196,7 +196,7 @@ export async function GET(request: NextRequest) {
           projectAudioUrl: metadata.audioUrl,
           ttsProvider: metadata.ttsProvider,
           voiceId: metadata.voiceId,
-          totalDuration: project.slides.reduce((sum: number, slide: { duration?: number; durationSeconds?: number }) => sum + (slide.duration || slide.durationSeconds || 5), 0)
+          totalDuration: (project.slides as any[]).reduce((sum: number, slide: any) => sum + (slide.duration || slide.durationSeconds || 5), 0)
         },
         slides: {
           total: project.slides.length,

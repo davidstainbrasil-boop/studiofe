@@ -206,7 +206,7 @@ async function getHandler(req: NextRequest) {
       createdAt: Date;
     }
     
-    const formattedAlerts = alerts.map((alert: AlertRecord) => {
+    const formattedAlerts = alerts.map((alert: any) => {
       const data = (alert.eventData as unknown as AlertEventData) || {};
 
       const valueFromData = typeof data.value === 'number'

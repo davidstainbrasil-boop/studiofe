@@ -1,16 +1,45 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useEditorStore } from '../stores/useEditorStore';
-import { LayoutGrid, Type, Video, Music, Image as ImageIcon } from 'lucide-react';
+import { LayoutGrid, Type, Video, Music, Image as ImageIcon, Loader2 } from 'lucide-react';
 import SubtitlesPanel from './SubtitlesPanel';
+import { logger } from '@/lib/logger';
+
+interface ProjectAsset {
+  name: string;
+  url: string;
+  type: 'video' | 'image' | 'audio';
+  size?: number;
+}
 
 const Sidebar = () => {
     const [activeTab, setActiveTab] = useState<'assets' | 'subtitles'>('assets');
     const addElement = useEditorStore((state) => state.addElement);
+    const [projectAssets, setProjectAssets] = useState<ProjectAsset[]>([]);
+    const [loadingAssets, setLoadingAssets] = useState(false);
 
     const handleDragStart = (e: React.DragEvent, type: string, src?: string) => {
         e.dataTransfer.setData('application/json', JSON.stringify({ type, src }));
     };
+
+    // Load project assets from Supabase Storage
+    useEffect(() => {
+        const loadAssets = async () => {
+            setLoadingAssets(true);
+            try {
+                const response = await fetch('/api/storage/assets');
+                if (response.ok) {
+                    const data = await response.json();
+                    setProjectAssets(data.assets || []);
+                }
+            } catch (err) {
+                logger.warn('Could not load project assets', { error: err });
+            } finally {
+                setLoadingAssets(false);
+            }
+        };
+        loadAssets();
+    }, []);
 
     return (
         <div className="flex h-full border-r bg-muted/30">
@@ -55,21 +84,38 @@ const Sidebar = () => {
                                 </div>
                             </div>
 
-                            {/* Video Section (Mock) */}
+                            {/* Media Section */}
                             <div>
-                                <h3 className="text-xs font-semibold text-muted-foreground mb-2">Videos (Mock)</h3>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <div
-                                        draggable
-                                        onDragStart={(e) => handleDragStart(e, 'video', 'https://upload.wikimedia.org/wikipedia/commons/transcoded/c/c0/Big_Buck_Bunny_4K.webm/Big_Buck_Bunny_4K.webm.480p.vp9.webm')}
-                                        className="aspect-video bg-black rounded overflow-hidden cursor-grab relative group"
-                                    >
-                                        <video src="https://upload.wikimedia.org/wikipedia/commons/transcoded/c/c0/Big_Buck_Bunny_4K.webm/Big_Buck_Bunny_4K.webm.480p.vp9.webm" className="w-full h-full object-cover pointer-events-none" />
-                                        <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition">
-                                            <span className="text-xs text-white">Drag</span>
-                                        </div>
+                                <h3 className="text-xs font-semibold text-muted-foreground mb-2">Media</h3>
+                                {loadingAssets ? (
+                                    <div className="flex items-center justify-center py-4">
+                                        <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
                                     </div>
-                                </div>
+                                ) : projectAssets.length > 0 ? (
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {projectAssets.filter(a => a.type === 'video' || a.type === 'image').map((asset, i) => (
+                                            <div
+                                                key={asset.url || i}
+                                                draggable
+                                                onDragStart={(e) => handleDragStart(e, asset.type, asset.url)}
+                                                className="aspect-video bg-black rounded overflow-hidden cursor-grab relative group"
+                                            >
+                                                {asset.type === 'video' ? (
+                                                    <video src={asset.url} className="w-full h-full object-cover pointer-events-none" />
+                                                ) : (
+                                                    <img src={asset.url} alt={asset.name} className="w-full h-full object-cover" />
+                                                )}
+                                                <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition">
+                                                    <span className="text-xs text-white">{asset.name}</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-xs text-muted-foreground py-4 text-center">
+                                        No media assets yet. Upload files to your project.
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </>

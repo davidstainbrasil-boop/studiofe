@@ -149,12 +149,12 @@ export async function GET(req: NextRequest) {
           ? Math.round(avgDuration / 1000) // ms para segundos
           : null
       },
-      renderJobs: renderJobs.map((item: RenderJobGroup) => ({
+      renderJobs: (renderJobs as any[]).map((item: any) => ({
         status: item.status || 'unknown',
         count: item._count.id
       })),
       recentProjects,
-      eventsByDay: eventsByDay.map((e: EventByDay) => ({
+      eventsByDay: (eventsByDay as any[]).map((e: any) => ({
         ...e,
         count: Number(e.count) // Serializar bigint para JSON
       }))

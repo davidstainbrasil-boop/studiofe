@@ -130,7 +130,7 @@ export async function GET(req: NextRequest) {
   
   const jobs: RenderJobRow[] = rawJobs.map((job: RenderJobWithProject) => ({
     id: job.id,
-    createdAt: job.created_at,
+    createdAt: job.createdAt,
     started_at: job.started_at,
     completed_at: job.completed_at,
     status: job.status,

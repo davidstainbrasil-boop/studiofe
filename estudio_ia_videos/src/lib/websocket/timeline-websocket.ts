@@ -40,7 +40,7 @@ export function initializeWebSocket(server: HTTPServer) {
       // Verify JWT using local secret (fastest for WS)
       // Note: In strict mode we might want to use supabase.auth.getUser() but that adds latency
       const { verifyJWT } = await import('@lib/auth/jwt');
-      const decoded = verifyJWT(token);
+      const decoded = await verifyJWT(token);
 
       if (!decoded || !decoded.sub) {
         logger.warn('Invalid token', { socketId: socket.id });

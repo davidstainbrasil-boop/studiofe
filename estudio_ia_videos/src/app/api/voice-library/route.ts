@@ -168,7 +168,7 @@ export async function PUT(request: NextRequest) {
 
     const voiceModel = await prisma.voice_models.update({
       where: { id },
-      data: updateData
+      data: updateData as any
     })
 
     return NextResponse.json({

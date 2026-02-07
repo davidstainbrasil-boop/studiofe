@@ -1,0 +1,610 @@
+openapi: 3.1.0
+info:
+  title: Estudio IA Videos API
+  description: |
+    API for converting PPTX presentations to AI-generated videos with avatars,
+    text-to-speech narration, background music, and automatic subtitles.
+
+    ## Authentication
+    All API endpoints require authentication using an API key.
+    Include your API key in the request headers:
+    - `Authorization: Bearer {your_api_key}`
+    - OR `X-API-Key: {your_api_key}`
+
+    ## Rate Limits
+    - Free plan: 10 requests/minute, 100 requests/month
+    - Starter: 30 requests/minute, 1,000 requests/month
+    - Pro: 100 requests/minute, 10,000 requests/month
+    - Enterprise: 1,000 requests/minute, 100,000 requests/month
+
+    ## Webhooks
+    For long-running operations like video generation, you can provide a
+    webhook URL to receive status updates instead of polling.
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: api@estudioiavideos.com
+  license:
+    name: Proprietary
+
+servers:
+  - url: https://app.estudioiavideos.com/api/v1
+    description: Production server
+  - url: http://localhost:3000/api/v1
+    description: Development server
+
+security:
+  - ApiKeyAuth: []
+  - BearerAuth: []
+
+tags:
+  - name: Videos
+    description: Video generation from PPTX
+  - name: Avatars
+    description: AI avatar management
+  - name: Voices
+    description: Text-to-speech voices
+  - name: Music
+    description: Background music library
+  - name: Auth
+    description: API key management
+
+paths:
+  /pptx-to-video:
+    post:
+      tags:
+        - Videos
+      summary: Create video from PPTX
+      description: |
+        Converts a PowerPoint presentation to a video with AI avatar,
+        narration, background music, and subtitles.
+      operationId: createVideoFromPPTX
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - pptx_file
+                - voice_id
+              properties:
+                pptx_file:
+                  type: string
+                  format: binary
+                  description: PPTX file to convert
+                voice_id:
+                  type: string
+                  description: ID of the TTS voice to use
+                  example: narrador-profissional
+                voice_provider:
+                  type: string
+                  enum: [elevenlabs, azure, edge, google]
+                  default: elevenlabs
+                avatar_id:
+                  type: string
+                  description: ID of the avatar (optional)
+                music_id:
+                  type: string
+                  description: ID of the background music track
+                music_volume:
+                  type: integer
+                  minimum: 0
+                  maximum: 100
+                  default: 20
+                  description: Background music volume (0-100)
+                subtitles:
+                  type: boolean
+                  default: true
+                  description: Enable automatic subtitles
+                subtitle_style:
+                  type: string
+                  enum: [default, netflix, minimal, bold]
+                  default: default
+                quality:
+                  type: string
+                  enum: ['720p', '1080p', '4k']
+                  default: '1080p'
+                webhook_url:
+                  type: string
+                  format: uri
+                  description: URL for status updates
+          application/json:
+            schema:
+              type: object
+              required:
+                - voice_id
+              properties:
+                pptx_url:
+                  type: string
+                  format: uri
+                  description: URL to PPTX file (alternative to file upload)
+                pptx_file:
+                  type: string
+                  format: byte
+                  description: Base64-encoded PPTX file
+                voice_id:
+                  type: string
+                voice_provider:
+                  type: string
+                  enum: [elevenlabs, azure, edge, google]
+                avatar_id:
+                  type: string
+                music_id:
+                  type: string
+                music_volume:
+                  type: integer
+                subtitles:
+                  type: boolean
+                subtitle_style:
+                  type: string
+                quality:
+                  type: string
+                webhook_url:
+                  type: string
+      responses:
+        '202':
+          description: Job queued successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  job_id:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                    enum: [queued, processing]
+                  message:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /pptx-to-video/{jobId}:
+    get:
+      tags:
+        - Videos
+      summary: Get video job status
+      description: Check the status of a video generation job
+      operationId: getVideoJobStatus
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Job status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  status:
+                    type: string
+                    enum: [queued, processing, completed, failed]
+                  progress:
+                    type: integer
+                    minimum: 0
+                    maximum: 100
+                  stage:
+                    type: string
+                    enum: [preparing, tts, avatar, composing, subtitles, music, finalizing]
+                  video_url:
+                    type: string
+                    format: uri
+                  subtitles_url:
+                    type: string
+                    format: uri
+                  duration:
+                    type: number
+                  file_size:
+                    type: integer
+                  error:
+                    type: string
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /avatars:
+    get:
+      tags:
+        - Avatars
+      summary: List available avatars
+      description: Returns all available AI avatars for video generation
+      operationId: listAvatars
+      parameters:
+        - name: language
+          in: query
+          schema:
+            type: string
+          description: Filter by supported language (e.g., pt-BR, en-US)
+        - name: gender
+          in: query
+          schema:
+            type: string
+            enum: [male, female, neutral]
+        - name: style
+          in: query
+          schema:
+            type: string
+            enum: [realistic, 3d, cartoon, professional]
+      responses:
+        '200':
+          description: List of avatars
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  count:
+                    type: integer
+                  avatars:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Avatar'
+
+  /voices:
+    get:
+      tags:
+        - Voices
+      summary: List available voices
+      description: Returns all available TTS voices for narration
+      operationId: listVoices
+      parameters:
+        - name: provider
+          in: query
+          schema:
+            type: string
+            enum: [elevenlabs, azure, edge, google]
+        - name: language
+          in: query
+          schema:
+            type: string
+        - name: gender
+          in: query
+          schema:
+            type: string
+            enum: [male, female, neutral]
+      responses:
+        '200':
+          description: List of voices
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  count:
+                    type: integer
+                  recommended:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Voice'
+                  voices:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Voice'
+
+  /music:
+    get:
+      tags:
+        - Music
+      summary: List background music
+      description: Returns available royalty-free background music tracks
+      operationId: listMusic
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [corporate, training, motivational, ambient, technology, documentary, uplifting, calm]
+        - name: mood
+          in: query
+          schema:
+            type: string
+            enum: [professional, energetic, calm, inspiring, serious, friendly, modern, classic, minimal, dramatic]
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: min_duration
+          in: query
+          schema:
+            type: integer
+        - name: max_duration
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of music tracks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  count:
+                    type: integer
+                  categories:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        count:
+                          type: integer
+                  tracks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MusicTrack'
+
+  /auth/api-key:
+    post:
+      tags:
+        - Auth
+      summary: Generate API key
+      description: Creates a new API key for the authenticated user
+      operationId: generateApiKey
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  description: Friendly name for the API key
+                plan:
+                  type: string
+                  enum: [free, starter, pro, enterprise]
+                  default: free
+      responses:
+        '200':
+          description: API key generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  api_key:
+                    type: string
+                    description: The API key (only shown once)
+                  key_id:
+                    type: string
+                  message:
+                    type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    delete:
+      tags:
+        - Auth
+      summary: Revoke API key
+      description: Revokes an existing API key
+      operationId: revokeApiKey
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - key_id
+              properties:
+                key_id:
+                  type: string
+      responses:
+        '200':
+          description: API key revoked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+
+  schemas:
+    Avatar:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        provider:
+          type: string
+          enum: [did, heygen, rpm, synthesia, local]
+        thumbnail_url:
+          type: string
+          format: uri
+        preview_url:
+          type: string
+          format: uri
+        gender:
+          type: string
+          enum: [male, female, neutral]
+        languages:
+          type: array
+          items:
+            type: string
+        style:
+          type: string
+          enum: [realistic, 3d, cartoon, professional]
+        is_premium:
+          type: boolean
+        capabilities:
+          type: object
+          properties:
+            lipSync:
+              type: boolean
+            expressions:
+              type: boolean
+            gestures:
+              type: boolean
+            customBackground:
+              type: boolean
+
+    Voice:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        provider:
+          type: string
+          enum: [elevenlabs, azure, edge, google]
+        language:
+          type: string
+        gender:
+          type: string
+          enum: [male, female, neutral]
+        preview_url:
+          type: string
+          format: uri
+        accent:
+          type: string
+
+    MusicTrack:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        artist:
+          type: string
+        category:
+          type: string
+        duration:
+          type: integer
+          description: Duration in seconds
+        duration_formatted:
+          type: string
+          example: "3:45"
+        bpm:
+          type: integer
+        url:
+          type: string
+          format: uri
+        preview_url:
+          type: string
+          format: uri
+        license:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        is_loop:
+          type: boolean
+
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+        code:
+          type: string
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error: "Invalid request parameters"
+            code: "BAD_REQUEST"
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error: "API key required"
+            code: "UNAUTHORIZED"
+
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error: "Resource not found"
+            code: "NOT_FOUND"
+
+    RateLimited:
+      description: Rate limit exceeded
+      headers:
+        X-RateLimit-Limit:
+          schema:
+            type: integer
+        X-RateLimit-Remaining:
+          schema:
+            type: integer
+        X-RateLimit-Reset:
+          schema:
+            type: integer
+        Retry-After:
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error: "Too many requests"
+            code: "RATE_LIMIT_EXCEEDED"
+            retryAfter: 30

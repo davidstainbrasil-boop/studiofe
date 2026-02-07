@@ -49,7 +49,7 @@ interface GenerateRequest {
   };
 }
 
-// In-memory job store (in production, use Redis or database)
+// In-memory job store (fast reads; also persisted to video_jobs table)
 const jobStore = new Map<
   string,
   {
@@ -66,6 +66,39 @@ const jobStore = new Map<
     error?: string;
   }
 >();
+
+/** Persist job state to video_jobs table (best-effort) */
+async function persistJobToDB(jobId: string, update: Record<string, unknown>) {
+  try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!supabaseUrl || !supabaseKey) return;
+
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    await supabase
+      .from('video_jobs')
+      .update({
+        status: update.status,
+        stage: update.stage,
+        progress: update.progress,
+        message: update.message,
+        video_url: update.videoUrl,
+        subtitles_url: update.subtitlesUrl,
+        duration: update.duration,
+        file_size: update.fileSize,
+        error: update.error,
+        updated_at: new Date().toISOString(),
+        ...(update.status === 'completed' || update.status === 'failed'
+          ? { completed_at: new Date().toISOString() }
+          : {}),
+      })
+      .eq('id', jobId);
+  } catch {
+    // Best-effort persistence; in-memory store is the primary source
+  }
+}
 
 export async function POST(request: NextRequest) {
   const jobId = randomUUID();
@@ -137,7 +170,10 @@ async function generateVideoAsync(
   const updateJob = (update: Partial<typeof jobStore extends Map<string, infer V> ? V : never>) => {
     const current = jobStore.get(jobId);
     if (current) {
-      jobStore.set(jobId, { ...current, ...update });
+      const merged = { ...current, ...update };
+      jobStore.set(jobId, merged);
+      // Persist to database (non-blocking)
+      persistJobToDB(jobId, merged);
     }
   };
 

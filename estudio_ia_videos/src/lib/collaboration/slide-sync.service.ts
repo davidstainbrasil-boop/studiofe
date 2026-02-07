@@ -348,7 +348,7 @@ export class SlideSyncService {
         content: data.content || '',
         metadata: data.metadata || {},
         version: 1
-      }
+      } as any
     });
   }
 
@@ -359,7 +359,7 @@ export class SlideSyncService {
         content: data.content,
         metadata: data.metadata,
         version
-      }
+      } as any
     });
   }
 
@@ -374,7 +374,7 @@ export class SlideSyncService {
     for (let i = 0; i < slideIds.length; i++) {
       await prisma.slides.update({
         where: { id: slideIds[i] },
-        data: { order: i }
+        data: { order: i } as any
       });
     }
   }

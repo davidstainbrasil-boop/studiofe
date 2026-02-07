@@ -2,9 +2,44 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@lib/logger'
 import { getSupabaseForRequest } from '@lib/supabase/server'
+import { requireAuth, unauthorizedResponse, forbiddenResponse } from '@lib/api/auth-middleware'
+
+/**
+ * Verifica se usuário é admin
+ */
+async function isAdmin(auth: NonNullable<Awaited<ReturnType<typeof requireAuth>>>): Promise<boolean> {
+  try {
+    const { data: profile } = await (auth.supabase as any)
+      .from('user_profiles')
+      .select('role')
+      .eq('id', auth.user.id)
+      .single();
+    
+    return (profile as any)?.role === 'admin' || (profile as any)?.role === 'super_admin';
+  } catch {
+    return false;
+  }
+}
 
 // API para configurar o banco de dados
 export async function POST(request: NextRequest) {
+  // CRÍTICO: Este endpoint nunca deve estar disponível em produção
+  if (process.env.NODE_ENV === 'production' && process.env.ALLOW_DB_SETUP !== 'true') {
+    return NextResponse.json({
+      success: false,
+      error: 'Database setup endpoint is disabled in production',
+      code: 'FORBIDDEN'
+    }, { status: 403 });
+  }
+  
+  const auth = await requireAuth(request);
+  if (!auth) return unauthorizedResponse();
+  
+  // Apenas admin pode executar setup de database
+  if (!(await isAdmin(auth))) {
+    return forbiddenResponse('Apenas administradores podem executar setup de database');
+  }
+  
   try {
     logger.info('🚀 [SETUP-DB] Iniciando configuração do banco de dados...', { component: 'API: setup-database' })
     
@@ -103,9 +138,16 @@ export async function POST(request: NextRequest) {
 
 // GET para verificar status do banco
 export async function GET(request: NextRequest) {
+  const auth = await requireAuth(request);
+  if (!auth) return unauthorizedResponse();
+
+  if (!(await isAdmin(auth))) {
+    return forbiddenResponse('Apenas administradores podem verificar status do banco');
+  }
+
   try {
     logger.info('🔍 [SETUP-DB] Verificando status do banco de dados...', { component: 'API: setup-database' })
-    
+
     const supabase = getSupabaseForRequest(request)
     
     // Tentar acessar a tabela projects

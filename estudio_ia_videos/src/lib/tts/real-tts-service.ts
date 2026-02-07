@@ -55,7 +55,7 @@ export class RealTTSService {
    */
   async generateSpeechForSlide(
     slideContent: string,
-    slideNotes?: string,
+    slideNotes: string | undefined,
     options: {
       provider: TTSProviderType;
       voiceId?: string;
@@ -75,6 +75,8 @@ export class RealTTSService {
           error: 'No content available for TTS generation',
         };
       }
+
+      let lastPrimaryError: unknown;
 
       // Get TTS configuration
       const ttsConfig: TTSConfig = {
@@ -128,8 +130,10 @@ export class RealTTSService {
             cost: response.cost,
             metadata: {
               ...response.metadata,
-              storedAudioId: storedAudio.id,
-              storagePath: storedAudio.path,
+              provider: response.metadata?.provider || options.provider,
+              voiceId: response.metadata?.voiceId || options.voiceId || 'default',
+              textLength: response.metadata?.textLength || 0,
+              processingTime: response.metadata?.processingTime || 0,
             },
           };
 
@@ -146,6 +150,7 @@ export class RealTTSService {
         }
 
       } catch (primaryError) {
+        lastPrimaryError = primaryError;
         logger.warn('Primary TTS provider failed', {
           provider: options.provider,
           error: primaryError instanceof Error ? primaryError.message : 'Unknown error',
@@ -168,10 +173,13 @@ export class RealTTSService {
             }
 
           } catch (fallbackError) {
-            logger.error('Both primary and fallback TTS providers failed', {
-              primaryError: primaryError instanceof Error ? primaryError.message : 'Unknown error',
-              fallbackError: fallbackError instanceof Error ? fallbackError.message : 'Unknown error',
-            });
+            logger.error('Both primary and fallback TTS providers failed',
+              primaryError instanceof Error ? primaryError : new Error('Both TTS providers failed'),
+              {
+                primaryError: primaryError instanceof Error ? primaryError.message : 'Unknown error',
+                fallbackError: fallbackError instanceof Error ? fallbackError.message : 'Unknown error',
+              }
+            );
           }
         }
       }
@@ -181,7 +189,7 @@ export class RealTTSService {
       
       return {
         success: false,
-        error: `All TTS providers failed. Primary: ${primaryError instanceof Error ? primaryError.message : 'Unknown error'}`,
+        error: `All TTS providers failed. Primary: ${lastPrimaryError instanceof Error ? lastPrimaryError.message : 'Unknown error'}`,
         metadata: {
           provider: options.provider,
           voiceId: options.voiceId || 'default',
@@ -204,7 +212,7 @@ export class RealTTSService {
         metadata: {
           provider: options.provider,
           voiceId: options.voiceId || 'default',
-          textLength: textToSpeak.length,
+          textLength: slideContent.length,
           processingTime,
         },
       };
@@ -282,7 +290,7 @@ export class RealTTSService {
 
       // Try primary provider
       if (primary) {
-        return await primary.getAvailableVoices();
+        return await (primary as any).getAvailableVoices();
       }
 
       return [];
@@ -307,7 +315,7 @@ export class RealTTSService {
       // Try primary Provider
       if (primary) {
         if ('getBrazilianVoices' in primary) {
-          const voices = await primary.getBrazilianVoices();
+          const voices = await (primary as any).getBrazilianVoices();
           logger.info('Brazilian voices retrieved', {
             provider,
             count: voices.length,
@@ -337,7 +345,7 @@ export class RealTTSService {
 
       // Try primary Provider
       if (primary && 'testVoice' in primary) {
-        return await primary.testVoice(voiceId, 'Teste de voz para TécnicoCursos');
+        return await (primary as any).testVoice(voiceId, 'Teste de voz para TécnicoCursos');
       }
 
       return {
@@ -361,18 +369,20 @@ export class RealTTSService {
   /**
    * Get cost estimate for text
    */
-  estimateCost(text: string, provider: TTSProviderType, voiceId?: string): number {
+  estimateCost(text: string, provider: TTSProviderType, _voiceId?: string): number {
     try {
-      const config: TTSConfig = { provider };
-      const { primary, fallback } = await TTSFactory.createWithFallback(config);
+      // Cost estimation based on provider pricing
+      // These are approximate costs per character
+      const costPerChar: Record<string, number> = {
+        [TTSProviderType.ELEVENLABS]: 0.0003,   // ~$0.30 per 1000 characters
+        [TTSProviderType.AWS_POLLY]: 0.000016,  // ~$16 per 1M characters
+        [TTSProviderType.GOOGLE_CLOUD]: 0.000016, // ~$16 per 1M characters
+        [TTSProviderType.MOCK]: 0,              // Free (mock)
+        [TTSProviderType.OPENAI]: 0.000015,     // ~$15 per 1M characters
+      };
 
-      // Try primary Provider
-      if (primary && 'estimateCost' in primary) {
-        return primary.estimateCost(text, voiceId);
-      }
-
-      // Fallback cost estimation (mock)
-      return Math.ceil(text.length * 0.001 * 100) / 100; // $0.01 per character
+      const rate = costPerChar[provider] || 0.0001;
+      return Math.ceil(text.length * rate * 100) / 100;
 
     } catch (error) {
       logger.error('Cost estimation failed', error instanceof Error ? error : new Error(String(error)), {

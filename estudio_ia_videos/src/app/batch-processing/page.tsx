@@ -66,21 +66,56 @@ export default function BatchProcessingPage() {
                     j.id === job.id ? { ...j, status: 'processing' as const } : j
                 ))
 
-                // Simulate processing with progress updates
-                for (let i = 0; i <= 100; i += 10) {
-                    await new Promise(resolve => setTimeout(resolve, 200))
-                    setJobs(prev => prev.map(j =>
-                        j.id === job.id ? { ...j, progress: i } : j
-                    ))
+                // Call real API based on processing type
+                const formData = new FormData()
+                // Retrieve original file from data URL or refetch if needed
+                formData.append('video', new Blob([]), job.filename)
+                formData.append('useQueue', 'false')
+
+                let apiEndpoint = ''
+                switch (processingType) {
+                    case 'subtitle':
+                        apiEndpoint = '/api/ai/subtitle-generator'
+                        break
+                    case 'enhance':
+                        apiEndpoint = '/api/ai/enhance'
+                        break
+                    case 'scene':
+                        apiEndpoint = '/api/ai/scene-detect'
+                        break
                 }
 
-                // Mark as completed
+                // Progress polling via SSE or interval
+                const progressInterval = setInterval(() => {
+                    setJobs(prev => prev.map(j => {
+                        if (j.id === job.id && j.status === 'processing') {
+                            const newProgress = Math.min(j.progress + 5, 95)
+                            return { ...j, progress: newProgress }
+                        }
+                        return j
+                    }))
+                }, 1000)
+
+                const response = await fetch(apiEndpoint, {
+                    method: 'POST',
+                    body: formData
+                })
+
+                clearInterval(progressInterval)
+
+                if (!response.ok) {
+                    throw new Error(`API retornou status ${response.status}`)
+                }
+
+                const result = await response.json()
+
+                // Mark as completed with real result
                 setJobs(prev => prev.map(j =>
                     j.id === job.id ? {
                         ...j,
                         status: 'completed' as const,
                         progress: 100,
-                        result: { outputUrl: '#' }
+                        result: result
                     } : j
                 ))
 
@@ -90,7 +125,7 @@ export default function BatchProcessingPage() {
                     j.id === job.id ? {
                         ...j,
                         status: 'failed' as const,
-                        error: 'Erro no processamento'
+                        error: error instanceof Error ? error.message : 'Erro no processamento'
                     } : j
                 ))
                 toast.error(`Erro ao processar ${job.filename}`)

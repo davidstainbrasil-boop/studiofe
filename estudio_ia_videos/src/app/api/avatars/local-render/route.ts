@@ -241,9 +241,9 @@ async function processAvatarRendering(
       await prisma.render_jobs.update({
         where: { id: jobId },
         data: {
-          status: data.status,
+          status: data.status as any,
           progress: data.progress,
-          renderSettings: data.jobData || {},
+          renderSettings: (data.jobData || {}) as any,
           errorMessage: data.errorMessage || null
         }
       });

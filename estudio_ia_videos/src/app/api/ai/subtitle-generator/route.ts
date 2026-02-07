@@ -124,51 +124,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-/**
- * Helper function to extract audio from video
- * TODO: Implement using FFmpeg or similar
- */
-async function extractAudio(videoFile: File): Promise<Buffer> {
-  // Implementation needed
-  throw new Error('Not implemented')
-}
-
-/**
- * Helper function to call Whisper API
- * TODO:Integrate with OpenAI Whisper API
- */
-async function callWhisperAPI(
-  audioBuffer: Buffer,
-  language: string,
-  model: string
-): Promise<any> {
-  // Implementation needed  
-  // Example:
-  // const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-  // const transcription = await openai.audio.transcriptions.create({
-  //   file: audioBuffer,
-  //   model,
-  //   language: language === 'auto' ? undefined : language,
-  //   response_format: 'verbose_json',
-  //   timestamp_granularities: ['word', 'segment']
-  // })
-  // return transcription
-  
-  throw new Error('Not implemented')
-}
-
-/**
- * Helper function to parse transcription into subtitles
- */
-function parseTranscription(transcription: unknown): Array<{
-  id: number
-  startTime: number
-  endTime: number
-  text: string
-}> {
-  //Implementation needed
-  // Parse the transcription response and create subtitle objects
-  // with proper timestamps and text
-  
-  throw new Error('Not implemented')
-}
+// Note: Audio extraction & Whisper API calls are handled by
+// subtitleService (see @lib/services/subtitle.service) and
+// TranscriptionService (see @lib/services/transcription-service.ts).

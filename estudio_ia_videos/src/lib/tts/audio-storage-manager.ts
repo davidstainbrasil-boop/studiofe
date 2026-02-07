@@ -6,6 +6,7 @@
 import { logger } from '@/lib/monitoring/logger';
 import { getRequiredEnv } from '@/lib/env';
 import * as fs from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import * as path from 'path';
 
 export interface StoredAudio {
@@ -42,8 +43,8 @@ export class AudioStorageManager {
   
   constructor(config?: Partial<AudioStorageConfig>) {
     this.config = {
-      bucket: getRequiredEnv('AUDIO_STORAGE_BUCKET', 'project-audio'),
-      region: getRequiredEnv('AUDIO_STORAGE_REGION', 'us-east-1'),
+      bucket: process.env.AUDIO_STORAGE_BUCKET || 'project-audio',
+      region: process.env.AUDIO_STORAGE_REGION || 'us-east-1',
       endpoint: process.env.AUDIO_STORAGE_ENDPOINT,
       accessKeyId: process.env.AWS_ACCESS_KEY_ID,
       secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
@@ -117,7 +118,7 @@ export class AudioStorageManager {
       // Search for audio file
       const audioDir = path.join(process.cwd(), 'uploads', 'audio', audioId);
       
-      if (!fs.existsSync(audioDir)) {
+      if (!existsSync(audioDir)) {
         return null;
       }
 
@@ -146,12 +147,9 @@ export class AudioStorageManager {
    */
   async deleteAudio(audioId: string): Promise<boolean> {
     try {
-      const fs = await import('fs/promises');
-      const path = await import('path');
-      
       const audioDir = path.join(process.cwd(), 'uploads', 'audio', audioId);
       
-      if (!fs.existsSync(audioDir)) {
+      if (!existsSync(audioDir)) {
         return false; // Already doesn't exist
       }
 
@@ -176,12 +174,9 @@ export class AudioStorageManager {
    */
   async listAudio(projectId?: string): Promise<StoredAudio[]> {
     try {
-      const fs = await import('fs/promises');
-      const path = await import('path');
-      
       const audioDir = path.join(process.cwd(), 'uploads', 'audio');
       
-      if (!fs.existsSync(audioDir)) {
+      if (!existsSync(audioDir)) {
         return [];
       }
 
@@ -189,7 +184,7 @@ export class AudioStorageManager {
       const audioFiles: StoredAudio[] = [];
 
       for (const entry of entries) {
-        if (entry.isDirectory) {
+        if (entry.isDirectory()) {
           const metadataPath = path.join(entry.name, 'metadata.json');
           
           try {
@@ -233,7 +228,7 @@ export class AudioStorageManager {
    * Get public URL for audio
    */
   getPublicUrl(storedAudio: StoredAudio): string {
-    const baseUrl = getRequiredEnv('PUBLIC_URL', 'http://localhost:3001');
+    const baseUrl = process.env.PUBLIC_URL || 'http://localhost:3001';
     return `${baseUrl}${storedAudio.url}`;
   }
 
@@ -242,12 +237,9 @@ export class AudioStorageManager {
    */
   async cleanupOldAudio(daysOld: number = 7): Promise<number> {
     try {
-      const fs = await import('fs/promises');
-      const path = await import('path');
-      
       const audioDir = path.join(process.cwd(), 'uploads', 'audio');
       
-      if (!fs.existsSync(audioDir)) {
+      if (!existsSync(audioDir)) {
         return 0;
       }
 
@@ -258,7 +250,7 @@ export class AudioStorageManager {
       const entries = await fs.readdir(audioDir, { withFileTypes: true });
 
       for (const entry of entries) {
-        if (entry.isDirectory) {
+        if (entry.isDirectory()) {
           const metadataPath = path.join(entry.name, 'metadata.json');
           
           try {
@@ -313,7 +305,7 @@ export class AudioStorageManager {
       }
 
       const totalSize = audioFiles.reduce((sum, audio) => sum + audio.size, 0);
-      const dates = audioFiles.map(audio => audio.createdAt);
+      const dates = audioFiles.map(audio => audio.createdAt.getTime());
       const oldestFile = new Date(Math.min(...dates));
       const newestFile = new Date(Math.max(...dates));
 
@@ -351,7 +343,7 @@ export class AudioStorageManager {
       ];
 
       const header = buffer.slice(0, 4);
-      let detectedFormat = null;
+      let detectedFormat: string | undefined = undefined;
 
       for (const format of validFormats) {
         if (format.header.every((byte, index) => header[index] === byte)) {
@@ -361,7 +353,7 @@ export class AudioStorageManager {
       }
 
       return {
-        isValid: detectedFormat !== null,
+        isValid: detectedFormat !== undefined,
         format: detectedFormat,
         duration: undefined, // Would need audio processing library to calculate
       };
