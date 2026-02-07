@@ -1,33 +1,52 @@
 # Claude Progress Log - MVP Vídeos TécnicoCursos v7
-# Updated: 2026-02-02 (Session 22 - TypeScript Strict Mode Cleanup)
+# Updated: 2026-02-02 (Session 24 - API Hardening & Mock Elimination)
 
-## Session 22 Summary (Current) - Eliminação de `any` Types nas API Routes ✅
+## Session 24 Summary (Current) - Error Standardization, Mock Elimination, Leak Fix ✅
 
 ### ✅ RESULTADO FINAL:
-- **Início:** ~89 `any` types nas API routes
-- **Final:** 5 totais (3 intencionais com eslint-disable, 2 em testes)
-- **TypeScript:** 0 erros
-- **Testes:** 1924 passed
+- **Testes:** 1936 passed, 118 suites
+- **Build:** 0 prerender errors, 0 TS build errors
+- **Commits:** acf7b7a (session 23 work), 00b7276 (session 24 work)
+- **Branch:** hardening-prod
 
-### 📋 ARQUIVOS CORRIGIDOS:
+### 📋 O QUE FOI FEITO:
 
-| Arquivo | `any` removidos | Solução |
-|---------|-----------------|---------|
-| compliance/metrics/route.ts | 10 | Interfaces para Prisma callbacks |
-| analytics/dashboard/route.ts | 10 | Interfaces para groupBy/reduce |
-| analytics/performance/route.ts | 9 | Interfaces para RenderJob |
-| analytics/user-metrics/route.ts | 6 | Interfaces para métricas |
-| analytics/realtime/route.ts | 6 | Interfaces para eventos |
-| analytics/user-behavior/route.ts | 5 | Interfaces para funnel |
-| projects/[id]/route.ts | 4 | Interfaces para metadata |
-| analytics/alerts/route.ts | 4 | Interfaces para alertas |
-| compliance/alerts/route.ts | 3 | Interfaces para compliance |
-| compliance/check/route.ts | 2 | Interfaces para check |
-| analytics/system-metrics/route.ts | 2 | Interface CompletedJob |
-| analytics/metrics/route.ts | 3 | Interfaces RenderJobGroup, EventByDay |
-| voice-library/route.ts | 2 | Interface VoiceUpdateData |
-| v2/avatars/gallery/route.ts | 2 | Interface AvatarWhereClause |
-| templates/[id]/route.ts | 1 | `unknown` em vez de `any` |
+#### 1. API Error Response Standardization (10 routes)
+Todas as respostas de erro agora incluem campo `code` estruturado:
+- `render/jobs/route.ts` - FETCH_JOBS_FAILED, PROJECT_NOT_FOUND, ACTIVE_RENDER_EXISTS
+- `render/jobs/[jobId]/route.ts` - AUTH_REQUIRED, JOB_NOT_FOUND, FORBIDDEN, INTERNAL_ERROR, PROJECT_NOT_FOUND
+- `render/jobs/[jobId]/retry/route.ts` - AUTH_REQUIRED, JOB_NOT_FOUND, PROJECT_NOT_FOUND, FORBIDDEN, INTERNAL_ERROR
+- `render/jobs/[jobId]/cancel/route.ts` - AUTH_REQUIRED, JOB_NOT_FOUND, PROJECT_NOT_FOUND, FORBIDDEN, INTERNAL_ERROR
+- `render/unified/route.ts` - AUTH_REQUIRED, VALIDATION_ERROR, INTERNAL_ERROR, JOB_NOT_FOUND
+- `render/analytics/route.ts` - AUTH_REQUIRED, FETCH_DATA_FAILED, INTERNAL_ERROR
+- `tts/route.ts` - VALIDATION_ERROR, TTS_GENERATION_FAILED, INTERNAL_ERROR
+- `pptx/upload/route.ts` - AUTH_REQUIRED, AUTH_ERROR, FILE_MISSING, FILE_EMPTY, DB_CREATE_FAILED
+- `storage/upload/route.ts` - AUTH_REQUIRED, FILE_MISSING, STORAGE_LIMIT_EXCEEDED, UPLOAD_FAILED, LIST_FILES_FAILED
+- `storage/assets/route.ts` (NEW) - Supabase Storage integration
+
+#### 2. Mock Elimination (P1 items)
+- `s3.ts` - Full rewrite: mock URLs → Supabase Storage operations
+- `s3-upload-engine.ts` - Full rewrite: storage.example.com → Supabase Storage
+- `cloudfront-signer.ts` - Fallback: mock S3 → Supabase public URLs
+- `slide-to-video-composer.ts` - Removed createMockVideoUrl() method
+- `ffmpeg-renderer.ts` - console.log → logger.info
+
+#### 3. Prerender Error Fix (Session 23 → committed this session)
+- 140 prerender errors → 0: template.tsx hydration-safe, layout force-dynamic, custom _error.tsx
+
+#### 4. Worker Process Leak Mitigation
+- .unref() on TaggedCache setInterval
+- afterAll cleanup for globalTaggedCache in tests
+- forceExit: true in jest.config.cjs
+- Root cause: module-level timers in queue/cache modules (cosmetic in multi-worker Jest)
+
+### 🎯 PRÓXIMOS PASSOS:
+- Remaining P2/P3 mocks (v1/v2 experimental APIs, avatar providers, hooks)
+- More API routes needing error codes (v1 API routes)
+- Queue module-level Redis guard for NODE_ENV=test
+- E2E Playwright tests validation
+
+
 | comments/route.ts | 1 | Interface CommentUpdate |
 | admin/stats/route.ts | 1 | Interface PlanGroup |
 | analytics/track/route.ts | 1 | Interface EventTypeGroup |
