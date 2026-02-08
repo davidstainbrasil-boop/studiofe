@@ -143,7 +143,7 @@ export default class SubtitleEmbedder extends EventEmitter {
           try {
             await fs.unlink(tempSubPath);
           } catch (e) {
-            // Ignore cleanup error
+            logger.debug('Temp subtitle file cleanup skipped', { path: tempSubPath });
           }
           this.emit('embed:complete', { success: true });
           resolve({

@@ -13,7 +13,7 @@ if (typeof window === 'undefined' && process.env.NODE_ENV === 'production') {
   try {
     Sentry = require('@sentry/nextjs');
   } catch (e) {
-    // Sentry not available
+    logger.debug('Sentry SDK not available, monitoring disabled');
   }
 }
 

@@ -8,7 +8,7 @@ import { promisify } from 'util';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { EventEmitter } from 'events';
-import { Logger } from '@lib/logger';
+import { Logger, logger } from '@lib/logger';
 
 const execAsync = promisify(exec);
 
@@ -111,7 +111,8 @@ export class FFmpegExecutor {
       try {
         await fs.unlink(tempOutputPath);
       } catch (cleanupError) {
-        // Ignora erros de limpeza
+        // Cleanup errors are non-critical
+        logger.debug('Failed to clean temp file', { path: tempOutputPath });
       }
 
       return {

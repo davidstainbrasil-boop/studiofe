@@ -1,6 +1,7 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { logger } from '@/lib/logger'
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
@@ -46,10 +47,10 @@ export async function GET(request: Request) {
           });
           
           if (!response.ok) {
-            console.error('Failed to init trial:', await response.text());
+            logger.error('Failed to init trial', new Error(await response.text()));
           }
         } catch (e) {
-          console.error('Error initializing trial:', e);
+          logger.error('Error initializing trial', e instanceof Error ? e : new Error(String(e)));
         }
       }
       

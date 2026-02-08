@@ -247,7 +247,7 @@ export class RenderingCache extends EventEmitter {
         this.entries.set(entry.key, entry);
       }
     } catch (error) {
-      // Ignore error if file doesn't exist
+      logger.debug('Cache metadata not found or invalid, starting fresh');
     }
   }
 
@@ -269,7 +269,7 @@ export class RenderingCache extends EventEmitter {
     try {
         await fs.rm(this.cacheDir, { recursive: true, force: true });
     } catch (e) {
-        // ignore
+        logger.debug('Cache directory cleanup skipped', { dir: this.cacheDir });
     }
   }
 }

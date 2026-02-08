@@ -36,13 +36,13 @@ let QRCode: QRCodeLibrary | undefined;
 try {
   Canvas = require('canvas');
 } catch (e) {
-  // Canvas not available
+  // Canvas is an optional dependency for watermark features
 }
 
 try {
   QRCode = require('qrcode');
 } catch (e) {
-  // QRCode not available
+  // QRCode is an optional dependency for watermark features
 }
 
 export enum WatermarkType {
@@ -351,7 +351,7 @@ export default class WatermarkProcessor extends EventEmitter {
       }
       await fs.rmdir(dir);
     } catch (e) {
-      // Ignore cleanup errors
+      // Cleanup errors are non-critical, files will be GC'd by OS
     }
   }
 

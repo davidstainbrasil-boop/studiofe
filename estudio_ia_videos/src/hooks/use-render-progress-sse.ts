@@ -123,7 +123,7 @@ export function useRenderProgressSSE(
           disconnect()
         }
       } catch (err) {
-        // Error logged in service layer - no console in production
+        console.error('[RenderSSE] Error processing render progress:', err);
       }
     }
 
@@ -180,7 +180,7 @@ export function useRenderProgressSSE(
             disconnect()
           }
         } catch (err) {
-          // SSE parse error - handled gracefully
+          console.warn('[RenderSSE] SSE event parse error:', err);
         }
       }
 

@@ -222,7 +222,7 @@ class AssetsManager {
               data: { favorites: { increment: 1 } }
           });
       } catch (e) {
-          // Ignore if not found
+          logger.warn('Failed to add favorite', e instanceof Error ? e : new Error(String(e)), { assetId, userId });
       }
   }
 
@@ -233,7 +233,7 @@ class AssetsManager {
               data: { favorites: { decrement: 1 } }
           });
       } catch (e) {
-          // Ignore
+          logger.warn('Failed to remove favorite', e instanceof Error ? e : new Error(String(e)), { assetId, userId });
       }
   }
 

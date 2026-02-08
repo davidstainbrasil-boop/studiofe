@@ -1,6 +1,7 @@
 import { EventEmitter } from 'events';
 import fs from 'fs/promises';
 import path from 'path';
+import { logger } from '@lib/logger';
 
 export type VideoOperation = string;
 export type Priority = 'low' | 'normal' | 'high' | 'urgent';
@@ -285,7 +286,7 @@ export class BatchProcessor extends EventEmitter {
       this.emit('state:loaded', { path: this.config.stateFilePath });
       this.emit('statistics:updated', this.getStatistics());
     } catch (error) {
-      // Ignore error if file doesn't exist or invalid
+      logger.debug('Could not load persisted state', { path: this.config.stateFilePath });
     }
   }
 

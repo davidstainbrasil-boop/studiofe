@@ -26,7 +26,7 @@ export function ProfessionalTimelineWrapper() {
         const collab = useCollaboration();
         lockedElements = collab.lockedElements;
     } catch (e) {
-        // Fallback for standalone/testing
+        // Collaboration context unavailable — standalone/testing mode
     }
 
     // Store State

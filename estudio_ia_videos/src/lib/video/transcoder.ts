@@ -162,7 +162,7 @@ export default class VideoTranscoder extends EventEmitter {
     try {
         await fs.mkdir(outputDir, { recursive: true });
     } catch (e) {
-        // ignore if exists
+        // mkdir recursive is idempotent, error expected if dir exists
     }
 
     for (const res of resolutions) {

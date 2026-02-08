@@ -154,7 +154,7 @@ export const DELETE = withRateLimit(RATE_LIMITS.AUTH_STRICT, 'user')(async funct
       try {
         await unlink((upload as any).file_path)
       } catch (err) {
-        // Ignorar erros de remoção do arquivo local
+        logger.warn('Failed to remove temp upload file', err instanceof Error ? err : new Error(String(err)));
       }
     }
 
