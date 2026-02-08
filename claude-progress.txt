@@ -1,7 +1,45 @@
 # Claude Progress Log - MVP Vídeos TécnicoCursos v7
-# Updated: 2026-02-02 (Session 24 - API Hardening & Mock Elimination)
+# Updated: 2026-02-05 (Session 25 - Auth Hardening)
 
-## Session 24 Summary (Current) - Error Standardization, Mock Elimination, Leak Fix ✅
+## Session 25 Summary (Current) - Auth Guards on 18 Unprotected Routes ✅
+
+### ✅ RESULTADO FINAL:
+- **Testes:** 1936 passed, 118 suites, 0 failures
+- **TS Errors:** 0 in modified files (74 pre-existing in legacy)
+- **Commits:** 98a4d76 (auth guards + jest fix)
+- **Branch:** hardening-prod
+
+### 📋 O QUE FOI FEITO:
+
+#### 1. Comprehensive Security Audit
+Ran full audit of 414 API routes. Found:
+- 123 mutation routes with ZERO auth or rate limiting (CRITICAL)
+- 264 of 414 routes missing rate limiting
+- 225 console.log in production code
+- 131 catch blocks that swallow errors
+
+#### 2. Auth Guards Added to 18 Routes (3 Waves)
+All use consistent pattern: `getServerSession()` + 401 `{ error: 'Unauthorized', code: 'AUTH_REQUIRED' }`
+
+**Wave 1 (Critical Data):** upload, upload/chunk, backup (GET/POST/DELETE), batch/create, batch/control, export/create
+**Wave 2 (AI/TTS Cost):** script/generate, subtitles/generate, ai-intelligence/analyze, ai-intelligence/recommendations, avatars/generate-speech, pipeline/integrated, recommendations/generate
+**Wave 3 (Data/Admin):** templates (POST), templates/import, alerts (GET/POST), usage/track, analytics catch-all (POST/GET)
+
+#### 3. IDOR Vulnerability Fixes
+Routes that trusted client-supplied `userId` from request body now use `session.user.id`:
+- batch/create, export/create, pipeline/integrated, recommendations/generate, usage/track
+
+#### 4. Jest Test Infrastructure Fix
+- Added `next-auth` mock to `jest.setup.js` (ESM compat issue)
+- Added `next-auth` to `transformIgnorePatterns` in `jest.config.cjs`
+
+### 🔮 NEXT SESSION TODO:
+- ~100+ more routes still need auth (lower priority - most dangerous done)
+- console.log → logger migration (225 occurrences, top 10 files identified)
+- Fix 131 swallowed error catch blocks
+- Rate limiting on high-traffic routes
+
+## Session 24 Summary - Error Standardization, Mock Elimination, Leak Fix ✅
 
 ### ✅ RESULTADO FINAL:
 - **Testes:** 1936 passed, 118 suites
