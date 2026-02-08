@@ -1,4 +1,5 @@
 
+import { logger } from '@/lib/logger';
 import React, { useState } from 'react';
 import { Button } from '@components/ui/button';
 import { useTimelineStore } from '@lib/stores/timeline-store';
@@ -86,7 +87,7 @@ export function SubtitlesPanel() {
                     }
 
                 } catch (error) {
-                    console.error(error);
+                    logger.error(error);
                     toast.error('Erro ao transcrever áudio.');
                 } finally {
                     setIsGenerating(false);
@@ -95,7 +96,7 @@ export function SubtitlesPanel() {
             input.click();
 
         } catch (e) {
-            console.error(e);
+            logger.error(e);
             toast.error('Erro ao iniciar processo');
             setIsGenerating(false);
         }

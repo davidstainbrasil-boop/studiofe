@@ -154,7 +154,7 @@ export default function AIScriptGenerator({ projectId }: { projectId?: string })
       }
 
     } catch (error) {
-      console.error(error);
+      logger.error(error);
       toast.error('Falha ao criar projeto', { id: toastId });
     } finally {
       setLoading(false);

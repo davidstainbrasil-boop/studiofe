@@ -1,4 +1,5 @@
 'use client';
+import { logger } from '@/lib/logger';
 
 /**
  * Admin Dashboard
@@ -100,7 +101,7 @@ export default function AdminDashboard() {
         setStats(await resStats.json());
       }
     } catch (error) {
-      console.error('Failed to fetch data:', error);
+      logger.error('Failed to fetch data:', error);
     } finally {
       setLoading(false);
     }
@@ -124,7 +125,7 @@ export default function AdminDashboard() {
         setTimeout(fetchData, 2000);
       }
     } catch (error) {
-      console.error('Cleanup error:', error);
+      logger.error('Cleanup error:', error);
       setCleanupResults({
         success: false,
         summary: {

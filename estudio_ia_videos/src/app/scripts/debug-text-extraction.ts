@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 /**
  * 🔍 Debug Text Extraction
  * Teste específico para verificar extração de texto
@@ -8,11 +9,11 @@ import JSZip from 'jszip'
 import { PPTXTextParser } from '@/lib/pptx/parsers/text-parser'
 
 async function debugTextExtraction() {
-  console.log('🔍 DEBUGANDO EXTRAÇÃO DE TEXTO')
-  console.log('=' .repeat(40))
+  logger.info('🔍 DEBUGANDO EXTRAÇÃO DE TEXTO')
+  logger.info('=' .repeat(40))
   
   // 1. Criar PPTX simples
-  console.log('📝 Criando PPTX simples...')
+  logger.info('📝 Criando PPTX simples...')
   const pptx = new PptxGenJS()
   const slide = pptx.addSlide()
   
@@ -34,50 +35,50 @@ async function debugTextExtraction() {
   })
   
   const buffer = await pptx.write({ outputType: 'nodebuffer' }) as Buffer
-  console.log(`✅ PPTX criado: ${buffer.length} bytes`)
+  logger.info(`✅ PPTX criado: ${buffer.length} bytes`)
   
   // 2. Abrir como ZIP
-  console.log('\n📦 Abrindo como ZIP...')
+  logger.info('\n📦 Abrindo como ZIP...')
   const zip = new JSZip()
   await zip.loadAsync(buffer)
   
   // 3. Listar arquivos
-  console.log('\n📁 Arquivos no ZIP:')
+  logger.info('\n📁 Arquivos no ZIP:')
   Object.keys(zip.files).forEach(filename => {
-    console.log(`  - ${filename}`)
+    logger.info(`  - ${filename}`)
   })
   
   // 4. Verificar slide1.xml
-  console.log('\n📄 Conteúdo do slide1.xml:')
+  logger.info('\n📄 Conteúdo do slide1.xml:')
   const slideFile = zip.file('ppt/slides/slide1.xml')
   if (slideFile) {
     const slideXml = await slideFile.async('text')
-    console.log('Primeiros 500 caracteres:')
-    console.log(slideXml.substring(0, 500))
-    console.log('...')
+    logger.info('Primeiros 500 caracteres:')
+    logger.info(slideXml.substring(0, 500))
+    logger.info('...')
   } else {
-    console.log('❌ slide1.xml não encontrado!')
+    logger.info('❌ slide1.xml não encontrado!')
   }
   
   // 5. Testar parser
-  console.log('\n🔧 Testando parser de texto...')
+  logger.info('\n🔧 Testando parser de texto...')
   try {
     const parser = new PPTXTextParser()
     const textResult = await parser.extractTextFromSlide(zip, 1)
     
-    console.log('📊 Resultado do parser:')
-    console.log(`- Texto: "${textResult.text}"`)
-    console.log(`- Linhas: ${textResult.lines.length}`)
-    console.log(`- Contagem de palavras: ${textResult.wordCount}`)
-    console.log(`- Bullet points: ${textResult.bulletPoints?.length || 0}`)
+    logger.info('📊 Resultado do parser:')
+    logger.info(`- Texto: "${textResult.text}"`)
+    logger.info(`- Linhas: ${textResult.lines.length}`)
+    logger.info(`- Contagem de palavras: ${textResult.wordCount}`)
+    logger.info(`- Bullet points: ${textResult.bulletPoints?.length || 0}`)
     
     textResult.lines.forEach((line: string, index: number) => {
-      console.log(`\n📝 Linha ${index + 1}:`)
-      console.log(`  Texto: "${line}"`)
+      logger.info(`\n📝 Linha ${index + 1}:`)
+      logger.info(`  Texto: "${line}"`)
     })
     
   } catch (error) {
-    console.error('💥 Erro no parser:', error)
+    logger.error('💥 Erro no parser:', error)
   }
 }
 
@@ -85,11 +86,11 @@ async function debugTextExtraction() {
 if (require.main === module) {
   debugTextExtraction()
     .then(() => {
-      console.log('\n🏁 Debug concluído!')
+      logger.info('\n🏁 Debug concluído!')
       process.exit(0)
     })
     .catch((error) => {
-      console.error('💥 Erro fatal:', error)
+      logger.error('💥 Erro fatal:', error)
       process.exit(1)
     })
 }

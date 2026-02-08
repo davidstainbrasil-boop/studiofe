@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 
 /**
  * Sentry Client Configuration
@@ -21,7 +22,7 @@ Sentry.init({
   beforeSend(event, hint) {
     // Don't send dev errors
     if (process.env.NODE_ENV === 'development') {
-      console.error('[Sentry]', event, hint)
+      logger.error('[Sentry]', event, hint)
       return null
     }
     return event

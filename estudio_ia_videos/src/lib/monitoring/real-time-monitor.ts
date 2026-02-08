@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 /**
  * Real-time Monitor
  * Monitoramento em tempo real do sistema

@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 /**
  * Advanced Analytics System - Fase 5: Integrações Premium
  * Sistema completo de analytics e reporting para vídeos, avatares e engagement

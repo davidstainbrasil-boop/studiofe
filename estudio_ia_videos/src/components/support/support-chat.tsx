@@ -1,4 +1,5 @@
 'use client';
+import { logger } from '@/lib/logger';
 
 /**
  * Support Chat Widget
@@ -487,7 +488,7 @@ function ContactForm({ onClose }: { onClose: () => void }) {
     await new Promise(resolve => setTimeout(resolve, 1500));
 
     // In production, send to /api/support/ticket
-    console.log('Support ticket:', formData);
+    logger.info('Support ticket:', formData);
 
     setIsSubmitting(false);
     setIsSubmitted(true);

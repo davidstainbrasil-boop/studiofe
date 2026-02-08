@@ -1,4 +1,5 @@
 'use client'
+import { logger } from '@/lib/logger';
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -43,7 +44,7 @@ export function CreateProjectDialog({ trigger, open, onOpenChange }: CreateProje
             // [DEV MODE] Bypass Auth with Cookie check on client side
             let user = authUser;
             if (!user && document.cookie.includes('dev_bypass=true')) {
-                console.log('🛡️ Bypass Auth (Client): Cookie found');
+                logger.info('🛡️ Bypass Auth (Client): Cookie found');
                 user = { id: 'dev-user-id', email: 'dev@local' } as any;
             }
 
@@ -94,7 +95,7 @@ export function CreateProjectDialog({ trigger, open, onOpenChange }: CreateProje
 
             router.refresh()
         } catch (error) {
-            console.error('Error creating project:', error)
+            logger.error('Error creating project:', error)
             toast.error('Falha ao criar projeto')
         } finally {
             setIsLoading(false)
@@ -147,7 +148,7 @@ export function CreateProjectDialog({ trigger, open, onOpenChange }: CreateProje
                             autoComplete="off"
                             value={name}
                             onChange={(e) => {
-                                console.log('[CreateProjectDialog] Input Change:', e.target.value);
+                                logger.info('[CreateProjectDialog] Input Change:', e.target.value);
                                 setName(e.target.value);
                             }}
                             placeholder="Ex: Treinamento de Segurança"

@@ -115,7 +115,7 @@ const SCORM_API_JS = `
         }
         return true;
       }
-      console.warn('SCORM API not found - running in standalone mode');
+      logger.warn('SCORM API not found - running in standalone mode');
       return false;
     },
     

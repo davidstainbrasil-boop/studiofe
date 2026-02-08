@@ -1,5 +1,6 @@
 // TODO: Alinhar Template type com Omit<Template, ...>
 'use client';
+import { logger } from '@/lib/logger';
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -244,7 +245,7 @@ export default function CreateTemplatePage() {
       toast.success('Template criado com sucesso!');
       router.push(`/templates`);
     } catch (error) {
-      console.error('Error creating template:', error);
+      logger.error('Error creating template:', error);
       toast.error('Erro ao criar template');
     } finally {
       setIsLoading(false);

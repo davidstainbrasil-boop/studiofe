@@ -1,4 +1,5 @@
 'use client';
+import { logger } from '@/lib/logger';
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
@@ -59,15 +60,15 @@ export default function SignupPage() {
             });
 
             if (signUpError) {
-                console.error('[SIGNUP] Error:', signUpError);
+                logger.error('[SIGNUP] Error:', signUpError);
                 throw signUpError;
             }
 
-            console.log('[SIGNUP] Success! Data:', data);
+            logger.info('[SIGNUP] Success! Data:', data);
 
             // UX Improvement: Check if session was created immediately (Email Confirm disabled)
             if (data.session) {
-                console.log('[SIGNUP] Auto-login successful, redirecting to dashboard...');
+                logger.info('[SIGNUP] Auto-login successful, redirecting to dashboard...');
                 router.push('/dashboard');
                 return;
             }
@@ -75,7 +76,7 @@ export default function SignupPage() {
             // Otherwise show success message for email verification
             setSuccess(true);
         } catch (err) {
-            console.error('Signup error:', err);
+            logger.error('Signup error:', err);
             const message = err instanceof Error ? err.message : 'Erro ao criar conta. Tente novamente.';
             setError(message);
         } finally {

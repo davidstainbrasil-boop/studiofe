@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 /**
  * AI Video Analysis System - Real Implementation
  * Uses OpenAI Vision and FFmpeg for video analysis

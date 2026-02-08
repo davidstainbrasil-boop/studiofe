@@ -5,6 +5,7 @@
 
 'use client';
 
+import { logger } from '@/lib/logger';
 import React, { useState, useRef } from 'react';
 import { usePPTX } from '../../hooks/use-pptx';
 import { PPTXDocument, PPTXProcessingJob } from '../../types/pptx-types';
@@ -133,9 +134,9 @@ const PPTXTest: React.FC = () => {
         includeAnimations: true,
         optimizeImages: true
       });
-      console.log('Upload iniciado:', jobId);
+      logger.info('Upload iniciado:', jobId);
     } catch (err) {
-      console.error('Erro no upload:', err);
+      logger.error('Erro no upload:', err);
     }
   };
 
@@ -159,9 +160,9 @@ const PPTXTest: React.FC = () => {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      console.log('Apresentação gerada e baixada com sucesso');
+      logger.info('Apresentação gerada e baixada com sucesso');
     } catch (err) {
-      console.error('Erro na geração:', err);
+      logger.error('Erro na geração:', err);
     }
   };
 
@@ -207,10 +208,10 @@ const PPTXTest: React.FC = () => {
         }
       });
 
-      console.log('Conversão para vídeo iniciada:', videoJobId);
+      logger.info('Conversão para vídeo iniciada:', videoJobId);
       alert(`Conversão para vídeo iniciada! Job ID: ${videoJobId}`);
     } catch (err) {
-      console.error('Erro na conversão para vídeo:', err);
+      logger.error('Erro na conversão para vídeo:', err);
     }
   };
 

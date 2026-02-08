@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 /**
  * E2E Test Helpers for PPTX-to-Video Pipeline
  *
@@ -108,7 +109,7 @@ export async function pollRenderJob(
     const data = await response.json();
     const job = data.job || data.data;
 
-    console.log(`[Poll ${attempts}] Job ${jobId} status: ${job.status}`);
+    logger.info(`[Poll ${attempts}] Job ${jobId} status: ${job.status}`);
 
     if (job.status === 'completed') {
       return {
@@ -176,18 +177,18 @@ export async function validateStorageFile(
   // Expected format: https://<project>.supabase.co/storage/v1/object/public/videos/<path>
   const storagePath = parseStoragePath(outputUrl);
 
-  console.log(`Validating storage file: ${storagePath}`);
+  logger.info(`Validating storage file: ${storagePath}`);
 
   // Use HEAD request to check existence and get Content-Length
   const { data, error } = await supabase.storage.from('videos').download(storagePath);
 
   if (error) {
-    console.error(`Storage validation failed: ${error.message}`);
+    logger.error(`Storage validation failed: ${error.message}`);
     return { exists: false, size: 0, path: storagePath };
   }
 
   const size = data?.size || 0;
-  console.log(`Storage file exists: ${storagePath}, size: ${size} bytes`);
+  logger.info(`Storage file exists: ${storagePath}, size: ${size} bytes`);
 
   return { exists: true, size, path: storagePath };
 }
@@ -229,12 +230,12 @@ export async function cleanupTestData(
       // Delete slides first (foreign key dependency)
       await supabase.from('pptx_slides').delete().eq('upload_id', uploadId);
       await supabase.from('pptx_uploads').delete().eq('id', uploadId);
-      console.log(`Cleaned up PPTX upload: ${uploadId}`);
+      logger.info(`Cleaned up PPTX upload: ${uploadId}`);
     }
 
     if (jobId) {
       await supabase.from('render_jobs').delete().eq('id', jobId);
-      console.log(`Cleaned up render job: ${jobId}`);
+      logger.info(`Cleaned up render job: ${jobId}`);
     }
 
     if (projectId) {
@@ -242,15 +243,15 @@ export async function cleanupTestData(
       await supabase.from('slides').delete().eq('projectId', projectId);
       await supabase.from('timelines').delete().eq('projectId', projectId);
       await supabase.from('projects').delete().eq('id', projectId);
-      console.log(`Cleaned up project: ${projectId}`);
+      logger.info(`Cleaned up project: ${projectId}`);
     }
 
     if (avatarId) {
         await supabase.from('avatar_models').delete().eq('id', avatarId);
-        console.log(`Cleaned up avatar: ${avatarId}`);
+        logger.info(`Cleaned up avatar: ${avatarId}`);
     }
   } catch (error) {
-    console.error('Cleanup error (non-fatal):', error);
+    logger.error('Cleanup error (non-fatal):', error);
   }
 }
 
@@ -312,7 +313,7 @@ export async function createTestProject(userId: string, projectId: string): Prom
   if (error) {
     throw new Error(`Failed to create test project: ${error.message}`);
   }
-  console.log(`Created test project: ${projectId} for user ${userId}`);
+  logger.info(`Created test project: ${projectId} for user ${userId}`);
 }
 
 /**
@@ -335,7 +336,7 @@ export async function createTestAvatar(avatarId: string, userId?: string): Promi
   });
   
   if (error) {
-       console.error(`Failed to create test avatar (attempt 1): ${error.message}`);
+       logger.error(`Failed to create test avatar (attempt 1): ${error.message}`);
        
        // Fallback or retry with different structure if needed, but SQL seems clear.
        // Note: 'category' was in my previous guess but SQL has 'avatar_type'.
@@ -356,5 +357,5 @@ export async function createTestAvatar(avatarId: string, userId?: string): Promi
            throw new Error(`Failed to create test avatar: ${error2.message}`);
        }
   }
-  console.log(`Created test avatar: ${avatarId}`);
+  logger.info(`Created test avatar: ${avatarId}`);
 }

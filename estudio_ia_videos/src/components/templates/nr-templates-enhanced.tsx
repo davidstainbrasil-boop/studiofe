@@ -6,6 +6,7 @@
  */
 
 'use client';
+import { logger } from '@/lib/logger';
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@components/ui/card';
@@ -236,7 +237,7 @@ export default function NRTemplatesEnhanced() {
         }
       }
     } catch (error) {
-      console.error('Failed to fetch NR templates:', error);
+      logger.error('Failed to fetch NR templates:', error);
     }
 
     // Fallback: set empty array (UI will show empty state)

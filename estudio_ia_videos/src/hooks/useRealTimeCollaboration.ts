@@ -213,7 +213,7 @@ export const useRealTimeCollaboration = (projectId?: string) => {
           throw new Error('API request failed');
         }
       } catch (apiError) {
-        console.log('Collaboration API not available, using local session');
+        logger.info('Collaboration API not available, using local session');
         // Fallback to local session
         initialSession = {
           id: `session_${projectId}`,

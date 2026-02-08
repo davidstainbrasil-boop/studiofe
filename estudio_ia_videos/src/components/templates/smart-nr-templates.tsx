@@ -1,5 +1,6 @@
 
 'use client'
+import { logger } from '@/lib/logger';
 
 import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@components/ui/card"
@@ -222,7 +223,7 @@ export default function SmartNRTemplates() {
           setTemplates(mockNRTemplates)
         }
       } catch (error) {
-        console.warn('Using mock templates:', error)
+        logger.warn('Using mock templates:', error)
         setTemplates(mockNRTemplates)
       } finally {
         setIsLoading(false)

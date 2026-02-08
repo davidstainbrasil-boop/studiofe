@@ -1,4 +1,5 @@
 
+import { logger } from '@/lib/logger';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs';
@@ -53,7 +54,7 @@ export function AssetBrowser() {
                 }
             }
         } catch (error) {
-            console.error('Failed to load assets', error);
+            logger.error('Failed to load assets', error);
             toast.error('Erro ao carregar assets');
         } finally {
             setLoading(false);
@@ -80,7 +81,7 @@ export function AssetBrowser() {
                 const data = await res.json();
                 return data.success ? data.asset : null;
             } catch (error) {
-                console.error('Upload error for file', file.name, error);
+                logger.error('Upload error for file', file.name, error);
                 toast.error(`Erro ao enviar ${file.name}`);
                 return null;
             }

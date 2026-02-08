@@ -1,4 +1,5 @@
 'use client'
+import { logger } from '@/lib/logger';
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
@@ -199,7 +200,7 @@ export function useSubscription(userId?: string): UseSubscriptionReturn {
         error: null,
       })
     } catch (error) {
-      console.error('Error fetching subscription:', error)
+      logger.error('Error fetching subscription:', error)
       setState(prev => ({
         ...prev,
         isLoading: false,
@@ -301,7 +302,7 @@ export function useSubscription(userId?: string): UseSubscriptionReturn {
       const { url } = await response.json()
       window.location.href = url
     } catch (error) {
-      console.error('Error opening billing portal:', error)
+      logger.error('Error opening billing portal:', error)
       // Fallback to billing page
       router.push('/dashboard/billing')
     }
@@ -363,7 +364,7 @@ export function useUsageTracker(userId?: string) {
       await refresh()
       return { success: true }
     } catch (error) {
-      console.error('Error tracking video creation:', error)
+      logger.error('Error tracking video creation:', error)
       return { success: false, error: 'Erro ao verificar limites' }
     }
   }, [userId, checkLimit, openUpgradeModal, refresh])
@@ -384,7 +385,7 @@ export function useUsageTracker(userId?: string) {
       await refresh()
       return { success: true }
     } catch (error) {
-      console.error('Error tracking storage:', error)
+      logger.error('Error tracking storage:', error)
       return { success: false, error: 'Erro ao registrar storage' }
     }
   }, [userId, checkLimit, openUpgradeModal, refresh])

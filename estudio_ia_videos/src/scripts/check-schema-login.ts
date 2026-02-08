@@ -1,16 +1,17 @@
 
+import { logger } from '@/lib/logger';
 import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function check() {
     try {
-        console.log('Checking users table for lastLogin field...');
+        logger.info('Checking users table for lastLogin field...');
         const user = await prisma.users.findFirst({
             select: { id: true, createdAt: true, updatedAt: true }
         });
-        console.log('User sample:', user);
+        logger.info('User sample:', user);
     } catch (e) {
-        console.error('Error querying users:', e);
+        logger.error('Error querying users:', e);
     } finally {
         await prisma.$disconnect();
     }

@@ -46,7 +46,7 @@ import {
 
 export default function TimelineEditorSimple() {
   const searchParams = useSearchParams();
-  const projectId = searchParams.get('project');
+  const projectId = searchParams?.get('project') ?? null;
   
   const {
     project,

@@ -61,19 +61,19 @@ export default function VideoPreview({
 
     preview.initialize(canvasRef.current, {
       onTimeUpdate: (time) => {
-        setState((prev) => ({ ...prev, currentTime: time }));
+        setState((prev: PreviewState) => ({ ...prev, currentTime: time }));
         onTimeUpdate?.(time);
       },
       onSlideChange: (index) => {
-        setState((prev) => ({ ...prev, currentSlideIndex: index }));
+        setState((prev: PreviewState) => ({ ...prev, currentSlideIndex: index }));
         onSlideChange?.(index);
       },
       onEnded: () => {
-        setState((prev) => ({ ...prev, isPlaying: false }));
+        setState((prev: PreviewState) => ({ ...prev, isPlaying: false }));
         onEnded?.();
       },
       onBuffering: (isBuffering) => {
-        setState((prev) => ({ ...prev, isBuffering }));
+        setState((prev: PreviewState) => ({ ...prev, isBuffering }));
       },
     });
 
@@ -95,7 +95,7 @@ export default function VideoPreview({
 
     previewRef.current.configure(config).then(() => {
       setIsReady(true);
-      setState((prev) => ({
+      setState((prev: PreviewState) => ({
         ...prev,
         duration: previewRef.current?.getDuration() || 0,
       }));
@@ -107,17 +107,17 @@ export default function VideoPreview({
 
     if (state.isPlaying) {
       previewRef.current.pause();
-      setState((prev) => ({ ...prev, isPlaying: false }));
+      setState((prev: PreviewState) => ({ ...prev, isPlaying: false }));
     } else {
       previewRef.current.play();
-      setState((prev) => ({ ...prev, isPlaying: true }));
+      setState((prev: PreviewState) => ({ ...prev, isPlaying: true }));
     }
   }, [state.isPlaying]);
 
   const handleStop = useCallback(() => {
     if (!previewRef.current) return;
     previewRef.current.stop();
-    setState((prev) => ({ ...prev, isPlaying: false, currentTime: 0, currentSlideIndex: 0 }));
+    setState((prev: PreviewState) => ({ ...prev, isPlaying: false, currentTime: 0, currentSlideIndex: 0 }));
   }, []);
 
   const handleSeek = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {

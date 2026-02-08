@@ -1,4 +1,5 @@
 'use client';
+import { logger } from '@/lib/logger';
 
 import { TimelineEditor } from './timeline/TimelineEditor';
 import { useState, useRef, useCallback } from 'react';
@@ -28,8 +29,8 @@ export function VideoStudio({ projectId }: { projectId: string }) {
     const [layers, setLayers] = useState<LayerItem[]>([]);
 
     useKeyboardShortcuts({
-        'Space': () => console.log('Toggle Playback'), // Connect to actual store
-        'Ctrl+S': () => console.log('Save Project'),
+        'Space': () => logger.info('Toggle Playback'), // Connect to actual store
+        'Ctrl+S': () => logger.info('Save Project'),
         'Delete': () => canvasRef.current?.deleteSelected(), // Modified
         'Escape': () => {
             setActivePanel('none');
@@ -163,12 +164,12 @@ export function VideoStudio({ projectId }: { projectId: string }) {
                 {/* Right Panel: Properties / Layers / Effects */}
                 {activePanel === 'effects' && (
                     <div className="w-80 border-l border-border bg-card">
-                        <EffectsPanel onSelectEffect={(id, type) => console.log('Selected:', id, type)} />
+                        <EffectsPanel onSelectEffect={(id, type) => logger.info('Selected:', id, type)} />
                     </div>
                 )}
                 {activePanel === 'templates' && (
                     <div className="w-80 border-l border-border bg-card">
-                        <TemplatesPanel onSelectTemplate={(template) => console.log('Selected Template:', template.id)} />
+                        <TemplatesPanel onSelectTemplate={(template) => logger.info('Selected Template:', template.id)} />
                     </div>
                 )}
 

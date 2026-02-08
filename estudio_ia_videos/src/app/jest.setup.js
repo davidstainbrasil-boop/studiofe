@@ -175,6 +175,15 @@ const { TextEncoder, TextDecoder } = require('util');
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
 
+// Radix UI relies on ResizeObserver in jsdom tests
+if (typeof document !== 'undefined' && !global.ResizeObserver) {
+  global.ResizeObserver = class ResizeObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+}
+
 // Mock crypto.randomUUID for Node < 19 or test environments
 if (!global.crypto) {
   global.crypto = {}
@@ -194,13 +203,15 @@ if (!global.crypto.randomUUID) {
 }
 
 // Mock para WebSocket se necessário
-// Overwrite global WebSocket to avoid jsdom implementation issues
-global.WebSocket = jest.fn().mockImplementation(() => ({
-  send: jest.fn(),
-  close: jest.fn(),
-  addEventListener: jest.fn(),
-  removeEventListener: jest.fn(),
-}))
+// Overwrite global WebSocket only in jsdom to avoid breaking Node-based socket tests
+if (typeof document !== 'undefined') {
+  global.WebSocket = jest.fn().mockImplementation(() => ({
+    send: jest.fn(),
+    close: jest.fn(),
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+  }))
+}
 
 // Global teardown: clear any remaining timers/handles to prevent worker leak
 afterAll(() => {

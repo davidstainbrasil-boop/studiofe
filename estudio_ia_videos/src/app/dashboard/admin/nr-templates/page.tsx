@@ -1,4 +1,5 @@
 'use client';
+import { logger } from '@/lib/logger';
 
 import { useState, useEffect } from 'react';
 import { Button } from '@components/ui/button';
@@ -67,7 +68,7 @@ export default function NRTemplatesAdminPage() {
       setTemplates(data);
       setFilteredTemplates(data);
     } catch (error) {
-      console.error('Erro ao carregar templates:', error);
+      logger.error('Erro ao carregar templates:', error);
       alert('Erro ao carregar templates. Verifique o console.');
     } finally {
       setLoading(false);
@@ -96,7 +97,7 @@ export default function NRTemplatesAdminPage() {
       setIsCreateDialogOpen(false);
       loadTemplates();
     } catch (error) {
-      console.error('Erro ao criar template:', error);
+      logger.error('Erro ao criar template:', error);
       alert('Erro ao criar template. Verifique o console.');
     }
   }
@@ -125,7 +126,7 @@ export default function NRTemplatesAdminPage() {
       setEditingTemplate(null);
       loadTemplates();
     } catch (error) {
-      console.error('Erro ao atualizar template:', error);
+      logger.error('Erro ao atualizar template:', error);
       alert('Erro ao atualizar template. Verifique o console.');
     }
   }
@@ -143,7 +144,7 @@ export default function NRTemplatesAdminPage() {
       setDeletingTemplate(null);
       loadTemplates();
     } catch (error) {
-      console.error('Erro ao deletar template:', error);
+      logger.error('Erro ao deletar template:', error);
       alert('Erro ao deletar template. Verifique o console.');
     }
   }

@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 // TODO: Archive script - fix types
 /**
  * 🧪 TESTE RÁPIDO - Validação da Stack Completa
@@ -21,16 +22,16 @@ const colors = {
 }
 
 const log = {
-  success: (msg: string) => console.log(`${colors.green}✅ ${msg}${colors.reset}`),
-  error: (msg: string) => console.log(`${colors.red}❌ ${msg}${colors.reset}`),
-  info: (msg: string) => console.log(`${colors.cyan}ℹ️  ${msg}${colors.reset}`),
-  warn: (msg: string) => console.log(`${colors.yellow}⚠️  ${msg}${colors.reset}`)
+  success: (msg: string) => logger.info(`${colors.green}✅ ${msg}${colors.reset}`),
+  error: (msg: string) => logger.info(`${colors.red}❌ ${msg}${colors.reset}`),
+  info: (msg: string) => logger.info(`${colors.cyan}ℹ️  ${msg}${colors.reset}`),
+  warn: (msg: string) => logger.info(`${colors.yellow}⚠️  ${msg}${colors.reset}`)
 }
 
 async function validateStack() {
-  console.log('\n' + '='.repeat(60))
-  console.log('🧪 VALIDAÇÃO DA STACK COMPLETA')
-  console.log('='.repeat(60) + '\n')
+  logger.info('\n' + '='.repeat(60))
+  logger.info('🧪 VALIDAÇÃO DA STACK COMPLETA')
+  logger.info('='.repeat(60) + '\n')
 
   let errors = 0
   let warnings = 0
@@ -68,7 +69,7 @@ async function validateStack() {
   }
 
   // 2. Validar imports dos serviços PPTX
-  console.log('\n📦 Validando serviços PPTX...\n')
+  logger.info('\n📦 Validando serviços PPTX...\n')
 
   try {
     const modules = [
@@ -95,7 +96,7 @@ async function validateStack() {
   }
 
   // 3. Validar estrutura de arquivos
-  console.log('\n📁 Validando estrutura de arquivos...\n')
+  logger.info('\n📁 Validando estrutura de arquivos...\n')
 
   const fs = await import('fs')
   const path = await import('path')
@@ -126,7 +127,7 @@ async function validateStack() {
   }
 
   // 4. Validar variáveis de ambiente
-  console.log('\n🔐 Validando variáveis de ambiente...\n')
+  logger.info('\n🔐 Validando variáveis de ambiente...\n')
 
   if (process.env.DATABASE_URL) {
     log.success('DATABASE_URL configurado')
@@ -145,30 +146,30 @@ async function validateStack() {
   }
 
   // Resumo
-  console.log('\n' + '='.repeat(60))
-  console.log('📊 RESUMO DA VALIDAÇÃO')
-  console.log('='.repeat(60) + '\n')
+  logger.info('\n' + '='.repeat(60))
+  logger.info('📊 RESUMO DA VALIDAÇÃO')
+  logger.info('='.repeat(60) + '\n')
 
-  console.log(`${colors.green}✅ Sucessos: ${success}${colors.reset}`)
-  console.log(`${colors.yellow}⚠️  Avisos: ${warnings}${colors.reset}`)
-  console.log(`${colors.red}❌ Erros: ${errors}${colors.reset}`)
+  logger.info(`${colors.green}✅ Sucessos: ${success}${colors.reset}`)
+  logger.info(`${colors.yellow}⚠️  Avisos: ${warnings}${colors.reset}`)
+  logger.info(`${colors.red}❌ Erros: ${errors}${colors.reset}`)
 
-  console.log('\n' + '='.repeat(60) + '\n')
+  logger.info('\n' + '='.repeat(60) + '\n')
 
   if (errors === 0 && warnings <= 2) {
     log.success('SISTEMA PRONTO PARA USO! 🎉')
-    console.log('\n📝 Próximos passos:')
-    console.log('   1. Configure Supabase: .\\scripts\\configure-supabase.ps1')
-    console.log('   2. Execute testes: .\\scripts\\setup-and-test.ps1')
-    console.log('   3. Inicie app: npm run dev\n')
+    logger.info('\n📝 Próximos passos:')
+    logger.info('   1. Configure Supabase: .\\scripts\\configure-supabase.ps1')
+    logger.info('   2. Execute testes: .\\scripts\\setup-and-test.ps1')
+    logger.info('   3. Inicie app: npm run dev\n')
     return 0
   } else if (errors === 0) {
     log.warn('Sistema OK, mas precisa configurar DATABASE_URL')
-    console.log('\n📝 Execute: .\\scripts\\configure-supabase.ps1\n')
+    logger.info('\n📝 Execute: .\\scripts\\configure-supabase.ps1\n')
     return 0
   } else {
     log.error(`Sistema com ${errors} erro(s) crítico(s)`)
-    console.log('\n📖 Consulte a documentação: GUIA_SUPABASE_SETUP.md\n')
+    logger.info('\n📖 Consulte a documentação: GUIA_SUPABASE_SETUP.md\n')
     return 1
   }
 }
@@ -177,6 +178,6 @@ async function validateStack() {
 validateStack()
   .then(code => process.exit(code))
   .catch(error => {
-    console.error('Erro fatal:', error)
+    logger.error('Erro fatal:', error)
     process.exit(1)
   })

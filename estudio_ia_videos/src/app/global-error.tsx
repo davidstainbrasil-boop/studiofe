@@ -1,4 +1,5 @@
 'use client'
+import { logger } from '@/lib/logger';
 
 import { useEffect } from 'react'
 import { Button } from '@components/ui/button'
@@ -13,7 +14,7 @@ export default function GlobalError({
     reset: () => void
 }) {
     useEffect(() => {
-        console.error('Global Error:', error)
+        logger.error('Global Error:', error)
     }, [error])
 
     return (

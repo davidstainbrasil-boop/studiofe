@@ -1,5 +1,6 @@
 
 'use client';
+import { logger } from "@/lib/logger";
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useTimelineSocket, UseTimelineSocketOptions, TimelineSocketReturn, UserPresence, CursorMovePayload } from '@hooks/useTimelineSocket';
@@ -52,12 +53,12 @@ export function CollaborationProvider({ children, ...options }: CollaborationPro
         socket.onTimelineUpdated((payload) => {
             // Here we would apply delta updates. For now, we might just re-fetch or apply simple changes.
             // Implementing full CRDT is confusing for this step, so we'll just log or trigger a toast.
-            console.log('Remote timeline update received', payload);
+            logger.info('Remote timeline update received', payload);
         });
 
         socket.onNotification((data) => {
             // Show toast
-            console.log('Remote notification', data);
+            logger.info('Remote notification', data);
         });
 
 

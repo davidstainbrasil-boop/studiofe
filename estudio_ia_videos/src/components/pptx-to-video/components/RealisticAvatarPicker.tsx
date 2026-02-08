@@ -4,6 +4,7 @@
  * Usa MuseTalk/SadTalker para gerar talking heads de qualquer foto
  */
 'use client';
+import { logger } from '@/lib/logger';
 
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
@@ -128,7 +129,7 @@ export function RealisticAvatarPicker({
         setPreviewUrl(data.videoUrl);
       }
     } catch (error) {
-      console.error('Preview generation failed:', error);
+      logger.error('Preview generation failed:', error);
     } finally {
       setIsGeneratingPreview(false);
     }

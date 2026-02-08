@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 /**
  * 🧪 Componente de Teste para Notificações de Render
  * Permite testar o sistema de notificações manualmente
@@ -54,7 +55,7 @@ export function RenderNotificationTest({ userId }: RenderNotificationTestProps) 
 
       toast.success('Job de teste criado com sucesso!');
     } catch (error) {
-      console.error('Erro ao criar job de teste:', error);
+      logger.error('Erro ao criar job de teste:', error);
       toast.error('Erro ao criar job de teste');
     } finally {
       setIsLoading(false);
@@ -114,7 +115,7 @@ export function RenderNotificationTest({ userId }: RenderNotificationTestProps) 
 
       toast.success('Simulação de progresso concluída!');
     } catch (error) {
-      console.error('Erro na simulação:', error);
+      logger.error('Erro na simulação:', error);
       toast.error('Erro na simulação de progresso');
     }
   };
@@ -166,7 +167,7 @@ export function RenderNotificationTest({ userId }: RenderNotificationTestProps) 
 
       toast.success('Simulação de erro concluída!');
     } catch (error) {
-      console.error('Erro na simulação:', error);
+      logger.error('Erro na simulação:', error);
       toast.error('Erro na simulação de erro');
     }
   };

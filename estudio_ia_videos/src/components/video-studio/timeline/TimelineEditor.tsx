@@ -1,4 +1,5 @@
 'use client';
+import { logger } from '@/lib/logger';
 
 import { useState, useRef, useEffect } from 'react';
 import { DndContext, DragEndEvent } from '@dnd-kit/core';
@@ -77,7 +78,7 @@ export function TimelineEditor({ projectId }: { projectId: string }) {
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
         if (!over) return;
-        console.log('Dragged', active.id, 'to', over.id);
+        logger.info('Dragged', active.id, 'to', over.id);
         // Logic to update element position
     };
 

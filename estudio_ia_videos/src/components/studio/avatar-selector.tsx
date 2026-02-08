@@ -1,4 +1,5 @@
 'use client';
+import { logger } from '@/lib/logger';
 
 import { useState } from 'react';
 import { useTimelineStore } from '@lib/stores/timeline-store';
@@ -70,7 +71,7 @@ export function AvatarSelector() {
 
             alert(`Avatar ${selectedAvatar.name} adicionado à cena!`);
         } catch (error) {
-            console.error('Error adding avatar:', error);
+            logger.error('Error adding avatar:', error);
             alert('Erro ao adicionar avatar à cena');
         } finally {
             setIsAdding(false);

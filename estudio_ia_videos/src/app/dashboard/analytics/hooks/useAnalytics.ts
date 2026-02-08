@@ -1,4 +1,5 @@
 'use client';
+import { logger } from '@/lib/logger';
 
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
@@ -26,7 +27,7 @@ export function useAnalytics<T>(options: FetchAnalyticsOptions) {
       setData(analyticsData);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido'
-      console.error('Error fetching analytics:', error);
+      logger.error('Error fetching analytics:', error);
       toast.error(`Erro ao carregar analytics: ${errorMessage}`);
     } finally {
       setLoading(false);

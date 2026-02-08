@@ -1,10 +1,11 @@
+import { logger } from '@/lib/logger';
 /**
  * Playwright Global Setup
  * Enforces URL isolation for E2E tests
  */
 
 async function globalSetup() {
-  console.log('🔒 Setting up E2E URL isolation...');
+  logger.info('🔒 Setting up E2E URL isolation...');
 
   // Set environment variables
   process.env.E2E_TEST = 'true';
@@ -16,9 +17,9 @@ async function globalSetup() {
   process.env.DISABLE_SENTRY = 'true';
   process.env.DISABLE_ANALYTICS = 'true';
 
-  console.log('✅ E2E environment configured');
-  console.log('   - External requests will be blocked');
-  console.log('   - Allowed domains: localhost, cursostecno.com.br');
+  logger.info('✅ E2E environment configured');
+  logger.info('   - External requests will be blocked');
+  logger.info('   - Allowed domains: localhost, cursostecno.com.br');
 }
 
 export default globalSetup;

@@ -1,5 +1,6 @@
 
 'use client';
+import { logger } from '@/lib/logger';
 
 /**
  * 📴 SPRINT 39 - Offline Indicator
@@ -36,7 +37,7 @@ export function OfflineIndicator() {
           setShowIndicator(!online);
         }
       } catch (error) {
-        console.debug('Erro ao atualizar status offline:', error);
+        logger.debug('Erro ao atualizar status offline:', error);
       }
     };
 

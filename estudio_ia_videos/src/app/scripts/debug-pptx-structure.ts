@@ -1,4 +1,5 @@
 #!/usr/bin/env tsx
+import { logger } from '@/lib/logger';
 // TODO: Script - fix types
 
 /**
@@ -46,7 +47,7 @@ const getErrorMessage = (error: unknown): string => {
 }
 
 async function debugPPTXStructure() {
-  console.log('🔍 Analisando estrutura XML do PPTX...\n')
+  logger.info('🔍 Analisando estrutura XML do PPTX...\n')
 
   try {
     // Caminho para o arquivo PPTX de teste
@@ -60,27 +61,27 @@ async function debugPPTXStructure() {
     const pptxBuffer = fs.readFileSync(testPptxPath)
     const zip = await JSZip.loadAsync(pptxBuffer)
 
-    console.log('📁 ARQUIVOS NO PPTX:')
+    logger.info('📁 ARQUIVOS NO PPTX:')
     Object.keys(zip.files).forEach(filename => {
-      console.log(`  - ${filename}`)
+      logger.info(`  - ${filename}`)
     })
 
     // Analisar slide 1
-    console.log('\n🔍 ANALISANDO SLIDE 1:')
+    logger.info('\n🔍 ANALISANDO SLIDE 1:')
     const slide1File = zip.file('ppt/slides/slide1.xml')
     
     if (slide1File) {
       const slide1Xml = await slide1File.async('text')
-      console.log('\n📄 XML do Slide 1 (primeiros 1000 caracteres):')
-      console.log(slide1Xml.substring(0, 1000) + '...')
+      logger.info('\n📄 XML do Slide 1 (primeiros 1000 caracteres):')
+      logger.info(slide1Xml.substring(0, 1000) + '...')
       
       // Parse do XML
       const slide1Data = (await parseStringPromise(slide1Xml)) as XmlValue
-      console.log('\n🔧 ESTRUTURA PARSEADA:')
-      console.log(JSON.stringify(slide1Data, null, 2).substring(0, 2000) + '...')
+      logger.info('\n🔧 ESTRUTURA PARSEADA:')
+      logger.info(JSON.stringify(slide1Data, null, 2).substring(0, 2000) + '...')
       
       // Procurar por texto
-      console.log('\n🔍 PROCURANDO TEXTO:')
+      logger.info('\n🔍 PROCURANDO TEXTO:')
       const findText = (obj: XmlValue, currentPath: string = ''): void => {
         if (!isXmlRecord(obj)) return
         
@@ -89,7 +90,7 @@ async function debugPPTXStructure() {
           const value = obj[key]
           
           if (key === 'a:t' && typeof value === 'string') {
-            console.log(`  📝 Texto encontrado em ${nextPath}: "${value}"`)
+            logger.info(`  📝 Texto encontrado em ${nextPath}: "${value}"`)
           }
           
           if (typeof value === 'object' && value !== null) {
@@ -104,7 +105,7 @@ async function debugPPTXStructure() {
       findText(slide1Data)
       
       // Procurar por shapes
-      console.log('\n🔍 PROCURANDO SHAPES:')
+      logger.info('\n🔍 PROCURANDO SHAPES:')
       const findShapes = (obj: XmlValue, currentPath: string = ''): void => {
         if (!isXmlRecord(obj)) return
         
@@ -113,14 +114,14 @@ async function debugPPTXStructure() {
           const value = obj[key]
           
           if (key === 'p:sp') {
-            console.log(`  🔷 Shape encontrado em ${nextPath}`)
+            logger.info(`  🔷 Shape encontrado em ${nextPath}`)
             toArray(value).forEach((shape, index) => {
               if (!isXmlRecord(shape)) return
-              console.log(`    Shape ${index + 1}:`)
+              logger.info(`    Shape ${index + 1}:`)
 
               const txBody = shape['p:txBody']
               if (txBody) {
-                console.log('      - Tem texto body')
+                logger.info('      - Tem texto body')
                 findText(txBody, `${nextPath}[${index}].p:txBody`)
               }
 
@@ -135,7 +136,7 @@ async function debugPPTXStructure() {
                   if (isXmlRecord(attributes)) {
                     const nameAttribute = attributes.name
                     if (typeof nameAttribute === 'string') {
-                      console.log(`      - Nome: ${nameAttribute}`)
+                      logger.info(`      - Nome: ${nameAttribute}`)
                     }
                   }
                 }
@@ -155,20 +156,20 @@ async function debugPPTXStructure() {
       findShapes(slide1Data)
       
     } else {
-      console.log('❌ Slide 1 não encontrado')
+      logger.info('❌ Slide 1 não encontrado')
     }
 
     // Verificar content types
-    console.log('\n📋 CONTENT TYPES:')
+    logger.info('\n📋 CONTENT TYPES:')
     const contentTypesFile = zip.file('[Content_Types].xml')
     if (contentTypesFile) {
       const contentTypesXml = await contentTypesFile.async('text')
       const contentTypesData = await parseStringPromise(contentTypesXml)
-      console.log(JSON.stringify(contentTypesData, null, 2))
+      logger.info(JSON.stringify(contentTypesData, null, 2))
     }
 
   } catch (error) {
-    console.error('❌ Erro durante análise:', getErrorMessage(error))
+    logger.error('❌ Erro durante análise:', getErrorMessage(error))
     process.exit(1)
   }
 }
@@ -177,11 +178,11 @@ async function debugPPTXStructure() {
 if (require.main === module) {
   debugPPTXStructure()
     .then(() => {
-      console.log('\n✅ Análise de estrutura concluída!')
+      logger.info('\n✅ Análise de estrutura concluída!')
       process.exit(0)
     })
     .catch((error) => {
-      console.error('\n❌ Erro na análise:', getErrorMessage(error))
+      logger.error('\n❌ Erro na análise:', getErrorMessage(error))
       process.exit(1)
     })
 }

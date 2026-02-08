@@ -115,7 +115,7 @@ export default function VoiceCloningStudio() {
         }
       }
     } catch (error) {
-      console.error('Failed to fetch voice profiles:', error)
+      logger.error('Failed to fetch voice profiles:', error)
     }
     
     // Fallback to default empty state

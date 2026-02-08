@@ -1,4 +1,5 @@
 'use client'
+import { logger } from '@/lib/logger';
 
 import React from 'react'
 
@@ -25,7 +26,7 @@ class EmergencyAnalytics {
 
     setInterval(() => {
       if (this.events.length > 100) {
-        console.warn('🚨 [ANALYTICS] Limpando eventos (>100)')
+        logger.warn('🚨 [ANALYTICS] Limpando eventos (>100)')
         this.events = this.events.slice(-50)
       }
     }, 30_000)
@@ -42,7 +43,7 @@ class EmergencyAnalytics {
     const now = Date.now()
     const last = THROTTLE_REGISTRY.get(type) ?? 0
     if (now - last < THROTTLE_DELAY) {
-      console.warn(`⏱️ [ANALYTICS] Throttled: ${type}`)
+      logger.warn(`⏱️ [ANALYTICS] Throttled: ${type}`)
       return true
     }
     THROTTLE_REGISTRY.set(type, now)
@@ -64,16 +65,16 @@ class EmergencyAnalytics {
     this.events.push(event)
 
     if (process.env.NODE_ENV === 'development') {
-      console.log('📊 [ANALYTICS]', type, data)
+      logger.info('📊 [ANALYTICS]', type, data)
     }
 
     const recent = this.events.filter((evt) => Date.now() - evt.timestamp < 10_000)
     if (recent.length > 20) {
-      console.error('🚨 [ANALYTICS] BLOQUEANDO - muitos eventos!')
+      logger.error('🚨 [ANALYTICS] BLOQUEANDO - muitos eventos!')
       this.isBlocked = true
       setTimeout(() => {
         this.isBlocked = false
-        console.log('✅ [ANALYTICS] Desbloqueado')
+        logger.info('✅ [ANALYTICS] Desbloqueado')
       }, 10_000)
     }
   }
@@ -115,15 +116,15 @@ class EmergencyAnalytics {
   emergency = {
     block: () => {
       this.isBlocked = true
-      console.log('🚨 Analytics BLOCKED')
+      logger.info('🚨 Analytics BLOCKED')
     },
     unblock: () => {
       this.isBlocked = false
-      console.log('✅ Analytics UNBLOCKED')
+      logger.info('✅ Analytics UNBLOCKED')
     },
     clear: () => {
       this.events = []
-      console.log('🗑️ Analytics CLEARED')
+      logger.info('🗑️ Analytics CLEARED')
     },
     status: () => ({
       isBlocked: this.isBlocked,
@@ -187,7 +188,7 @@ export class EmergencyErrorBoundary extends React.Component<
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
-    console.error('🚨 Emergency Error Boundary:', error, info)
+    logger.error('🚨 Emergency Error Boundary:', error, info)
     
     this.setState({ errorInfo: info })
     
@@ -197,7 +198,7 @@ export class EmergencyErrorBoundary extends React.Component<
         this.setState((prev) => ({ ...prev, errorCount: prev.errorCount + 1 }))
       }
     } catch (err) {
-      console.warn('Failed to track error:', err)
+      logger.warn('Failed to track error:', err)
     }
   }
 

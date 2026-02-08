@@ -1,4 +1,5 @@
 'use client';
+import { logger } from '@/lib/logger';
 
 import { useState } from 'react';
 import { Sparkles, PenTool, Eraser, Check } from 'lucide-react';
@@ -109,11 +110,11 @@ export function Step2Script({ onNext, initialValue }: Step2ScriptProps) {
                                                 if (data.success) {
                                                     setScript(data.data.scriptContent || data.data);
                                                 } else {
-                                                    console.error(data.error);
+                                                    logger.error(data.error);
                                                     setScript("Erro ao gerar roteiro. Tente novamente.");
                                                 }
                                             } catch (e) {
-                                                console.error(e);
+                                                logger.error(e);
                                                 setScript("Erro de conexão. Verifique sua internet.");
                                             } finally {
                                                 setIsGenerating(false);

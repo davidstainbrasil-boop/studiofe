@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 /**
  * Review Workflow
  * Fluxo de trabalho de revisão colaborativa

@@ -1,5 +1,6 @@
 
 'use client'
+import { logger } from "@/lib/logger";
 
 /**
  * 🚨 EMERGENCY LOOP KILLER SYSTEM 🚨
@@ -40,10 +41,10 @@ export class LoopKiller {
         entry.blocked = false
         entry.count = 1
         entry.lastExecution = now
-        console.log(`🔓 [LOOP KILLER] Desbloqueado: ${componentId}`)
+        logger.info(`🔓 [LOOP KILLER] Desbloqueado: ${componentId}`)
         return false
       }
-      console.warn(`⛔ [LOOP KILLER] Bloqueado: ${componentId}`)
+      logger.warn(`⛔ [LOOP KILLER] Bloqueado: ${componentId}`)
       return true
     }
     
@@ -61,12 +62,12 @@ export class LoopKiller {
     // Detecta loop
     if (entry.count > this.MAX_EXECUTIONS) {
       entry.blocked = true
-      console.error(`🚨 [LOOP KILLER] LOOP INFINITO DETECTADO: ${componentId} - BLOQUEANDO!`)
+      logger.error(`🚨 [LOOP KILLER] LOOP INFINITO DETECTADO: ${componentId} - BLOQUEANDO!`)
       return true
     }
     
     if (entry.count > 5) {
-      console.warn(`⚠️ [LOOP KILLER] Alerta: ${componentId} executou ${entry.count} vezes`)
+      logger.warn(`⚠️ [LOOP KILLER] Alerta: ${componentId} executou ${entry.count} vezes`)
     }
     
     return false
@@ -75,10 +76,10 @@ export class LoopKiller {
   static reset(componentId?: string) {
     if (componentId) {
       LOOP_DETECTION_REGISTRY.delete(componentId)
-      console.log(`🔄 [LOOP KILLER] Reset: ${componentId}`)
+      logger.info(`🔄 [LOOP KILLER] Reset: ${componentId}`)
     } else {
       LOOP_DETECTION_REGISTRY.clear()
-      console.log('🔄 [LOOP KILLER] Reset total')
+      logger.info('🔄 [LOOP KILLER] Reset total')
     }
   }
   
@@ -117,7 +118,7 @@ export function useLoopProtection(componentId: string, dependencies: unknown[] =
     
     // Check if loop detected
     if (LoopKiller.isLoopDetected(componentId)) {
-      console.error(`🛑 [${componentId}] EXECUÇÃO BLOQUEADA - Loop detectado!`)
+      logger.error(`🛑 [${componentId}] EXECUÇÃO BLOQUEADA - Loop detectado!`)
       return
     }
     
@@ -174,11 +175,11 @@ if (typeof window !== 'undefined') {
     status: () => LoopKiller.getStatus(),
     reset: (componentId?: string) => LoopKiller.reset(componentId),
     resetAll: () => LoopKiller.reset(),
-    info: () => console.log('🚨 Emergency Loop Killer Commands:\n- status()\n- reset(componentId)\n- resetAll()')
+    info: () => logger.info('🚨 Emergency Loop Killer Commands:\n- status()\n- reset(componentId)\n- resetAll()')
   }
   
   // Log inicial
-  console.log('🚨 Emergency Loop Killer loaded. Type "emergencyLoopKiller.info()" for commands.')
+  logger.info('🚨 Emergency Loop Killer loaded. Type "emergencyLoopKiller.info()" for commands.')
 }
 
 // Emergency timeout wrapper
@@ -190,7 +191,7 @@ export function withTimeout<T extends (...args: unknown[]) => unknown>(
   return ((...args: Parameters<T>) => {
     return new Promise((resolve, reject) => {
       const timeoutId = setTimeout(() => {
-        console.error(`⏰ [TIMEOUT] ${componentId} excedeu ${timeout}ms`)
+        logger.error(`⏰ [TIMEOUT] ${componentId} excedeu ${timeout}ms`)
         reject(new Error(`Timeout: ${componentId}`))
       }, timeout)
       

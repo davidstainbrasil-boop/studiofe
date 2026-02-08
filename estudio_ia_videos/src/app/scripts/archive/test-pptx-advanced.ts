@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 // TODO: Archive script - fix types
 /**
  * Script de Teste Completo - PPTX Advanced Features v2.1
@@ -138,19 +139,19 @@ function createLayoutTestSlide(): AnalyzeSlideInput {
 // ============================================================================
 
 function log(emoji: string, message: string) {
-  console.log(`${emoji} ${message}`)
+  logger.info(`${emoji} ${message}`)
 }
 
 function logSuccess(message: string) {
-  console.log(`✅ ${message}`)
+  logger.info(`✅ ${message}`)
 }
 
 function logError(message: string) {
-  console.log(`❌ ${message}`)
+  logger.info(`❌ ${message}`)
 }
 
 function logInfo(message: string) {
-  console.log(`ℹ️  ${message}`)
+  logger.info(`ℹ️  ${message}`)
 }
 
 // ============================================================================
@@ -159,7 +160,7 @@ function logInfo(message: string) {
 
 async function testDatabaseService() {
   log('📦', 'TESTE 1: Database Service (Prisma)')
-  console.log('━'.repeat(80))
+  logger.info('━'.repeat(80))
   
   try {
     // 1.1 Criar batch job
@@ -250,20 +251,20 @@ async function testDatabaseService() {
     // 1.6 Obter estatísticas
     logInfo('Obtendo estatísticas...')
     const stats: BatchStatistics = await PPTXBatchDBService.getBatchStatistics(batchJob.id)
-    console.log('\n📊 Estatísticas:')
-    console.log('   Total de arquivos:', stats.batchJob.totalFiles)
-    console.log('   Completos:', stats.batchJob.completed)
-    console.log('   Falhas:', stats.batchJob.failed)
-    console.log('   Total de slides:', stats.batchJob.totalSlides)
-    console.log('   Tempo total:', stats.batchJob.processingTime, 'ms')
+    logger.info('\n📊 Estatísticas:')
+    logger.info('   Total de arquivos:', stats.batchJob.totalFiles)
+    logger.info('   Completos:', stats.batchJob.completed)
+    logger.info('   Falhas:', stats.batchJob.failed)
+    logger.info('   Total de slides:', stats.batchJob.totalSlides)
+    logger.info('   Tempo total:', stats.batchJob.processingTime, 'ms')
     
     // 1.7 Obter progresso
     logInfo('Obtendo progresso...')
     const progress = await PPTXBatchDBService.getBatchProgress(batchJob.id)
-    console.log('\n📈 Progresso:')
-    console.log('   Progresso geral:', progress.overallProgress + '%')
-    console.log('   Jobs completos:', progress.summary.completed)
-    console.log('   Jobs em andamento:', progress.summary.processing)
+    logger.info('\n📈 Progresso:')
+    logger.info('   Progresso geral:', progress.overallProgress + '%')
+    logger.info('   Jobs completos:', progress.summary.completed)
+    logger.info('   Jobs em andamento:', progress.summary.processing)
     
     // 1.8 Listar batch jobs do usuário
     logInfo('Listando batch jobs do usuário...')
@@ -271,9 +272,9 @@ async function testDatabaseService() {
       'test_user_123',
       { limit: 10 }
     )
-    console.log(`\n📋 Encontrados ${total} batch jobs`)
+    logger.info(`\n📋 Encontrados ${total} batch jobs`)
     userJobs.forEach((job, index) => {
-      console.log(`   ${index + 1}. ${job.batchName} - Status: ${job.status}`)
+      logger.info(`   ${index + 1}. ${job.batchName} - Status: ${job.status}`)
     })
     
     // 1.9 Cleanup (opcional - comentado para manter dados de teste)
@@ -281,14 +282,14 @@ async function testDatabaseService() {
     // await prisma.pPTXBatchJob.delete({ where: { id: batchJob.id } })
     // logSuccess('Dados limpos')
     
-    console.log('\n' + '━'.repeat(80))
+    logger.info('\n' + '━'.repeat(80))
     logSuccess('TESTE 1 CONCLUÍDO COM SUCESSO!\n')
     
     return { batchJob, jobs }
     
   } catch (error) {
     logError('TESTE 1 FALHOU!')
-    console.error(error)
+    logger.error(error)
     throw error
   }
 }
@@ -299,7 +300,7 @@ async function testDatabaseService() {
 
 async function testLayoutAnalyzer() {
   log('🔍', 'TESTE 2: Layout Analyzer')
-  console.log('━'.repeat(80))
+  logger.info('━'.repeat(80))
   
   try {
     const analyzer = new LayoutAnalyzer()
@@ -311,20 +312,20 @@ async function testLayoutAnalyzer() {
     logInfo('Analisando slide...')
     const result: LayoutAnalysis = analyzer.analyzeSlide(mockSlide)
     
-    console.log('\n📊 Resultado da Análise:')
-    console.log('   Score:', result.score + '/100')
-    console.log('   Erros:', result.errors)
-    console.log('   Avisos:', result.warnings)
-    console.log('   Sugestões:', result.suggestions)
-    console.log('   Issues encontrados:', result.issues.length)
+    logger.info('\n📊 Resultado da Análise:')
+    logger.info('   Score:', result.score + '/100')
+    logger.info('   Erros:', result.errors)
+    logger.info('   Avisos:', result.warnings)
+    logger.info('   Sugestões:', result.suggestions)
+    logger.info('   Issues encontrados:', result.issues.length)
     
     // Mostrar issues
     if (result.issues.length > 0) {
-      console.log('\n⚠️  Issues Detectados:')
+      logger.info('\n⚠️  Issues Detectados:')
       result.issues.forEach((issue, index) => {
-        console.log(`   ${index + 1}. [${issue.severity}] ${issue.category}: ${issue.message}`)
+        logger.info(`   ${index + 1}. [${issue.severity}] ${issue.category}: ${issue.message}`)
         if (issue.suggestion) {
-          console.log(`      💡 Sugestão: ${issue.suggestion}`)
+          logger.info(`      💡 Sugestão: ${issue.suggestion}`)
         }
       })
     }
@@ -345,21 +346,21 @@ async function testLayoutAnalyzer() {
       { fg: '#999999', bg: '#CCCCCC', expected: 2.5 },
     ]
     
-    console.log('\n🎨 Testes de Contraste WCAG:')
+    logger.info('\n🎨 Testes de Contraste WCAG:')
     contrastTests.forEach(test => {
       const ratio = analyzer.calculateContrastRatio(test.fg, test.bg)
       const passes = ratio >= 4.5 ? '✅ PASSA' : '❌ FALHA'
-      console.log(`   ${test.fg} / ${test.bg}: ${ratio.toFixed(2)}:1 ${passes}`)
+      logger.info(`   ${test.fg} / ${test.bg}: ${ratio.toFixed(2)}:1 ${passes}`)
     })
     
-    console.log('\n' + '━'.repeat(80))
+    logger.info('\n' + '━'.repeat(80))
     logSuccess('TESTE 2 CONCLUÍDO COM SUCESSO!\n')
     
     return result
     
   } catch (error) {
     logError('TESTE 2 FALHOU!')
-    console.error(error)
+    logger.error(error)
     throw error
   }
 }
@@ -370,7 +371,7 @@ async function testLayoutAnalyzer() {
 
 async function testAnimationConverter() {
   log('🎬', 'TESTE 3: Animation Converter')
-  console.log('━'.repeat(80))
+  logger.info('━'.repeat(80))
   
   try {
     const converter = new AnimationConverter()
@@ -431,7 +432,7 @@ async function testAnimationConverter() {
     ]
     
     logInfo('Convertendo animações...')
-    console.log(`\n🎬 Tentando converter ${mockAnimations.length} animações:\n`)
+    logger.info(`\n🎬 Tentando converter ${mockAnimations.length} animações:\n`)
     
     let supportedCount = 0
     let unsupportedCount = 0
@@ -441,26 +442,26 @@ async function testAnimationConverter() {
       
       if (converted) {
         supportedCount++
-        console.log(`   ✅ ${anim.type.padEnd(20)} → ${converted.keyframes.length} keyframes`)
+        logger.info(`   ✅ ${anim.type.padEnd(20)} → ${converted.keyframes.length} keyframes`)
       } else {
         unsupportedCount++
-        console.log(`   ⚠️  ${anim.type.padEnd(20)} → Não suportado (fallback: fade)`)
+        logger.info(`   ⚠️  ${anim.type.padEnd(20)} → Não suportado (fallback: fade)`)
       }
     }
     
-    console.log(`\n📊 Resultado:`)
-    console.log(`   Suportadas: ${supportedCount}`)
-    console.log(`   Não suportadas: ${unsupportedCount}`)
-    console.log(`   Taxa de conversão: ${Math.round((supportedCount / mockAnimations.length) * 100)}%`)
+    logger.info(`\n📊 Resultado:`)
+    logger.info(`   Suportadas: ${supportedCount}`)
+    logger.info(`   Não suportadas: ${unsupportedCount}`)
+    logger.info(`   Taxa de conversão: ${Math.round((supportedCount / mockAnimations.length) * 100)}%`)
     
-    console.log('\n' + '━'.repeat(80))
+    logger.info('\n' + '━'.repeat(80))
     logSuccess('TESTE 3 CONCLUÍDO COM SUCESSO!\n')
     
     return { supportedCount, unsupportedCount }
     
   } catch (error) {
     logError('TESTE 3 FALHOU!')
-    console.error(error)
+    logger.error(error)
     throw error
   }
 }
@@ -471,7 +472,7 @@ async function testAnimationConverter() {
 
 async function testAutoNarrationService() {
   log('🎙️', 'TESTE 4: Auto Narration Service')
-  console.log('━'.repeat(80))
+  logger.info('━'.repeat(80))
   
   try {
     const service = new AutoNarrationService() as NarrationServiceWithExtraction
@@ -499,11 +500,11 @@ async function testAutoNarrationService() {
       service.extractScriptFromSlide(slide)
     )
     
-    console.log('\n📝 Scripts Extraídos:\n')
+    logger.info('\n📝 Scripts Extraídos:\n')
     scripts.forEach((script, index) => {
-      console.log(`   Slide ${index + 1}:`)
-      console.log(`   "${script.substring(0, 60)}${script.length > 60 ? '...' : ''}"`)
-      console.log()
+      logger.info(`   Slide ${index + 1}:`)
+      logger.info(`   "${script.substring(0, 60)}${script.length > 60 ? '...' : ''}"`)
+      logger.info()
     })
     
     logInfo('Limpando scripts...')
@@ -511,12 +512,12 @@ async function testAutoNarrationService() {
       service.cleanScript(script)
     )
     
-    console.log('📋 Scripts Limpos:\n')
+    logger.info('📋 Scripts Limpos:\n')
     cleanedScripts.forEach((script, index) => {
-      console.log(`   Slide ${index + 1}: ${script.split(' ').length} palavras`)
+      logger.info(`   Slide ${index + 1}: ${script.split(' ').length} palavras`)
     })
     
-    console.log('\n' + '━'.repeat(80))
+    logger.info('\n' + '━'.repeat(80))
     logSuccess('TESTE 4 CONCLUÍDO COM SUCESSO!\n')
     logInfo('Nota: Geração real de TTS requer credenciais Azure/ElevenLabs')
     
@@ -524,7 +525,7 @@ async function testAutoNarrationService() {
     
   } catch (error) {
     logError('TESTE 4 FALHOU!')
-    console.error(error)
+    logger.error(error)
     throw error
   }
 }
@@ -535,7 +536,7 @@ async function testAutoNarrationService() {
 
 async function testFullIntegration() {
   log('🚀', 'TESTE 5: Integração Completa')
-  console.log('━'.repeat(80))
+  logger.info('━'.repeat(80))
   
   try {
     logInfo('Simulando fluxo completo de processamento...')
@@ -635,21 +636,21 @@ async function testFullIntegration() {
     // 5. Obter estatísticas finais
     const stats: BatchStatistics = await PPTXBatchDBService.getBatchStatistics(batchJob.id)
     
-    console.log('\n📊 Estatísticas Finais:')
-    console.log('   Status:', stats.batchJob.status)
-    console.log('   Arquivos processados:', stats.batchJob.completed)
-    console.log('   Total de slides:', stats.batchJob.totalSlides)
-    console.log('   Tempo total:', stats.batchJob.processingTime + 'ms')
-    console.log('   Tempo médio por arquivo:', Math.round(stats.batchJob.processingTime! / stats.batchJob.completed) + 'ms')
+    logger.info('\n📊 Estatísticas Finais:')
+    logger.info('   Status:', stats.batchJob.status)
+    logger.info('   Arquivos processados:', stats.batchJob.completed)
+    logger.info('   Total de slides:', stats.batchJob.totalSlides)
+    logger.info('   Tempo total:', stats.batchJob.processingTime + 'ms')
+    logger.info('   Tempo médio por arquivo:', Math.round(stats.batchJob.processingTime! / stats.batchJob.completed) + 'ms')
     
-    console.log('\n' + '━'.repeat(80))
+    logger.info('\n' + '━'.repeat(80))
     logSuccess('TESTE 5 CONCLUÍDO COM SUCESSO!\n')
     
     return { batchJob, jobs, stats }
     
   } catch (error) {
     logError('TESTE 5 FALHOU!')
-    console.error(error)
+    logger.error(error)
     throw error
   }
 }
@@ -659,9 +660,9 @@ async function testFullIntegration() {
 // ============================================================================
 
 async function main() {
-  console.log('\n' + '='.repeat(80))
-  console.log('🧪 PPTX ADVANCED FEATURES v2.1 - SUITE DE TESTES COMPLETA')
-  console.log('='.repeat(80) + '\n')
+  logger.info('\n' + '='.repeat(80))
+  logger.info('🧪 PPTX ADVANCED FEATURES v2.1 - SUITE DE TESTES COMPLETA')
+  logger.info('='.repeat(80) + '\n')
   
   const results: TestSuiteResults = {}
   
@@ -682,25 +683,25 @@ async function main() {
     results.integration = await testFullIntegration()
     
     // Resumo Final
-    console.log('\n' + '='.repeat(80))
-    console.log('🎉 TODOS OS TESTES CONCLUÍDOS COM SUCESSO!')
-    console.log('='.repeat(80))
+    logger.info('\n' + '='.repeat(80))
+    logger.info('🎉 TODOS OS TESTES CONCLUÍDOS COM SUCESSO!')
+    logger.info('='.repeat(80))
     
-    console.log('\n📋 Resumo:')
-    console.log('   ✅ Database Service - OK')
-    console.log('   ✅ Layout Analyzer - OK')
-    console.log('   ✅ Animation Converter - OK')
-    console.log('   ✅ Auto Narration Service - OK')
-    console.log('   ✅ Integração Completa - OK')
+    logger.info('\n📋 Resumo:')
+    logger.info('   ✅ Database Service - OK')
+    logger.info('   ✅ Layout Analyzer - OK')
+    logger.info('   ✅ Animation Converter - OK')
+    logger.info('   ✅ Auto Narration Service - OK')
+    logger.info('   ✅ Integração Completa - OK')
     
-    console.log('\n💾 Dados de teste salvos no banco de dados')
-    console.log('   Você pode visualizá-los com: npx prisma studio\n')
+    logger.info('\n💾 Dados de teste salvos no banco de dados')
+    logger.info('   Você pode visualizá-los com: npx prisma studio\n')
     
   } catch (error) {
-    console.error('\n' + '='.repeat(80))
-    console.error('❌ TESTES FALHARAM!')
-    console.error('='.repeat(80))
-    console.error(error)
+    logger.error('\n' + '='.repeat(80))
+    logger.error('❌ TESTES FALHARAM!')
+    logger.error('='.repeat(80))
+    logger.error(error)
     process.exit(1)
   } finally {
     await prisma.$disconnect()
@@ -712,7 +713,7 @@ if (require.main === module) {
   main()
     .then(() => process.exit(0))
     .catch(error => {
-      console.error(error)
+      logger.error(error)
       process.exit(1)
     })
 }

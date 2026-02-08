@@ -1,5 +1,6 @@
 
 'use client'
+import { logger } from '@/lib/logger';
 
 import React, { useState, useEffect, useMemo } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@components/ui/card'
@@ -156,7 +157,7 @@ export default function RealAnalyticsDashboard() {
           }
         }
       } catch (error) {
-        console.error('Failed to fetch analytics:', error)
+        logger.error('Failed to fetch analytics:', error)
       } finally {
         setLoading(false)
       }
@@ -229,7 +230,7 @@ export default function RealAnalyticsDashboard() {
           }
         }
       } catch (error) {
-        console.error('Failed to fetch detailed analytics:', error)
+        logger.error('Failed to fetch detailed analytics:', error)
       }
     }
 
@@ -283,7 +284,7 @@ export default function RealAnalyticsDashboard() {
           }
         }
       } catch (error) {
-        console.error('Failed to fetch NR compliance:', error)
+        logger.error('Failed to fetch NR compliance:', error)
       }
     }
     fetchCompliance()
@@ -306,7 +307,7 @@ export default function RealAnalyticsDashboard() {
         }
       }
     } catch (error) {
-      console.error('Failed to refresh data:', error)
+      logger.error('Failed to refresh data:', error)
     } finally {
       setLoading(false)
     }

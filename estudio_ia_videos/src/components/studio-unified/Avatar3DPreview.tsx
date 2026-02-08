@@ -1,4 +1,5 @@
 'use client';
+import { logger } from '@/lib/logger';
 
 /**
  * SPRINT 6: Avatar 3D Preview Component with Lip-Sync
@@ -207,7 +208,7 @@ export function Avatar3DPreview({
   useEffect(() => {
     if (audioRef.current) {
       if (isPlaying) {
-        audioRef.current.play().catch(e => console.error("Audio play failed", e));
+        audioRef.current.play().catch(e => logger.error("Audio play failed", e));
       } else {
         audioRef.current.pause();
         audioRef.current.currentTime = 0;

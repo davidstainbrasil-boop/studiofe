@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 /**
  * Video Processor Module
  * Handles video processing operations

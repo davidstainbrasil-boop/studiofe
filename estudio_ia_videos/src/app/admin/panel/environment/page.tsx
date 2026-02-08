@@ -1,4 +1,5 @@
 'use client';
+import { logger } from '@/lib/logger';
 
 import { useEffect, useState } from 'react';
 import { 
@@ -50,7 +51,7 @@ export default function EnvironmentPage() {
         setVariables(data.variables || []);
       }
     } catch (error) {
-      console.error('Erro ao buscar variáveis:', error);
+      logger.error('Erro ao buscar variáveis:', error);
     } finally {
       setIsLoading(false);
     }

@@ -4,6 +4,7 @@
  */
 
 'use client';
+import { logger } from '@/lib/logger';
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@components/ui/card';
@@ -339,7 +340,7 @@ export default function RenderEngine({
 
       return false;
     } catch (error) {
-      console.error('API render failed:', error);
+      logger.error('API render failed:', error);
       return false;
     }
   }, []);

@@ -146,15 +146,15 @@ if (require.main === module) {
   const demo = new SimplePipelineDemo();
   demo.demonstrateFullPipeline()
     .then(() => {
-      console.log('\n🎉 Demonstração do Pipeline E2E concluída!');
-      console.log('\nResultado:');
-      console.log('✅ PPTX → Slides: Extração simulada com sucesso');
-      console.log('✅ Slides → TTS: Narração gerada para 3 slides');
-      console.log('✅ TTS → Vídeo: Renderização simulada completa');
-      console.log('\n🚀 O pipeline está funcionando conforme especificado!');
+      logger.info('\n🎉 Demonstração do Pipeline E2E concluída!');
+      logger.info('\nResultado:');
+      logger.info('✅ PPTX → Slides: Extração simulada com sucesso');
+      logger.info('✅ Slides → TTS: Narração gerada para 3 slides');
+      logger.info('✅ TTS → Vídeo: Renderização simulada completa');
+      logger.info('\n🚀 O pipeline está funcionando conforme especificado!');
     })
     .catch((error) => {
-      console.error('❌ Erro na demonstração:', error);
+      logger.error('❌ Erro na demonstração:', error);
       process.exit(1);
     });
 }

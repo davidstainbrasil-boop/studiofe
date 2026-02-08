@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 // TODO: Script - fix types
 
 /**
@@ -10,11 +11,11 @@ import { randomUUID } from 'node:crypto'
 const prisma = new PrismaClient()
 
 async function main() {
-  console.log('🌱 Starting database seeding...')
+  logger.info('🌱 Starting database seeding...')
 
   try {
     // Create default system settings
-    console.log('📄 Creating default system settings...')
+    logger.info('📄 Creating default system settings...')
     
     const existingSettings = await prisma.system_settings.findUnique({
       where: { key: 'theme_config' }
@@ -39,13 +40,13 @@ async function main() {
           }
         }
       })
-      console.log('✅ Default system settings created')
+      logger.info('✅ Default system settings created')
     } else {
-      console.log('✅ System settings already exist')
+      logger.info('✅ System settings already exist')
     }
 
     // Create admin user if using email/password auth
-    console.log('👤 Checking for admin user...')
+    logger.info('👤 Checking for admin user...')
     
     const adminUser = await prisma.users.findUnique({
       where: { email: 'admin@estudio.ai' }
@@ -60,22 +61,22 @@ async function main() {
           role: 'admin'
         }
       })
-      console.log('✅ Admin user created: admin@estudio.ai')
+      logger.info('✅ Admin user created: admin@estudio.ai')
     } else {
-      console.log('✅ Admin user already exists')
+      logger.info('✅ Admin user already exists')
     }
 
-    console.log('🎉 Database seeding completed successfully!')
+    logger.info('🎉 Database seeding completed successfully!')
 
   } catch (error) {
-    console.error('❌ Error during seeding:', error)
+    logger.error('❌ Error during seeding:', error)
     throw error
   }
 }
 
 main()
   .catch((e) => {
-    console.error(e)
+    logger.error(e)
     process.exit(1)
   })
   .finally(async () => {

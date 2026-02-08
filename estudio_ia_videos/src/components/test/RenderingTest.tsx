@@ -1,4 +1,5 @@
 'use client';
+import { logger } from '@/lib/logger';
 
 /**
  * 🧪 Teste de Renderização Completa
@@ -117,12 +118,12 @@ const RenderingTest: React.FC = () => {
   };
 
   const handleStartRender = async () => {
-    console.log('🎬 Iniciando teste de renderização...');
+    logger.info('🎬 Iniciando teste de renderização...');
     await startRender(testProject, exportSettings);
   };
 
   const handleCancelRender = async () => {
-    console.log('⏹️ Cancelando renderização...');
+    logger.info('⏹️ Cancelando renderização...');
     await cancelRender();
   };
 
@@ -131,29 +132,29 @@ const RenderingTest: React.FC = () => {
     try {
       const result = await listJobs();
       setJobs(result.jobs || []);
-      console.log('📋 Jobs encontrados:', result);
+      logger.info('📋 Jobs encontrados:', result);
     } catch (err) {
-      console.error('Erro ao listar jobs:', err);
+      logger.error('Erro ao listar jobs:', err);
     } finally {
       setLoading(false);
     }
   };
 
   const handleDownload = (jobId: string) => {
-    console.log('⬇️ Baixando arquivo:', jobId);
+    logger.info('⬇️ Baixando arquivo:', jobId);
     downloadRender(jobId, 'mp4');
   };
 
   const handleValidation = () => {
     const validation = validateProject(testProject);
-    console.log('✅ Validação do projeto:', validation);
+    logger.info('✅ Validação do projeto:', validation);
   };
 
   const handlePresetTest = () => {
     const presets = ['low', 'medium', 'high', 'ultra'];
     presets.forEach(preset => {
       const config = getPreset(preset);
-      console.log(`🎯 Preset ${preset}:`, config);
+      logger.info(`🎯 Preset ${preset}:`, config);
     });
   };
 

@@ -1,4 +1,5 @@
 #!/usr/bin/env tsx
+import { logger } from '@/lib/logger';
 // TODO: Script - fix types
 
 /**
@@ -11,7 +12,7 @@ import fs from 'fs'
 import path from 'path'
 
 async function createTestPPTX() {
-  console.log('🎯 Criando arquivo PPTX de teste...')
+  logger.info('🎯 Criando arquivo PPTX de teste...')
 
   try {
     // Criar nova apresentação
@@ -198,23 +199,23 @@ async function createTestPPTX() {
     // Salvar arquivo
     const outputPath = path.join(process.cwd(), '..', 'test-presentation.pptx')
     
-    console.log('💾 Salvando apresentação...')
+    logger.info('💾 Salvando apresentação...')
     await pptx.writeFile({ fileName: outputPath })
     
     // Verificar se o arquivo foi criado
     if (fs.existsSync(outputPath)) {
       const stats = fs.statSync(outputPath)
-      console.log(`✅ Arquivo PPTX criado com sucesso!`)
-      console.log(`📁 Localização: ${outputPath}`)
-      console.log(`📊 Tamanho: ${(stats.size / 1024).toFixed(2)} KB`)
-      console.log(`📄 Slides: 5`)
-      console.log(`🎯 Pronto para teste de processamento!`)
+      logger.info(`✅ Arquivo PPTX criado com sucesso!`)
+      logger.info(`📁 Localização: ${outputPath}`)
+      logger.info(`📊 Tamanho: ${(stats.size / 1024).toFixed(2)} KB`)
+      logger.info(`📄 Slides: 5`)
+      logger.info(`🎯 Pronto para teste de processamento!`)
     } else {
       throw new Error('Arquivo não foi criado')
     }
 
   } catch (error) {
-    console.error('❌ Erro ao criar PPTX de teste:', error)
+    logger.error('❌ Erro ao criar PPTX de teste:', error)
     process.exit(1)
   }
 }
@@ -223,11 +224,11 @@ async function createTestPPTX() {
 if (require.main === module) {
   createTestPPTX()
     .then(() => {
-      console.log('\n🎉 Arquivo PPTX de teste criado com sucesso!')
+      logger.info('\n🎉 Arquivo PPTX de teste criado com sucesso!')
       process.exit(0)
     })
     .catch((error) => {
-      console.error('\n❌ Erro na criação:', error)
+      logger.error('\n❌ Erro na criação:', error)
       process.exit(1)
     })
 }

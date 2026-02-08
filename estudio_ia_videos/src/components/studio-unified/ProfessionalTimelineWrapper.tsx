@@ -1,5 +1,6 @@
 
 'use client';
+import { logger } from '@/lib/logger';
 
 import React, { useRef, useEffect, useState, useCallback, DragEvent } from 'react';
 import { ScrollArea } from '@components/ui/scroll-area';
@@ -161,7 +162,7 @@ export function ProfessionalTimelineWrapper() {
                 addElement(newElement);
             }
         } catch (err) {
-            console.error('Timeline Drop Error', err);
+            logger.error('Timeline Drop Error', err);
         }
     };
 

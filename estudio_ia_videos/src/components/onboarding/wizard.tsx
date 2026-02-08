@@ -1,4 +1,5 @@
 'use client';
+import { logger } from '@/lib/logger';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -141,7 +142,7 @@ export function OnboardingWizard({
         router.push(`/studio-pro?voice=${data.selectedVoice}`);
       }
     } catch (error) {
-      console.error('Erro ao completar onboarding:', error);
+      logger.error('Erro ao completar onboarding:', error);
     } finally {
       setIsGenerating(false);
     }

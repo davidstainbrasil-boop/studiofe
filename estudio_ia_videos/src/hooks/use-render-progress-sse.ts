@@ -6,6 +6,7 @@
  */
 
 'use client'
+import { logger } from '@/lib/logger';
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 
@@ -123,7 +124,7 @@ export function useRenderProgressSSE(
           disconnect()
         }
       } catch (err) {
-        console.error('[RenderSSE] Error processing render progress:', err);
+        logger.error('[RenderSSE] Error processing render progress:', err);
       }
     }
 
@@ -180,7 +181,7 @@ export function useRenderProgressSSE(
             disconnect()
           }
         } catch (err) {
-          console.warn('[RenderSSE] SSE event parse error:', err);
+          logger.warn('[RenderSSE] SSE event parse error:', err);
         }
       }
 

@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 /**
  * 🔍 DIAGNÓSTICO COMPLETO - API DE UPLOAD PPTX
  * 
@@ -15,26 +16,26 @@ import { PPTXParser } from './lib/pptx/parser';
 import fs from 'fs';
 import path from 'path';
 
-console.log('╔════════════════════════════════════════════════════════════════════╗');
-console.log('║          🔍 DIAGNÓSTICO - API DE UPLOAD PPTX                      ║');
-console.log('╚════════════════════════════════════════════════════════════════════╝\n');
+logger.info('╔════════════════════════════════════════════════════════════════════╗');
+logger.info('║          🔍 DIAGNÓSTICO - API DE UPLOAD PPTX                      ║');
+logger.info('╚════════════════════════════════════════════════════════════════════╝\n');
 
 async function testDatabase() {
-  console.log('📊 TESTE 1: CONEXÃO COM BANCO DE DADOS');
-  console.log('─'.repeat(70));
+  logger.info('📊 TESTE 1: CONEXÃO COM BANCO DE DADOS');
+  logger.info('─'.repeat(70));
   
   try {
     // Testar conexão
     await db.$connect();
-    console.log('✅ Conexão estabelecida com sucesso\n');
+    logger.info('✅ Conexão estabelecida com sucesso\n');
     
     // Testar consulta
-    console.log('🔍 Verificando usuários...');
+    logger.info('🔍 Verificando usuários...');
     const userCount = await db.user.count();
-    console.log(`   Total de usuários: ${userCount}`);
+    logger.info(`   Total de usuários: ${userCount}`);
     
     if (userCount === 0) {
-      console.log('⚠️  Nenhum usuário encontrado - criando usuário de teste...');
+      logger.info('⚠️  Nenhum usuário encontrado - criando usuário de teste...');
       const testUser = await db.user.create({
         data: {
           email: 'test@estudioiavideos.com',
@@ -42,101 +43,101 @@ async function testDatabase() {
           role: 'USER',
         },
       });
-      console.log(`✅ Usuário de teste criado: ${testUser.email} (ID: ${testUser.id})`);
+      logger.info(`✅ Usuário de teste criado: ${testUser.email} (ID: ${testUser.id})`);
     } else {
       const firstUser = await db.user.findFirst();
-      console.log(`✅ Usuário encontrado: ${firstUser?.email} (ID: ${firstUser?.id})`);
+      logger.info(`✅ Usuário encontrado: ${firstUser?.email} (ID: ${firstUser?.id})`);
     }
     
     // Testar tabelas do projeto
-    console.log('\n🔍 Verificando estrutura de tabelas...');
+    logger.info('\n🔍 Verificando estrutura de tabelas...');
     const projectCount = await db.project.count();
-    console.log(`   Projetos existentes: ${projectCount}`);
+    logger.info(`   Projetos existentes: ${projectCount}`);
     
-    console.log('\n✅ BANCO DE DADOS: OK\n');
+    logger.info('\n✅ BANCO DE DADOS: OK\n');
     return true;
   } catch (error) {
-    console.log('\n❌ ERRO NO BANCO DE DADOS!');
-    console.error('Detalhes:', error);
-    console.log('\n💡 POSSÍVEIS CAUSAS:');
-    console.log('   • DATABASE_URL incorreto no .env');
-    console.log('   • Banco de dados não está rodando');
-    console.log('   • Migrations não foram executadas (npx prisma migrate dev)');
-    console.log('   • Cliente Prisma não foi gerado (npx prisma generate)');
-    console.log('');
+    logger.info('\n❌ ERRO NO BANCO DE DADOS!');
+    logger.error('Detalhes:', error);
+    logger.info('\n💡 POSSÍVEIS CAUSAS:');
+    logger.info('   • DATABASE_URL incorreto no .env');
+    logger.info('   • Banco de dados não está rodando');
+    logger.info('   • Migrations não foram executadas (npx prisma migrate dev)');
+    logger.info('   • Cliente Prisma não foi gerado (npx prisma generate)');
+    logger.info('');
     return false;
   }
 }
 
 async function testPPTXParser() {
-  console.log('📄 TESTE 2: PARSER DE PPTX');
-  console.log('─'.repeat(70));
+  logger.info('📄 TESTE 2: PARSER DE PPTX');
+  logger.info('─'.repeat(70));
   
   try {
     // Verificar se o parser pode ser instanciado
     const parser = new PPTXParser();
-    console.log('✅ PPTXParser instanciado com sucesso');
+    logger.info('✅ PPTXParser instanciado com sucesso');
     
     // Verificar método de validação
     if (typeof PPTXParser.validatePPTX === 'function') {
-      console.log('✅ Método validatePPTX disponível');
+      logger.info('✅ Método validatePPTX disponível');
     } else {
-      console.log('⚠️  Método validatePPTX não encontrado');
+      logger.info('⚠️  Método validatePPTX não encontrado');
     }
     
-    console.log('\n✅ PARSER PPTX: OK\n');
+    logger.info('\n✅ PARSER PPTX: OK\n');
     return true;
   } catch (error) {
-    console.log('\n❌ ERRO NO PARSER PPTX!');
-    console.error('Detalhes:', error);
-    console.log('\n💡 POSSÍVEIS CAUSAS:');
-    console.log('   • Dependência faltando (npm install)');
-    console.log('   • Arquivo lib/pptx/parser.ts com erro');
-    console.log('');
+    logger.info('\n❌ ERRO NO PARSER PPTX!');
+    logger.error('Detalhes:', error);
+    logger.info('\n💡 POSSÍVEIS CAUSAS:');
+    logger.info('   • Dependência faltando (npm install)');
+    logger.info('   • Arquivo lib/pptx/parser.ts com erro');
+    logger.info('');
     return false;
   }
 }
 
 async function testFileSystem() {
-  console.log('💾 TESTE 3: SISTEMA DE ARQUIVOS');
-  console.log('─'.repeat(70));
+  logger.info('💾 TESTE 3: SISTEMA DE ARQUIVOS');
+  logger.info('─'.repeat(70));
   
   try {
     // Verificar diretório de uploads
     const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-    console.log(`📁 Diretório de uploads: ${uploadsDir}`);
+    logger.info(`📁 Diretório de uploads: ${uploadsDir}`);
     
     if (!fs.existsSync(uploadsDir)) {
-      console.log('⚠️  Diretório não existe - criando...');
+      logger.info('⚠️  Diretório não existe - criando...');
       fs.mkdirSync(uploadsDir, { recursive: true });
-      console.log('✅ Diretório criado');
+      logger.info('✅ Diretório criado');
     } else {
-      console.log('✅ Diretório existe');
+      logger.info('✅ Diretório existe');
     }
     
     // Testar permissão de escrita
     const testFile = path.join(uploadsDir, '.test-write');
     fs.writeFileSync(testFile, 'test');
     fs.unlinkSync(testFile);
-    console.log('✅ Permissão de escrita OK');
+    logger.info('✅ Permissão de escrita OK');
     
-    console.log('\n✅ SISTEMA DE ARQUIVOS: OK\n');
+    logger.info('\n✅ SISTEMA DE ARQUIVOS: OK\n');
     return true;
   } catch (error) {
-    console.log('\n❌ ERRO NO SISTEMA DE ARQUIVOS!');
-    console.error('Detalhes:', error);
-    console.log('\n💡 POSSÍVEIS CAUSAS:');
-    console.log('   • Sem permissão para criar diretórios');
-    console.log('   • Disco cheio');
-    console.log('   • Caminho inválido');
-    console.log('');
+    logger.info('\n❌ ERRO NO SISTEMA DE ARQUIVOS!');
+    logger.error('Detalhes:', error);
+    logger.info('\n💡 POSSÍVEIS CAUSAS:');
+    logger.info('   • Sem permissão para criar diretórios');
+    logger.info('   • Disco cheio');
+    logger.info('   • Caminho inválido');
+    logger.info('');
     return false;
   }
 }
 
 async function testEnvironmentVariables() {
-  console.log('🔧 TESTE 4: VARIÁVEIS DE AMBIENTE');
-  console.log('─'.repeat(70));
+  logger.info('🔧 TESTE 4: VARIÁVEIS DE AMBIENTE');
+  logger.info('─'.repeat(70));
   
   const requiredVars = [
     'DATABASE_URL',
@@ -151,35 +152,35 @@ async function testEnvironmentVariables() {
   
   let allRequired = true;
   
-  console.log('📋 Variáveis obrigatórias:');
+  logger.info('📋 Variáveis obrigatórias:');
   for (const varName of requiredVars) {
     const value = process.env[varName];
     if (value) {
       const preview = varName.includes('SECRET') || varName.includes('KEY') 
         ? `${value.substring(0, 10)}...` 
         : value.substring(0, 30) + '...';
-      console.log(`   ✅ ${varName}: ${preview}`);
+      logger.info(`   ✅ ${varName}: ${preview}`);
     } else {
-      console.log(`   ❌ ${varName}: NÃO DEFINIDA`);
+      logger.info(`   ❌ ${varName}: NÃO DEFINIDA`);
       allRequired = false;
     }
   }
   
-  console.log('\n📋 Variáveis opcionais:');
+  logger.info('\n📋 Variáveis opcionais:');
   for (const varName of optionalVars) {
     const value = process.env[varName];
     if (value) {
-      console.log(`   ✅ ${varName}: configurada`);
+      logger.info(`   ✅ ${varName}: configurada`);
     } else {
-      console.log(`   ⚠️  ${varName}: não configurada`);
+      logger.info(`   ⚠️  ${varName}: não configurada`);
     }
   }
   
   if (allRequired) {
-    console.log('\n✅ VARIÁVEIS DE AMBIENTE: OK\n');
+    logger.info('\n✅ VARIÁVEIS DE AMBIENTE: OK\n');
     return true;
   } else {
-    console.log('\n⚠️  ALGUMAS VARIÁVEIS OBRIGATÓRIAS FALTANDO\n');
+    logger.info('\n⚠️  ALGUMAS VARIÁVEIS OBRIGATÓRIAS FALTANDO\n');
     return false;
   }
 }
@@ -199,9 +200,9 @@ async function runDiagnostics() {
   results.filesystem = await testFileSystem();
   
   // Resumo final
-  console.log('\n╔════════════════════════════════════════════════════════════════════╗');
-  console.log('║                      📊 RESUMO DO DIAGNÓSTICO                      ║');
-  console.log('╚════════════════════════════════════════════════════════════════════╝\n');
+  logger.info('\n╔════════════════════════════════════════════════════════════════════╗');
+  logger.info('║                      📊 RESUMO DO DIAGNÓSTICO                      ║');
+  logger.info('╚════════════════════════════════════════════════════════════════════╝\n');
   
   const tests = [
     { name: 'Variáveis de Ambiente', result: results.env },
@@ -213,18 +214,18 @@ async function runDiagnostics() {
   tests.forEach(test => {
     const icon = test.result ? '✅' : '❌';
     const status = test.result ? 'OK' : 'FALHOU';
-    console.log(`${icon} ${test.name.padEnd(25)} ${status}`);
+    logger.info(`${icon} ${test.name.padEnd(25)} ${status}`);
   });
   
   const allPassed = Object.values(results).every(r => r);
   
   if (allPassed) {
-    console.log('\n🎉 TODOS OS TESTES PASSARAM!');
-    console.log('   A API de upload deve estar funcionando corretamente.');
-    console.log('   Se ainda assim há erro 500, verifique os logs do servidor.\n');
+    logger.info('\n🎉 TODOS OS TESTES PASSARAM!');
+    logger.info('   A API de upload deve estar funcionando corretamente.');
+    logger.info('   Se ainda assim há erro 500, verifique os logs do servidor.\n');
   } else {
-    console.log('\n⚠️  ALGUNS TESTES FALHARAM!');
-    console.log('   Corrija os problemas acima antes de tentar fazer upload.\n');
+    logger.info('\n⚠️  ALGUNS TESTES FALHARAM!');
+    logger.info('   Corrija os problemas acima antes de tentar fazer upload.\n');
   }
   
   // Desconectar do banco
@@ -233,7 +234,7 @@ async function runDiagnostics() {
 
 // Executar diagnóstico
 runDiagnostics().catch((error) => {
-  console.error('\n💥 ERRO FATAL NO DIAGNÓSTICO:');
-  console.error(error);
+  logger.error('\n💥 ERRO FATAL NO DIAGNÓSTICO:');
+  logger.error(error);
   process.exit(1);
 });

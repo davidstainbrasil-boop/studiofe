@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 
 /**
  * Socket.IO Server Setup
@@ -21,7 +22,7 @@ export function setupSocketIO(server: HTTPServer) {
   const projectRooms = new Map<string, Set<string>>()
 
   io.on('connection', (socket: Socket) => {
-    console.log('✓ Socket conectado:', socket.id)
+    logger.info('✓ Socket conectado:', socket.id)
 
     socket.on('join-project', ({ projectId, user }: { projectId: string; user: SocketUser }) => {
       const room = `project:${projectId}`
@@ -75,7 +76,7 @@ export function setupSocketIO(server: HTTPServer) {
     })
 
     socket.on('disconnect', () => {
-      console.log('Socket desconectado:', socket.id)
+      logger.info('Socket desconectado:', socket.id)
       
       // Remove from all rooms
       projectRooms.forEach((sockets, projectId) => {
@@ -87,6 +88,6 @@ export function setupSocketIO(server: HTTPServer) {
     })
   })
 
-  console.log('✓ Socket.IO server configurado')
+  logger.info('✓ Socket.IO server configurado')
   return io
 }

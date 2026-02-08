@@ -1,4 +1,5 @@
 'use client';
+import { logger } from '@/lib/logger';
 
 import { useEffect, useState } from 'react';
 import { 
@@ -56,7 +57,7 @@ export default function AdminDashboardPage() {
         setStats(await statsRes.json());
       }
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+      logger.error('Error fetching dashboard data:', error);
     } finally {
       setIsLoading(false);
     }

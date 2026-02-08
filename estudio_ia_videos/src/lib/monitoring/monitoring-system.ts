@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 /**
  * Monitoring and Observability System - Fase 6: Production Hardening
  * Sistema completo de monitoramento, logs e observabilidade
@@ -191,7 +192,7 @@ export class MonitoringSystem {
     // Console output in development
     if (process.env.NODE_ENV !== 'production') {
       const color = this.getLogColor(level)
-      console.log(
+      logger.info(
         `[${entry.timestamp.toISOString()}] ${color}${level.toUpperCase()}\x1b[0m ${context ? `[${context}]` : ''} ${message}`,
         metadata ? metadata : ''
       )

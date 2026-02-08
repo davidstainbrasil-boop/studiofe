@@ -1,5 +1,6 @@
 
 'use client';
+import { logger } from "@/lib/logger";
 
 import React, { useState, useRef } from 'react';
 import { RealisticAvatarRenderer, AvatarCustomizationConfig, RealisticAvatarRendererRef } from './RealisticAvatarRenderer';
@@ -69,7 +70,7 @@ export default function RealisticAvatarSystem({
       document.body.removeChild(link);
 
       // Also log the config for reference (in a real app, this could be a JSON download)
-      console.log('Exporting Avatar Config:', avatarConfig);
+      logger.info('Exporting Avatar Config:', avatarConfig);
     }
   };
 

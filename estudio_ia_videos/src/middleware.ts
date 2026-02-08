@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextResponse, type NextRequest } from 'next/server';
 import { createClient } from './lib/supabase/middleware';
 import { isE2ETestMode } from './lib/auth/e2e-test-auth';
@@ -9,14 +10,14 @@ import { isE2ETestMode } from './lib/auth/e2e-test-auth';
 const edgeLog = {
   warn: (message: string, context?: Record<string, unknown>) => {
     if (process.env.NODE_ENV === 'production') {
-      console.warn(JSON.stringify({ level: 'warn', message, ...context, timestamp: new Date().toISOString() }));
+      logger.warn(JSON.stringify({ level: 'warn', message, ...context, timestamp: new Date().toISOString() }));
     } else {
-      console.warn(`[MIDDLEWARE WARN] ${message}`, context);
+      logger.warn(`[MIDDLEWARE WARN] ${message}`, context);
     }
   },
   error: (message: string, error?: Error, context?: Record<string, unknown>) => {
     if (process.env.NODE_ENV === 'production') {
-      console.error(JSON.stringify({ 
+      logger.error(JSON.stringify({ 
         level: 'error', 
         message, 
         error: error ? { name: error.name, message: error.message } : undefined,
@@ -24,7 +25,7 @@ const edgeLog = {
         timestamp: new Date().toISOString() 
       }));
     } else {
-      console.error(`[MIDDLEWARE ERROR] ${message}`, error, context);
+      logger.error(`[MIDDLEWARE ERROR] ${message}`, error, context);
     }
   },
 };

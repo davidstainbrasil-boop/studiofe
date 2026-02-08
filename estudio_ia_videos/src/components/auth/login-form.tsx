@@ -113,8 +113,8 @@ export function LoginForm() {
     // Mostrar botões de dev apenas em desenvolvimento
     const isDev = process.env.NODE_ENV === 'development';
 
-    const redirectUrl = searchParams.get('redirect') || '/dashboard';
-    const reason = searchParams.get('reason');
+    const redirectUrl = searchParams?.get('redirect') || '/dashboard';
+    const reason = searchParams?.get('reason') ?? null;
 
     React.useEffect(() => {
         if (reason === 'unauthorized') {

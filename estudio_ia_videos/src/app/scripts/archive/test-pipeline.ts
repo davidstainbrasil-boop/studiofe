@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 // TODO: Archive script - fix types
 
 // Test pipeline for MVP validation
@@ -33,11 +34,11 @@ const TEST_SLIDES = [
 ]
 
 async function testPipeline() {
-  console.log('🧪 Iniciando teste do pipeline completo...\n')
+  logger.info('🧪 Iniciando teste do pipeline completo...\n')
   
   try {
     // Test 1: TTS Generation
-    console.log('📊 Teste 1: Geração de TTS')
+    logger.info('📊 Teste 1: Geração de TTS')
     const startTTS = Date.now()
     
     const slideAudios = await slideAudioProcessor.generateSlideAudios(
@@ -50,10 +51,10 @@ async function testPipeline() {
     )
     
     const ttsTime = Date.now() - startTTS
-    console.log(`✅ TTS gerado em ${ttsTime}ms para ${slideAudios.length} slides\n`)
+    logger.info(`✅ TTS gerado em ${ttsTime}ms para ${slideAudios.length} slides\n`)
 
     // Test 2: Avatar Animation
-    console.log('📊 Teste 2: Animação de Avatar')
+    logger.info('📊 Teste 2: Animação de Avatar')
     const startAvatar = Date.now()
     
     const avatarVideos = []
@@ -82,10 +83,10 @@ async function testPipeline() {
     }
     
     const avatarTime = Date.now() - startAvatar
-    console.log(`✅ Avatar animado em ${avatarTime}ms para ${avatarVideos.length} slides\n`)
+    logger.info(`✅ Avatar animado em ${avatarTime}ms para ${avatarVideos.length} slides\n`)
 
     // Test 3: Video Composition
-    console.log('📊 Teste 3: Composição de Vídeo')
+    logger.info('📊 Teste 3: Composição de Vídeo')
     const startComposition = Date.now()
     
     // Create placeholder slide images
@@ -108,30 +109,30 @@ async function testPipeline() {
     )
     
     const compositionTime = Date.now() - startComposition
-    console.log(`✅ Vídeo composto em ${compositionTime}ms (${finalVideo.length} bytes)\n`)
+    logger.info(`✅ Vídeo composto em ${compositionTime}ms (${finalVideo.length} bytes)\n`)
 
     // Test 4: Validation
-    console.log('📊 Teste 4: Validação de Qualidade')
+    logger.info('📊 Teste 4: Validação de Qualidade')
     const validation = await ffmpegComposer.validateVideo(finalVideo)
     
     if (validation.isValid) {
-      console.log('✅ Vídeo validado com sucesso')
-      console.log(`   Duração: ${validation.duration}s`)
-      console.log(`   Resolução: ${validation.resolution}`)
-      console.log(`   Formato: ${validation.format}`)
-      console.log(`   Áudio: ${validation.hasAudio ? 'Sim' : 'Não'}`)
+      logger.info('✅ Vídeo validado com sucesso')
+      logger.info(`   Duração: ${validation.duration}s`)
+      logger.info(`   Resolução: ${validation.resolution}`)
+      logger.info(`   Formato: ${validation.format}`)
+      logger.info(`   Áudio: ${validation.hasAudio ? 'Sim' : 'Não'}`)
     } else {
-      console.log('❌ Validação falhou:')
-      validation.errors.forEach(error => console.log(`   - ${error}`))
+      logger.info('❌ Validação falhou:')
+      validation.errors.forEach(error => logger.info(`   - ${error}`))
     }
 
     // Test Summary
     const totalTime = Date.now() - (startTTS - ttsTime + startAvatar - avatarTime + startComposition - compositionTime)
-    console.log('\n🎯 RESUMO DO TESTE:')
-    console.log(`✅ Pipeline completo executado em ${totalTime}ms`)
-    console.log(`📊 TTS: ${ttsTime}ms | Avatar: ${avatarTime}ms | Composição: ${compositionTime}ms`)
-    console.log(`🎬 Vídeo final: ${(finalVideo.length / 1024).toFixed(1)}KB`)
-    console.log(`📈 Performance: ${totalTime < 10000 ? '✅ APROVADO' : '⚠️ LENTO'} (meta: <10s para teste)`)
+    logger.info('\n🎯 RESUMO DO TESTE:')
+    logger.info(`✅ Pipeline completo executado em ${totalTime}ms`)
+    logger.info(`📊 TTS: ${ttsTime}ms | Avatar: ${avatarTime}ms | Composição: ${compositionTime}ms`)
+    logger.info(`🎬 Vídeo final: ${(finalVideo.length / 1024).toFixed(1)}KB`)
+    logger.info(`📈 Performance: ${totalTime < 10000 ? '✅ APROVADO' : '⚠️ LENTO'} (meta: <10s para teste)`)
 
     // Performance check against PRD requirements
     const performanceReport = {
@@ -142,10 +143,10 @@ async function testPipeline() {
       meets_requirements: totalTime < 600000 // 10 minutes
     }
 
-    console.log('\n📋 CONFORMIDADE COM PRD:')
-    console.log(`   Requisito: ${performanceReport.prd_requirement}`)
-    console.log(`   Resultado: ${performanceReport.meets_requirements ? '✅ CONFORME' : '❌ NÃO CONFORME'}`)
-    console.log(`   Tempo real: ${performanceReport.actual_time}`)
+    logger.info('\n📋 CONFORMIDADE COM PRD:')
+    logger.info(`   Requisito: ${performanceReport.prd_requirement}`)
+    logger.info(`   Resultado: ${performanceReport.meets_requirements ? '✅ CONFORME' : '❌ NÃO CONFORME'}`)
+    logger.info(`   Tempo real: ${performanceReport.actual_time}`)
 
     return {
       success: true,
@@ -159,7 +160,7 @@ async function testPipeline() {
     }
 
   } catch (error) {
-    console.error('❌ Teste do pipeline falhou:', error)
+    logger.error('❌ Teste do pipeline falhou:', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -171,11 +172,11 @@ async function testPipeline() {
 if (require.main === module) {
   testPipeline()
     .then(result => {
-      console.log('\n🎯 Teste concluído:', result.success ? 'SUCESSO' : 'FALHA')
+      logger.info('\n🎯 Teste concluído:', result.success ? 'SUCESSO' : 'FALHA')
       process.exit(result.success ? 0 : 1)
     })
     .catch(error => {
-      console.error('Erro fatal no teste:', error)
+      logger.error('Erro fatal no teste:', error)
       process.exit(1)
     })
 }

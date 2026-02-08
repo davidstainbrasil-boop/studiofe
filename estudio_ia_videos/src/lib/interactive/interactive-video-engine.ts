@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 /**
  * Interactive Video Engine - Fase 5: Integrações Premium
  * Sistema completo de vídeos interativos com branches, quizzes, CTAs e hotspots

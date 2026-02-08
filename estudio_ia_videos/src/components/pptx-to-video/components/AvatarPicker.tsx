@@ -2,6 +2,7 @@
  * AvatarPicker - Seletor de Avatar com grid e preview
  */
 'use client';
+import { logger } from '@/lib/logger';
 
 import { useState, useEffect } from 'react';
 import { SelectedAvatar } from '../hooks/usePPTXToVideo';
@@ -117,7 +118,7 @@ export function AvatarPicker({ selected, onSelect }: AvatarPickerProps) {
         }
       } catch (error) {
         // Use default avatars on error
-        console.error('Failed to fetch avatars:', error);
+        logger.error('Failed to fetch avatars:', error);
       } finally {
         setLoading(false);
       }

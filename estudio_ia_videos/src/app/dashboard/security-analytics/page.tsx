@@ -5,6 +5,7 @@
  */
 
 'use client';
+import { logger } from '@/lib/logger';
 
 import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@components/ui/card';
@@ -59,7 +60,7 @@ export default function SecurityAnalyticsPage() {
         if (!isMounted) return;
         setUser(data.user ?? null);
       } catch (error) {
-        console.error('[SecurityAnalytics] Falha ao carregar usuário:', error);
+        logger.error('[SecurityAnalytics] Falha ao carregar usuário:', error);
       }
     };
 
@@ -106,7 +107,7 @@ export default function SecurityAnalyticsPage() {
         });
       }
     } catch (error) {
-      console.error('Erro ao carregar estatísticas:', error);
+      logger.error('Erro ao carregar estatísticas:', error);
       // Set empty stats on error
       setStats({
         logins: { successful: 0, failed: 0, sso: 0, successRate: 100 },

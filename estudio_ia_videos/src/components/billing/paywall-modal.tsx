@@ -1,4 +1,5 @@
 'use client'
+import { logger } from '@/lib/logger';
 
 import React, { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -168,7 +169,7 @@ export function PaywallModal({
         }
       }
     } catch (error) {
-      console.error('Upgrade error:', error)
+      logger.error('Upgrade error:', error)
     } finally {
       setIsLoading(false)
     }

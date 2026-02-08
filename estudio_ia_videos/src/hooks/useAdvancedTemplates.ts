@@ -524,7 +524,7 @@ export const useAdvancedTemplates = (): AdvancedTemplateFeatures & ReturnType<ty
         }
       }
     } catch (error) {
-      console.log('Template analytics API not available, using local generation');
+      logger.info('Template analytics API not available, using local generation');
     }
     
     // Fallback: Generate local analytics based on template data

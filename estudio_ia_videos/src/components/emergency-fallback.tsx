@@ -1,5 +1,6 @@
 
 'use client'
+import { logger } from '@/lib/logger';
 
 /**
  * 🚨 EMERGENCY FALLBACK - Quebra loops infinitos e carregamentos travados
@@ -21,7 +22,7 @@ export function EmergencyFallback({ children, onRecover }: EmergencyFallbackProp
   useEffect(() => {
     // Timeout de segurança - se ficar mais de 8 segundos carregando, força fallback
     const timeout = setTimeout(() => {
-      console.warn('🚨 EMERGENCY: Loading timeout detected')
+      logger.warn('🚨 EMERGENCY: Loading timeout detected')
       setLoadingTimeout(true)
       setIsLoading(false)
     }, 8000)
@@ -40,7 +41,7 @@ export function EmergencyFallback({ children, onRecover }: EmergencyFallbackProp
   useEffect(() => {
     // Monitora erros de console
     const errorHandler = (event: ErrorEvent) => {
-      console.error('🚨 EMERGENCY: Runtime error detected', event.error)
+      logger.error('🚨 EMERGENCY: Runtime error detected', event.error)
       setHasError(true)
       setIsLoading(false)
     }

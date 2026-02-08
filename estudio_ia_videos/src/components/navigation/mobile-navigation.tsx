@@ -238,7 +238,7 @@ export function MobileNavigation({ user, onSignOut, className }: MobileNavigatio
                     <div className="space-y-1">
                       {group.items.map((item) => {
                         const Icon = item.icon;
-                        const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+                        const isActive = pathname === item.href || pathname?.startsWith(item.href + '/') === true;
 
                         return (
                           <Link
@@ -353,7 +353,7 @@ export function MobileBottomNavigation() {
       <div className="flex items-stretch h-16">
         {BOTTOM_NAV_ITEMS.map((item) => {
           const Icon = item.icon;
-          const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+          const isActive = pathname === item.href || pathname?.startsWith(item.href + '/') === true;
 
           return (
             <Link

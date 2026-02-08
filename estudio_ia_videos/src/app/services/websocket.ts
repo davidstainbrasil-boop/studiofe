@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import {
   ActivityNotification,
   Comment,
@@ -74,7 +75,7 @@ export class WebSocketService {
         this.ws = new WebSocket(`${this.wsUrl}/collaboration?projectId=${this.projectId}&userId=${this.userId}`);
 
         this.ws.onopen = () => {
-          console.log('WebSocket connected');
+          logger.info('WebSocket connected');
           this.reconnectAttempts = 0;
           this.startHeartbeat();
           this.notifyConnectionListeners(true);
@@ -86,12 +87,12 @@ export class WebSocketService {
             const message: WebSocketMessage = JSON.parse(event.data);
             this.handleMessage(message);
           } catch (error) {
-            console.error('Error parsing WebSocket message:', error);
+            logger.error('Error parsing WebSocket message:', error);
           }
         };
 
         this.ws.onclose = (event) => {
-          console.log('WebSocket disconnected:', event.code, event.reason);
+          logger.info('WebSocket disconnected:', event.code, event.reason);
           this.stopHeartbeat();
           this.notifyConnectionListeners(false);
           
@@ -101,7 +102,7 @@ export class WebSocketService {
         };
 
         this.ws.onerror = (error) => {
-          console.error('WebSocket error:', error);
+          logger.error('WebSocket error:', error);
           reject(error);
         };
 
@@ -131,7 +132,7 @@ export class WebSocketService {
 
       this.ws.send(JSON.stringify(message));
     } else {
-      console.warn('WebSocket not connected, message not sent:', type, payload);
+      logger.warn('WebSocket not connected, message not sent:', type, payload);
     }
   }
 
@@ -173,7 +174,7 @@ export class WebSocketService {
         try {
           callback(message.payload);
         } catch (error) {
-          console.error('Error in WebSocket event listener:', error);
+          logger.error('Error in WebSocket event listener:', error);
         }
       });
     }
@@ -183,11 +184,11 @@ export class WebSocketService {
     this.reconnectAttempts++;
     const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
     
-    console.log(`Attempting to reconnect in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+    logger.info(`Attempting to reconnect in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
     
     setTimeout(() => {
       this.connect().catch(error => {
-        console.error('Reconnection failed:', error);
+        logger.error('Reconnection failed:', error);
       });
     }, delay);
   }
@@ -212,7 +213,7 @@ export class WebSocketService {
       try {
         callback(connected);
       } catch (error) {
-        console.error('Error in connection listener:', error);
+        logger.error('Error in connection listener:', error);
       }
     });
   }

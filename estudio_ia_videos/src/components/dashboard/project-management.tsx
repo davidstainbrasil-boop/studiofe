@@ -4,6 +4,7 @@
  */
 
 'use client'
+import { logger } from "@/lib/logger";
 
 import React, { useState, useEffect } from 'react'
 import { useProjects, Project } from '@/hooks/use-projects'
@@ -69,7 +70,7 @@ export function ProjectManagement() {
 
   // Debug Logging
   useEffect(() => {
-    console.log('[ProjectManagement] State:', {
+    logger.info('[ProjectManagement] State:', {
       total,
       projectsCount: projects?.length,
       isLoading,

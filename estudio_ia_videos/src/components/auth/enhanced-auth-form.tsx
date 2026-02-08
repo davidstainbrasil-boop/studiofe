@@ -117,9 +117,9 @@ export function EnhancedAuthForm({ mode = 'login' }: EnhancedAuthFormProps) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const isDev = process.env.NODE_ENV === 'development';
-  const redirectUrl = searchParams.get('redirect') || '/dashboard';
-  const trialParam = searchParams.get('trial') === 'true';
-  const planParam = searchParams.get('plan');
+  const redirectUrl = searchParams?.get('redirect') || '/dashboard';
+  const trialParam = searchParams?.get('trial') === 'true';
+  const planParam = searchParams?.get('plan') ?? null;
   
   // Build callback URL with trial params
   const buildCallbackUrl = () => {
@@ -229,7 +229,7 @@ export function EnhancedAuthForm({ mode = 'login' }: EnhancedAuthFormProps) {
               }),
             });
           } catch (e) {
-            console.error('Error initializing trial:', e);
+            logger.error('Error initializing trial:', e);
           }
         }
         

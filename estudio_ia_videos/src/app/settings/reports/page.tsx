@@ -5,6 +5,7 @@
  */
 
 'use client';
+import { logger } from '@/lib/logger';
 
 import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@components/ui/card';
@@ -89,7 +90,7 @@ export default function ReportsPage() {
         if (!isMounted) return;
         setUser(data.user ?? null);
       } catch (error) {
-        console.error('Erro ao carregar sessão do usuário:', error);
+        logger.error('Erro ao carregar sessão do usuário:', error);
       }
     };
 
@@ -147,7 +148,7 @@ export default function ReportsPage() {
 
       alert('Relatório gerado com sucesso!');
     } catch (error) {
-      console.error('Erro ao gerar relatório:', error);
+      logger.error('Erro ao gerar relatório:', error);
       alert(error instanceof Error ? error.message : 'Erro ao gerar relatório');
     } finally {
       setGenerating(false);

@@ -177,7 +177,7 @@ function playNotificationSound(type: Notification['type']) {
     });
 
   } catch (error) {
-    console.warn('[Notifications] Sound playback failed:', error);
+    logger.warn('[Notifications] Sound playback failed:', error);
   }
 }
 

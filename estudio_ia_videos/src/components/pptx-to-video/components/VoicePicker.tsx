@@ -2,6 +2,7 @@
  * VoicePicker - Seletor de Voz com preview de áudio
  */
 'use client';
+import { logger } from '@/lib/logger';
 
 import { useState, useEffect, useRef } from 'react';
 import { SelectedVoice } from '../hooks/usePPTXToVideo';
@@ -150,7 +151,7 @@ export function VoicePicker({ selected, onSelect }: VoicePickerProps) {
           }
         }
       } catch (error) {
-        console.error('Failed to fetch voices:', error);
+        logger.error('Failed to fetch voices:', error);
       } finally {
         setLoading(false);
       }
@@ -221,7 +222,7 @@ export function VoicePicker({ selected, onSelect }: VoicePickerProps) {
           audioUrl = data.audioUrl;
         }
       } catch (error) {
-        console.error('Failed to generate preview:', error);
+        logger.error('Failed to generate preview:', error);
         return;
       }
     }

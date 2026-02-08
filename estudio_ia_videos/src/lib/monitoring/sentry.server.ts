@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 /**
  * Sentry Server Configuration
  * Inicialização do Sentry para monitoramento de erros no lado do servidor
@@ -21,12 +22,12 @@ export function initSentry() {
   }
 
   if (process.env.SENTRY_DISABLED === 'true') {
-    console.log('ℹ️ Sentry desabilitado via SENTRY_DISABLED=true');
+    logger.info('ℹ️ Sentry desabilitado via SENTRY_DISABLED=true');
     return;
   }
 
   if (!SENTRY_DSN) {
-    console.warn('⚠️ SENTRY_DSN não configurado - monitoramento desabilitado');
+    logger.warn('⚠️ SENTRY_DSN não configurado - monitoramento desabilitado');
     return;
   }
 
@@ -62,9 +63,9 @@ export function initSentry() {
     });
     
     sentryInitialized = true;
-    console.log('✅ Sentry server inicializado');
+    logger.info('✅ Sentry server inicializado');
   } catch (error) {
-    console.error('❌ Erro ao inicializar Sentry server:', error);
+    logger.error('❌ Erro ao inicializar Sentry server:', error);
   }
 }
 
@@ -73,7 +74,7 @@ export function initSentry() {
  */
 export function captureException(error: Error, context?: Record<string, unknown>) {
   if (!sentryInitialized) {
-    console.error('Sentry não inicializado:', error);
+    logger.error('Sentry não inicializado:', error);
     return;
   }
   
@@ -87,7 +88,7 @@ export function captureException(error: Error, context?: Record<string, unknown>
  */
 export function captureMessage(message: string, level: 'info' | 'warning' | 'error' = 'info') {
   if (!sentryInitialized) {
-    console.log(`[${level}] ${message}`);
+    logger.info(`[${level}] ${message}`);
     return;
   }
   

@@ -1,5 +1,6 @@
 
 'use client';
+import { logger } from '@/lib/logger';
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@components/ui/button';
@@ -54,7 +55,7 @@ function UsageIndicatorWrapper() {
         fetch('/api/billing/usage')
             .then(res => res.json())
             .then(setData)
-            .catch(console.error);
+            .catch((e) => logger.error("Unexpected error", e));
     }, []);
 
     if (!data) return null;

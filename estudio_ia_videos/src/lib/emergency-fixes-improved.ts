@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 /**
  * 🚑 Sistema de correções emergenciais melhorado
  */
@@ -50,7 +51,7 @@ export class EmergencyFixManager {
     this.captureContext()
     this.registerFixes()
     this.startMonitoring()
-    console.log('✅ Emergency fixes initialized (improved version)')
+    logger.info('✅ Emergency fixes initialized (improved version)')
   }
 
   private captureContext() {
@@ -75,7 +76,7 @@ export class EmergencyFixManager {
       if (typeof window === 'undefined' || !window.fabric) return
       if (!window.fabricLoaded) {
         window.fabricLoaded = true
-        console.log('🔧 Fixed: Fabric.js conflicts resolved')
+        logger.info('🔧 Fixed: Fabric.js conflicts resolved')
       }
     })
 
@@ -91,7 +92,7 @@ export class EmergencyFixManager {
         }
         return originalFillText.call(this, text, x, y, maxWidth)
       }
-      console.log('🔧 Fixed: Canvas TextBaseline corrected')
+      logger.info('🔧 Fixed: Canvas TextBaseline corrected')
     })
 
     this.fixes.set('performance-monitor', () => {
@@ -99,7 +100,7 @@ export class EmergencyFixManager {
       const observer = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
           if (entry.duration > 50) {
-            console.warn('⚠️ Long task detected:', `${entry.duration}ms`)
+            logger.warn('⚠️ Long task detected:', `${entry.duration}ms`)
             setTimeout(() => this.optimizePerformance(), 100)
           }
         }
@@ -108,13 +109,13 @@ export class EmergencyFixManager {
       try {
         observer.observe({ entryTypes: ['longtask', 'measure'] })
       } catch (error) {
-        console.log('Long task monitoring not supported', error)
+        logger.info('Long task monitoring not supported', error)
       }
     })
 
     this.fixes.set('memory-cleanup', () => {
       if (typeof window === 'undefined') return
-      console.log('🔧 Fixed: Memory leak prevention active')
+      logger.info('🔧 Fixed: Memory leak prevention active')
     })
   }
 
@@ -135,7 +136,7 @@ export class EmergencyFixManager {
     if (perfMemory) {
       const used = perfMemory.usedJSHeapSize / perfMemory.totalJSHeapSize
       if (used > 0.9) {
-        console.warn('🚨 High memory usage detected:', `${(used * 100).toFixed(1)}%`)
+        logger.warn('🚨 High memory usage detected:', `${(used * 100).toFixed(1)}%`)
         this.optimizePerformance()
       }
     }
@@ -150,7 +151,7 @@ export class EmergencyFixManager {
     if (window.gc) {
       try {
         window.gc()
-        console.log('🗑️ Forced garbage collection')
+        logger.info('🗑️ Forced garbage collection')
       } catch {
         /* noop */
       }
@@ -161,7 +162,7 @@ export class EmergencyFixManager {
       ctx?.clearRect(0, 0, canvas.width, canvas.height)
     })
 
-    console.log('⚡ Performance optimization applied')
+    logger.info('⚡ Performance optimization applied')
   }
 
   applyFix(name: string) {
@@ -169,7 +170,7 @@ export class EmergencyFixManager {
     try {
       fix?.()
     } catch (error) {
-      console.error(`Error applying fix ${name}:`, error)
+      logger.error(`Error applying fix ${name}:`, error)
     }
   }
 

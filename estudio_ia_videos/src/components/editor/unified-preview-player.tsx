@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import React, { useEffect, useRef, useState, CSSProperties } from 'react';
 import { cn } from '@lib/utils';
 import Avatar3DRenderer from '../avatars/Avatar3DRenderer';
@@ -159,7 +160,7 @@ function ClipRenderer({ type, content, time, isPlaying }: ClipRendererProps) {
           // Audio/video play() pode falhar silenciosamente se bloqueado pelo browser
           // (ex: autoplay policy). Não é crítico, apenas log para debug.
           if (process.env.NODE_ENV === 'development') {
-            console.debug('Media play() failed (likely autoplay policy)', { error });
+            logger.debug('Media play() failed (likely autoplay policy)', { error });
           }
         });
       } else if (!isPlaying && !mediaElement.paused) {

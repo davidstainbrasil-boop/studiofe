@@ -1,4 +1,5 @@
 'use client'
+import { logger } from '@/lib/logger';
 
 /**
  * 🎬 Batch Export Dialog
@@ -372,7 +373,7 @@ export function BatchExportDialog({
       setSelectedProjects(new Set())
       setCurrentStep('select')
     } catch (error) {
-      console.error('Export failed:', error)
+      logger.error('Export failed:', error)
     } finally {
       setIsExporting(false)
     }

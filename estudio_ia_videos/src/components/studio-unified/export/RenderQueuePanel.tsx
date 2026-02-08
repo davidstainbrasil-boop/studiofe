@@ -1,4 +1,5 @@
 'use client';
+import { logger } from '@/lib/logger';
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
@@ -714,7 +715,7 @@ export function RenderQueuePanel({
   }, [jobs]);
 
   const handleOpenFolder = useCallback((id: string) => {
-    console.log('Open folder for job:', id);
+    logger.info('Open folder for job:', id);
   }, []);
 
   const handleClearCompleted = useCallback(() => {

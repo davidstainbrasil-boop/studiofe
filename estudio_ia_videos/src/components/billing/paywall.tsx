@@ -1,4 +1,5 @@
 'use client';
+import { logger } from '@/lib/logger';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -96,7 +97,7 @@ export function Paywall({
         throw new Error(data.error || 'Erro ao criar checkout');
       }
     } catch (error) {
-      console.error('Erro ao fazer upgrade:', error);
+      logger.error('Erro ao fazer upgrade:', error);
       // TODO: Toast de erro
     } finally {
       setLoading(null);
@@ -234,7 +235,7 @@ export function useVideoLimit() {
 
       return true;
     } catch (error) {
-      console.error('Erro ao verificar limite:', error);
+      logger.error('Erro ao verificar limite:', error);
       return true; // Em caso de erro, permitir (fail-open)
     }
   };

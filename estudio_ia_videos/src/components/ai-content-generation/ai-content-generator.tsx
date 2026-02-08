@@ -280,7 +280,7 @@ const AIContentGenerator = () => {
       setPrompt('');
 
     } catch (error) {
-      console.error('Generation error:', error);
+      logger.error('Generation error:', error);
       toast.error('Erro ao gerar conteúdo. Tente novamente.');
       
       setGenerationHistory(prev => prev.map(req =>

@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 /**
  * 🔐 Session Timeout Hook
  * Manages user session activity and handles token refresh
@@ -53,11 +54,11 @@ export function useSessionTimeout(options: UseSessionTimeoutOptions = {}) {
     try {
       const { error } = await supabase.auth.refreshSession();
       if (error) {
-        console.error('Session refresh failed:', error);
+        logger.error('Session refresh failed:', error);
         onSessionExpired?.();
       }
     } catch (err) {
-      console.error('Session refresh error:', err);
+      logger.error('Session refresh error:', err);
     } finally {
       setIsRefreshing(false);
     }

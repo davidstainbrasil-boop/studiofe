@@ -1,5 +1,6 @@
 
 'use client';
+import { logger } from '@/lib/logger';
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { Button } from '@components/ui/button';
@@ -25,7 +26,7 @@ export class StudioErrorBoundary extends Component<Props, State> {
     }
 
     public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-        console.error('Uncaught error in Studio:', error, errorInfo);
+        logger.error('Uncaught error in Studio:', error, errorInfo);
         // Ideally log to Sentry here: Sentry.captureException(error);
     }
 

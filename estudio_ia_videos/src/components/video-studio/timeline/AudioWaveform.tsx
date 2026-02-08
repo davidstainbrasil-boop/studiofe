@@ -1,4 +1,5 @@
 'use client';
+import { logger } from '@/lib/logger';
 
 import React, { useEffect, useRef } from 'react';
 import WaveSurfer from 'wavesurfer.js';
@@ -43,7 +44,7 @@ export function AudioWaveform({
 
         // Initial silent error handling
         wavesurfer.current.on('error', (e) => {
-            console.warn('WaveSurfer error:', e);
+            logger.warn('WaveSurfer error:', e);
         });
 
         return () => {

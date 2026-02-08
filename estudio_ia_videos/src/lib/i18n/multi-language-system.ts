@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 /**
  * Multi-Language Support System - Fase 5: Integrações Premium
  * Sistema completo de suporte a múltiplos idiomas com TTS e tradução automática

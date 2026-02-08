@@ -3,6 +3,7 @@ import { generateLipSyncVideo, validateLipSyncResources } from '@lib/services/li
 import { logger } from '@lib/logger';
 import { withPlanGuard } from '@/middleware/with-plan-guard';
 import { applyRateLimit } from '@/lib/rate-limit';
+import { getServerAuth } from '@lib/auth/unified-session';
 
 /**
  * POST /api/lip-sync
@@ -69,6 +70,11 @@ export async function GET(request: NextRequest) {
   try {
     const rateLimitBlocked = await applyRateLimit(request, 'lip-sync-get', 60);
     if (rateLimitBlocked) return rateLimitBlocked;
+
+    const session = await getServerAuth();
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const validation = await validateLipSyncResources();
     return NextResponse.json(validation);

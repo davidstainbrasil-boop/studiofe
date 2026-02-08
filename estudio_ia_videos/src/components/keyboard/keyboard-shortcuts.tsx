@@ -1,4 +1,5 @@
 'use client';
+import { logger } from '@/lib/logger';
 
 import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -32,31 +33,31 @@ const KeyboardShortcutsContext = createContext<KeyboardShortcutsContextType | nu
 // Default shortcuts
 const defaultShortcuts: ShortcutAction[] = [
   // General
-  { id: 'save', keys: ['ctrl', 's'], label: 'Salvar', category: 'general', action: () => console.log('Save'), description: 'Salvar projeto' },
-  { id: 'undo', keys: ['ctrl', 'z'], label: 'Desfazer', category: 'general', action: () => console.log('Undo'), description: 'Desfazer última ação' },
-  { id: 'redo', keys: ['ctrl', 'shift', 'z'], label: 'Refazer', category: 'general', action: () => console.log('Redo'), description: 'Refazer última ação' },
+  { id: 'save', keys: ['ctrl', 's'], label: 'Salvar', category: 'general', action: () => logger.info('Save'), description: 'Salvar projeto' },
+  { id: 'undo', keys: ['ctrl', 'z'], label: 'Desfazer', category: 'general', action: () => logger.info('Undo'), description: 'Desfazer última ação' },
+  { id: 'redo', keys: ['ctrl', 'shift', 'z'], label: 'Refazer', category: 'general', action: () => logger.info('Redo'), description: 'Refazer última ação' },
   { id: 'shortcuts', keys: ['ctrl', '/'], label: 'Atalhos', category: 'general', action: () => {}, description: 'Mostrar atalhos de teclado' },
-  { id: 'search', keys: ['ctrl', 'k'], label: 'Buscar', category: 'general', action: () => console.log('Search'), description: 'Busca rápida' },
+  { id: 'search', keys: ['ctrl', 'k'], label: 'Buscar', category: 'general', action: () => logger.info('Search'), description: 'Busca rápida' },
   
   // Editor
-  { id: 'newSlide', keys: ['ctrl', 'n'], label: 'Novo Slide', category: 'editor', action: () => console.log('New slide'), description: 'Criar novo slide' },
-  { id: 'duplicate', keys: ['ctrl', 'd'], label: 'Duplicar', category: 'editor', action: () => console.log('Duplicate'), description: 'Duplicar seleção' },
-  { id: 'delete', keys: ['delete'], label: 'Excluir', category: 'editor', action: () => console.log('Delete'), description: 'Excluir seleção' },
-  { id: 'selectAll', keys: ['ctrl', 'a'], label: 'Selecionar Tudo', category: 'editor', action: () => console.log('Select all'), description: 'Selecionar todos os elementos' },
-  { id: 'copy', keys: ['ctrl', 'c'], label: 'Copiar', category: 'editor', action: () => console.log('Copy'), description: 'Copiar seleção' },
-  { id: 'paste', keys: ['ctrl', 'v'], label: 'Colar', category: 'editor', action: () => console.log('Paste'), description: 'Colar área de transferência' },
-  { id: 'cut', keys: ['ctrl', 'x'], label: 'Recortar', category: 'editor', action: () => console.log('Cut'), description: 'Recortar seleção' },
+  { id: 'newSlide', keys: ['ctrl', 'n'], label: 'Novo Slide', category: 'editor', action: () => logger.info('New slide'), description: 'Criar novo slide' },
+  { id: 'duplicate', keys: ['ctrl', 'd'], label: 'Duplicar', category: 'editor', action: () => logger.info('Duplicate'), description: 'Duplicar seleção' },
+  { id: 'delete', keys: ['delete'], label: 'Excluir', category: 'editor', action: () => logger.info('Delete'), description: 'Excluir seleção' },
+  { id: 'selectAll', keys: ['ctrl', 'a'], label: 'Selecionar Tudo', category: 'editor', action: () => logger.info('Select all'), description: 'Selecionar todos os elementos' },
+  { id: 'copy', keys: ['ctrl', 'c'], label: 'Copiar', category: 'editor', action: () => logger.info('Copy'), description: 'Copiar seleção' },
+  { id: 'paste', keys: ['ctrl', 'v'], label: 'Colar', category: 'editor', action: () => logger.info('Paste'), description: 'Colar área de transferência' },
+  { id: 'cut', keys: ['ctrl', 'x'], label: 'Recortar', category: 'editor', action: () => logger.info('Cut'), description: 'Recortar seleção' },
   
   // Navigation
-  { id: 'prevSlide', keys: ['arrowup'], label: 'Slide Anterior', category: 'navigation', action: () => console.log('Previous slide'), description: 'Ir para slide anterior' },
-  { id: 'nextSlide', keys: ['arrowdown'], label: 'Próximo Slide', category: 'navigation', action: () => console.log('Next slide'), description: 'Ir para próximo slide' },
-  { id: 'firstSlide', keys: ['home'], label: 'Primeiro Slide', category: 'navigation', action: () => console.log('First slide'), description: 'Ir para primeiro slide' },
-  { id: 'lastSlide', keys: ['end'], label: 'Último Slide', category: 'navigation', action: () => console.log('Last slide'), description: 'Ir para último slide' },
+  { id: 'prevSlide', keys: ['arrowup'], label: 'Slide Anterior', category: 'navigation', action: () => logger.info('Previous slide'), description: 'Ir para slide anterior' },
+  { id: 'nextSlide', keys: ['arrowdown'], label: 'Próximo Slide', category: 'navigation', action: () => logger.info('Next slide'), description: 'Ir para próximo slide' },
+  { id: 'firstSlide', keys: ['home'], label: 'Primeiro Slide', category: 'navigation', action: () => logger.info('First slide'), description: 'Ir para primeiro slide' },
+  { id: 'lastSlide', keys: ['end'], label: 'Último Slide', category: 'navigation', action: () => logger.info('Last slide'), description: 'Ir para último slide' },
   
   // Playback
-  { id: 'playPause', keys: ['space'], label: 'Play/Pause', category: 'playback', action: () => console.log('Play/Pause'), description: 'Iniciar ou pausar preview' },
-  { id: 'preview', keys: ['ctrl', 'p'], label: 'Preview', category: 'playback', action: () => console.log('Preview'), description: 'Abrir preview em tela cheia' },
-  { id: 'export', keys: ['ctrl', 'e'], label: 'Exportar', category: 'playback', action: () => console.log('Export'), description: 'Exportar vídeo' },
+  { id: 'playPause', keys: ['space'], label: 'Play/Pause', category: 'playback', action: () => logger.info('Play/Pause'), description: 'Iniciar ou pausar preview' },
+  { id: 'preview', keys: ['ctrl', 'p'], label: 'Preview', category: 'playback', action: () => logger.info('Preview'), description: 'Abrir preview em tela cheia' },
+  { id: 'export', keys: ['ctrl', 'e'], label: 'Exportar', category: 'playback', action: () => logger.info('Export'), description: 'Exportar vídeo' },
 ];
 
 // Helper functions

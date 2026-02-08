@@ -16,10 +16,10 @@ export default function EmbedPlayer({ params }: EmbedPlayerProps) {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
-  const autoplay = searchParams.get('autoplay') === '1';
-  const loop = searchParams.get('loop') === '1';
-  const muted = searchParams.get('muted') === '1' || autoplay;
-  const controls = searchParams.get('controls') !== '0';
+  const autoplay = searchParams?.get('autoplay') === '1';
+  const loop = searchParams?.get('loop') === '1';
+  const muted = searchParams?.get('muted') === '1' || autoplay;
+  const controls = searchParams?.get('controls') !== '0';
 
   useEffect(() => {
     async function fetchVideo() {

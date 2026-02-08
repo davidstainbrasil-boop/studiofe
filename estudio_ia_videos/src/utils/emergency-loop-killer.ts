@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 /**
  * Emergency Loop Killer Utility
  * Detects and terminates infinite loops in browser context
@@ -34,13 +35,13 @@ export function checkLoop(id: string): boolean {
   const elapsed = stats.lastCheckTime - stats.startTime;
 
   if (stats.iterations > MAX_ITERATIONS) {
-    console.error(`[Emergency Loop Killer] Loop ${id} exceeded max iterations (${MAX_ITERATIONS})`);
+    logger.error(`[Emergency Loop Killer] Loop ${id} exceeded max iterations (${MAX_ITERATIONS})`);
     killLoop(id);
     return false;
   }
 
   if (elapsed > MAX_TIME_MS) {
-    console.error(`[Emergency Loop Killer] Loop ${id} exceeded max time (${MAX_TIME_MS}ms)`);
+    logger.error(`[Emergency Loop Killer] Loop ${id} exceeded max time (${MAX_TIME_MS}ms)`);
     killLoop(id);
     return false;
   }
@@ -85,7 +86,7 @@ export function useLoopProtection(componentId: string) {
     loopCountRef.current++;
 
     if (loopCountRef.current > 100) {
-      console.error(`[Loop Protection] ${componentId} detected render loop (${loopCountRef.current} renders/sec)`);
+      logger.error(`[Loop Protection] ${componentId} detected render loop (${loopCountRef.current} renders/sec)`);
       isBlockedRef.current = true;
       return false;
     }

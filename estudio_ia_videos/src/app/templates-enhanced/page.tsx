@@ -1,4 +1,5 @@
 'use client';
+import { logger } from '@/lib/logger';
 
 /**
  * 📚 Enhanced Template Library - Professional template system
@@ -226,7 +227,7 @@ export default function EnhancedTemplateLibrary() {
     });
     
     // Aqui seria redirecionado para o editor com o template
-    console.log('Using template:', template.id);
+    logger.info('Using template:', template.id);
   };
 
   const handlePreview = (template: Template) => {

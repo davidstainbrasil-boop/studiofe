@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 // TODO: Script - DISABLED - needs complete rewrite for new PptxProcessor API
 /**
  * 🧪 Script de Teste - Importação PPTX End-to-End
@@ -12,12 +13,12 @@
 import { PptxProcessor, type PptxProcessResult } from '@/lib/pptx/pptx-processor'
 
 async function testPPTXImport(): Promise<void> {
-  console.log('⚠️ Este script precisa ser reescrito para a nova API do PptxProcessor')
-  console.log('')
-  console.log('A nova API espera que os arquivos já estejam no Supabase Storage.')
-  console.log('Uso: processor.process({ storagePath: "pptx/uploads/arquivo.pptx" })')
-  console.log('')
-  console.log('Para testar, use a rota da API: POST /api/pptx/upload')
+  logger.info('⚠️ Este script precisa ser reescrito para a nova API do PptxProcessor')
+  logger.info('')
+  logger.info('A nova API espera que os arquivos já estejam no Supabase Storage.')
+  logger.info('Uso: processor.process({ storagePath: "pptx/uploads/arquivo.pptx" })')
+  logger.info('')
+  logger.info('Para testar, use a rota da API: POST /api/pptx/upload')
   
   // Example of how to use the new API (requires file in storage):
   const processor = new PptxProcessor();
@@ -28,10 +29,10 @@ async function testPPTXImport(): Promise<void> {
   //   extractImages: true,
   //   extractNotes: true
   // });
-  // console.log('Slides processados:', result.slideCount);
-  // console.log('Conteúdo:', result.content);
+  // logger.info('Slides processados:', result.slideCount);
+  // logger.info('Conteúdo:', result.content);
 }
 
 // Executar teste
-testPPTXImport().catch(console.error);
+testPPTXImport().catch((e) => logger.error("Unexpected error", e));
 testPPTXImport()

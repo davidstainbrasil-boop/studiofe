@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { useState, useEffect, useCallback } from 'react'
 
 // =============================================================================
@@ -52,7 +53,7 @@ export function useTour(totalSteps: number = 9): UseTourReturn {
         const parsed = JSON.parse(savedState) as TourState
         setState(parsed)
       } catch (error) {
-        console.error('Failed to parse tour state:', error)
+        logger.error('Failed to parse tour state:', error)
       }
     }
   }, [])

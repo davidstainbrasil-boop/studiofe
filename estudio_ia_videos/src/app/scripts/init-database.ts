@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 /**
  * 🚀 Database Initialization Script
  * 
@@ -9,7 +10,7 @@ import { PrismaClient, Prisma } from '@prisma/client'
 const prisma = new PrismaClient()
 
 async function main() {
-  console.log('🚀 Initializing database...')
+  logger.info('🚀 Initializing database...')
 
   try {
     // Create default system configurations
@@ -81,7 +82,7 @@ async function main() {
     //   })
     // }
 
-    console.log('✅ System configurations skipped (model not available)')
+    logger.info('✅ System configurations skipped (model not available)')
 
     // Create demo user for testing
     // Note: The users table requires a valid auth.users reference (FK constraint)
@@ -97,9 +98,9 @@ async function main() {
           name: 'Usuário Demo'
         }
       })
-      console.log('✅ Demo user created:', demoUser.email)
+      logger.info('✅ Demo user created:', demoUser.email)
     } catch (err) {
-      console.log('⚠️ Demo user skipped - auth.users FK constraint requires existing auth user')
+      logger.info('⚠️ Demo user skipped - auth.users FK constraint requires existing auth user')
     }
 
     // Create sample templates
@@ -169,7 +170,7 @@ async function main() {
     //   })
     // }
 
-    console.log('✅ Sample templates skipped (model not available)')
+    logger.info('✅ Sample templates skipped (model not available)')
 
     // Create sample project for demo user
     const slidesData: Prisma.InputJsonValue = [
@@ -221,20 +222,20 @@ async function main() {
         }
       })
 
-      console.log('✅ Sample project created:', sampleProject.name)
+      logger.info('✅ Sample project created:', sampleProject.name)
     }
 
-    console.log('🎉 Database initialization completed successfully!')
+    logger.info('🎉 Database initialization completed successfully!')
 
   } catch (error) {
-    console.error('❌ Error initializing database:', error)
+    logger.error('❌ Error initializing database:', error)
     throw error
   }
 }
 
 main()
   .catch((e) => {
-    console.error(e)
+    logger.error(e)
     process.exit(1)
   })
   .finally(async () => {

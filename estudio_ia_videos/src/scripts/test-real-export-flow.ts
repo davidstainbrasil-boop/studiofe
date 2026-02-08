@@ -13,14 +13,14 @@ const createMockJob = (data: any): Job => {
     id: data.videoExportId,
     data,
     updateProgress: async (progress: number) => {
-        console.log(`[MockJob] Progress: ${progress}%`);
+        logger.info(`[MockJob] Progress: ${progress}%`);
     },
     // Add other minimal necessary methods
   } as unknown as Job;
 };
 
 async function main() {
-    console.log('--- Starting Real Export Flow Simulation ---');
+    logger.info('--- Starting Real Export Flow Simulation ---');
 
     // 1. Create a dummy project owner if not exists
     const user = await prisma.users.findFirst() || await prisma.users.create({
@@ -53,7 +53,7 @@ async function main() {
         }
     });
 
-    console.log(`Created Project: ${project.id}`);
+    logger.info(`Created Project: ${project.id}`);
 
     // 4. Create Video Export Record (QUEUED)
     // Note: In real app, this is done by api/export-real.
@@ -72,7 +72,7 @@ async function main() {
         }
     });
 
-    console.log(`Created Export Job: ${exportJobId} (Status: QUEUED)`);
+    logger.info(`Created Export Job: ${exportJobId} (Status: QUEUED)`);
 
     // 5. Simulate Worker Processing
     const jobPayload = {
@@ -80,35 +80,35 @@ async function main() {
         projectId: project.id,
     };
 
-    console.log('Invoking Worker Handler...');
+    logger.info('Invoking Worker Handler...');
     try {
         const mockJob = createMockJob(jobPayload);
         // Call handler
         const { workerHandler } = await import('../app/workers/video-processor');
         await workerHandler(mockJob);
         
-        console.log('Worker Handler Finished.');
+        logger.info('Worker Handler Finished.');
 
         // 6. Verify Result in DB
         const result = await prisma.render_jobs.findUnique({ where: { id: exportJobId } });
-        console.log(`Final Job Status: ${result?.status}`);
-        console.log(`Output URL: ${result?.outputUrl}`);
+        logger.info(`Final Job Status: ${result?.status}`);
+        logger.info(`Output URL: ${result?.outputUrl}`);
         
         if (result?.status === 'completed') {
-            console.log('✅ TEST PASSED: Job completed successfully.');
+            logger.info('✅ TEST PASSED: Job completed successfully.');
         } else if (result?.status === 'failed') {
-            console.log(`❌ TEST FAILED: Job failed with error: ${result.errorMessage}`);
+            logger.info(`❌ TEST FAILED: Job failed with error: ${result.errorMessage}`);
         } else {
-             console.log(`⚠️ TEST INCONCLUSIVE: Status is ${result?.status}`);
+             logger.info(`⚠️ TEST INCONCLUSIVE: Status is ${result?.status}`);
         }
         
     } catch (e) {
-        console.error('Test Execution Error:', e);
+        logger.error('Test Execution Error:', e);
     }
 }
 
 main()
-  .catch(e => console.error(e))
+  .catch(e => logger.error(e))
   .finally(async () => {
     await prisma.$disconnect();
   });

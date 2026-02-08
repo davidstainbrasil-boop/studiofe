@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 // TODO: Fixar return type async function Promise<string>
 /**
  * E2E Test Helpers (Updated for Real Auth)
@@ -40,7 +41,7 @@ export async function loginAsAdmin(page: Page) {
 
   // Verificar se carregou
   await page.waitForLoadState('networkidle');
-  console.log(`✅ Logged in as: ${TEST_USERS.admin.email}`);
+  logger.info(`✅ Logged in as: ${TEST_USERS.admin.email}`);
 }
 
 export async function loginWithCookie(page: Page) {
@@ -78,7 +79,7 @@ export async function loginWithCookie(page: Page) {
 export async function mockSupabaseAuth(page: Page) {
   // Mock endpoint de usuário do Supabase
   await page.route('**/auth/v1/user', async (route) => {
-    console.log('intercepted supabase user request');
+    logger.info('intercepted supabase user request');
     await route.fulfill({
       status: 200,
       contentType: 'application/json',

@@ -4,6 +4,7 @@
  */
 
 'use client';
+import { logger } from "@/lib/logger";
 
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
@@ -1007,7 +1008,7 @@ export default function ProfessionalTimelineEditor({ projectId }: { projectId?: 
         toast.success('Renderização iniciada em background.');
       }
     } catch (error) {
-      console.error(error);
+      logger.error(error);
       toast.error('Erro ao iniciar renderização');
     } finally {
       setIsLoading(false);
@@ -1032,7 +1033,7 @@ export default function ProfessionalTimelineEditor({ projectId }: { projectId?: 
         toast.success('Projeto carregado do armazenamento local');
         return;
       } catch (e) {
-        console.error('Failed to parse local project', e);
+        logger.error('Failed to parse local project', e);
       }
     }
 
@@ -1040,7 +1041,7 @@ export default function ProfessionalTimelineEditor({ projectId }: { projectId?: 
     if (projectId === 'demo') return;
 
     // Real Load from Supabase via API
-    console.log('Loading project:', projectId);
+    logger.info('Loading project:', projectId);
     const loadProject = async () => {
       try {
         const response = await fetch(`/api/projects/${projectId}`);
@@ -1071,7 +1072,7 @@ export default function ProfessionalTimelineEditor({ projectId }: { projectId?: 
           }
         }
       } catch (error) {
-        console.error('Error loading project:', error);
+        logger.error('Error loading project:', error);
         toast.error('Erro ao carregar projeto');
       }
     };
@@ -1209,7 +1210,7 @@ export default function ProfessionalTimelineEditor({ projectId }: { projectId?: 
         throw new Error(result.error);
       }
     } catch (error) {
-      console.error(error);
+      logger.error(error);
       toast.error('Erro ao gerar narração', { id: toastId });
     }
   };
@@ -1232,7 +1233,7 @@ export default function ProfessionalTimelineEditor({ projectId }: { projectId?: 
         throw new Error(result.error);
       }
     } catch (error) {
-      console.error(error);
+      logger.error(error);
       toast.error('Erro ao gerar avatares', { id: toastId });
     }
   };
@@ -1324,7 +1325,7 @@ export default function ProfessionalTimelineEditor({ projectId }: { projectId?: 
       toast.success('Legendas geradas com sucesso!')
 
     } catch (error) {
-      console.error("Subtitle generation failed", error)
+      logger.error("Subtitle generation failed", error)
       toast.error('Erro ao gerar legendas.')
     } finally {
       setIsLoading(false)
@@ -1373,7 +1374,7 @@ export default function ProfessionalTimelineEditor({ projectId }: { projectId?: 
 
   }, [project.tracks]);
 
-  console.log('DEBUG EDITOR RENDER', { project, tracks: project?.tracks });
+  logger.info('DEBUG EDITOR RENDER', { project, tracks: project?.tracks });
 
   if (!project || !project.tracks) {
     return <div className="flex items-center justify-center h-screen bg-gray-900 text-white">Loading Project State...</div>;

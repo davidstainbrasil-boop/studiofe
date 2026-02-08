@@ -1,4 +1,5 @@
 #!/usr/bin/env tsx
+import { logger } from '@/lib/logger';
 // TODO: Archive script - fix types
 
 /**
@@ -10,14 +11,14 @@ import { checkCompliance } from '../../lib/compliance/nr-engine'
 import { getAllNRs } from '../../lib/compliance/templates'
 
 async function demonstrateComplianceSystem() {
-  console.log('🚀 DEMONSTRAÇÃO DO SISTEMA DE COMPLIANCE COM IA')
-  console.log('=' .repeat(60))
+  logger.info('🚀 DEMONSTRAÇÃO DO SISTEMA DE COMPLIANCE COM IA')
+  logger.info('=' .repeat(60))
   
   // 1. Listar NRs disponíveis
-  console.log('\n📋 NRs Disponíveis:')
+  logger.info('\n📋 NRs Disponíveis:')
   const availableNRs = getAllNRs()
   availableNRs.forEach(nr => {
-    console.log(`- ${nr.code}: ${nr.name}`)
+    logger.info(`- ${nr.code}: ${nr.name}`)
   })
   
   // 2. Dados de teste
@@ -45,56 +46,56 @@ async function demonstrateComplianceSystem() {
     audioFiles: ["/audio/intro-seguranca.mp3", "/audio/dispositivos-protecao.mp3"]
   }
   
-  console.log('\n🧪 TESTE 1: Análise Tradicional (sem IA)')
-  console.log('-'.repeat(50))
+  logger.info('\n🧪 TESTE 1: Análise Tradicional (sem IA)')
+  logger.info('-'.repeat(50))
   
   try {
     const traditionalResult = await checkCompliance('NR-12', testProject, false)
     
-    console.log(`✅ Status: ${traditionalResult.status}`)
-    console.log(`📊 Score: ${traditionalResult.score.toFixed(1)}%`)
-    console.log(`📋 Requisitos: ${traditionalResult.requirementsMet}/${traditionalResult.requirementsTotal}`)
+    logger.info(`✅ Status: ${traditionalResult.status}`)
+    logger.info(`📊 Score: ${traditionalResult.score.toFixed(1)}%`)
+    logger.info(`📋 Requisitos: ${traditionalResult.requirementsMet}/${traditionalResult.requirementsTotal}`)
     
   } catch (error) {
-    console.error('❌ Erro na análise tradicional:', error)
+    logger.error('❌ Erro na análise tradicional:', error)
   }
   
-  console.log('\n🤖 TESTE 2: Análise com IA')
-  console.log('-'.repeat(50))
+  logger.info('\n🤖 TESTE 2: Análise com IA')
+  logger.info('-'.repeat(50))
   
   try {
     const aiResult = await checkCompliance('NR-12', testProject, true)
     
-    console.log(`✅ Status: ${aiResult.status}`)
-    console.log(`📊 Score Tradicional: ${aiResult.score.toFixed(1)}%`)
-    console.log(`🤖 Score IA: ${aiResult.aiScore?.toFixed(1) || 'N/A'}%`)
-    console.log(`🎯 Score Final: ${aiResult.finalScore?.toFixed(1) || 'N/A'}%`)
-    console.log(`🎲 Confiança: ${((aiResult.confidence || 0) * 100).toFixed(1)}%`)
+    logger.info(`✅ Status: ${aiResult.status}`)
+    logger.info(`📊 Score Tradicional: ${aiResult.score.toFixed(1)}%`)
+    logger.info(`🤖 Score IA: ${aiResult.aiScore?.toFixed(1) || 'N/A'}%`)
+    logger.info(`🎯 Score Final: ${aiResult.finalScore?.toFixed(1) || 'N/A'}%`)
+    logger.info(`🎲 Confiança: ${((aiResult.confidence || 0) * 100).toFixed(1)}%`)
     
     if (aiResult.recommendations.length > 0) {
-      console.log('\n💡 Recomendações da IA:')
+      logger.info('\n💡 Recomendações da IA:')
       aiResult.recommendations.forEach((rec, i) => {
-        console.log(`  ${i + 1}. ${rec}`)
+        logger.info(`  ${i + 1}. ${rec}`)
       })
     }
     
   } catch (error) {
-    console.error('❌ Erro na análise com IA:', error)
+    logger.error('❌ Erro na análise com IA:', error)
   }
   
-  console.log('\n🏁 DEMONSTRAÇÃO CONCLUÍDA')
-  console.log('✅ Sistema de Compliance com IA funcionando!')
+  logger.info('\n🏁 DEMONSTRAÇÃO CONCLUÍDA')
+  logger.info('✅ Sistema de Compliance com IA funcionando!')
 }
 
 // Executar demonstração
 if (require.main === module) {
   demonstrateComplianceSystem()
     .then(() => {
-      console.log('\n✨ Demonstração finalizada com sucesso!')
+      logger.info('\n✨ Demonstração finalizada com sucesso!')
       process.exit(0)
     })
     .catch((error) => {
-      console.error('\n💥 Erro na demonstração:', error)
+      logger.error('\n💥 Erro na demonstração:', error)
       process.exit(1)
     })
 }

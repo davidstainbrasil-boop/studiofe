@@ -1,4 +1,5 @@
 'use client'
+import { logger } from '@/lib/logger';
 
 /**
  * Scene Canvas Editor - Editable Scene/Slide System
@@ -466,7 +467,7 @@ export function SceneCanvasEditor({
         canvas.backgroundImage = img
         canvas.renderAll()
       } catch (error) {
-        console.error('Failed to load background image:', error)
+        logger.error('Failed to load background image:', error)
       }
     }
 
@@ -494,7 +495,7 @@ export function SceneCanvasEditor({
               scaleY: element.height / (fabricObj.height || 1),
             })
           } catch (e) {
-            console.error('Failed to load image:', e)
+            logger.error('Failed to load image:', e)
             return
           }
         }

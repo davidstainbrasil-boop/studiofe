@@ -1,4 +1,5 @@
 'use client';
+import { logger } from '@/lib/logger';
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -192,7 +193,7 @@ export default function PPTtoVideoWizard() {
                     setSelectedVoice(FALLBACK_VOICES[0].id);
                 }
             } catch (err) {
-                console.warn('Failed to fetch voices, using fallback:', err);
+                logger.warn('Failed to fetch voices, using fallback:', err);
                 setVoices(FALLBACK_VOICES);
                 setSelectedVoice(FALLBACK_VOICES[0].id);
             } finally {
@@ -227,7 +228,7 @@ export default function PPTtoVideoWizard() {
                     setAvatars(FALLBACK_AVATARS);
                 }
             } catch (err) {
-                console.warn('Failed to fetch avatars, using fallback:', err);
+                logger.warn('Failed to fetch avatars, using fallback:', err);
                 setAvatars(FALLBACK_AVATARS);
             } finally {
                 setLoadingAvatars(false);
@@ -293,7 +294,7 @@ export default function PPTtoVideoWizard() {
                 toast.error('Erro ao gerar preview de voz');
             }
         } catch (err) {
-            console.error('Voice preview error:', err);
+            logger.error('Voice preview error:', err);
             toast.error('Erro ao gerar preview');
         } finally {
             setGeneratingPreview(false);

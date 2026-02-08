@@ -1,4 +1,5 @@
 'use client'
+import { logger } from '@/lib/logger';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -725,7 +726,7 @@ export function ProfessionalDashboard() {
         }
       }
     } catch (error) {
-      console.error('Failed to fetch activities:', error)
+      logger.error('Failed to fetch activities:', error)
       // Keep default activities on error
     } finally {
       setActivitiesLoading(false)
@@ -775,7 +776,7 @@ export function ProfessionalDashboard() {
         }
       }
     } catch (error) {
-      console.error('Failed to fetch system status:', error)
+      logger.error('Failed to fetch system status:', error)
       // Keep default status on error
     } finally {
       setSystemLoading(false)

@@ -1,4 +1,5 @@
 
+import { logger } from '@/lib/logger';
 import { prisma } from '../../lib/prisma';
 
 async function main() {
@@ -11,25 +12,25 @@ async function main() {
   }
 
   const email = 'test_user_jetski_001@gmail.com';
-  console.log(`Checking user: ${email}`);
+  logger.info(`Checking user: ${email}`);
   
   const user = await prisma.users.findUnique({
     where: { email }
   });
 
   if (user) {
-    console.log('User found in public.users:');
-    console.log(JSON.stringify(user, null, 2));
+    logger.info('User found in public.users:');
+    logger.info(JSON.stringify(user, null, 2));
   } else {
-    console.log('User NOT found in public.users');
+    logger.info('User NOT found in public.users');
     // List some users to see if DB is empty
     const count = await prisma.users.count();
-    console.log(`Total users in public DB: ${count}`);
+    logger.info(`Total users in public DB: ${count}`);
   }
 }
 
 main()
-  .catch(e => console.error(e))
+  .catch(e => logger.error(e))
   .finally(async () => {
     await prisma.$disconnect();
   });

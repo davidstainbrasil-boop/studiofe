@@ -1,4 +1,5 @@
 'use client';
+import { logger } from '@/lib/logger';
 
 import { useState, useEffect, useMemo } from 'react';
 import { useAnalytics } from './hooks/useAnalytics';
@@ -122,7 +123,7 @@ export default function AnalyticsDashboard() {
       try {
         // [DEV] Bypass Check
         if (typeof document !== 'undefined' && document.cookie.includes('dev_bypass=true')) {
-          console.log('[Analytics] Dev Bypass detected. Mocking user.');
+          logger.info('[Analytics] Dev Bypass detected. Mocking user.');
           setUser({ id: 'dev-user', email: 'dev@test.com', app_metadata: {}, user_metadata: {}, aud: 'authenticated', created_at: '' });
           return;
         }
@@ -131,7 +132,7 @@ export default function AnalyticsDashboard() {
         if (!isMounted) return;
         setUser(sessionData.user ?? null);
       } catch (error) {
-        console.error('[Analytics] Falha ao carregar usuário:', error);
+        logger.error('[Analytics] Falha ao carregar usuário:', error);
       }
     };
 
@@ -177,7 +178,7 @@ export default function AnalyticsDashboard() {
 
       toast.success(`Dados exportados em ${format.toUpperCase()}`);
     } catch (error) {
-      console.error('Error exporting data:', error);
+      logger.error('Error exporting data:', error);
       toast.error('Erro ao exportar dados');
     }
   };

@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { PrismaClient } from '@prisma/client'
 import { randomUUID } from 'node:crypto'
 
@@ -17,10 +18,10 @@ async function main() {
       status: 'draft'
     }
   })
-  console.log('PROJECT_ID:', project.id)
-  console.log('USER_ID:', user.id)
+  logger.info('PROJECT_ID:', project.id)
+  logger.info('USER_ID:', user.id)
 }
 
 main()
-  .catch(console.error)
+  .catch((e) => logger.error("Unexpected error", e))
   .finally(() => prisma.$disconnect())

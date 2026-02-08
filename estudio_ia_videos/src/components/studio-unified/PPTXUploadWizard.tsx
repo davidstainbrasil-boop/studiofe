@@ -1,4 +1,5 @@
 'use client'
+import { logger } from '@/lib/logger';
 
 /**
  * PPTX Upload Wizard
@@ -195,7 +196,7 @@ export const PPTXUploadWizard: React.FC<PPTXUploadWizardProps> = ({
       }, 2000)
 
     } catch (error) {
-      console.error('Upload error:', error)
+      logger.error('Upload error:', error)
       setProgress({
         phase: 'completed',
         percentage: 0,

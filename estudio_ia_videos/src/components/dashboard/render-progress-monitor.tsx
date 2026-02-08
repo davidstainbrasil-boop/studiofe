@@ -1,4 +1,5 @@
 'use client';
+import { logger } from '@/lib/logger';
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -57,7 +58,7 @@ export function RenderProgressMonitor() {
         }
       }
     } catch (error) {
-      console.error('Failed to fetch recent jobs:', error);
+      logger.error('Failed to fetch recent jobs:', error);
       // Keep empty on error
     } finally {
       setLoadingRecent(false);

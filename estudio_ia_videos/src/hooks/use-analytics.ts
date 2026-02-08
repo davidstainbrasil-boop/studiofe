@@ -222,7 +222,7 @@ export function useAnalytics(filters: AnalyticsFilters = { timeRange: '24h' }) {
           }
         }
       } catch (error) {
-        console.error('Failed to fetch analytics data:', error)
+        logger.error('Failed to fetch analytics data:', error)
         // Keep empty arrays on error - fallback handled in component
       }
     }

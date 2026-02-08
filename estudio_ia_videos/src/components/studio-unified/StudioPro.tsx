@@ -10,6 +10,7 @@
  */
 
 'use client';
+import { logger } from '@/lib/logger';
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useStudioStore } from '@/lib/stores/studio-store';
@@ -104,12 +105,12 @@ export function StudioPro({ className, onSave, onExport }: StudioProProps) {
 
         // Show notification (you can add toast here)
         if (result.warnings.length > 0) {
-          console.warn('Import warnings:', result.warnings);
+          logger.warn('Import warnings:', result.warnings);
         }
         // Success: imported slides
         void result.slidesProcessed;
       } catch (error) {
-        console.error('Failed to import PPTX:', error);
+        logger.error('Failed to import PPTX:', error);
       }
 
       // Reset input

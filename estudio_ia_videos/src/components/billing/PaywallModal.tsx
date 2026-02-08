@@ -1,4 +1,5 @@
 'use client';
+import { logger } from '@/lib/logger';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -265,7 +266,7 @@ export function useFeatureGate({ userId, onBlocked }: UseFeatureGateOptions): Us
 
       return true;
     } catch (error) {
-      console.error('Error checking feature:', error);
+      logger.error('Error checking feature:', error);
       // Em caso de erro, permitir para não bloquear usuário
       return true;
     }

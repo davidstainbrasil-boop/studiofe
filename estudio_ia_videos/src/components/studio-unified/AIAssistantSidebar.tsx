@@ -4,6 +4,7 @@
  */
 
 'use client';
+import { logger } from "@/lib/logger";
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
@@ -215,7 +216,7 @@ export function AIAssistantSidebar({ className }: { className?: string }) {
               <Wand2 className="h-3 w-3" />,
         action: () => {
           // Apply suggestion to store based on type
-          console.log('Applying suggestion:', suggestion);
+          logger.info('Applying suggestion:', suggestion);
           addAISuggestion({
             type: suggestion.type as 'script' | 'edit' | 'visual' | 'optimization',
             title: suggestion.type,
@@ -239,7 +240,7 @@ export function AIAssistantSidebar({ className }: { className?: string }) {
           })
       );
     } catch (error) {
-      console.error('AI chat error:', error);
+      logger.error('AI chat error:', error);
       
       // Fallback to mock response in case of API failure
       const mockResponse = generateMockResponse(content);
@@ -516,13 +517,13 @@ Deseja que eu ajuste algo no roteiro?`,
           id: 'apply-script',
           label: 'Aplicar ao Projeto',
           icon: <Check className="h-3 w-3" />,
-          action: () => console.log('Apply script'),
+          action: () => logger.info('Apply script'),
         },
         {
           id: 'regenerate',
           label: 'Regenerar',
           icon: <RefreshCw className="h-3 w-3" />,
-          action: () => console.log('Regenerate'),
+          action: () => logger.info('Regenerate'),
         },
       ],
       suggestion: {
@@ -551,7 +552,7 @@ Analisei seu conteúdo e sugiro:
           id: 'apply-cuts',
           label: 'Aplicar Cortes',
           icon: <Scissors className="h-3 w-3" />,
-          action: () => console.log('Apply cuts'),
+          action: () => logger.info('Apply cuts'),
         },
       ],
     };
@@ -576,7 +577,7 @@ Para um visual mais profissional:
           id: 'apply-template',
           label: 'Ver Templates',
           icon: <Palette className="h-3 w-3" />,
-          action: () => console.log('View templates'),
+          action: () => logger.info('View templates'),
         },
       ],
     };

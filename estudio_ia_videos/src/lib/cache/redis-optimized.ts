@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 /**
  * Redis Optimized Cache
  * Cache otimizado usando Redis (ou fallback in-memory)

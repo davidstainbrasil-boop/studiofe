@@ -21,6 +21,7 @@ import {
   getPaywallService,
   PLANS,
   PlanTier,
+  PlanConfig,
   BillingInterval,
 } from '@/src/lib/billing/stripe-service';
 
@@ -174,7 +175,7 @@ async function getInvoices(userId: string) {
 }
 
 async function getPlans() {
-  const plans = Object.values(PLANS).map(plan => ({
+  const plans = Object.values(PLANS).map((plan: PlanConfig) => ({
     id: plan.id,
     name: plan.name,
     description: plan.description,

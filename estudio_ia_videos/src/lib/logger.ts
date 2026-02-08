@@ -134,20 +134,51 @@ class Logger {
   }
 
 
-  debug(message: string, context?: Record<string, unknown>) {
-    this.log('debug', message, context)
+  private normalizeContext(...args: unknown[]): Record<string, unknown> | undefined {
+    if (args.length === 0) return undefined
+    if (args.length === 1) {
+      const arg = args[0]
+      if (arg === null || arg === undefined) return undefined
+      if (typeof arg === 'object' && !Array.isArray(arg) && !(arg instanceof Error)) {
+        return arg as Record<string, unknown>
+      }
+      return { data: arg }
+    }
+    return { data: args }
   }
 
-  info(message: string, context?: Record<string, unknown>) {
-    this.log('info', message, context)
+  debug(message: string, ...args: unknown[]) {
+    this.log('debug', message, this.normalizeContext(...args))
   }
 
-  warn(message: string, context?: Record<string, unknown>) {
-    this.log('warn', message, context)
+  info(message: string, ...args: unknown[]) {
+    this.log('info', message, this.normalizeContext(...args))
   }
 
-  error(message: string, error?: Error, context?: Record<string, unknown>) {
-    this.log('error', message, context, error)
+  warn(message: string, ...args: unknown[]) {
+    this.log('warn', message, this.normalizeContext(...args))
+  }
+
+  error(message: string, ...args: unknown[]) {
+    // Extract Error if first arg is Error-like
+    let err: Error | undefined
+    let ctx: Record<string, unknown> | undefined
+    
+    if (args.length >= 1 && args[0] instanceof Error) {
+      err = args[0]
+      ctx = args.length >= 2 ? this.normalizeContext(args[1]) : undefined
+    } else if (args.length >= 1) {
+      // First arg might be an unknown error from catch blocks
+      const maybeError = args[0]
+      if (maybeError && typeof maybeError === 'object' && 'message' in maybeError) {
+        err = maybeError as Error
+        ctx = args.length >= 2 ? this.normalizeContext(args[1]) : undefined
+      } else {
+        ctx = this.normalizeContext(...args)
+      }
+    }
+    
+    this.log('error', message, ctx, err)
   }
 
   withContext(context: Record<string, unknown>): Logger {
@@ -169,8 +200,8 @@ export { Logger }
 
 // Export convenience functions
 export const log = {
-  debug: (message: string, context?: Record<string, unknown>) => logger.debug(message, context),
-  info: (message: string, context?: Record<string, unknown>) => logger.info(message, context),
-  warn: (message: string, context?: Record<string, unknown>) => logger.warn(message, context),
-  error: (message: string, error?: Error, context?: Record<string, unknown>) => logger.error(message, error, context),
+  debug: (message: string, ...args: unknown[]) => logger.debug(message, ...args),
+  info: (message: string, ...args: unknown[]) => logger.info(message, ...args),
+  warn: (message: string, ...args: unknown[]) => logger.warn(message, ...args),
+  error: (message: string, ...args: unknown[]) => logger.error(message, ...args),
 }

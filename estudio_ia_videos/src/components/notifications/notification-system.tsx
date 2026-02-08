@@ -1,4 +1,5 @@
 'use client';
+import { logger } from '@/lib/logger';
 
 import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -69,7 +70,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         const valid = parsed.filter(n => !n.expiresAt || n.expiresAt > now);
         setNotifications(valid);
       } catch (e) {
-        console.error('Failed to parse notifications:', e);
+        logger.error('Failed to parse notifications:', e);
       }
     }
   }, []);

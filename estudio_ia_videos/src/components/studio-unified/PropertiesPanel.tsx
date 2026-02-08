@@ -130,14 +130,17 @@ const NumberInput: React.FC<NumberInputProps> = ({
   inputRef,
   onKeyDown,
 }) => {
+  const inputId = React.useId();
+
   return (
     <div className="space-y-2">
-      <Label className="text-xs font-medium flex items-center gap-2">
+      <Label htmlFor={inputId} className="text-xs font-medium flex items-center gap-2">
         {icon}
         {label}
       </Label>
       <div className="flex items-center gap-2">
         <Input
+          id={inputId}
           ref={inputRef}
           type="number"
           value={value}
@@ -227,8 +230,10 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   const aspectRatio = useRef<number>(1);
 
   useEffect(() => {
-    if (element?.transform.width && element?.transform.height) {
-      aspectRatio.current = element.transform.width / element.transform.height;
+    const width = element?.transform.width;
+    const height = element?.transform.height;
+    if (typeof width === 'number' && typeof height === 'number' && height !== 0) {
+      aspectRatio.current = width / height;
     }
   }, [element]);
 
@@ -236,12 +241,23 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     (updates: Partial<Transform>) => {
       if (!element) return;
 
+      if (typeof updates.opacity === 'number') {
+        updates.opacity = Math.min(1, Math.max(0, updates.opacity));
+      }
+
       // Apply constrain proportions for width/height changes
-      if (constrainProportions && (updates.width || updates.height)) {
-        if (updates.width && element.transform.height) {
-          updates.height = updates.width / aspectRatio.current;
-        } else if (updates.height && element.transform.width) {
-          updates.width = updates.height * aspectRatio.current;
+      const hasSize =
+        element.transform.width !== undefined && element.transform.height !== undefined;
+      const hasWidthUpdate = updates.width !== undefined;
+      const hasHeightUpdate = updates.height !== undefined;
+      const ratio = aspectRatio.current;
+      const canUseRatio = Number.isFinite(ratio) && ratio > 0;
+
+      if (constrainProportions && hasSize && canUseRatio && (hasWidthUpdate || hasHeightUpdate)) {
+        if (hasWidthUpdate) {
+          updates.height = updates.width! / ratio;
+        } else if (hasHeightUpdate) {
+          updates.width = updates.height! * ratio;
         }
       }
 
@@ -307,6 +323,8 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     );
   }
 
+  const opacityPercent = Math.round(Math.min(1, Math.max(0, element.transform.opacity)) * 100);
+
   return (
     <div className={cn('flex flex-col h-full bg-background', className)}>
       {/* Header */}
@@ -318,6 +336,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               size="icon"
               variant="ghost"
               className="h-8 w-8"
+              aria-label={element.visible ? 'Hide element' : 'Show element'}
               onClick={() => onUpdate({ visible: !element.visible })}
             >
               {element.visible ? (
@@ -330,6 +349,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               size="icon"
               variant="ghost"
               className="h-8 w-8"
+              aria-label={element.locked ? 'Unlock element' : 'Lock element'}
               onClick={() => onUpdate({ locked: !element.locked })}
             >
               {element.locked ? (
@@ -463,8 +483,8 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                   />
                   <SliderInput
                     label="Opacity"
-                    value={element.transform.opacity}
-                    onChange={(val) => updateTransform({ opacity: val })}
+                    value={opacityPercent}
+                    onChange={(val) => updateTransform({ opacity: val / 100 })}
                     min={0}
                     max={100}
                     step={1}
@@ -494,12 +514,12 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="inter">Inter</SelectItem>
-                          <SelectItem value="roboto">Roboto</SelectItem>
-                          <SelectItem value="arial">Arial</SelectItem>
-                          <SelectItem value="helvetica">Helvetica</SelectItem>
-                          <SelectItem value="georgia">Georgia</SelectItem>
-                          <SelectItem value="times">Times New Roman</SelectItem>
+                          <SelectItem value="Inter">Inter</SelectItem>
+                          <SelectItem value="Roboto">Roboto</SelectItem>
+                          <SelectItem value="Arial">Arial</SelectItem>
+                          <SelectItem value="Helvetica">Helvetica</SelectItem>
+                          <SelectItem value="Georgia">Georgia</SelectItem>
+                          <SelectItem value="Times New Roman">Times New Roman</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -704,7 +724,17 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
                       <div className="space-y-2">
                         <Label className="text-xs">Type</Label>
-                        <Select value={animation.type}>
+                        <Select
+                          value={animation.type}
+                          onValueChange={(val) => {
+                            const newAnimations = [...element.animations];
+                            newAnimations[index] = {
+                              ...animation,
+                              type: val as Animation['type'],
+                            };
+                            onUpdate({ animations: newAnimations });
+                          }}
+                        >
                           <SelectTrigger className="h-8 text-sm">
                             <SelectValue />
                           </SelectTrigger>

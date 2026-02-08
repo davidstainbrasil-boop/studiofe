@@ -5,6 +5,7 @@
  */
 
 'use client';
+import { logger } from '@/lib/logger';
 
 import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@components/ui/card';
@@ -57,7 +58,7 @@ export default function AuditLogsPage() {
         if (!isMounted) return;
         setUser(data.user ?? null);
       } catch (error) {
-        console.error('Erro ao carregar sessão do usuário:', error);
+        logger.error('Erro ao carregar sessão do usuário:', error);
       }
     };
 
@@ -105,7 +106,7 @@ export default function AuditLogsPage() {
       setLogs(data.logs || []);
       setTotal(data.total || 0);
     } catch (error) {
-      console.error('Erro ao carregar logs:', error);
+      logger.error('Erro ao carregar logs:', error);
     } finally {
       setLoading(false);
     }
@@ -131,7 +132,7 @@ export default function AuditLogsPage() {
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('Erro ao exportar logs:', error);
+      logger.error('Erro ao exportar logs:', error);
       alert('Erro ao exportar logs');
     }
   };

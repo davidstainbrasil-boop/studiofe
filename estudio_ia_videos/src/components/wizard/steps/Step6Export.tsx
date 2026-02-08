@@ -1,4 +1,5 @@
 'use client';
+import { logger } from '@/lib/logger';
 
 import { CheckCircle, Download, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -101,7 +102,7 @@ export function Step6Export({ videoData }: { videoData: any }) {
                     throw new Error(data.error);
                 }
             } catch (e) {
-                console.error(e);
+                logger.error(e);
                 setError(e instanceof Error ? e.message : "Erro desconhecido");
                 setStatus('failed');
                 hasStartedRef.current = false; // Allow retry if needed?

@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 export interface OrchestratorPayload {
   job_id: string;
   primary_image_url: string;

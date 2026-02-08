@@ -1,4 +1,5 @@
 'use client';
+import { logger } from '@/lib/logger';
 
 import Link from 'next/link';
 import { useState, useEffect, Suspense } from 'react';
@@ -111,7 +112,7 @@ function PricingContent() {
             setCurrentPlan(data.plan || 'free');
           }
         } catch (e) {
-          console.error('Error fetching subscription:', e);
+          logger.error('Error fetching subscription:', e);
         }
       }
     };

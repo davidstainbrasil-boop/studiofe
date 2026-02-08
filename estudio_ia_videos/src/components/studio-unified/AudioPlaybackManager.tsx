@@ -1,5 +1,6 @@
 
 'use client';
+import { logger } from '@/lib/logger';
 
 import React, { useEffect, useRef } from 'react';
 import { useTimelineStore } from '@lib/stores/timeline-store';
@@ -62,7 +63,7 @@ export function AudioPlaybackManager() {
                 if (audio.paused) {
                     // Set time first
                     audio.currentTime = currentTime - element.start;
-                    audio.play().catch(e => console.warn('Audio play blocked:', e));
+                    audio.play().catch(e => logger.warn('Audio play blocked:', e));
                 } else {
                     // Constant sync to prevent drift (drastic drift check)
                     const targetTime = currentTime - element.start;

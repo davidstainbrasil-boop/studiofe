@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import React, { useEffect, useState } from 'react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
@@ -36,7 +37,7 @@ export function VoiceSelector({ value, onChange, label = "Voz da Narração" }: 
                 setVoices(allVoices)
             }
         } catch (error) {
-            console.error('Failed to fetch voices', error)
+            logger.error('Failed to fetch voices', error)
         } finally {
             setLoading(false)
         }

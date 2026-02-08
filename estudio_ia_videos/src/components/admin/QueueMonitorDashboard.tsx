@@ -1,4 +1,5 @@
 'use client'
+import { logger } from '@/lib/logger';
 
 /**
  * Queue Monitor Dashboard - Fase 4
@@ -86,7 +87,7 @@ export default function QueueMonitorDashboard() {
         setRecentFailed(data.data.recentJobs.failed)
       }
     } catch (error) {
-      console.error('Error fetching metrics:', error)
+      logger.error('Error fetching metrics:', error)
     } finally {
       setLoading(false)
     }
@@ -113,7 +114,7 @@ export default function QueueMonitorDashboard() {
         await fetchMetrics()
       }
     } catch (error) {
-      console.error('Error cancelling job:', error)
+      logger.error('Error cancelling job:', error)
     }
   }
 
@@ -128,7 +129,7 @@ export default function QueueMonitorDashboard() {
         await fetchMetrics()
       }
     } catch (error) {
-      console.error('Error retrying job:', error)
+      logger.error('Error retrying job:', error)
     }
   }
 
