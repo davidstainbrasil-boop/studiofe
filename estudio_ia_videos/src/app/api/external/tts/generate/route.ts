@@ -271,8 +271,8 @@ export async function POST(request: NextRequest) {
     const params = TTSGenerateSchema.parse(body)
 
     // Get provider configuration
-    const { data: providerData, error: providerError } = await (supabaseAdmin as any)
-      .from('user_external_api_configs')
+    const { data: providerData, error: providerError } = await supabaseAdmin
+      .from('user_external_api_configs' as never)
       .select('*')
       .eq("user_id", session.user.id)
       .eq('api_type', 'tts')
@@ -290,8 +290,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Check rate limits and quotas
-    const { data: usage, error: usageError } = await (supabaseAdmin as any)
-      .from('external_api_usage')
+    const { data: usage, error: usageError } = await supabaseAdmin
+      .from('external_api_usage' as never)
       .select('*')
       .eq("user_id", session.user.id)
       .eq('api_type', 'tts')
@@ -335,8 +335,8 @@ export async function POST(request: NextRequest) {
 
     // Record usage
     try {
-      await (supabaseAdmin as any)
-        .from('external_api_usage')
+      await supabaseAdmin
+        .from('external_api_usage' as never)
         .insert({
           user_id: session.user.id,
           api_type: 'tts',
@@ -375,7 +375,7 @@ export async function POST(request: NextRequest) {
               cost: totalCost,
               timestamp: new Date().toISOString()
             }
-          } as any,
+          } as Record<string, unknown>,
           createdAt: new Date().toISOString()
         })
     } catch (analyticsError) {

@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
     // TODO: Se certificates não existir no schema Prisma, usar outra tabela ou Supabase diretamente
     let certificate;
     try {
-      certificate = await (prisma as any).certificates.create({
+      certificate = await (prisma as unknown as { certificates: { create(args: unknown): Promise<unknown> } }).certificates.create({
         data: {
           id: uuidv4(),
           projectId,

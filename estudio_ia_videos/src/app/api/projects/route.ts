@@ -86,12 +86,12 @@ export async function GET(request: NextRequest) {
       async () => {
         return await Promise.all([
           prisma.projects.findMany({
-            where: whereClause as any,
+            where: whereClause as Record<string, unknown>,
             orderBy: { updatedAt: 'desc' },
             skip: (page - 1) * limit,
             take: limit,
           }),
-          prisma.projects.count({ where: whereClause as any })
+          prisma.projects.count({ where: whereClause as Record<string, unknown> })
         ]);
       },
       CacheTier.SHORT // 5 minutes cache
@@ -154,7 +154,7 @@ export async function POST(request: NextRequest) {
         id: randomUUID(),
         name: validatedData.name,
         description: validatedData.description || '',
-        type: validatedData.type as any,
+        type: validatedData.type as never,
         status: 'draft',
         userId: userId,
         metadata: (validatedData.metadata || {}) as object,

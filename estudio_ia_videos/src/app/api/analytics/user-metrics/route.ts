@@ -131,8 +131,8 @@ async function getUserRenderStats(userId: string, timeRange: Date) {
       }
     });
 
-    const completedRenders = (renders as any[]).filter((r: any) => r.status === 'completed');
-    const totalRenderTime = completedRenders.reduce((sum: number, render: any) => {
+    const completedRenders = renders.filter((r) => r.status === 'completed');
+    const totalRenderTime = completedRenders.reduce((sum: number, render) => {
       return sum + ((render.durationMs || 0) / 1000); // Convert ms to seconds
     }, 0);
 
@@ -211,7 +211,7 @@ async function getRecentActivity(userId: string, timeRange: Date, limit: number 
       createdAt: Date;
     }
 
-    return (activities as any[]).map((activity: any) => {
+    return activities.map((activity) => {
       const data = activity.eventData as Record<string, unknown> || {};
       return {
         id: activity.id,
@@ -251,7 +251,7 @@ async function getUsagePatterns(userId: string, timeRange: Date) {
 
     // Calculate most active hours
     const hourCounts = new Array(24).fill(0);
-    (events as any[]).forEach((event: any) => {
+    events.forEach((event) => {
       const hour = new Date(event.createdAt).getHours();
       hourCounts[hour]++;
     });
@@ -265,7 +265,7 @@ async function getUsagePatterns(userId: string, timeRange: Date) {
       .map((item: HourCount) => item.hour);
 
     // Calculate preferred features
-    const featureCounts = (events as any[]).reduce((acc: Record<string, number>, event: any) => {
+    const featureCounts = events.reduce((acc: Record<string, number>, event) => {
       const data = event.eventData as Record<string, unknown> || {};
       const action = (data.action as string) || 'unknown';
       const feature = `${event.eventType}_${action}`;

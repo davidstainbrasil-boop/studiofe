@@ -85,7 +85,7 @@ async function getNotificationStats(userId: string, filters: z.infer<typeof Noti
 
     if (error) throw error
 
-    const notifications = (notificationsData || []) as any[]
+    const notifications = (notificationsData || []) as Array<{ id: string; type: string; priority: string; status: string }>
 
     const total = notifications.length
     const unread = notifications.filter((n) => n.status === 'unread').length

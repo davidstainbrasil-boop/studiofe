@@ -161,7 +161,7 @@ export async function GET(request: NextRequest) {
       success: true,
       data: {
         ...data,
-        conversionRates: (funnelData as any).conversionRates || (funnelData as any).conversion_rates || {},
+        conversionRates: (funnelData as unknown as { conversionRates?: Record<string, number>; conversion_rates?: Record<string, number> }).conversionRates || (funnelData as unknown as { conversionRates?: Record<string, number>; conversion_rates?: Record<string, number> }).conversion_rates || {},
         period: {
           days,
           from: startDate.toISOString(),
@@ -171,7 +171,7 @@ export async function GET(request: NextRequest) {
       _meta: {
         source: 'real_database',
         totalEvents: summary.totalEvents,
-        errorRate: (summary as any).errorRate || 0,
+        errorRate: (summary as unknown as { errorRate?: number }).errorRate || 0,
       },
     })
     

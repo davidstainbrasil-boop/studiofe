@@ -7,6 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseForRequest } from '@lib/supabase/server';
+import { requireAdmin } from '@/lib/auth/admin-middleware';
 import { circuitBreakerRegistry } from '@lib/resilience/circuit-breaker';
 import { prisma } from '@lib/prisma';
 import { logger } from '@lib/logger';
@@ -16,19 +17,9 @@ import { logger } from '@lib/logger';
  */
 export async function GET(req: NextRequest) {
   try {
-    // Auth check
-    const supabase = getSupabaseForRequest(req);
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Não autenticado' },
-        { status: 401 }
-      );
-    }
-
-    // TODO: Check if user is admin
-    // For now, allow all authenticated users to view metrics
+    // Auth check - require admin
+    const { isAdmin, response: authResponse } = await requireAdmin(req);
+    if (!isAdmin) return authResponse!;
 
     // Collect metrics
     const [

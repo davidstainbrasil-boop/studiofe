@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     }
 
     // Authenticate user
-    const supabase = getSupabaseForRequest(request as any); // Type cast if needed depending on Next.js version
+    const supabase = getSupabaseForRequest(request);
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {

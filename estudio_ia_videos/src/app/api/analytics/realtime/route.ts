@@ -278,7 +278,7 @@ async function getHandler(req: NextRequest) {
         }
       },
       timeline,
-      topCategories: (topCategories as any[]).map((item: any) => ({
+      topCategories: (topCategories as unknown as CategoryGroup[]).map((item: CategoryGroup) => ({
         category: item.eventType,
         count: item._count.id,
         percentage: totalEvents > 0 ? ((item._count.id / totalEvents) * 100).toFixed(1) : '0'
@@ -290,7 +290,7 @@ async function getHandler(req: NextRequest) {
         responseTime: Math.round(systemHealth.responseTime),
         throughput: systemHealth.throughput
       },
-      recentEvents: (recentEvents as any[]).map((event: any) => {
+      recentEvents: (recentEvents as unknown as RecentEventRaw[]).map((event: RecentEventRaw) => {
         const data = (event.eventData as Record<string, unknown>) || {};
         return {
           id: event.id,

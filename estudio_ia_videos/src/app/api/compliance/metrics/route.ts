@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
     // Note: If nr_compliance_records doesn't exist in Prisma schema, empty metrics are returned
     let nrRecords: NRComplianceRecord[] = [];
     try {
-      nrRecords = await (prisma as any).nr_compliance_records.findMany({
+      nrRecords = await (prisma as unknown as { nr_compliance_records: { findMany(args: unknown): Promise<NRComplianceRecord[]> } }).nr_compliance_records.findMany({
       where: {
         projectId: { in: projectIds },
         createdAt: {

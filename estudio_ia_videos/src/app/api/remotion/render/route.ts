@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const { compositionId, props, projectId } = body;
-    const userId = (session?.user as any)?.id || 'anonymous-user'; // Fallback se sem auth
+    const userId = (session?.user as unknown as { id?: string })?.id || 'anonymous-user'; // Fallback se sem auth
 
     if (!compositionId) {
         return NextResponse.json({ error: 'compositionId is required' }, { status: 400 });

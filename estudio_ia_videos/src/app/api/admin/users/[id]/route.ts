@@ -43,7 +43,7 @@ export async function PUT(
 
     const user = await prisma.users.update({
       where: { id: params.id },
-      data: { role: role as any },
+      data: { role: role as never },
     })
 
     await auditLogger.log({
@@ -55,7 +55,7 @@ export async function PUT(
 
     return NextResponse.json(user)
   } catch (error) {
-    if ((error as any).code === 'P2025') {
+    if ((error as unknown as { code?: string }).code === 'P2025') {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
@@ -92,7 +92,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    if ((error as any).code === 'P2025') {
+    if ((error as unknown as { code?: string }).code === 'P2025') {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 

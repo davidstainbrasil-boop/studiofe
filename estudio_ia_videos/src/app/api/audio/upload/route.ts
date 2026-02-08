@@ -104,8 +104,8 @@ export async function POST(req: NextRequest): Promise<NextResponse<UploadRespons
       .getPublicUrl(filename);
 
     // Create database record
-    const { data: audioRecord, error: dbError } = await (supabase as any)
-      .from('audio_uploads')
+    const { data: audioRecord, error: dbError } = await supabase
+      .from('audio_uploads' as never)
       .insert({
         user_id: user.id,
         project_id: projectId || null,
@@ -165,8 +165,8 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
     }
 
     // Update duration in database
-    const { error: updateError } = await (supabase as any)
-      .from('audio_uploads')
+    const { error: updateError } = await supabase
+      .from('audio_uploads' as never)
       .update({ duration_seconds: duration })
       .eq('id', audioId)
       .eq('user_id', user.id);
@@ -202,8 +202,8 @@ export async function DELETE(req: NextRequest): Promise<NextResponse> {
     }
 
     // Get audio record
-    const { data: audio } = await (supabase as any)
-      .from('audio_uploads')
+    const { data: audio } = await supabase
+      .from('audio_uploads' as never)
       .select('storage_path')
       .eq('id', audioId)
       .eq('user_id', user.id)
@@ -217,8 +217,8 @@ export async function DELETE(req: NextRequest): Promise<NextResponse> {
     }
 
     // Delete database record
-    await (supabase as any)
-      .from('audio_uploads')
+    await supabase
+      .from('audio_uploads' as never)
       .delete()
       .eq('id', audioId)
       .eq('user_id', user.id);

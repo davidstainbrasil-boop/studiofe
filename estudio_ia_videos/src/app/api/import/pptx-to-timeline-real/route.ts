@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'No slides found for this project' }, { status: 404 })
     }
 
-    const typedSlides = (slides as any[]).map(s => ({
+    const typedSlides = (slides as Array<Record<string, unknown>>).map(s => ({
         ...s,
         orderIndex: s.order_index,
         backgroundColor: s.background_color,

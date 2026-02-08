@@ -8,6 +8,26 @@ import { randomUUID } from 'crypto';
 // Default avatar image if none provided
 const DEFAULT_AVATAR = 'https://img.freepik.com/free-photo/portrait-white-man-isolated_53876-40306.jpg';
 
+// Type helpers for Supabase query results
+interface SlideWithAudio {
+  audio_url?: string;
+  audio_config?: { audio_url?: string };
+}
+
+interface TimelineTrack {
+  id: string;
+  name: string;
+  type: string;
+  elements: unknown[];
+  height?: number;
+  color?: string;
+  muted?: boolean;
+  locked?: boolean;
+  visible?: boolean;
+  volume?: number;
+  collapsed?: boolean;
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -65,10 +85,10 @@ export async function POST(
     // We will attempt to process all, but client should handle timeout.
     
     for (const slide of slides) {
-        const slideAny = slide as any;
-        if (!slideAny.audio_url && !slideAny.audio_config?.audio_url) continue;
+        const typedSlide = slide as unknown as SlideWithAudio;
+        if (!typedSlide.audio_url && !typedSlide.audio_config?.audio_url) continue;
         
-        const audioUrl = slideAny.audio_url || slideAny.audio_config?.audio_url;
+        const audioUrl = typedSlide.audio_url || typedSlide.audio_config?.audio_url;
 
         // Skip if already has video (optional, maybe force regen?)
         // if (slideAny.video_url && slideAny.video_url.includes('d-id')) continue;
@@ -89,7 +109,7 @@ export async function POST(
             await supabase.from('slides').update({
                 video_url: videoUrl,
                 layout: 'avatar_overlay'
-            } as any).eq('id', slide.id);
+            } as Record<string, unknown>).eq('id', slide.id);
 
             // Add to Timeline
             // We'll create a new Video/Overlay Track for Avatars
@@ -124,7 +144,7 @@ export async function POST(
 
     // 3. Update Timeline Tracks
     if (avatarElements.length > 0) {
-        const tracks = timeline.tracks as any[];
+        const tracks = timeline.tracks as unknown as TimelineTrack[];
         let avatarTrackIndex = tracks.findIndex(t => t.name === 'Avatar AI');
 
         if (avatarTrackIndex === -1) {

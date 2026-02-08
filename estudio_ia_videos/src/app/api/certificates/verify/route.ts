@@ -23,7 +23,7 @@ export async function GET(req: Request) {
     // TODO: Se certificates não existir no schema Prisma, usar outra tabela ou Supabase diretamente
     let certificate;
     try {
-      certificate = await (prisma as any).certificates.findUnique({
+      certificate = await (prisma as unknown as { certificates: { findUnique(args: unknown): Promise<unknown> } }).certificates.findUnique({
         where: { code },
       });
     } catch (dbError) {

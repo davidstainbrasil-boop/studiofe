@@ -44,6 +44,33 @@ const defaultSettings = {
   }
 }
 
+// Interface for records from user_render_settings table (not in generated Supabase types)
+interface RenderSettingsValue {
+  auto_retry?: boolean;
+  maxRetries?: number;
+  priority_boost?: boolean;
+  quality_preset?: string;
+  notifications?: {
+    on_completion?: boolean;
+    on_failure?: boolean;
+    on_queue_position?: boolean;
+  };
+  resource_limits?: {
+    max_cpu_usage?: number;
+    max_memory_usage?: number;
+    max_duration?: number;
+  };
+  [key: string]: unknown;
+}
+
+interface UserRenderSettingsRecord {
+  user_id: string;
+  settings: RenderSettingsValue;
+  createdAt?: string;
+  updated_at?: string;
+  [key: string]: unknown;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const supabase = getSupabaseForRequest(request)
@@ -58,7 +85,7 @@ export async function GET(request: NextRequest) {
 
     // Get user's render settings
     const { data: settings, error } = await supabase
-      .from('user_render_settings' as any)
+      .from('user_render_settings' as never)
       .select('*')
       .eq("user_id", user.id)
       .single()
@@ -70,7 +97,7 @@ export async function GET(request: NextRequest) {
     // If no settings exist, create default settings
     if (!settings) {
       const { data: newSettings, error: createError } = await supabase
-        .from('user_render_settings' as any)
+        .from('user_render_settings' as never)
         .insert({
           user_id: user.id,
           settings: defaultSettings,
@@ -84,14 +111,14 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json({
         success: true,
-        data: (newSettings as any)?.settings,
+        data: (newSettings as unknown as UserRenderSettingsRecord | null)?.settings,
         message: 'Default render settings created'
       })
     }
 
     return NextResponse.json({
       success: true,
-      data: (settings as any)?.settings,
+      data: (settings as unknown as UserRenderSettingsRecord | null)?.settings,
       message: 'Render settings retrieved successfully'
     })
 
@@ -127,7 +154,7 @@ export async function PATCH(request: NextRequest) {
 
     // Get current settings
     const { data: currentSettings, error: fetchError } = await supabase
-      .from('user_render_settings' as any)
+      .from('user_render_settings' as never)
       .select('*')
       .eq("user_id", user.id)
       .single()
@@ -143,7 +170,7 @@ export async function PATCH(request: NextRequest) {
       updatedSettings = { ...defaultSettings, ...settingsUpdate }
       
       const { data: newSettings, error: createError } = await supabase
-        .from('user_render_settings' as any)
+        .from('user_render_settings' as never)
         .insert({
           user_id: user.id,
           settings: updatedSettings,
@@ -155,24 +182,25 @@ export async function PATCH(request: NextRequest) {
 
       if (createError) throw createError
 
-      updatedSettings = (newSettings as any)?.settings
+      updatedSettings = (newSettings as unknown as UserRenderSettingsRecord | null)?.settings ?? updatedSettings
     } else {
       // Update existing settings (deep merge)
+      const currentRecord = currentSettings as unknown as UserRenderSettingsRecord | null;
       updatedSettings = {
-        ...(currentSettings as any)?.settings,
+        ...currentRecord?.settings,
         ...settingsUpdate,
         notifications: {
-          ...(currentSettings as any)?.settings?.notifications,
+          ...currentRecord?.settings?.notifications,
           ...settingsUpdate.notifications
         },
         resource_limits: {
-          ...(currentSettings as any)?.settings?.resource_limits,
+          ...currentRecord?.settings?.resource_limits,
           ...settingsUpdate.resource_limits
         }
       }
 
       const { data: updated, error: updateError } = await supabase
-        .from('user_render_settings' as any)
+        .from('user_render_settings' as never)
         .update({
           settings: updatedSettings,
           updated_at: new Date().toISOString()
@@ -250,7 +278,7 @@ export async function DELETE(request: NextRequest) {
 
     // Reset to default settings
     const { data: resetSettings, error } = await supabase
-      .from('user_render_settings' as any)
+      .from('user_render_settings' as never)
       .upsert({
         user_id: user.id,
         settings: defaultSettings,

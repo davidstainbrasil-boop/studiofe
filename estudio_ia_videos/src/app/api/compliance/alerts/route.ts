@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     interface ValidationRecord { id: string; projectId: string; nr: string; score: number; createdAt: Date; recommendations?: string[]; }
     let recentValidations: ValidationRecord[] = [];
     try {
-      recentValidations = await (prisma as any).nr_compliance_records.findMany({
+      recentValidations = await (prisma as unknown as { nr_compliance_records: { findMany(args: unknown): Promise<ValidationRecord[]> } }).nr_compliance_records.findMany({
       where: {
         projectId: { in: projectIds },
         createdAt: {
@@ -94,8 +94,9 @@ export async function GET(request: NextRequest) {
       }
 
       // Check for missing critical topics
-      if ((validation as any).criticalPoints) {
-        const missingPoints = toStringArray((validation as any).criticalPoints);
+      const validationExt = validation as unknown as { criticalPoints?: unknown };
+      if (validationExt.criticalPoints) {
+        const missingPoints = toStringArray(validationExt.criticalPoints);
         if (Array.isArray(missingPoints) && missingPoints.length > 0) {
           alerts.push({
             id: `missing-${validation.id}`,

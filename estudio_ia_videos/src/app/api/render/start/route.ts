@@ -95,10 +95,8 @@ function getRequiredPlanForRender(
 
 async function resolveUserPlan(userId: string): Promise<PlanTier> {
   try {
-    // Cast to any to bypass Supabase type checking for subscriptions table
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase dynamic table query
-    const { data: subscription, error } = await (supabaseAdmin as any)
-      .from('subscriptions')
+    const { data: subscription, error } = await supabaseAdmin
+      .from('subscriptions' as never)
       .select('plan, status')
       .eq('user_id', userId)
       .single() as { data: { plan: string; status: string } | null; error: { message?: string; code?: string } | null };

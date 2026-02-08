@@ -68,8 +68,8 @@ export async function POST(req: NextRequest) {
     };
 
     // Try to save to database
-    const { data: savedTicket, error: dbError } = await (supabase as any)
-      .from('support_tickets')
+    const { data: savedTicket, error: dbError } = await supabase
+      .from('support_tickets' as never)
       .insert(ticket)
       .select()
       .single();
@@ -197,8 +197,8 @@ export async function GET(req: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50');
 
     // Fetch tickets
-    const { data: tickets, error } = await (supabase as any)
-      .from('support_tickets')
+    const { data: tickets, error } = await supabase
+      .from('support_tickets' as never)
       .select('*')
       .eq('status', status)
       .order('created_at', { ascending: false })

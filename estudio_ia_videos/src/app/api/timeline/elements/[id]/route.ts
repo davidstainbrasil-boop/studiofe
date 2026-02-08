@@ -281,7 +281,7 @@ export async function PUT(
               effects: element.effects,
               transitions: element.transitions
             }
-          } as any,
+          } as Record<string, unknown>,
           createdAt: new Date().toISOString()
         })
     }

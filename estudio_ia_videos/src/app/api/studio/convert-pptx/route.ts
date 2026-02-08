@@ -81,8 +81,7 @@ export async function POST(request: NextRequest) {
       projectId,
       defaultDuration,
       avatarId: avatarId || undefined,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      avatarProvider: (avatarProvider as any) || undefined,
+      avatarProvider: (avatarProvider as 'did' | 'heygen' | 'rpm') || undefined,
       voiceId: voiceId || undefined,
       generateSubtitles,
       autoTransitions,

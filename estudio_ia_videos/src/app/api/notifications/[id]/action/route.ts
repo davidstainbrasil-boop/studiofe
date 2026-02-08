@@ -15,6 +15,8 @@ const NotificationActionSchema = z.object({
   action: z.string().min(1)
 })
 
+type NotificationMetadata = Record<string, unknown> & { render_id?: string };
+
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -134,12 +136,12 @@ export async function POST(
 
       case 'download_render':
         // Handle render download
-        if ((notification.metadata as any)?.render_id) {
+        if ((notification.metadata as unknown as NotificationMetadata)?.render_id) {
           try {
             const { data: renderJob, error: renderError } = await supabaseAdmin
               .from('render_jobs')
               .select("output_url")
-              .eq('id', (notification.metadata as any).render_id)
+              .eq('id', (notification.metadata as unknown as NotificationMetadata).render_id!)
               .eq("userId", session.user.id)
               .single()
 
@@ -155,7 +157,7 @@ export async function POST(
 
       case 'retry_render':
         // Handle render retry
-        if ((notification.metadata as any)?.render_id) {
+        if ((notification.metadata as unknown as NotificationMetadata)?.render_id) {
           try {
             const { error: retryError } = await supabaseAdmin
               .from('render_jobs')
@@ -164,7 +166,7 @@ export async function POST(
                 errorMessage: null,
                 updatedAt: new Date().toISOString()
               })
-              .eq('id', (notification.metadata as any).render_id)
+              .eq('id', (notification.metadata as unknown as NotificationMetadata).render_id!)
               .eq("userId", session.user.id)
 
             if (retryError) throw retryError
@@ -213,7 +215,7 @@ export async function POST(
             action_type: action,
             success: actionResult.success,
             timestamp: new Date().toISOString()
-          } as any,
+          } as Record<string, unknown>,
           createdAt: new Date().toISOString()
         })
     } catch (analyticsError) {

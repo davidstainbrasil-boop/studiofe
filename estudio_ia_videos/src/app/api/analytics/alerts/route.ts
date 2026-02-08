@@ -440,7 +440,7 @@ async function putHandler(req: NextRequest) {
     await prisma.analytics_events.update({
       where: { id: ruleId },
       data: {
-        eventData: updatedData as any
+        eventData: updatedData as Record<string, unknown>
       }
     });
 

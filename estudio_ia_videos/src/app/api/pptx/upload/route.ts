@@ -165,7 +165,7 @@ export async function POST(req: NextRequest) {
             metadata: {
               created_via: 'upload_api',
               original_filename: file.name,
-              extraction_stats: extraction.extractionStats as any,
+              extraction_stats: extraction.extractionStats as Record<string, unknown>,
             },
           },
         });
@@ -209,7 +209,7 @@ export async function POST(req: NextRequest) {
         const { error: deleteError } = await supabaseAdmin
           .from('slides')
           .delete()
-          .eq('project_id' as any, projectId);
+          .eq('project_id' as never, projectId);
         
         if (deleteError) {
           logger.warn('Could not clear existing slides (may be first upload)', { 
@@ -221,7 +221,7 @@ export async function POST(req: NextRequest) {
         // Inserir novos slides
         const { error: insertError, data: insertedSlides } = await supabaseAdmin
           .from('slides')
-          .insert(slidesToInsert as any)
+          .insert(slidesToInsert as Record<string, unknown>[])
           .select();
 
         if (insertError) {

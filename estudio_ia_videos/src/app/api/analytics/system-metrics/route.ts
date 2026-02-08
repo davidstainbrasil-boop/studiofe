@@ -114,9 +114,9 @@ async function getRenderQueueStats() {
     // Calculate average render time
     interface CompletedJob { createdAt: Date; completedAt: Date | null; }
     
-    const renderTimes = (completedJobs as any[])
-      .filter((job: any) => job.completedAt)
-      .map((job: any) => {
+    const renderTimes = (completedJobs as CompletedJob[])
+      .filter((job: CompletedJob) => job.completedAt)
+      .map((job: CompletedJob) => {
         const start = new Date(job.createdAt).getTime()
         const end = new Date(job.completedAt!).getTime()
         return (end - start) / 1000 // Convert to seconds

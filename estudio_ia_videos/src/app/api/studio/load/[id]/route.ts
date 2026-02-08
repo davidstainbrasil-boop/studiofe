@@ -82,7 +82,7 @@ export async function GET(
     }
 
     // Extrai snapshot do metadata
-    const metadata = project.metadata as any;
+    const metadata = project.metadata as Record<string, unknown> | null;
     const snapshot = metadata?.studioSnapshot;
 
     logger.info('Project loaded successfully', {

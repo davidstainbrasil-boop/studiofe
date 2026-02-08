@@ -9,13 +9,14 @@ import { requireAuth, unauthorizedResponse, forbiddenResponse } from '@lib/api/a
  */
 async function isAdmin(auth: NonNullable<Awaited<ReturnType<typeof requireAuth>>>): Promise<boolean> {
   try {
-    const { data: profile } = await (auth.supabase as any)
-      .from('user_profiles')
+    const { data: profile } = await auth.supabase
+      .from('user_profiles' as never)
       .select('role')
       .eq('id', auth.user.id)
       .single();
     
-    return (profile as any)?.role === 'admin' || (profile as any)?.role === 'super_admin';
+    const profileData = profile as { role: string } | null;
+    return profileData?.role === 'admin' || profileData?.role === 'super_admin';
   } catch {
     return false;
   }
@@ -47,7 +48,7 @@ export async function POST(request: NextRequest) {
     
     // Verificar se as tabelas já existem
     const { data: existingTables, error: checkError } = await supabase
-      .rpc('check_table_exists' as any, { table_name: 'projects' })
+      .rpc('check_table_exists' as never, { table_name: 'projects' })
     
     if (checkError) {
       logger.info('⚠️ [SETUP-DB] Não foi possível verificar tabelas existentes, prosseguindo...', { component: 'API: setup-database' })
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
       );
     `
 
-    const { error: createError } = await supabase.rpc('exec_sql' as any, { 
+    const { error: createError } = await supabase.rpc('exec_sql' as never, { 
       query: createProjectsTable 
     })
 

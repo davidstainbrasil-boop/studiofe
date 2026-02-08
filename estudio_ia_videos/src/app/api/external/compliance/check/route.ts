@@ -396,7 +396,7 @@ export async function POST(request: NextRequest) {
     // Note: external_api_usage is a valid table but not in generated types
     try {
       await supabaseAdmin
-        .from('external_api_usage' as any)
+        .from('external_api_usage' as never)
         .insert({
           user_id: session.user.id,
           api_type: 'compliance',
@@ -410,7 +410,7 @@ export async function POST(request: NextRequest) {
             passed: results.passed
           },
           createdAt: new Date().toISOString()
-        } as any)
+        } as Record<string, unknown>)
     } catch (usageLogError) {
       logger.warn('Failed to log compliance check usage', { component: 'API: external/compliance/check' })
     }

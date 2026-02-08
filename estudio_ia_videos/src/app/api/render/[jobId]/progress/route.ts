@@ -160,12 +160,9 @@ export async function GET(request: NextRequest, ctx: { params: { id?: string } }
       }
 
       // BullMQ QueueEvents requires generic listener type - use type assertion for compatibility
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      queueEvents.on('progress', onProgress as any)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      queueEvents.on('completed', onCompleted as any)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      queueEvents.on('failed', onFailed as any)
+      queueEvents.on('progress', onProgress as (...args: unknown[]) => void)
+      queueEvents.on('completed', onCompleted as (...args: unknown[]) => void)
+      queueEvents.on('failed', onFailed as (...args: unknown[]) => void)
 
       const keepAlive = setInterval(() => {
         controller.enqueue(encoder.encode(': keep-alive\n\n'))
@@ -173,12 +170,9 @@ export async function GET(request: NextRequest, ctx: { params: { id?: string } }
 
       const close = () => {
         clearInterval(keepAlive)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        queueEvents.removeListener('progress', onProgress as any)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        queueEvents.removeListener('completed', onCompleted as any)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        queueEvents.removeListener('failed', onFailed as any)
+        queueEvents.removeListener('progress', onProgress as (...args: unknown[]) => void)
+        queueEvents.removeListener('completed', onCompleted as (...args: unknown[]) => void)
+        queueEvents.removeListener('failed', onFailed as (...args: unknown[]) => void)
         queueEvents.close().catch(() => undefined)
         controller.close()
       }

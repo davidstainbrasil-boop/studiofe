@@ -48,8 +48,8 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = getSupabaseForRequest(request) as any
-    const { data: { user } } = await supabase.auth.getUser() as any
+    const supabase = getSupabaseForRequest(request)
+    const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -59,7 +59,7 @@ export async function GET(
       .from('projects')
       .select('*, timeline:timelines(*)')
       .eq('id', params.id)
-      .single() as any
+      .single()
     
     if (error || !project) {
       return NextResponse.json({
@@ -223,7 +223,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = getSupabaseForRequest(request) as any
+    const supabase = getSupabaseForRequest(request)
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
@@ -308,7 +308,7 @@ export async function PUT(
             .single()
         
         const currentSettings = (typeof currentProject?.render_settings === 'object' && currentProject?.render_settings !== null)  
-          ? (currentProject as any).render_settings as Record<string, unknown>
+          ? (currentProject as unknown as { render_settings: Record<string, unknown> }).render_settings
           : {}
         updateData.render_settings = { ...currentSettings, ...validatedData.settings }
     }
@@ -350,7 +350,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = getSupabaseForRequest(request) as any
+    const supabase = getSupabaseForRequest(request)
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {

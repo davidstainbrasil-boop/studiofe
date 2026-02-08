@@ -551,8 +551,8 @@ const handlePost = async (req: NextRequest) => {
     });
 
     // Track export in analytics - using any cast as table is created via migration
-    const { error: analyticsError } = await (supabase as any)
-      .from('scorm_exports')
+    const { error: analyticsError } = await supabase
+      .from('scorm_exports' as never)
       .insert({
         user_id: user.id,
         project_id: projectId,

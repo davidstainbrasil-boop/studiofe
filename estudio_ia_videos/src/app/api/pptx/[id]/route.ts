@@ -79,7 +79,7 @@ export async function GET(
     }
 
     // Verificar permissões
-    const project = (upload as any).projects as Record<string, unknown>
+    const project = (upload as unknown as { projects: Record<string, unknown> }).projects
     const hasPermission = project.owner_id === user.id || 
                          (project.collaborators as string[])?.includes(user.id) ||
                          project.isPublic
@@ -215,7 +215,7 @@ export async function PUT(
     await supabase
       .from('project_history')
       .insert({
-        projectId: (upload as any).project_id,
+        projectId: upload.project_id,
         userId: user.id,
         action: 'update',
         entity_type: 'pptx_upload',
@@ -280,7 +280,7 @@ export async function DELETE(
       )
     }
 
-    const project = (upload as any).projects as Record<string, unknown>
+    const project = (upload as unknown as { projects: Record<string, unknown> }).projects
     const hasPermission = project.owner_id === user.id || 
                          (project.collaborators as string[])?.includes(user.id)
 
@@ -328,7 +328,7 @@ export async function DELETE(
     await supabase
       .from('project_history')
       .insert({
-        projectId: (upload as any).project_id,
+        projectId: (upload as unknown as { project_id: string | null }).project_id,
         userId: user.id,
         action: 'delete',
         entity_type: 'pptx_upload',

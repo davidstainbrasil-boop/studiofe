@@ -21,7 +21,7 @@ const updateSlideSchema = slideSchema.partial().omit({ upload_id: true })
 // GET - Listar slides de um upload
 export async function GET(request: NextRequest) {
   try {
-    const supabase = getSupabaseForRequest(request) as any
+    const supabase = getSupabaseForRequest(request)
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
     if (authError || !user) {
@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
     const authorizedSlides = []
     
     for (const slide of slides || []) {
-      const upload = (slide as any).pptx_uploads as Record<string, unknown>
+      const upload = (slide as unknown as { pptx_uploads: Record<string, unknown> }).pptx_uploads
       
       // Buscar projeto para verificar permissões
       const { data: project } = await supabase
@@ -85,7 +85,8 @@ export async function GET(request: NextRequest) {
         .single()
 
       if (project) {
-        let hasPermission = (project as any).owner_id === user.id || (project as any).is_public
+        const proj = project as unknown as { owner_id: string; is_public: boolean; user_id: string }
+        let hasPermission = proj.user_id === user.id || proj.is_public
 
         if (!hasPermission) {
           const { data: collaborator } = await supabase
@@ -118,7 +119,7 @@ export async function GET(request: NextRequest) {
 // POST - Criar novo slide
 export async function POST(request: NextRequest) {
   try {
-    const supabase = getSupabaseForRequest(request) as any
+    const supabase = getSupabaseForRequest(request)
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
     if (authError || !user) {
@@ -150,8 +151,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const project = (upload as any).projects as Record<string, unknown>
-    let hasPermission = (project as any).user_id === user.id
+    const project = (upload as unknown as { projects: Record<string, unknown> }).projects
+    const proj = project as unknown as { user_id: string }
+    let hasPermission = proj.user_id === user.id
 
     if (!hasPermission) {
       const { data: collaboratorData } = await supabase
@@ -197,7 +199,7 @@ export async function POST(request: NextRequest) {
         ...validatedData,
         transition_type: validatedData.transitionType,
         thumbnail_url: validatedData.thumbnailUrl,
-        properties: validatedData.properties as any
+        properties: validatedData.properties as Record<string, unknown>
       })
       .select()
       .single()
@@ -225,7 +227,7 @@ export async function POST(request: NextRequest) {
     await supabase
       .from('project_history')
       .insert({
-        projectId: (upload as any).project_id,
+        projectId: (upload as unknown as { project_id: string }).project_id,
         userId: user.id,
         action: 'create',
         entity_type: 'pptx_slide',
@@ -254,7 +256,7 @@ export async function POST(request: NextRequest) {
 // PUT - Reordenar slides
 export async function PUT(request: NextRequest) {
   try {
-    const supabase = getSupabaseForRequest(request) as any
+    const supabase = getSupabaseForRequest(request)
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
     if (authError || !user) {
@@ -336,7 +338,7 @@ export async function PUT(request: NextRequest) {
     await supabase
       .from('project_history')
       .insert({
-        projectId: (upload as any).project_id,
+        projectId: (upload as unknown as { project_id: string }).project_id,
         userId: user.id,
         action: 'update',
         entity_type: 'pptx_slides',

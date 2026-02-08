@@ -196,14 +196,14 @@ async function processRenderJob(
     
     // Fase 1: Preparar assets
     logger.info(`📦 [Video Render v2] Preparando assets para job ${jobId}...`, { component: 'API: v1/render/video-production-v2' });
-    const assets = await pipeline.prepareAssets(slides as any[]);
+    const assets = await pipeline.prepareAssets(slides as unknown[]);
     job.progress = 30;
     renderJobs.set(jobId, job);
 
     // Fase 2-4: Executar pipeline completo (métodos individuais foram removidos, usar execute())
     logger.info(`🎬 [Video Render v2] Executando pipeline completo para job ${jobId}...`, { component: 'API: v1/render/video-production-v2' });
     // TODO: Extrair projectId dos slides ou timeline, ou passar como parâmetro
-    const projectId = (slides[0] as any)?.projectId || `temp-${jobId}`;
+    const projectId = (slides[0] as unknown as { projectId?: string })?.projectId || `temp-${jobId}`;
     const outputPath = await pipeline.execute({
       projectId,
       jobId,

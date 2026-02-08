@@ -1,4 +1,6 @@
 
+import { logger } from '@/lib/logger';
+
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 interface TranscriptionSegment {

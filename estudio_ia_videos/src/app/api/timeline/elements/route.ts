@@ -74,7 +74,7 @@ const moveElementSchema = z.object({
 // GET - Listar elementos de uma track ou projeto
 export async function GET(request: NextRequest) {
   try {
-    const supabase = getSupabaseForRequest(request) as any
+    const supabase = getSupabaseForRequest(request)
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
     if (authError || !user) {
@@ -183,7 +183,7 @@ export async function GET(request: NextRequest) {
 // POST - Criar novo elemento
 export async function POST(request: NextRequest) {
   try {
-    const supabase = getSupabaseForRequest(request) as any
+    const supabase = getSupabaseForRequest(request)
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
     if (authError || !user) {
@@ -293,7 +293,7 @@ export async function POST(request: NextRequest) {
           ...defaultProperties,
           effects: validatedData.effects || [],
           transitions: validatedData.transitions || {}
-        } as any
+        } as Record<string, unknown>
       })
       .select()
       .single()
@@ -320,7 +320,7 @@ export async function POST(request: NextRequest) {
         description: `Elemento ${element.type || 'desconhecido'} adicionado à timeline`,
         changes: {
           created_element: element
-        } as any
+        } as Record<string, unknown>
       })
 
     return NextResponse.json(element, { status: 201 })
@@ -344,7 +344,7 @@ export async function POST(request: NextRequest) {
 // PUT - Mover elemento para outra track ou posição
 export async function PUT(request: NextRequest) {
   try {
-    const supabase = getSupabaseForRequest(request) as any
+    const supabase = getSupabaseForRequest(request)
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
     if (authError || !user) {
@@ -475,7 +475,7 @@ export async function PUT(request: NextRequest) {
               duration: existingElement.duration
             },
             new_data: updateData
-          } as any
+          } as Record<string, unknown>
         })
     }
 

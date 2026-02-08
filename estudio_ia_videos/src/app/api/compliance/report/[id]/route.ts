@@ -26,7 +26,7 @@ export async function GET(
     // TODO: Se nr_compliance_records não existir no schema Prisma, usar Supabase diretamente
     let record;
     try {
-      record = await (prisma as any).nr_compliance_records.findUnique({
+      record = await (prisma as unknown as { nr_compliance_records: { findUnique(args: unknown): Promise<unknown> } }).nr_compliance_records.findUnique({
       where: { id: recordId },
       include: {
         projects: {

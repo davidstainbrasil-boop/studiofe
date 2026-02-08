@@ -116,6 +116,23 @@ function generateWordPressShortcode(videoId: string, options: {
   return `[estudio_ia_video id="${videoId}" autoplay="${autoplay}" controls="${controls}"]`;
 }
 
+// OEmbed response shape
+interface OEmbedResponse {
+  type: string;
+  version: string;
+  title: string;
+  author_name: string;
+  author_url: string;
+  provider_name: string;
+  provider_url: string;
+  thumbnail_url: string;
+  thumbnail_width: number;
+  thumbnail_height: number;
+  html: string;
+  width: number;
+  height: number;
+}
+
 // Generate oEmbed JSON
 function generateOEmbedResponse(
   videoId: string,
@@ -128,7 +145,7 @@ function generateOEmbedResponse(
     width?: number;
     height?: number;
   }
-): object {
+): OEmbedResponse {
   const {
     title = 'Vídeo de Treinamento',
     authorName = 'Estúdio IA Vídeos',
@@ -185,7 +202,7 @@ export async function POST(req: NextRequest) {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
                     `${req.nextUrl.protocol}//${req.nextUrl.host}`;
 
-    let embedCode: string | object;
+    let embedCode: string | OEmbedResponse;
 
     switch (format) {
       case 'html':
@@ -212,8 +229,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Track embed generation
-    const { error: analyticsError } = await (supabase as any)
-      .from('embed_analytics')
+    const { error: analyticsError } = await supabase
+      .from('embed_analytics' as never)
       .insert({
         user_id: user.id,
         video_id: videoId,
@@ -292,15 +309,15 @@ export async function GET(req: NextRequest) {
   if (format === 'xml') {
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <oembed>
-  <type>${(oembedResponse as any).type}</type>
-  <version>${(oembedResponse as any).version}</version>
-  <title>${(oembedResponse as any).title}</title>
-  <author_name>${(oembedResponse as any).author_name}</author_name>
-  <provider_name>${(oembedResponse as any).provider_name}</provider_name>
-  <provider_url>${(oembedResponse as any).provider_url}</provider_url>
-  <width>${(oembedResponse as any).width}</width>
-  <height>${(oembedResponse as any).height}</height>
-  <html><![CDATA[${(oembedResponse as any).html}]]></html>
+  <type>${oembedResponse.type}</type>
+  <version>${oembedResponse.version}</version>
+  <title>${oembedResponse.title}</title>
+  <author_name>${oembedResponse.author_name}</author_name>
+  <provider_name>${oembedResponse.provider_name}</provider_name>
+  <provider_url>${oembedResponse.provider_url}</provider_url>
+  <width>${oembedResponse.width}</width>
+  <height>${oembedResponse.height}</height>
+  <html><![CDATA[${oembedResponse.html}]]></html>
 </oembed>`;
 
     return new NextResponse(xml, {

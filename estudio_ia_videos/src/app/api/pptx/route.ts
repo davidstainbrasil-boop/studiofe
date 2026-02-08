@@ -177,7 +177,7 @@ export async function POST(request: NextRequest) {
     if (slidesToInsert.length > 0) {
       const { error: slidesError } = await supabaseAdmin
         .from('slides')
-        .insert(slidesToInsert as any[]);
+        .insert(slidesToInsert as Record<string, unknown>[]);
 
       if (slidesError) {
         logger.error('Failed to insert slides:', new Error(slidesError.message), { component: 'API: pptx' });

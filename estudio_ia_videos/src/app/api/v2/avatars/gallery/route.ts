@@ -90,13 +90,13 @@ export async function GET(request: NextRequest) {
     }
 
     const avatars = await prisma.avatar_models.findMany({
-        where: whereClause as any,
+        where: whereClause as never,
         skip: (page - 1) * limit,
         take: limit,
         orderBy: { updated_at: 'desc' } // Ordenar por mais recente
     });
 
-    const totalCount = await prisma.avatar_models.count({ where: whereClause as any });
+    const totalCount = await prisma.avatar_models.count({ where: whereClause as never });
 
     // Obter estatísticas do pipeline
     const stats = await avatar3DPipeline.getPipelineStats()

@@ -88,7 +88,7 @@ export async function POST(req: Request) {
       throw new Error('Supabase client não inicializado');
     }
 
-    const insertPayload = {
+    const insertPayload: Record<string, unknown> = {
       user_id: userId,
       project_id: payload.projectId,
       status: 'queued',
@@ -96,8 +96,7 @@ export async function POST(req: Request) {
       attempts: 1,
       render_settings: { slides: payload.slides.length, quality: payload.quality, tts_voice: payload.tts_voice },
     };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error: insertErr, data } = await (supabase.from('render_jobs').insert(insertPayload as any) as any).select('id,status,project_id,created_at,progress,render_settings,attempts,duration_ms').single();
+    const { error: insertErr, data } = await (supabase.from('render_jobs') as unknown as { insert: (v: Record<string, unknown>) => { select: (cols: string) => { single: () => Promise<{ data: unknown; error: { message: string } | null }> } } }).insert(insertPayload).select('id,status,project_id,created_at,progress,render_settings,attempts,duration_ms').single();
 
     if (insertErr) {
       recordError('DB_ERROR');
@@ -160,8 +159,8 @@ export async function GET(req: Request) {
     }
     const { limit: dbLimit, offset, status: statusFilter, projectId, sortBy, sortOrder } = queryParams;
     const sortColumn = sortBy === "updatedAt" ? "updated_at" : sortBy === 'status' ? 'status' : "created_at";
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let query = (supabase.from('render_jobs') as any)
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call -- Supabase dynamic query builder
+    let query = supabase.from('render_jobs' as never)
       .select('id,status,project_id,created_at,updated_at,progress,render_settings,attempts,duration_ms')
       .eq("user_id", userId)
       .order(sortColumn, { ascending: sortOrder === 'asc' })

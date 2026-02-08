@@ -95,7 +95,7 @@ export async function GET(
       let collaborator = null;
       try {
         const result = await supabase
-          .from('collaborators' as any)
+          .from('collaborators' as never)
           .select("userId")
           .eq("projectId", track.projectId)
           .eq("userId", user.id)
@@ -175,7 +175,7 @@ export async function PUT(
 
     if (!hasPermission) {
       const { data: collaboratorData } = await supabase
-        .from('collaborators' as any)
+        .from('collaborators' as never)
         .select('role')
         .eq("projectId", existingTrack.projectId)
         .eq("userId", user.id)
@@ -300,7 +300,7 @@ export async function DELETE(
 
     if (!hasPermission) {
       const { data: collaboratorData } = await supabase
-        .from('collaborators' as any)
+        .from('collaborators' as never)
         .select('role')
         .eq("projectId", existingTrack.projectId)
         .eq("userId", user.id)

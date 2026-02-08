@@ -120,14 +120,15 @@ export async function GET(request: NextRequest) {
     });
 
     const previousAnalyses = events.map(event => {
-      const data = event.eventData as any;
+      const data = (event.eventData as Record<string, unknown> | null) || {};
+      const result = data.result as Record<string, unknown> | undefined;
       return {
         id: event.id,
         projectId,
-        type: data.analysisType || 'full',
+        type: (data.analysisType as string) || 'full',
         completedAt: event.createdAt,
-        overallScore: data.result?.overallScore || 0,
-        confidence: data.result?.confidence || 0,
+        overallScore: (result?.overallScore as number) || 0,
+        confidence: (result?.confidence as number) || 0,
         status: 'completed'
       };
     });

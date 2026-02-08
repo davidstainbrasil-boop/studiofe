@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { warmCache } from '@lib/cache/cache-warming'
-import { getServerSession } from 'next-auth'
+import { requireAdmin } from '@/lib/auth/admin-middleware'
 import { logger } from '@lib/logger'
 
 /**
@@ -11,18 +11,10 @@ import { logger } from '@lib/logger'
  */
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession()
-    
-    // Check authentication (admin only)
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const { isAdmin, response: authResponse } = await requireAdmin(req)
+    if (!isAdmin) return authResponse!
 
-    // TODO: Add proper admin role check
-    // For now, accept any authenticated user
-    // In production, check: session.user.role === 'admin'
-
-    logger.info('Manual cache warming triggered', { userId: session.user.id })
+    logger.info('Manual cache warming triggered')
 
     // Trigger cache warming
     await warmCache()

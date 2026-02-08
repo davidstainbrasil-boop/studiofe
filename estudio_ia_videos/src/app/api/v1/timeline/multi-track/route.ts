@@ -74,8 +74,8 @@ interface TimelineRecord {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = getSupabaseForRequest(request) as any;
-    const { data: { user }, error: authError } = await supabase.auth.getUser() as any;
+    const supabase = getSupabaseForRequest(request);
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
       return NextResponse.json(
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
       .from('projects')
       .select('id, user_id')
       .eq('id', projectId)
-      .single() as any;
+      .single();
 
     if (projectError || !project) {
       return NextResponse.json(
@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
         .from('timelines')
         .select('id, version')
         .eq("project_id", projectId)
-        .single() as any;
+        .single();
 
     let timeline: TimelineRecord;
     
@@ -164,7 +164,7 @@ export async function POST(request: NextRequest) {
             .from('timelines')
             .update({
                 tracks: tracks,
-                settings: toJsonValue(settings) as any,
+                settings: toJsonValue(settings),
                 total_duration: Math.ceil(totalDuration || 0),
                 version: newVersion,
                 updated_at: new Date().toISOString()
@@ -172,7 +172,7 @@ export async function POST(request: NextRequest) {
             .eq("project_id", projectId)
             .eq("version", currentVersion) // ✅ VERSION CHECK - prevents concurrent updates
             .select()
-            .single() as any;
+            .single();
 
         // Check if update succeeded (version conflict)
         if (error || !data) {
@@ -199,12 +199,12 @@ export async function POST(request: NextRequest) {
             .insert({
                 projectId: projectId,
                 tracks: tracks,
-                settings: toJsonValue(settings) as any,
+                settings: toJsonValue(settings),
                 total_duration: Math.ceil(totalDuration || 0),
                 version: 1
             })
             .select()
-            .single() as any;
+            .single();
             
         if (error) throw error;
         timeline = data as TimelineRecord;
@@ -278,7 +278,7 @@ function calculateComplexity(tracks: Track[]): string {
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = getSupabaseForRequest(request) as any;
+    const supabase = getSupabaseForRequest(request);
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
@@ -386,7 +386,7 @@ export async function PUT(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
   try {
-    const supabase = getSupabaseForRequest(request) as any;
+    const supabase = getSupabaseForRequest(request);
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
@@ -480,7 +480,7 @@ export async function DELETE(request: NextRequest) {
  */
 export async function PATCH(request: NextRequest) {
   try {
-    const supabase = getSupabaseForRequest(request) as any;
+    const supabase = getSupabaseForRequest(request);
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {

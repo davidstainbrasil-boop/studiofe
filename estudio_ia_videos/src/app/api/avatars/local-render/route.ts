@@ -16,7 +16,7 @@ import { prisma } from '@lib/prisma';
 import { EnhancedTTSService } from '@lib/enhanced-tts-service';
 import { S3UploadEngine } from '@lib/s3-upload-engine';
 import { LocalAvatarRenderer } from '@lib/local-avatar-renderer';
-import { Prisma } from '@prisma/client';
+import { Prisma, JobStatus } from '@prisma/client';
 import { logger } from '@lib/logger';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
@@ -32,6 +32,30 @@ interface AvatarJobData {
   lipSyncData?: unknown;
   fileSize?: number;
 }
+
+// Type for accessing processing_queue which may not exist in generated Prisma types
+interface ProcessingQueueRecord {
+  id: string;
+  jobType?: string;
+  status: string;
+  priority?: number;
+  progress?: number;
+  jobData?: Record<string, unknown>;
+  errorMessage?: string | null;
+  createdAt?: Date;
+  updatedAt?: Date;
+  [key: string]: unknown;
+}
+
+interface ProcessingQueueModel {
+  create(args: { data: Record<string, unknown> }): Promise<ProcessingQueueRecord>;
+  findUnique(args: { where: { id: string } }): Promise<ProcessingQueueRecord | null>;
+  update(args: { where: { id: string }; data: Record<string, unknown> }): Promise<ProcessingQueueRecord>;
+}
+
+type PrismaWithProcessingQueue = typeof prisma & {
+  processing_queue: ProcessingQueueModel;
+};
 
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -85,13 +109,13 @@ export async function POST(request: NextRequest) {
     // TODO: Se processing_queue não existir no schema Prisma, usar render_jobs ou outra tabela
     let job;
     try {
-      job = await (prisma as any).processing_queue.create({
+      job = await (prisma as unknown as PrismaWithProcessingQueue).processing_queue.create({
       data: {
         id: crypto.randomUUID(),
         jobType: 'avatar-3d-render',
         status: 'pending',
         priority: 1,
-        jobData: jobData as any
+        jobData: jobData as Record<string, unknown>
       }
     });
     } catch (dbError) {
@@ -106,7 +130,7 @@ export async function POST(request: NextRequest) {
           userId: 'system',
           status: 'queued',
           progress: 0,
-          renderSettings: jobData as any
+          renderSettings: jobData as Prisma.InputJsonValue
         }
       });
     }
@@ -117,7 +141,7 @@ export async function POST(request: NextRequest) {
       .catch(error => {
         logger.error(`[Job ${job.id}] Erro no processamento`, error instanceof Error ? error : new Error(String(error)), { component: 'API: avatars/local-render' });
         // Atualiza job com erro
-        ((prisma as any).processing_queue || prisma.render_jobs).update({
+        ((prisma as unknown as PrismaWithProcessingQueue).processing_queue || (prisma.render_jobs as unknown as ProcessingQueueModel)).update({
           where: { id: job.id },
           data: {
             status: 'failed',
@@ -126,7 +150,7 @@ export async function POST(request: NextRequest) {
               ...jobData,
               error: error.message,
               errorDetails: { stack: error.stack }
-            } as any
+            } as Record<string, unknown>
           }
         }).catch((err: unknown) => logger.error('Erro ao atualizar job falho', err instanceof Error ? err : new Error(String(err)), { component: 'API: avatars/local-render' }));
       });
@@ -162,7 +186,7 @@ export async function GET(request: NextRequest) {
     // TODO: Se processing_queue não existir no schema Prisma, usar render_jobs
     let job;
     try {
-      job = await (prisma as any).processing_queue.findUnique({
+      job = await (prisma as unknown as PrismaWithProcessingQueue).processing_queue.findUnique({
       where: { id: jobId }
     });
     } catch (dbError) {
@@ -177,7 +201,7 @@ export async function GET(request: NextRequest) {
             ...job,
             jobData: job.renderSettings || {},
             errorMessage: job.errorMessage || null
-          } as any;
+          } as ProcessingQueueRecord;
         }
       } catch {
         job = null;
@@ -239,7 +263,7 @@ async function processAvatarRendering(
   }
   const updateJob = async (data: JobUpdateData) => {
     try {
-      await (prisma as any).processing_queue.update({
+      await (prisma as unknown as PrismaWithProcessingQueue).processing_queue.update({
         where: { id: jobId },
         data
       });
@@ -248,9 +272,9 @@ async function processAvatarRendering(
       await prisma.render_jobs.update({
         where: { id: jobId },
         data: {
-          status: data.status as any,
+          status: data.status as JobStatus | undefined,
           progress: data.progress,
-          renderSettings: (data.jobData || {}) as any,
+          renderSettings: (data.jobData || {}) as Prisma.InputJsonValue,
           errorMessage: data.errorMessage || null
         }
       });
@@ -260,14 +284,14 @@ async function processAvatarRendering(
   // Helper para buscar job com fallback
   const getJob = async () => {
     try {
-      return await (prisma as any).processing_queue.findUnique({ where: { id: jobId } });
+      return await (prisma as unknown as PrismaWithProcessingQueue).processing_queue.findUnique({ where: { id: jobId } });
     } catch {
       const job = await prisma.render_jobs.findUnique({ where: { id: jobId } });
       if (job) {
         return {
           ...job,
           jobData: job.renderSettings || {}
-        } as any;
+        } as ProcessingQueueRecord;
       }
       return null;
     }
@@ -283,7 +307,7 @@ async function processAvatarRendering(
     await updateJob({
       status: 'processing',
       progress: 10,
-      jobData: currentData as any
+      jobData: currentData as Record<string, unknown>
     });
 
     const ttsResult = await new EnhancedTTSService().synthesize({
@@ -308,14 +332,14 @@ async function processAvatarRendering(
 
     await updateJob({
       progress: 25,
-      jobData: currentData as any
+      jobData: currentData as Record<string, unknown>
     });
 
     // ETAPA 2: Processar lip sync e animação
     currentData = { ...currentData, currentStage: 'lipsync' };
     await updateJob({
       progress: 40,
-      jobData: currentData as any
+      jobData: currentData as Record<string, unknown>
     });
 
     // Mock LipSync
@@ -325,7 +349,7 @@ async function processAvatarRendering(
     currentData = { ...currentData, currentStage: 'rendering' };
     await updateJob({
       progress: 60,
-      jobData: currentData as any
+      jobData: currentData as Record<string, unknown>
     });
 
     // Use renderSequence
@@ -339,7 +363,7 @@ async function processAvatarRendering(
     currentData = { ...currentData, currentStage: 'encoding' };
     await updateJob({
       progress: 85,
-      jobData: currentData as any
+      jobData: currentData as Record<string, unknown>
     });
 
     const uploadResult = await s3.upload({
@@ -363,7 +387,7 @@ async function processAvatarRendering(
     await updateJob({
       status: 'completed',
       progress: 100,
-      jobData: currentData as any
+      jobData: currentData as Record<string, unknown>
     });
 
     logger.info(`[Job ${jobId}] ✅ Renderização concluída com sucesso`, { component: 'API: avatars/local-render' });

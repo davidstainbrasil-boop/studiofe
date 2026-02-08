@@ -104,7 +104,7 @@ async function getBillingStats() {
     const { prisma } = await import('@/lib/prisma');
     
     // Aggregations might need casting if types aren't fully generated yet
-    const usageAgg = await (prisma as any).user_usage.aggregate({
+    const usageAgg = await (prisma as unknown as { user_usage: { aggregate: (args: Record<string, unknown>) => Promise<{ _sum: { rendersCount: number | null; storageUsedBytes: number | null } }> } }).user_usage.aggregate({
         _sum: {
             rendersCount: true,
             storageUsedBytes: true
@@ -112,7 +112,7 @@ async function getBillingStats() {
     });
 
     const userPlans = await prisma.users.groupBy({
-        by: ['plan_tier'] as any, // Cast to any to avoid Enum issues if not fully regenerated
+        by: ['plan_tier'] as never, // Cast to never to avoid Enum issues if not fully regenerated
         _count: {
             id: true
         }

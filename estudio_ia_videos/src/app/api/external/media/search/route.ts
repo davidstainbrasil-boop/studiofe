@@ -327,8 +327,8 @@ export async function GET(request: NextRequest) {
     })
 
     // Get provider configuration
-    const { data: providerData, error: providerError } = await (supabaseAdmin as any)
-      .from('user_external_api_configs')
+    const { data: providerData, error: providerError } = await supabaseAdmin
+      .from('user_external_api_configs' as never)
       .select('*')
       .eq("user_id", session.user.id)
       .eq('api_type', 'media')
@@ -346,8 +346,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Check rate limits
-    const { data: usage, error: usageError } = await (supabaseAdmin as any)
-      .from('external_api_usage')
+    const { data: usage, error: usageError } = await supabaseAdmin
+      .from('external_api_usage' as never)
       .select('*')
       .eq("user_id", session.user.id)
       .eq('api_type', 'media')
@@ -378,8 +378,8 @@ export async function GET(request: NextRequest) {
 
     // Record usage
     try {
-      await (supabaseAdmin as any)
-        .from('external_api_usage')
+      await supabaseAdmin
+        .from('external_api_usage' as never)
         .insert({
           user_id: session.user.id,
           api_type: 'media',
@@ -416,7 +416,7 @@ export async function GET(request: NextRequest) {
               cost: searchCost,
               timestamp: new Date().toISOString()
             }
-          } as any,
+          } as Record<string, unknown>,
           createdAt: new Date().toISOString()
         })
     } catch (analyticsError) {

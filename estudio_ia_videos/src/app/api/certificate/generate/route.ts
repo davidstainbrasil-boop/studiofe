@@ -243,8 +243,8 @@ export async function POST(req: NextRequest) {
 
     // Store certificate record in database
     // Note: Using generic from() call as table is created via migration
-    const { error: insertError } = await (supabase as any)
-      .from('certificates')
+    const { error: insertError } = await supabase
+      .from('certificates' as never)
       .insert({
         user_id: user.id,
         certificate_number: certificateNumber,
@@ -348,8 +348,8 @@ export async function GET(req: NextRequest) {
 
     // Look up certificate - using any cast as table is created via migration
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase dynamic table query
-    const { data: certificate, error } = await (supabase as any)
-      .from('certificates')
+    const { data: certificate, error } = await supabase
+      .from('certificates' as never)
       .select('*')
       .eq('certificate_number', certificateNumber)
       .single() as { data: CertificateRecord | null; error: { message?: string; code?: string } | null };

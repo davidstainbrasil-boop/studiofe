@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
 
     if (!hasPermission) {
       const { data: collaborator } = await supabase
-        .from('collaborators' as any)
+        .from('collaborators' as never)
         .select("userId")
         .eq("projectId", projectId)
         .eq("userId", user.id)
@@ -174,7 +174,7 @@ export async function POST(request: NextRequest) {
 
     if (!hasPermission) {
       const { data: collaboratorData } = await supabase
-        .from('collaborators' as any)
+        .from('collaborators' as never)
         .select('role')
         .eq("projectId", validatedData.projectId)
         .eq("userId", user.id)
@@ -262,7 +262,7 @@ export async function POST(request: NextRequest) {
         description: `Track "${track.name}" criada`,
         changes: {
           created_track: track
-        } as any
+        } as Record<string, unknown>
       })
 
     return NextResponse.json(track, { status: 201 })
@@ -344,7 +344,7 @@ export async function PUT(request: NextRequest) {
 
     if (!hasPermission) {
       const { data: collaboratorData } = await supabase
-        .from('collaborators' as any)
+        .from('collaborators' as never)
         .select('role')
         .eq("projectId", projectId)
         .eq("userId", user.id)
@@ -385,7 +385,7 @@ export async function PUT(request: NextRequest) {
         description: 'Tracks reordenadas',
         changes: {
           reordered_tracks: tracks
-        } as any
+        } as Record<string, unknown>
       })
 
     return NextResponse.json({ message: 'Tracks reordenadas com sucesso' })

@@ -139,8 +139,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user's media provider configurations
-    const { data: userProviders, error } = await (supabaseAdmin as any)
-      .from('user_external_api_configs')
+    const { data: userProviders, error } = await supabaseAdmin
+      .from('user_external_api_configs' as never)
       .select('*')
       .eq("user_id", session.user.id)
       .eq('api_type', 'media')
@@ -164,8 +164,8 @@ export async function GET(request: NextRequest) {
         updated_at: new Date().toISOString()
       }))
 
-      const { data: createdConfigs, error: createError } = await (supabaseAdmin as any)
-        .from('user_external_api_configs')
+      const { data: createdConfigs, error: createError } = await supabaseAdmin
+        .from('user_external_api_configs' as never)
         .insert(defaultConfigs)
         .select()
 
@@ -246,8 +246,8 @@ export async function POST(request: NextRequest) {
     const providerId = `${providerData.type}-${Date.now()}`
 
     // Create new media provider configuration
-    const { data: newProvider, error } = await (supabaseAdmin as any)
-      .from('user_external_api_configs')
+    const { data: newProvider, error } = await supabaseAdmin
+      .from('user_external_api_configs' as never)
       .insert({
         user_id: session.user.id,
         api_type: 'media',
@@ -280,7 +280,7 @@ export async function POST(request: NextRequest) {
               provider_type: providerData.type,
               timestamp: new Date().toISOString()
             }
-          } as any,
+          } as Record<string, unknown>,
           createdAt: new Date().toISOString()
         })
     } catch (analyticsError) {

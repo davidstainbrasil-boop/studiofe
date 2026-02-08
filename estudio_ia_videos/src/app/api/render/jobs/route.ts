@@ -35,6 +35,11 @@ const RenderJobQuerySchema = z.object({
 })
 
 export async function GET(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   try {
     const { searchParams } = new URL(request.url)
     const query = RenderJobQuerySchema.parse(Object.fromEntries(searchParams))
@@ -151,7 +156,7 @@ export async function POST(request: NextRequest) {
     const activeRender = await prisma.render_jobs.findFirst({
       where: {
         projectId: jobData.projectId,
-        status: { in: ['queued', 'processing'] as any[] }
+        status: { in: ['queued', 'processing'] as JobStatus[] }
       }
     })
 
@@ -190,7 +195,7 @@ export async function POST(request: NextRequest) {
         id: jobId,
         projectId: jobData.projectId,
         userId: effectiveUserId,
-        status: 'queued' as any,
+        status: 'queued' as JobStatus,
         progress: 0,
         renderSettings: renderJobData as object
       }
@@ -226,7 +231,7 @@ export async function POST(request: NextRequest) {
             job_id: createdJob.id,
             type: jobData.type,
             settings: renderJobData
-          } as any
+          } as Record<string, unknown>
         }
       })
     } catch (historyError) {

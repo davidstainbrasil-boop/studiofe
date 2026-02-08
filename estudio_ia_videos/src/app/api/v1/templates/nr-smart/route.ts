@@ -33,11 +33,11 @@ interface NRTemplate {
  */
 function convertToV1Format(dbTemplate: ServiceNRTemplate): NRTemplate {
   const title = String(dbTemplate.title || '');
-  const nrNumber = String((dbTemplate as any).nr_number || (dbTemplate as any).nrNumber || '');
+  const nrNumber = String(dbTemplate.nr_code || dbTemplate.nrNumber || '');
   const description = String(dbTemplate.description || '');
-  const durationSeconds = Number((dbTemplate as any).duration_seconds || (dbTemplate as any).durationSeconds || 0);
-  const slideCount = Number((dbTemplate as any).slide_count || (dbTemplate as any).slideCount || 0);
-  const updatedAt = String((dbTemplate as any).updated_at || (dbTemplate as any).updatedAt || new Date().toISOString());
+  const durationSeconds = Number(dbTemplate.durationSeconds || 0);
+  const slideCount = Number(dbTemplate.slideCount || 0);
+  const updatedAt = String(dbTemplate.createdAt || new Date().toISOString());
 
   return {
     id: String(dbTemplate.id),

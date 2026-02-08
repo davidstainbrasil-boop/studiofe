@@ -71,8 +71,8 @@ export async function POST(request: NextRequest) {
         id: crypto.randomUUID(),
         timelineId: currentTimeline.id,
         version: currentTimeline.version,
-        tracks: toJsonValue((currentTimeline.tracks ?? []) as any),
-        settings: toJsonValue((currentTimeline.settings ?? {}) as any),
+        tracks: toJsonValue((currentTimeline.tracks ?? []) as unknown[]),
+        settings: toJsonValue((currentTimeline.settings ?? {}) as Record<string, unknown>),
         totalDuration: currentTimeline.totalDuration || 0,
         userId: session.user.id,
         description: `Auto-backup antes de restaurar v${snapshot.version}`,
@@ -85,8 +85,8 @@ export async function POST(request: NextRequest) {
     const restoredTimeline = await prisma.timelines.update({
       where: { id: snapshot.timelineId },
       data: {
-        tracks: toJsonValue((snapshot.tracks ?? []) as any),
-        settings: toJsonValue((snapshot.settings ?? {}) as any),
+        tracks: toJsonValue((snapshot.tracks ?? []) as unknown[]),
+        settings: toJsonValue((snapshot.settings ?? {}) as Record<string, unknown>),
         totalDuration: snapshot.totalDuration || 0,
         version: { increment: 1 },
         updatedAt: new Date(),

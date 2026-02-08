@@ -7,6 +7,23 @@ import { notificationManager } from '@lib/notifications/notification-manager'
 import { unlink } from 'fs/promises'
 import { logger } from '@lib/logger'
 
+/** Shape of pptx_uploads rows accessed in this route */
+interface PptxUpload {
+  id: string
+  project_id: string
+  original_filename?: string
+  preview_url?: string
+  file_path?: string
+  status?: string
+  [key: string]: unknown
+}
+
+/** Shape of project row for permission check */
+interface ProjectPermission {
+  user_id: string
+  is_public: boolean
+}
+
 // GET /api/pptx/upload/[id] - Buscar status e metadados de um upload específico
 export const GET = withRateLimit(RATE_LIMITS.AUTH_API, 'user')(async function GET(request: NextRequest, context?: { params: Record<string, string> }) {
   try {
@@ -23,7 +40,7 @@ export const GET = withRateLimit(RATE_LIMITS.AUTH_API, 'user')(async function GE
     }
 
     // Buscar upload
-    const { data: upload, error } = await supabase
+    const { data: uploadRaw, error } = await supabase
       .from('pptx_uploads')
       .select('*')
       .eq('id', uploadId)
@@ -34,24 +51,27 @@ export const GET = withRateLimit(RATE_LIMITS.AUTH_API, 'user')(async function GE
       return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 })
     }
 
-    if (!upload) {
+    if (!uploadRaw) {
       return NextResponse.json({ error: 'Upload não encontrado' }, { status: 404 })
     }
+
+    const upload = uploadRaw as unknown as PptxUpload
 
     // Verificar permissões no projeto
     const { data: project } = await supabase
       .from('projects')
       .select('user_id, is_public')
-      .eq('id', (upload as any).project_id)
+      .eq('id', upload.project_id)
       .single()
 
-    let hasPermission = project && ((project as any).user_id === user.id || (project as any).is_public)
+    const proj = project as unknown as ProjectPermission | null
+    let hasPermission = proj && (proj.user_id === user.id || proj.is_public)
 
-    if (!hasPermission && project) {
+    if (!hasPermission && proj) {
       const { data: collaborator } = await supabase
         .from('project_collaborators')
         .select("userId")
-        .eq("projectId", (upload as any).project_id)
+        .eq("projectId", upload.project_id)
         .eq("userId", user.id)
         .single()
       
@@ -91,30 +111,33 @@ export const DELETE = withRateLimit(RATE_LIMITS.AUTH_STRICT, 'user')(async funct
     }
 
     // Buscar upload para validar e obter dados
-    const { data: upload } = await supabase
+    const { data: uploadRaw } = await supabase
       .from('pptx_uploads')
       .select('*')
       .eq('id', uploadId)
       .single()
 
-    if (!upload) {
+    if (!uploadRaw) {
       return NextResponse.json({ error: 'Upload não encontrado' }, { status: 404 })
     }
+
+    const upload = uploadRaw as unknown as PptxUpload
 
     // Verificar permissões no projeto
     const { data: project } = await supabase
       .from('projects')
       .select('user_id, is_public')
-      .eq('id', (upload as any).project_id)
+      .eq('id', upload.project_id)
       .single()
 
-    let hasPermission = project && ((project as any).user_id === user.id || (project as any).is_public)
+    const proj = project as unknown as ProjectPermission | null
+    let hasPermission = proj && (proj.user_id === user.id || proj.is_public)
 
-    if (!hasPermission && project) {
+    if (!hasPermission && proj) {
       const { data: collaboratorData } = await supabase
         .from('project_collaborators')
         .select('role')
-        .eq("projectId", (upload as any).project_id)
+        .eq("projectId", upload.project_id)
         .eq("userId", user.id)
         .single()
       
@@ -135,13 +158,13 @@ export const DELETE = withRateLimit(RATE_LIMITS.AUTH_STRICT, 'user')(async funct
       .eq('upload_id', uploadId)
 
     // Limpar preview assets (S3 ou cache local)
-    if ((upload as any).preview_url && typeof (upload as any).preview_url === 'string') {
+    if (upload.preview_url && typeof upload.preview_url === 'string') {
       try {
-        if ((upload as any).preview_url.startsWith('/api/s3/serve/')) {
-          const key = decodeURIComponent((upload as any).preview_url.replace('/api/s3/serve/', ''))
+        if (upload.preview_url.startsWith('/api/s3/serve/')) {
+          const key = decodeURIComponent(upload.preview_url.replace('/api/s3/serve/', ''))
           await S3StorageService.deleteFile(key)
-        } else if ((upload as any).preview_url.startsWith('/api/videos/cache/')) {
-          const filename = decodeURIComponent((upload as any).preview_url.replace('/api/videos/cache/', ''))
+        } else if (upload.preview_url.startsWith('/api/videos/cache/')) {
+          const filename = decodeURIComponent(upload.preview_url.replace('/api/videos/cache/', ''))
           videoCache.delete(filename)
         }
       } catch (err) {
@@ -150,9 +173,9 @@ export const DELETE = withRateLimit(RATE_LIMITS.AUTH_STRICT, 'user')(async funct
     }
 
     // Remover arquivo original do disco, se existir
-    if ((upload as any).file_path && typeof (upload as any).file_path === 'string') {
+    if (upload.file_path && typeof upload.file_path === 'string') {
       try {
-        await unlink((upload as any).file_path)
+        await unlink(upload.file_path)
       } catch (err) {
         logger.warn('Failed to remove temp upload file', err instanceof Error ? err : new Error(String(err)));
       }
@@ -165,7 +188,7 @@ export const DELETE = withRateLimit(RATE_LIMITS.AUTH_STRICT, 'user')(async funct
       .eq('id', uploadId)
 
     // Notificar sala do projeto (opcional)
-    const roomId = `project:${(upload as any).project_id}:uploads`
+    const roomId = `project:${upload.project_id}:uploads`
     notificationManager.sendNotification({
       id: `upload_${uploadId}_deleted_${Date.now()}`,
       type: 'system_alert',
@@ -174,7 +197,7 @@ export const DELETE = withRateLimit(RATE_LIMITS.AUTH_STRICT, 'user')(async funct
       priority: 'low',
       timestamp: Date.now(),
       roomId,
-      data: { uploadId, projectId: (upload as any).project_id }
+      data: { uploadId, projectId: upload.project_id }
     })
 
     return NextResponse.json({ success: true })

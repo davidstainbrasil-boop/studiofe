@@ -66,7 +66,7 @@ export const NRTemplatesService = {
 
       return (data as NRTemplate[]) || [];
     } catch (error) {
-      logger.warn('NRTemplatesService.getTemplates using fallback:', error);
+      logger.warn('NRTemplatesService.getTemplates using fallback:', { error: String(error) });
       // Fallback to hardcoded templates
       return NR_TEMPLATES.map(transformHardcodedTemplate);
     }

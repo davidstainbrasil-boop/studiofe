@@ -5,6 +5,21 @@ import { authOptions } from '@lib/auth';
 import { prisma } from '@lib/prisma';
 import { logger } from '@lib/logger';
 
+// Types for optional Prisma models (may not exist in current schema)
+interface VideoExportsModel {
+  findMany: (args: Record<string, unknown>) => Promise<Array<{ duration: number | null }>>;
+  count: (args: Record<string, unknown>) => Promise<number>;
+}
+
+interface CollaboratorsModel {
+  groupBy: (args: Record<string, unknown>) => Promise<Array<{ userId: string }>>;
+}
+
+type PrismaExtended = typeof prisma & {
+  video_exports?: VideoExportsModel;
+  collaborators?: CollaboratorsModel;
+};
+
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
@@ -25,18 +40,18 @@ export async function GET(request: NextRequest) {
       prisma.projects.count({
         where: { 
             userId,
-            status: { not: 'archived' } as any 
+            status: { not: 'archived' as const } 
         }
       }),
       // Render stats (completed video exports)
       // TODO: Se video_exports não existir no schema Prisma, usar render_jobs ou outra tabela
-      (prisma as any).video_exports?.findMany({
+      (prisma as unknown as PrismaExtended).video_exports?.findMany({
           where: { userId, status: 'completed' },
           select: { duration: true }
       }).catch(() => []) || Promise.resolve([]),
       // Collaborators (unique users collaborating on my projects)
       // TODO: Se collaborators não existir no schema Prisma, usar outra abordagem
-      (prisma as any).collaborators?.groupBy({
+      (prisma as unknown as PrismaExtended).collaborators?.groupBy({
           by: ['userId'],
           where: { 
               projects: { userId }
@@ -61,8 +76,8 @@ export async function GET(request: NextRequest) {
     let failedExports = 0;
     try {
       const [total, failed] = await Promise.all([
-        (prisma as any).video_exports?.count({ where: { userId } }).catch(() => 0) || Promise.resolve(0),
-        (prisma as any).video_exports?.count({ where: { userId, status: 'failed' } }).catch(() => 0) || Promise.resolve(0)
+        (prisma as unknown as PrismaExtended).video_exports?.count({ where: { userId } }).catch(() => 0) || Promise.resolve(0),
+        (prisma as unknown as PrismaExtended).video_exports?.count({ where: { userId, status: 'failed' } }).catch(() => 0) || Promise.resolve(0)
       ]);
       totalExports = total || 0;
       failedExports = failed || 0;

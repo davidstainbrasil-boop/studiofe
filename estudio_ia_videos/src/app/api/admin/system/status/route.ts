@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAdmin } from '@lib/auth/admin-middleware';
+import { requireAdmin } from '@/lib/auth/admin-middleware';
 import { getOptionalEnv } from '@lib/env';
 
 export async function GET(request: NextRequest) {
-  // Status básico não requer autenticação (para health checks)
-  // Mas verifica se é admin para retornar informações adicionais
-  const isAdmin = await verifyAdmin(request);
+  const { isAdmin, response: authResponse } = await requireAdmin(request);
+  if (!isAdmin) return authResponse!;
 
   const status = {
     database: 'unhealthy' as 'healthy' | 'degraded' | 'unhealthy',

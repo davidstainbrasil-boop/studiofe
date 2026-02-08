@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     return new Response('Job ID é obrigatório', { status: 400 });
   }
 
-  const supabase = getSupabaseForRequest(request) as any;
+  const supabase = getSupabaseForRequest(request);
   const { data: { user }, error: authError } = await supabase.auth.getUser();
 
   if (authError || !user) {
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
             progress: currentJob.progress,
             error: currentJob.error_message,
             outputUrl: currentJob.output_url,
-            updatedAt: "updated_at" in currentJob ? (currentJob as any).updated_at : undefined
+            updatedAt: "updated_at" in currentJob ? (currentJob as unknown as { updated_at?: string }).updated_at : undefined
           };
 
           const sseData = `data: ${JSON.stringify(data)}\n\n`;

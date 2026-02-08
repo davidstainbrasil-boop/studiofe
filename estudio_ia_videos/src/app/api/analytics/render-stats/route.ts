@@ -112,7 +112,7 @@ export async function GET(req: NextRequest) {
   }
 
   if (params.projectType) {
-    query = query.eq('projects.type', params.projectType as any)
+    query = query.eq('projects.type', params.projectType as string)
   }
 
   if (params.status !== 'all') {

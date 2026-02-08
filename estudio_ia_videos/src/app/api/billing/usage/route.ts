@@ -6,7 +6,7 @@ import { getUserPlan, PLANS } from '@lib/billing/limits';
 
 export async function GET(request: Request) {
     try {
-        const supabase = getSupabaseForRequest(request as any);
+        const supabase = getSupabaseForRequest(request);
         const { data: { user }, error } = await supabase.auth.getUser();
 
         if (error || !user) {

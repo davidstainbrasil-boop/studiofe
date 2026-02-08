@@ -33,7 +33,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = getSupabaseForRequest(request) as any
+    const supabase = getSupabaseForRequest(request)
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
     if (authError || !user) {
@@ -59,7 +59,7 @@ export async function GET(
         )
       `)
       .eq('id', avatarId)
-      .single() as any
+      .single()
 
     if (error || !avatarData) {
       return NextResponse.json(
@@ -111,7 +111,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = getSupabaseForRequest(request) as any
+    const supabase = getSupabaseForRequest(request)
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
     if (authError || !user) {
@@ -138,7 +138,7 @@ export async function PUT(
         )
       `)
       .eq('id', avatarId)
-      .single() as any
+      .single()
 
     if (!avatarData) {
       return NextResponse.json(
@@ -173,7 +173,7 @@ export async function PUT(
         .eq("project_id", avatar.projectId ?? '')
         .eq('name', validatedData.name)
         .neq('id', avatarId)
-        .single() as any
+        .single()
 
       if (existingAvatarConflict) {
         return NextResponse.json(
@@ -237,7 +237,7 @@ export async function PUT(
     // Atualizar avatar
     const { data: updatedAvatar, error: updateError } = await supabase
       .from('avatars_3d')
-      .update(updateData as any)
+      .update(updateData as Record<string, unknown>)
       .eq('id', avatarId)
       .select()
       .single()
@@ -283,7 +283,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = getSupabaseForRequest(request) as any
+    const supabase = getSupabaseForRequest(request)
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
     if (authError || !user) {
@@ -306,7 +306,7 @@ export async function DELETE(
         )
       `)
       .eq('id', avatarId)
-      .single() as any
+      .single()
 
     if (!avatarDataDel) {
       return NextResponse.json(
@@ -338,7 +338,7 @@ export async function DELETE(
     const { count: usedCount } = await supabase
       .from('render_jobs')
       .select('id', { count: 'exact', head: true })
-      .eq("project_id", avatarDel.projectId ?? '') as any
+      .eq("project_id", avatarDel.projectId ?? '')
 
     // Skip timeline check for now since table not typed
     // In production, this would check timeline_elements

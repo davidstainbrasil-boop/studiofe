@@ -24,13 +24,13 @@ export async function GET() {
     const supabase = await createClient()
 
     // Fetch aggregated stats from database
-    // Using 'any' cast to avoid Supabase type issues with select options
-    const projectsResult = await (supabase as any)
-      .from('projects')
+    // Using 'never' cast to avoid Supabase type issues with select options
+    const projectsResult = await supabase
+      .from('projects' as never)
       .select('id', { count: 'exact', head: true })
     
-    const usersResult = await (supabase as any)
-      .from('profiles')
+    const usersResult = await supabase
+      .from('profiles' as never)
       .select('id', { count: 'exact', head: true })
     
     const renderJobsResult = await supabase

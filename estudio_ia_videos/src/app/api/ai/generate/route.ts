@@ -131,9 +131,9 @@ export async function POST(req: NextRequest) {
     });
     
     // Tratar erros da OpenAI
-    if ((error as any).response) {
+    if ((error as unknown as { response?: { data: { error: { message: string } } } }).response) {
          return NextResponse.json(
-            { error: `Erro no provedor de IA: ${(error as any).response.data.error.message}` },
+            { error: `Erro no provedor de IA: ${(error as unknown as { response: { data: { error: { message: string } } } }).response.data.error.message}` },
             { status: 502 }
         );
     }

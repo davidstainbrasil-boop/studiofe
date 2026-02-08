@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
     
     // Prepara conteúdo para análise
     const projectContent = {
-      slides: (project.slides as any[]).map((slide: any) => ({
+      slides: (project.slides as unknown as ProjectSlide[]).map((slide) => ({
         number: slide.orderIndex,
         title: slide.title,
         content: slide.content,
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
         audioPath: null // TODO: Extract from audioConfig if needed
       })),
       totalDuration: (project as { duration?: number }).duration || 0,
-      imageUrls: (project.slides as any[]).map((slide: any) => slide.backgroundImage).filter(Boolean),
+      imageUrls: (project.slides as unknown as ProjectSlide[]).map((slide) => slide.backgroundImage).filter(Boolean),
       audioFiles: []
     }
 
@@ -76,9 +76,12 @@ export async function POST(req: NextRequest) {
 
     // Salva resultado no banco
     // TODO: Se nr_compliance_records não existir no schema Prisma, usar Supabase diretamente ou criar migration
+    interface NrComplianceModel {
+      create: (args: { data: Record<string, unknown> }) => Promise<{ id: string }>;
+    }
     let complianceRecord;
     try {
-      complianceRecord = await (prisma as any).nr_compliance_records.create({
+      complianceRecord = await (prisma as unknown as { nr_compliance_records: NrComplianceModel }).nr_compliance_records.create({
       data: {
         id: crypto.randomUUID(),
 
@@ -92,9 +95,9 @@ export async function POST(req: NextRequest) {
         requirementsTotal: result.requirementsTotal,
         validatedAt: new Date(),
         validatedBy: 'AI',
-        recommendations: (result.recommendations || []) as any,
-        criticalPoints: (result.criticalPoints || []) as any,
-        aiAnalysis: (result.aiAnalysis || {}) as any,
+        recommendations: (result.recommendations || []) as unknown,
+        criticalPoints: (result.criticalPoints || []) as unknown,
+        aiAnalysis: (result.aiAnalysis || {}) as unknown,
         aiScore: result.aiScore,
         confidence: result.confidence
       }
@@ -142,9 +145,12 @@ export async function GET(req: NextRequest) {
 
     // Busca registros de conformidade
     // TODO: Se nr_compliance_records não existir no schema Prisma, usar Supabase diretamente
+    interface NrComplianceFindModel {
+      findMany: (args: { where: Record<string, unknown>; orderBy: Record<string, string> }) => Promise<Array<Record<string, unknown>>>;
+    }
     let records;
     try {
-      records = await (prisma as any).nr_compliance_records.findMany({
+      records = await (prisma as unknown as { nr_compliance_records: NrComplianceFindModel }).nr_compliance_records.findMany({
       where: { projectId },
       orderBy: { createdAt: 'desc' }
     });

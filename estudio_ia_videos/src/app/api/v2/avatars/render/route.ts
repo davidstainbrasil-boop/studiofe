@@ -261,7 +261,7 @@ export async function POST(request: NextRequest) {
             .eq('id', avatarId)
             .single();
          
-         const sourceUrl = (avatarRecord as any)?.imageUrl || 'https://placehold.co/512x512.png'; // Fallback or Error
+         const sourceUrl = (avatarRecord as unknown as { imageUrl?: string })?.imageUrl || 'https://placehold.co/512x512.png'; // Fallback or Error
 
          const talkId = await didService.createTalk({
              sourceImage: sourceUrl,

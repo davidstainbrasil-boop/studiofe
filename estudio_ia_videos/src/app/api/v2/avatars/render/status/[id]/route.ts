@@ -32,6 +32,27 @@ interface LipSyncData {
   };
 }
 
+// Type for avatar_models DB row (not in generated Supabase types)
+interface AvatarModelRow {
+  id: string;
+  name: string;
+  display_name: string | null;
+  category?: string;
+}
+
+// Type for render settings stored as JSON
+interface RenderSettingsData {
+  quality?: string;
+  resolution?: string;
+  rayTracing?: boolean;
+  realTimeLipSync?: boolean;
+  language?: string;
+  audio2FaceEnabled?: boolean;
+  provider?: string;
+  externalId?: string;
+  [key: string]: unknown;
+}
+
 const rateLimiterGet = createRateLimiter(rateLimitPresets.render);
 export async function GET(
   request: NextRequest,
@@ -62,13 +83,13 @@ export async function GET(
     // Buscar informações do avatar do Supabase (já que não está no Prisma types)
     // Cast 'avatar_models' to any to avoid literal type check error if table not in generated types
     const { data: avatarData } = await supabase
-      .from('avatar_models' as any)
+      .from('avatar_models' as never)
       .select('id, name, display_name, category')
       .eq('id', job.avatarModelId)
       .single();
     
     // Safety check for avatarData
-    const avatarRecord = avatarData as any;
+    const avatarRecord = avatarData as unknown as AvatarModelRow | null;
     const avatar: AvatarModelInfo | null = avatarRecord ? {
       id: avatarRecord.id,
       name: avatarRecord.name,
@@ -77,7 +98,7 @@ export async function GET(
     } : null;
 
     const jobData = job;
-    const renderSettings = (jobData.renderSettings || {}) as any;
+    const renderSettings = (jobData.renderSettings || {}) as unknown as RenderSettingsData;
 
     // Calcular métricas
     const currentTime = Date.now()
@@ -164,7 +185,7 @@ export async function GET(
     }
 
     // --- HEYGEN STATUS CHECK START ---
-    const settings = (job.renderSettings || {}) as any;
+    const settings = (job.renderSettings || {}) as unknown as RenderSettingsData;
     if (settings.provider === 'heygen' && job.status === 'processing') {
        try {
            const { heyGenService } = await import('@lib/heygen-service');
@@ -186,11 +207,13 @@ export async function GET(
                        }
                    });
                    // Update local job object for response
-                   (job as any).status = 'completed';
-                   (job as any).outputUrl = heyGenStatus.video_url;
-                   (job as any).thumbnailUrl = heyGenStatus.thumbnail_url;
-                   (job as any).progress = 100;
-                   (job as any).completedAt = new Date();
+                   Object.assign(job, {
+                     status: 'completed' as const,
+                     outputUrl: heyGenStatus.video_url,
+                     thumbnailUrl: heyGenStatus.thumbnail_url,
+                     progress: 100,
+                     completedAt: new Date()
+                   });
                } else if (heyGenStatus.status === 'failed') {
                     await prisma.render_jobs.update({
                        where: { id: jobId },
@@ -200,8 +223,10 @@ export async function GET(
                            completedAt: new Date()
                        }
                    });
-                   (job as any).status = 'failed';
-                   (job as any).errorMessage = heyGenStatus.error;
+                   Object.assign(job, {
+                     status: 'failed' as const,
+                     errorMessage: heyGenStatus.error
+                   });
                }
            }
        } catch (err) {
@@ -312,7 +337,7 @@ export async function POST(
         await prisma.render_jobs.update({
           where: { id: jobId },
           data: {
-            status: 'queued' as any,
+            status: 'queued',
             progress: 0,
             errorMessage: null,
             completedAt: null,

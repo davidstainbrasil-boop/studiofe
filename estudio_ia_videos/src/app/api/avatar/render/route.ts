@@ -173,7 +173,7 @@ export async function GET(request: NextRequest) {
     const jobs = await prisma.render_jobs.findMany({
       where: {
         userId: user.id,
-        ...(status ? { status: status as any } : {})
+        ...(status ? { status: status as 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled' | 'queued' } : {})
       },
       orderBy: { createdAt: 'desc' },
       take: limit

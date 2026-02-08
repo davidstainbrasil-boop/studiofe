@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { LipSyncOrchestrator } from '@/lib/sync/lip-sync-orchestrator'
+import { LipSyncOrchestrator, LipSyncProvider } from '@/lib/sync/lip-sync-orchestrator'
 import { logger } from '@/lib/logger'
 import { createClient } from '@/lib/supabase/server'
 import { z } from 'zod'
@@ -53,7 +53,7 @@ const handlePost = async (request: NextRequest) => {
       text,
       audioPath,
       voice,
-      forceProvider: provider === 'auto' ? undefined : (provider as any)
+      forceProvider: provider === 'auto' ? undefined : (provider as LipSyncProvider)
     })
 
     const phonemes = result.result.phonemes || []

@@ -60,7 +60,7 @@ async function getHandler(req: NextRequest) {
       interface ReportEvent { id: string; eventData: Record<string, unknown>; createdAt: Date; }
       
       return NextResponse.json({
-        reports: (reports as any[]).map((report: any) => {
+        reports: reports.map((report) => {
           const data = report.eventData as Record<string, unknown>;
           return {
             id: report.id,
@@ -175,7 +175,7 @@ async function getHandler(req: NextRequest) {
           label: reportData.period.label,
           status: 'success',
           ...reportData
-        } as unknown as any
+        } as Prisma.InputJsonValue
       }
     });
 
@@ -286,7 +286,7 @@ async function postHandler(req: NextRequest) {
             customFilters,
             createdBy: session.user.id,
             createdAt: new Date().toISOString()
-          } as unknown as any
+          } as Prisma.InputJsonValue
         }
       });
 
@@ -318,7 +318,7 @@ async function postHandler(req: NextRequest) {
           customFilters,
           createdBy: session.user.id,
           createdAt: new Date().toISOString()
-        } as unknown as any
+        } as Prisma.InputJsonValue
       }
     });
 

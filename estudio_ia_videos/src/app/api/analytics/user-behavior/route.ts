@@ -299,17 +299,17 @@ async function getHandler(req: NextRequest) {
         FROM analytics_events
         WHERE created_at >= ${startDate}
         AND event_data->>'userAgent' IS NOT NULL
-        ${targetUserId ? (Prisma as any).sql`AND user_id = ${targetUserId}::uuid` : (Prisma as any).sql``}
+        ${targetUserId ? Prisma.sql`AND user_id = ${targetUserId}::uuid` : Prisma.sql``}
         GROUP BY event_data->>'userAgent'
         ORDER BY count DESC
         LIMIT 100
-      ` as any[];
+      ` as Array<{ ua: string; count: bigint }>;
 
       const devices = { desktop: 0, mobile: 0, tablet: 0 };
       const browsers = new Map<string, number>();
       const os = new Map<string, number>();
 
-      (userAgents as Array<{ ua: string; count: number }>).forEach((item) => {
+      (userAgents as Array<{ ua: string; count: bigint }>).forEach((item) => {
         const ua = item.ua.toLowerCase();
         const count = Number(item.count);
 

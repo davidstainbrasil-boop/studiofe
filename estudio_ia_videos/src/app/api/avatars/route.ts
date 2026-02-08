@@ -190,7 +190,7 @@ export async function POST(request: NextRequest) {
         modelUrl: avatarData.modelUrl,
         thumbnailUrl: avatarData.thumbnailUrl,
         metadata: avatarData.metadata
-      } as any)
+      } as Record<string, unknown>)
       .select()
       .single()
 

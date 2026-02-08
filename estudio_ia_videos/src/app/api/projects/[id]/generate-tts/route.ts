@@ -46,8 +46,8 @@ export async function POST(
 
     for (const slide of slides) {
       // Extract text
-      const content = slide.content as any;
-      const text = content?.text || content?.script || (slide as any).notes;
+      const content = slide.content as Record<string, unknown> | null;
+      const text = (content?.text as string) || (content?.script as string) || (slide as unknown as { notes?: string }).notes;
 
       if (!text) {
         currentTime += (slide.duration || 5);
@@ -60,13 +60,13 @@ export async function POST(
         const audioUrl = await generateAndUploadTTSAudio(
            text, 
            fileName, 
-           ((slide as any).audio_config as any)?.voice_id || 'default'
+           ((slide as unknown as { audio_config?: { voice_id?: string } }).audio_config)?.voice_id || 'default'
         );
 
         // Update Slide Record
         await supabase
           .from('slides')
-          .update({ audio_url: audioUrl } as any)
+          .update({ audio_url: audioUrl } as Record<string, unknown>)
           .eq('id', slide.id);
 
         // Create Timeline Audio Element
@@ -80,7 +80,7 @@ export async function POST(
         audioElements.push({
             id: `audio-${slide.id}-${Date.now()}`,
             type: 'audio',
-            name: `Narração Slide ${(slide as any).order_index}`,
+            name: `Narração Slide ${(slide as unknown as { order_index?: number }).order_index}`,
             startTime: currentTime,
             duration: slide.duration || 5, // Ideally this should match audio length
             content: audioUrl,
@@ -105,7 +105,7 @@ export async function POST(
       .single();
 
     if (timeline) {
-      const tracks = timeline.tracks as any[];
+      const tracks = timeline.tracks as Array<{ type: string; name: string; elements: unknown[]; [key: string]: unknown }>;
       const audioTrackIndex = tracks.findIndex(t => t.type === 'audio' || t.name.includes('Locução'));
       
       if (audioTrackIndex >= 0) {
