@@ -6,6 +6,7 @@ import { randomUUID } from 'crypto';
 import { cachedQuery, CacheTier } from '@lib/cache/redis-cache';
 import { rateLimit, getUserTier } from '@/middleware/rate-limiter';
 import { getSupabaseForRequest } from '@lib/supabase/server';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // Schema de validação para projetos
 const ProjectSchema = z.object({
@@ -30,6 +31,9 @@ const ProjectSchema = z.object({
 // GET - Listar projetos (usando Prisma para banco local)
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'projects-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     // Apply rate limiting
     const supabase = getSupabaseForRequest(request);
     const { data: { user } } = await supabase.auth.getUser();

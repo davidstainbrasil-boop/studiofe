@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth/admin-middleware';
 import { getOptionalEnv } from '@lib/env';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function GET(request: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(request, 'admin-system-status-get', 30);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   const { isAdmin, response: authResponse } = await requireAdmin(request);
   if (!isAdmin) return authResponse!;
 

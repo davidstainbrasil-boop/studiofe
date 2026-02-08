@@ -3,9 +3,13 @@ import { NextResponse } from 'next/server';
 import { getSupabaseForRequest } from '@lib/supabase/server';
 import { getUsageSummary } from '@lib/billing/usage';
 import { getUserPlan, PLANS } from '@lib/billing/limits';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function GET(request: Request) {
     try {
+    const rateLimitBlocked = await applyRateLimit(request, 'billing-usage-get', 30);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
         const supabase = getSupabaseForRequest(request);
         const { data: { user }, error } = await supabase.auth.getUser();
 

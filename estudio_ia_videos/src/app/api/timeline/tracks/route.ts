@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { Prisma } from '@prisma/client'
 import { logger } from '@lib/logger'
 import { type Json } from '@lib/supabase/types'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // Interfaces para tipagem de queries
 interface TrackOrderIndex {
@@ -57,6 +58,9 @@ const reorderTracksSchema = z.object({
 // GET - Listar tracks de um projeto
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'timeline-tracks-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const supabase = getSupabaseForRequest(request)
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 

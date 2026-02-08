@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextResponse , NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // Memória simples para agregação (reset a cada deployment)
 const vitals: { samples: number; metrics: Record<string, number[]> } = {
@@ -28,7 +29,10 @@ export async function POST(req: Request) {
   }
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(req, 'metrics-web-vitals-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   const summary: Record<string, { count: number; p50: number; p90: number }> = {};
   for (const [k, values] of Object.entries(vitals.metrics)) {
     const sorted = [...values].sort((a, b) => a - b);

@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseForRequest } from '@lib/supabase/server';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -74,6 +75,9 @@ function getTimeRange(period: string): TimeRange {
 }
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
+    const rateLimitBlocked = await applyRateLimit(request, 'analytics-usage-stats-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   const { searchParams } = new URL(request.url);
   const period = searchParams.get('period') || '30d';
   

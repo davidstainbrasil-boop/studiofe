@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { prisma } from '@lib/db'
 import { logger } from '@lib/logger'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // Rate limit configurations (should match actual middleware config)
 const RATE_LIMIT_CONFIG = {
@@ -21,6 +22,9 @@ const RATE_LIMIT_CONFIG = {
  */
 export async function GET(req: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(req, 'admin-rate-limits-status-get', 30);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const session = await getServerSession()
     
     if (!session?.user?.id) {

@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseForRequest } from '@lib/supabase/server'
 import { webhookManager } from '@lib/webhooks-system-real'
 import { logger } from '@lib/logger'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 /**
  * GET /api/webhooks/[id]/stats
@@ -18,6 +19,9 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'webhooks-stats-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const supabase = getSupabaseForRequest(request)
     const { data: { session } } = await supabase.auth.getSession()
     

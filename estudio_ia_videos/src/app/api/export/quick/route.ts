@@ -73,7 +73,10 @@ export async function POST(request: NextRequest) {
  * GET /api/export/quick
  * Lista presets disponíveis
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(req, 'export-quick-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   return NextResponse.json({
     success: true,
     presets: PLATFORM_PRESETS,

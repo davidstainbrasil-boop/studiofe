@@ -8,6 +8,7 @@ import { videoQueueManager } from '@/lib/queue/video-queue-manager'
 import { z } from 'zod'
 import { logger } from '@/lib/logger'
 import { requireAdmin } from '@/lib/auth/admin-middleware'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic'
 
@@ -22,6 +23,9 @@ const querySchema = z.object({
 })
 
 export async function GET(request: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(request, 'admin-queue-jobs-get', 30);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   const { isAdmin, response } = await requireAdmin(request)
   if (!isAdmin) return response!
 

@@ -11,6 +11,7 @@ import { workflowManager } from '@lib/workflow/unified-workflow-manager'
 import { Prisma } from '@prisma/client'
 import { z } from 'zod'
 import { logger } from '@lib/logger'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // Schemas de validação
 const CanvasDataSchema = z.object({
@@ -327,6 +328,9 @@ export async function PUT(request: NextRequest) {
 // GET - Obter dados do canvas
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'editor-canvas-save-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

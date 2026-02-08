@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseForRequest } from '@lib/supabase/server';
 import os from 'os';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -73,6 +74,9 @@ function formatUptime(seconds: number): string {
 }
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
+    const rateLimitBlocked = await applyRateLimit(request, 'system-info-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   // Check authentication
   const supabase = getSupabaseForRequest(request);
   const { data: { user }, error: authError } = await supabase.auth.getUser();

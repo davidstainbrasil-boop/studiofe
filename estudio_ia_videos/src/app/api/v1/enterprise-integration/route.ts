@@ -4,9 +4,13 @@ import { logger } from '@lib/logger'
 import { isProduction } from '@lib/utils/mock-guard'
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'v1-enterprise-integration-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const erpIntegrations = [
       {
         id: 'sap-001',

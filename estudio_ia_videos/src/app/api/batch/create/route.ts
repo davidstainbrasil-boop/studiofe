@@ -9,6 +9,7 @@ import { batchSystem } from '@lib/batch-processing-system';
 import type { BatchJobType } from '@lib/batch-processing-system';
 import { logger } from '@lib/logger';
 import { getServerSession } from 'next-auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 /**
  * POST /api/batch/create
@@ -78,6 +79,9 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'batch-create-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     // Auth guard
     const session = await getServerSession();
     if (!session?.user?.id) {

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 interface Slide {
   id: string
@@ -52,6 +53,9 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'templates-export-get', 20);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const { id } = params;
     const { searchParams } = new URL(request.url);
     const format = searchParams.get('format') || 'json';

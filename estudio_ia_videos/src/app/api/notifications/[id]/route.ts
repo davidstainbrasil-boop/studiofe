@@ -9,6 +9,7 @@ import { authOptions } from '@lib/auth'
 import { supabaseAdmin } from '@lib/services/server'
 import { z } from 'zod'
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // Validation schema for notification actions
 const NotificationActionSchema = z.object({
@@ -20,6 +21,9 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'notifications-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     // Check authentication
     const session = await getServerSession(authOptions)
     if (!session?.user) {

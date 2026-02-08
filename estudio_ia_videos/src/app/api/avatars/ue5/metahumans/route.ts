@@ -1,14 +1,18 @@
 
-import { NextResponse } from 'next/server'
+import { NextResponse , NextRequest } from 'next/server'
 import { ue5AvatarEngine } from '@lib/engines/ue5-avatar-engine'
 import { logger } from '@lib/logger'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 /**
  * GET /api/avatars/ue5/metahumans
  * Listar MetaHumans disponíveis
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(req, 'avatars-ue5-metahumans-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const metahumans = ue5AvatarEngine.getAvailableMetaHumans()
     
     // Ensure metahumans is an array (defensive programming)

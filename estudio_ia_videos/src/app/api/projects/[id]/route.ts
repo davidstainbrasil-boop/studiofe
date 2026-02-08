@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getSupabaseForRequest } from '@lib/supabase/server'
 import { logger } from '@lib/logger'
+import { applyRateLimit } from '@/lib/rate-limit'
 
 // Type definitions for PPTX slides and timeline elements
 interface PptxSlide {
@@ -48,6 +49,9 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'projects-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const supabase = getSupabaseForRequest(request)
     const { data: { user } } = await supabase.auth.getUser()
 

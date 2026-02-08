@@ -1,9 +1,13 @@
-import { NextResponse } from 'next/server';
+import { NextResponse , NextRequest } from 'next/server';
 import { heyGenService } from '@lib/heygen-service';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(req, 'heygen-voices-get', 30);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const voices = await heyGenService.listVoices();
     return NextResponse.json({ voices });
   } catch (error) {

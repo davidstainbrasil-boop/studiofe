@@ -4,6 +4,7 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { z } from 'zod'
 import { createRenderQueueEvents } from '@lib/queue/render-queue'
 import type { Database } from '@lib/supabase/types'
+import { applyRateLimit } from '@/lib/rate-limit';
 interface RenderJobWithProject {
   id: string
   project_id: string
@@ -38,6 +39,9 @@ function sseHeaders() {
 }
 
 export async function GET(request: NextRequest, ctx: { params: { id?: string } }) {
+    const rateLimitBlocked = await applyRateLimit(request, 'render-progress-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   const parsed = paramsSchema.safeParse(ctx.params)
   if (!parsed.success) {
     return new Response(JSON.stringify({ error: 'Parâmetros inválidos' }), {

@@ -14,6 +14,7 @@ import path from 'path'
 import { logger } from '@lib/logger';
 import { prisma } from '@lib/db';
 import { requireAuth, unauthorizedResponse } from '@lib/api/auth-middleware';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 const rateLimiterPost = createRateLimiter(rateLimitPresets.render);
 export async function POST(request: NextRequest) {
@@ -388,6 +389,9 @@ export async function POST(request: NextRequest) {
 
 const rateLimiterGet = createRateLimiter(rateLimitPresets.authenticated);
 export async function GET(request: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(request, 'v2-avatars-render-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   return rateLimiterGet(request, async (request: NextRequest) => {
   try {
     const { searchParams } = new URL(request.url)

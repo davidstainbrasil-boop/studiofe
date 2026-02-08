@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@lib/supabase/server';
 import { logger } from '@/lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 const ASSET_BUCKET = 'assets';
 
@@ -29,6 +30,9 @@ function getAssetType(filename: string): 'video' | 'image' | 'audio' | null {
 
 export async function GET(req: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(req, 'storage-assets-get', 30);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const supabase = createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 

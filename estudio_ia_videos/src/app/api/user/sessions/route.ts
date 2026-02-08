@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { headers } from 'next/headers';
 import { logger } from '@/lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 /**
  * User Sessions API
@@ -53,8 +54,11 @@ function parseUserAgent(ua: string): { device: string; browser: string; os: stri
 }
 
 // GET - List sessions
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(req, 'user-sessions-get', 30);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const supabase = await createClient();
     
     const { data: { user }, error: authError } = await supabase.auth.getUser();

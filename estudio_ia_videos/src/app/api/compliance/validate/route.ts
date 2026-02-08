@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@lib/logger';
 import { getSupabaseForRequest } from '@lib/supabase/server';
 import { SmartComplianceValidator } from '@lib/compliance/smart-validator';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
@@ -134,6 +135,9 @@ export async function PUT(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'compliance-validate-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const supabase = getSupabaseForRequest(request);
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 

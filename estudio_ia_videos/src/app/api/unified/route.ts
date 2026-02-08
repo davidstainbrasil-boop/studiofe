@@ -20,6 +20,7 @@ import { prisma } from '@lib/prisma'
 import { z } from 'zod'
 import { workflowManager, StepData } from '@lib/workflow/unified-workflow-manager'
 import { logger } from '@lib/logger'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // Schemas de validação
 const ProjectCreateSchema = z.object({
@@ -40,6 +41,9 @@ const ProjectUpdateSchema = z.object({
 // GET - Obter status do workflow
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'unified-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

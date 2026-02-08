@@ -12,6 +12,7 @@ import { AnalyticsTracker } from '@lib/analytics/analytics-tracker'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@lib/auth'
 import { getOrgId, isAdmin, getUserId } from '@lib/auth/utils';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 interface AnalyticsData {
   funnel: {
@@ -60,6 +61,9 @@ interface ProviderPerformance {
  */
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'v1-analytics-advanced-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const session = await getServerSession(authOptions)
     if (!session?.user) {
       return NextResponse.json(

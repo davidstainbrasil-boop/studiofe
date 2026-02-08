@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
 import { assertCan, UserContext } from '@lib/rbac';
 import { supabaseAdmin, fromUntypedTable } from '@lib/supabase/server';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 interface RoleRow { role: string; description?: string }
 
@@ -13,6 +14,9 @@ async function buildUserContext(userId: string): Promise<UserContext> {
 }
 
 export async function GET(req: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(req, 'admin-roles-get', 30);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const ctx = await buildUserContext(session.user.id);

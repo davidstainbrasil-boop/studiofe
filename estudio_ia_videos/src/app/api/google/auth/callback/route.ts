@@ -7,8 +7,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getGoogleAuth } from '@/lib/google/google-auth';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function GET(request: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(request, 'google-auth-callback-get', 20);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   const searchParams = request.nextUrl.searchParams;
   const code = searchParams.get('code');
   const state = searchParams.get('state');

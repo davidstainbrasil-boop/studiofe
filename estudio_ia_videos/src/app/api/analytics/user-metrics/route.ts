@@ -5,6 +5,7 @@ import { prisma } from '@lib/prisma';
 import { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -329,6 +330,9 @@ async function getUsagePatterns(userId: string, timeRange: Date) {
 
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'analytics-user-metrics-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json(

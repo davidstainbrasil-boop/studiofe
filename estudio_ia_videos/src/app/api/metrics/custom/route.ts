@@ -12,6 +12,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { metricsRegistry } from '@lib/observability/custom-metrics';
 import { Logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 const logger = new Logger('MetricsAPI');
 
@@ -34,6 +35,9 @@ function isAuthorized(request: NextRequest): boolean {
 }
 
 export async function GET(request: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(request, 'metrics-custom-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   // Verificação de autorização
   if (!isAuthorized(request)) {
     logger.warn('Unauthorized metrics access attempt', {

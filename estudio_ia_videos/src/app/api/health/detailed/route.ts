@@ -8,6 +8,7 @@ import { createApiLogger, createResponseHeaders } from '@lib/logger-api'
 import { createErrorResponse, DatabaseError, withRetry } from '@lib/error-handling'
 import { createClient } from '@supabase/supabase-js'
 import { getRequiredEnv, getOptionalEnv } from '@lib/env'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 interface HealthCheckResult {
   service: string
@@ -208,6 +209,9 @@ async function checkTTS(): Promise<HealthCheckResult | null> {
  * Returns comprehensive system health status
  */
 export async function GET(request: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(request, 'health-detailed-get', 120);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   const log = createApiLogger(request, 'health-detailed')
   log.logRequestStart()
 

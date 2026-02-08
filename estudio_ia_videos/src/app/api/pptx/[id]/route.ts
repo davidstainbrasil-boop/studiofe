@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { existsSync } from 'fs'
 import { unlink } from 'fs/promises'
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // Tipo para upload com projeto relacionado
 type PptxUploadWithProject = {
@@ -33,6 +34,9 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'pptx-get', 30);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const supabase = getSupabaseForRequest(request)
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 

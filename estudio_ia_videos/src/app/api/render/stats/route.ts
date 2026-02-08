@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
 import { createClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 interface RenderStats {
   totalRenders: number;
@@ -20,7 +21,10 @@ interface RenderStats {
   };
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(req, 'render-stats-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });

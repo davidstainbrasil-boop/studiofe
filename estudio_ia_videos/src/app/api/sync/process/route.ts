@@ -10,6 +10,7 @@ import { createRateLimiter, rateLimitPresets } from '@lib/utils/rate-limit-middl
 import { lipSyncProcessor } from '@lib/sync/lip-sync-processor'
 import { Logger } from '@lib/logger'
 import { getSupabaseForRequest } from '@lib/supabase/server'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 const logger = new Logger('LipSyncAPI')
 
@@ -173,6 +174,9 @@ export async function POST(request: NextRequest) {
 
 const rateLimiterGet = createRateLimiter(rateLimitPresets.authenticated);
 export async function GET(request: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(request, 'sync-process-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   return rateLimiterGet(request, async (request: NextRequest) => {
   try {
     const supabase = getSupabaseForRequest(request)

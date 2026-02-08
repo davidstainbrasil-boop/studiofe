@@ -2,11 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@lib/auth/admin-middleware';
 import { prisma } from '@lib/prisma';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
     try {
+    const rateLimitBlocked = await applyRateLimit(req, 'admin-users-get', 30);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
         const { isAdmin, response } = await requireAdmin(req);
         if (!isAdmin) return response!;
 

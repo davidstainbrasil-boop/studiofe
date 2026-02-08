@@ -15,7 +15,10 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ error: 'Endpoint deprecated. Use /api/render/jobs' }, { status: 410 });
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(req, 'render-video-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   return NextResponse.json({ error: 'Endpoint deprecated. Use /api/render/jobs' }, { status: 410 });
 }
 

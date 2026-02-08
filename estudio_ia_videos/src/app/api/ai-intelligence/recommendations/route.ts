@@ -2,9 +2,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@lib/logger';
 import { getServerSession } from 'next-auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'ai-intelligence-recommendations-get', 30);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     // Auth guard
     const session = await getServerSession();
     if (!session?.user?.id) {

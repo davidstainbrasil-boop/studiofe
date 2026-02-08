@@ -7,12 +7,16 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { logger } from '@/lib/logger'
 import { AvatarRenderOrchestrator } from '@/lib/avatar/avatar-render-orchestrator'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { jobId: string } }
 ) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'v2-avatars-status-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     // 1. Authenticate user
     const supabase = createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()

@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseForRequest } from "@/lib/supabase/server"
 import { logger } from "@/lib/logger"
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const rateLimitBlocked = await applyRateLimit(req, 'render-status-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const supabase = getSupabaseForRequest(req);
     const jobId = params.id;
 

@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { logger } from '@lib/logger';
 import { 
+import { applyRateLimit } from '@/lib/rate-limit';
   NR_TEMPLATES, 
   getTemplateById, 
   getTemplateByNR,
@@ -34,6 +35,9 @@ interface TemplateListItem {
 
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'templates-nr-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const { searchParams } = new URL(request.url);
     const nrNumber = searchParams.get('nr');
     const id = searchParams.get('id');

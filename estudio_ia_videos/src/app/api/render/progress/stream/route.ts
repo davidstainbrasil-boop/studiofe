@@ -8,6 +8,7 @@
 import { NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -26,6 +27,9 @@ interface ProgressUpdate {
 }
 
 export async function GET(request: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(request, 'render-progress-stream-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   const { searchParams } = new URL(request.url);
   const jobId = searchParams.get('jobId');
 

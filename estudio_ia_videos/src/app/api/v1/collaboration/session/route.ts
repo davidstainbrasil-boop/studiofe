@@ -1,6 +1,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
@@ -73,6 +74,9 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'v1-collaboration-session-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const { searchParams } = new URL(request.url);
     const sessionId = searchParams.get('sessionId');
     const userId = searchParams.get('userId');

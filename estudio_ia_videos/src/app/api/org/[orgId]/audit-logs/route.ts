@@ -10,12 +10,16 @@ import { authOptions } from '@lib/auth';
 import { getOrgContext, hasPermission } from '@lib/multi-tenancy/org-context';
 import { getAuditLogs } from '@lib/billing/audit-logger';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function GET(
   req: NextRequest,
   { params }: { params: { orgId: string } }
 ) {
   try {
+    const rateLimitBlocked = await applyRateLimit(req, 'org-audit-logs-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });

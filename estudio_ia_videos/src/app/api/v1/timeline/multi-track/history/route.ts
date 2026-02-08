@@ -11,12 +11,16 @@ import { prisma } from '@lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 /**
  * GET - Retrieve timeline history (all versions)
  */
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'v1-timeline-multi-track-history-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json(

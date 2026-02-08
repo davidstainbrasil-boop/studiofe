@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
 import { headers } from 'next/headers';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // Request validation schema
 const ticketSchema = z.object({
@@ -172,6 +173,9 @@ async function sendAutoReplyEmail(email: string, name: string): Promise<void> {
 // GET - List tickets (admin only)
 export async function GET(req: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(req, 'support-ticket-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const supabase = await createClient();
     
     // Check authentication

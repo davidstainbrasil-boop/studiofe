@@ -10,6 +10,7 @@ import { logger } from '@/lib/monitoring/logger';
 import { getSupabaseForRequest } from '@/lib/supabase/server';
 import { PptxToVideoService } from '@/lib/services/pptx-to-video.service';
 import { rateLimit, getUserTier } from '@/middleware/rate-limiter';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300; // 5 minutes
@@ -141,7 +142,10 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(req, 'pipeline-pptx-to-video-get', 30);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   return NextResponse.json({
     endpoint: 'Pipeline PPTX → Vídeo E2E',
     method: 'POST',

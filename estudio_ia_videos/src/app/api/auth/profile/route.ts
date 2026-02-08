@@ -7,9 +7,13 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { authService } from '@lib/auth/auth-service';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'auth-profile-get', 20);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const token = request.cookies.get('auth-token')?.value;
     
     if (!token) {

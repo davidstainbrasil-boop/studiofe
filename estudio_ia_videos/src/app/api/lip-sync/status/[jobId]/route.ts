@@ -9,6 +9,7 @@ import { Redis } from 'ioredis';
 import { logger } from '@/lib/logger';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
 const lipSyncQueue = new Queue('lip-sync', { connection: redis as unknown as ConnectionOptions });
@@ -34,6 +35,9 @@ export async function GET(
   { params }: { params: { jobId: string } }
 ) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'lip-sync-status-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const { jobId } = params;
 
     logger.info('[API] Checking lip-sync job status', { jobId });

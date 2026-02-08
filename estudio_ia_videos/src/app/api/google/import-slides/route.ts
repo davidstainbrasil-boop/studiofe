@@ -12,12 +12,16 @@ import { createGoogleSlidesConverter } from '@/lib/google/slides-converter';
 import { logger } from '@lib/logger';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 /**
  * GET - List presentations from Google Drive
  */
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'google-import-slides-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     // Get credentials from cookie
     const credentialsCookie = request.cookies.get('google_credentials');
     if (!credentialsCookie) {

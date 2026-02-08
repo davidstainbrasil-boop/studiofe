@@ -11,8 +11,9 @@
  * - Required services available
  */
 
-import { NextResponse } from 'next/server';
+import { NextResponse , NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // Readiness check result interface
 interface ReadinessResult {
@@ -67,7 +68,10 @@ async function checkRedis(): Promise<boolean> {
   }
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(req, 'health-ready-get', 120);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   const startTime = Date.now();
   
   try {

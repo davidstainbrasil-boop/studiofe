@@ -5,6 +5,7 @@ import { SilenceDetector } from '@lib/silence-removal/silence-detector';
 import { logger } from '@lib/logger';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 const UPLOAD_DIR = '/tmp/silence-detection';
 
@@ -60,7 +61,10 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(req, 'silence-detect-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   return NextResponse.json({
     message: 'Silence detection API endpoint',
     methods: ['POST'],

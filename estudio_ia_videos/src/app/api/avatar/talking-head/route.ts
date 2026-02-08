@@ -115,7 +115,10 @@ export async function POST(request: NextRequest) {
  * GET /api/avatar/talking-head
  * Returns available providers and their status
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(req, 'avatar-talking-head-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   const museTalk = getMuseTalkProvider();
   const sadTalker = getSadTalkerProvider();
 

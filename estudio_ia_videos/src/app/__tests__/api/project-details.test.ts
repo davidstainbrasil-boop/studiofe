@@ -9,6 +9,8 @@ jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn()
 }))
 
+jest.mock('@/lib/rate-limit');
+
 const { getSupabaseForRequest } = jest.requireMock('@/lib/supabase/server')
 
 describe('/api/projects/[id]', () => {

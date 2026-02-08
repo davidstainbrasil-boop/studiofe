@@ -9,12 +9,16 @@ import { NextRequest, NextResponse } from 'next/server'
 import { videoCache } from '@lib/video/video-cache'
 import { audioCache } from '@lib/audio-cache'
 import { logger } from '@lib/logger'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { filename: string } }
 ) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'files-cache-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const filename = params.filename
     
     if (!filename) {

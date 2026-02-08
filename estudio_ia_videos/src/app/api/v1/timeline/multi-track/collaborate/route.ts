@@ -10,6 +10,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
 import { logger } from '@lib/logger';
 import { randomUUID } from 'crypto';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // Lock expiration time in minutes
 const LOCK_EXPIRATION_MINUTES = 30;
@@ -192,6 +193,9 @@ export async function POST(req: NextRequest) {
  */
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'v1-timeline-multi-track-collaborate-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json(

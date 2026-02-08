@@ -13,6 +13,7 @@ import { logger } from '@lib/logger'
 import { prisma } from '@lib/db'
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // Interface para tipagem do avatar
 interface AvatarModelInfo {
@@ -58,6 +59,9 @@ export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+    const rateLimitBlocked = await applyRateLimit(request, 'v2-avatars-render-status-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   return rateLimiterGet(request, async (request: NextRequest) => {
   try {
     const jobId = params.id

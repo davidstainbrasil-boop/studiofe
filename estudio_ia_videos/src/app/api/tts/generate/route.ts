@@ -5,7 +5,7 @@ import { RhubarbLipSyncEngine } from '@/lib/sync/rhubarb-lip-sync-engine';
 import { writeFile, unlink } from 'fs/promises';
 import { join } from 'path';
 import { randomUUID } from 'crypto';
-import { checkRateLimit } from '@/lib/rate-limit';
+import { checkRateLimit , applyRateLimit } from '@/lib/rate-limit';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
 
@@ -195,6 +195,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(request, 'tts-generate-get', 30);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   return NextResponse.json({
     success: true,
     data: {

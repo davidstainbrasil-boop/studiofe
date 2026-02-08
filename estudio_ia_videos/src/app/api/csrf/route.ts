@@ -8,12 +8,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateCsrfToken } from '@lib/security/csrf-protection'
 import crypto from 'crypto'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 /**
  * GET /api/csrf
  * Retorna novo token CSRF
  */
 export async function GET(request: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(request, 'csrf-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   // Gera ou recupera um ID de sessão
   const sessionId = request.cookies.get('session-id')?.value || crypto.randomUUID();
   

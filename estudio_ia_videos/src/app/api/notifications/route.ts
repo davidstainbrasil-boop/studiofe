@@ -11,6 +11,7 @@ import { supabaseAdmin } from '@lib/services/server'
 import { fromUntypedTable } from '@lib/supabase/server'
 import { z } from 'zod'
 import { logger } from '@lib/logger'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // Helper para acessar tabela notifications com tipagem
 function notificationsTable() {
@@ -130,6 +131,9 @@ async function getNotificationStats(userId: string, filters: z.infer<typeof Noti
 
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'notifications-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     // Check authentication
     const session = await getServerSession(authOptions)
     if (!session?.user) {

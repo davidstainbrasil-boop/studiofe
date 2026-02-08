@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 import { createClient } from '@/lib/supabase/server';
 import { withPlanGuard } from '@/middleware/with-plan-guard';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // SCORM 1.2 manifest template
 const SCORM_12_MANIFEST = (courseId: string, title: string, description: string) => `<?xml version="1.0" encoding="UTF-8"?>
@@ -597,6 +598,9 @@ export const POST = withPlanGuard(handlePost, {
 });
 
 export async function GET(req: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(req, 'export-scorm-get', 20);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   // Return supported SCORM versions and documentation
   return NextResponse.json({
     supportedVersions: ['1.2', '2004'],

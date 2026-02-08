@@ -14,6 +14,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
 import { analytics } from '@lib/analytics/analytics-standalone';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 /**
  * GET /api/analytics/user
@@ -22,6 +23,9 @@ import { logger } from '@lib/logger';
  */
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'analytics-user-get', 30);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json(

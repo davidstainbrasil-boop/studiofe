@@ -1,6 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextResponse , NextRequest } from 'next/server';
+import { applyRateLimit } from '@/lib/rate-limit';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(req, 'ai-models-get', 30);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   const models = [
     {
       id: 'gpt-4-turbo',

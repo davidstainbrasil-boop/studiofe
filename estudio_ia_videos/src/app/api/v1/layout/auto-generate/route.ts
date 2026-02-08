@@ -257,7 +257,10 @@ function calculateLayoutScore(elements: LayoutElement[], settings?: LayoutSettin
   return Math.min(score, 100)
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(req, 'v1-layout-auto-generate-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   return NextResponse.json({
     message: 'Auto Layout System API',
     version: '1.0.0',

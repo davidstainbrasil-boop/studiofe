@@ -11,12 +11,16 @@ import { authConfig } from '@lib/auth/auth-config';
 import { getOrgContext } from '@lib/multi-tenancy/org-context';
 import { alertManager } from '@lib/alerts/alert-manager';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function GET(
   req: NextRequest,
   { params }: { params: { orgId: string } }
 ) {
   try {
+    const rateLimitBlocked = await applyRateLimit(req, 'org-alerts-statistics-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const session = await getServerSession(authConfig as unknown as AuthOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });

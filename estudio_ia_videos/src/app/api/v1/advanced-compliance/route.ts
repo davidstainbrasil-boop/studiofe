@@ -2,9 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@lib/logger'
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'v1-advanced-compliance-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     // Simulated NR compliance data
     const complianceData = {
       overallScore: 97.2,

@@ -8,9 +8,13 @@
 
 import { NextResponse } from 'next/server';
 import { healthCheckService } from '@lib/monitoring/health-check';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function GET(request: Request) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'health-get', 120);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const { searchParams } = new URL(request.url);
     const full = searchParams.get('full') === 'true';
 

@@ -29,6 +29,8 @@ jest.mock('@/lib/logger', () => ({
   },
 }));
 
+jest.mock('@/lib/rate-limit');
+
 const { GET } = require('../../api/analytics/usage-stats/route');
 const { getSupabaseForRequest } = require('@/lib/supabase/server');
 

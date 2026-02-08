@@ -7,6 +7,7 @@ import { readFile } from 'fs/promises';
 import { NextRequest, NextResponse } from 'next/server';
 import path from 'path';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 const SWAGGER_UI_HTML = `
 <!DOCTYPE html>
@@ -44,6 +45,9 @@ const SWAGGER_UI_HTML = `
 `;
 
 export async function GET(request: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(request, 'docs-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   const { searchParams } = new URL(request.url);
   const format = searchParams.get('format');
 

@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { logger } from '@lib/logger'
 import { getRequiredEnv } from '@lib/env'
 import { createClient as createServerClient } from '@lib/supabase/server'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 const supabaseUrl = getRequiredEnv('NEXT_PUBLIC_SUPABASE_URL')
 const supabaseKey = getRequiredEnv('SUPABASE_SERVICE_ROLE_KEY')
@@ -15,6 +16,9 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseKey)
  */
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'comments-all-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     // Get authenticated user
     const supabase = createServerClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()

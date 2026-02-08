@@ -4,6 +4,7 @@ import { ElevenLabsService } from '@lib/elevenlabs-service'
 import { prisma } from '@lib/prisma'
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // POST - Voice Cloning (Implementação Real)
 export async function POST(request: NextRequest) {
@@ -109,7 +110,10 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(req, 'voice-cloning-clone-get', 30);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   // Retorna capabilities reais
   return NextResponse.json({
     provider: 'ElevenLabs',

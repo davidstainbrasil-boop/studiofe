@@ -14,6 +14,7 @@ import {
 import { logger } from '@lib/logger'
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // Extended template type that combines both interfaces
 interface ExtendedNRTemplate {
@@ -31,6 +32,9 @@ interface ExtendedNRTemplate {
 
 export async function GET(req: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(req, 'templates-nr-expanded-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const category = req.nextUrl.searchParams.get('category')
     const search = req.nextUrl.searchParams.get('search')
     const minDuration = req.nextUrl.searchParams.get('minDuration')

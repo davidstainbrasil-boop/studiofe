@@ -6,9 +6,13 @@
 import { NextRequest, NextResponse } from "next/server"
 import { redisOptimized } from "@/lib/cache/redis-optimized"
 import { logger } from "@/lib/logger"
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'redis-health-get', 120);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     // Health check
     const healthCheck = await redisOptimized.healthCheck()
     

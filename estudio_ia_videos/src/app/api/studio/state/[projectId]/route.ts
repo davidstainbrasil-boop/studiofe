@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
 import { createClient } from '@/lib/supabase/server';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // ============================================================================
 // Schemas
@@ -62,6 +63,9 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
+    const rateLimitBlocked = await applyRateLimit(request, 'studio-state-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   const { projectId } = await params;
 
   try {

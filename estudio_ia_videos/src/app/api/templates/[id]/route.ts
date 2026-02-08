@@ -10,6 +10,7 @@ interface Template {
 import { logger } from '@lib/logger';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // This would be replaced with actual database operations in production
 // For now, we'll use a simple in-memory store that matches the main route
@@ -20,6 +21,9 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'templates-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const { id } = params;
     
     const template = templates.find(t => t.id === id);

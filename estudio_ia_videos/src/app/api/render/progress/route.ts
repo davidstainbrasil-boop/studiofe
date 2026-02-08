@@ -6,8 +6,12 @@
 import { NextRequest } from 'next/server';
 import { getSupabaseForRequest } from '@lib/supabase/server';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function GET(request: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(request, 'render-progress-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   const { searchParams } = new URL(request.url);
   const jobId = searchParams.get('jobId');
 

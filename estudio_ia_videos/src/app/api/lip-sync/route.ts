@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { generateLipSyncVideo, validateLipSyncResources } from '@lib/services/lip-sync-integration';
 import { logger } from '@lib/logger';
 import { withPlanGuard } from '@/middleware/with-plan-guard';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 /**
  * POST /api/lip-sync
@@ -66,6 +67,9 @@ export const POST = withPlanGuard(handlePost, {
  */
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'lip-sync-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const validation = await validateLipSyncResources();
     return NextResponse.json(validation);
   } catch (error) {

@@ -9,12 +9,16 @@ import { prisma } from '@lib/prisma';
 import { getSupabaseForRequest } from '@lib/supabase/server';
 import { logger } from '@lib/logger';
 import { z } from 'zod';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const rateLimitBlocked = await applyRateLimit(req, 'studio-load-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const projectId = params.id;
 
     if (!projectId) {

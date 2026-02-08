@@ -22,6 +22,8 @@ jest.mock('@/lib/supabase/server', () => ({
   getSupabaseForRequest: jest.fn(),
 }));
 
+jest.mock('@/lib/rate-limit');
+
 const { GET } = require('../../api/system/info/route');
 const { getSupabaseForRequest } = require('@/lib/supabase/server');
 

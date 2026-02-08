@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // Type for brand kit stored in user metadata
 interface BrandKit {
@@ -65,8 +66,11 @@ const brandKitSchema = z.object({
   }),
 });
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(req, 'brand-kit-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const supabase = await createClient();
     
     const { data: { user }, error: authError } = await supabase.auth.getUser();

@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { logger } from '@/lib/logger'
 import { cachedQuery } from '@/lib/cache/redis-cache'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic'
 
@@ -73,6 +74,9 @@ interface RenderJobRow {
 
 export async function GET(req: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(req, 'metrics-dashboard-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const supabase = await createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 

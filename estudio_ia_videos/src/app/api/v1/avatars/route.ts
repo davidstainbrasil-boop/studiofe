@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAPIKey, APIKey } from '@/lib/api/api-key-middleware';
 import { withRateLimit } from '@/lib/api/rate-limiter';
 import { getUnifiedAvatarProvider } from '@/lib/avatar-providers/unified-avatar-provider';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 async function handleRequest(request: NextRequest, apiKey: APIKey): Promise<NextResponse> {
   try {
@@ -51,5 +52,8 @@ async function handleRequest(request: NextRequest, apiKey: APIKey): Promise<Next
 }
 
 export async function GET(request: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(request, 'v1-avatars-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   return withRateLimit(request, (req) => withAPIKey(req, handleRequest));
 }

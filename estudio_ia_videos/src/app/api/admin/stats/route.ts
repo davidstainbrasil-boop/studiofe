@@ -5,6 +5,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@lib/auth/auth-options'
 import { logger } from '@lib/logger'
 import { supabaseAdmin } from '@lib/supabase/server'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 async function isAdmin(userId: string | undefined): Promise<boolean> {
   if (!userId) {
@@ -22,6 +23,9 @@ async function isAdmin(userId: string | undefined): Promise<boolean> {
 
 export async function GET(_request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(_request, 'admin-stats-get', 30);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const session = await getServerSession(authOptions)
 
     if (!session?.user?.id) {

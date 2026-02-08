@@ -62,7 +62,10 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(req, 'v1-voice-cloning-generate-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   // Retorna lista de vozes disponíveis
   const voices = [
     {

@@ -106,6 +106,7 @@ const { NextRequest } = require('next/server');
 jest.mock('@/lib/avatar-3d-pipeline')
 jest.mock('@/lib/tts/tts-service')
 jest.mock('@/lib/services/monitoring-service')
+jest.mock('@/lib/rate-limit');
 
 describe('API Endpoints Tests', () => {
   describe('/api/avatars/generate-speech', () => {

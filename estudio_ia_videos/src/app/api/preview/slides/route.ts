@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { logger } from '@lib/logger';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 const slideSchema = z.object({
   id: z.string().optional(),
@@ -177,7 +178,10 @@ function adjustColor(hex: string, amount: number): string {
   return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(req, 'preview-slides-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   return NextResponse.json({
     service: 'Slide Preview API',
     version: '1.0.0',

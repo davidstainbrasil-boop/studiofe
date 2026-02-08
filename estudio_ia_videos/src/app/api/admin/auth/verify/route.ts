@@ -2,9 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { sessionStore } from '@/lib/admin-auth';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'admin-auth-verify-get', 20);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const cookieStore = await cookies();
     const token = cookieStore.get('admin_token')?.value;
 

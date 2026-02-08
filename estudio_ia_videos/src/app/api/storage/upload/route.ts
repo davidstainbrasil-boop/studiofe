@@ -9,6 +9,7 @@ import { storageSystem } from '@lib/storage-system-real';
 import { auditLogger, AuditAction, getRequestMetadata } from '@lib/audit-logging-real';
 import { withRateLimit, RATE_LIMITS } from '@lib/rate-limiter-real';
 import { getServerSession } from 'next-auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 const DEFAULT_BUCKET = 'videos';
 
@@ -77,6 +78,9 @@ export const POST = withRateLimit(RATE_LIMITS.UPLOAD, 'user')(async function POS
 
 export async function GET(req: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(req, 'storage-upload-get', 30);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const session = await getServerSession();
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });

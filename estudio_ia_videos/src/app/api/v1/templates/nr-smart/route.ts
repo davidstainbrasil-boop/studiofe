@@ -6,6 +6,7 @@ import { logger } from '@lib/logger'
 import { AIScriptGeneratorService } from '@lib/ai/script-generator.service'
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 interface NRTemplate {
   id: string
@@ -67,6 +68,9 @@ function convertToV1Format(dbTemplate: ServiceNRTemplate): NRTemplate {
 
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'v1-templates-nr-smart-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const searchParams = request.nextUrl.searchParams
     const category = searchParams.get('category')
     const norma = searchParams.get('norma')

@@ -6,9 +6,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getExportQueue } from '@lib/export/export-queue'
 import { logger } from '@lib/logger'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'v1-export-queue-status-get', 20);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const queue = getExportQueue()
     const queueStatus = queue.getQueueStatus()
     const statistics = queue.getStatistics()

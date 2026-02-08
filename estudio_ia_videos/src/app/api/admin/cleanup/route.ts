@@ -11,12 +11,16 @@ import { getSupabaseForRequest } from '@lib/supabase/server';
 import { runCleanup, CleanupPolicy } from '@lib/cleanup/resource-cleaner';
 import { logger } from '@lib/logger';
 import { requireAdmin } from '@lib/auth/admin-middleware';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 /**
  * GET - Get cleanup configuration and last run info
  */
 export async function GET(req: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(req, 'admin-cleanup-get', 30);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     // Require admin authentication
     const { isAdmin, response } = await requireAdmin(req);
     if (!isAdmin) return response!;

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseForRequest } from '@lib/supabase/server'
 import { z } from 'zod'
 import { logger } from '@lib/logger'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // Schema de validação para criação/atualização de slide
 const slideSchema = z.object({
@@ -21,6 +22,9 @@ const updateSlideSchema = slideSchema.partial().omit({ upload_id: true })
 // GET - Listar slides de um upload
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'pptx-slides-get', 30);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const supabase = getSupabaseForRequest(request)
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 

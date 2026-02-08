@@ -3,6 +3,7 @@ import { getSupabaseForRequest } from '@lib/supabase/server'
 import { z } from 'zod'
 import { Prisma } from '@prisma/client'
 import { logger } from '@lib/logger'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // Schema de validação para atualização de track
 const updateTrackSchema = z.object({
@@ -47,6 +48,9 @@ export async function GET(
   { params }: RouteParams
 ) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'timeline-tracks-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const supabase = getSupabaseForRequest(request)
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 

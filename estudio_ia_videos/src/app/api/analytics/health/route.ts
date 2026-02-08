@@ -5,6 +5,7 @@ import { withAnalytics } from '@lib/analytics/middleware';
 import { ANALYTICS_CONFIG, validateConfig, getEnvironmentInfo } from '@lib/analytics/config';
 import { prisma } from '@lib/prisma';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 interface HealthCheck {
   status: 'healthy' | 'degraded' | 'unhealthy';
@@ -347,6 +348,9 @@ async function performHealthCheck(): Promise<HealthCheck> {
 
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'analytics-health-get', 120);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const session = await getServerSession(authOptions);
     
     // Verificar autenticação para informações detalhadas

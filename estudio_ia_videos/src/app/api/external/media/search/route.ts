@@ -12,6 +12,7 @@ import { supabaseAdmin } from '@lib/services/server'
 import { z } from 'zod'
 import { logger } from '@lib/logger'
 import type { Json } from '@lib/supabase/types'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // Validation schema
 const MediaSearchSchema = z.object({
@@ -303,6 +304,9 @@ class MediaProviderFactory {
 
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'external-media-search-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     // Check authentication
     const session = await getServerSession(authOptions)
     if (!session?.user) {

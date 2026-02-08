@@ -11,7 +11,8 @@
  * - Warming complete
  */
 
-import { NextResponse } from 'next/server';
+import { NextResponse , NextRequest } from 'next/server';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // Track initialization state
 let isInitialized = false;
@@ -31,7 +32,10 @@ interface StartupResult {
   message?: string;
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(req, 'health-startup-get', 120);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   const now = Date.now();
   const startupDuration = now - startupTime;
   

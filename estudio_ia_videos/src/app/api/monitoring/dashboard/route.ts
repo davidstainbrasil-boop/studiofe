@@ -7,9 +7,13 @@ import { NextRequest, NextResponse } from "next/server"
 import { metrics } from "@/lib/monitoring/metrics"
 import { logger } from "@/lib/monitoring/logger"
 import { redisOptimized } from "@/lib/cache/redis-optimized"
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'monitoring-dashboard-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const systemMetrics = metrics.getSystemMetrics()
     const redisStats = await redisOptimized.getStats()
     const redisHealth = await redisOptimized.healthCheck()

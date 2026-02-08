@@ -10,6 +10,7 @@ import { supabaseAdmin } from '@lib/services/server';
 import { logger } from '@lib/logger';
 import { getRequiredEnv } from '@lib/env';
 import type { CompletePPTXData, CompleteSlideData } from '@lib/pptx/parsers/advanced-parser';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 /**
  * POST - Upload e parse de arquivo PPTX
@@ -239,6 +240,9 @@ export async function POST(request: NextRequest) {
  * GET - Obter status de job ou listar jobs
  */
 export async function GET(request: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(request, 'pptx-get', 30);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     // Placeholder for future implementation if needed
     return NextResponse.json({ message: 'Use /api/projects to list projects' });
 }

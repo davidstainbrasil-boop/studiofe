@@ -7,8 +7,12 @@ import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseForRequest } from "@/lib/supabase/server"
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function GET(req: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(req, 'video-pipeline-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   return NextResponse.json({
     success: true,
     message: "Video pipeline endpoint working!",

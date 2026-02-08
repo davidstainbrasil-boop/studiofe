@@ -1,6 +1,7 @@
 import { logger } from '@/lib/logger';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 /**
  * Analytics Overview API
@@ -34,6 +35,9 @@ interface TrendData {
 
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'analytics-overview-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const supabase = await createClient();
     
     const { data: { user }, error: authError } = await supabase.auth.getUser();

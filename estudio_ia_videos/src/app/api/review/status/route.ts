@@ -11,9 +11,13 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
 import { reviewWorkflowService } from '@lib/collab/review-workflow';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'review-status-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });

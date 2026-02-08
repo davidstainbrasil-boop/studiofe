@@ -7,9 +7,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { LocalAuth } from '@lib/auth/local-auth';
 import { cookies } from 'next/headers';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'auth-local-me-get', 20);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const cookieStore = await cookies();
     const token = cookieStore.get('auth_token')?.value;
 

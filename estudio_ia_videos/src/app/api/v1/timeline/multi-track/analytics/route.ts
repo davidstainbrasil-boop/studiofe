@@ -11,6 +11,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
 import { Prisma } from '@prisma/client';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // Types for analytics data structures
 interface Track {
@@ -132,6 +133,9 @@ type AnalyticsData = AnalyticsSummary | UsageStats | PerformanceMetrics | Editin
  */
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'v1-timeline-multi-track-analytics-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json(

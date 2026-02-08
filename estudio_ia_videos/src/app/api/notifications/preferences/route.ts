@@ -10,6 +10,7 @@ import { supabase } from '@lib/services'
 import { supabaseAdmin } from '@lib/services/server'
 import { z } from 'zod'
 import { logger } from '@lib/logger'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // Validation schema for preferences
 const NotificationPreferencesSchema = z.object({
@@ -67,6 +68,9 @@ const defaultPreferences = {
 
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'notifications-preferences-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     // Check authentication
     const session = await getServerSession(authOptions)
     if (!session?.user) {

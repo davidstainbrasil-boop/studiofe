@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { renderPrometheus, getMetricsJson } from '@lib/metrics'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -13,6 +14,9 @@ export const revalidate = 0
  * - format: 'prometheus' (default) | 'json'
  */
 export async function GET(request: Request) {
+    const rateLimitBlocked = await applyRateLimit(request, 'metrics-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   const { searchParams } = new URL(request.url)
   const format = searchParams.get('format') || 'prometheus'
   

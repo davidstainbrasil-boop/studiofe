@@ -4,6 +4,7 @@ import { logger } from '@lib/logger'
 import { getRequiredEnv } from '@lib/env'
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 const supabaseUrl = getRequiredEnv('NEXT_PUBLIC_SUPABASE_URL')
 const supabaseKey = getRequiredEnv('SUPABASE_SERVICE_ROLE_KEY')
@@ -11,6 +12,9 @@ const supabase = createClient(supabaseUrl, supabaseKey)
 
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'comments-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const { searchParams } = new URL(request.url)
     const projectId = searchParams.get('projectId')
 

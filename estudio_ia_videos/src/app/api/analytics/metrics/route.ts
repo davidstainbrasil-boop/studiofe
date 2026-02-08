@@ -7,6 +7,7 @@ import { authOptions } from '@lib/auth';
 import { prisma } from '@lib/prisma';
 import { Prisma } from '@prisma/client';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 /**
  * GET /api/analytics/metrics
@@ -14,6 +15,9 @@ import { logger } from '@lib/logger';
  */
 export async function GET(req: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(req, 'analytics-metrics-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const session = await getServerSession(authOptions);
     
     if (!session?.user) {

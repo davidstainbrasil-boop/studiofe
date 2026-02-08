@@ -6,8 +6,9 @@
  * Useful for deployment verification and monitoring.
  */
 
-import { NextResponse } from 'next/server';
+import { NextResponse , NextRequest } from 'next/server';
 import { execSync } from 'child_process';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,7 +54,10 @@ function getEnabledFeatures(): string[] {
   return features;
 }
 
-export async function GET(): Promise<NextResponse<VersionInfo>> {
+export async function GET(req: NextRequest): Promise<NextResponse<VersionInfo>> {
+    const rateLimitBlocked = await applyRateLimit(req, 'system-version-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   const gitInfo = getGitInfo();
   
   const versionInfo: VersionInfo = {

@@ -5,6 +5,7 @@ import path from 'path';
 import { requireAdmin } from '@lib/auth/admin-middleware';
 import { getRequiredEnv, getOptionalEnv } from '@lib/env';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // Chave de criptografia (em produção, usar variável de ambiente segura)
 const ENCRYPTION_KEY = getOptionalEnv('CREDENTIALS_ENCRYPTION_KEY', 'mvp-encryption-key-2024-secure');
@@ -39,6 +40,9 @@ function decrypt(encryptedText: string): string {
 
 // GET - Obter credenciais (mascaradas)
 export async function GET(request: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(request, 'admin-credentials-get', 30);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   const { isAdmin, response } = await requireAdmin(request);
   if (!isAdmin) return response!;
 

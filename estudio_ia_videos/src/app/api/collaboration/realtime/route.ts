@@ -7,9 +7,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@lib/logger'
 import { prisma } from '@lib/prisma'
 import { getSupabaseForRequest } from '@lib/supabase/server'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function GET(req: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(req, 'collaboration-realtime-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const projectId = req.nextUrl.searchParams.get('projectId')
 
     if (!projectId) {

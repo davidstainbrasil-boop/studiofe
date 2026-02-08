@@ -6,8 +6,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function GET(req: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(req, 'video-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   const { searchParams } = new URL(req.url);
   const action = searchParams.get('action');
   const project_id = searchParams.get("projectId");

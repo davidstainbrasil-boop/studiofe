@@ -38,6 +38,8 @@ jest.mock('child_process', () => ({
   }),
 }));
 
+jest.mock('@/lib/rate-limit');
+
 const { GET } = require('../../api/system/version/route');
 
 describe('GET /api/system/version', () => {

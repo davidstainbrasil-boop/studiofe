@@ -6,8 +6,12 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@lib/db'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function GET(req: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(req, 'video-pipeline-health-get', 120);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   const { searchParams } = new URL(req.url);
   const action = searchParams.get('action');
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { warmCache } from '@lib/cache/cache-warming'
 import { requireAdmin } from '@/lib/auth/admin-middleware'
 import { logger } from '@lib/logger'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 /**
  * Admin API: Manual Cache Warming
@@ -36,7 +37,10 @@ export async function POST(req: NextRequest) {
 /**
  * GET endpoint for status/info
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(req, 'admin-cache-warm-get', 30);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   return NextResponse.json({
     service: 'Cache Warming API',
     version: '1.0.0',

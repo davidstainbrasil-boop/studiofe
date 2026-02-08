@@ -1,7 +1,11 @@
 
-import { NextResponse } from 'next/server'
+import { NextResponse , NextRequest } from 'next/server'
+import { applyRateLimit } from '@/lib/rate-limit';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(req, 'v1-voice-cloning-voices-get', 30);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   // Return available voices for ElevenLabs integration
   const voices = [
     {

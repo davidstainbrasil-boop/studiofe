@@ -12,7 +12,7 @@ import { randomUUID } from 'crypto';
 import PPTXProcessorReal from '@lib/pptx/pptx-processor-real';
 import { logger } from '@lib/logger';
 import { getServerSession } from 'next-auth';
-import { checkRateLimit } from '@/lib/rate-limit';
+import { checkRateLimit , applyRateLimit } from '@/lib/rate-limit';
 
 // Configurações de upload
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
@@ -180,7 +180,10 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(req, 'upload-get', 20);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   return NextResponse.json({
     service: 'Upload API',
     version: '1.0.0',

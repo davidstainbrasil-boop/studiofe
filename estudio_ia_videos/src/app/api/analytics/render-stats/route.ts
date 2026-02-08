@@ -13,6 +13,7 @@ import {
 } from '@lib/analytics/render-core'
 import getInMemoryCache from '@lib/in-memory-cache'
 import { RenderStatsQuerySchema, type RenderStatsQuery } from '@lib/validation/schemas'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 const MAX_ROWS = 5000
 const cache = getInMemoryCache({ ttl: 30000 })
@@ -72,6 +73,9 @@ function getTimeRangeFilter(range: TimeRange): Date {
 }
 
 export async function GET(req: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(req, 'analytics-render-stats-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   const session = await getServerSession(authOptions)
   if (!session?.user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

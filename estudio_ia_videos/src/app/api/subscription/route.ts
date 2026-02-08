@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { logger } from '@/lib/logger'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || '',
@@ -46,6 +47,9 @@ const PLAN_LIMITS = {
 
 export async function GET(req: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(req, 'subscription-get', 30);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const { searchParams } = new URL(req.url)
     const userId = searchParams.get('userId')
 

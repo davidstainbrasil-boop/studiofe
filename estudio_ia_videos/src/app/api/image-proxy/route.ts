@@ -1,8 +1,12 @@
 // Proxy de imagens como workaround para problemas de configuração
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@lib/logger'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function GET(request: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(request, 'image-proxy-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   const searchParams = request.nextUrl.searchParams
   const url = searchParams.get('url')
   const w = searchParams.get('w')

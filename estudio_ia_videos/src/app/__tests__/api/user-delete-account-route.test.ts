@@ -42,6 +42,8 @@ jest.mock('@/lib/logger', () => ({
   },
 }));
 
+jest.mock('@/lib/rate-limit');
+
 const { DELETE, GET } = require('../../api/user/delete-account/route');
 const { getSupabaseForRequest, supabaseAdmin } = require('@/lib/supabase/server');
 

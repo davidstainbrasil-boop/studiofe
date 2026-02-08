@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { backupRecoverySystem as backupSystem } from '@lib/backup-recovery-system';
 import { logger } from '@lib/logger';
 import { getServerSession } from 'next-auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 /** Auth guard - requer sessão autenticada */
 async function requireAuth() {
@@ -28,6 +29,9 @@ async function requireAuth() {
  * Lista todos os backups disponíveis
  */
 export async function GET(request: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(request, 'backup-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   const auth = await requireAuth();
   if (auth.error) return auth.response!;
 

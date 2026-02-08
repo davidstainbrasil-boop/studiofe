@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseForRequest, supabaseAdmin } from '@lib/supabase/server';
 import { logger } from '@lib/logger';
 import { z } from 'zod';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -179,6 +180,9 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
 
 // GET endpoint to show what will be deleted
 export async function GET(request: NextRequest): Promise<NextResponse> {
+    const rateLimitBlocked = await applyRateLimit(request, 'user-delete-account-get', 30);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   const supabase = getSupabaseForRequest(request);
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   

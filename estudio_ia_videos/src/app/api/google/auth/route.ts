@@ -7,8 +7,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getGoogleAuth } from '@/lib/google/google-auth';
 import { randomUUID } from 'crypto';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function GET(request: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(request, 'google-auth-get', 20);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   const auth = getGoogleAuth();
 
   if (!auth.isConfigured) {

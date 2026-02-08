@@ -27,6 +27,7 @@ import {
   AggregationPeriod,
 } from '@lib/analytics/analytics-metrics-system';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 interface EventFilters {
   types?: EventType[];
@@ -200,6 +201,9 @@ export async function POST(request: NextRequest) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 export async function GET(request: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(request, 'analytics-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   const session = await getServerSession();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });

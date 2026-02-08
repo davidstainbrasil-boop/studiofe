@@ -7,6 +7,7 @@ import { prisma } from '@lib/prisma'
 import { z } from 'zod'
 import { Prisma } from '@prisma/client'
 import { logger } from '@lib/logger'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // Validation schema
 const SystemMetricsQuerySchema = z.object({
@@ -172,6 +173,9 @@ async function getErrorRate(timeRange: Date) {
 
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'analytics-system-metrics-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     // Check authentication
     const session = await getServerSession(authOptions)
     if (!session?.user) {

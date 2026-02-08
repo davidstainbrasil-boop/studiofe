@@ -13,6 +13,7 @@ import { createClient } from '@supabase/supabase-js'
 import { getRequiredEnv } from '@lib/env'
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 const logger = new Logger('MonitoringAPI')
 
@@ -40,6 +41,9 @@ const AlertsFilterSchema = z.object({
  */
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'monitoring-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const { searchParams } = new URL(request.url)
     const endpoint = searchParams.get('endpoint')
 

@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { authService } from '@lib/auth/auth-service';
 import { AuthMiddleware } from '@lib/auth/auth-middleware';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
@@ -75,6 +76,9 @@ export async function POST(request: NextRequest) {
 // Endpoint para verificar status de login
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'auth-login-get', 20);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const token = request.cookies.get('auth-token')?.value;
     
     if (!token) {

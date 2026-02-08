@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@lib/logger';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -93,6 +94,9 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'collaboration-version-create-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const { searchParams } = new URL(request.url);
     const projectId = searchParams.get('projectId');
     const limit = parseInt(searchParams.get('limit') || '10');

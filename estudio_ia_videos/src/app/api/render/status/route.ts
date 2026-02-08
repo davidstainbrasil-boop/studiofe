@@ -48,14 +48,8 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
-    // Allow unauthenticated access for development/polling
-    // const session = await getServerSession(authOptions);
-    // if (!session?.user?.id) {
-    //   return NextResponse.json(
-    //     { error: 'Não autenticado' },
-    //     { status: 401 }
-    //   );
-    // }
+    const blocked = await applyRateLimit(req, 'render-status-get', 60);
+    if (blocked) return blocked;
 
     const { searchParams } = new URL(req.url);
     const jobId = searchParams.get('jobId');

@@ -11,6 +11,7 @@ import { createClient } from '@supabase/supabase-js'
 import { integratedPipeline } from '@lib/pipeline/integrated-pipeline'
 import { Logger } from '@lib/logger'
 import { getRequiredEnv } from '@lib/env'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 const logger = new Logger('PipelineJobAPI')
 
@@ -23,6 +24,9 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'pipeline-get', 30);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const supabase = createClient(
       getRequiredEnv('NEXT_PUBLIC_SUPABASE_URL'),
       getRequiredEnv('SUPABASE_SERVICE_ROLE_KEY')

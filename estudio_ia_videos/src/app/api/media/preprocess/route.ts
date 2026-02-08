@@ -9,6 +9,7 @@ import * as fs from 'fs/promises';
 import { logger } from '@lib/logger';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -67,6 +68,9 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'media-preprocess-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const stats = mediaPreprocessor.getStats();
 
     return NextResponse.json({

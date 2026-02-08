@@ -5,9 +5,13 @@
 
 import { NextResponse } from 'next/server';
 import { apiQuotaMonitor } from '@lib/monitoring/api-quota-monitor';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function GET(request: Request) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'quotas-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const { searchParams } = new URL(request.url);
     const forceRefresh = searchParams.get('refresh') === 'true';
 

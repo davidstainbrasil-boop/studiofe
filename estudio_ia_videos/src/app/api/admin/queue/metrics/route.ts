@@ -7,10 +7,14 @@ import { logger } from '@/lib/logger';
 import { NextRequest, NextResponse } from 'next/server'
 import { videoQueueManager } from '@/lib/queue/video-queue-manager'
 import { requireAdmin } from '@/lib/auth/admin-middleware'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(request, 'admin-queue-metrics-get', 30);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   const { isAdmin, response: authResponse } = await requireAdmin(request)
   if (!isAdmin) return authResponse!
 

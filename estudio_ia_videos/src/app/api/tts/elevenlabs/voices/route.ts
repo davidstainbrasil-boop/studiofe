@@ -2,9 +2,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import ElevenLabsService from '@lib/elevenlabs-service'
 import { logger } from '@lib/logger'
+import { applyRateLimit } from '@/lib/rate-limit';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(req, 'tts-elevenlabs-voices-get', 30);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const elevenLabsService = ElevenLabsService.getInstance()
     const voices = await elevenLabsService.listVoices()
     

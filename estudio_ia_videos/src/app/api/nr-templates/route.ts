@@ -11,6 +11,7 @@ import {
 import { createClient } from '@supabase/supabase-js';
 import { getRequiredEnv } from '@lib/env';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 const supabaseUrl = getRequiredEnv('NEXT_PUBLIC_SUPABASE_URL');
 const supabaseServiceKey = getRequiredEnv('SUPABASE_SERVICE_ROLE_KEY');
@@ -21,6 +22,9 @@ const supabaseServiceKey = getRequiredEnv('SUPABASE_SERVICE_ROLE_KEY');
  */
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'nr-templates-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('q');
     const nrNumber = searchParams.get('nr');

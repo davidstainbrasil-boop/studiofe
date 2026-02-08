@@ -10,6 +10,7 @@ import { getPPTXConverter, ConversionProgress } from '@lib/studio/pptx-to-scenes
 import { logger } from '@lib/logger';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300; // 5 minutes
@@ -135,6 +136,9 @@ export async function POST(request: NextRequest) {
 // ============================================================================
 
 export async function GET(request: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(request, 'studio-convert-pptx-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   const { searchParams } = new URL(request.url);
   const jobId = searchParams.get('jobId');
 

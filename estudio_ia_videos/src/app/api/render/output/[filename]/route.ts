@@ -10,12 +10,16 @@ import path from 'path';
 import { logger } from '@lib/logger';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { filename: string } }
 ) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'render-output-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const filename = params.filename;
 
     if (!filename) {

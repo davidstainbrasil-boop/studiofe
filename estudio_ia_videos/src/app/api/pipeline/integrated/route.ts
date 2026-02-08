@@ -5,6 +5,7 @@ import { getServerSession } from 'next-auth';
 // Using inline implementations instead of external modules
 // import { IntegratedTTSAvatarPipeline } from '@lib/pipeline/integrated-tts-avatar-pipeline';
 // import { MonitoringService } from '@lib/monitoring/monitoring-service';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // Inline implementations
 class MonitoringService {
@@ -239,6 +240,9 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'pipeline-integrated-get', 30);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     // Auth guard
     const session = await getServerSession();
     if (!session?.user?.id) {

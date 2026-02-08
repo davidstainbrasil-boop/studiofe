@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { parseUuidParam } from '@/lib/handlers/route-params'
 import { logger } from '@/lib/services'
 import { getSupabaseForRequest } from '@/lib/services/server'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 type RenderJobRow = {
   id: string;
@@ -18,6 +19,9 @@ type RenderJobRow = {
 
 export async function GET(req: Request, ctx: { params: { id: string } }) {
   try {
+    const rateLimitBlocked = await applyRateLimit(req, 'v1-video-jobs-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const supabase = getSupabaseForRequest(req)
     const { data: userData, error: userErr } = await supabase.auth.getUser()
     if (userErr || !userData.user) {

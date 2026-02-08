@@ -9,12 +9,16 @@ import { CollaborationServer } from '@lib/collaboration/server';
 import { logger } from '@lib/logger';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 let collaborationServer: CollaborationServer | null = null;
 let httpServer: HTTPServer | null = null;
 
 export async function GET(req: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(req, 'collaboration-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     // Initialize collaboration server if not already done
     if (!collaborationServer) {
       // Create HTTP server if it doesn't exist

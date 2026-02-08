@@ -11,12 +11,16 @@ import { requireAdmin } from '@/lib/auth/admin-middleware';
 import { circuitBreakerRegistry } from '@lib/resilience/circuit-breaker';
 import { prisma } from '@lib/prisma';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 /**
  * GET - Get system metrics
  */
 export async function GET(req: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(req, 'admin-metrics-get', 30);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     // Auth check - require admin
     const { isAdmin, response: authResponse } = await requireAdmin(req);
     if (!isAdmin) return authResponse!;

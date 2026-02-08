@@ -12,6 +12,7 @@ import { z } from 'zod';
 import { logger } from '@/lib/logger';
 import { createClient, fromUntypedTable } from '@/lib/supabase/server';
 import { v4 as uuidv4 } from 'uuid';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // ============================================================================
 // Types
@@ -144,6 +145,9 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'studio-state-snapshot-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const { searchParams } = new URL(request.url);
     const projectId = searchParams.get('projectId');
 

@@ -9,6 +9,7 @@ import { imageProcessor, processProjectImages } from '@lib/image-processor-real'
 import { logger } from '@lib/logger'
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic'
 
@@ -73,6 +74,9 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'v1-images-process-real-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const { searchParams } = new URL(request.url)
     const action = searchParams.get('action')
 

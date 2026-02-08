@@ -9,6 +9,7 @@ import { logger } from '@lib/logger';
 import { z } from 'zod';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // ============================================================================
 // Schemas
@@ -32,6 +33,9 @@ const releaseLockSchema = z.object({
 
 export async function GET(req: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(req, 'collaboration-locks-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const { searchParams } = new URL(req.url);
     const projectId = searchParams.get('projectId');
     

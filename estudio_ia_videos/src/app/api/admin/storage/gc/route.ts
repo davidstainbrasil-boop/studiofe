@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { runStorageGC, getStorageStats } from '@lib/storage/storage-gc';
 import { requireAuth, unauthorizedResponse, forbiddenResponse } from '@lib/api/auth-middleware';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
@@ -58,6 +59,9 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'admin-storage-gc-get', 30);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     // Require authentication
     const auth = await requireAuth(request);
     if (!auth) {

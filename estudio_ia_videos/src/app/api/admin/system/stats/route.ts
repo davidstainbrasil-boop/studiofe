@@ -2,8 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@lib/auth/admin-middleware';
 import { getRequiredEnv, getOptionalEnv } from '@lib/env';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function GET(request: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(request, 'admin-system-stats-get', 30);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   const { isAdmin, response } = await requireAdmin(request);
   if (!isAdmin) return response!;
 

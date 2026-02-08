@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { prisma } from '@lib/db'
 import { logger } from '@lib/logger'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 /**
  * Admin API: Rate Limit Statistics
@@ -11,6 +12,9 @@ import { logger } from '@lib/logger'
  */
 export async function GET(req: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(req, 'admin-rate-limits-stats-get', 30);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const session = await getServerSession()
     
     if (!session?.user?.id) {

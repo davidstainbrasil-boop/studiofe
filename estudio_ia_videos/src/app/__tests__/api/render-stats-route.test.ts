@@ -78,6 +78,8 @@ jest.mock('@/lib/supabase/admin', () => {
   }
 })
 
+jest.mock('@/lib/rate-limit');
+
 const { GET: routeGET } = require('../../api/analytics/render-stats/route')
 
 describe('GET /api/analytics/render-stats', () => {

@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { logger } from '@lib/services'
 import { getSupabaseForRequest } from '@lib/services/server'
 import { VideoJobStatsQuerySchema } from '@lib/video-jobs/validation/schemas'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // Type for cached stats payload
 interface CachedStatsPayload {
@@ -34,6 +35,9 @@ function setCache(key: string, payload: CachedStatsPayload) {
 }
 
 export async function GET(req: Request) {
+    const rateLimitBlocked = await applyRateLimit(req, 'v1-video-jobs-stats-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   let userId = ''
   let queryParams: import('zod').infer<typeof VideoJobStatsQuerySchema> | null = null
   try {

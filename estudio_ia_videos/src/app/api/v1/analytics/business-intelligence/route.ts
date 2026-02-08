@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@lib/logger'
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // Mock data for business intelligence
 const generateAnalyticsData = () => {
@@ -100,6 +101,9 @@ const generateAnalyticsData = () => {
 
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'v1-analytics-business-intelligence-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     // In production, this would fetch real data from database
     const analyticsData = generateAnalyticsData()
     

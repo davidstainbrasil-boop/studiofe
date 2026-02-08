@@ -399,7 +399,10 @@ async function generateMockTTS(text: string, voice?: string, speed?: number, for
   };
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(req, 'v1-tts-generate-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   return NextResponse.json({
     providers: ['elevenlabs', 'azure', 'google', 'mock'],
     voices: {

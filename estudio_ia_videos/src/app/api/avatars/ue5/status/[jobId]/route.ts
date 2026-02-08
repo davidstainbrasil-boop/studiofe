@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ue5AvatarEngine } from '@lib/engines/ue5-avatar-engine'
 import { logger } from '@lib/logger'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 /**
  * GET /api/avatars/ue5/status/:jobId
@@ -12,6 +13,9 @@ export async function GET(
   { params }: { params: { jobId: string } }
 ) {
   try {
+    const rateLimitBlocked = await applyRateLimit(req, 'avatars-ue5-status-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const job = ue5AvatarEngine.getJobStatus(params.jobId)
     
     if (!job) {

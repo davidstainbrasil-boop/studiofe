@@ -9,7 +9,8 @@
  * No external service checks to avoid cascading failures
  */
 
-import { NextResponse } from 'next/server';
+import { NextResponse , NextRequest } from 'next/server';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // Track startup time for uptime calculation
 const startupTime = Date.now();
@@ -35,7 +36,10 @@ setInterval(() => {
   lastHeartbeat = Date.now();
 }, 10000);
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(req, 'health-live-get', 120);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   const now = Date.now();
   
   try {

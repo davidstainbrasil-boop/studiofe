@@ -3,9 +3,10 @@
  * Returns aggregated platform statistics (no auth required)
  */
 
-import { NextResponse } from 'next/server'
+import { NextResponse , NextRequest } from 'next/server'
 import { createClient } from '@lib/supabase/server'
 import { logger } from '@lib/logger'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 300 // Cache for 5 minutes
@@ -19,8 +20,11 @@ interface PublicStats {
   lastUpdated: string
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(req, 'public-stats-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const supabase = await createClient()
 
     // Fetch aggregated stats from database

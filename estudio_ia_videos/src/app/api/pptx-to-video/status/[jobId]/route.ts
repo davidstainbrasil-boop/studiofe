@@ -7,6 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { jobStore } from '../../generate/route';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 interface RouteParams {
   params: Promise<{ jobId: string }>;
@@ -16,6 +17,9 @@ export async function GET(
   request: NextRequest,
   { params }: RouteParams
 ) {
+    const rateLimitBlocked = await applyRateLimit(request, 'pptx-to-video-status-get', 30);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   const { jobId } = await params;
 
   if (!jobId) {

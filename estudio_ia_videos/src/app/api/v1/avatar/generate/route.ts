@@ -235,7 +235,10 @@ function generateRealThumbnail(type: string, avatarId: string): string {
   return `${baseUrl}/avatars/thumbnails/${type}_${avatarId}_thumb.jpg`;
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(req, 'v1-avatar-generate-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   return NextResponse.json({
     types: ['talking-photo', '3d-avatar', 'animated-character'],
     avatars: {

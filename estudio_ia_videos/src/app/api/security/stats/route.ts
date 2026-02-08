@@ -6,6 +6,7 @@ import { authOptions } from '@lib/auth';
 import { prisma } from '@lib/prisma';
 import { logger } from '@lib/logger';
 import { z } from 'zod';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 const QuerySchema = z.object({
   period: z.enum(['7d', '30d', '90d']).default('7d'),
@@ -17,6 +18,9 @@ const QuerySchema = z.object({
  */
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'security-stats-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {

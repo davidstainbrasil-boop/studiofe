@@ -8,6 +8,7 @@ import { checkRateLimit, inspectRateLimit } from '@lib/rate-limit';
 import { parseVideoJobInput, isErr } from '@lib/video-jobs/handlers/video-jobs';
 import { parseVideoJobsQuery, type VideoJobsQuery } from '@lib/video-jobs/handlers/video-jobs-query';
 import { recordRateLimitHit, recordError } from '@lib/video-jobs/utils/metrics';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // Removido schema local de erro (não usado diretamente)
 
@@ -115,6 +116,9 @@ export async function POST(req: Request) {
 }
 
 export async function GET(req: Request) {
+    const rateLimitBlocked = await applyRateLimit(req, 'v1-video-jobs-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   let userId = '';
   let queryParams: VideoJobsQuery | null = null;
   try {

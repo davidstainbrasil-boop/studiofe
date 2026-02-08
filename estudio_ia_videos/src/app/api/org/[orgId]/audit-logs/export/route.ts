@@ -12,12 +12,16 @@ import { getAuditLogs } from '@lib/billing/audit-logger';
 // @ts-ignore
 import { Parser } from 'json2csv';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function GET(
   req: NextRequest,
   { params }: { params: { orgId: string } }
 ) {
   try {
+    const rateLimitBlocked = await applyRateLimit(req, 'org-audit-logs-export-get', 20);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });

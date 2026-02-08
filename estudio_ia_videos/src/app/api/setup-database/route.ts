@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@lib/logger'
 import { getSupabaseForRequest } from '@lib/supabase/server'
 import { requireAuth, unauthorizedResponse, forbiddenResponse } from '@lib/api/auth-middleware'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 /**
  * Verifica se usuário é admin
@@ -139,6 +140,9 @@ export async function POST(request: NextRequest) {
 
 // GET para verificar status do banco
 export async function GET(request: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(request, 'setup-database-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   const auth = await requireAuth(request);
   if (!auth) return unauthorizedResponse();
 

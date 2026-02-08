@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@lib/supabase/server'
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 /**
  * 📊 UNIFIED DASHBOARD STATS API
@@ -20,6 +21,9 @@ interface DashboardStats {
 
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'dashboard-unified-stats-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const supabase = createClient()
     
     const { data: { user }, error: authError } = await supabase.auth.getUser()

@@ -4,6 +4,7 @@ import { mockDelay, isProduction } from '@lib/utils/mock-guard';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
 // import { MonitoringService } from '@lib/monitoring/monitoring-service';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // Inline monitoring service
 class MonitoringService {
@@ -205,6 +206,9 @@ class IntelligentCacheSystem {
 
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'cache-intelligent-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const { searchParams } = new URL(request.url);
     const action = searchParams.get('action');
     const key = searchParams.get('key');

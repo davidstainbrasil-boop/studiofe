@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@lib/logger'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // FAQ data - In production, this would come from a CMS or database
 const faqs = [
@@ -162,6 +163,9 @@ const contactOptions = [
  */
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'help-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const { searchParams } = new URL(request.url)
     const search = searchParams.get('search')?.toLowerCase()
     const category = searchParams.get('category')

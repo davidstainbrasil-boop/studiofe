@@ -1,6 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextResponse , NextRequest } from 'next/server';
+import { applyRateLimit } from '@/lib/rate-limit';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(req, 'ai-stats-get', 30);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   const stats = {
     totalRequests: 1250,
     totalTokensUsed: 5000000,

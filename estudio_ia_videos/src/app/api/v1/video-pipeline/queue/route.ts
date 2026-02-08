@@ -2,8 +2,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(req, 'v1-video-pipeline-queue-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   // Return queue status for video pipeline
   const queueStatus = {
     active_jobs: 2,

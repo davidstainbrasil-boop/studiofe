@@ -1,8 +1,12 @@
-import { NextResponse } from 'next/server'
+import { NextResponse , NextRequest } from 'next/server'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic'
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(req, 'queue-metrics-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   const redisUrl = process.env.REDIS_URL || process.env.UPSTASH_REDIS_REST_URL || ''
 
   if (!redisUrl) {

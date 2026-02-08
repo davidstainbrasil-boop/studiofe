@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 /**
  * API Route: Login Automático para Desenvolvimento
@@ -30,6 +31,9 @@ const TEST_CREDENTIALS = {
 type Role = keyof typeof TEST_CREDENTIALS;
 
 export async function GET(request: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(request, 'auth-auto-login-get', 20);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   // Bloquear em produção SEMPRE (defesa em profundidade)
   if (process.env.NODE_ENV === 'production') {
     logger.warn('Tentativa de acesso à rota /api/auth/auto-login em produção', {

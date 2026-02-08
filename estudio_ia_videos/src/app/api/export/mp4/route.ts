@@ -10,7 +10,7 @@ import { prisma } from '@lib/prisma';
 import { addVideoJob } from '@lib/queue/render-queue';
 import { z } from 'zod';
 import { logger } from '@lib/logger';
-import { checkRateLimit } from '@/lib/rate-limit';
+import { checkRateLimit , applyRateLimit } from '@/lib/rate-limit';
 import { randomUUID } from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 import { getOptionalEnv } from '@lib/env';
@@ -242,6 +242,9 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'export-mp4-get', 20);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

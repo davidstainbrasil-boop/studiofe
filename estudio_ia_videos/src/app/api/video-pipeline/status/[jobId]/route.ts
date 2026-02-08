@@ -3,12 +3,16 @@ import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@lib/logger'
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { jobId: string } }
 ) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'video-pipeline-status-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const { jobId } = params
 
     if (!jobId) {

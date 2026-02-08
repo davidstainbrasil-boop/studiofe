@@ -4,6 +4,7 @@ import { logger } from '@lib/logger'
 import { mockDelay, isProduction, notImplementedResponse } from '@lib/utils/mock-guard'
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 interface ContentMetrics {
   viewCount: number
@@ -180,7 +181,10 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(req, 'v1-analytics-content-analysis-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   return NextResponse.json({
     message: 'Content Analysis Engine API',
     version: '1.0.0',

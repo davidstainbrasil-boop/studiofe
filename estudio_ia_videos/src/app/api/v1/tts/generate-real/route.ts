@@ -9,6 +9,7 @@ import { prisma } from '@lib/prisma'
 import { logger } from '@lib/logger'
 import { rateLimit, getUserTier } from '@/middleware/rate-limiter'
 import { getSupabaseForRequest } from '@lib/supabase/server'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic'
 
@@ -124,6 +125,9 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'v1-tts-generate-real-get', 30);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const { searchParams } = new URL(request.url)
     const action = searchParams.get('action')
     const provider = searchParams.get('provider') as 'elevenlabs' | 'azure'

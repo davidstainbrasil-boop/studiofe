@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { storageSystem } from '@lib/storage-system-real';
 import { auditLogger, AuditAction, getRequestMetadata } from '@lib/audit-logging-real';
 import { getServerSession } from 'next-auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 const DEFAULT_BUCKET = 'videos';
 
@@ -16,6 +17,9 @@ export async function GET(
   { params }: { params: { key: string } }
 ) {
   try {
+    const rateLimitBlocked = await applyRateLimit(req, 'storage-files-get', 30);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const session = await getServerSession();
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

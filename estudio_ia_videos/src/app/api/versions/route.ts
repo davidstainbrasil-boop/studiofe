@@ -13,6 +13,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@lib/auth'
 import { prisma } from '@lib/db'
 import { logger } from '@lib/logger'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 
 const getUserId = (user: unknown): string => ((user as { id?: string }).id || '');
@@ -72,6 +73,9 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(req, 'versions-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const session = await getServerSession(authOptions)
     if (!session?.user) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })

@@ -2,9 +2,13 @@ import { NextResponse } from 'next/server'
 
 import { getSupabaseForRequest } from '@lib/services/server'
 import { getMetricsSnapshot } from '@lib/metrics';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function GET(req: Request) {
   try {
+    const rateLimitBlocked = await applyRateLimit(req, 'v1-video-jobs-metrics-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const supabase = getSupabaseForRequest(req)
     const { data: userData, error: userErr } = await supabase.auth.getUser()
     if (userErr || !userData?.user) {

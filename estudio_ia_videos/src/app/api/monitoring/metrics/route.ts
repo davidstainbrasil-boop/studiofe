@@ -7,6 +7,7 @@ import { authOptions } from '@lib/auth';
 // import { IntegratedTTSAvatarPipeline } from '@lib/pipeline/integrated-tts-avatar-pipeline';
 // import { TTSEngineManager } from '@lib/tts/tts-engine-manager';
 // import { Avatar3DRenderEngine } from '@lib/avatar/avatar-3d-render-engine';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // Inline implementations
 class MonitoringService {
@@ -107,6 +108,9 @@ class Avatar3DRenderEngine {
 
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'monitoring-metrics-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type') || 'all';
     const timeRange = searchParams.get('timeRange') || '1h';

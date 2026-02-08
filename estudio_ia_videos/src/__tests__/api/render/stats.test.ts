@@ -26,6 +26,8 @@ jest.mock('@/lib/logger', () => ({
   },
 }));
 
+jest.mock('@/lib/rate-limit');
+
 import { GET } from '@/app/api/render/stats/route';
 
 describe('GET /api/render/stats', () => {

@@ -96,7 +96,10 @@ export async function POST(request: NextRequest) {
 }
 
 // Suporte a GET para debug
-export async function GET() {
+export async function GET(req: NextRequest) {
+    const rateLimitBlocked = await applyRateLimit(req, 'tts-synthesize-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   return NextResponse.json({
     service: 'TTS Synthesize API',
     version: '1.0.0',

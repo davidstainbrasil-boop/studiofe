@@ -8,6 +8,7 @@ import { getSupabaseForRequest } from '@/lib/supabase/server';
 import { AnalyticsTracker } from '@lib/analytics/analytics-tracker';
 import { logger } from '@lib/logger';
 import { toJsonValue } from '@lib/prisma-helpers';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // Types for Timeline structures
 interface Keyframe {
@@ -278,6 +279,9 @@ function calculateComplexity(tracks: Track[]): string {
 
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'v1-timeline-multi-track-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const supabase = getSupabaseForRequest(request);
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 

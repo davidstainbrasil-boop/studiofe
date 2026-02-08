@@ -4,6 +4,7 @@ import { Prisma } from '@prisma/client'
 import { logger } from '@lib/logger'
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 interface VoiceLibraryItem {
   id: string
@@ -27,6 +28,9 @@ interface VoiceLibraryItem {
  */
 export async function GET(request: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'voice-library-get', 30);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')
     const provider = searchParams.get('provider')

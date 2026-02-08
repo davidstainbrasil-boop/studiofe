@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { heyGenService } from '@lib/heygen-service';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
+    const rateLimitBlocked = await applyRateLimit(req, 'heygen-credits-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
     const quota = await heyGenService.getQuota();
 
     if (quota.error) {

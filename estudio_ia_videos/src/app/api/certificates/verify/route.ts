@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@lib/prisma';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // Access global mock store
 declare global {
@@ -12,6 +13,9 @@ if (!global.mockCertificates) {
 }
 
 export async function GET(req: Request) {
+    const rateLimitBlocked = await applyRateLimit(req, 'certificates-verify-get', 60);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
   const { searchParams } = new URL(req.url);
   const code = searchParams.get('code');
 
