@@ -3,17 +3,18 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { authService } from '@lib/auth/auth-service';
 import { AuthMiddleware } from '@lib/auth/auth-middleware';
 import { logger } from '@lib/logger';
+import { createClient } from '@lib/supabase/server';
 
 export async function POST(request: NextRequest) {
   try {
-    const token = request.cookies.get('auth-token')?.value;
-    
-    if (token) {
-      // Invalidar token (em produção, adicionar à blacklist)
-      await authService.logout(token);
+    // Sign out from Supabase
+    try {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+    } catch {
+      // Ignore Supabase signout errors
     }
 
     // Preparar resposta

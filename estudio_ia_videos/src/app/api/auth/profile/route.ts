@@ -5,49 +5,32 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { authService } from '@lib/auth/auth-service';
 import { logger } from '@lib/logger';
 import { applyRateLimit } from '@/lib/rate-limit';
+import { getServerAuth } from '@lib/auth/unified-session';
 
 export async function GET(request: NextRequest) {
   try {
     const rateLimitBlocked = await applyRateLimit(request, 'auth-profile-get', 20);
     if (rateLimitBlocked) return rateLimitBlocked;
 
-    const token = request.cookies.get('auth-token')?.value;
+    const session = await getServerAuth();
     
-    if (!token) {
+    if (!session?.user) {
       return NextResponse.json(
         { error: 'Token de acesso obrigatório' },
         { status: 401 }
       );
     }
 
-    const user = await authService.getUserFromToken(token);
-    
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Usuário não encontrado' },
-        { status: 404 }
-      );
-    }
-
     return NextResponse.json({
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      avatar: user.avatar,
-      role: user.role,
-      permissions: user.permissions,
-      preferences: user.preferences,
-      metadata: {
-        ...user.metadata,
-        // Não expor informações sensíveis
-        lastIp: undefined,
-        userAgent: undefined
-      },
-      createdAt: user.createdAt,
-      lastLoginAt: user.lastLoginAt
+      id: session.user.id,
+      email: session.user.email,
+      name: session.user.name,
+      avatar: session.user.image,
+      role: 'user',
+      permissions: [],
+      preferences: {},
     });
 
   } catch (error) {
@@ -61,21 +44,12 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const token = request.cookies.get('auth-token')?.value;
+    const session = await getServerAuth();
     
-    if (!token) {
+    if (!session?.user) {
       return NextResponse.json(
         { error: 'Token de acesso obrigatório' },
         { status: 401 }
-      );
-    }
-
-    const user = await authService.getUserFromToken(token);
-    
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Usuário não encontrado' },
-        { status: 404 }
       );
     }
 
@@ -100,19 +74,17 @@ export async function PUT(request: NextRequest) {
     }
 
     // Atualizar usuário (em produção, salvar no banco)
-    Object.assign(user, filteredUpdates);
-
     return NextResponse.json({
       success: true,
       message: 'Perfil atualizado com sucesso',
       user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        avatar: user.avatar,
-        role: user.role,
-        permissions: user.permissions,
-        preferences: user.preferences
+        id: session.user.id,
+        email: session.user.email,
+        name: filteredUpdates.name || session.user.name,
+        avatar: filteredUpdates.avatar || session.user.image,
+        role: 'user',
+        permissions: [],
+        preferences: filteredUpdates.preferences || {}
       }
     });
 

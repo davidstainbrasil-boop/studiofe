@@ -79,18 +79,10 @@ export async function GET(request: NextRequest) {
     const rateLimitBlocked = await applyRateLimit(request, 'auth-login-get', 20);
     if (rateLimitBlocked) return rateLimitBlocked;
 
-    const token = request.cookies.get('auth-token')?.value;
+    const { getServerAuth } = await import('@lib/auth/unified-session');
+    const session = await getServerAuth();
     
-    if (!token) {
-      return NextResponse.json(
-        { authenticated: false },
-        { status: 401 }
-      );
-    }
-
-    const user = await authService.getUserFromToken(token);
-    
-    if (!user) {
+    if (!session?.user) {
       return NextResponse.json(
         { authenticated: false },
         { status: 401 }
@@ -100,13 +92,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       authenticated: true,
       user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        avatar: user.avatar,
-        role: user.role,
-        permissions: user.permissions,
-        preferences: user.preferences
+        id: session.user.id,
+        email: session.user.email,
+        name: session.user.name,
+        avatar: session.user.image,
+        role: 'user',
+        permissions: [],
+        preferences: {}
       }
     });
 

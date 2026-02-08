@@ -5,26 +5,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authService } from '@lib/auth/auth-service';
 import { logger } from '@lib/logger';
+import { getServerAuth } from '@lib/auth/unified-session';
 
 export async function POST(request: NextRequest) {
   try {
-    const token = request.cookies.get('auth-token')?.value;
+    const session = await getServerAuth();
     
-    if (!token) {
+    if (!session?.user) {
       return NextResponse.json(
         { error: 'Token de acesso obrigatório' },
         { status: 401 }
       );
     }
 
-    const user = await authService.getUserFromToken(token);
-    
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Usuário não encontrado' },
-        { status: 404 }
-      );
-    }
+    const userId = session.user.id;
+    const userEmail = session.user.email;
 
     const { currentPassword, newPassword, confirmPassword } = await request.json();
 
@@ -64,10 +59,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Alterar senha
-    await authService.changePassword(user.id, currentPassword, newPassword);
+    await authService.changePassword(userId, currentPassword, newPassword);
 
     // Log de segurança
-    logger.info(`Password changed for user: ${user.email}`, { component: 'API: auth/change-password' });
+    logger.info(`Password changed for user: ${userEmail}`, { component: 'API: auth/change-password' });
 
     return NextResponse.json({
       success: true,
