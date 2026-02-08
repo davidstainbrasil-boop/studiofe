@@ -4,8 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@lib/auth'
+import { getServerAuth } from '@lib/auth/unified-session'
 import { prisma } from '@lib/db'
 import { generateComplianceReport } from '@lib/compliance/report-generator'
 import { logger } from '@lib/logger'
@@ -19,7 +18,7 @@ export async function GET(
     const rateLimitBlocked = await applyRateLimit(req, 'compliance-report-get', 60);
     if (rateLimitBlocked) return rateLimitBlocked;
 
-    const session = await getServerSession(authOptions)
+    const session = await getServerAuth()
     if (!session?.user) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }

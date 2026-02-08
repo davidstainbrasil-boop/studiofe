@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@lib/logger';
 import { mockDelay, isProduction } from '@lib/utils/mock-guard';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@lib/auth';
+import { getServerAuth } from '@lib/auth/unified-session';
 import { applyRateLimit } from '@/lib/rate-limit';
 // Using inline implementations instead of external modules
 // import { AdvancedLipSyncProcessor } from '@lib/lipsync/advanced-lipsync-processor';
@@ -125,7 +124,7 @@ class Avatar3DRenderEngine {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await getServerAuth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
   }

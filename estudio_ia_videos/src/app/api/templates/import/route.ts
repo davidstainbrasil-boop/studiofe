@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { getServerAuth } from '@lib/auth/unified-session';
 import { logger } from '@lib/logger';
 
 interface Template {
@@ -26,7 +26,7 @@ const templates: Template[] = [];
 
 // POST - Importar templates
 export async function POST(request: NextRequest) {
-  const session = await getServerSession();
+  const session = await getServerAuth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
   }

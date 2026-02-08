@@ -4,8 +4,7 @@
  * POST /api/import/pptx-to-timeline
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@lib/auth';
+import { getServerAuth } from '@lib/auth/unified-session';
 import { prisma } from '@lib/prisma';
 import { createRateLimiter, rateLimitPresets } from '@lib/utils/rate-limit-middleware';
 import { logger } from '@lib/logger';
@@ -15,7 +14,7 @@ const rateLimiter = createRateLimiter(rateLimitPresets.authenticated);
 export async function POST(req: NextRequest) {
   return rateLimiter(req, async (req: NextRequest) => {
     try {
-      const session = await getServerSession(authOptions);
+      const session = await getServerAuth();
       if (!session?.user?.id) {
         return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
       }

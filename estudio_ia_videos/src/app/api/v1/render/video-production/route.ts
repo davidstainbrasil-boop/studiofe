@@ -8,8 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { VideoRenderEngine } from '@lib/video/video-render-engine';
 import { PPTXRealParser } from '@lib/pptx-real-parser';
 import { logger } from '@lib/logger';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@lib/auth';
+import { getServerAuth } from '@lib/auth/unified-session';
 import { applyRateLimit } from '@/lib/rate-limit';
 
 const renderEngine = new VideoRenderEngine();
@@ -18,7 +17,7 @@ export async function POST(request: NextRequest) {
   const blocked = await applyRateLimit(request, 'video-prod', 5);
   if (blocked) return blocked;
 
-  const session = await getServerSession(authOptions);
+  const session = await getServerAuth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
   }
@@ -162,7 +161,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await getServerAuth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
   }

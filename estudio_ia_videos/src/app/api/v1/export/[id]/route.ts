@@ -19,8 +19,7 @@ import {
 } from '@/types/export.types'
 import { getExportQueue } from '@lib/export/export-queue'
 import { logger } from '@lib/logger'
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@lib/auth';
+import { getServerAuth } from '@lib/auth/unified-session';
 import { applyRateLimit } from '@/lib/rate-limit';
 
 // Helper para validar settings
@@ -106,7 +105,7 @@ export async function DELETE(
   const blocked = await applyRateLimit(request, 'v1-export-id', 10);
   if (blocked) return blocked;
 
-  const session = await getServerSession(authOptions);
+  const session = await getServerAuth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
   }

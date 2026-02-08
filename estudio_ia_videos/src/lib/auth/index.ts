@@ -1,8 +1,12 @@
-import type { NextAuthOptions } from 'next-auth'
+/**
+ * Auth module - Re-exporta configuração real e helpers unificados.
+ * 
+ * Em produção, usa authOptions reais com Supabase CredentialsProvider.
+ * Para API routes, use getServerAuth() de '@lib/auth/unified-session'.
+ */
 
-// Stub simplificado para testes; em produção substituir pela configuração real.
-export const authOptions: NextAuthOptions = {
-  providers: [],
-  session: { strategy: 'jwt' },
-  callbacks: {}
-}
+// Re-export authOptions reais (usados apenas pelo handler NextAuth [...nextauth])
+export { authOptions } from './auth-options';
+
+// Re-export helper unificado para API routes
+export { getServerAuth } from './unified-session';

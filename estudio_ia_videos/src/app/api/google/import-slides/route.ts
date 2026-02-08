@@ -10,8 +10,7 @@ import { getGoogleAuth, GoogleCredentials } from '@/lib/google/google-auth';
 import { createGoogleSlidesImporter } from '@/lib/google/slides-importer';
 import { createGoogleSlidesConverter } from '@/lib/google/slides-converter';
 import { logger } from '@lib/logger';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@lib/auth';
+import { getServerAuth } from '@lib/auth/unified-session';
 import { applyRateLimit } from '@/lib/rate-limit';
 
 /**
@@ -67,7 +66,7 @@ export async function GET(request: NextRequest) {
  * POST - Import a specific presentation
  */
 export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await getServerAuth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
   }

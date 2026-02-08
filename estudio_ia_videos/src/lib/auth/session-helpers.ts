@@ -3,8 +3,7 @@
  * Utilitários para validação de sessões
  */
 
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@lib/auth';
+import { getServerAuth } from '@lib/auth/unified-session';
 import { NextResponse } from 'next/server';
 
 export interface SessionUser {
@@ -15,7 +14,7 @@ export interface SessionUser {
 }
 
 export async function validateSession(): Promise<{ user: SessionUser } | { error: NextResponse }> {
-  const session = await getServerSession(authOptions);
+  const session = await getServerAuth();
   
   if (!session?.user) {
     return {

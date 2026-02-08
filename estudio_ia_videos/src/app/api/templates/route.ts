@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { getServerSession } from 'next-auth'
+import { getServerAuth } from '@lib/auth/unified-session'
 import { logger } from '@lib/logger'
 import { getRequiredEnv } from '@lib/env'
 import { applyRateLimit } from '@/lib/rate-limit';
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await getServerSession()
+  const session = await getServerAuth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 })
   }

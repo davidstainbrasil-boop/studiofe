@@ -11,8 +11,7 @@ import { getUsageTracker } from '@/lib/api/usage-tracker';
 import { PPTXProcessorReal } from '@/lib/pptx/pptx-processor-real';
 import { logger } from '@lib/logger';
 import { randomUUID } from 'crypto';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@lib/auth';
+import { getServerAuth } from '@lib/auth/unified-session';
 
 export const maxDuration = 300;
 
@@ -255,7 +254,7 @@ async function handleRequest(request: NextRequest, apiKey: APIKey): Promise<Next
 }
 
 export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await getServerAuth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
   }

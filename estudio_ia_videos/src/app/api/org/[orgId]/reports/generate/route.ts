@@ -5,8 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@lib/auth';
+import { getServerAuth } from '@lib/auth/unified-session';
 import { getOrgContext, hasPermission } from '@lib/multi-tenancy/org-context';
 import { reportGenerator, ReportType } from '@lib/reports/report-generator';
 import { logger } from '@lib/logger';
@@ -21,7 +20,7 @@ export async function POST(
     const blocked = await applyRateLimit(req, 'org-report', 5);
     if (blocked) return blocked;
 
-    const session = await getServerSession(authOptions);
+    const session = await getServerAuth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }

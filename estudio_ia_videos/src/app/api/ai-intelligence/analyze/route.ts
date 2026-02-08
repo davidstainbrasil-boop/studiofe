@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@lib/logger';
 import { prisma } from '@lib/prisma';
 import { AIContentService } from '@lib/services/ai-content.service';
-import { getServerSession } from 'next-auth';
+import { getServerAuth } from '@lib/auth/unified-session';
 import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     if (blocked) return blocked;
 
     // Auth guard
-    const session = await getServerSession();
+    const session = await getServerAuth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
     }

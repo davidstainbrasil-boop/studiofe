@@ -4,7 +4,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { getServerAuth } from '@lib/auth/unified-session';
 import { errorAlerting } from '@lib/monitoring/error-alerting';
 import { applyRateLimit } from '@/lib/rate-limit';
 
@@ -12,7 +12,7 @@ export async function GET(request: Request) {
     const rateLimitBlocked = await applyRateLimit(request, 'alerts-get', 60);
     if (rateLimitBlocked) return rateLimitBlocked;
 
-  const session = await getServerSession();
+  const session = await getServerAuth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
   }
@@ -44,7 +44,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const session = await getServerSession();
+  const session = await getServerAuth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
   }

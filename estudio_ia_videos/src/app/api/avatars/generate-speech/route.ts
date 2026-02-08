@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@lib/logger';
 import { mockDelay, isProduction } from '@lib/utils/mock-guard';
-import { getServerSession } from 'next-auth';
+import { getServerAuth } from '@lib/auth/unified-session';
 import { applyRateLimit } from '@/lib/rate-limit';
 // Using inline implementations instead of external modules
 // import { EnhancedTTSService, EnhancedTTSConfig } from '@lib/enhanced-tts-service';
@@ -287,7 +287,7 @@ export async function POST(request: NextRequest) {
   const startTime = Date.now();
   
   // Auth guard
-  const session = await getServerSession();
+  const session = await getServerAuth();
   if (!session?.user?.id) {
     return NextResponse.json(
       { success: false, error: 'Não autenticado', code: 'AUTH_REQUIRED' },
@@ -494,7 +494,7 @@ async function handleDirectTTS(config: GenerateSpeechRequest, startTime: number)
 export async function GET(request: NextRequest) {
   try {
     // Auth guard
-    const session = await getServerSession();
+    const session = await getServerAuth();
     if (!session?.user?.id) {
       return NextResponse.json(
         { success: false, error: 'Não autenticado', code: 'AUTH_REQUIRED' },

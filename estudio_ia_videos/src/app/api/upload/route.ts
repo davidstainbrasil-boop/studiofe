@@ -11,7 +11,7 @@ import { access } from 'fs/promises';
 import { randomUUID } from 'crypto';
 import PPTXProcessorReal from '@lib/pptx/pptx-processor-real';
 import { logger } from '@lib/logger';
-import { getServerSession } from 'next-auth';
+import { getServerAuth } from '@lib/auth/unified-session';
 import { checkRateLimit , applyRateLimit } from '@/lib/rate-limit';
 
 // Configurações de upload
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Auth guard
-    const session = await getServerSession();
+    const session = await getServerAuth();
     if (!session?.user?.id) {
       return NextResponse.json(
         { success: false, error: 'Não autenticado', code: 'AUTH_REQUIRED' },

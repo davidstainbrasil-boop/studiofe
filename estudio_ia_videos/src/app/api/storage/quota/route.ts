@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { storageSystem } from '@lib/storage-system-real';
-import { getServerSession } from 'next-auth';
+import { getServerAuth } from '@lib/auth/unified-session';
 import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function GET(req: NextRequest) {
@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
     const rateLimitBlocked = await applyRateLimit(req, 'storage-quota-get', 30);
     if (rateLimitBlocked) return rateLimitBlocked;
 
-    const session = await getServerSession();
+    const session = await getServerAuth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
-    const session = await getServerSession();
+    const session = await getServerAuth();
     const userRole = (session?.user as { role?: string } | undefined)?.role;
     if (!session?.user?.id || userRole !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

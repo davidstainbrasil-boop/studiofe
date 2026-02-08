@@ -14,8 +14,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@lib/auth'
+import { getServerAuth } from '@lib/auth/unified-session'
 import { prisma } from '@lib/prisma'
 import { z } from 'zod'
 import { workflowManager, StepData } from '@lib/workflow/unified-workflow-manager'
@@ -44,7 +43,7 @@ export async function GET(request: NextRequest) {
     const rateLimitBlocked = await applyRateLimit(request, 'unified-get', 60);
     if (rateLimitBlocked) return rateLimitBlocked;
 
-    const session = await getServerSession(authOptions)
+    const session = await getServerAuth()
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -72,7 +71,7 @@ export async function GET(request: NextRequest) {
 // POST - Criar novo projeto e workflow
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerAuth()
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -137,7 +136,7 @@ export async function POST(request: NextRequest) {
 // PUT - Atualizar projeto e avançar workflow
 export async function PUT(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerAuth()
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -196,7 +195,7 @@ export async function PUT(request: NextRequest) {
 // DELETE - Remover projeto e workflow
 export async function DELETE(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerAuth()
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }

@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { batchSystem } from '@lib/batch-processing-system';
 import type { BatchJobType } from '@lib/batch-processing-system';
 import { logger } from '@lib/logger';
-import { getServerSession } from 'next-auth';
+import { getServerAuth } from '@lib/auth/unified-session';
 import { applyRateLimit } from '@/lib/rate-limit';
 
 /**
@@ -18,7 +18,7 @@ import { applyRateLimit } from '@/lib/rate-limit';
 export async function POST(request: NextRequest) {
   try {
     // Auth guard
-    const session = await getServerSession();
+    const session = await getServerAuth();
     if (!session?.user?.id) {
       return NextResponse.json(
         { error: 'Unauthorized', code: 'AUTH_REQUIRED' },
@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
     if (rateLimitBlocked) return rateLimitBlocked;
 
     // Auth guard
-    const session = await getServerSession();
+    const session = await getServerAuth();
     if (!session?.user?.id) {
       return NextResponse.json(
         { error: 'Unauthorized', code: 'AUTH_REQUIRED' },

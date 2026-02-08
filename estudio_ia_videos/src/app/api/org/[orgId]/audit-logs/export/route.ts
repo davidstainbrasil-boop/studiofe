@@ -5,8 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@lib/auth';
+import { getServerAuth } from '@lib/auth/unified-session';
 import { getOrgContext, hasPermission } from '@lib/multi-tenancy/org-context';
 import { getAuditLogs } from '@lib/billing/audit-logger';
 // @ts-ignore
@@ -22,7 +21,7 @@ export async function GET(
     const rateLimitBlocked = await applyRateLimit(req, 'org-audit-logs-export-get', 20);
     if (rateLimitBlocked) return rateLimitBlocked;
 
-    const session = await getServerSession(authOptions);
+    const session = await getServerAuth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }

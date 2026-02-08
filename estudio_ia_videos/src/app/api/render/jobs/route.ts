@@ -13,8 +13,7 @@ import { randomUUID } from 'crypto'
 import { logger } from '@lib/logger'
 import { applyRateLimit } from '@/lib/rate-limit'
 import type { JobStatus } from '@prisma/client'
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@lib/auth';
+import { getServerAuth } from '@lib/auth/unified-session';
 
 // Validation schemas
 const RenderJobCreateSchema = z.object({
@@ -36,7 +35,7 @@ const RenderJobQuerySchema = z.object({
 })
 
 export async function GET(request: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await getServerAuth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
   }
@@ -120,7 +119,7 @@ export async function POST(request: NextRequest) {
   const blocked = await applyRateLimit(request, 'render-jobs', 20);
   if (blocked) return blocked;
 
-  const session = await getServerSession(authOptions);
+  const session = await getServerAuth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
   }

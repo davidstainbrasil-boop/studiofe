@@ -1,8 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@lib/auth/auth-options'
+import { getServerAuth } from '@lib/auth/unified-session'
 import { logger } from '@lib/logger'
 import { supabaseAdmin } from '@lib/supabase/server'
 import { applyRateLimit } from '@/lib/rate-limit';
@@ -26,7 +25,7 @@ export async function GET(_request: NextRequest) {
     const rateLimitBlocked = await applyRateLimit(_request, 'admin-stats-get', 30);
     if (rateLimitBlocked) return rateLimitBlocked;
 
-    const session = await getServerSession(authOptions)
+    const session = await getServerAuth()
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

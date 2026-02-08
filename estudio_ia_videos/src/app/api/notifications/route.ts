@@ -4,8 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@lib/auth'
+import { getServerAuth } from '@lib/auth/unified-session'
 import { supabase } from '@lib/services'
 import { supabaseAdmin } from '@lib/services/server'
 import { fromUntypedTable } from '@lib/supabase/server'
@@ -135,7 +134,7 @@ export async function GET(request: NextRequest) {
     if (rateLimitBlocked) return rateLimitBlocked;
 
     // Check authentication
-    const session = await getServerSession(authOptions)
+    const session = await getServerAuth()
     if (!session?.user) {
       return NextResponse.json(
         { success: false, error: 'Authentication required' },
@@ -245,7 +244,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     // Check authentication
-    const session = await getServerSession(authOptions)
+    const session = await getServerAuth()
     if (!session?.user) {
       return NextResponse.json(
         { success: false, error: 'Authentication required' },

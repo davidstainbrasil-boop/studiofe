@@ -4,8 +4,7 @@ import { z } from 'zod';
 import { prisma } from '@lib/prisma';
 import { logger } from '@lib/logger';
 import { WatermarkSettingsSchema } from '@/types/watermark.types';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@lib/auth';
+import { getServerAuth } from '@lib/auth/unified-session';
 
 const RouteContextSchema = z.object({
   params: z.object({
@@ -14,7 +13,7 @@ const RouteContextSchema = z.object({
 });
 
 export async function POST(req: Request, context: z.infer<typeof RouteContextSchema>) {
-  const session = await getServerSession(authOptions);
+  const session = await getServerAuth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
   }

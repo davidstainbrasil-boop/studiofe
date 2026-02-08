@@ -9,8 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { log } from '@lib/monitoring/logger'
 import { AnalyticsTracker } from '@lib/analytics/analytics-tracker'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@lib/auth'
+import { getServerAuth } from '@lib/auth/unified-session'
 import { getOrgId, isAdmin, getUserId } from '@lib/auth/utils';
 import { applyRateLimit } from '@/lib/rate-limit';
 
@@ -64,7 +63,7 @@ export async function GET(request: NextRequest) {
     const rateLimitBlocked = await applyRateLimit(request, 'v1-analytics-advanced-get', 60);
     if (rateLimitBlocked) return rateLimitBlocked;
 
-    const session = await getServerSession(authOptions)
+    const session = await getServerAuth()
     if (!session?.user) {
       return NextResponse.json(
         { success: false, error: 'Não autorizado' },

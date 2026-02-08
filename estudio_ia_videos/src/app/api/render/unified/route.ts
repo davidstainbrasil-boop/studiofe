@@ -6,8 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@lib/logger'
 import { applyRateLimit } from '@/lib/rate-limit'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@lib/auth'
+import { getServerAuth } from '@lib/auth/unified-session'
 import { db } from '@lib/db'
 import { mockDelay, isProduction } from '@lib/utils/mock-guard'
 
@@ -410,7 +409,7 @@ export async function POST(request: NextRequest) {
     const blocked = await applyRateLimit(request, 'render-unified', 10);
     if (blocked) return blocked;
 
-    const session = await getServerSession(authOptions)
+    const session = await getServerAuth()
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 })
     }
@@ -451,7 +450,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerAuth()
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 })
     }

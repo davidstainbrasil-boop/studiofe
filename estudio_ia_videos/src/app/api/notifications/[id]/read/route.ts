@@ -4,8 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@lib/auth'
+import { getServerAuth } from '@lib/auth/unified-session'
 import { supabaseAdmin } from '@lib/services/server'
 import { logger } from '@lib/logger'
 
@@ -15,7 +14,7 @@ export async function PATCH(
 ) {
   try {
     // Check authentication
-    const session = await getServerSession(authOptions)
+    const session = await getServerAuth()
     if (!session?.user) {
       return NextResponse.json(
         { success: false, error: 'Authentication required' },

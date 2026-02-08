@@ -19,7 +19,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { getServerAuth } from '@lib/auth/unified-session';
 import {
   AnalyticsMetricsSystem,
   EventType,
@@ -52,7 +52,7 @@ const analytics = AnalyticsMetricsSystem.getInstance();
 // ═══════════════════════════════════════════════════════════════════════════
 
 export async function POST(request: NextRequest) {
-  const session = await getServerSession();
+  const session = await getServerAuth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
   }
@@ -204,7 +204,7 @@ export async function GET(request: NextRequest) {
     const rateLimitBlocked = await applyRateLimit(request, 'analytics-get', 60);
     if (rateLimitBlocked) return rateLimitBlocked;
 
-  const session = await getServerSession();
+  const session = await getServerAuth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
   }

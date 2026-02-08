@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@lib/auth'
+import { getServerAuth } from '@lib/auth/unified-session'
 import { prisma } from '@lib/prisma'
 import { trainVoice } from '@lib/voice/voice-cloning'
 import { logger } from '@lib/logger'
@@ -9,7 +8,7 @@ import { logger } from '@lib/logger'
 const getUserId = (user: unknown): string => ((user as { id?: string }).id || '');
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerAuth()
     if (!session?.user) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }

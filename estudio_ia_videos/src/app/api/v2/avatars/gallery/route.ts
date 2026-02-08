@@ -11,8 +11,7 @@ import { avatar3DPipeline } from '@lib/avatar-3d-pipeline'
 import { supabase as supabaseClient } from '@lib/services'
 import { logger } from '@lib/logger';
 import { prisma } from '@lib/prisma'; // Corrigido de '@lib/db' para '@lib/prisma'
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@lib/auth';
+import { getServerAuth } from '@lib/auth/unified-session';
 import { applyRateLimit } from '@/lib/rate-limit';
 
 // Interface para avatar model da tabela
@@ -203,7 +202,7 @@ export async function GET(request: NextRequest) {
 
 const rateLimiterPost = createRateLimiter(rateLimitPresets.authenticated);
 export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await getServerAuth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
   }

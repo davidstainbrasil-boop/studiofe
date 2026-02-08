@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@lib/auth';
+import { getServerAuth } from '@lib/auth/unified-session';
 import { logger } from '@lib/logger';
 import { prisma } from '@lib/prisma';
 import { Prisma } from '@prisma/client';
@@ -18,7 +17,7 @@ const toNumber = (v: unknown): number => (typeof v === 'number' ? v : Number(v ?
 
 async function getHandler(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerAuth();
     
     if (!session?.user?.id) {
       return NextResponse.json(
@@ -360,7 +359,7 @@ async function getHandler(req: NextRequest) {
 
 async function postHandler(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerAuth();
     const body = await req.json();
     
     const {

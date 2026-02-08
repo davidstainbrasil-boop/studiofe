@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { getServerSession } from 'next-auth'
+import { getServerAuth } from '@lib/auth/unified-session'
 import { logger } from '@/lib/logger'
 
 const supabase = createClient(
@@ -26,7 +26,7 @@ interface TrackRequest {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession()
+  const session = await getServerAuth()
   if (!session?.user?.id) {
     return NextResponse.json(
       { error: 'Unauthorized', code: 'AUTH_REQUIRED' },

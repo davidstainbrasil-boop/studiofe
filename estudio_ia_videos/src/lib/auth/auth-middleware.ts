@@ -4,8 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@lib/auth';
+import { getServerAuth } from '@lib/auth/unified-session';
 
 export interface AuthenticatedRequest extends NextRequest {
   user?: {
@@ -21,7 +20,7 @@ export async function withAuth(
   options?: { requireAdmin?: boolean }
 ): Promise<(req: NextRequest) => Promise<NextResponse>> {
   return async (req: NextRequest) => {
-    const session = await getServerSession(authOptions);
+    const session = await getServerAuth();
     
     if (!session?.user) {
       return NextResponse.json(

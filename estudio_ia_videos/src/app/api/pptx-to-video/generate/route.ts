@@ -16,8 +16,7 @@ import { SubtitleBurner } from '@/lib/subtitles/subtitle-burner';
 import { AudioMixer } from '@/lib/audio/audio-mixer';
 import { getMusicLibrary } from '@/lib/audio/music-library';
 import { TalkingHeadPipelineService } from '@/lib/avatar/talking-head-pipeline-service';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@lib/auth';
+import { getServerAuth } from '@lib/auth/unified-session';
 import { applyRateLimit } from '@/lib/rate-limit';
 
 export const maxDuration = 300; // 5 minutes max
@@ -104,7 +103,7 @@ async function persistJobToDB(jobId: string, update: Record<string, unknown>) {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await getServerAuth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
   }

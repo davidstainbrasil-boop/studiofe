@@ -4,7 +4,7 @@ import { logger } from '@/lib/monitoring/logger';
 import { validateRequestBody } from '@/lib/validation/api-validator';
 import { ScriptGenerateSchema } from '@/lib/validation/schemas';
 import { isPresentationNode, PPTXPresentationNode } from '@/lib/pptx/types/pptx-ast.types';
-import { getServerSession } from 'next-auth';
+import { getServerAuth } from '@lib/auth/unified-session';
 import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function POST(req: NextRequest) {
@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
   if (blocked) return blocked;
 
   // Auth guard
-  const session = await getServerSession();
+  const session = await getServerAuth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
   }

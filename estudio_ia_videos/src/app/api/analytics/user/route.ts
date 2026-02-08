@@ -10,8 +10,7 @@ export const dynamic = 'force-dynamic';
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@lib/auth';
+import { getServerAuth } from '@lib/auth/unified-session';
 import { analytics } from '@lib/analytics/analytics-standalone';
 import { logger } from '@lib/logger';
 import { applyRateLimit } from '@/lib/rate-limit';
@@ -26,7 +25,7 @@ export async function GET(request: NextRequest) {
     const rateLimitBlocked = await applyRateLimit(request, 'analytics-user-get', 30);
     if (rateLimitBlocked) return rateLimitBlocked;
 
-    const session = await getServerSession(authOptions);
+    const session = await getServerAuth();
     if (!session?.user) {
       return NextResponse.json(
         { error: 'Não autorizado' },

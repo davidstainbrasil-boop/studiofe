@@ -7,8 +7,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@lib/prisma';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@lib/auth';
+import { getServerAuth } from '@lib/auth/unified-session';
 import { Prisma } from '@prisma/client';
 import { logger } from '@lib/logger';
 import { applyRateLimit } from '@/lib/rate-limit';
@@ -136,7 +135,7 @@ export async function GET(request: NextRequest) {
     const rateLimitBlocked = await applyRateLimit(request, 'v1-timeline-multi-track-analytics-get', 60);
     if (rateLimitBlocked) return rateLimitBlocked;
 
-    const session = await getServerSession(authOptions);
+    const session = await getServerAuth();
     if (!session?.user) {
       return NextResponse.json(
         { success: false, message: 'Não autorizado' },

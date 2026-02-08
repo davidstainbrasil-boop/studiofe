@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@lib/auth';
+import { getServerAuth } from '@lib/auth/unified-session';
 import { prisma } from '@lib/prisma';
 import { Prisma } from '@prisma/client';
 import { z } from 'zod';
@@ -333,7 +332,7 @@ export async function GET(request: NextRequest) {
     const rateLimitBlocked = await applyRateLimit(request, 'analytics-user-metrics-get', 60);
     if (rateLimitBlocked) return rateLimitBlocked;
 
-    const session = await getServerSession(authOptions);
+    const session = await getServerAuth();
     if (!session?.user?.id) {
       return NextResponse.json(
         { success: false, error: 'Authentication required' },

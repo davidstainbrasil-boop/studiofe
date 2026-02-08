@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@lib/auth'
+import { getServerAuth } from '@lib/auth/unified-session'
 import { subtitleService } from '@lib/services/subtitle.service'
 import { fileUploadService } from '@lib/services/file-upload.service'
 import { addVideoJob, getJobStatus } from '@lib/queue/video-processing.queue'
@@ -12,7 +11,7 @@ import { applyRateLimit } from '@/lib/rate-limit';
  * Generate subtitles from video using Whisper AI
  */
 export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions)
+  const session = await getServerAuth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 })
   }

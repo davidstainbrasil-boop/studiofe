@@ -1,8 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@lib/auth';
+import { getServerAuth } from '@lib/auth/unified-session';
 import { getOrgId, isAdmin, getUserId } from '@lib/auth/utils';
 import { prisma } from '@lib/db';
 import { withAnalytics } from '@lib/analytics/api-performance-middleware';
@@ -18,7 +17,7 @@ import { logger } from '@lib/logger';
  */
 async function getHandler(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerAuth();
     
     // [DEV] Bypass Auth with Cookie
     const isDevBypass = req.cookies.get('dev_bypass')?.value === 'true';

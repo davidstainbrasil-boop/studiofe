@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@lib/auth';
+import { getServerAuth } from '@lib/auth/unified-session';
 import { getOrgId } from '@lib/auth/utils';
 import { prisma } from '@lib/db';
 import { withAnalytics } from '@lib/analytics/api-performance-middleware';
@@ -18,7 +17,7 @@ interface RecentEventRaw { id: string; eventType: string; eventData: Record<stri
  */
 async function getHandler(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerAuth();
     
     if (!session?.user?.id) {
       return NextResponse.json(
@@ -329,7 +328,7 @@ async function getHandler(req: NextRequest) {
  */
 async function postHandler(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerAuth();
     const body = await req.json();
     
     const {

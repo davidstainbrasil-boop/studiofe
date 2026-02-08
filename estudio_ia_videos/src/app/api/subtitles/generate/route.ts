@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { SRTGenerator } from '@lib/subtitles/srt-generator';
 import { z } from 'zod';
 import { logger } from '@lib/logger';
-import { getServerSession } from 'next-auth';
+import { getServerAuth } from '@lib/auth/unified-session';
 import { applyRateLimit } from '@/lib/rate-limit';
 
 const slideSchema = z.object({
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     if (blocked) return blocked;
 
     // Auth guard
-    const session = await getServerSession();
+    const session = await getServerAuth();
     if (!session?.user?.id) {
       return NextResponse.json(
         { success: false, error: 'Não autenticado', code: 'AUTH_REQUIRED' },

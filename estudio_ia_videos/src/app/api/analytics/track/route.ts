@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@lib/auth';
+import { getServerAuth } from '@lib/auth/unified-session';
 import { logger } from '@lib/logger';
 import { prisma } from '@lib/prisma';
 import { withAnalytics } from '@lib/analytics/api-performance-middleware';
@@ -11,7 +10,7 @@ import { withAnalytics } from '@lib/analytics/api-performance-middleware';
  */
 async function postHandler(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerAuth();
     const userId = session?.user?.id || null;
 
     const body = await req.json();
@@ -81,7 +80,7 @@ async function postHandler(req: NextRequest) {
  */
 async function getHandler(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerAuth();
     
     if (!session?.user?.id) {
       return NextResponse.json(

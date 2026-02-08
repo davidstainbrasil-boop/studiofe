@@ -7,8 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Server as HTTPServer } from 'http';
 import { CollaborationServer } from '@lib/collaboration/server';
 import { logger } from '@lib/logger';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@lib/auth';
+import { getServerAuth } from '@lib/auth/unified-session';
 import { applyRateLimit } from '@/lib/rate-limit';
 
 let collaborationServer: CollaborationServer | null = null;
@@ -74,7 +73,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await getServerAuth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
   }

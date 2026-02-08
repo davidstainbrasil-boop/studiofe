@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@lib/auth';
+import { getServerAuth } from '@lib/auth/unified-session';
 import { getOrgId, isAdmin, getUserId } from '@lib/auth/utils';
 import { ReportGenerator, ReportType } from '@lib/analytics/report-generator';
 import { withAnalytics } from '@lib/analytics/api-performance-middleware';
@@ -20,7 +19,7 @@ import { logger } from '@lib/logger';
  */
 async function getHandler(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerAuth();
     
     if (!session?.user?.id) {
       return NextResponse.json(
@@ -224,7 +223,7 @@ async function getHandler(req: NextRequest) {
  */
 async function postHandler(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerAuth();
     
     if (!session?.user?.id) {
       return NextResponse.json(
@@ -352,7 +351,7 @@ async function postHandler(req: NextRequest) {
  */
 async function deleteHandler(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerAuth();
     
     if (!session?.user?.id) {
       return NextResponse.json(

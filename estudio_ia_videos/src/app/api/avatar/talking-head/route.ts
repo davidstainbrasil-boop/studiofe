@@ -10,8 +10,7 @@ import { logger } from '@/lib/logger';
 import { applyRateLimit } from '@/lib/rate-limit';
 import { getMuseTalkProvider } from '@/lib/avatar/musetalk-provider';
 import { getSadTalkerProvider } from '@/lib/avatar/sadtalker-provider';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@lib/auth';
+import { getServerAuth } from '@lib/auth/unified-session';
 
 export const maxDuration = 300; // 5 minutes
 
@@ -28,7 +27,7 @@ interface GenerateRequest {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await getServerAuth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
   }

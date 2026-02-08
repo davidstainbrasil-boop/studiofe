@@ -5,8 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@lib/prisma';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@lib/auth';
+import { getServerAuth } from '@lib/auth/unified-session';
 import { Prisma } from '@prisma/client';
 import { logger } from '@lib/logger';
 
@@ -61,7 +60,7 @@ interface BulkResult {
  */
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerAuth();
     if (!session?.user) {
       return NextResponse.json(
         { success: false, message: 'Não autorizado' },

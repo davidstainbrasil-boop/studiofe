@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { auditLogger } from '@lib/audit-logging-real';
-import { getServerSession } from 'next-auth';
+import { getServerAuth } from '@lib/auth/unified-session';
 import { supabase } from '@lib/services';
 import { applyRateLimit } from '@/lib/rate-limit';
 
@@ -19,7 +19,7 @@ export async function GET(
     const rateLimitBlocked = await applyRateLimit(req, 'audit-user-get', 30);
     if (rateLimitBlocked) return rateLimitBlocked;
 
-    const session = await getServerSession();
+    const session = await getServerAuth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

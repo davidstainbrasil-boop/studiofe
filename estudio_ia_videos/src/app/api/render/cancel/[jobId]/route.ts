@@ -4,8 +4,7 @@
  * POST /api/render/cancel/:jobId
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import type { AuthOptions } from 'next-auth';
+import { getServerAuth } from '@lib/auth/unified-session';
 import { authConfig } from '@lib/auth/auth-config';
 import { logger } from '@lib/logger';
 import { applyRateLimit } from '@/lib/rate-limit';
@@ -18,7 +17,7 @@ export async function POST(
     const blocked = await applyRateLimit(req, 'render-cancel', 20);
     if (blocked) return blocked;
 
-    const session = await getServerSession(authConfig as unknown as AuthOptions);
+    const session = await getServerAuth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }

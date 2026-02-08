@@ -2,8 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ue5AvatarEngine, UE5AvatarConfig } from '@lib/engines/ue5-avatar-engine'
 import { logger } from '@lib/logger'
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@lib/auth';
+import { getServerAuth } from '@lib/auth/unified-session';
 import { applyRateLimit } from '@/lib/rate-limit';
 
 /**
@@ -11,7 +10,7 @@ import { applyRateLimit } from '@/lib/rate-limit';
  * Iniciar renderização de avatar UE5 + Audio2Face
  */
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await getServerAuth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
   }

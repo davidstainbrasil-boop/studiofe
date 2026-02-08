@@ -1,8 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@lib/auth'
+import { getServerAuth } from '@lib/auth/unified-session'
 import { prisma } from '@lib/prisma'
 import { z } from 'zod'
 import { Prisma } from '@prisma/client'
@@ -177,7 +176,7 @@ export async function GET(request: NextRequest) {
     if (rateLimitBlocked) return rateLimitBlocked;
 
     // Check authentication
-    const session = await getServerSession(authOptions)
+    const session = await getServerAuth()
     if (!session?.user) {
       return NextResponse.json(
         { success: false, error: 'Authentication required' },

@@ -7,8 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@lib/logger';
 import { prisma } from '@lib/prisma';
 import { applyRateLimit } from '@/lib/rate-limit';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@lib/auth';
+import { getServerAuth } from '@lib/auth/unified-session';
 import { v4 as uuidv4 } from 'uuid';
 // import { renderQueue } from '@lib/queue/render-queue'; // Se estivesse configurada a fila
 
@@ -17,7 +16,7 @@ export async function POST(request: NextRequest) {
     const blocked = await applyRateLimit(request, 'remotion-render', 5);
     if (blocked) return blocked;
 
-    const session = await getServerSession(authOptions);
+    const session = await getServerAuth();
     // Em produção real, descomentar verificação de sessão
     // if (!session?.user?.id) {
     //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

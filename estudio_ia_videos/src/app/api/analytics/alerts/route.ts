@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@lib/auth';
+import { getServerAuth } from '@lib/auth/unified-session';
 import { getOrgId, isAdmin } from '@lib/auth/utils';
 import { AlertSystem, AlertType } from '@lib/analytics/alert-system';
 import { withAnalytics } from '@lib/analytics/api-performance-middleware';
@@ -32,7 +31,7 @@ interface AlertEventData {
  */
 async function getHandler(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerAuth();
     
     if (!session || !session.user) {
       return NextResponse.json(
@@ -269,7 +268,7 @@ async function getHandler(req: NextRequest) {
  */
 async function postHandler(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerAuth();
     
     if (!session || !session.user) {
       return NextResponse.json(
@@ -381,7 +380,7 @@ async function postHandler(req: NextRequest) {
  */
 async function putHandler(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerAuth();
     
     if (!session || !session.user) {
       return NextResponse.json(
@@ -468,7 +467,7 @@ async function putHandler(req: NextRequest) {
  */
 async function deleteHandler(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerAuth();
     
     if (!session || !session.user) {
       return NextResponse.json(

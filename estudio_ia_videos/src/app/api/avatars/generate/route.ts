@@ -5,8 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@lib/logger'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@lib/auth'
+import { getServerAuth } from '@lib/auth/unified-session'
 import { prisma } from '@lib/prisma'
 import { workflowManager } from '@lib/workflow/unified-workflow-manager'
 import { z } from 'zod'
@@ -249,7 +248,7 @@ export async function POST(request: NextRequest) {
     const blocked = await applyRateLimit(request, 'avatars-gen', 5);
     if (blocked) return blocked;
 
-    const session = await getServerSession(authOptions)
+    const session = await getServerAuth()
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -313,7 +312,7 @@ export async function POST(request: NextRequest) {
 // GET - Obter modelos de avatar disponíveis
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerAuth()
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -359,7 +358,7 @@ export async function PUT(request: NextRequest) {
     const blocked = await applyRateLimit(request, 'avatars-gen', 5);
     if (blocked) return blocked;
 
-    const session = await getServerSession(authOptions)
+    const session = await getServerAuth()
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }

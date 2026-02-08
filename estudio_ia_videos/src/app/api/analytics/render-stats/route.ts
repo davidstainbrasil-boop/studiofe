@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@lib/auth'
+import { getServerAuth } from '@lib/auth/unified-session'
 import { supabaseAdmin } from '@lib/supabase/admin'
 import { logger } from '@lib/logger'
 import {
@@ -76,7 +75,7 @@ export async function GET(req: NextRequest) {
     const rateLimitBlocked = await applyRateLimit(req, 'analytics-render-stats-get', 60);
     if (rateLimitBlocked) return rateLimitBlocked;
 
-  const session = await getServerSession(authOptions)
+  const session = await getServerAuth()
   if (!session?.user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }

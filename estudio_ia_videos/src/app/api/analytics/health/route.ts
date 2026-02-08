@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@lib/auth';
+import { getServerAuth } from '@lib/auth/unified-session';
 import { withAnalytics } from '@lib/analytics/middleware';
 import { ANALYTICS_CONFIG, validateConfig, getEnvironmentInfo } from '@lib/analytics/config';
 import { prisma } from '@lib/prisma';
@@ -351,7 +350,7 @@ export async function GET(request: NextRequest) {
     const rateLimitBlocked = await applyRateLimit(request, 'analytics-health-get', 120);
     if (rateLimitBlocked) return rateLimitBlocked;
 
-    const session = await getServerSession(authOptions);
+    const session = await getServerAuth();
     
     // Verificar autenticação para informações detalhadas
     const detailed = request.nextUrl.searchParams.get('detailed') === 'true';

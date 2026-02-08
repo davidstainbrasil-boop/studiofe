@@ -5,8 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import type { AuthOptions } from 'next-auth';
+import { getServerAuth } from '@lib/auth/unified-session';
 import { authConfig } from '@lib/auth/auth-config';
 import { getOrgContext } from '@lib/multi-tenancy/org-context';
 import { alertManager, AlertSeverity, AlertType } from '@lib/alerts/alert-manager';
@@ -21,7 +20,7 @@ export async function GET(
     const rateLimitBlocked = await applyRateLimit(req, 'org-alerts-get', 60);
     if (rateLimitBlocked) return rateLimitBlocked;
 
-    const session = await getServerSession(authConfig as unknown as AuthOptions);
+    const session = await getServerAuth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }

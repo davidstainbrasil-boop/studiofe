@@ -7,6 +7,7 @@ import { cachedQuery, CacheTier } from '@lib/cache/redis-cache';
 import { rateLimit, getUserTier } from '@/middleware/rate-limiter';
 import { getSupabaseForRequest } from '@lib/supabase/server';
 import { applyRateLimit } from '@/lib/rate-limit';
+import { getServerAuth } from '@lib/auth/unified-session';
 
 // Schema de validação para projetos
 const ProjectSchema = z.object({
@@ -136,8 +137,16 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     
-    // Get user_id from body or header for local dev
-    const userId = body.userId || request.headers.get('x-user-id') || 'demo-user'
+    // Obter user ID do auth unificado (Supabase cookies)
+    const session = await getServerAuth();
+    if (!session?.user?.id) {
+      return NextResponse.json({
+        success: false,
+        error: 'Usuário não autenticado',
+        timestamp: new Date().toISOString()
+      }, { status: 401 });
+    }
+    const userId = session.user.id;
     
     // Validação dos dados
     const validationResult = ProjectSchema.safeParse(body)
