@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { backupRecoverySystem as backupSystem } from '@lib/backup-recovery-system';
 import { logger } from '@lib/logger';
+import { getServerSession } from 'next-auth';
+
+/** Auth guard - requer sessão autenticada */
+async function requireAuth() {
+  const session = await getServerSession();
+  if (!session?.user?.id) {
+    return { error: true, response: NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 }), session: null };
+  }
+  return { error: false, response: null, session };
+}
 
 /**
  * API de Backup e Recuperação
@@ -18,6 +28,9 @@ import { logger } from '@lib/logger';
  * Lista todos os backups disponíveis
  */
 export async function GET(request: NextRequest) {
+  const auth = await requireAuth();
+  if (auth.error) return auth.response!;
+
   try {
     const { searchParams } = new URL(request.url);
     const backupId = searchParams.get('id');
@@ -62,6 +75,9 @@ export async function GET(request: NextRequest) {
  * Cria novo backup completo
  */
 export async function POST(request: NextRequest) {
+  const auth = await requireAuth();
+  if (auth.error) return auth.response!;
+
   try {
     const body = await request.json().catch(() => ({}));
     const { action, backupId, overwrite, dryRun } = body;
@@ -102,6 +118,9 @@ export async function POST(request: NextRequest) {
  * Remove backups antigos
  */
 export async function DELETE() {
+  const auth = await requireAuth();
+  if (auth.error) return auth.response!;
+
   try {
     const deleted = await backupSystem.cleanupOldBackups();
 

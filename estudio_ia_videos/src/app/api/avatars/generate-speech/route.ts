@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@lib/logger';
 import { mockDelay, isProduction } from '@lib/utils/mock-guard';
+import { getServerSession } from 'next-auth';
 // Using inline implementations instead of external modules
 // import { EnhancedTTSService, EnhancedTTSConfig } from '@lib/enhanced-tts-service';
 // import { UnifiedAvatarPipeline } from '@lib/unified-avatar-pipeline';
@@ -284,6 +285,15 @@ function getDefaultVoiceId(provider: string, language: string): string {
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
   
+  // Auth guard
+  const session = await getServerSession();
+  if (!session?.user?.id) {
+    return NextResponse.json(
+      { success: false, error: 'Não autenticado', code: 'AUTH_REQUIRED' },
+      { status: 401 }
+    );
+  }
+
   try {
     // Parse do body
     let body: GenerateSpeechRequest;
@@ -479,6 +489,15 @@ async function handleDirectTTS(config: GenerateSpeechRequest, startTime: number)
 // Endpoint GET para obter status de job (pipeline unificado)
 export async function GET(request: NextRequest) {
   try {
+    // Auth guard
+    const session = await getServerSession();
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { success: false, error: 'Não autenticado', code: 'AUTH_REQUIRED' },
+        { status: 401 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const jobId = searchParams.get('jobId');
     

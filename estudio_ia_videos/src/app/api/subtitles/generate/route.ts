@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { SRTGenerator } from '@lib/subtitles/srt-generator';
 import { z } from 'zod';
 import { logger } from '@lib/logger';
+import { getServerSession } from 'next-auth';
 
 const slideSchema = z.object({
   id: z.string().optional(),
@@ -23,6 +24,15 @@ const generateSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    // Auth guard
+    const session = await getServerSession();
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { success: false, error: 'Não autenticado', code: 'AUTH_REQUIRED' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const validation = generateSchema.safeParse(body);
 

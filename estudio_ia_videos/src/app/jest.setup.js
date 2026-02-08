@@ -30,6 +30,20 @@ jest.mock('next/server', () => {
   }
 })
 
+// Mock next-auth (ESM module not compatible with Jest CJS)
+jest.mock('next-auth', () => ({
+  getServerSession: jest.fn().mockResolvedValue({
+    user: { id: 'test-user-id', email: 'test@example.com', name: 'Test User' },
+    expires: new Date(Date.now() + 86400000).toISOString(),
+  }),
+}))
+
+jest.mock('next-auth/jwt', () => ({
+  getToken: jest.fn().mockResolvedValue({ sub: 'test-user-id' }),
+  encode: jest.fn(),
+  decode: jest.fn(),
+}))
+
 require('@testing-library/jest-dom')
 
 // Mock environment variables

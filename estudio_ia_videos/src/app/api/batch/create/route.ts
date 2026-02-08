@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { batchSystem } from '@lib/batch-processing-system';
 import type { BatchJobType } from '@lib/batch-processing-system';
 import { logger } from '@lib/logger';
+import { getServerSession } from 'next-auth';
 
 /**
  * POST /api/batch/create
@@ -15,18 +16,29 @@ import { logger } from '@lib/logger';
  */
 export async function POST(request: NextRequest) {
   try {
+    // Auth guard
+    const session = await getServerSession();
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: 'Unauthorized', code: 'AUTH_REQUIRED' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
-    const { name, type, userId, tasks, config } = body as {
+    const { name, type, tasks, config } = body as {
       name: string;
       type: BatchJobType;
-      userId: string;
       tasks: Record<string, unknown>[];
       config?: Record<string, unknown>;
     };
 
-    if (!name || !type || !userId || !tasks || tasks.length === 0) {
+    // Use server-side userId instead of client-supplied
+    const userId = session.user.id;
+
+    if (!name || !type || !tasks || tasks.length === 0) {
       return NextResponse.json(
-        { error: 'Missing required fields: name, type, userId, tasks' },
+        { error: 'Missing required fields: name, type, tasks', code: 'VALIDATION_ERROR' },
         { status: 400 }
       );
     }
@@ -66,6 +78,15 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
   try {
+    // Auth guard
+    const session = await getServerSession();
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: 'Unauthorized', code: 'AUTH_REQUIRED' },
+        { status: 401 }
+      );
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const jobId = searchParams.get('jobId');
 

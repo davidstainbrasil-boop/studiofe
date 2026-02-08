@@ -1,9 +1,16 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@lib/logger';
+import { getServerSession } from 'next-auth';
 
 export async function GET(request: NextRequest) {
   try {
+    // Auth guard
+    const session = await getServerSession();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const projectId = searchParams.get('projectId');
     const category = searchParams.get('category') || 'all';
@@ -219,6 +226,12 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    // Auth guard
+    const session = await getServerSession();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+    }
+
     const { 
       projectId, 
       recommendationId, 

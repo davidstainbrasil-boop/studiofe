@@ -7,6 +7,7 @@ import { promises as fs } from 'fs';
 import { createHash } from 'crypto';
 import path from 'path';
 import { logger } from '@lib/logger';
+import { getServerSession } from 'next-auth';
 
 const UPLOAD_DIR = path.join(process.cwd(), 'uploads', 'temp');
 const METADATA_DIR = path.join(process.cwd(), 'uploads', 'metadata');
@@ -37,6 +38,15 @@ async function generateFileHash(buffer: Buffer): Promise<string> {
 }
 
 export async function POST(request: NextRequest) {
+  // Auth guard
+  const session = await getServerSession();
+  if (!session?.user?.id) {
+    return NextResponse.json(
+      { error: 'Unauthorized', code: 'AUTH_REQUIRED' },
+      { status: 401 }
+    );
+  }
+
   await ensureDirectories();
 
   try {

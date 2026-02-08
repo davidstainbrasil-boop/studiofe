@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@lib/logger';
 import { recommendationSystem, RecommendationItem } from '@lib/intelligent-recommendation-system';
+import { getServerSession } from 'next-auth';
 
 type RecommendationType = 'template' | 'asset' | 'course' | 'feature';
 
@@ -16,19 +17,22 @@ type RecommendationType = 'template' | 'asset' | 'course' | 'feature';
  */
 export async function POST(request: NextRequest) {
   try {
+    // Auth guard — use server-side userId instead of client-supplied
+    const session = await getServerSession();
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: 'Unauthorized', code: 'AUTH_REQUIRED' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
-    const { userId, types, limit } = body as {
-      userId: string;
+    const { types, limit } = body as {
       types?: RecommendationType[];
       limit?: number;
     };
 
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'Missing required field: userId' },
-        { status: 400 }
-      );
-    }
+    const userId = session.user.id;
 
     const allRecommendations = await recommendationSystem.getRecommendations(
       userId,
@@ -67,16 +71,18 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const userId = searchParams.get('userId');
-    const limit = searchParams.get('limit');
-
-    if (!userId) {
+    // Auth guard
+    const session = await getServerSession();
+    if (!session?.user?.id) {
       return NextResponse.json(
-        { error: 'Missing userId parameter' },
-        { status: 400 }
+        { error: 'Unauthorized', code: 'AUTH_REQUIRED' },
+        { status: 401 }
       );
     }
+
+    const searchParams = request.nextUrl.searchParams;
+    const userId = session.user.id;
+    const limit = searchParams.get('limit');
 
     const recommendations = await recommendationSystem.getRecommendations(
       userId,

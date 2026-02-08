@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { getServerSession } from 'next-auth'
 import { logger } from '@/lib/logger'
 
 const supabase = createClient(
@@ -25,16 +26,18 @@ interface TrackRequest {
 }
 
 export async function POST(req: NextRequest) {
+  const session = await getServerSession()
+  if (!session?.user?.id) {
+    return NextResponse.json(
+      { error: 'Unauthorized', code: 'AUTH_REQUIRED' },
+      { status: 401 }
+    )
+  }
+
   try {
     const body = await req.json() as TrackRequest
-    const { userId, resource, amount = 1 } = body
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'userId é obrigatório' },
-        { status: 400 }
-      )
-    }
+    const { resource, amount = 1 } = body
+    const userId = session.user.id
 
     if (!resource || !['video', 'storage', 'tts'].includes(resource)) {
       return NextResponse.json(

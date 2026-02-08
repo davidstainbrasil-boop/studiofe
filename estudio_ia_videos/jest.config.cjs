@@ -37,7 +37,7 @@ module.exports = {
   },
 
   transformIgnorePatterns: [
-    '/node_modules/(?!bullmq|msgpackr|jose|@supabase/auth-helpers-shared|@supabase/auth-helpers-nextjs|dnd-core|react-dnd|react-dnd-html5-backend).+\\.(js|jsx|mjs|cjs|ts|tsx)$',
+    '/node_modules/(?!bullmq|msgpackr|jose|next-auth|@panva|preact-render-to-string|@supabase/auth-helpers-shared|@supabase/auth-helpers-nextjs|dnd-core|react-dnd|react-dnd-html5-backend).+\\.(js|jsx|mjs|cjs|ts|tsx)$',
   ],
 
   testMatch: [

@@ -4,9 +4,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@lib/logger';
 import { prisma } from '@lib/prisma';
 import { AIContentService } from '@lib/services/ai-content.service';
+import { getServerSession } from 'next-auth';
 
 export async function POST(request: NextRequest) {
   try {
+    // Auth guard
+    const session = await getServerSession();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+    }
+
     const { projectId, analysisType = 'full', options = {} } = await request.json();
 
     if (!projectId) {

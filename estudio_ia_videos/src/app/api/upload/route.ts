@@ -11,6 +11,7 @@ import { access } from 'fs/promises';
 import { randomUUID } from 'crypto';
 import PPTXProcessorReal from '@lib/pptx/pptx-processor-real';
 import { logger } from '@lib/logger';
+import { getServerSession } from 'next-auth';
 
 // Configurações de upload
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
@@ -35,6 +36,15 @@ async function ensureDirectories() {
 
 export async function POST(request: NextRequest) {
   try {
+    // Auth guard
+    const session = await getServerSession();
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { success: false, error: 'Não autenticado', code: 'AUTH_REQUIRED' },
+        { status: 401 }
+      );
+    }
+
     await ensureDirectories();
 
     const contentType = request.headers.get('content-type');

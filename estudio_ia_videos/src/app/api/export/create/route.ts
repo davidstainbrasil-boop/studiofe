@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { exportSystem } from '@lib/export-advanced-system';
 import type { ExportOptions, TargetPlatform } from '@lib/export-advanced-system';
 import { logger } from '@lib/logger';
+import { getServerSession } from 'next-auth';
 
 /**
  * POST /api/export/create
@@ -15,16 +16,27 @@ import { logger } from '@lib/logger';
  */
 export async function POST(request: NextRequest) {
   try {
+    // Auth guard
+    const session = await getServerSession();
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: 'Unauthorized', code: 'AUTH_REQUIRED' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
-    const { projectId, userId, options } = body as {
+    const { projectId, options } = body as {
       projectId: string;
-      userId: string;
       options: ExportOptions;
     };
 
-    if (!projectId || !userId || !options) {
+    // Use server-side userId instead of client-supplied
+    const userId = session.user.id;
+
+    if (!projectId || !options) {
       return NextResponse.json(
-        { error: 'Missing required fields: projectId, userId, options' },
+        { error: 'Missing required fields: projectId, options', code: 'VALIDATION_ERROR' },
         { status: 400 }
       );
     }
@@ -56,6 +68,15 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
   try {
+    // Auth guard
+    const session = await getServerSession();
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: 'Unauthorized', code: 'AUTH_REQUIRED' },
+        { status: 401 }
+      );
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const jobId = searchParams.get('jobId');
 

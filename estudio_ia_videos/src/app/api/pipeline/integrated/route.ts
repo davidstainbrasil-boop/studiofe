@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@lib/logger';
 import { mockDelay, isProduction } from '@lib/utils/mock-guard';
+import { getServerSession } from 'next-auth';
 // Using inline implementations instead of external modules
 // import { IntegratedTTSAvatarPipeline } from '@lib/pipeline/integrated-tts-avatar-pipeline';
 // import { MonitoringService } from '@lib/monitoring/monitoring-service';
@@ -113,6 +114,12 @@ class IntegratedTTSAvatarPipeline {
 }
 
 export async function POST(request: NextRequest) {
+  // Auth guard
+  const session = await getServerSession();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   const monitoring = MonitoringService.getInstance();
   const startTime = Date.now();
   
@@ -122,9 +129,11 @@ export async function POST(request: NextRequest) {
     const { 
       text,
       config = {},
-      userId,
       processImmediately = false
     } = body;
+
+    // Use server-side userId
+    const userId = session.user.id;
 
     // Validações
     if (!text || typeof text !== 'string') {
@@ -230,10 +239,16 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    // Auth guard
+    const session = await getServerSession();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const action = searchParams.get('action');
     const jobId = searchParams.get('jobId');
-    const userId = searchParams.get('userId');
+    const userId = session.user.id;
 
     const pipeline = IntegratedTTSAvatarPipeline.getInstance();
 
@@ -315,6 +330,12 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
+    // Auth guard
+    const session = await getServerSession();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+    }
+
     const body = await request.json();
     const { jobId, action } = body;
 

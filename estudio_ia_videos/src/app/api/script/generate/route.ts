@@ -4,8 +4,15 @@ import { logger } from '@/lib/monitoring/logger';
 import { validateRequestBody } from '@/lib/validation/api-validator';
 import { ScriptGenerateSchema } from '@/lib/validation/schemas';
 import { isPresentationNode, PPTXPresentationNode } from '@/lib/pptx/types/pptx-ast.types';
+import { getServerSession } from 'next-auth';
 
 export async function POST(req: NextRequest) {
+  // Auth guard
+  const session = await getServerSession();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   logger.info('Recebida requisição para gerar roteiro.');
 
   const validation = await validateRequestBody(req, ScriptGenerateSchema);

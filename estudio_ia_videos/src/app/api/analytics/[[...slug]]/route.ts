@@ -19,6 +19,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
 import {
   AnalyticsMetricsSystem,
   EventType,
@@ -50,6 +51,11 @@ const analytics = AnalyticsMetricsSystem.getInstance();
 // ═══════════════════════════════════════════════════════════════════════════
 
 export async function POST(request: NextRequest) {
+  const session = await getServerSession();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   try {
     const url = new URL(request.url);
     const pathname = url.pathname;
@@ -194,6 +200,11 @@ export async function POST(request: NextRequest) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 export async function GET(request: NextRequest) {
+  const session = await getServerSession();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   try {
     const url = new URL(request.url);
     const pathname = url.pathname;

@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { batchSystem } from '@lib/batch-processing-system';
 import { logger } from '@lib/logger';
+import { getServerSession } from 'next-auth';
 
 /**
  * POST /api/batch/control
@@ -14,6 +15,15 @@ import { logger } from '@lib/logger';
  */
 export async function POST(request: NextRequest) {
   try {
+    // Auth guard
+    const session = await getServerSession();
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: 'Unauthorized', code: 'AUTH_REQUIRED' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const { jobId, action, priority } = body as {
       jobId: string;
