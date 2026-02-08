@@ -13,6 +13,7 @@ import { createVideoRenderWorker, isHarnessMode } from '@/lib/workers/video-rend
 import { RenderService } from '@/lib/services/render-service';
 import { Slide, SlideElement } from '@/lib/types';
 import { logger } from '@/lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   // Route only available in E2E test mode
@@ -35,6 +36,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const blocked = await applyRateLimit(request, 'test-render', 5);
+    if (blocked) return blocked;
+
     const body = await request.json();
     const { projectId, slides } = body;
 

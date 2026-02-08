@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
 import { AIScriptGeneratorService } from '@lib/ai/script-generator.service';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -11,6 +12,9 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const blocked = await applyRateLimit(req, 'ai-script', 10);
+    if (blocked) return blocked;
+
     const body = await req.json();
     const { nr, topics, duration, audience, company_context } = body;
 

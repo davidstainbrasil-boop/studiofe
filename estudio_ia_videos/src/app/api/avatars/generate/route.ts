@@ -12,6 +12,7 @@ import { workflowManager } from '@lib/workflow/unified-workflow-manager'
 import { z } from 'zod'
 import { Prisma } from '@prisma/client'
 import { mockDelay, isProduction } from '@lib/utils/mock-guard'
+import { applyRateLimit } from '@/lib/rate-limit'
 
 // Schemas de validação
 const AvatarConfigSchema = z.object({
@@ -245,6 +246,9 @@ const avatar3DGenerator = new Avatar3DGenerator()
 // POST - Gerar avatar 3D
 export async function POST(request: NextRequest) {
   try {
+    const blocked = await applyRateLimit(request, 'avatars-gen', 5);
+    if (blocked) return blocked;
+
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -352,6 +356,9 @@ export async function GET(request: NextRequest) {
 // PUT - Atualizar configuração do avatar
 export async function PUT(request: NextRequest) {
   try {
+    const blocked = await applyRateLimit(request, 'avatars-gen', 5);
+    if (blocked) return blocked;
+
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

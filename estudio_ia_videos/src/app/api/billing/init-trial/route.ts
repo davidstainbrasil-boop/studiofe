@@ -10,6 +10,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
 import { createClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || '',
@@ -23,6 +24,9 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const blocked = await applyRateLimit(req, 'billing-trial', 3);
+    if (blocked) return blocked;
+
     const body = await req.json();
     const { userId, plan = 'pro', trialDays = 7 } = body;
 

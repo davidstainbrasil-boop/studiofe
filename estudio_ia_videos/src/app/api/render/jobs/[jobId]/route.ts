@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseForRequest } from '@lib/supabase/server'
 import { logger } from '@lib/logger'
 import { prisma } from '@lib/prisma'
+import { applyRateLimit } from '@/lib/rate-limit'
 
 export async function GET(
   request: NextRequest,
@@ -72,6 +73,9 @@ export async function DELETE(
   { params }: { params: { jobId: string } }
 ) {
   try {
+    const blocked = await applyRateLimit(request, 'render-job', 20);
+    if (blocked) return blocked;
+
     // Support x-user-id header for local dev/testing
     let userId = request.headers.get('x-user-id');
 

@@ -4,6 +4,7 @@ import { ue5AvatarEngine, UE5AvatarConfig } from '@lib/engines/ue5-avatar-engine
 import { logger } from '@lib/logger'
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 /**
  * POST /api/avatars/ue5/render
@@ -16,6 +17,9 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const blocked = await applyRateLimit(req, 'avatars-ue5', 5);
+    if (blocked) return blocked;
+
     const config: UE5AvatarConfig = await req.json()
     
     // Validações

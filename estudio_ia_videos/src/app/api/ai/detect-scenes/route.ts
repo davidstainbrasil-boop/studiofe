@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@lib/auth'
 import { logger } from '@lib/logger'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 /**
  * POST /api/ai/detect-scenes
@@ -14,6 +15,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const blocked = await applyRateLimit(request, 'ai-scenes', 5);
+    if (blocked) return blocked;
+
     const formData = await request.formData()
     const videoFile = formData.get('video') as File
     const sensitivity = parseInt(formData.get('sensitivity') as string || '50')

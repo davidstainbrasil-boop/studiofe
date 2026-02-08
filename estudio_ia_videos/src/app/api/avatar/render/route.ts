@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { applyRateLimit } from '@/lib/rate-limit'
 import { avatar3DPipeline } from '@lib/avatar-3d-pipeline'
 import { Logger } from '@lib/logger'
 import { createClient } from '@supabase/supabase-js'
@@ -48,6 +49,9 @@ export async function POST(request: NextRequest) {
   const startTime = Date.now()
   
   try {
+    const blocked = await applyRateLimit(request, 'avatar-render', 5);
+    if (blocked) return blocked;
+
     // Validar autenticação via Supabase (JWT)
     const authHeader = request.headers.get('authorization')
     if (!authHeader?.startsWith('Bearer ')) {

@@ -4,6 +4,7 @@ import { logger } from '@lib/logger'
 import { AIContentService } from '@lib/services/ai-content.service'
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -12,6 +13,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const blocked = await applyRateLimit(request, 'v1-ai-gen', 10);
+    if (blocked) return blocked;
+
     const body = await request.json()
     const { prompt, options } = body
     

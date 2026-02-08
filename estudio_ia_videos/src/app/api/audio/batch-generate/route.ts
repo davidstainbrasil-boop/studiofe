@@ -5,6 +5,7 @@ import { logger } from '@/lib/monitoring/logger';
 import { Scene } from '@/types/video-script';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 interface BatchGenerateAudioRequest {
   scenes: Scene[];
@@ -27,6 +28,9 @@ export async function POST(req: NextRequest) {
   logger.info('Recebida requisição para gerar áudio em lote.');
 
   try {
+    const blocked = await applyRateLimit(req, 'audio-batch', 3);
+    if (blocked) return blocked;
+
     const body = (await req.json()) as BatchGenerateAudioRequest;
     const { scenes, voiceId } = body;
 

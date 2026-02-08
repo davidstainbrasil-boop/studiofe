@@ -16,6 +16,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   // 🔒 SECURITY: Only allow in development mode
@@ -31,6 +32,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const blocked = await applyRateLimit(request, 'test-avatars', 5);
+    if (blocked) return blocked;
+
     const body = await request.json();
     const { text, quality = 'PLACEHOLDER', emotion = 'neutral', fps = 30 } = body;
 

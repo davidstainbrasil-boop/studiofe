@@ -5,6 +5,7 @@ import { logger } from '@lib/logger'
 import { mockDelay, isProduction, notImplementedResponse } from '@lib/utils/mock-guard'
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 interface LayoutElement {
   id: string
@@ -33,6 +34,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const blocked = await applyRateLimit(request, 'layout-gen', 10);
+    if (blocked) return blocked;
+
     const body = await request.json()
     const { 
       contentType = 'presentation',

@@ -5,6 +5,7 @@ import { getSupabaseForRequest } from '@lib/supabase/server';
 import { getRequiredEnv } from '@lib/env';
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // Global mock store for development/testing when DB is down
 declare global {
@@ -17,6 +18,9 @@ if (!global.mockCertificates) {
 
 export async function POST(request: NextRequest) {
   try {
+    const blocked = await applyRateLimit(request, 'certs', 10);
+    if (blocked) return blocked;
+
     // Authentication Logic (copied from projects/route.ts)
     const authHeader = request.headers.get('authorization') || request.headers.get('Authorization');
     

@@ -9,6 +9,7 @@ import { ElevenLabsProvider } from '@/lib/tts/elevenlabs-provider';
 import { SupabaseStorageService } from '@/lib/storage/supabase-storage.service';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 const logger = createLogger('TTSGenerateAPI');
 
@@ -31,6 +32,9 @@ export async function POST(request: NextRequest) {
   logger.info('🎙️ Iniciando geração TTS...', { component: 'API: v1/tts/generate' });
 
   try {
+    const blocked = await applyRateLimit(request, 'v1-tts-gen', 10);
+    if (blocked) return blocked;
+
     const body: TTSRequest = await request.json();
     const {
       text,

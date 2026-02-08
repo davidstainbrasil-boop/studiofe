@@ -8,6 +8,7 @@ import { getWebSocketServer } from '@lib/notifications/websocket-server';
 import { logger } from '@lib/logger';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 interface UploadProgressData {
   uploadId: string;
@@ -29,6 +30,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const blocked = await applyRateLimit(request, 'notif-upload', 10);
+    if (blocked) return blocked;
+
     const body: UploadProgressData = await request.json();
     
     const {

@@ -21,6 +21,11 @@ describe('API Route: /api/audio/batch-generate', () => {
       },
     }));
 
+    jest.doMock('@/lib/rate-limit', () => ({
+      applyRateLimit: jest.fn().mockResolvedValue(null),
+      checkRateLimit: jest.fn().mockResolvedValue({ allowed: true, retryAfterSec: 0, remaining: 10, limit: 10, resetAtMs: 0, source: 'memory' }),
+    }));
+
     // Importar dinamicamente após os mocks
     const route = require('@/app/api/audio/batch-generate/route');
     const ttsService = require('@/lib/tts/tts-service');

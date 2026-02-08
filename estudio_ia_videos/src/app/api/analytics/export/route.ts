@@ -5,6 +5,7 @@ import { withAnalytics } from '@lib/analytics/middleware';
 import { DataExporter, ExportFormat, ExportDataType } from '@lib/analytics/data-exporter';
 import { getOrgId, isAdmin, getUserId } from '@lib/auth/utils';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function GET(request: NextRequest) {
   return withAnalytics(async (req: NextRequest) => {
@@ -120,6 +121,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const blocked = await applyRateLimit(request, 'analytics-export', 10);
+  if (blocked) return blocked;
+
   return withAnalytics(async (req: NextRequest) => {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -248,6 +252,9 @@ export async function POST(request: NextRequest) {
 
 // Endpoint para listar histórico de exportações
 export async function PUT(request: NextRequest) {
+  const blocked = await applyRateLimit(request, 'analytics-export', 10);
+  if (blocked) return blocked;
+
   return withAnalytics(async (req: NextRequest) => {
     const session = await getServerSession(authOptions);
     if (!session?.user) {

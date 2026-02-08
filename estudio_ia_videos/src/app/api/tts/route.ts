@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { TTSService } from '@lib/tts/tts-service';
 import { z } from 'zod';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
 
@@ -18,6 +19,9 @@ export async function POST(request: Request) {
   }
 
   try {
+    const blocked = await applyRateLimit(request, 'tts', 10);
+    if (blocked) return blocked;
+
     const body = await request.json();
     const validation = ttsSchema.safeParse(body);
 

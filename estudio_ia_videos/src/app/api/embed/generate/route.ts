@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 import { createClient } from '@/lib/supabase/server';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // Generate embed HTML for a video
 function generateEmbedCode(
@@ -173,6 +174,9 @@ function generateOEmbedResponse(
 
 export async function POST(req: NextRequest) {
   try {
+    const blocked = await applyRateLimit(req, 'embed-gen', 10);
+    if (blocked) return blocked;
+
     const supabase = await createClient();
     
     // Get authenticated user

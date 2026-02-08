@@ -11,6 +11,7 @@ import { authOptions } from '@lib/auth';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // Inicializa Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
@@ -45,6 +46,9 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const blocked = await applyRateLimit(req, 'stripe-checkout', 5);
+    if (blocked) return blocked;
+
     const body = await req.json() as CheckoutRequest;
     const { userId, priceId, successUrl, cancelUrl } = body;
 

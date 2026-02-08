@@ -10,6 +10,7 @@ import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
 import { headers } from 'next/headers';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2023-10-16',
@@ -39,6 +40,9 @@ const PLAN_LIMITS: Record<string, number> = {
 
 export async function POST(req: NextRequest) {
   try {
+    const blocked = await applyRateLimit(req, 'stripe-webhook', 100);
+    if (blocked) return blocked;
+
     const body = await req.text();
     const headersList = await headers();
     const signature = headersList.get('stripe-signature');

@@ -6,9 +6,13 @@ import { RenderService } from '@lib/services/render-service';
 import { createVideoRenderWorker } from '@lib/workers/video-render-worker-factory';
 import { Slide, SlideElement } from '@lib/types';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
+    const blocked = await applyRateLimit(request, 'v1-export', 5);
+    if (blocked) return blocked;
+
     // Auth check
     const supabase = getSupabaseForRequest(request);
     const { data: { user }, error: authError } = await supabase.auth.getUser();

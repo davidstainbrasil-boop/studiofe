@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseForRequest } from '@lib/supabase/server'
 import { z } from 'zod'
 import { logger } from '@lib/logger'
+import { applyRateLimit } from '@/lib/rate-limit'
 
 // Schema de validação para atualização de avatar
 const updateAvatarSchema = z.object({
@@ -111,6 +112,9 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    const blocked = await applyRateLimit(request, 'avatars-id', 20);
+    if (blocked) return blocked;
+
     const supabase = getSupabaseForRequest(request)
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
@@ -283,6 +287,9 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    const blocked = await applyRateLimit(request, 'avatars-id', 20);
+    if (blocked) return blocked;
+
     const supabase = getSupabaseForRequest(request)
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 

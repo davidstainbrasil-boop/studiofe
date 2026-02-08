@@ -8,9 +8,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@lib/prisma';
 import { getVideoJobStatus } from '@lib/queue/render-queue';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function POST(req: NextRequest) {
   try {
+    const blocked = await applyRateLimit(req, 'render-status', 30);
+    if (blocked) return blocked;
+
     const body = await req.json();
     const { project_id, preset_id } = body;
 

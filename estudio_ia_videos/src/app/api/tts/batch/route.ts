@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { logger } from '@lib/logger';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 const batchSchema = z.object({
   items: z.array(z.object({
@@ -26,6 +27,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const blocked = await applyRateLimit(request, 'tts-batch', 3);
+    if (blocked) return blocked;
+
     const body = await request.json();
     const validation = batchSchema.safeParse(body);
 

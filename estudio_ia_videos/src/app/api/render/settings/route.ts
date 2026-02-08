@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseForRequest } from '@lib/supabase/server'
 import { z } from 'zod'
 import { logger } from '@lib/logger'
+import { applyRateLimit } from '@/lib/rate-limit'
 
 // Validation schema for render settings
 const RenderSettingsSchema = z.object({
@@ -138,6 +139,9 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
+    const blocked = await applyRateLimit(request, 'render-settings', 20);
+    if (blocked) return blocked;
+
     const supabase = getSupabaseForRequest(request)
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 

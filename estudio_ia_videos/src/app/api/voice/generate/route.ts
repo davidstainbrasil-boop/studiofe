@@ -3,11 +3,15 @@ import { createClient } from '@/lib/supabase/server'
 import { AudioGeneratorFactory, AudioProvider } from '@/lib/services/voice/audio-generator-factory'
 import { CreditManager } from '@/lib/billing/credit-manager'
 import { logger } from '@/lib/logger'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 const factory = new AudioGeneratorFactory()
 
 export async function POST(req: NextRequest) {
   try {
+    const blocked = await applyRateLimit(req, 'voice-gen', 10);
+    if (blocked) return blocked;
+
     const supabase = createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 

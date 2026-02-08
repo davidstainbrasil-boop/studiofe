@@ -10,6 +10,7 @@ import { logger } from '@lib/logger';
 import { mockDelay, isProduction } from '@lib/utils/mock-guard';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 interface AvatarConfig {
   id: string;
@@ -43,6 +44,9 @@ export async function POST(request: NextRequest) {
   logger.info('🧑‍💼 Iniciando geração de avatar...', { component: 'API: v1/avatar/generate' });
 
   try {
+    const blocked = await applyRateLimit(request, 'v1-avatar-gen', 5);
+    if (blocked) return blocked;
+
     const body: AvatarRequest = await request.json();
     const { type, text, audioUrl, avatar, settings } = body;
 

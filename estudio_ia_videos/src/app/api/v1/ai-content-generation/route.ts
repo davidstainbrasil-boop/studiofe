@@ -4,6 +4,7 @@ import { logger } from '@lib/logger'
 import { isProduction } from '@lib/utils/mock-guard'
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function GET(request: NextRequest) {
   try {
@@ -89,6 +90,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const blocked = await applyRateLimit(request, 'v1-ai-content', 10);
+    if (blocked) return blocked;
+
     const body = await request.json()
     const { 
       contentType, 

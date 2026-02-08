@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@lib/logger';
 import { recommendationSystem, RecommendationItem } from '@lib/intelligent-recommendation-system';
 import { getServerSession } from 'next-auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 type RecommendationType = 'template' | 'asset' | 'course' | 'feature';
 
@@ -17,6 +18,9 @@ type RecommendationType = 'template' | 'asset' | 'course' | 'feature';
  */
 export async function POST(request: NextRequest) {
   try {
+    const blocked = await applyRateLimit(request, 'reco-gen', 10);
+    if (blocked) return blocked;
+
     // Auth guard — use server-side userId instead of client-supplied
     const session = await getServerSession();
     if (!session?.user?.id) {

@@ -10,11 +10,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { ttsEngineManager, TTSGenerationOptions } from '@lib/tts/engine-manager'
 import { Logger } from '@lib/logger'
 import { getSupabaseForRequest } from '@lib/supabase/server'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 const logger = new Logger('TTSEngineAPI')
 
 export async function POST(request: NextRequest) {
   try {
+    const blocked = await applyRateLimit(request, 'tts-engine', 10);
+    if (blocked) return blocked;
+
     const body = await request.json()
     
     // Validar parâmetros obrigatórios

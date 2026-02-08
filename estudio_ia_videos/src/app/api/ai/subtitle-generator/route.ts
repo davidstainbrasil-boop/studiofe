@@ -5,6 +5,7 @@ import { subtitleService } from '@lib/services/subtitle.service'
 import { fileUploadService } from '@lib/services/file-upload.service'
 import { addVideoJob, getJobStatus } from '@lib/queue/video-processing.queue'
 import { logger } from '@lib/logger'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 /**
  * POST /api/ai/subtitle-generator
@@ -17,6 +18,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const blocked = await applyRateLimit(request, 'ai-subtitle', 10);
+    if (blocked) return blocked;
+
     const formData = await request.formData()
     const videoFile = formData.get('video') as File
     const language = formData.get('language') as string || 'auto'

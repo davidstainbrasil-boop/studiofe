@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@lib/auth'
+import { applyRateLimit } from '@/lib/rate-limit'
 
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions)
@@ -9,6 +10,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const blocked = await applyRateLimit(request, 'billing-checkout', 5);
+    if (blocked) return blocked;
+
     const body = await request.json()
     const priceId = process.env.STRIPE_PRICE_ID || body.priceId
     const secret = process.env.STRIPE_SECRET_KEY || ''

@@ -12,6 +12,7 @@ import { addVideoJob } from '@lib/queue/render-queue';
 import { jobManager } from '@lib/render/job-manager';
 import { logger } from '@lib/logger';
 import { rateLimit, getUserTier } from '@/middleware/rate-limiter';
+import { applyRateLimit } from '@/lib/rate-limit';
 import { cachedQuery, CacheTier, invalidatePattern } from '@lib/cache/redis-cache';
 import crypto from 'crypto';
 // Local type definitions replacing missing module
@@ -204,6 +205,9 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const blocked = await applyRateLimit(req, 'render-start', 10);
+    if (blocked) return blocked;
+
     const supabase = getSupabaseForRequest(req);
 
     // Support x-user-id header for local dev (fallback to Supabase auth)

@@ -8,6 +8,7 @@ import { PPTXGenerator, PPTXGenerationOptions } from '@lib/pptx/pptx-generator';
 import { logger } from '@lib/logger';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 /**
  * POST - Gerar apresentação PPTX
@@ -19,6 +20,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const blocked = await applyRateLimit(request, 'pptx-gen', 5);
+    if (blocked) return blocked;
+
     const body = await request.json();
     const { type, data, options } = body;
 

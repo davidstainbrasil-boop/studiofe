@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,6 +34,9 @@ interface UploadResponse {
 
 export async function POST(req: NextRequest): Promise<NextResponse<UploadResponse>> {
   try {
+    const blocked = await applyRateLimit(req, 'audio-upload', 10);
+    if (blocked) return blocked;
+
     const supabase = await createClient();
 
     // Get authenticated user

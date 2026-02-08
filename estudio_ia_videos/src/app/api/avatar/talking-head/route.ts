@@ -7,6 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 import { getMuseTalkProvider } from '@/lib/avatar/musetalk-provider';
 import { getSadTalkerProvider } from '@/lib/avatar/sadtalker-provider';
 import { getServerSession } from 'next-auth';
@@ -33,6 +34,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const blocked = await applyRateLimit(request, 'avatar-talking', 5);
+    if (blocked) return blocked;
+
     const body: GenerateRequest = await request.json();
     const { sourceImage, audioUrl, provider = 'auto', options = {} } = body;
 

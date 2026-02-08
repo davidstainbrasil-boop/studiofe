@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 import { AvatarLipSyncIntegration } from '@/lib/avatar/avatar-lip-sync-integration';
 import { AvatarRenderOrchestrator } from '@/lib/avatar/avatar-render-orchestrator';
 import { z } from 'zod';
@@ -35,6 +36,9 @@ export async function POST(request: NextRequest) {
   const startTime = Date.now();
 
   try {
+    const blocked = await applyRateLimit(request, 'v2-avatars-gen', 5);
+    if (blocked) return blocked;
+
     // 1. Authenticate user
     // In test environment, allow x-user-id header for E2E tests
     const testUserId = request.headers.get('x-user-id');

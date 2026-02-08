@@ -38,6 +38,11 @@ jest.mock('@/lib/logger', () => ({
   },
 }));
 
+jest.mock('@/lib/rate-limit', () => ({
+  applyRateLimit: jest.fn().mockResolvedValue(null),
+  checkRateLimit: jest.fn().mockResolvedValue({ allowed: true, retryAfterSec: 0, remaining: 10, limit: 10, resetAtMs: 0, source: 'memory' }),
+}));
+
 const { POST } = require('../../api/user/export-data/route');
 const { getSupabaseForRequest } = require('@/lib/supabase/server');
 

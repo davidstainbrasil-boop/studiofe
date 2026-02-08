@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@lib/logger';
 import { mockDelay, isProduction } from '@lib/utils/mock-guard';
 import { getServerSession } from 'next-auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 // Using inline implementations instead of external modules
 // import { EnhancedTTSService, EnhancedTTSConfig } from '@lib/enhanced-tts-service';
 // import { UnifiedAvatarPipeline } from '@lib/unified-avatar-pipeline';
@@ -295,6 +296,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const blocked = await applyRateLimit(request, 'avatars-speech', 10);
+    if (blocked) return blocked;
+
     // Parse do body
     let body: GenerateSpeechRequest;
     try {

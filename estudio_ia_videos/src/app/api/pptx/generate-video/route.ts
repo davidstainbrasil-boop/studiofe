@@ -25,6 +25,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
 import { prisma } from '@lib/prisma';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 const execAsync = promisify(exec);
 
@@ -187,6 +188,9 @@ export async function POST(req: NextRequest) {
   let tempDir: string | null = null;
 
   try {
+    const blocked = await applyRateLimit(req, 'pptx-video', 5);
+    if (blocked) return blocked;
+
     // 1. Authentication
     const supabase = getSupabaseForRequest(req);
     let userId = req.headers.get('x-user-id');

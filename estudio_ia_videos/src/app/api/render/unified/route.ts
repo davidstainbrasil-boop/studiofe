@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@lib/logger'
+import { applyRateLimit } from '@/lib/rate-limit'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@lib/auth'
 import { db } from '@lib/db'
@@ -406,6 +407,9 @@ const renderPipeline = new UnifiedRenderPipeline()
 // API Handlers
 export async function POST(request: NextRequest) {
   try {
+    const blocked = await applyRateLimit(request, 'render-unified', 10);
+    if (blocked) return blocked;
+
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 })

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseForRequest } from '@lib/supabase/server'
 import { z } from 'zod'
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // Inline type definition to avoid @types/database import
 type Avatar3DWithProject = any;
@@ -116,6 +117,9 @@ export async function GET(request: NextRequest) {
 // POST - Criar novo avatar 3D
 export async function POST(request: NextRequest) {
   try {
+    const blocked = await applyRateLimit(request, 'avatars', 20);
+    if (blocked) return blocked;
+
     const supabase = getSupabaseForRequest(request)
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
@@ -273,6 +277,9 @@ async function fetchReadyPlayerMeData(url: string) {
 // PUT - Atualizar configurações globais de avatares
 export async function PUT(request: NextRequest) {
   try {
+    const blocked = await applyRateLimit(request, 'avatars', 20);
+    if (blocked) return blocked;
+
     const supabase = getSupabaseForRequest(request)
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 

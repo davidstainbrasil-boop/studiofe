@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseForRequest } from '@lib/supabase/server';
 import { logger } from '@lib/logger';
 import { z } from 'zod';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,6 +35,10 @@ interface UserDataExport {
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  // Rate limiting
+  const blocked = await applyRateLimit(request, 'user-export', 3);
+  if (blocked) return blocked;
+
   // Check authentication
   const supabase = getSupabaseForRequest(request);
   const { data: { user }, error: authError } = await supabase.auth.getUser();

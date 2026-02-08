@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
 import { logger } from '@/lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 import { 
   checkFeatureAccess, 
   checkVideoLimit, 
@@ -29,6 +30,9 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const blocked = await applyRateLimit(req, 'billing-check', 30);
+    if (blocked) return blocked;
+
     const body = await req.json() as CheckFeatureRequest;
     const { userId, feature, additionalBytes } = body;
 

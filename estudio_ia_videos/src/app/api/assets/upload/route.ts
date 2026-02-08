@@ -4,9 +4,13 @@ import { getSupabaseForRequest } from '@lib/supabase/server';
 import { prisma } from '@lib/prisma';
 import { logger } from '@lib/logger';
 import { randomUUID } from 'crypto';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function POST(req: NextRequest) {
   try {
+    const blocked = await applyRateLimit(req, 'assets-upload', 10);
+    if (blocked) return blocked;
+
     const supabase = getSupabaseForRequest(req);
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 

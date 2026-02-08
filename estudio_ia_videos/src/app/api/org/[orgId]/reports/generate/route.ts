@@ -11,12 +11,16 @@ import { getOrgContext, hasPermission } from '@lib/multi-tenancy/org-context';
 import { reportGenerator, ReportType } from '@lib/reports/report-generator';
 import { logger } from '@lib/logger';
 import fs from 'fs';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function POST(
   req: NextRequest,
   { params }: { params: { orgId: string } }
 ) {
   try {
+    const blocked = await applyRateLimit(req, 'org-report', 5);
+    if (blocked) return blocked;
+
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });

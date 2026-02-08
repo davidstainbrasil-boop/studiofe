@@ -18,6 +18,7 @@ import { getMusicLibrary } from '@/lib/audio/music-library';
 import { TalkingHeadPipelineService } from '@/lib/avatar/talking-head-pipeline-service';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export const maxDuration = 300; // 5 minutes max
 
@@ -111,6 +112,9 @@ export async function POST(request: NextRequest) {
   const jobId = randomUUID();
 
   try {
+    const blocked = await applyRateLimit(request, 'pptx2video', 5);
+    if (blocked) return blocked;
+
     const body: GenerateRequest = await request.json();
     const { projectId, slides, settings } = body;
 

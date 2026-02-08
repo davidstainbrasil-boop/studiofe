@@ -8,6 +8,7 @@ import { createHash } from 'crypto';
 import path from 'path';
 import { logger } from '@lib/logger';
 import { getServerSession } from 'next-auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 const UPLOAD_DIR = path.join(process.cwd(), 'uploads', 'temp');
 const METADATA_DIR = path.join(process.cwd(), 'uploads', 'metadata');
@@ -38,6 +39,10 @@ async function generateFileHash(buffer: Buffer): Promise<string> {
 }
 
 export async function POST(request: NextRequest) {
+  // Rate limiting
+  const blocked = await applyRateLimit(request, 'upload-chunk', 60);
+  if (blocked) return blocked;
+
   // Auth guard
   const session = await getServerSession();
   if (!session?.user?.id) {

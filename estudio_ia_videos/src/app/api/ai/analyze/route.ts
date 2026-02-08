@@ -9,6 +9,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
 import { AIVideoAnalysisSystem } from '@lib/ai/ai-video-analysis-system';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 /**
  * POST /api/ai/analyze
@@ -21,6 +22,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const blocked = await applyRateLimit(request, 'ai-analyze', 10);
+    if (blocked) return blocked;
+
     const body = await request.json();
     const { videoId, videoPath, config } = body as {
       videoId: string;

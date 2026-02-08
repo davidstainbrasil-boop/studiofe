@@ -5,6 +5,7 @@ import { logger } from '@lib/logger'
 import { AIContentService } from '@lib/services/ai-content.service'
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // Force dynamic rendering - this route uses OpenAI and shouldn't be prerendered
 export const dynamic = 'force-dynamic';
@@ -22,6 +23,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const blocked = await applyRateLimit(request, 'v1-ai-analyze', 10);
+    if (blocked) return blocked;
+
     const body: AnalysisRequest = await request.json()
 
     logger.info('Analyzing content via AIContentService', { contentType: body.contentType });

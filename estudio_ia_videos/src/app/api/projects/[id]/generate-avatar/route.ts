@@ -4,6 +4,7 @@ import { getSupabaseForRequest } from '@lib/supabase/server';
 import { getDIDService } from '@lib/services/avatar/did-service';
 import { logger } from '@lib/logger';
 import { randomUUID } from 'crypto';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // Default avatar image if none provided
 const DEFAULT_AVATAR = 'https://img.freepik.com/free-photo/portrait-white-man-isolated_53876-40306.jpg';
@@ -33,6 +34,9 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
+    const blocked = await applyRateLimit(request, 'proj-avatar', 5);
+    if (blocked) return blocked;
+
     const supabase = getSupabaseForRequest(request);
     const { data: { user } } = await supabase.auth.getUser();
 

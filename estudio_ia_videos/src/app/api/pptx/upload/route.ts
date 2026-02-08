@@ -8,6 +8,7 @@ import { randomUUID } from 'crypto';
 import PPTXProcessorReal from '@lib/pptx/pptx-processor-real';
 import { AppError, getUserMessage, normalizeError } from '@lib/error-handling';
 import { getRequiredEnv } from '@lib/env';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // Helper to create Supabase Admin Client for database operations ensuring RLS bypass if needed
 import { createClient } from '@supabase/supabase-js';
@@ -17,6 +18,9 @@ export async function POST(req: NextRequest) {
   logger.info('PPTX upload request received');
 
   try {
+    const blocked = await applyRateLimit(req, 'pptx-upload', 10);
+    if (blocked) return blocked;
+
     let user;
 
     // Production authentication - NO BYPASS IN PRODUCTION

@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseForRequest } from '@lib/supabase/server'
 import { logger } from '@lib/logger'
+import { applyRateLimit } from '@/lib/rate-limit'
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { jobId: string } }
 ) {
   try {
+    const blocked = await applyRateLimit(request, 'render-retry', 10);
+    if (blocked) return blocked;
+
     const supabase = getSupabaseForRequest(request)
     const { data: { user } } = await supabase.auth.getUser()
 

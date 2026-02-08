@@ -20,6 +20,7 @@ import { Prisma, JobStatus } from '@prisma/client';
 import { logger } from '@lib/logger';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // Interface for jobData stored in processingQueue
 interface AvatarJobData {
@@ -64,6 +65,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const blocked = await applyRateLimit(request, 'avatars-local', 5);
+    if (blocked) return blocked;
+
     const body = await request.json();
     const { 
       text, 

@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getTTSService } from '@/lib/tts/tts-service-real'
 import { getSupabaseForRequest } from '@/lib/supabase/server'
 import { logger } from '@/lib/logger'
+import { applyRateLimit } from '@/lib/rate-limit';
 import { z } from 'zod'
 
 // Schema de validação
@@ -39,6 +40,9 @@ export async function POST(req: NextRequest) {
   const startTime = Date.now()
 
   try {
+    const blocked = await applyRateLimit(req, 'tts-real', 10);
+    if (blocked) return blocked;
+
     // Autenticação
     const supabase = getSupabaseForRequest(req)
     const { data: { user }, error: authError } = await supabase.auth.getUser()

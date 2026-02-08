@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 interface VoiceGenerationRequest {
   text: string;
@@ -23,6 +24,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const blocked = await applyRateLimit(request, 'v1-voice-clone', 3);
+    if (blocked) return blocked;
+
     const body: VoiceGenerationRequest = await request.json();
     
     // Simulação da geração de áudio

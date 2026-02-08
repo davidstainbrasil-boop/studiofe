@@ -9,6 +9,7 @@ import path from 'path';
 import { logger } from '@lib/logger';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 const UPLOAD_DIR = path.join(process.cwd(), 'uploads', 'temp');
 const METADATA_DIR = path.join(process.cwd(), 'uploads', 'metadata');
@@ -109,6 +110,9 @@ function getPublicUrl(filename: string): string {
 }
 
 export async function POST(request: NextRequest) {
+  const blocked = await applyRateLimit(request, 'upload-finalize', 10);
+  if (blocked) return blocked;
+
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });

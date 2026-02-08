@@ -8,6 +8,7 @@ import { SRTGenerator } from '@lib/subtitles/srt-generator';
 import { z } from 'zod';
 import { logger } from '@lib/logger';
 import { getServerSession } from 'next-auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 const slideSchema = z.object({
   id: z.string().optional(),
@@ -24,6 +25,9 @@ const generateSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    const blocked = await applyRateLimit(request, 'subtitle-gen', 10);
+    if (blocked) return blocked;
+
     // Auth guard
     const session = await getServerSession();
     if (!session?.user?.id) {

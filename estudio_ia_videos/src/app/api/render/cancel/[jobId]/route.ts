@@ -8,12 +8,16 @@ import { getServerSession } from 'next-auth';
 import type { AuthOptions } from 'next-auth';
 import { authConfig } from '@lib/auth/auth-config';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function POST(
   req: NextRequest,
   { params }: { params: { jobId: string } }
 ) {
   try {
+    const blocked = await applyRateLimit(req, 'render-cancel', 20);
+    if (blocked) return blocked;
+
     const session = await getServerSession(authConfig as unknown as AuthOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });

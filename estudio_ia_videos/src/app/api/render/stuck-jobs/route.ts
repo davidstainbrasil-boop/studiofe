@@ -12,6 +12,7 @@ import { stuckJobMonitor } from '@lib/render/stuck-job-monitor';
 import { logger } from '@lib/logger';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 /**
  * GET - Lista jobs stuck sem modificá-los
@@ -65,6 +66,9 @@ export async function GET(req: NextRequest) {
  * POST - Força recuperação (fail) de jobs stuck
  */
 export async function POST(req: NextRequest) {
+  const blocked = await applyRateLimit(req, 'render-stuck', 5);
+  if (blocked) return blocked;
+
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });

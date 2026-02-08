@@ -1,4 +1,5 @@
 import Redis from 'ioredis';
+import { NextResponse } from 'next/server';
 import { logger } from './logger';
 
 type InMemoryBucket = { count: number; resetAtMs: number };
@@ -185,4 +186,36 @@ export const globalRateLimiter = {
     return this;
   },
 };
+
+/**
+ * Apply rate limiting to a request. Returns a 429 NextResponse if blocked, or null if allowed.
+ *
+ * Usage:
+ * ```ts
+ * const blocked = await applyRateLimit(request, 'render', 10);
+ * if (blocked) return blocked;
+ * ```
+ *
+ * @param request - The incoming request (uses x-forwarded-for or ip header)
+ * @param prefix - Rate limit key prefix (e.g. 'render', 'tts', 'upload')
+ * @param limit - Max requests per window (default 30)
+ * @param windowMs - Window size in ms (default 60_000 = 1 min)
+ */
+export async function applyRateLimit(
+  request: { headers: { get(name: string): string | null } },
+  prefix: string,
+  limit = 30,
+  windowMs = 60_000,
+): Promise<NextResponse | null> {
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  const rl = await checkRateLimit(`${prefix}:${ip}`, limit, windowMs);
+  if (!rl.allowed) {
+    logger.warn(`Rate limit exceeded: ${prefix}`, { ip, retryAfter: rl.retryAfterSec });
+    return NextResponse.json(
+      { error: 'Too many requests', retryAfter: rl.retryAfterSec },
+      { status: 429, headers: { 'Retry-After': String(rl.retryAfterSec) } },
+    );
+  }
+  return null;
+}
 

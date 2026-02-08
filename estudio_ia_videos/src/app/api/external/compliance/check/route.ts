@@ -9,6 +9,7 @@ import { authOptions } from '@lib/auth'
 import { supabaseAdmin } from '@lib/services/server'
 import { z } from 'zod'
 import { logger } from '@lib/logger'
+import { applyRateLimit } from '@/lib/rate-limit'
 
 // Validation schema
 const ComplianceCheckSchema = z.object({
@@ -364,6 +365,9 @@ class ComplianceChecker {
 
 export async function POST(request: NextRequest) {
   try {
+    const blocked = await applyRateLimit(request, 'ext-compliance', 10);
+    if (blocked) return blocked;
+
     // Check authentication
     const session = await getServerSession(authOptions)
     if (!session?.user) {

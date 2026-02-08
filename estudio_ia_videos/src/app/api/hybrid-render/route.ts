@@ -8,6 +8,7 @@ import { CloudRenderingOrchestrator } from '@lib/hybrid-rendering/cloud-orchestr
 import { createClient } from '@lib/supabase/server';
 import { getRequiredEnv, getOptionalEnv } from '@lib/env';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // Initialize orchestrator
 const orchestrator = new CloudRenderingOrchestrator(
@@ -20,6 +21,9 @@ const orchestrator = new CloudRenderingOrchestrator(
 
 export async function POST(request: NextRequest) {
   try {
+    const blocked = await applyRateLimit(request, 'hybrid-render', 5);
+    if (blocked) return blocked;
+
     const supabase = createClient();
     
     // Get authenticated user

@@ -11,6 +11,7 @@ import { z } from 'zod'
 import { addVideoJob } from '@lib/queue/render-queue'
 import { randomUUID } from 'crypto'
 import { logger } from '@lib/logger'
+import { applyRateLimit } from '@/lib/rate-limit'
 import type { JobStatus } from '@prisma/client'
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
@@ -116,6 +117,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const blocked = await applyRateLimit(request, 'render-jobs', 20);
+  if (blocked) return blocked;
+
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });

@@ -17,6 +17,7 @@ import { randomUUID } from 'crypto';
 import { logger } from '@lib/logger';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 const slideInputSchema = z.object({
   title: z.string(),
@@ -49,6 +50,9 @@ const videoJobs = new Map<string, {
 }>();
 
 export async function POST(request: NextRequest) {
+  const blocked = await applyRateLimit(request, 'video-generate', 5);
+  if (blocked) return blocked;
+
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });

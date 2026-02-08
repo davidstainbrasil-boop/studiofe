@@ -3,6 +3,8 @@
  * Sistema de processamento em lote
  */
 
+import { logger } from '@/lib/logger';
+
 export type BatchJobType = 'video_render' | 'transcription' | 'translation' | 'export';
 
 export interface BatchJob<T = unknown> {
@@ -67,7 +69,7 @@ export class BatchProcessingSystem {
     this.jobs.set(jobId, job as BatchJob);
     
     // Iniciar processamento
-    this.processJob(jobId).catch(console.error);
+    this.processJob(jobId).catch((err) => logger.error('Batch job failed', { jobId, error: String(err) }));
     
     return job;
   }

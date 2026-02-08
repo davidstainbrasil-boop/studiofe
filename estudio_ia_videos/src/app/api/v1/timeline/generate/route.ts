@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@lib/logger'
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 interface TimelineSlide {
   id: string
@@ -59,6 +60,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const blocked = await applyRateLimit(request, 'timeline-gen', 10);
+    if (blocked) return blocked;
+
     const { slides, jobId } = await request.json()
     
     if (!slides || !Array.isArray(slides)) {

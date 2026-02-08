@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getSupabaseForRequest } from '@lib/supabase/server'
 import { logger } from '@lib/logger'
+import { applyRateLimit } from '@/lib/rate-limit';
 import { mockDelay, isProduction } from '@lib/utils/mock-guard'
 
 // Schema de validação
@@ -35,6 +36,9 @@ async function generateRealAudio(text: string, voiceId: string, settings?: z.inf
 
 export async function POST(request: NextRequest) {
   try {
+    const blocked = await applyRateLimit(request, 'voice-clone', 3);
+    if (blocked) return blocked;
+
     // 🔐 Autenticação obrigatória
     const supabase = getSupabaseForRequest(request)
     const { data: { user }, error: authError } = await supabase.auth.getUser()

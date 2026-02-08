@@ -10,6 +10,7 @@ import { logger } from '@lib/logger';
 import { getSupabaseForRequest } from '@lib/supabase/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -18,6 +19,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const blocked = await applyRateLimit(request, 'upload-notif', 10);
+    if (blocked) return blocked;
+
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const userId = formData.get('userId') as string;

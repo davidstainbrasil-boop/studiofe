@@ -12,6 +12,7 @@ import { ffmpegService, RenderSettings, getResolutionDimensions } from '@lib/vid
 import { CanvasToVideoConverter, VideoScene } from '@lib/canvas-to-video'
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 interface ExportRequest {
   project: {
@@ -43,6 +44,9 @@ interface ExportRequest {
 }
 
 export async function POST(request: NextRequest) {
+  const blocked = await applyRateLimit(request, 'v1-export-video', 5);
+  if (blocked) return blocked;
+
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });

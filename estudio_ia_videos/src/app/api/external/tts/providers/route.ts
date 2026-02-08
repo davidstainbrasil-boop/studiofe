@@ -9,6 +9,7 @@ import { authOptions } from '@lib/auth'
 import { supabaseAdmin } from '@lib/services/server'
 import { z } from 'zod'
 import { logger } from '@lib/logger'
+import { applyRateLimit } from '@/lib/rate-limit';
 import type { Json } from '@lib/supabase/types'
 
 // Validation schema
@@ -216,6 +217,9 @@ interface TTSProviderConfig {
 
 export async function POST(request: NextRequest) {
   try {
+    const blocked = await applyRateLimit(request, 'ext-tts-prov', 20);
+    if (blocked) return blocked;
+
     // Check authentication
     const session = await getServerSession(authOptions)
     if (!session?.user) {

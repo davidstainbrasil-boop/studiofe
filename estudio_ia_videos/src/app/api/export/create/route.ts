@@ -9,6 +9,7 @@ import { exportSystem } from '@lib/export-advanced-system';
 import type { ExportOptions, TargetPlatform } from '@lib/export-advanced-system';
 import { logger } from '@lib/logger';
 import { getServerSession } from 'next-auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 /**
  * POST /api/export/create
@@ -16,6 +17,9 @@ import { getServerSession } from 'next-auth';
  */
 export async function POST(request: NextRequest) {
   try {
+    const blocked = await applyRateLimit(request, 'export-create', 5);
+    if (blocked) return blocked;
+
     // Auth guard
     const session = await getServerSession();
     if (!session?.user?.id) {

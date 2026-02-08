@@ -3,6 +3,7 @@ import { logger } from '@lib/logger';
 import { mockDelay, isProduction } from '@lib/utils/mock-guard';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 // Using inline implementations instead of external modules
 // import { AdvancedLipSyncProcessor } from '@lib/lipsync/advanced-lipsync-processor';
 // import { Avatar3DRenderEngine } from '@lib/avatar/avatar-3d-render-engine';
@@ -133,6 +134,9 @@ export async function POST(request: NextRequest) {
   const startTime = Date.now();
   
   try {
+    const blocked = await applyRateLimit(request, 'avatars-sync', 10);
+    if (blocked) return blocked;
+
     // Parse do body da requisição
     const body = await request.json();
     const { 

@@ -7,11 +7,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseForRequest } from '@lib/supabase/server';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 import { prepareStudioExportPayload } from '@lib/render/studio-render-adapter';
 import type { TimelineProject } from '@lib/types/timeline-types';
 
 export async function POST(req: NextRequest) {
   try {
+    const blocked = await applyRateLimit(req, 'studio-export', 5);
+    if (blocked) return blocked;
+
     // Autenticação
     let userId = req.headers.get('x-user-id');
     

@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { DIDWebhookHandler } from '@/lib/services/avatar/did-webhook-handler'
 import { logger } from '@/lib/logger'
+import { applyRateLimit } from '@/lib/rate-limit'
 
 const handler = new DIDWebhookHandler()
 
 export async function POST(req: NextRequest) {
   try {
+    const blocked = await applyRateLimit(req, 'avatar-webhook', 30);
+    if (blocked) return blocked;
+
     // Basic security check (optional: verify secret if D-ID supports it or use custom header)
     // const signature = req.headers.get('x-did-signature')
     

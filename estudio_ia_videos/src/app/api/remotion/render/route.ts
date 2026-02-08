@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@lib/logger';
 import { prisma } from '@lib/prisma';
+import { applyRateLimit } from '@/lib/rate-limit';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
 import { v4 as uuidv4 } from 'uuid';
@@ -13,6 +14,9 @@ import { v4 as uuidv4 } from 'uuid';
 
 export async function POST(request: NextRequest) {
   try {
+    const blocked = await applyRateLimit(request, 'remotion-render', 5);
+    if (blocked) return blocked;
+
     const session = await getServerSession(authOptions);
     // Em produção real, descomentar verificação de sessão
     // if (!session?.user?.id) {

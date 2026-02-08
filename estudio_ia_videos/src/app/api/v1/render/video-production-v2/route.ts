@@ -13,6 +13,7 @@ import fs from 'fs';
 import { logger } from '@lib/logger';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 interface RenderJob {
   jobId: string;
@@ -40,6 +41,9 @@ interface RenderSettings {
 const renderJobs = new Map<string, RenderJob>();
 
 export async function POST(request: NextRequest) {
+  const blocked = await applyRateLimit(request, 'video-prod-v2', 5);
+  if (blocked) return blocked;
+
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });

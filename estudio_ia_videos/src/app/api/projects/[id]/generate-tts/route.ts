@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseForRequest } from '@lib/supabase/server';
 import { generateAndUploadTTSAudio } from '@lib/elevenlabs-service';
 import { logger } from '@lib/logger';
+import { applyRateLimit } from '@/lib/rate-limit';
 import { prisma } from '@lib/prisma'; // Using Prisma for easier JSON manipulation if Supabase client is tricky for deep JSON updates
 
 export async function POST(
@@ -10,6 +11,9 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
+    const blocked = await applyRateLimit(request, 'proj-tts', 10);
+    if (blocked) return blocked;
+
     const supabase = getSupabaseForRequest(request);
     const { data: { user } } = await supabase.auth.getUser();
 

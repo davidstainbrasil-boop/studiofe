@@ -5,8 +5,12 @@ import { validateRequestBody } from '@/lib/validation/api-validator';
 import { ScriptGenerateSchema } from '@/lib/validation/schemas';
 import { isPresentationNode, PPTXPresentationNode } from '@/lib/pptx/types/pptx-ast.types';
 import { getServerSession } from 'next-auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function POST(req: NextRequest) {
+  const blocked = await applyRateLimit(req, 'script-gen', 10);
+  if (blocked) return blocked;
+
   // Auth guard
   const session = await getServerSession();
   if (!session?.user?.id) {

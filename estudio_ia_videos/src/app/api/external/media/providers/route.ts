@@ -10,6 +10,7 @@ import { supabaseAdmin } from '@lib/services/server'
 import { z } from 'zod'
 import { logger } from '@lib/logger'
 import type { Json } from '@lib/supabase/types'
+import { applyRateLimit } from '@/lib/rate-limit'
 
 // Validation schema
 const MediaProviderSchema = z.object({
@@ -229,6 +230,9 @@ interface ProviderConfig {
 
 export async function POST(request: NextRequest) {
   try {
+    const blocked = await applyRateLimit(request, 'ext-media-prov', 20);
+    if (blocked) return blocked;
+
     // Check authentication
     const session = await getServerSession(authOptions)
     if (!session?.user) {

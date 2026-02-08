@@ -8,6 +8,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@lib/auth'
 import { logger } from '@lib/logger'
 import { mockDelay, isProduction } from '@lib/utils/mock-guard'
+import { applyRateLimit } from '@/lib/rate-limit'
 
 // Interfaces
 interface AvatarRenderRequest {
@@ -571,6 +572,9 @@ const avatarRenderer = new Avatar3DRenderer()
 // API Handlers
 export async function POST(request: NextRequest) {
   try {
+    const blocked = await applyRateLimit(request, 'avatars-render', 5);
+    if (blocked) return blocked;
+
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

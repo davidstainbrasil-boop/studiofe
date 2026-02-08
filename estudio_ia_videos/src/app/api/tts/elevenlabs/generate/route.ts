@@ -3,6 +3,7 @@ import { z } from 'zod'
 import ElevenLabsService from '@lib/elevenlabs-service'
 import { getSupabaseForRequest } from '@lib/supabase/server'
 import { logger } from '@lib/logger'
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // Schema de validação com Zod
 const TTSRequestSchema = z.object({
@@ -19,6 +20,9 @@ const TTSRequestSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    const blocked = await applyRateLimit(request, 'tts-11labs', 10);
+    if (blocked) return blocked;
+
     // 🔐 Autenticação obrigatória
     const supabase = getSupabaseForRequest(request)
     const { data: { user }, error: authError } = await supabase.auth.getUser()

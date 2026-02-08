@@ -5,6 +5,7 @@ import { Upload } from '@aws-sdk/lib-storage'
 import { S3Client } from '@aws-sdk/client-s3'
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 // AWS S3 Client (use hosted storage config)
 const s3Client = new S3Client({
@@ -18,6 +19,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const blocked = await applyRateLimit(request, 'v1-tts-11labs', 10);
+    if (blocked) return blocked;
+
     const body = await request.json()
     const { text, voiceId, voice_id, settings, voice_settings, model_id = 'eleven_multilingual_v2' } = body
     

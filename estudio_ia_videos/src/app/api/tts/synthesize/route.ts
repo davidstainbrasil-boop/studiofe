@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { logger } from '@lib/logger';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 const synthesizeSchema = z.object({
   text: z.string().min(1, 'Texto é obrigatório').max(5000, 'Texto muito longo (máx 5000 caracteres)'),
@@ -26,6 +27,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const blocked = await applyRateLimit(request, 'tts-synth', 10);
+    if (blocked) return blocked;
+
     const body = await request.json();
     const validation = synthesizeSchema.safeParse(body);
 

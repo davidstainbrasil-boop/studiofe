@@ -9,6 +9,7 @@ import { avatarEngine } from '@lib/avatar-engine';
 import { logger } from '@lib/logger';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@lib/auth';
+import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -17,6 +18,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const blocked = await applyRateLimit(request, 'avatars-3d', 5);
+    if (blocked) return blocked;
+
     const body = await request.json();
     const { avatarId, text, audioUrl, duration, resolution = 'HD' } = body;
 
