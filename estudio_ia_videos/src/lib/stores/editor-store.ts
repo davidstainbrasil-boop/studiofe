@@ -3,6 +3,13 @@ import { devtools } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import { createClient } from '../supabase/client';
 import { logger } from '../logger';
+import type {
+  Scene,
+  SceneVoiceConfig,
+  SceneAvatarConfig,
+  SceneMusicConfig,
+  TTSState,
+} from '@/types/scene';
 
 // Types
 interface Slide {
@@ -47,16 +54,26 @@ interface DatabaseSlide {
   background_image?: string | null;
   background_color?: string | null;
   audio_config?: Record<string, unknown> | null;
+  script?: string | null;
+  voice_config?: Record<string, unknown> | null;
+  avatar_config?: Record<string, unknown> | null;
+  music_config?: Record<string, unknown> | null;
+  notes?: string | null;
 }
 
 interface SlideWithTTS extends Slide {
-  ttsState: 'idle' | 'generating' | 'ready' | 'error' | 'success';
+  ttsState: TTSState;
   ttsUrl?: string;
   errorMessage?: string;
   visualSettings?: {
     backgroundImageUrl?: string;
     backgroundColor?: string;
   };
+  // Per-scene configuration
+  script?: string;
+  voiceConfig?: SceneVoiceConfig;
+  avatarConfig?: SceneAvatarConfig;
+  musicConfig?: SceneMusicConfig;
 }
 
 interface EditorState {
@@ -70,6 +87,14 @@ interface EditorState {
   addSlide: (type?: 'video' | 'audio' | 'text' | 'pptx') => void;
   deleteSlide: (slideId: string) => void;
   reorderSlides: (startIndex: number, endIndex: number) => void;
+
+  // Per-scene configuration methods
+  updateSlideScript: (slideId: string, script: string) => void;
+  updateSlideVoice: (slideId: string, voiceConfig: SceneVoiceConfig) => void;
+  updateSlideAvatar: (slideId: string, avatarConfig: SceneAvatarConfig | undefined) => void;
+  updateSlideMusic: (slideId: string, musicConfig: SceneMusicConfig | undefined) => void;
+  generateSlideTTS: (slideId: string) => Promise<void>;
+  generateAllTTS: () => Promise<void>;
 }
 
 export const useEditorStore = create<EditorState>()(
@@ -154,13 +179,18 @@ export const useEditorStore = create<EditorState>()(
               title: s.title || `Slide ${s.order_index + 1}`,
               content: s.content || '',
               duration: s.duration || 10,
-              ttsState: 'idle',
+              ttsState: 'idle' as TTSState,
               visualSettings: {
                 backgroundImageUrl: s.background_image || undefined,
                 backgroundColor: s.background_color || undefined,
               },
-              elements: [], // Elements would be fetched from timeline_elements if needed
-              audioUrl: (s.audio_config as Record<string, unknown>)?.url as string | undefined
+              elements: [],
+              audioUrl: (s.audio_config as Record<string, unknown>)?.url as string | undefined,
+              script: s.script || undefined,
+              notes: s.notes || undefined,
+              voiceConfig: s.voice_config ? (s.voice_config as unknown as SceneVoiceConfig) : undefined,
+              avatarConfig: s.avatar_config ? (s.avatar_config as unknown as SceneAvatarConfig) : undefined,
+              musicConfig: s.music_config ? (s.music_config as unknown as SceneMusicConfig) : undefined,
             }));
             
             set({ slides: mappedSlides });
@@ -184,7 +214,7 @@ export const useEditorStore = create<EditorState>()(
           // Note: This assumes IDs are valid UUIDs. 
           // If you have temp IDs, you should handle them (e.g. remove ID to let DB generate, then reload)
           const slidesToSave = state.slides.map(s => ({
-            id: s.id.includes('-') && s.id.length > 10 ? s.id : undefined, // Simple check for UUID-like
+            id: s.id.includes('-') && s.id.length > 10 ? s.id : undefined,
             projectId: projectId,
             order_index: s.order_index,
             title: s.title,
@@ -193,6 +223,11 @@ export const useEditorStore = create<EditorState>()(
             background_image: s.visualSettings?.backgroundImageUrl,
             background_color: s.visualSettings?.backgroundColor,
             audio_config: s.audioUrl ? { url: s.audioUrl } : undefined,
+            script: s.script || null,
+            notes: s.notes || null,
+            voice_config: s.voiceConfig ? JSON.parse(JSON.stringify(s.voiceConfig)) : null,
+            avatar_config: s.avatarConfig ? JSON.parse(JSON.stringify(s.avatarConfig)) : null,
+            music_config: s.musicConfig ? JSON.parse(JSON.stringify(s.musicConfig)) : null,
             updatedAt: new Date().toISOString()
           }));
 
@@ -252,7 +287,105 @@ export const useEditorStore = create<EditorState>()(
           
           state.slides = result;
         });
-      }
+      },
+
+      // ============================================
+      // Per-scene configuration methods
+      // ============================================
+
+      updateSlideScript: (slideId: string, script: string) => {
+        set((state) => {
+          const slide = state.slides.find((s: SlideWithTTS) => s.id === slideId);
+          if (slide) {
+            slide.script = script;
+            slide.ttsText = script; // keep backward compatibility
+          }
+        });
+      },
+
+      updateSlideVoice: (slideId: string, voiceConfig: SceneVoiceConfig) => {
+        set((state) => {
+          const slide = state.slides.find((s: SlideWithTTS) => s.id === slideId);
+          if (slide) {
+            slide.voiceConfig = voiceConfig;
+          }
+        });
+      },
+
+      updateSlideAvatar: (slideId: string, avatarConfig: SceneAvatarConfig | undefined) => {
+        set((state) => {
+          const slide = state.slides.find((s: SlideWithTTS) => s.id === slideId);
+          if (slide) {
+            slide.avatarConfig = avatarConfig;
+          }
+        });
+      },
+
+      updateSlideMusic: (slideId: string, musicConfig: SceneMusicConfig | undefined) => {
+        set((state) => {
+          const slide = state.slides.find((s: SlideWithTTS) => s.id === slideId);
+          if (slide) {
+            slide.musicConfig = musicConfig;
+          }
+        });
+      },
+
+      generateSlideTTS: async (slideId: string) => {
+        const state = get();
+        const slide = state.slides.find((s: SlideWithTTS) => s.id === slideId);
+        if (!slide?.script?.trim()) {
+          logger.warn('No script for TTS generation', { slideId });
+          return;
+        }
+
+        get().updateSlide(slideId, { ttsState: 'generating' });
+
+        try {
+          const voiceId = slide.voiceConfig?.voiceId || 'pt-BR-FranciscaNeural';
+          const provider = slide.voiceConfig?.provider || 'edge-tts';
+
+          const response = await fetch('/api/tts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              text: slide.script,
+              voiceId,
+              provider,
+              speed: slide.voiceConfig?.speed || 1.0,
+              slideId,
+            }),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || `TTS failed (${response.status})`);
+          }
+
+          const result = await response.json();
+          get().updateSlide(slideId, {
+            ttsState: 'ready',
+            audioUrl: result.audioUrl || result.url,
+          });
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+          get().updateSlide(slideId, {
+            ttsState: 'error',
+            errorMessage,
+          });
+          logger.error('TTS generation failed', error instanceof Error ? error : new Error(errorMessage), { slideId });
+        }
+      },
+
+      generateAllTTS: async () => {
+        const state = get();
+        const slidesWithScript = state.slides.filter(
+          (s: SlideWithTTS) => s.script?.trim() && s.ttsState !== 'ready'
+        );
+
+        for (const slide of slidesWithScript) {
+          await get().generateSlideTTS(slide.id);
+        }
+      },
     }))
   )
 );

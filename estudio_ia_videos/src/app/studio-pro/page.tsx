@@ -51,8 +51,10 @@ import {
 import { ShortcutsHelpPanel } from '@components/studio-unified/ShortcutsHelpPanel';
 import { LayersPanel } from '@components/studio-unified/LayersPanel';
 import { AlignmentToolbar } from '@components/studio-unified/AlignmentToolbar';
+import { SceneConfigPanel } from '@components/studio-unified/SceneConfigPanel';
 import { useKeyboardShortcuts, COMMON_SHORTCUTS } from '@hooks/useKeyboardShortcuts';
 import { useHistory } from '@hooks/useHistory';
+import { useEditorStore } from '@/lib/stores/editor-store';
 import type { Scene } from '@/types/scene';
 import type { Scene as VideoProjectScene, CanvasElement as VideoProjectCanvasElement } from '@/types/video-project';
 import { importPPTX } from '@lib/pptx/pptx-to-scenes';
@@ -142,7 +144,7 @@ export default function StudioProPage() {
   const [activeTab, setActiveTab] = useState<StudioTab>('avatars');
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
   const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
-  const [rightPanelTab, setRightPanelTab] = useState<'properties' | 'layers'>('layers');
+  const [rightPanelTab, setRightPanelTab] = useState<'properties' | 'layers' | 'scene'>('layers');
   const [projectName, setProjectName] = useState('Untitled Project');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const initialScene = useMemo(() => createScene(1), []);
@@ -302,30 +304,101 @@ export default function StudioProPage() {
     toast.success(isPlaying ? 'Paused' : 'Playing');
   }, [isPlaying]);
 
+  // Real save via Supabase (editor-store)
+  const editorStore = useEditorStore();
+
   const handleSave = useCallback(async () => {
-    toast.promise(new Promise((resolve) => setTimeout(resolve, 1000)), {
-      loading: 'Saving project...',
-      success: 'Project saved successfully',
-      error: 'Failed to save project',
-    });
-  }, []);
+    const projectId = editorStore.project?.id;
+    if (!projectId) {
+      // Create a new project first
+      try {
+        const res = await fetch('/api/projects', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: projectName,
+            scenes: scenes.map((s) => ({
+              id: s.id,
+              name: s.name,
+              duration: s.duration,
+              elements: s.elements,
+              script: s.script,
+              voiceConfig: s.voiceConfig,
+              avatarConfig: s.avatarConfig,
+              musicConfig: s.musicConfig,
+            })),
+          }),
+        });
+        if (!res.ok) throw new Error('Failed to create project');
+        const data = await res.json();
+        toast.success(`Projeto "${projectName}" salvo (ID: ${data.id || 'criado'})`);
+      } catch (error) {
+        toast.error('Erro ao salvar projeto');
+      }
+      return;
+    }
+    toast.promise(
+      editorStore.saveProject(projectId),
+      {
+        loading: 'Salvando projeto...',
+        success: 'Projeto salvo com sucesso!',
+        error: 'Erro ao salvar projeto',
+      },
+    );
+  }, [editorStore, projectName, scenes]);
 
   const handleExport = useCallback(async () => {
-    toast.promise(new Promise((resolve) => setTimeout(resolve, 2000)), {
-      loading: 'Exporting video...',
-      success: 'Video exported successfully',
-      error: 'Failed to export video',
-    });
-  }, []);
+    try {
+      // Build render config from scenes
+      const renderSlides = scenes.map((s) => ({
+        id: s.id,
+        name: s.name,
+        duration: s.duration,
+        elements: s.elements,
+        script: s.script,
+        audioUrl: s.audioUrl,
+        voiceConfig: s.voiceConfig,
+        avatarConfig: s.avatarConfig,
+        musicConfig: s.musicConfig,
+      }));
 
-  const handleSelectAvatar = useCallback((avatar: { name: string; thumbnailUrl: string }) => {
-    // Add avatar to canvas
+      toast.loading('Iniciando renderização...');
+
+      const res = await fetch('/api/render/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectName,
+          slides: renderSlides,
+          settings: {
+            resolution: { width: 1920, height: 1080 },
+            fps: 30,
+          },
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Render failed');
+      }
+
+      const result = await res.json();
+      toast.dismiss();
+      toast.success(`Renderização iniciada! Job: ${result.jobId || result.id}`);
+    } catch (error) {
+      toast.dismiss();
+      toast.error(error instanceof Error ? error.message : 'Erro ao exportar vídeo');
+    }
+  }, [projectName, scenes]);
+
+  const handleSelectAvatar = useCallback((avatar: { id?: string; name: string; thumbnailUrl: string; provider?: string }) => {
+    // Add avatar as visual element to canvas
     const newElement: CanvasElement = {
       id: `avatar-${Date.now()}`,
       type: 'avatar',
       name: avatar.name,
-      x: 960 - 200, // Center horizontally (1920/2 - width/2)
-      y: 540 - 300, // Center vertically (1080/2 - height/2)
+      x: 960 - 200,
+      y: 540 - 300,
       width: 400,
       height: 600,
       rotation: 0,
@@ -344,8 +417,34 @@ export default function StudioProPage() {
       elements: [...prev.elements, newElement],
     }));
 
-    toast.success(`Avatar "${avatar.name}" added to scene`);
+    // Also set as per-scene avatar config
+    if (activeSceneId) {
+      handleUpdateScene(activeSceneId, {
+        avatarConfig: {
+          avatarId: avatar.id || `avatar-${Date.now()}`,
+          avatarName: avatar.name,
+          thumbnailUrl: avatar.thumbnailUrl,
+          provider: (avatar.provider || 'custom') as 'did' | 'heygen' | 'rpm' | 'custom',
+          position: 'bottom-right',
+        },
+      });
+    }
+
+    toast.success(`Avatar "${avatar.name}" adicionado à cena`);
+  }, [activeSceneId]);
+
+  // Per-scene update handler (script, voice, avatar, music)
+  const handleUpdateScene = useCallback((sceneId: string, updates: Partial<Scene>) => {
+    setScenes((prev) =>
+      prev.map((scene) => (scene.id === sceneId ? { ...scene, ...updates } : scene)),
+    );
   }, []);
+
+  // Get active scene
+  const activeScene = useMemo(
+    () => scenes.find((s) => s.id === activeSceneId) || null,
+    [scenes, activeSceneId],
+  );
 
   // Conversion: CanvasElement → ElementProperties
   const canvasElementToProperties = useCallback((element: CanvasElement): ElementProperties => {
@@ -1551,21 +1650,29 @@ export default function StudioProPage() {
               </TabsContent>
 
               <TabsContent value="music" className="flex-1 m-0">
-                <div className="flex items-center justify-center h-full text-muted-foreground">
-                  <div className="text-center">
-                    <Music className="h-12 w-12 mx-auto mb-4" />
-                    <p className="text-sm">Music Library</p>
-                    <p className="text-xs">Coming soon</p>
+                {activeScene ? (
+                  <SceneConfigPanel
+                    scene={activeScene}
+                    onUpdateScene={handleUpdateScene}
+                    className="h-full"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full text-muted-foreground">
+                    <div className="text-center">
+                      <Music className="h-12 w-12 mx-auto mb-4" />
+                      <p className="text-sm">Selecione uma cena</p>
+                      <p className="text-xs">Configure roteiro, voz, avatar e música por cena</p>
+                    </div>
                   </div>
-                </div>
+                )}
               </TabsContent>
 
               <TabsContent value="effects" className="flex-1 m-0">
                 <div className="flex items-center justify-center h-full text-muted-foreground">
                   <div className="text-center">
                     <Zap className="h-12 w-12 mx-auto mb-4" />
-                    <p className="text-sm">Effects & Transitions</p>
-                    <p className="text-xs">Coming soon</p>
+                    <p className="text-sm">Efeitos & Transições</p>
+                    <p className="text-xs">Em breve - Fade, Slide, Zoom</p>
                   </div>
                 </div>
               </TabsContent>
@@ -1708,17 +1815,21 @@ export default function StudioProPage() {
             <div className="h-12 border-b flex items-center justify-between px-4 bg-background">
               <Tabs
                 value={rightPanelTab}
-                onValueChange={(v) => setRightPanelTab(v as 'properties' | 'layers')}
+                onValueChange={(v) => setRightPanelTab(v as 'properties' | 'layers' | 'scene')}
                 className="w-full"
               >
-                <TabsList className="grid w-full grid-cols-2 h-9">
+                <TabsList className="grid w-full grid-cols-3 h-9">
                   <TabsTrigger value="layers" className="text-xs">
                     <Layers className="w-3 h-3 mr-1" />
                     Layers
                   </TabsTrigger>
+                  <TabsTrigger value="scene" className="text-xs">
+                    <Sparkles className="w-3 h-3 mr-1" />
+                    Cena
+                  </TabsTrigger>
                   <TabsTrigger value="properties" className="text-xs">
                     <Settings className="w-3 h-3 mr-1" />
-                    Properties
+                    Props
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
@@ -1745,6 +1856,12 @@ export default function StudioProPage() {
                   onReorderElements={handleReorderElements}
                   onBringForward={handleBringForwardSingle}
                   onSendBackward={handleSendBackwardSingle}
+                />
+              ) : rightPanelTab === 'scene' ? (
+                <SceneConfigPanel
+                  scene={activeScene}
+                  onUpdateScene={handleUpdateScene}
+                  className="h-full"
                 />
               ) : (
                 <PropertiesPanel

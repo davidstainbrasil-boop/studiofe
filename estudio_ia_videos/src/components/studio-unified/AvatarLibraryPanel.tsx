@@ -96,92 +96,45 @@ export interface AvatarFilters {
 }
 
 // ============================================================================
-// MOCK DATA (Replace with real API calls)
+// API DATA FETCHING (Real avatars from /api/avatars)
 // ============================================================================
 
-const MOCK_AVATARS: Avatar[] = [
-  {
-    id: 'did-avatar-1',
-    provider: 'did',
-    name: 'Dr. Sarah Johnson',
-    thumbnailUrl: 'https://create-images-results.d-id.com/DefaultPresenters/Amy_in_Checked_Shirt/thumbnail.jpeg',
-    previewVideoUrl: '/api/avatars/preview/did-avatar-1',
-    gender: 'female',
-    ethnicity: 'caucasian',
-    age: 'adult',
-    style: 'professional',
-    tags: ['medical', 'corporate', 'educational'],
-    featured: true,
-    premium: false,
-    rating: 4.8,
-    usageCount: 1247,
-    providerId: 'amy_presenter',
-    customizable: true,
-    emotions: ['neutral', 'happy', 'serious', 'surprised'],
-    voiceIds: ['en-US-female-1', 'en-US-female-2'],
-    supportedLanguages: ['en', 'pt', 'es']
-  },
-  {
-    id: 'heygen-avatar-1',
-    provider: 'heygen',
-    name: 'Prof. Michael Chen',
-    thumbnailUrl: 'https://files.heygen.ai/avatar/v3/e5e07aa6f6ea4e52bc03d2c7d2c009b0/thumbnail.jpg',
-    previewVideoUrl: '/api/avatars/preview/heygen-avatar-1',
-    gender: 'male',
-    ethnicity: 'asian',
-    age: 'adult',
-    style: 'formal',
-    tags: ['education', 'technology', 'business'],
-    featured: true,
-    premium: true,
-    rating: 4.9,
-    usageCount: 892,
-    providerId: 'wayne_commercial',
-    customizable: true,
-    emotions: ['neutral', 'happy', 'confident'],
-    voiceIds: ['en-US-male-1', 'zh-CN-male-1'],
-    supportedLanguages: ['en', 'zh', 'pt']
-  },
-  {
-    id: 'rpm-avatar-1',
-    provider: 'rpm',
-    name: 'Maya Rodriguez',
-    thumbnailUrl: '/api/avatars/thumbnail/rpm-avatar-1',
-    gender: 'female',
-    ethnicity: 'hispanic',
-    age: 'young',
-    style: 'casual',
-    tags: ['gaming', 'social', 'marketing'],
-    featured: false,
-    premium: false,
-    rating: 4.5,
-    usageCount: 567,
-    providerId: 'rpm_custom_001',
-    customizable: true,
-    emotions: ['neutral', 'happy', 'excited', 'friendly'],
-    supportedLanguages: ['en', 'es', 'pt']
-  },
-  {
-    id: 'did-avatar-2',
-    provider: 'did',
-    name: 'John Anderson',
-    thumbnailUrl: 'https://create-images-results.d-id.com/DefaultPresenters/Jason_in_Shirt/thumbnail.jpeg',
-    gender: 'male',
-    ethnicity: 'caucasian',
-    age: 'adult',
-    style: 'professional',
-    tags: ['corporate', 'training', 'hr'],
-    featured: false,
-    premium: false,
-    rating: 4.6,
-    usageCount: 432,
-    providerId: 'jason_presenter',
-    customizable: true,
-    emotions: ['neutral', 'serious', 'friendly'],
-    voiceIds: ['en-US-male-2'],
-    supportedLanguages: ['en']
+function mapApiAvatarToAvatar(data: Record<string, unknown>): Avatar {
+  return {
+    id: (data.id as string) || `avatar-${Date.now()}`,
+    provider: ((data.provider as string) || 'custom') as AvatarProvider,
+    name: (data.name as string) || 'Avatar',
+    thumbnailUrl: (data.thumbnail_url as string) || (data.thumbnailUrl as string) || '/placeholder-avatar.png',
+    previewVideoUrl: (data.preview_video_url as string) || (data.previewVideoUrl as string),
+    gender: ((data.gender as string) || 'neutral') as AvatarGender,
+    ethnicity: (data.ethnicity as AvatarEthnicity) || undefined,
+    age: (data.age as string) || 'adult',
+    style: (data.style as string) || 'professional',
+    tags: (data.tags as string[]) || [],
+    featured: (data.featured as boolean) || false,
+    premium: (data.premium as boolean) || false,
+    rating: (data.rating as number) || undefined,
+    usageCount: (data.usage_count as number) || (data.usageCount as number) || 0,
+    providerId: (data.provider_id as string) || (data.providerId as string) || (data.id as string) || '',
+    providerMetadata: (data.provider_metadata as Record<string, unknown>) || undefined,
+    voiceIds: (data.voice_ids as string[]) || (data.voiceIds as string[]) || [],
+    supportedLanguages: (data.supported_languages as string[]) || (data.supportedLanguages as string[]) || ['pt'],
+    customizable: (data.customizable as boolean) || false,
+    emotions: (data.emotions as string[]) || ['neutral'],
   }
-]
+}
+
+async function fetchAvatarsFromAPI(): Promise<Avatar[]> {
+  try {
+    const res = await fetch('/api/avatars')
+    if (!res.ok) return []
+    const data = await res.json()
+    const list = data.avatars || data.data || (Array.isArray(data) ? data : [])
+    return list.map((item: Record<string, unknown>) => mapApiAvatarToAvatar(item))
+  } catch {
+    return []
+  }
+}
 
 // ============================================================================
 // AVATAR CARD COMPONENT
@@ -376,12 +329,28 @@ export const AvatarLibraryPanel: React.FC<AvatarLibraryPanelProps> = ({
   selectedAvatarId,
   className
 }) => {
-  const [avatars, setAvatars] = useState<Avatar[]>(MOCK_AVATARS)
+  const [avatars, setAvatars] = useState<Avatar[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [filters, setFilters] = useState<AvatarFilters>({})
   const [selectedProvider, setSelectedProvider] = useState<string>('all')
   const [previewAvatar, setPreviewAvatar] = useState<Avatar | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Fetch real avatars from API on mount
+  useEffect(() => {
+    let cancelled = false
+    setIsLoading(true)
+    fetchAvatarsFromAPI()
+      .then((apiAvatars) => {
+        if (!cancelled) {
+          setAvatars(apiAvatars)
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [])
 
   // Filter avatars
   const filteredAvatars = avatars.filter(avatar => {
