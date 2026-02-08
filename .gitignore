@@ -143,3 +143,4 @@ videos/
 /public/uploads/
 /testsprite_tests/
 estudio_ia_videos/Rhubarb*
+.github/workflows/ci-cd.yml
