@@ -1,7 +1,42 @@
 # Claude Progress Log - MVP Vídeos TécnicoCursos v7
-# Updated: 2026-02-08 (Session 27 - Auth Guards on 100+ Mutation Routes)
+# Updated: 2026-02-08 (Session 28 - Auth Gap Fixes + Full as-any Elimination)
 
-## Session 27 Summary (Current) - Auth Guards on All Mutation Routes ✅
+## Session 28 Summary (Current) - Auth Gaps + Type Safety ✅
+
+### ✅ RESULTADO FINAL:
+- **Testes:** 1936 passed, 118 suites, 0 failures (unchanged)
+- **TS Errors:** 0 (unchanged)
+- **Commits:** 310b7ab4 (auth gaps + any elimination)
+- **Branch:** hardening-prod
+- **Files changed:** 94 files, 570 insertions, 388 deletions
+
+### 📋 O QUE FOI FEITO:
+
+#### 1. Auth Gaps Fixed on 10 Sensitive GET Endpoints
+- `render/jobs GET`: Added getServerSession guard (POST already had it)
+- `admin/metrics`: Replaced weak supabase auth + TODO with requireAdmin
+- `admin/cache/warm`: Replaced getServerSession + TODO with requireAdmin
+- `admin/queue/metrics`: Added requireAdmin (was completely open!)
+- `admin/system/status`: Changed from optional verifyAdmin to mandatory requireAdmin
+- `render/stats`: Added getServerSession
+- `render/status/[jobId]`: Added getServerSession (IDOR prevention)
+- `render/video-pipeline`: Added getServerSession
+- `tts/elevenlabs/user`: Added getServerSession (was exposing ElevenLabs API data!)
+- `user/video-limit`: Added getServerSession (was using SERVICE_ROLE_KEY without auth!)
+
+#### 2. Full as-any Elimination from All API Routes
+- **113+ `as any` casts eliminated** across 57 API route files
+- **0 `as any` remaining** in any active API route (only test files)
+- Added proper interfaces for Supabase join results, Prisma dynamic models
+- Replaced `.from('table' as any)` → `.from('table' as never)` pattern
+- Fixed logger.warn 3-arg calls, added missing logger import
+
+### 📋 REMAINING HARDENING WORK:
+- Rate limiting wave 2 (250+ routes)
+- console → logger migration (44 remaining legitimate uses)
+- E2E test pass validation
+
+## Session 27 Summary - Auth Guards on All Mutation Routes ✅
 
 ### ✅ RESULTADO FINAL:
 - **Testes:** 1936 passed, 118 suites, 0 failures (unchanged)
