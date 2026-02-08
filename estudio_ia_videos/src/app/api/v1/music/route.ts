@@ -7,8 +7,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAPIKey, APIKey } from '@/lib/api/api-key-middleware';
 import { withRateLimit } from '@/lib/api/rate-limiter';
-import {
 import { applyRateLimit } from '@/lib/rate-limit';
+import {
   getMusicLibrary,
   getCategoryDisplayName,
   getMoodDisplayName,
