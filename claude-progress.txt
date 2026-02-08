@@ -1,39 +1,40 @@
 # Claude Progress Log - MVP Vídeos TécnicoCursos v7
-# Updated: 2026-02-08 (Session 29 - Rate Limiting + Console Migration)
+# Updated: 2026-02-08 (Session 30 - GET Rate Limiting Complete)
 
-## Session 29 Summary (Current) - Rate Limiting Wave 2 ✅
+## Session 30 Summary (Current) - GET Rate Limiting Wave 3 ✅
 
 ### ✅ RESULTADO FINAL:
-- **Testes:** 1936 passed, 118 suites, 0 failures (unchanged)
-- **TS Errors:** 0 (unchanged)
-- **Commits:** 15acb9a6 (rate limiting + console migration)
+- **Testes:** 1936 passed, 118 suites, 0 failures
+- **TS Errors:** 0
+- **Commits:** 1cc2916a (GET rate limiting)
 - **Branch:** hardening-prod
-- **Files changed:** 105 files, 475 insertions, 6 deletions
+- **Files changed:** 242 files, 1298 insertions, 74 deletions
 
 ### 📋 O QUE FOI FEITO:
 
-#### 1. Rate Limiting on 100+ High-Risk API Routes (19→115 protected)
-- Created `applyRateLimit()` helper in lib/rate-limit.ts for 1-line usage
-- Render/export: 5-10 req/min (30 routes)
-- AI/TTS: 3-10 req/min (29 routes)
-- Avatar: 5-20 req/min (21 routes)
-- Upload/billing/misc: 3-60 req/min (35 routes)
-- Uses Redis when available, in-memory fallback
+#### 1. Rate Limiting on 233 GET Handlers (102→323 protected routes)
+- Created automated scripts to batch-add applyRateLimit to all GET handlers
+- Auth endpoints: 20 req/min (brute force protection)
+- Admin/user/tts/voice/ai/billing: 30 req/min
+- General/analytics/render/video/projects: 60 req/min
+- Health/monitoring: 120 req/min
+- Test/debug/_archived routes: correctly excluded (13 routes)
 
-#### 2. Console→Logger Migration Complete
-- 0 console.* remaining in API routes
-- Fixed batch-processing-system.ts console.error → logger
-- Remaining console.* in lib/ are in logger/sentry impl (correct)
+#### 2. Fixes Applied During Audit
+- Fixed render/status/route.ts GET handler: added rate limiting (was missing)
+- Fixed projects/[id]/route.ts: misplaced import moved to top
+- Fixed 12 parameterless GET() handlers not caught by main script
+- Added jest.mock('@/lib/rate-limit') to 8 test files
 
-### 📋 HARDENING COMPLETED (Sessions 27-29):
+### 📋 HARDENING COMPLETED (Sessions 27-30):
 - ✅ Auth guards on 100+ mutation routes (S27)
 - ✅ Auth gaps fixed on 10 sensitive GET endpoints (S28)
 - ✅ 113+ `as any` eliminated from all API routes (S28)
-- ✅ Rate limiting on 115 routes (S29)
+- ✅ Rate limiting on 323 routes total (S29+S30)
 - ✅ Console→logger migration (S29)
 - ✅ Build fix for corrupted import (S28)
 
-## Session 28 Summary - Auth Gaps + Type Safety ✅
+## Session 29 Summary - Rate Limiting + Console Migration ✅
 
 ### ✅ RESULTADO FINAL:
 - **Testes:** 1936 passed, 118 suites, 0 failures (unchanged)
