@@ -50,8 +50,8 @@ export function captureError(error: unknown, context?: Record<string, unknown>) 
     )
   } catch (captureErr) {
     // Last resort fallback - use console to avoid infinite loop
-    console.error('[observability] Failed to capture error:', captureErr)
-    console.error('[observability] Original error:', error)
+    logger.error('[observability] Failed to capture error:', captureErr instanceof Error ? captureErr : new Error(String(captureErr)))
+    logger.error('[observability] Original error:', error instanceof Error ? error : new Error(String(error)))
   }
 }
 

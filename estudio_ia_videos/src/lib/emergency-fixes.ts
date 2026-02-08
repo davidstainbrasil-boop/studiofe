@@ -166,7 +166,7 @@ export const initializeEmergencyFixes = () => {
 
   window.setInterval(monitorLoadingState, 5_000)
 
-  console.log('✅ Emergency fixes initialized')
+  logger.info('✅ Emergency fixes initialized')
 }
 
 export default {

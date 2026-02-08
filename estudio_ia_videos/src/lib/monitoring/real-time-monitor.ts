@@ -157,7 +157,7 @@ export class RealTimeMonitor {
 
   emit(event: string, data?: unknown): void {
     // Event emitter stub - pode ser expandido com EventEmitter real
-    console.log(`[RealTimeMonitor] Event: ${event}`, data);
+    logger.info(`[RealTimeMonitor] Event: ${event}`, data);
   }
 }
 

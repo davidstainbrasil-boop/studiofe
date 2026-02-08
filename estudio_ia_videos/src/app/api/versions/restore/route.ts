@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
@@ -145,7 +146,7 @@ export async function POST(request: NextRequest) {
       .eq('id', projectId);
 
     if (updateError) {
-      console.error('Error restoring version:', updateError);
+      logger.error('Error restoring version:', updateError instanceof Error ? updateError : new Error(String(updateError)));
       return NextResponse.json(
         { error: 'Failed to restore version' },
         { status: 500 }
@@ -159,7 +160,7 @@ export async function POST(request: NextRequest) {
       backupVersion: newVersionNumber,
     });
   } catch (error) {
-    console.error('Version restore error:', error);
+    logger.error('Version restore error:', error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

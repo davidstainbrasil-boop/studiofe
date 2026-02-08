@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 /**
  * Project Versions API
@@ -121,7 +122,7 @@ export async function GET(request: NextRequest) {
       currentVersion,
     });
   } catch (error) {
-    console.error('Versions GET error:', error);
+    logger.error('Versions GET error:', error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -226,7 +227,7 @@ export async function POST(request: NextRequest) {
       .eq('id', projectId);
 
     if (updateError) {
-      console.error('Error saving version:', updateError);
+      logger.error('Error saving version:', updateError instanceof Error ? updateError : new Error(String(updateError)));
       return NextResponse.json(
         { error: 'Failed to create version' },
         { status: 500 }
@@ -242,7 +243,7 @@ export async function POST(request: NextRequest) {
       createdAt: new Date(newVersion.created_at),
     }, { status: 201 });
   } catch (error) {
-    console.error('Versions POST error:', error);
+    logger.error('Versions POST error:', error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

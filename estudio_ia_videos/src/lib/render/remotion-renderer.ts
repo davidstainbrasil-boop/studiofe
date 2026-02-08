@@ -78,7 +78,7 @@ export class RemotionRenderer {
         onProgress: ({ progress }) => {
           // Update job progress (0-100)
           const p = Math.round(progress * 100);
-          jobManager.updateProgress(jobId, p).catch((e) => console.error(e));
+          jobManager.updateProgress(jobId, p).catch((e) => logger.error(e, new Error(String(e))));
         },
       });
 

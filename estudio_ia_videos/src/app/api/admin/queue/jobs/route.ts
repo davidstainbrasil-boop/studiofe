@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { videoQueueManager } from '@/lib/queue/video-queue-manager'
 import { z } from 'zod'
+import { logger } from '@/lib/logger'
 
 export const dynamic = 'force-dynamic'
 
@@ -62,7 +63,7 @@ export async function GET(request: NextRequest) {
       }
     })
   } catch (error) {
-    console.error('Error listing jobs:', error)
+    logger.error('Error listing jobs:', error instanceof Error ? error : new Error(String(error)))
 
     return NextResponse.json({
       success: false,
@@ -129,7 +130,7 @@ export async function POST(request: NextRequest) {
       }
     }, { status: 201 })
   } catch (error) {
-    console.error('Error creating job:', error)
+    logger.error('Error creating job:', error instanceof Error ? error : new Error(String(error)))
 
     return NextResponse.json({
       success: false,
@@ -168,7 +169,7 @@ export async function DELETE(request: NextRequest) {
       message: 'Job cancelled successfully'
     })
   } catch (error) {
-    console.error('Error cancelling job:', error)
+    logger.error('Error cancelling job:', error instanceof Error ? error : new Error(String(error)))
 
     return NextResponse.json({
       success: false,
@@ -211,7 +212,7 @@ export async function PUT(request: NextRequest) {
       }
     })
   } catch (error) {
-    console.error('Error retrying job:', error)
+    logger.error('Error retrying job:', error instanceof Error ? error : new Error(String(error)))
 
     return NextResponse.json({
       success: false,

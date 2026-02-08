@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 /**
  * User Preferences API
@@ -161,7 +162,7 @@ export async function GET() {
       defaults: DEFAULT_PREFERENCES,
     });
   } catch (error) {
-    console.error('Preferences fetch error:', error);
+    logger.error('Preferences fetch error:', error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -219,7 +220,7 @@ export async function PUT(request: NextRequest) {
     });
 
     if (updateError) {
-      console.error('Preferences update error:', updateError);
+      logger.error('Preferences update error:', updateError instanceof Error ? updateError : new Error(String(updateError)));
       return NextResponse.json(
         { error: 'Failed to update preferences' },
         { status: 500 }
@@ -231,7 +232,7 @@ export async function PUT(request: NextRequest) {
       preferences: newPreferences,
     });
   } catch (error) {
-    console.error('Preferences update error:', error);
+    logger.error('Preferences update error:', error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -296,7 +297,7 @@ export async function PATCH(request: NextRequest) {
     });
 
     if (updateError) {
-      console.error('Preferences update error:', updateError);
+      logger.error('Preferences update error:', updateError instanceof Error ? updateError : new Error(String(updateError)));
       return NextResponse.json(
         { error: 'Failed to update preferences' },
         { status: 500 }
@@ -308,7 +309,7 @@ export async function PATCH(request: NextRequest) {
       preferences: updatedPreferences,
     });
   } catch (error) {
-    console.error('Preferences update error:', error);
+    logger.error('Preferences update error:', error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

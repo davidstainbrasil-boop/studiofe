@@ -4,6 +4,7 @@
  */
 
 import { exec } from 'child_process';
+import { logger } from '@/lib/logger';
 import { promisify } from 'util';
 import { existsSync, mkdirSync, statSync } from 'fs';
 import { join } from 'path';
@@ -143,7 +144,7 @@ export async function synthesize(options: TTSOptions): Promise<TTSResult> {
       fileSize,
     };
   } catch (error) {
-    console.error('Edge TTS Error:', error);
+    logger.error('Edge TTS Error:', error instanceof Error ? error : new Error(String(error)));
     return {
       success: false,
       fileUrl: '',

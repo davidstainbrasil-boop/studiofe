@@ -1,4 +1,5 @@
 import * as Y from 'yjs';
+import { logger } from '@/lib/logger';
 import { WebsocketProvider } from 'y-websocket';
 
 class YjsProvider {
@@ -29,7 +30,7 @@ class YjsProvider {
      this.awareness = this.provider.awareness;
      
      this.provider.on('status', (event: any) => {
-         console.log('YJS Connection status:', event.status);
+         logger.info('YJS Connection status:', event.status);
      });
   }
 

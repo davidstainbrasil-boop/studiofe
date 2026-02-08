@@ -5,6 +5,7 @@
  */
 
 import { EventEmitter } from 'events';
+import { logger } from '@/lib/logger';
 import { promises as fs } from 'fs';
 import path from 'path';
 import ffmpeg from 'fluent-ffmpeg';
@@ -320,7 +321,7 @@ export default class ThumbnailGenerator extends EventEmitter {
             }
         })
         .on('error', (err) => {
-           console.error('Error detecting scenes:', err);
+           logger.error('Error detecting scenes:', err instanceof Error ? err : new Error(String(err)));
            // Fallback gracioso em caso de erro no ffmpeg
            resolve([]);
         })

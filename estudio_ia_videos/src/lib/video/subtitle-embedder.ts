@@ -208,7 +208,7 @@ export default class SubtitleEmbedder extends EventEmitter {
           // Cleanup
           for (const file of tempFiles) {
             try { await fs.unlink(file); } catch (e) {
-              console.warn('[SubtitleEmbedder] Failed to cleanup temp file:', file, e);
+              logger.warn('[SubtitleEmbedder] Failed to cleanup temp file:', file, e);
             }
           }
           this.emit('embed:complete', { success: true });

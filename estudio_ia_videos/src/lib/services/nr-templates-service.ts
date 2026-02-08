@@ -1,5 +1,6 @@
 
 import { supabase } from '@/lib/supabase/client';
+import { logger } from '@/lib/logger';
 import { NR_TEMPLATES, getTemplateById as getHardcodedTemplate, getTemplateByNR, type NRTemplate as HardcodedNRTemplate } from '@/lib/templates/nr-templates-real';
 
 export interface NRTemplate {
@@ -53,7 +54,7 @@ export const NRTemplatesService = {
         .order("createdAt", { ascending: false });
 
       if (error) {
-        console.warn('Database templates not available, using hardcoded:', error.message);
+        logger.warn('Database templates not available, using hardcoded:', error.message);
         // Fallback to hardcoded templates
         return NR_TEMPLATES.map(transformHardcodedTemplate);
       }
@@ -65,7 +66,7 @@ export const NRTemplatesService = {
 
       return (data as NRTemplate[]) || [];
     } catch (error) {
-      console.warn('NRTemplatesService.getTemplates using fallback:', error);
+      logger.warn('NRTemplatesService.getTemplates using fallback:', error);
       // Fallback to hardcoded templates
       return NR_TEMPLATES.map(transformHardcodedTemplate);
     }

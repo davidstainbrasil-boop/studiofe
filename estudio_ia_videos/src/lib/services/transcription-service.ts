@@ -36,7 +36,7 @@ class TranscriptionServiceImpl {
   
   async transcribe(audioBlob: Blob | File): Promise<TranscriptionResult> {
     if (!OPENAI_API_KEY) {
-      console.warn('TranscriptionService: OPENAI_API_KEY not configured');
+      logger.warn('TranscriptionService: OPENAI_API_KEY not configured');
       return { text: 'Transcription disabled (no API key)', segments: [] };
     }
 
@@ -75,7 +75,7 @@ class TranscriptionServiceImpl {
         })) || [],
       };
     } catch (error) {
-      console.error('TranscriptionService error:', error);
+      logger.error('TranscriptionService error:', error instanceof Error ? error : new Error(String(error)));
       throw error;
     }
   }
@@ -131,7 +131,7 @@ class TranscriptionServiceImpl {
       
       return [];
     } catch (error) {
-      console.error('generateSubtitles error:', error);
+      logger.error('generateSubtitles error:', error instanceof Error ? error : new Error(String(error)));
       return [];
     }
   }

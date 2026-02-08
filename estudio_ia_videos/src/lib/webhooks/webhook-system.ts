@@ -4,6 +4,7 @@
  */
 
 import crypto from 'crypto'
+import { logger } from '@/lib/logger'
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -246,7 +247,7 @@ export class WebhookSystem {
       )
 
     if (subscribedWebhooks.length === 0) {
-      console.log(`[WebhookSystem] No webhooks subscribed to event: ${event}`)
+      logger.info(`[WebhookSystem] No webhooks subscribed to event: ${event}`)
       return
     }
 
@@ -265,7 +266,7 @@ export class WebhookSystem {
       this.deliveryQueue.push(delivery)
     }
 
-    console.log(`[WebhookSystem] Triggered event ${event} for ${subscribedWebhooks.length} webhooks`)
+    logger.info(`[WebhookSystem] Triggered event ${event} for ${subscribedWebhooks.length} webhooks`)
   }
 
   /**
@@ -320,7 +321,7 @@ export class WebhookSystem {
   private async deliverWebhook(delivery: WebhookDelivery): Promise<void> {
     const webhook = this.webhooks.get(delivery.webhookId)
     if (!webhook) {
-      console.error(`[WebhookSystem] Webhook ${delivery.webhookId} not found`)
+      logger.error(`[WebhookSystem] Webhook ${delivery.webhookId} not found`, new Error('Webhook not found'))
       return
     }
 
@@ -362,7 +363,7 @@ export class WebhookSystem {
         webhook.successfulDeliveries++
         webhook.lastTriggeredAt = new Date()
 
-        console.log(`[WebhookSystem] Delivered ${delivery.event} to ${webhook.url} (${responseTime}ms)`)
+        logger.info(`[WebhookSystem] Delivered ${delivery.event} to ${webhook.url} (${responseTime}ms)`)
       } else {
         throw new Error(`HTTP ${response.status}: ${await response.text()}`)
       }
@@ -370,7 +371,7 @@ export class WebhookSystem {
       delivery.status = 'failed'
       delivery.error = error instanceof Error ? error.message : String(error)
 
-      console.error(`[WebhookSystem] Delivery failed (attempt ${delivery.attempt}/${webhook.retryPolicy.maxRetries}):`, error)
+      logger.error(`[WebhookSystem] Delivery failed (attempt ${delivery.attempt}/${webhook.retryPolicy.maxRetries}):`, error instanceof Error ? error : new Error(String(error)))
 
       // Retry logic
       if (delivery.attempt < webhook.retryPolicy.maxRetries) {
@@ -386,7 +387,7 @@ export class WebhookSystem {
         webhook.totalDeliveries++
         webhook.failedDeliveries++
 
-        console.error(`[WebhookSystem] Max retries reached for delivery ${delivery.id}`)
+        logger.error(`[WebhookSystem] Max retries reached for delivery ${delivery.id}`, new Error('Max retries reached'))
       }
     }
 
@@ -555,7 +556,7 @@ export class WebhookSystem {
    */
   private async saveWebhook(webhook: Webhook): Promise<void> {
     // TODO: Implement database persistence
-    console.log('[WebhookSystem] Saving webhook:', webhook.id)
+    logger.info('[WebhookSystem] Saving webhook:', webhook.id)
   }
 
   /**
@@ -563,7 +564,7 @@ export class WebhookSystem {
    */
   private async removeWebhook(webhookId: string): Promise<void> {
     // TODO: Implement database deletion
-    console.log('[WebhookSystem] Removing webhook:', webhookId)
+    logger.info('[WebhookSystem] Removing webhook:', webhookId)
   }
 
   /**
@@ -571,7 +572,7 @@ export class WebhookSystem {
    */
   private async saveDelivery(delivery: WebhookDelivery): Promise<void> {
     // TODO: Implement database persistence
-    console.log('[WebhookSystem] Saving delivery:', delivery.id)
+    logger.info('[WebhookSystem] Saving delivery:', delivery.id)
   }
 }
 

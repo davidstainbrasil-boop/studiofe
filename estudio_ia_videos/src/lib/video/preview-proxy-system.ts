@@ -5,6 +5,7 @@
  */
 
 import { FFmpegService } from './ffmpeg-service'
+import { logger } from '@/lib/logger';
 
 // ============================================================================
 // TYPES
@@ -158,7 +159,7 @@ export class PreviewProxySystem {
         completed++
         onProgress?.(completed, sources.length)
       } catch (error) {
-        console.error(`Failed to generate proxy for ${source.url}:`, error)
+        logger.error(`Failed to generate proxy for ${source.url}:`, error instanceof Error ? error : new Error(String(error)))
       }
     }
 
@@ -305,7 +306,7 @@ export class PreviewProxySystem {
           this.jobs.delete(jobId)
           cleared++
         } catch (error) {
-          console.error(`Failed to delete proxy ${job.proxyUrl}:`, error)
+          logger.error(`Failed to delete proxy ${job.proxyUrl}:`, error instanceof Error ? error : new Error(String(error)))
         }
       }
     }
@@ -371,7 +372,7 @@ export class PreviewProxySystem {
     // In a real implementation, this would execute FFmpeg
     // For now, we'll simulate it
     return new Promise((resolve, reject) => {
-      console.log('FFmpeg command:', command)
+      logger.info('FFmpeg command:', command)
 
       // Simulate progress
       if (onProgress) {
@@ -399,7 +400,7 @@ export class PreviewProxySystem {
 
   private async deleteFile(filePath: string): Promise<void> {
     // In a real implementation, this would delete the file
-    console.log('Deleting file:', filePath)
+    logger.info('Deleting file:', filePath)
   }
 }
 

@@ -4,6 +4,7 @@
  */
 
 import { AuthOptions } from 'next-auth';
+import { logger } from '@/lib/logger';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { createClient } from '@supabase/supabase-js';
 import { getRequiredEnv } from '@lib/env';
@@ -37,7 +38,7 @@ export const authOptions: AuthOptions = {
         });
 
         if (error || !data.user) {
-          console.error('Auth failed:', error?.message);
+          logger.error('Auth failed:', error?.message instanceof Error ? error?.message : new Error(String(error?.message)));
           return null;
         }
 

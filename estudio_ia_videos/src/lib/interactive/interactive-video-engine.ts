@@ -661,7 +661,7 @@ export class InteractiveVideoEngine {
     elementId?: string
   }): Promise<void> {
     // TODO: Send to analytics service (Google Analytics, Mixpanel, etc.)
-    console.log('[InteractiveVideoEngine] Analytics event:', event)
+    logger.info('[InteractiveVideoEngine] Analytics event:', event)
   }
 
   // ============================================================================
@@ -673,7 +673,7 @@ export class InteractiveVideoEngine {
    */
   private async saveVideo(video: InteractiveVideo): Promise<void> {
     // TODO: Implement database persistence
-    console.log('[InteractiveVideoEngine] Saving video:', video.id)
+    logger.info('[InteractiveVideoEngine] Saving video:', video.id)
   }
 
   /**
@@ -681,7 +681,7 @@ export class InteractiveVideoEngine {
    */
   private async loadVideo(videoId: string): Promise<InteractiveVideo | null> {
     // TODO: Implement database loading
-    console.log('[InteractiveVideoEngine] Loading video:', videoId)
+    logger.info('[InteractiveVideoEngine] Loading video:', videoId)
     return null
   }
 
@@ -690,7 +690,7 @@ export class InteractiveVideoEngine {
    */
   private async saveSession(session: VideoSession): Promise<void> {
     // TODO: Implement database persistence
-    console.log('[InteractiveVideoEngine] Saving session:', session.sessionId)
+    logger.info('[InteractiveVideoEngine] Saving session:', session.sessionId)
   }
 }
 

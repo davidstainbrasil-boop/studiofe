@@ -464,7 +464,7 @@ export class AdvancedAnalyticsSystem {
     }
 
     // TODO: Implement actual export logic
-    console.log(`[AdvancedAnalyticsSystem] Exporting report ${reportId} as ${format}`)
+    logger.info(`[AdvancedAnalyticsSystem] Exporting report ${reportId} as ${format}`)
 
     return `/exports/report-${reportId}.${format}`
   }
@@ -562,7 +562,7 @@ export class AdvancedAnalyticsSystem {
    */
   private async saveEvent(event: AnalyticsEvent): Promise<void> {
     // TODO: Implement database persistence
-    console.log('[AdvancedAnalyticsSystem] Saving event:', event.id)
+    logger.info('[AdvancedAnalyticsSystem] Saving event:', event.id)
   }
 
   /**
@@ -570,7 +570,7 @@ export class AdvancedAnalyticsSystem {
    */
   private async saveReport(report: AnalyticsReport): Promise<void> {
     // TODO: Implement database persistence
-    console.log('[AdvancedAnalyticsSystem] Saving report:', report.id)
+    logger.info('[AdvancedAnalyticsSystem] Saving report:', report.id)
   }
 
   /**
@@ -578,7 +578,7 @@ export class AdvancedAnalyticsSystem {
    */
   private async sendToExternalAnalytics(event: AnalyticsEvent): Promise<void> {
     // TODO: Implement Google Analytics, Mixpanel, etc.
-    console.log('[AdvancedAnalyticsSystem] Sending to external analytics:', event.type)
+    logger.info('[AdvancedAnalyticsSystem] Sending to external analytics:', event.type)
   }
 }
 

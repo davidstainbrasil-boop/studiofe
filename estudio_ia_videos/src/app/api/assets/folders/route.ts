@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 /**
  * Asset Folders Management API
@@ -69,7 +70,7 @@ export async function GET() {
       totalAssets: assets.length,
     });
   } catch (error) {
-    console.error('Folders list error:', error);
+    logger.error('Folders list error:', error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -125,7 +126,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (updateError) {
-      console.error('Folder creation error:', updateError);
+      logger.error('Folder creation error:', updateError instanceof Error ? updateError : new Error(String(updateError)));
       return NextResponse.json(
         { error: 'Failed to create folder' },
         { status: 500 }
@@ -142,7 +143,7 @@ export async function POST(request: NextRequest) {
       },
     }, { status: 201 });
   } catch (error) {
-    console.error('Folder creation error:', error);
+    logger.error('Folder creation error:', error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -218,7 +219,7 @@ export async function PATCH(request: NextRequest) {
     });
 
     if (updateError) {
-      console.error('Folder update error:', updateError);
+      logger.error('Folder update error:', updateError instanceof Error ? updateError : new Error(String(updateError)));
       return NextResponse.json(
         { error: 'Failed to update folder' },
         { status: 500 }
@@ -234,7 +235,7 @@ export async function PATCH(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Folder update error:', error);
+    logger.error('Folder update error:', error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -296,7 +297,7 @@ export async function DELETE(request: NextRequest) {
     });
 
     if (updateError) {
-      console.error('Folder deletion error:', updateError);
+      logger.error('Folder deletion error:', updateError instanceof Error ? updateError : new Error(String(updateError)));
       return NextResponse.json(
         { error: 'Failed to delete folder' },
         { status: 500 }
@@ -309,7 +310,7 @@ export async function DELETE(request: NextRequest) {
       movedAssets,
     });
   } catch (error) {
-    console.error('Folder deletion error:', error);
+    logger.error('Folder deletion error:', error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

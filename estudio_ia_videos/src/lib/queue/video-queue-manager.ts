@@ -7,6 +7,7 @@ import { Queue, Worker, Job, QueueEvents, type ConnectionOptions } from 'bullmq'
 import { Redis } from 'ioredis'
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
+import { logger } from '@/lib/logger'
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -429,7 +430,7 @@ export class VideoQueueManager {
         await this.retryJob(job.id as string)
         retried++
       } catch (error) {
-        console.error(`Failed to retry job ${job.id}:`, error)
+        logger.error(`Failed to retry job ${job.id}:`, error instanceof Error ? error : new Error(String(error)))
         failed++
       }
     }
@@ -535,7 +536,7 @@ export class VideoQueueManager {
 
     // Worker event listeners
     worker.on('completed', async (job) => {
-      console.log(`[Worker ${name}] Job ${job.id} completed`)
+      logger.info(`[Worker ${name}] Job ${job.id} completed`)
       const result = job.returnvalue as VideoRenderJobResult | undefined
 
       await prisma.render_jobs.update({
@@ -550,7 +551,7 @@ export class VideoQueueManager {
     })
 
     worker.on('failed', async (job, err) => {
-      console.error(`[Worker ${name}] Job ${job?.id} failed:`, err)
+      logger.error(`[Worker ${name}] Job ${job?.id} failed:`, err instanceof Error ? err : new Error(String(err)))
 
       if (job) {
         await prisma.render_jobs.update({
@@ -627,19 +628,19 @@ export class VideoQueueManager {
 
   private setupEventListeners(): void {
     this.queueEvents.on('completed', ({ jobId }) => {
-      console.log(`Job ${jobId} completed`)
+      logger.info(`Job ${jobId} completed`)
     })
 
     this.queueEvents.on('failed', ({ jobId, failedReason }) => {
-      console.error(`Job ${jobId} failed:`, failedReason)
+      logger.error(`Job ${jobId} failed:`, failedReason instanceof Error ? failedReason : new Error(String(failedReason)))
     })
 
     this.queueEvents.on('progress', ({ jobId, data }) => {
-      console.log(`Job ${jobId} progress:`, data)
+      logger.info(`Job ${jobId} progress:`, data)
     })
 
     this.queueEvents.on('stalled', ({ jobId }) => {
-      console.warn(`Job ${jobId} stalled`)
+      logger.warn(`Job ${jobId} stalled`)
     })
   }
 

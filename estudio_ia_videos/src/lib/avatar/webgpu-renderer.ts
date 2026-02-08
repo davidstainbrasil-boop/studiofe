@@ -4,6 +4,7 @@
  */
 
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 // WebGPU Renderer Configuration
 export const WebGPUConfigSchema = z.object({
@@ -162,9 +163,9 @@ export class WebGPUAvatarRenderer {
       await this.createResources();
 
       this.isInitialized = true;
-      console.log('WebGPU Avatar Renderer initialized successfully');
+      logger.info('WebGPU Avatar Renderer initialized successfully');
     } catch (error) {
-      console.error('Failed to initialize WebGPU renderer:', error);
+      logger.error('Failed to initialize WebGPU renderer:', error instanceof Error ? error : new Error(String(error)));
       throw error;
     }
   }
@@ -521,9 +522,9 @@ export class WebGPUAvatarRenderer {
       const model: GPUModel = await this.parseGLTF(gltf);
       this.modelCache.set(modelUrl, model);
 
-      console.log(`Model loaded: ${modelUrl}`);
+      logger.info(`Model loaded: ${modelUrl}`);
     } catch (error) {
-      console.error(`Failed to load model ${modelUrl}:`, error);
+      logger.error(`Failed to load model ${modelUrl}:`, error instanceof Error ? error : new Error(String(error)));
       throw error;
     }
   }

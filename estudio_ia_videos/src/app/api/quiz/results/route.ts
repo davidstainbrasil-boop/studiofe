@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 /**
  * Quiz Results API
@@ -111,7 +112,7 @@ export async function GET(request: NextRequest) {
       stats,
     });
   } catch (error) {
-    console.error('Quiz results fetch error:', error);
+    logger.error('Quiz results fetch error:', error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -174,7 +175,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (updateError) {
-      console.error('Quiz result storage error:', updateError);
+      logger.error('Quiz result storage error:', updateError instanceof Error ? updateError : new Error(String(updateError)));
       return NextResponse.json(
         { error: 'Failed to save result' },
         { status: 500 }
@@ -200,7 +201,7 @@ export async function POST(request: NextRequest) {
         : `Você obteve ${score}%. Tente novamente para atingir 70%.`,
     });
   } catch (error) {
-    console.error('Quiz result save error:', error);
+    logger.error('Quiz result save error:', error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

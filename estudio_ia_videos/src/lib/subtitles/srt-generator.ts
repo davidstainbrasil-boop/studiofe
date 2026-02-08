@@ -4,6 +4,7 @@
  */
 
 import { writeFile, mkdir } from 'fs/promises';
+import { logger } from '@/lib/logger';
 import { existsSync } from 'fs';
 import { join } from 'path';
 import { randomUUID } from 'crypto';
@@ -199,7 +200,7 @@ export async function generateSubtitlesFromSlides(
       segmentCount: segments.length,
     };
   } catch (error) {
-    console.error('[SRT Generator] Erro:', error);
+    logger.error('[SRT Generator] Erro:', error instanceof Error ? error : new Error(String(error)));
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Erro desconhecido',
@@ -244,7 +245,7 @@ export async function generateSubtitlesFromText(
       segmentCount: segments.length,
     };
   } catch (error) {
-    console.error('[SRT Generator] Erro:', error);
+    logger.error('[SRT Generator] Erro:', error instanceof Error ? error : new Error(String(error)));
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Erro desconhecido',

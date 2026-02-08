@@ -4,6 +4,7 @@
  */
 
 import crypto from 'crypto'
+import { logger } from '@/lib/logger';
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -794,7 +795,7 @@ export class SecurityAuditSystem {
 
     // In production, this would write to database or log aggregation service
     if (this.config.audit.logAllRequests || event.status === 'failure') {
-      console.log('[SECURITY AUDIT]', JSON.stringify(log))
+      logger.info('[SECURITY AUDIT]', JSON.stringify(log))
     }
   }
 

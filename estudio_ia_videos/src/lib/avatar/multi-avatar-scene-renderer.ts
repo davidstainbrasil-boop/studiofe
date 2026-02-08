@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 /**
  * Multi-Avatar Scene Rendering System
@@ -218,7 +219,7 @@ export class MultiAvatarSceneRenderer {
 
       return jobId;
     } catch (error) {
-      console.error('Failed to start scene rendering:', error);
+      logger.error('Failed to start scene rendering:', error instanceof Error ? error : new Error(String(error)));
       throw new Error(
         `Scene rendering failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );

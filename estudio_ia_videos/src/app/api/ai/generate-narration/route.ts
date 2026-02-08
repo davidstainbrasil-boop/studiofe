@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 /**
  * AI Narration Generation API
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Narration generation error:', error);
+    logger.error('Narration generation error:', error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

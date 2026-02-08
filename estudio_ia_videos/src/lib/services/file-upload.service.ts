@@ -4,6 +4,7 @@
  */
 
 import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3'
+import { logger } from '@/lib/logger';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import crypto from 'crypto'
 import { getRequiredEnv, getOptionalEnv } from '@lib/env'
@@ -71,7 +72,7 @@ export class FileUploadService {
 
       return { url, key }
     } catch (error) {
-      console.error('File upload error:', error)
+      logger.error('File upload error:', error instanceof Error ? error : new Error(String(error)))
       throw new Error('Failed to upload file')
     }
   }

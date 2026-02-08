@@ -329,7 +329,7 @@ export class MonitoringSystem {
 
     if (alert.severity === 'critical') {
       // Send to on-call engineer
-      console.error('🚨 CRITICAL ALERT:', alert.title)
+      logger.error('🚨 CRITICAL ALERT:', alert.title instanceof Error ? alert.title : new Error(String(alert.title)))
     }
   }
 

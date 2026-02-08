@@ -3,6 +3,7 @@
  * Retorna métricas em tempo real da fila de rendering
  */
 
+import { logger } from '@/lib/logger';
 import { NextRequest, NextResponse } from 'next/server'
 import { videoQueueManager } from '@/lib/queue/video-queue-manager'
 
@@ -56,7 +57,7 @@ export async function GET(request: NextRequest) {
       }
     })
   } catch (error) {
-    console.error('Error fetching queue metrics:', error)
+    logger.error('Error fetching queue metrics:', error instanceof Error ? error : new Error(String(error)))
 
     return NextResponse.json({
       success: false,

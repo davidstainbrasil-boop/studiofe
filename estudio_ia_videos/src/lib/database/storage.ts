@@ -9,6 +9,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as crypto from 'crypto';
 import { insert, query, queryOne, queryAll } from './index';
+import { logger } from '@/lib/logger';
 
 // ============================================
 // CONFIGURAÇÃO
@@ -145,7 +146,7 @@ export async function initStorage(): Promise<void> {
   for (const bucket of Object.values(BUCKETS)) {
     await ensureDir(path.join(STORAGE_BASE_PATH, bucket));
   }
-  console.log('[Storage] Diretórios inicializados');
+  logger.info('[Storage] Diretórios inicializados');
 }
 
 /**
@@ -204,7 +205,7 @@ export async function uploadFile(
     return { success: true, file: storageFile, url };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Upload failed';
-    console.error('[Storage] Erro no upload:', message);
+    logger.error('[Storage] Erro no upload:', message instanceof Error ? message : new Error(String(message)));
     return { success: false, error: message };
   }
 }
@@ -251,7 +252,7 @@ export async function downloadFile(
     
     return content;
   } catch (error) {
-    console.error('[Storage] Erro no download:', error);
+    logger.error('[Storage] Erro no download:', error instanceof Error ? error : new Error(String(error)));
     return null;
   }
 }
@@ -299,7 +300,7 @@ export async function deleteFile(
     
     return true;
   } catch (error) {
-    console.error('[Storage] Erro ao deletar:', error);
+    logger.error('[Storage] Erro ao deletar:', error instanceof Error ? error : new Error(String(error)));
     return false;
   }
 }
@@ -367,7 +368,7 @@ export async function moveFile(
     
     return true;
   } catch (error) {
-    console.error('[Storage] Erro ao mover arquivo:', error);
+    logger.error('[Storage] Erro ao mover arquivo:', error instanceof Error ? error : new Error(String(error)));
     return false;
   }
 }
@@ -431,7 +432,7 @@ export async function cleanupTempFiles(olderThanHours: number = 24): Promise<num
     
     return deleted;
   } catch (error) {
-    console.error('[Storage] Erro ao limpar temp:', error);
+    logger.error('[Storage] Erro ao limpar temp:', error instanceof Error ? error : new Error(String(error)));
     return 0;
   }
 }
@@ -482,7 +483,7 @@ export async function getStorageStats(userId?: string): Promise<{
 // ============================================
 
 // Inicializar diretórios ao carregar módulo
-initStorage().catch(console.error);
+initStorage().catch((err: unknown) => logger.error('Storage initialization failed', err instanceof Error ? err : new Error(String(err))));
 
 // ============================================
 // EXPORT

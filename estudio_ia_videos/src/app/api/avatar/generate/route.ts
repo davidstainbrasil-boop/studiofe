@@ -88,7 +88,7 @@ const handlePost = async (req: NextRequest) => {
     })
 
   } catch (error) {
-    console.error('API Error Detailed:', error)
+    logger.error('API Error Detailed:', error instanceof Error ? error : new Error(String(error)))
     logger.error('Failed to generate avatar', error as Error)
     return NextResponse.json(
       { error: 'Internal Server Error' },

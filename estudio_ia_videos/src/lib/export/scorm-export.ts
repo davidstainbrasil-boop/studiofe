@@ -6,6 +6,7 @@
  */
 
 import JSZip from 'jszip';
+import { logger } from '@/lib/logger';
 import { Logger } from '@lib/logger';
 
 const logger = new Logger('scorm-export');
@@ -235,7 +236,7 @@ var SCORM = (function() {
     API = findAPI(window);
     
     if (!API) {
-      console.warn('SCORM API não encontrada. Executando em modo standalone.');
+      logger.warn('SCORM API não encontrada. Executando em modo standalone.');
       return false;
     }
     
@@ -361,7 +362,7 @@ var SCORM = (function() {
     API = findAPI(window);
     
     if (!API) {
-      console.warn('SCORM 2004 API não encontrada. Executando em modo standalone.');
+      logger.warn('SCORM 2004 API não encontrada. Executando em modo standalone.');
       return false;
     }
     

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 /**
  * Real UE5 MetaHuman API Integration
@@ -121,7 +122,7 @@ export class RealMetaHumanAPI {
       const data = await response.json();
       return RenderResponseSchema.parse(data);
     } catch (error) {
-      console.error('Failed to submit render job:', error);
+      logger.error('Failed to submit render job:', error instanceof Error ? error : new Error(String(error)));
       throw error;
     }
   }
@@ -143,7 +144,7 @@ export class RealMetaHumanAPI {
       const data = await response.json();
       return RenderResponseSchema.parse(data);
     } catch (error) {
-      console.error(`Failed to get render status for job ${jobId}:`, error);
+      logger.error(`Failed to get render status for job ${jobId}:`, error instanceof Error ? error : new Error(String(error)));
       throw error;
     }
   }
@@ -160,7 +161,7 @@ export class RealMetaHumanAPI {
 
       return response.ok;
     } catch (error) {
-      console.error(`Failed to cancel render job ${jobId}:`, error);
+      logger.error(`Failed to cancel render job ${jobId}:`, error instanceof Error ? error : new Error(String(error)));
       return false;
     }
   }
@@ -192,7 +193,7 @@ export class RealMetaHumanAPI {
       const data = await response.json();
       return data.characters;
     } catch (error) {
-      console.error('Failed to list characters:', error);
+      logger.error('Failed to list characters:', error instanceof Error ? error : new Error(String(error)));
       throw error;
     }
   }
@@ -225,7 +226,7 @@ export class RealMetaHumanAPI {
 
       return await response.json();
     } catch (error) {
-      console.error(`Failed to get character details for ${characterId}:`, error);
+      logger.error(`Failed to get character details for ${characterId}:`, error instanceof Error ? error : new Error(String(error)));
       throw error;
     }
   }
@@ -261,7 +262,7 @@ export class RealMetaHumanAPI {
 
       return await response.json();
     } catch (error) {
-      console.error('Failed to create custom character:', error);
+      logger.error('Failed to create custom character:', error instanceof Error ? error : new Error(String(error)));
       throw error;
     }
   }
@@ -288,7 +289,7 @@ export class RealMetaHumanAPI {
 
       return await response.json();
     } catch (error) {
-      console.error('Failed to get render farm status:', error);
+      logger.error('Failed to get render farm status:', error instanceof Error ? error : new Error(String(error)));
       throw error;
     }
   }
@@ -315,7 +316,7 @@ export class UE5RenderFarmManager {
     // Check capacity
     if (this.activeJobs.size >= this.maxConcurrentJobs) {
       // Queue logic - implement priority queue here
-      console.log('Render farm at capacity, queuing job');
+      logger.info('Render farm at capacity, queuing job');
     }
 
     const job = await this.api.submitRenderJob(request);
@@ -341,7 +342,7 @@ export class UE5RenderFarmManager {
           this.activeJobs.delete(jobId);
         }
       } catch (error) {
-        console.error(`Error monitoring job ${jobId}:`, error);
+        logger.error(`Error monitoring job ${jobId}:`, error instanceof Error ? error : new Error(String(error)));
         clearInterval(checkInterval);
         this.activeJobs.delete(jobId);
       }

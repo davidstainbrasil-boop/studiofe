@@ -6,6 +6,7 @@
  */
 
 import JSZip from 'jszip';
+import { logger } from '@/lib/logger';
 import type {
   VideoProject,
   Scene,
@@ -378,7 +379,7 @@ async function convertSlideToScene(
         imageTrack.elements.push(timelineElement);
       }
     } catch (error) {
-      console.warn(`Failed to extract image ${i} from slide ${sceneIndex}:`, error);
+      logger.warn(`Failed to extract image ${i} from slide ${sceneIndex}:`, error);
     }
   }
 
@@ -441,7 +442,7 @@ export async function previewPPTX(file: File): Promise<{
       thumbnails: [],
     };
   } catch (error) {
-    console.error('Failed to preview PPTX:', error);
+    logger.error('Failed to preview PPTX:', error instanceof Error ? error : new Error(String(error)));
     return {
       slideCount: 0,
       thumbnails: [],

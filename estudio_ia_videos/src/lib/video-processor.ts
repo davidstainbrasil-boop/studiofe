@@ -29,7 +29,7 @@ export interface ProcessingResult {
 }
 
 export async function getVideoMetadata(inputPath: string): Promise<VideoMetadata> {
-  console.warn('[Video Processor] getVideoMetadata not implemented', inputPath);
+  logger.warn('[Video Processor] getVideoMetadata not implemented', inputPath);
   return {
     width: 1920,
     height: 1080,
@@ -45,7 +45,7 @@ export async function processVideo(
   outputPath: string, 
   options: ProcessingOptions = {}
 ): Promise<ProcessingResult> {
-  console.warn('[Video Processor] processVideo not implemented', { inputPath, outputPath, options });
+  logger.warn('[Video Processor] processVideo not implemented', { inputPath, outputPath, options });
   return {
     success: false,
     error: 'Video processor not implemented'
@@ -53,7 +53,7 @@ export async function processVideo(
 }
 
 export async function extractAudio(inputPath: string, outputPath: string): Promise<ProcessingResult> {
-  console.warn('[Video Processor] extractAudio not implemented', { inputPath, outputPath });
+  logger.warn('[Video Processor] extractAudio not implemented', { inputPath, outputPath });
   return {
     success: false,
     error: 'Extract audio not implemented'
@@ -65,7 +65,7 @@ export async function mergeVideoAudio(
   audioPath: string, 
   outputPath: string
 ): Promise<ProcessingResult> {
-  console.warn('[Video Processor] mergeVideoAudio not implemented', { videoPath, audioPath, outputPath });
+  logger.warn('[Video Processor] mergeVideoAudio not implemented', { videoPath, audioPath, outputPath });
   return {
     success: false,
     error: 'Merge video/audio not implemented'

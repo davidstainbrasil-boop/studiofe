@@ -94,7 +94,7 @@ export interface OrchestratorResponse {
 
 class Avatar3DHyperOrchestrator {
   async process(payload: OrchestratorPayload): Promise<OrchestratorResponse> {
-    console.log('Avatar3DHyperOrchestrator processing:', payload);
+    logger.info('Avatar3DHyperOrchestrator processing:', payload);
     return {
       job_id: payload.job_id || `job_${Date.now()}`,
       job_status: 'completed',

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 /**
  * Neural Video Enhancement Pipeline
@@ -108,7 +109,7 @@ export class NeuralVideoEnhancer {
 
       return job;
     } catch (error) {
-      console.error('Video enhancement failed:', error);
+      logger.error('Video enhancement failed:', error instanceof Error ? error : new Error(String(error)));
       throw new Error(
         `Failed to enhance video: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
@@ -164,7 +165,7 @@ export class NeuralVideoEnhancer {
           }
         }
       } catch (error) {
-        console.error(`Error monitoring enhancement progress for job ${jobId}:`, error);
+        logger.error(`Error monitoring enhancement progress for job ${jobId}:`, error instanceof Error ? error : new Error(String(error)));
         clearInterval(checkInterval);
       }
     }, 5000); // Check every 5 seconds
@@ -280,7 +281,7 @@ export class NeuralVideoEnhancer {
         const job = await this.enhanceVideo(config);
         jobs.push(job);
       } catch (error) {
-        console.error(`Failed to start enhancement for video ${config.inputVideoUrl}:`, error);
+        logger.error(`Failed to start enhancement for video ${config.inputVideoUrl}:`, error instanceof Error ? error : new Error(String(error)));
       }
     }
 
@@ -488,7 +489,7 @@ export class StreamEnhancer {
         // Process single frame
         await this.processFrame(frame);
       } catch (error) {
-        console.error(`Failed to process frame ${frame.id}:`, error);
+        logger.error(`Failed to process frame ${frame.id}:`, error instanceof Error ? error : new Error(String(error)));
       }
     }
 

@@ -14,7 +14,7 @@ export class RedisOptimizedCache {
   
   async connect(): Promise<boolean> {
     // Placeholder - conectar Redis real
-    console.log('[Cache] Using in-memory fallback (Redis not configured)');
+    logger.info('[Cache] Using in-memory fallback (Redis not configured)');
     this.connected = true;
     return true;
   }

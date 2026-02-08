@@ -106,7 +106,7 @@ async function generateSlideImage(
     await execAsync(command, { timeout: 30000 });
     return existsSync(outputPath);
   } catch (error) {
-    console.warn(`[Render] Erro ao gerar imagem do slide, usando fallback:`, error);
+    logger.warn(`[Render] Erro ao gerar imagem do slide, usando fallback:`, error);
     // Fallback: criar imagem simples com FFmpeg
     const { width, height } = config;
     const bgColor = slide.backgroundColor || '#1a1a2e';
@@ -225,7 +225,7 @@ async function compositeSlideWithAvatar(
     await execAsync(cmd, { timeout: PIPELINE_TIMEOUTS.slideComposition });
     return existsSync(outputPath);
   } catch (error) {
-    console.error('[Render] PIP compositing error:', error);
+    logger.error('[Render] PIP compositing error:', error instanceof Error ? error : new Error(String(error)));
     return false;
   }
 }
@@ -314,7 +314,7 @@ export async function renderVideo(
             continue;
           }
           // Fall through to static rendering if compositing fails
-          console.warn(`[Render] PIP compositing failed for slide ${i}, using static fallback`);
+          logger.warn(`[Render] PIP compositing failed for slide ${i}, using static fallback`);
         }
 
         // Static slide (no avatar or compositing failed)
@@ -456,7 +456,7 @@ export async function renderVideo(
     };
 
   } catch (error) {
-    console.error('[Render] Erro:', error);
+    logger.error('[Render] Erro:', error instanceof Error ? error : new Error(String(error)));
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Erro desconhecido',

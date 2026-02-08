@@ -405,7 +405,7 @@ export class MultiLanguageSystem {
 
       return await response.json()
     } catch (error) {
-      console.error('[MultiLanguageSystem] Language detection failed:', error)
+      logger.error('[MultiLanguageSystem] Language detection failed:', error instanceof Error ? error : new Error(String(error)))
       return { language: 'en-US', confidence: 0 }
     }
   }
@@ -434,7 +434,7 @@ export class MultiLanguageSystem {
 
       return await response.json()
     } catch (error) {
-      console.error('[MultiLanguageSystem] Translation failed:', error)
+      logger.error('[MultiLanguageSystem] Translation failed:', error instanceof Error ? error : new Error(String(error)))
       throw error
     }
   }
@@ -540,7 +540,7 @@ export class MultiLanguageSystem {
         }
       }
     } catch (error) {
-      console.error('[MultiLanguageSystem] Multi-language generation failed:', error)
+      logger.error('[MultiLanguageSystem] Multi-language generation failed:', error instanceof Error ? error : new Error(String(error)))
       throw error
     }
   }

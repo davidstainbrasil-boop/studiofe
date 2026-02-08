@@ -5,6 +5,7 @@
  */
 
 import { sign, verify } from 'jsonwebtoken';
+import { logger } from '@/lib/logger';
 // import { hash, compare } from 'bcryptjs'; // Removido pois auth é via Supabase
 import { prisma } from '@lib/prisma';
 import { cookies } from 'next/headers';
@@ -152,7 +153,7 @@ export async function getCurrentUser(): Promise<User | null> {
  */
 export async function ensureDefaultUsers(): Promise<void> {
     // Implementação desativada pois requer criação no Supabase Auth
-    // console.log('[Auth] ensureDefaultUsers skipped (use Supabase seeding)');
+    // logger.info('[Auth] ensureDefaultUsers skipped (use Supabase seeding)');
     return;
 }
 

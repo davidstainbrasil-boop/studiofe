@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { headers } from 'next/headers';
+import { logger } from '@/lib/logger';
 
 /**
  * User Sessions API
@@ -105,7 +106,7 @@ export async function GET() {
       totalSessions: allSessions.length,
     });
   } catch (error) {
-    console.error('Sessions list error:', error);
+    logger.error('Sessions list error:', error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -170,7 +171,7 @@ export async function DELETE(request: NextRequest) {
     });
 
     if (updateError) {
-      console.error('Session revocation error:', updateError);
+      logger.error('Session revocation error:', updateError instanceof Error ? updateError : new Error(String(updateError)));
       return NextResponse.json(
         { error: 'Failed to revoke session' },
         { status: 500 }
@@ -190,7 +191,7 @@ export async function DELETE(request: NextRequest) {
       revokedCount,
     });
   } catch (error) {
-    console.error('Session revocation error:', error);
+    logger.error('Session revocation error:', error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

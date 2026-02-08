@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 /**
  * Dynamic Avatar Creator with GAN + Diffusion Models
@@ -167,7 +168,7 @@ export class AvatarCreationPipeline {
 
       return avatar;
     } catch (error) {
-      console.error('Avatar creation failed:', error);
+      logger.error('Avatar creation failed:', error instanceof Error ? error : new Error(String(error)));
       throw new Error(
         `Failed to create avatar: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
@@ -450,7 +451,7 @@ export class AvatarCreationPipeline {
       });
       return response.ok;
     } catch (error) {
-      console.error(`Failed to delete avatar ${avatarId}:`, error);
+      logger.error(`Failed to delete avatar ${avatarId}:`, error instanceof Error ? error : new Error(String(error)));
       return false;
     }
   }

@@ -1,4 +1,5 @@
 import { getServiceRoleClient } from '../supabase'
+import { logger } from '@/lib/logger';
 import type { CreateProjectInput, Project } from './types'
 import { Database } from '../supabase/database.types'
 import { SupabaseClient } from '@supabase/supabase-js'
@@ -12,7 +13,7 @@ export async function listProjectsByOwner(ownerId: string): Promise<Project[]> {
     .order("createdAt", { ascending: false })
 
   if (error) {
-    console.error('Supabase projects error:', error.message)
+    logger.error('Supabase projects error:', error.message instanceof Error ? error.message : new Error(String(error.message)))
     throw new Error(`Failed to list projects: ${error.message}`)
   }
 
@@ -31,7 +32,7 @@ export async function getProjectById(projectId: string): Promise<Project | null>
     if (error.code === 'PGRST116') {
       return null
     }
-    console.error('Supabase project error:', error.message)
+    logger.error('Supabase project error:', error.message instanceof Error ? error.message : new Error(String(error.message)))
     throw new Error(`Failed to get project: ${error.message}`)
   }
 

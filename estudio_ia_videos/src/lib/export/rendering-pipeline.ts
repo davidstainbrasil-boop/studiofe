@@ -237,7 +237,7 @@ export class RenderingPipeline {
     try {
       await fs.rm(this.tempDir, { recursive: true, force: true });
     } catch (e) {
-      console.error('Failed to cleanup temp dir', e);
+      logger.error('Failed to cleanup temp dir', e instanceof Error ? e : new Error(String(e)));
     }
   }
 }

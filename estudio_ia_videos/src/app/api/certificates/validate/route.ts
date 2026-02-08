@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 /**
  * Certificate Validation API
@@ -70,7 +71,7 @@ export async function GET(request: NextRequest) {
     const { data: { users }, error: listError } = await supabase.auth.admin.listUsers();
     
     if (listError) {
-      console.error('Error listing users:', listError);
+      logger.error('Error listing users:', listError instanceof Error ? listError : new Error(String(listError)));
       return NextResponse.json(
         { error: 'Unable to validate certificate' },
         { status: 500 }
@@ -108,7 +109,7 @@ export async function GET(request: NextRequest) {
       message: 'Certificate not found',
     }, { status: 404 });
   } catch (error) {
-    console.error('Certificate validation error:', error);
+    logger.error('Certificate validation error:', error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -176,7 +177,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (updateError) {
-      console.error('Certificate storage error:', updateError);
+      logger.error('Certificate storage error:', updateError instanceof Error ? updateError : new Error(String(updateError)));
       return NextResponse.json(
         { error: 'Failed to create certificate' },
         { status: 500 }
@@ -198,7 +199,7 @@ export async function POST(request: NextRequest) {
       message: 'Certificate generated successfully',
     });
   } catch (error) {
-    console.error('Certificate generation error:', error);
+    logger.error('Certificate generation error:', error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

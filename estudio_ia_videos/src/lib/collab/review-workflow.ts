@@ -63,7 +63,7 @@ export class ReviewWorkflow {
 
   async publishProject(params: { projectId: string; userId: string }): Promise<{ success: boolean; error?: string }> {
     // Placeholder - implementar integração com sistema de publicação
-    console.log(`Publishing project ${params.projectId} by user ${params.userId}`);
+    logger.info(`Publishing project ${params.projectId} by user ${params.userId}`);
     return { success: true };
   }
 

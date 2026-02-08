@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 // Type for brand kit stored in user metadata
 interface BrandKit {
@@ -106,7 +107,7 @@ export async function GET() {
 
     return NextResponse.json(brandKit);
   } catch (error) {
-    console.error('Brand kit GET error:', error);
+    logger.error('Brand kit GET error:', error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -148,7 +149,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (updateError) {
-      console.error('Error saving brand kit:', updateError);
+      logger.error('Error saving brand kit:', updateError instanceof Error ? updateError : new Error(String(updateError)));
       return NextResponse.json(
         { error: 'Failed to save brand kit' },
         { status: 500 }
@@ -157,7 +158,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(brandKitData);
   } catch (error) {
-    console.error('Brand kit POST error:', error);
+    logger.error('Brand kit POST error:', error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

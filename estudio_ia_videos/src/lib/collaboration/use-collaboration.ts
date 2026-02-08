@@ -6,6 +6,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { logger } from '@/lib/logger';
 import { io, Socket } from 'socket.io-client';
 import { useTimelineStore } from '@lib/stores/timeline-store';
 import {
@@ -128,7 +129,7 @@ export function useCollaboration(options: UseCollaborationOptions): UseCollabora
     });
     
     socket.on('connect_error', (error) => {
-      console.error('Connection error:', error);
+      logger.error('Connection error:', error instanceof Error ? error : new Error(String(error)));
       reconnectAttempts.current++;
     });
     
@@ -187,7 +188,7 @@ export function useCollaboration(options: UseCollaborationOptions): UseCollabora
         pending.resolve(false);
         pendingLockRequests.current.delete(trackId);
       }
-      console.warn('Lock denied:', error);
+      logger.warn('Lock denied:', error);
     });
     
     socket.on(CollabEvent.LOCK_RELEASED, ({ trackId }: { trackId: string }) => {

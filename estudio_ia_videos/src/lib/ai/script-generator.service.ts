@@ -1,4 +1,5 @@
 import 'openai/shims/node';
+import { logger } from '@/lib/logger';
 import { OpenAI } from 'openai';
 
 export interface ScriptGenerationParams {
@@ -44,14 +45,14 @@ export class AIScriptGeneratorService {
 
     if (client) {
       try {
-        console.log('[AIScriptGenerator] Using OpenAI API');
+        logger.info('[AIScriptGenerator] Using OpenAI API');
         return await this.generateWithOpenAI(client, params);
       } catch (error) {
-        console.error('[AIScriptGenerator] OpenAI Error, falling back to mock:', error);
+        logger.error('[AIScriptGenerator] OpenAI Error, falling back to mock:', error instanceof Error ? error : new Error(String(error)));
         return this.generateMock(params);
       }
     } else {
-      console.log('[AIScriptGenerator] No API Key found, using Mock Generator');
+      logger.info('[AIScriptGenerator] No API Key found, using Mock Generator');
       return this.generateMock(params);
     }
   }

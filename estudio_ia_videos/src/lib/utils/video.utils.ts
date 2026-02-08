@@ -5,6 +5,7 @@
  */
 
 import { exec } from 'child_process'
+import { logger } from '@/lib/logger';
 import { promisify } from 'util'
 import { writeFile, unlink } from 'fs/promises'
 import { createWriteStream } from 'fs'
@@ -279,7 +280,7 @@ export class VideoUtils {
     try {
       await unlink(filePath)
     } catch (error) {
-      console.error('Error cleaning up file:', error)
+      logger.error('Error cleaning up file:', error instanceof Error ? error : new Error(String(error)))
     }
   }
 }

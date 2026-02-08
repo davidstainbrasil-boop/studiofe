@@ -4,6 +4,7 @@
  */
 
 import { Job } from 'bullmq'
+import { logger } from '@/lib/logger';
 import { exec } from 'child_process'
 import { promisify } from 'util'
 import { writeFile, unlink, mkdir, readFile } from 'fs/promises'
@@ -60,7 +61,7 @@ export class DistributedVideoWorker {
     const logs: string[] = []
 
     try {
-      console.log(`[${this.workerId}] Processing job ${job.id}`)
+      logger.info(`[${this.workerId}] Processing job ${job.id}`)
       logs.push(`Started processing at ${new Date().toISOString()}`)
 
       // Validate job data
@@ -112,7 +113,7 @@ export class DistributedVideoWorker {
       const duration = (Date.now() - startTime) / 1000
       const errorCategory = this.categorizeError(error)
 
-      console.error(`[${this.workerId}] Job ${job.id} failed (${errorCategory}) after ${duration.toFixed(2)}s:`, error)
+      logger.error(`[${this.workerId}] Job ${job.id} failed (${errorCategory}) after ${duration.toFixed(2)}s:`, error instanceof Error ? error : new Error(String(error)))
       logs.push(`Failed (${errorCategory}) after ${duration.toFixed(2)}s: ${this.formatError(error)}`)
 
       await this.updateProgress(job, {
@@ -130,7 +131,7 @@ export class DistributedVideoWorker {
         await this.cleanup()
         logs.push('Cleanup completed')
       } catch (cleanupError) {
-        console.error(`[${this.workerId}] Cleanup failed:`, cleanupError)
+        logger.error(`[${this.workerId}] Cleanup failed:`, cleanupError instanceof Error ? cleanupError : new Error(String(cleanupError)))
         logs.push(`Cleanup failed: ${cleanupError}`)
       }
     }
@@ -633,7 +634,7 @@ export class DistributedVideoWorker {
         await unlink(join(this.tempDir, file)).catch(() => {})
       }
     } catch (error) {
-      console.error('Cleanup error:', error)
+      logger.error('Cleanup error:', error instanceof Error ? error : new Error(String(error)))
     }
   }
 

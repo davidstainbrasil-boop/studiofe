@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 /**
  * WebRTC Real-time Avatar Collaboration System
@@ -127,7 +128,7 @@ export class WebRTCCollaborationManager {
 
       return this.session.sessionId;
     } catch (error) {
-      console.error('Failed to create session:', error);
+      logger.error('Failed to create session:', error instanceof Error ? error : new Error(String(error)));
       throw new Error(
         `Session creation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
@@ -155,7 +156,7 @@ export class WebRTCCollaborationManager {
       // Connect to existing participants
       await this.connectToExistingParticipants(response.participants);
     } catch (error) {
-      console.error('Failed to join session:', error);
+      logger.error('Failed to join session:', error instanceof Error ? error : new Error(String(error)));
       throw new Error(
         `Failed to join session: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
@@ -183,7 +184,7 @@ export class WebRTCCollaborationManager {
       // Clear participants
       this.participants.clear();
     } catch (error) {
-      console.error('Error leaving session:', error);
+      logger.error('Error leaving session:', error instanceof Error ? error : new Error(String(error)));
     }
   }
 
@@ -224,7 +225,7 @@ export class WebRTCCollaborationManager {
         this.stopScreenShare();
       });
     } catch (error) {
-      console.error('Failed to start screen share:', error);
+      logger.error('Failed to start screen share:', error instanceof Error ? error : new Error(String(error)));
       throw new Error(
         `Screen share failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
@@ -256,7 +257,7 @@ export class WebRTCCollaborationManager {
         this.updateParticipantStatus(this.localParticipant);
       }
     } catch (error) {
-      console.error('Failed to stop screen share:', error);
+      logger.error('Failed to stop screen share:', error instanceof Error ? error : new Error(String(error)));
     }
   }
 
@@ -617,7 +618,7 @@ export class WebRTCCollaborationManager {
 
   private async attemptReconnection(participantId: string): Promise<void> {
     try {
-      console.log(`Attempting to reconnect to participant ${participantId}`);
+      logger.info(`Attempting to reconnect to participant ${participantId}`);
 
       // Close existing connection
       const oldConnection = this.peerConnections.get(participantId);
@@ -629,28 +630,28 @@ export class WebRTCCollaborationManager {
       await this.createPeerConnection(participantId);
       await this.offerConnection(participantId);
     } catch (error) {
-      console.error(`Reconnection failed for participant ${participantId}:`, error);
+      logger.error(`Reconnection failed for participant ${participantId}:`, error instanceof Error ? error : new Error(String(error)));
     }
   }
 
   // Event handlers (to be overridden by UI)
   protected onParticipantJoined(participant: Participant): void {
-    console.log('Participant joined:', participant);
+    logger.info('Participant joined:', participant);
   }
 
   protected onParticipantLeft(participantId: string): void {
-    console.log('Participant left:', participantId);
+    logger.info('Participant left:', participantId);
   }
 
   protected onParticipantStatusChanged(participant: Participant): void {
-    console.log('Participant status changed:', participant);
+    logger.info('Participant status changed:', participant);
   }
 
   protected onAvatarStateChanged(
     participantId: string,
     avatarState: Participant['avatarState'],
   ): void {
-    console.log('Avatar state changed:', participantId, avatarState);
+    logger.info('Avatar state changed:', participantId, avatarState);
   }
 
   protected onRemoteStreamReceived(
@@ -658,11 +659,11 @@ export class WebRTCCollaborationManager {
     stream: MediaStream,
     participant: Participant,
   ): void {
-    console.log('Remote stream received:', participantId);
+    logger.info('Remote stream received:', participantId);
   }
 
   protected onChatMessage(participantId: string, message: string, timestamp: string): void {
-    console.log('Chat message:', participantId, message);
+    logger.info('Chat message:', participantId, message);
   }
 }
 

@@ -165,7 +165,7 @@ async function sendAutoReplyEmail(email: string, name: string): Promise<void> {
   
   // Log instead of sending for development
   if (process.env.NODE_ENV === 'development') {
-    console.log('Would send email:', emailContent);
+    logger.info('Would send email:', emailContent);
   }
 }
 

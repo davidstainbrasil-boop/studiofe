@@ -4,6 +4,7 @@
  */
 
 import type { LipSyncEngine } from './lip-sync-orchestrator'
+import { logger } from '@/lib/logger';
 import type { LipSyncResult } from './types/phoneme.types'
 import type { Viseme } from './utils/viseme-mapper'
 
@@ -120,7 +121,7 @@ export class Audio2FaceEngine implements LipSyncEngine {
         }
       }
     } catch (error) {
-      console.error('[Audio2FaceEngine] Generation failed:', error)
+      logger.error('[Audio2FaceEngine] Generation failed:', error instanceof Error ? error : new Error(String(error)))
       throw error
     }
   }
@@ -408,7 +409,7 @@ export class Audio2FaceEngine implements LipSyncEngine {
     })
 
     if (!response.ok) {
-      console.warn('Emotion analysis failed, returning empty')
+      logger.warn('Emotion analysis failed, returning empty')
       return []
     }
 

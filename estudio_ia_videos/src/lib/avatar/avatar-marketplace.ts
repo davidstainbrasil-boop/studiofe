@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 /**
  * Avatar Marketplace with Blockchain Authentication
@@ -157,7 +158,7 @@ export class AvatarMarketplace {
 
       return this.currentUser;
     } catch (error) {
-      console.error('Failed to initialize marketplace:', error);
+      logger.error('Failed to initialize marketplace:', error instanceof Error ? error : new Error(String(error)));
       throw new Error(
         `Marketplace initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
@@ -227,7 +228,7 @@ export class AvatarMarketplace {
 
       return nftAvatar;
     } catch (error) {
-      console.error('Failed to create avatar:', error);
+      logger.error('Failed to create avatar:', error instanceof Error ? error : new Error(String(error)));
       throw new Error(
         `Avatar creation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
@@ -312,7 +313,7 @@ export class AvatarMarketplace {
 
       return listing;
     } catch (error) {
-      console.error('Failed to list avatar:', error);
+      logger.error('Failed to list avatar:', error instanceof Error ? error : new Error(String(error)));
       throw new Error(
         `Listing failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
@@ -340,7 +341,7 @@ export class AvatarMarketplace {
         return await this.executePurchase(listingId);
       }
     } catch (error) {
-      console.error('Failed to purchase avatar:', error);
+      logger.error('Failed to purchase avatar:', error instanceof Error ? error : new Error(String(error)));
       throw new Error(
         `Purchase failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
@@ -380,7 +381,7 @@ export class AvatarMarketplace {
 
       return txHash;
     } catch (error) {
-      console.error('Failed to place bid:', error);
+      logger.error('Failed to place bid:', error instanceof Error ? error : new Error(String(error)));
       throw new Error(`Bid failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -412,7 +413,7 @@ export class AvatarMarketplace {
         hasMore: (filters.offset || 0) + (filters.limit || 20) < searchResults.total,
       };
     } catch (error) {
-      console.error('Search failed:', error);
+      logger.error('Search failed:', error instanceof Error ? error : new Error(String(error)));
       return { avatars: [], total: 0, hasMore: false };
     }
   }
@@ -425,7 +426,7 @@ export class AvatarMarketplace {
       const avatars = await this.getUserAvatarsFromDatabase(walletAddress);
       return avatars;
     } catch (error) {
-      console.error('Failed to get user collection:', error);
+      logger.error('Failed to get user collection:', error instanceof Error ? error : new Error(String(error)));
       return [];
     }
   }

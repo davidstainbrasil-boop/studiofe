@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
@@ -160,7 +161,7 @@ export async function GET(request: NextRequest) {
       period,
     });
   } catch (error) {
-    console.error('Render jobs analytics error:', error);
+    logger.error('Render jobs analytics error:', error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

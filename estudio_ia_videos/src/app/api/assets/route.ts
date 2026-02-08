@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 /**
  * Assets Management API
@@ -146,7 +147,7 @@ export async function GET(request: NextRequest) {
       typeCounts,
     });
   } catch (error) {
-    console.error('Assets list error:', error);
+    logger.error('Assets list error:', error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -206,7 +207,7 @@ export async function PATCH(request: NextRequest) {
     });
 
     if (updateError) {
-      console.error('Asset update error:', updateError);
+      logger.error('Asset update error:', updateError instanceof Error ? updateError : new Error(String(updateError)));
       return NextResponse.json(
         { error: 'Failed to update asset' },
         { status: 500 }
@@ -225,7 +226,7 @@ export async function PATCH(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Asset update error:', error);
+    logger.error('Asset update error:', error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -278,7 +279,7 @@ export async function DELETE(request: NextRequest) {
           await supabase.storage.from(bucket).remove([path]);
         }
       } catch (storageError) {
-        console.warn('Failed to delete from storage:', storageError);
+        logger.warn('Failed to delete from storage:', { detail: storageError });
         // Continue with metadata deletion even if storage deletion fails
       }
     }
@@ -291,7 +292,7 @@ export async function DELETE(request: NextRequest) {
     });
 
     if (updateError) {
-      console.error('Asset deletion error:', updateError);
+      logger.error('Asset deletion error:', updateError instanceof Error ? updateError : new Error(String(updateError)));
       return NextResponse.json(
         { error: 'Failed to delete asset' },
         { status: 500 }
@@ -303,7 +304,7 @@ export async function DELETE(request: NextRequest) {
       message: 'Asset deleted successfully',
     });
   } catch (error) {
-    console.error('Asset deletion error:', error);
+    logger.error('Asset deletion error:', error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
