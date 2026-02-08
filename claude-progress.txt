@@ -1,7 +1,39 @@
 # Claude Progress Log - MVP Vídeos TécnicoCursos v7
-# Updated: 2026-02-08 (Session 28 - Auth Gap Fixes + Full as-any Elimination)
+# Updated: 2026-02-08 (Session 29 - Rate Limiting + Console Migration)
 
-## Session 28 Summary (Current) - Auth Gaps + Type Safety ✅
+## Session 29 Summary (Current) - Rate Limiting Wave 2 ✅
+
+### ✅ RESULTADO FINAL:
+- **Testes:** 1936 passed, 118 suites, 0 failures (unchanged)
+- **TS Errors:** 0 (unchanged)
+- **Commits:** 15acb9a6 (rate limiting + console migration)
+- **Branch:** hardening-prod
+- **Files changed:** 105 files, 475 insertions, 6 deletions
+
+### 📋 O QUE FOI FEITO:
+
+#### 1. Rate Limiting on 100+ High-Risk API Routes (19→115 protected)
+- Created `applyRateLimit()` helper in lib/rate-limit.ts for 1-line usage
+- Render/export: 5-10 req/min (30 routes)
+- AI/TTS: 3-10 req/min (29 routes)
+- Avatar: 5-20 req/min (21 routes)
+- Upload/billing/misc: 3-60 req/min (35 routes)
+- Uses Redis when available, in-memory fallback
+
+#### 2. Console→Logger Migration Complete
+- 0 console.* remaining in API routes
+- Fixed batch-processing-system.ts console.error → logger
+- Remaining console.* in lib/ are in logger/sentry impl (correct)
+
+### 📋 HARDENING COMPLETED (Sessions 27-29):
+- ✅ Auth guards on 100+ mutation routes (S27)
+- ✅ Auth gaps fixed on 10 sensitive GET endpoints (S28)
+- ✅ 113+ `as any` eliminated from all API routes (S28)
+- ✅ Rate limiting on 115 routes (S29)
+- ✅ Console→logger migration (S29)
+- ✅ Build fix for corrupted import (S28)
+
+## Session 28 Summary - Auth Gaps + Type Safety ✅
 
 ### ✅ RESULTADO FINAL:
 - **Testes:** 1936 passed, 118 suites, 0 failures (unchanged)
