@@ -11,6 +11,8 @@ import { Logger } from '@lib/logger'
 import { createClient } from '@supabase/supabase-js'
 import { prisma } from '@lib/prisma'
 import { getRequiredEnv } from '@lib/env'
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@lib/auth';
 
 const logger = new Logger('AvatarRenderAPI')
 
@@ -38,6 +40,11 @@ const AnimationSequenceSchema = z.object({
  * Renderizar vídeo com avatar 3D e sincronização labial
  */
 export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   const startTime = Date.now()
   
   try {
@@ -188,6 +195,11 @@ export async function GET(request: NextRequest) {
  * Cancelar job de renderização
  */
 export async function DELETE(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   try {
     const { searchParams } = new URL(request.url)
     const jobId = searchParams.get('jobId')

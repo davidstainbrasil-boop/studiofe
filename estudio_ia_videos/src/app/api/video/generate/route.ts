@@ -15,6 +15,8 @@ import { FFmpegRenderer, SlideData } from '@lib/video/ffmpeg-renderer';
 import { z } from 'zod';
 import { randomUUID } from 'crypto';
 import { logger } from '@lib/logger';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@lib/auth';
 
 const slideInputSchema = z.object({
   title: z.string(),
@@ -47,6 +49,11 @@ const videoJobs = new Map<string, {
 }>();
 
 export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   try {
     const body = await request.json();
     const validation = generateSchema.safeParse(body);

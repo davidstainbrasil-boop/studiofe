@@ -8,6 +8,8 @@ import { jobManager as renderJobManager } from '@lib/render/job-manager';
 import fs from 'fs/promises';
 import path from 'path';
 import { logger } from '@lib/logger';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@lib/auth';
 
 export async function GET(
   request: NextRequest,
@@ -89,6 +91,11 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { filename: string } }
 ) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   try {
     const filename = params.filename;
 

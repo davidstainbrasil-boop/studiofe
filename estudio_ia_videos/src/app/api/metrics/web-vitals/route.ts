@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@lib/auth';
 
 // Memória simples para agregação (reset a cada deployment)
 const vitals: { samples: number; metrics: Record<string, number[]> } = {
@@ -7,6 +9,11 @@ const vitals: { samples: number; metrics: Record<string, number[]> } = {
 };
 
 export async function POST(req: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   try {
     const data = await req.json();
     const { name, value } = data || {};

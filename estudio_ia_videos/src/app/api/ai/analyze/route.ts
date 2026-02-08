@@ -5,6 +5,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@lib/auth';
 import { AIVideoAnalysisSystem } from '@lib/ai/ai-video-analysis-system';
 import { logger } from '@lib/logger';
 
@@ -13,6 +15,11 @@ import { logger } from '@lib/logger';
  * Inicia análise de vídeo
  */
 export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   try {
     const body = await request.json();
     const { videoId, videoPath, config } = body as {

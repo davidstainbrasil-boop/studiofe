@@ -7,6 +7,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Queue, ConnectionOptions } from 'bullmq';
 import { Redis } from 'ioredis';
 import { logger } from '@/lib/logger';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@lib/auth';
 
 const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
 const lipSyncQueue = new Queue('lip-sync', { connection: redis as unknown as ConnectionOptions });
@@ -117,6 +119,11 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { jobId: string } }
 ) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   try {
     const { jobId } = params;
 

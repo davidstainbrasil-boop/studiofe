@@ -7,6 +7,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { EdgeTTSService } from '@lib/tts/edge-tts-service';
 import { z } from 'zod';
 import { logger } from '@lib/logger';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@lib/auth';
 
 const batchSchema = z.object({
   items: z.array(z.object({
@@ -18,6 +20,11 @@ const batchSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   try {
     const body = await request.json();
     const validation = batchSchema.safeParse(body);

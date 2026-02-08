@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseForRequest } from '@lib/supabase/server'
 import { logger } from '@lib/logger'
 import { z } from 'zod'
+import { requireAdmin } from '@/lib/auth/admin-middleware'
 
 const logContext = { component: 'AdminUserRolesAPI' }
 
@@ -21,6 +22,10 @@ export async function POST(
   const contextLogger = logger.withContext({ ...logContext, requestId, userId: params.id })
 
   try {
+    // Auth guard: require admin
+    const { isAdmin, response: authResponse } = await requireAdmin(req)
+    if (!isAdmin) return authResponse!
+
     contextLogger.info('Assigning role to user')
 
     const body = await req.json()

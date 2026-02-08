@@ -10,6 +10,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { jobManager, RenderJob } from '@lib/render/job-manager';
 import { stuckJobMonitor } from '@lib/render/stuck-job-monitor';
 import { logger } from '@lib/logger';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@lib/auth';
 
 /**
  * GET - Lista jobs stuck sem modificá-los
@@ -63,6 +65,11 @@ export async function GET(req: NextRequest) {
  * POST - Força recuperação (fail) de jobs stuck
  */
 export async function POST(req: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   try {
     const body = await req.json();
     const thresholdMin = body.threshold || 30;

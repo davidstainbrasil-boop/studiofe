@@ -11,6 +11,8 @@ import { VideoRenderPipeline } from '@lib/video/video-render-pipeline';
 import crypto from 'crypto';
 import fs from 'fs';
 import { logger } from '@lib/logger';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@lib/auth';
 
 interface RenderJob {
   jobId: string;
@@ -38,6 +40,11 @@ interface RenderSettings {
 const renderJobs = new Map<string, RenderJob>();
 
 export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   logger.info('🎬 [Video Render v2] Iniciando renderização de produção...', { component: 'API: v1/render/video-production-v2' })
   
   try {

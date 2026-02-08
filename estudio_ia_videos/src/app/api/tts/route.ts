@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server';
 import { TTSService } from '@lib/tts/tts-service';
 import { z } from 'zod';
 import { logger } from '@lib/logger';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@lib/auth';
 
 const ttsSchema = z.object({
   text: z.string().min(1, 'Text is required.'),
@@ -10,6 +12,11 @@ const ttsSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   try {
     const body = await request.json();
     const validation = ttsSchema.safeParse(body);

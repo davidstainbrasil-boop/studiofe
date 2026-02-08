@@ -8,10 +8,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { VideoRenderEngine } from '@lib/video/video-render-engine';
 import { PPTXRealParser } from '@lib/pptx-real-parser';
 import { logger } from '@lib/logger';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@lib/auth';
 
 const renderEngine = new VideoRenderEngine();
 
 export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   logger.info('🎬 Iniciando renderização de vídeo...', { component: 'API: v1/render/video-production' });
 
   try {
@@ -151,6 +158,11 @@ export async function GET(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   const { searchParams } = new URL(request.url);
   const jobId = searchParams.get('jobId');
 

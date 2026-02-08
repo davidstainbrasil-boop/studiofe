@@ -8,8 +8,15 @@ import { UploadManager } from '@lib/upload/upload-manager';
 import { NotificationManager } from '@lib/notifications/notification-manager';
 import { logger } from '@lib/logger';
 import { getSupabaseForRequest } from '@lib/supabase/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@lib/auth';
 
 export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File;
@@ -141,6 +148,11 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const uploadId = searchParams.get('uploadId');
@@ -197,6 +209,11 @@ export async function PATCH(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const uploadId = searchParams.get('uploadId');

@@ -18,6 +18,8 @@ import { S3UploadEngine } from '@lib/s3-upload-engine';
 import { LocalAvatarRenderer } from '@lib/local-avatar-renderer';
 import { Prisma } from '@prisma/client';
 import { logger } from '@lib/logger';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@lib/auth';
 
 // Interface for jobData stored in processingQueue
 interface AvatarJobData {
@@ -32,6 +34,11 @@ interface AvatarJobData {
 }
 
 export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   try {
     const body = await request.json();
     const { 

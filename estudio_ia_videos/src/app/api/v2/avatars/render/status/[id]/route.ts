@@ -11,6 +11,8 @@ import { avatar3DPipeline } from '@lib/avatar-3d-pipeline'
 import { getSupabaseForRequest } from '@lib/supabase/server'
 import { logger } from '@lib/logger'
 import { prisma } from '@lib/db'
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@lib/auth';
 
 // Interface para tipagem do avatar
 interface AvatarModelInfo {
@@ -246,6 +248,11 @@ export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   return rateLimiterPost(request, async (request: NextRequest) => {
   try {
     const jobId = params.id
@@ -375,6 +382,11 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   return rateLimiterDelete(request, async (request: NextRequest) => {
   try {
     const jobId = params.id

@@ -7,12 +7,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { recommendationSystem } from '@lib/intelligent-recommendation-system';
 import { logger } from '@lib/logger';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@lib/auth';
 
 /**
  * POST /api/recommendations/track
  * Registra interação com recomendação
  */
 export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   try {
     const body = await request.json();
     const { userId, recommendationId, itemId, action } = body as {

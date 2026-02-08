@@ -3,12 +3,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/monitoring/logger';
 import { PPTXProcessorReal } from '@/lib/pptx/pptx-processor-real';
 import { storageSystem } from '@/lib/storage-system-real';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@lib/auth';
 
 /**
  * Rota da API para processar um arquivo .pptx.
  * Espera um corpo de requisição com a propriedade "storagePath" e opcionalmente "projectId".
  */
 export async function POST(req: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   logger.info('Recebida requisição para processar PPTX.');
 
   try {

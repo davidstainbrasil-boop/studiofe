@@ -10,6 +10,8 @@ import { getGoogleAuth, GoogleCredentials } from '@/lib/google/google-auth';
 import { createGoogleSlidesImporter } from '@/lib/google/slides-importer';
 import { createGoogleSlidesConverter } from '@/lib/google/slides-converter';
 import { logger } from '@lib/logger';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@lib/auth';
 
 /**
  * GET - List presentations from Google Drive
@@ -61,6 +63,11 @@ export async function GET(request: NextRequest) {
  * POST - Import a specific presentation
  */
 export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   try {
     // Get credentials from cookie
     const credentialsCookie = request.cookies.get('google_credentials');

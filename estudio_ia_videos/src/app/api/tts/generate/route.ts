@@ -6,6 +6,8 @@ import { writeFile, unlink } from 'fs/promises';
 import { join } from 'path';
 import { randomUUID } from 'crypto';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@lib/auth';
 
 // Monitoring service for metrics
 class MonitoringService {
@@ -24,6 +26,11 @@ class MonitoringService {
 }
 
 export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   const monitoring = MonitoringService.getInstance();
   const startTime = Date.now();
   let tempAudioPath: string | null = null;

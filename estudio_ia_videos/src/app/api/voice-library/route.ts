@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@lib/prisma'
 import { Prisma } from '@prisma/client'
 import { logger } from '@lib/logger'
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@lib/auth';
 
 interface VoiceLibraryItem {
   id: string
@@ -76,6 +78,11 @@ export async function GET(request: NextRequest) {
  * Save a new cloned voice model
  */
 export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   try {
     const body = await request.json()
     const {
@@ -145,6 +152,11 @@ export async function POST(request: NextRequest) {
  * Update voice metadata
  */
 export async function PUT(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   try {
     const body = await request.json()
     const { id, name, metadata } = body
@@ -192,6 +204,11 @@ export async function PUT(request: NextRequest) {
  * Remove a voice model
  */
 export async function DELETE(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   try {
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')

@@ -12,6 +12,8 @@ import { addVideoJob } from '@lib/queue/render-queue'
 import { randomUUID } from 'crypto'
 import { logger } from '@lib/logger'
 import type { JobStatus } from '@prisma/client'
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@lib/auth';
 
 // Validation schemas
 const RenderJobCreateSchema = z.object({
@@ -109,6 +111,11 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   try {
     // For local dev, use a demo user or require proper auth header
     const authHeader = request.headers.get('authorization')

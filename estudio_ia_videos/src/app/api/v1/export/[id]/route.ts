@@ -19,6 +19,8 @@ import {
 } from '@/types/export.types'
 import { getExportQueue } from '@lib/export/export-queue'
 import { logger } from '@lib/logger'
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@lib/auth';
 
 // Helper para validar settings
 function validateExportSettings(settings: Partial<ExportSettings>): ExportSettings {
@@ -100,6 +102,11 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   try {
     const jobId = params.id
 

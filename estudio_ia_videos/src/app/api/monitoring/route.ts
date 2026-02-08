@@ -11,6 +11,8 @@ import { Logger } from '@lib/logger'
 import { supabase } from '@lib/supabase'
 import { createClient } from '@supabase/supabase-js'
 import { getRequiredEnv } from '@lib/env'
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@lib/auth';
 
 const logger = new Logger('MonitoringAPI')
 
@@ -122,6 +124,11 @@ export async function GET(request: NextRequest) {
  * Operações de controle do monitoramento
  */
 export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   try {
     const { searchParams } = new URL(request.url)
     const action = searchParams.get('action')

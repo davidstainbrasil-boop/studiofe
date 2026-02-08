@@ -6,10 +6,17 @@ import { NextRequest, NextResponse } from 'next/server'
 import { exportProjectVideo, getExportJobStatus } from '@lib/video/video-export-real'
 import { prisma } from '@lib/prisma'
 import { logger } from '@lib/logger'
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@lib/auth';
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   try {
     const body = await request.json()
     logger.info('DEBUG: Body received', { component: 'API: v1/video/export-real', body: JSON.stringify(body) })
@@ -181,6 +188,11 @@ export async function GET(request: NextRequest) {
  * Cancelar job de exportação
  */
 export async function DELETE(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   try {
     const { searchParams } = new URL(request.url)
     const jobId = searchParams.get('jobId')

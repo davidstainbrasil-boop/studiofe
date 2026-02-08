@@ -9,6 +9,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 import { getMuseTalkProvider } from '@/lib/avatar/musetalk-provider';
 import { getSadTalkerProvider } from '@/lib/avatar/sadtalker-provider';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@lib/auth';
 
 export const maxDuration = 300; // 5 minutes
 
@@ -25,6 +27,11 @@ interface GenerateRequest {
 }
 
 export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   try {
     const body: GenerateRequest = await request.json();
     const { sourceImage, audioUrl, provider = 'auto', options = {} } = body;

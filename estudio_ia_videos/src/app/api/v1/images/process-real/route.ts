@@ -7,10 +7,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { imageProcessor, processProjectImages } from '@lib/image-processor-real'
 import { logger } from '@lib/logger'
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@lib/auth';
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   try {
     const formData = await request.formData()
     const files = formData.getAll('files') as File[]

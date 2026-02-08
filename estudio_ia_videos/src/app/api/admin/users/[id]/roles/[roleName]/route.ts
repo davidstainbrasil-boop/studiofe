@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseForRequest } from '@lib/supabase/server'
 import { logger } from '@lib/logger'
+import { requireAdmin } from '@/lib/auth/admin-middleware'
 
 const logContext = { component: 'AdminRemoveUserRoleAPI' }
 
@@ -21,6 +22,10 @@ export async function DELETE(
   })
 
   try {
+    // Auth guard: require admin
+    const { isAdmin, response: authResponse } = await requireAdmin(req)
+    if (!isAdmin) return authResponse!
+
     contextLogger.info('Removing role from user')
 
     const supabase = getSupabaseForRequest(req)

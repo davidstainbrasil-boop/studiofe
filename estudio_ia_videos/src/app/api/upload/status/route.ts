@@ -7,6 +7,8 @@ import { createRateLimiter, rateLimitPresets } from '@lib/utils/rate-limit-middl
 import { promises as fs } from 'fs';
 import path from 'path';
 import { logger } from '@lib/logger';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@lib/auth';
 
 // Simulação de storage - em produção usar S3, Google Cloud Storage, etc.
 const UPLOAD_DIR = path.join(process.cwd(), 'uploads', 'temp');
@@ -34,6 +36,11 @@ interface UploadMetadata {
 
 const rateLimiterPost = createRateLimiter(rateLimitPresets.authenticated);
 export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   return rateLimiterPost(request, async (request: NextRequest) => {
   await ensureDirectories();
 

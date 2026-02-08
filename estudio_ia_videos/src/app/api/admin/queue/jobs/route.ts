@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { videoQueueManager } from '@/lib/queue/video-queue-manager'
 import { z } from 'zod'
 import { logger } from '@/lib/logger'
+import { requireAdmin } from '@/lib/auth/admin-middleware'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,6 +22,9 @@ const querySchema = z.object({
 })
 
 export async function GET(request: NextRequest) {
+  const { isAdmin, response } = await requireAdmin(request)
+  if (!isAdmin) return response!
+
   try {
     const { searchParams } = new URL(request.url)
 
@@ -97,6 +101,9 @@ const createJobSchema = z.object({
 })
 
 export async function POST(request: NextRequest) {
+  const { isAdmin, response } = await requireAdmin(request)
+  if (!isAdmin) return response!
+
   try {
     const body = await request.json()
 
@@ -144,6 +151,9 @@ export async function POST(request: NextRequest) {
 // ============================================================================
 
 export async function DELETE(request: NextRequest) {
+  const { isAdmin, response } = await requireAdmin(request)
+  if (!isAdmin) return response!
+
   try {
     const { searchParams } = new URL(request.url)
     const jobId = searchParams.get('jobId')
@@ -183,6 +193,9 @@ export async function DELETE(request: NextRequest) {
 // ============================================================================
 
 export async function PUT(request: NextRequest) {
+  const { isAdmin, response } = await requireAdmin(request)
+  if (!isAdmin) return response!
+
   try {
     const { searchParams } = new URL(request.url)
     const jobId = searchParams.get('jobId')

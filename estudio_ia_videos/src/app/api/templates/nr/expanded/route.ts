@@ -12,6 +12,8 @@ import {
   NRTemplate as NRTemplateBasic
 } from '@lib/nr-templates/nr-7-9-11-13-15'
 import { logger } from '@lib/logger'
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@lib/auth';
 
 // Extended template type that combines both interfaces
 interface ExtendedNRTemplate {
@@ -79,6 +81,11 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   try {
     const body = await req.json()
     const { templateId, projectName, customizations } = body

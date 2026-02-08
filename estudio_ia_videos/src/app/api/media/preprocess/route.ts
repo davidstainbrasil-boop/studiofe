@@ -7,8 +7,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { mediaPreprocessor, PreprocessOptions } from '@lib/media-preprocessor-real';
 import * as fs from 'fs/promises';
 import { logger } from '@lib/logger';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@lib/auth';
 
 export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   try {
     const body = await request.json();
     const { imagePath, options } = body as {

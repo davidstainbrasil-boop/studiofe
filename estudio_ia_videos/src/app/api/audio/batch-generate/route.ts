@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { TTSService } from '@/lib/tts/tts-service';
 import { logger } from '@/lib/monitoring/logger';
 import { Scene } from '@/types/video-script';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@lib/auth';
 
 interface BatchGenerateAudioRequest {
   scenes: Scene[];
@@ -17,6 +19,11 @@ interface SceneWithAudio extends Scene {
 }
 
 export async function POST(req: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   logger.info('Recebida requisição para gerar áudio em lote.');
 
   try {

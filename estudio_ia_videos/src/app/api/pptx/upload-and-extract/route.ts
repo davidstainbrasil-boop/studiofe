@@ -10,10 +10,17 @@ import { PPTXProcessorReal } from '@/lib/pptx/pptx-processor-real';
 import { logger } from '@lib/logger';
 import { randomUUID } from 'crypto';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@lib/auth';
 
 export const maxDuration = 60; // 60 seconds max
 
 export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   try {
     // Rate limit: 10 PPTX uploads per minute per IP
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';

@@ -2,6 +2,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@lib/logger'
 import { isProduction } from '@lib/utils/mock-guard'
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@lib/auth';
 
 export async function GET(request: NextRequest) {
   try {
@@ -94,6 +96,11 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   try {
     const body = await request.json()
     const { action, systemId, parameters } = body

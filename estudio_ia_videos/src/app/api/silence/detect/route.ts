@@ -3,10 +3,17 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { SilenceDetector } from '@lib/silence-removal/silence-detector';
 import { logger } from '@lib/logger';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@lib/auth';
 
 const UPLOAD_DIR = '/tmp/silence-detection';
 
 export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   try {
     const data = await request.formData();
     const file = data.get('file') as File;

@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@lib/logger'
 import { Upload } from '@aws-sdk/lib-storage'
 import { S3Client } from '@aws-sdk/client-s3'
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@lib/auth';
 
 // AWS S3 Client (use hosted storage config)
 const s3Client = new S3Client({
@@ -10,6 +12,11 @@ const s3Client = new S3Client({
 })
 
 export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   try {
     const body = await request.json()
     const { text, voiceId, voice_id, settings, voice_settings, model_id = 'eleven_multilingual_v2' } = body

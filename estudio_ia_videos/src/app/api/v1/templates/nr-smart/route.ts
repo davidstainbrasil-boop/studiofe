@@ -4,6 +4,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { listNRTemplates, NRTemplate as ServiceNRTemplate } from '@lib/services/nr-templates-service'
 import { logger } from '@lib/logger'
 import { AIScriptGeneratorService } from '@lib/ai/script-generator.service'
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@lib/auth';
 
 interface NRTemplate {
   id: string
@@ -118,6 +120,11 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   try {
     const body = await request.json()
     

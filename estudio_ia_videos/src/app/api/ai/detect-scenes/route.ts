@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@lib/auth'
 import { logger } from '@lib/logger'
 
 /**
@@ -6,6 +8,11 @@ import { logger } from '@lib/logger'
  * Detect scenes in a video using AI
  */
 export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 })
+  }
+
   try {
     const formData = await request.formData()
     const videoFile = formData.get('video') as File
