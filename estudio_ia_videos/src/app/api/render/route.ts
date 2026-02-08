@@ -3,9 +3,21 @@ import { logger } from '@lib/logger';
 import { jobManager } from '@lib/render/job-manager';
 import { getSupabaseForRequest } from '@lib/supabase/server';
 import { isQueueAvailable } from '@lib/queue/render-queue';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 export async function POST(request: Request) {
   try {
+    // Rate limit: 10 render requests per minute per IP
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const rl = await checkRateLimit(`render:${ip}`, 10, 60_000);
+    if (!rl.allowed) {
+      logger.warn('Render rate limit exceeded', { ip, retryAfter: rl.retryAfterSec });
+      return NextResponse.json(
+        { success: false, error: 'Too many render requests', retryAfter: rl.retryAfterSec },
+        { status: 429, headers: { 'Retry-After': String(rl.retryAfterSec) } }
+      );
+    }
+
     // Verificar disponibilidade da queue antes de processar
     if (!isQueueAvailable()) {
       logger.warn('Render queue unavailable - Redis not connected', { component: 'API:Render' });

@@ -9,7 +9,7 @@ import { authOptions } from '@lib/auth';
 import { prisma } from '@lib/prisma';
 import { addVideoJob } from '@lib/queue/render-queue';
 import { z } from 'zod';
-import { logger } from '@lib/logger';
+import { logger } from '@lib/logger';\nimport { checkRateLimit } from '@/lib/rate-limit';
 import { randomUUID } from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 import { getOptionalEnv } from '@lib/env';
@@ -132,6 +132,17 @@ const getSubtitleSourceForProject = async (projectId: string) => {
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 5 exports per minute per IP (CPU intensive FFmpeg)
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const rl = await checkRateLimit(`export-mp4:${ip}`, 5, 60_000);
+    if (!rl.allowed) {
+      logger.warn('Export rate limit exceeded', { ip, retryAfter: rl.retryAfterSec });
+      return NextResponse.json(
+        { error: 'Too many export requests', retryAfter: rl.retryAfterSec },
+        { status: 429, headers: { 'Retry-After': String(rl.retryAfterSec) } }
+      );
+    }
+
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

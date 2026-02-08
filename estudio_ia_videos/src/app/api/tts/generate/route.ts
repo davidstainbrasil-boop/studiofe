@@ -5,6 +5,7 @@ import { RhubarbLipSyncEngine } from '@/lib/sync/rhubarb-lip-sync-engine';
 import { writeFile, unlink } from 'fs/promises';
 import { join } from 'path';
 import { randomUUID } from 'crypto';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 // Monitoring service for metrics
 class MonitoringService {
@@ -28,6 +29,17 @@ export async function POST(request: NextRequest) {
   let tempAudioPath: string | null = null;
   
   try {
+    // Rate limit: 20 TTS requests per minute per IP
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const rl = await checkRateLimit(`tts-generate:${ip}`, 20, 60_000);
+    if (!rl.allowed) {
+      logger.warn('TTS rate limit exceeded', { ip, retryAfter: rl.retryAfterSec });
+      return NextResponse.json(
+        { error: 'Too many TTS requests', retryAfter: rl.retryAfterSec },
+        { status: 429, headers: { 'Retry-After': String(rl.retryAfterSec) } }
+      );
+    }
+
     // Parse request body
     const body = await request.json();
     const { 

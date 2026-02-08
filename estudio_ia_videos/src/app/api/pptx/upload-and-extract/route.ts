@@ -9,11 +9,23 @@ import { NextRequest, NextResponse } from 'next/server';
 import { PPTXProcessorReal } from '@/lib/pptx/pptx-processor-real';
 import { logger } from '@lib/logger';
 import { randomUUID } from 'crypto';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 export const maxDuration = 60; // 60 seconds max
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 10 PPTX uploads per minute per IP
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const rl = await checkRateLimit(`pptx-upload:${ip}`, 10, 60_000);
+    if (!rl.allowed) {
+      logger.warn('PPTX upload rate limit exceeded', { ip, retryAfter: rl.retryAfterSec });
+      return NextResponse.json(
+        { success: false, message: 'Too many upload requests', retryAfter: rl.retryAfterSec },
+        { status: 429, headers: { 'Retry-After': String(rl.retryAfterSec) } }
+      );
+    }
+
     // Parse multipart form data
     const formData = await request.formData();
     const file = formData.get('file') as File | null;

@@ -8,6 +8,7 @@ import { LocalAuth } from '@lib/auth/local-auth';
 import { z } from 'zod';
 import { cookies } from 'next/headers';
 import { logger } from '@lib/logger';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 const registerSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -17,6 +18,17 @@ const registerSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 3 registrations per minute per IP (anti-abuse)
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const rl = await checkRateLimit(`auth-register:${ip}`, 3, 60_000);
+    if (!rl.allowed) {
+      logger.warn('Register rate limit exceeded', { ip, retryAfter: rl.retryAfterSec });
+      return NextResponse.json(
+        { success: false, error: 'Too many registration attempts. Try again later.', retryAfter: rl.retryAfterSec },
+        { status: 429, headers: { 'Retry-After': String(rl.retryAfterSec) } }
+      );
+    }
+
     const body = await request.json();
     const validation = registerSchema.safeParse(body);
 

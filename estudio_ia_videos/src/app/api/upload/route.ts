@@ -12,6 +12,7 @@ import { randomUUID } from 'crypto';
 import PPTXProcessorReal from '@lib/pptx/pptx-processor-real';
 import { logger } from '@lib/logger';
 import { getServerSession } from 'next-auth';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 // Configurações de upload
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
@@ -36,6 +37,17 @@ async function ensureDirectories() {
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 10 uploads per minute per IP
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const rl = await checkRateLimit(`upload:${ip}`, 10, 60_000);
+    if (!rl.allowed) {
+      logger.warn('Upload rate limit exceeded', { ip, retryAfter: rl.retryAfterSec });
+      return NextResponse.json(
+        { success: false, error: 'Too many upload requests', retryAfter: rl.retryAfterSec },
+        { status: 429, headers: { 'Retry-After': String(rl.retryAfterSec) } }
+      );
+    }
+
     // Auth guard
     const session = await getServerSession();
     if (!session?.user?.id) {

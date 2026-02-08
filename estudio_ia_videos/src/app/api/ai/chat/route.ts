@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
 import { createClient } from '@/lib/supabase/server';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 // ============================================================================
 // Schemas
@@ -33,6 +34,17 @@ const chatRequestSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 20 chat requests per minute per IP
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const rl = await checkRateLimit(`ai-chat:${ip}`, 20, 60_000);
+    if (!rl.allowed) {
+      logger.warn('AI chat rate limit exceeded', { ip, retryAfter: rl.retryAfterSec });
+      return NextResponse.json(
+        { error: 'Too many requests', retryAfter: rl.retryAfterSec },
+        { status: 429, headers: { 'Retry-After': String(rl.retryAfterSec) } }
+      );
+    }
+
     const body = await request.json();
     const parsed = chatRequestSchema.safeParse(body);
 
