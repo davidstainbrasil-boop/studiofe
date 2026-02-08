@@ -1921,3 +1921,39 @@ Fluxo funcionando: PPTX → Slides → TTS → Render → MP4
 
 **Status:** Pipeline E2E funcionando! 🚀
 
+
+---
+
+### 🔧 Session: Library Integration into Studio-Pro (Feb 8, 2026)
+
+#### ✅ Completed
+
+1. **Audit:** Found 9 world-class libraries installed in package.json but NONE used in studio-pro
+   - wavesurfer.js, remotion, @remotion/player, lottie-web, fabric, gsap, theatre.js, three, yjs
+
+2. **Created 4 New Components:**
+   - `AudioWaveformPlayer.tsx` — WaveSurfer.js integration with play/pause/stop, volume, time display
+   - `RemotionScenePreview.tsx` — @remotion/player live video preview rendering Scene[] with transitions
+   - `LottieEffectsPanel.tsx` — 7 built-in Lottie effects (fade-in, slide-up, confetti, etc.) with search/filters
+   - `MediaLibraryPanel.tsx` — Stock images (Unsplash curated) + file upload to Supabase Storage
+
+3. **Integrated into studio-pro/page.tsx:**
+   - Canvas/Remotion toggle (Editar vs Preview modes) in toolbar
+   - Media Library replaces "Coming soon" placeholder tab
+   - Lottie Effects replaces "Em breve" placeholder tab
+   - AudioWaveformPlayer in SceneConfigPanel for TTS audio waveform visualization
+
+4. **Fixes Applied:**
+   - All browser-only components lazy-loaded via next/dynamic(ssr:false)
+   - Added `effects` field to Scene type
+   - Fixed useCallback dependency arrays
+   - Removed .github/workflows/ci-cd.yml from tracking (token lacks workflow scope)
+
+5. **Deployed:** Build OK, PM2 restart, health check passing, push to remote
+   - Commits: 0d5fb788, 8910d10c, 99b15713, 4eb7d704
+   - Branch: hardening-prod pushed to origin
+
+#### 📊 Status
+- 54/54 features passing
+- Server healthy (DB + Storage OK)
+- studio-pro: 347kB bundle (dynamic loading)
