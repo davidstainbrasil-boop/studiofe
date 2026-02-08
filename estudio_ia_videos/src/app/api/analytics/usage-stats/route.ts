@@ -113,7 +113,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const { count: inProgressProjects } = await supabase
       .from('projects')
       .select('*', { count: 'exact', head: true })
-      .eq('status', 'in_progress');
+      .eq('status', 'in-progress');
 
     // Fetch render stats
     const { count: totalRenders } = await supabase

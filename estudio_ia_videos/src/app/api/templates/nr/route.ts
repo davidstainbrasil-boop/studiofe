@@ -184,7 +184,7 @@ export async function POST(request: NextRequest) {
     const { data: project, error: projectError } = await supabase
       .from('projects')
       .insert({
-        userId: user.id,
+        user_id: user.id,
         name: projectName || `${template.nr} - ${template.title}`,
         description: template.description,
         type: 'template-nr',
@@ -214,7 +214,7 @@ export async function POST(request: NextRequest) {
 
     // Criar slides do template no banco
     const slidesData = template.slides.map((slide) => ({
-      projectId: project.id,
+      project_id: project.id,
       order_index: slide.order,
       title: applyCustomizations(slide.title, customizations),
       content: applyCustomizations(slide.content, customizations),

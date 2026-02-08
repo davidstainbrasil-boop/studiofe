@@ -78,9 +78,9 @@ export async function assignRoleWithAudit(existing: UserContext, role: RoleName,
     // user_roles usa role_id (UUID), não role (string). Precisaria resolver role -> role_id.
     // Para simplicidade, apenas logamos o evento sem persistir em user_roles.
     await admin.from('analytics_events').insert({
-      userId: actorUserId,
-      eventType: 'rbac_role_assigned',
-      eventData: { targetUserId: existing.id, role, previousRoles: existing.roles }
+      user_id: actorUserId,
+      event_type: 'rbac_role_assigned',
+      event_data: { targetUserId: existing.id, role, previousRoles: existing.roles }
     });
   } catch (e) {
     // eslint-disable-next-line no-console

@@ -74,7 +74,7 @@ export function UserProfile({ userId, editable = false, showStats = true, showAc
         .from('users')
         .update({
           name: formData.full_name,
-          updatedAt: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         })
         .eq('id', userId);
 
@@ -136,7 +136,7 @@ export function UserProfile({ userId, editable = false, showStats = true, showAc
                     {profile.role}
                   </Badge>
                   <span className="text-xs text-muted-foreground">
-                    Membro desde {profile.createdAt ? new Date(profile.createdAt).toLocaleDateString() : '-'}
+                    Membro desde {profile.created_at ? new Date(profile.created_at).toLocaleDateString() : '-'}
                   </span>
                 </CardDescription>
               </div>

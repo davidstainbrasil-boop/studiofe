@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
         description: `Treinamento ${nr} para ${audience}`,
         type: 'ai-generated',
         status: 'draft',
-        userId: user.id,
+        user_id: user.id,
         metadata: {
           nr,
           audience,
@@ -115,7 +115,7 @@ export async function POST(req: NextRequest) {
 
     // 3. Create Slides
     const slidesData = scenes.map((scene, index) => ({
-      projectId: project.id,
+      project_id: project.id,
       order_index: index + 1,
       title: scene.title,
       content: scene.content, // Script text
@@ -194,7 +194,7 @@ export async function POST(req: NextRequest) {
     const { error: timelineError } = await supabase
       .from('timelines')
       .insert({
-        projectId: project.id,
+        project_id: project.id,
         tracks: tracks,
         totalDuration: currentTime,
         version: 1,

@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
         .insert({
           user_id: session.user.id,
           ...defaultPreferences,
-          createdAt: new Date().toISOString(),
+          created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
         .select()
@@ -166,7 +166,7 @@ export async function PATCH(request: NextRequest) {
           user_id: session.user.id,
           ...defaultPreferences,
           ...validatedData,
-          createdAt: new Date().toISOString(),
+          created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
         .select()
@@ -219,13 +219,13 @@ export async function PATCH(request: NextRequest) {
       await supabaseAdmin
         .from('analytics_events')
         .insert({
-          userId: session.user.id,
-          eventType: 'notification_preferences_updated',
+          user_id: session.user.id,
+          event_type: 'notification_preferences_updated',
           event_data: {
             changes: Object.keys(validatedData),
             timestamp: new Date().toISOString()
           } as Record<string, unknown>,
-          createdAt: new Date().toISOString()
+          created_at: new Date().toISOString()
         })
     } catch (analyticsError) {
       logger.warn('Failed to log preference change:', { component: 'API: notifications/preferences' })

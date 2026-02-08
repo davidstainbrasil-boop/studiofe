@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
     // Verify ownership
     const { data: project, error: projectError } = await supabase
       .from('projects')
-      .select('userId, metadata, current_version')
+      .select('user_id, metadata, current_version')
       .eq('id', projectId)
       .single();
 
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (project.userId !== user.id) {
+    if (project.user_id !== user.id) {
       return NextResponse.json(
         { error: 'Access denied' },
         { status: 403 }
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
       .update({
         metadata: JSON.parse(JSON.stringify(newState)),
         current_version: String(newVersion),
-        updatedAt: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       })
       .eq('id', projectId);
 

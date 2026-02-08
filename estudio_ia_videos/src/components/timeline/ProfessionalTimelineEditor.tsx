@@ -1008,7 +1008,7 @@ export default function ProfessionalTimelineEditor({ projectId }: { projectId?: 
         toast.success('Renderização iniciada em background.');
       }
     } catch (error) {
-      logger.error(error);
+      logger.error(String(error));
       toast.error('Erro ao iniciar renderização');
     } finally {
       setIsLoading(false);
@@ -1210,7 +1210,7 @@ export default function ProfessionalTimelineEditor({ projectId }: { projectId?: 
         throw new Error(result.error);
       }
     } catch (error) {
-      logger.error(error);
+      logger.error(String(error));
       toast.error('Erro ao gerar narração', { id: toastId });
     }
   };
@@ -1233,7 +1233,7 @@ export default function ProfessionalTimelineEditor({ projectId }: { projectId?: 
         throw new Error(result.error);
       }
     } catch (error) {
-      logger.error(error);
+      logger.error(String(error));
       toast.error('Erro ao gerar avatares', { id: toastId });
     }
   };

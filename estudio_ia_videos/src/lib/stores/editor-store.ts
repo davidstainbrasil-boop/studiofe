@@ -133,7 +133,7 @@ export const useEditorStore = create<EditorState>()(
 
           const result = await response.json();
           get().updateSlide(slideId, {
-            ttsState: 'success',
+            ttsState: 'ready',
             audioUrl: result.audioUrl,
           });
         } catch (error) {

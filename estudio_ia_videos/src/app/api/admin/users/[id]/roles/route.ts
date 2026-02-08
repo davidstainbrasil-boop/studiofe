@@ -60,7 +60,7 @@ export async function POST(
     const { data: existingRole } = await supabase
       .from('user_roles')
       .select('id')
-      .eq("userId", params.id)
+      .eq("user_id", params.id)
       .eq('role_id', roleData.id)
       .single()
 
@@ -76,7 +76,7 @@ export async function POST(
     const { error: insertError } = await supabase
       .from('user_roles')
       .insert({
-        userId: params.id,
+        user_id: params.id,
         role_id: roleData.id
       })
 

@@ -632,7 +632,7 @@ export class VideoQueueManager {
     })
 
     this.queueEvents.on('failed', ({ jobId, failedReason }) => {
-      logger.error(`Job ${jobId} failed:`, failedReason instanceof Error ? failedReason : new Error(String(failedReason)))
+      logger.error(`Job ${jobId} failed:`, new Error(String(failedReason)))
     })
 
     this.queueEvents.on('progress', ({ jobId, data }) => {

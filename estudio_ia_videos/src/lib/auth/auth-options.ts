@@ -38,7 +38,7 @@ export const authOptions: AuthOptions = {
         });
 
         if (error || !data.user) {
-          logger.error('Auth failed:', error?.message instanceof Error ? error?.message : new Error(String(error?.message)));
+          logger.error('Auth failed:', new Error(String(error?.message)));
           return null;
         }
 

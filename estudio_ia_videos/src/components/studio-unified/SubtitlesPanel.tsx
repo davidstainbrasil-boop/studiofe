@@ -87,7 +87,7 @@ export function SubtitlesPanel() {
                     }
 
                 } catch (error) {
-                    logger.error(error);
+                    logger.error(String(error));
                     toast.error('Erro ao transcrever áudio.');
                 } finally {
                     setIsGenerating(false);

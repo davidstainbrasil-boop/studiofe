@@ -67,7 +67,7 @@ interface RenderSettingsValue {
 interface UserRenderSettingsRecord {
   user_id: string;
   settings: RenderSettingsValue;
-  createdAt?: string;
+  created_at?: string;
   updated_at?: string;
   [key: string]: unknown;
 }
@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
         .insert({
           user_id: user.id,
           settings: defaultSettings,
-          createdAt: new Date().toISOString(),
+          created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
         .select()
@@ -178,7 +178,7 @@ export async function PATCH(request: NextRequest) {
         .insert({
           user_id: user.id,
           settings: updatedSettings,
-          createdAt: new Date().toISOString(),
+          created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
         .select()
@@ -225,8 +225,8 @@ export async function PATCH(request: NextRequest) {
       await supabase
         .from('analytics_events')
         .insert({
-          userId: user.id,
-          eventType: 'settings_updated',
+          user_id: user.id,
+          event_type: 'settings_updated',
           event_data: {
             scope: 'render',
             updated_fields: Object.keys(settingsUpdate),
@@ -298,8 +298,8 @@ export async function DELETE(request: NextRequest) {
       await supabase
         .from('analytics_events')
         .insert({
-          userId: user.id,
-          eventType: 'settings_reset',
+          user_id: user.id,
+          event_type: 'settings_reset',
           event_data: {
             scope: 'render',
             timestamp: new Date().toISOString()

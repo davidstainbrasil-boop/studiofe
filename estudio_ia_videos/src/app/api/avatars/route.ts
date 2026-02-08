@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
     const offset = parseInt(searchParams.get('offset') || '0')
 
     let query = supabase
-      .from('avatars_3d')
+      .from('avatars')
       .select(`
         *,
         projects:project_id (
@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
     // Verificar se projeto existe e permissões
     const { data: projectData } = await supabase
       .from('projects')
-      .select('owner_id, collaborators')
+      .select('user_id, collaborators')
       .eq('id', validatedData.projectId)
       .single()
 
@@ -161,7 +161,7 @@ export async function POST(request: NextRequest) {
 
     // Verificar se já existe avatar com mesmo nome no projeto
     const { data: existingAvatar } = await supabase
-      .from('avatars_3d')
+      .from('avatars')
       .select('id')
       .eq("projectId", validatedData.projectId)
       .eq('name', validatedData.name)
@@ -187,7 +187,7 @@ export async function POST(request: NextRequest) {
 
     // Criar avatar
     const { data: avatar, error } = await supabase
-      .from('avatars_3d')
+      .from('avatars')
       .insert({
         ...validatedData,
         userId: user.id,
@@ -303,7 +303,7 @@ export async function PUT(request: NextRequest) {
     // Verificar permissões no projeto
     const { data: projectData } = await supabase
       .from('projects')
-      .select('owner_id, collaborators, settings')
+      .select('user_id, collaborators, settings')
       .eq('id', project_id)
       .single()
 

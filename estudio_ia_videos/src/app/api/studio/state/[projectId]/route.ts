@@ -103,7 +103,7 @@ export async function GET(
     }
 
     // Verify ownership
-    if (project.userId !== user.id) {
+    if (project.user_id !== user.id) {
       return NextResponse.json(
         { error: 'Access denied' },
         { status: 403 }
@@ -118,8 +118,8 @@ export async function GET(
         name: project.name,
         state: project.metadata || {},
         metadata: project.render_settings || {},
-        createdAt: project.createdAt,
-        updatedAt: project.updatedAt,
+        createdAt: project.created_at,
+        updatedAt: project.updated_at,
       },
     });
   } catch (error) {
@@ -173,7 +173,7 @@ export async function PUT(
     // Verify ownership
     const { data: project, error: projectError } = await supabase
       .from('projects')
-      .select('userId')
+      .select('user_id')
       .eq('id', projectId)
       .single();
 
@@ -184,7 +184,7 @@ export async function PUT(
       );
     }
 
-    if (project.userId !== user.id) {
+    if (project.user_id !== user.id) {
       return NextResponse.json(
         { error: 'Access denied' },
         { status: 403 }
@@ -196,7 +196,7 @@ export async function PUT(
       .from('projects')
       .update({
         metadata: JSON.parse(JSON.stringify(parsed.data)),
-        updatedAt: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       })
       .eq('id', projectId)
       .select()
@@ -216,7 +216,7 @@ export async function PUT(
       success: true,
       data: {
         id: updatedProject.id,
-        updatedAt: updatedProject.updatedAt,
+        updatedAt: updatedProject.updated_at,
       },
     });
   } catch (error) {

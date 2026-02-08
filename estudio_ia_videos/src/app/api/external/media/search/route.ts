@@ -406,8 +406,8 @@ export async function GET(request: NextRequest) {
       await supabaseAdmin
         .from('analytics_events')
         .insert({
-          userId: session.user.id,
-          eventType: 'media_searched',
+          user_id: session.user.id,
+          event_type: 'media_searched',
           event_data: {
             category: 'external_apis',
             action: 'media_searched',

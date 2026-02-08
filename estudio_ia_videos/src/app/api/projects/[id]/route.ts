@@ -74,15 +74,15 @@ export async function GET(
       }, { status: 404 })
     }
 
-    let hasPermission = (project.user_id || project.userId) === user.id || project.is_public
+    let hasPermission = project.user_id === user.id || project.is_public
 
 
     if (!hasPermission) {
       const { data: collaborator } = await supabase
-        .from('collaborators')
-        .select("userId")
+        .from('project_collaborators')
+        .select("user_id")
         .eq("project_id", params.id)
-        .eq("userId", user.id)
+        .eq("user_id", user.id)
         .single()
       
       if (collaborator) hasPermission = true
@@ -269,15 +269,15 @@ export async function PUT(
       }, { status: 404 })
     }
 
-    let hasPermission = (project.user_id || project.userId) === user.id
+    let hasPermission = project.user_id === user.id
 
 
     if (!hasPermission) {
       const { data: collaboratorData } = await supabase
-        .from('collaborators')
+        .from('project_collaborators')
         .select('role')
         .eq("project_id", params.id)
-        .eq("userId", user.id)
+        .eq("user_id", user.id)
         .single()
       
       const collaborator = collaboratorData as unknown as { role: string } | null;

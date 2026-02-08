@@ -15,7 +15,7 @@ interface TrackCreated {
   id: string;
   name: string;
   type: string;
-  projectId: string;
+  project_id: string;
   order_index: number;
   color?: string | null;
   height?: number;
@@ -27,7 +27,7 @@ interface TrackCreated {
 
 interface ExistingTrackWithProjectId {
   id: string;
-  projectId: string;
+  project_id: string;
 }
 
 // Schema de validação para criação de track
@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
     // Verificar permissões no projeto
     const { data: project } = await supabase
       .from('projects')
-      .select('userId, is_public')
+      .select('user_id, is_public')
       .eq('id', projectId)
       .single()
 
@@ -95,14 +95,14 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    let hasPermission = project.userId === user.id || project.is_public
+    let hasPermission = project.user_id === user.id || project.is_public
 
     if (!hasPermission) {
       const { data: collaborator } = await supabase
         .from('collaborators' as never)
-        .select("userId")
-        .eq("projectId", projectId)
-        .eq("userId", user.id)
+        .select("user_id")
+        .eq("project_id", projectId)
+        .eq("user_id", user.id)
         .single()
       
       if (collaborator) hasPermission = true
@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
         *,
         timeline_elements:timeline_elements(*)
       `)
-      .eq("projectId", projectId)
+      .eq("project_id", projectId)
       .order("order_index", { ascending: true })
 
     if (error) {
@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
     // Verificar permissões no projeto
     const { data: project } = await supabase
       .from('projects')
-      .select("userId")
+      .select("user_id")
       .eq('id', validatedData.projectId)
       .single()
 
@@ -174,14 +174,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    let hasPermission = project.userId === user.id
+    let hasPermission = project.user_id === user.id
 
     if (!hasPermission) {
       const { data: collaboratorData } = await supabase
         .from('collaborators' as never)
         .select('role')
-        .eq("projectId", validatedData.projectId)
-        .eq("userId", user.id)
+        .eq("project_id", validatedData.projectId)
+        .eq("user_id", user.id)
         .single()
       
       // Check if role allows editing (editor or owner)
@@ -203,7 +203,7 @@ export async function POST(request: NextRequest) {
       const { data: lastTrackData } = await supabase
         .from('timeline_tracks')
         .select("order_index")
-        .eq("projectId", validatedData.projectId)
+        .eq("project_id", validatedData.projectId)
         .order("order_index", { ascending: false })
         .limit(1)
         .single()
@@ -227,7 +227,7 @@ export async function POST(request: NextRequest) {
 
     // Criar track
     const trackInsert = {
-      projectId: validatedData.projectId,
+      project_id: validatedData.projectId,
       name: validatedData.name,
       type: validatedData.type,
       order_index: validatedData.orderIndex,
@@ -258,7 +258,7 @@ export async function POST(request: NextRequest) {
     await supabase
       .from('project_history')
       .insert({
-        projectId: validatedData.projectId,
+        project_id: validatedData.projectId,
         user_id: user.id,
         action: 'create',
         entity_type: 'track',
@@ -320,7 +320,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Verificar se todas as tracks pertencem ao mesmo projeto
-    const projectIds = [...new Set(existingTracks.map(t => t.projectId))]
+    const projectIds = [...new Set(existingTracks.map(t => t.project_id))]
     if (projectIds.length !== 1) {
       return NextResponse.json(
         { error: 'Todas as tracks devem pertencer ao mesmo projeto' },
@@ -333,7 +333,7 @@ export async function PUT(request: NextRequest) {
     // Verificar permissões no projeto
     const { data: project } = await supabase
       .from('projects')
-      .select("userId")
+      .select("user_id")
       .eq('id', projectId)
       .single()
 
@@ -344,14 +344,14 @@ export async function PUT(request: NextRequest) {
       )
     }
 
-    let hasPermission = project.userId === user.id
+    let hasPermission = project.user_id === user.id
 
     if (!hasPermission) {
       const { data: collaboratorData } = await supabase
         .from('collaborators' as never)
         .select('role')
-        .eq("projectId", projectId)
-        .eq("userId", user.id)
+        .eq("project_id", projectId)
+        .eq("user_id", user.id)
         .single()
       
       // Check if role allows editing (editor or owner)
@@ -382,7 +382,7 @@ export async function PUT(request: NextRequest) {
     await supabase
       .from('project_history')
       .insert({
-        projectId: projectId,
+        project_id: projectId,
         user_id: user.id,
         action: 'update',
         entity_type: 'track',

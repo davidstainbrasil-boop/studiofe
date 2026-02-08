@@ -934,6 +934,7 @@ model auth_users {
   sessions                                                      sessions[]
   avatar_analytics                                              avatar_analytics[]
   avatar_models                                                 avatar_models[]
+  avatar_analytics                                              avatar_analytics[]
   comments                                                      comments[]
   project_analytics                                             project_analytics[]
   project_collaborators_project_collaborators_invited_byTousers project_collaborators[] @relation("project_collaborators_invited_byTousers")
@@ -1182,6 +1183,7 @@ model avatar_analytics {
   session_id      String?        @db.VarChar(255)
   created_at      DateTime?      @default(now()) @db.Timestamptz(6)
   avatar_models   avatar_models? @relation(fields: [avatar_model_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  avatars_3d      avatars_3d?   @relation(fields: [avatar_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   render_jobs     render_jobs?   @relation(fields: [render_job_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   users           auth_users?    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
@@ -1193,360 +1195,6 @@ model avatar_analytics {
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model avatar_models {
-  id                     String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  name                   String             @unique(map: "avatar_models_name_unique") @db.VarChar(255)
-  display_name           String             @db.VarChar(255)
-  description            String?
-  avatar_type            avatar_type        @default(realistic)
-  gender                 avatar_gender
-  model_file_url         String
-  texture_file_url       String?
-  animation_file_url     String?
-  thumbnail_url          String?
-  age_range              String?            @db.VarChar(50)
-  ethnicity              String?            @db.VarChar(100)
-  hair_color             String?            @db.VarChar(50)
-  eye_color              String?            @db.VarChar(50)
-  supports_audio2face    Boolean?           @default(false)
-  supports_voice_cloning Boolean?           @default(false)
-  supports_real_time     Boolean?           @default(false)
-  blend_shapes_count     Int?               @default(0)
-  file_size              BigInt?
-  model_version          String?            @db.VarChar(50)
-  created_by             String?            @db.Uuid
-  is_active              Boolean?           @default(true)
-  is_premium             Boolean?           @default(false)
-  created_at             DateTime?          @default(now()) @db.Timestamptz(6)
-  updated_at             DateTime?          @default(now()) @db.Timestamptz(6)
-  avatar_analytics       avatar_analytics[]
-  users                  auth_users?        @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
-
-  @@index([is_active], map: "idx_avatar_models_active")
-  @@index([gender], map: "idx_avatar_models_gender")
-  @@index([avatar_type], map: "idx_avatar_models_type")
-  @@schema("public")
-}
-
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
-model comments {
-  id             String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  project_id     String     @db.Uuid
-  user_id        String     @db.Uuid
-  parent_id      String?    @db.Uuid
-  content        String
-  slide_index    Int?
-  timestamp_sec  Decimal?   @db.Decimal(10, 3)
-  metadata       Json?      @default("{}")
-  is_resolved    Boolean?   @default(false)
-  created_at     DateTime?  @default(now()) @db.Timestamptz(6)
-  updated_at     DateTime?  @default(now()) @db.Timestamptz(6)
-  comments       comments?  @relation("commentsTocomments", fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  other_comments comments[] @relation("commentsTocomments")
-  projects       projects   @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  users          auth_users @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  @@index([parent_id], map: "idx_comments_parent")
-  @@index([project_id], map: "idx_comments_project")
-  @@index([slide_index], map: "idx_comments_slide")
-  @@index([user_id], map: "idx_comments_user")
-  @@schema("public")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model system_stats {
-  id                      String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  total_renders           Int?      @default(0)
-  active_jobs             Int?      @default(0)
-  completed_jobs          Int?      @default(0)
-  failed_jobs             Int?      @default(0)
-  avg_render_time_seconds Decimal?  @db.Decimal(10, 2)
-  avg_lipsync_accuracy    Decimal?  @db.Decimal(5, 2)
-  success_rate            Decimal?  @db.Decimal(5, 2)
-  cpu_usage               Decimal?  @db.Decimal(5, 2)
-  memory_usage            Decimal?  @db.Decimal(5, 2)
-  gpu_usage               Decimal?  @db.Decimal(5, 2)
-  disk_usage              Decimal?  @db.Decimal(5, 2)
-  audio2face_status       String?   @default("unknown") @db.VarChar(50)
-  redis_status            String?   @default("unknown") @db.VarChar(50)
-  database_status         String?   @default("unknown") @db.VarChar(50)
-  recorded_at             DateTime? @default(now()) @db.Timestamptz(6)
-
-  @@schema("public")
-}
-
-model templates {
-  id            String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name          String      @db.VarChar(255)
-  description   String?
-  category      String      @db.VarChar(100)
-  type          String      @default("video") @db.VarChar(50)
-  thumbnail_url String?
-  preview_url   String?
-  metadata      Json?       @default("{}")
-  settings      Json?       @default("{}")
-  is_public     Boolean?    @default(true)
-  is_featured   Boolean?    @default(false)
-  usage_count   Int?        @default(0)
-  created_by    String?     @db.Uuid
-  created_at    DateTime?   @default(now()) @db.Timestamptz(6)
-  updated_at    DateTime?   @default(now()) @db.Timestamptz(6)
-  users         auth_users? @relation(fields: [created_by], references: [id], onUpdate: NoAction)
-
-  @@index([category], map: "idx_templates_category")
-  @@index([type], map: "idx_templates_type")
-  @@schema("public")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model voice_profiles {
-  id                String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  name              String             @db.VarChar(255)
-  display_name      String             @db.VarChar(255)
-  description       String?
-  language          supported_language @default(pt_BR)
-  gender            avatar_gender
-  age_range         String?            @db.VarChar(50)
-  accent            String?            @db.VarChar(100)
-  sample_audio_url  String
-  training_data_url String?
-  sample_rate       Int?               @default(22050)
-  bit_depth         Int?               @default(16)
-  duration_seconds  Decimal?           @db.Decimal(10, 2)
-  quality_score     Decimal?           @default(0.0) @db.Decimal(3, 2)
-  similarity_score  Decimal?           @default(0.0) @db.Decimal(3, 2)
-  naturalness_score Decimal?           @default(0.0) @db.Decimal(3, 2)
-  created_by        String?            @db.Uuid
-  is_active         Boolean?           @default(true)
-  is_premium        Boolean?           @default(false)
-  created_at        DateTime?          @default(now()) @db.Timestamptz(6)
-  updated_at        DateTime?          @default(now()) @db.Timestamptz(6)
-  users             auth_users?        @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
-
-  @@index([is_active], map: "idx_voice_profiles_active")
-  @@index([gender], map: "idx_voice_profiles_gender")
-  @@index([language], map: "idx_voice_profiles_language")
-  @@schema("public")
-}
-
-enum JobStatus {
-  pending
-  processing
-  completed
-  failed
-  cancelled
-  queued
-
-  @@schema("public")
-}
-
-enum PriorityLevel {
-  low
-  medium
-  high
-  urgent
-
-  @@schema("public")
-}
-
-enum video_quality {
-  p360
-  p480
-  p720
-  p1080
-  p1440
-  p2160
-
-  @@schema("public")
-}
-
-enum aal_level {
-  aal1
-  aal2
-  aal3
-
-  @@schema("auth")
-}
-
-enum code_challenge_method {
-  s256
-  plain
-
-  @@schema("auth")
-}
-
-enum factor_status {
-  unverified
-  verified
-
-  @@schema("auth")
-}
-
-enum factor_type {
-  totp
-  webauthn
-  phone
-
-  @@schema("auth")
-}
-
-enum oauth_authorization_status {
-  pending
-  approved
-  denied
-  expired
-
-  @@schema("auth")
-}
-
-enum oauth_client_type {
-  public
-  confidential
-
-  @@schema("auth")
-}
-
-enum oauth_registration_type {
-  dynamic
-  manual
-
-  @@schema("auth")
-}
-
-enum oauth_response_type {
-  code
-
-  @@schema("auth")
-}
-
-enum one_time_token_type {
-  confirmation_token
-  reauthentication_token
-  recovery_token
-  email_change_token_new
-  email_change_token_current
-  phone_change_token
-
-  @@schema("auth")
-}
-
-enum analytics_event_type {
-  project_created
-  project_updated
-  project_deleted
-  project_viewed
-  project_shared
-  project_duplicated
-  version_created
-  collaboration_added
-
-  @@schema("public")
-}
-
-enum collaboration_role {
-  owner
-  editor
-  viewer
-  reviewer
-
-  @@schema("public")
-}
-
-enum priority_level {
-  low
-  medium
-  high
-  urgent
-
-  @@schema("public")
-}
-
-enum project_status {
-  draft
-  in_progress @map("in-progress")
-  review
-  completed
-  archived
-  error
-
-  @@schema("public")
-}
-
-enum project_type {
-  pptx
-  template_nr   @map("template-nr")
-  talking_photo @map("talking-photo")
-  custom
-  ai_generated  @map("ai-generated")
-
-  @@schema("public")
-}
-
-enum avatar_gender {
-  male
-  female
-  neutral
-
-  @@schema("public")
-}
-
-enum avatar_type {
-  realistic
-  stylized
-  cartoon
-  professional
-
-  @@schema("public")
-}
-
-enum render_quality {
-  draft
-  standard
-  high
-  ultra
-
-  @@schema("public")
-}
-
-enum render_status {
-  pending
-  queued
-  processing
-  completed
-  failed
-  cancelled
-
-  @@schema("public")
-}
-
-enum supported_language {
-  pt_BR @map("pt-BR")
-  en_US @map("en-US")
-  es_ES @map("es-ES")
-  fr_FR @map("fr-FR")
-  de_DE @map("de-DE")
-  it_IT @map("it-IT")
-  ja_JP @map("ja-JP")
-  ko_KR @map("ko-KR")
-  zh_CN @map("zh-CN")
-
-  @@schema("public")
-}
-
-enum video_resolution {
-  p480  @map("480p")
-  p720  @map("720p")
-  p1080 @map("1080p")
-  p1440 @map("1440p")
-  k4    @map("4k")
-
-  @@schema("public")
-}
-
-// ============================================
-// MODELOS ADICIONADOS PARA COMPLETAR FEATURES
-// ============================================
-
-model timeline_templates {
   id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name        String    @db.VarChar(255)
   description String?
@@ -1564,8 +1212,35 @@ model timeline_templates {
   updatedAt   DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
   users       users?    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@index([userId], map: "idx_timeline_templates_user_id")
-  @@index([category], map: "idx_timeline_templates_category")
+  @@index([userId], map: "idx_avatar_models_user_id")
+  @@index([category], map: "idx_avatar_models_category")
+  @@schema("public")
+}
+
+model avatars_3d {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                String    @db.VarChar(255)
+  slug                String    @unique @db.VarChar(255)
+  category            String    @db.VarChar(50)
+  appearance          Json      @default("{}")
+  modelUrl            String    @map("model_url") @db.VarChar(500)
+  modelType            String    @map("model_type") @default("ready_player_me") @db.VarChar(50)
+  modelQuality        String    @map("model_quality") @default("hd") @db.VarChar(20)
+  animations          Json      @default("{}")
+  blendShapes         Json      @map("blend_shapes") @default("{}")
+  voiceCompatibility   String[]  @map("voice_compatibility") @default([])
+  specializations     String[]  @default([])
+  premium             Boolean   @default(false)
+  isPublic            Boolean   @map("is_public") @default(true)
+  popularityScore     Decimal   @map("popularity_score") @default(0.00) @db.Decimal(3, 2)
+  createdBy           String?   @map("created_by") @db.VarChar(255)
+  createdAt           DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@index([category], map: "idx_avatars_3d_category")
+  @@index([slug], map: "idx_avatars_3d_slug")
+  @@index([premium], map: "idx_avatars_3d_premium")
+  @@index([popularityScore], map: "idx_avatars_3d_popularity")
   @@schema("public")
 }
 
@@ -1585,6 +1260,7 @@ model timeline_snapshots {
   users       users?    @relation(fields: [userId], references: [id], onDelete: SetNull, onUpdate: NoAction)
 
   @@index([timelineId], map: "idx_timeline_snapshots_timeline_id")
+  @@index([userId], map: "idx_timeline_snapshots_user_id")
   @@schema("public")
 }
 

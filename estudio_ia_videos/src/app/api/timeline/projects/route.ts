@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
         name: projectData.name,
         type: 'custom', // or 'pptx' if we can infer
         status: 'draft',
-        userId: user.id,
+        user_id: user.id,
         metadata: {
             ...projectData.metadata,
             timeline: body // Store full timeline JSON in metadata
@@ -78,7 +78,7 @@ interface TimelineTrack {
     
     if (slideTrack && slideTrack.elements) {
         const slidesToInsert = slideTrack.elements.map((el, index: number) => ({
-            projectId: newProject.id,
+            project_id: newProject.id,
             order_index: index,
             title: el.name,
             content: el.properties?.content || el.name, // Fallback
@@ -132,8 +132,8 @@ export async function GET(request: NextRequest) {
     const { data: projects, error } = await supabase
       .from('projects')
       .select('*')
-      .eq("userId", user.id)
-      .order("createdAt", { ascending: false })
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
 
     if (error) throw error
 

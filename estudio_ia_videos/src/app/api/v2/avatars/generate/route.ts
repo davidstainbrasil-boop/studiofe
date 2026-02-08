@@ -341,8 +341,8 @@ export async function GET(request: NextRequest) {
     let query = supabase
       .from('render_jobs')
       .select('*', { count: 'exact' })
-      .eq('userId', effectiveUser.id)
-      .order('createdAt', { ascending: false })
+      .eq('user_id', effectiveUser.id)
+      .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
     if (status) {

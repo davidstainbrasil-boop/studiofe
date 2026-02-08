@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
     if (projectId) {
       const { data: projectData } = await supabase
         .from('projects')
-        .select('owner_id, collaborators, is_public')
+        .select('user_id, collaborators, is_public')
         .eq('id', projectId)
         .single()
 
@@ -148,7 +148,7 @@ export async function GET(request: NextRequest) {
       .order('start_time', { ascending: true })
 
     if (trackId) {
-      query = query.eq("trackId", trackId)
+      query = query.eq("track_id", trackId)
     }
     if (projectId) {
       query = query.eq("project_id", projectId)
@@ -264,7 +264,7 @@ export async function POST(request: NextRequest) {
     const { data: overlappingElements } = await supabase
       .from('timeline_elements')
       .select('id, start_time, duration')
-      .eq("trackId", validatedData.trackId)
+      .eq("track_id", validatedData.trackId)
       .or(`and(start_time.lte.${validatedData.start_time},end_time.gt.${validatedData.start_time}),and(start_time.lt.${validatedData.start_time + validatedData.duration},end_time.gte.${validatedData.start_time + validatedData.duration})`)
 
     if (overlappingElements && overlappingElements.length > 0) {
@@ -316,7 +316,7 @@ export async function POST(request: NextRequest) {
     await supabase
       .from('project_history')
       .insert({
-        projectId: validatedData.projectId,
+        project_id: validatedData.projectId,
         user_id: user.id,
         action: 'create',
         entity_type: 'timeline_element',
@@ -440,7 +440,7 @@ export async function PUT(request: NextRequest) {
 
     // Atualizar elemento
     const updateData: Record<string, unknown> = {}
-    if (validatedData.trackId) updateData.trackId = validatedData.trackId
+    if (validatedData.trackId) updateData.track_id = validatedData.trackId
     if (validatedData.start_time !== undefined) updateData.start_time = validatedData.start_time
     if (validatedData.duration !== undefined) updateData.duration = validatedData.duration
 
@@ -466,7 +466,7 @@ export async function PUT(request: NextRequest) {
       await supabase
         .from('project_history')
         .insert({
-          projectId: currentProjectId,
+          project_id: currentProjectId,
           user_id: user.id,
           action: 'update',
           entity_type: 'timeline_element',

@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
     // Get project and verify ownership
     const { data: project, error: projectError } = await supabase
       .from('projects')
-      .select('userId, metadata, name')
+      .select('user_id, metadata, name')
       .eq('id', projectId)
       .single();
 
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (project.userId !== user.id) {
+    if (project.user_id !== user.id) {
       return NextResponse.json(
         { error: 'Access denied' },
         { status: 403 }
@@ -172,7 +172,7 @@ export async function GET(request: NextRequest) {
     // Verify project ownership
     const { data: project, error: projectError } = await supabase
       .from('projects')
-      .select('userId')
+      .select('user_id')
       .eq('id', projectId)
       .single();
 
@@ -183,7 +183,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    if (project.userId !== user.id) {
+    if (project.user_id !== user.id) {
       return NextResponse.json(
         { error: 'Access denied' },
         { status: 403 }

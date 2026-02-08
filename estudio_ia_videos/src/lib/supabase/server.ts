@@ -76,7 +76,7 @@ export function getSupabaseForRequest(req: Request): SupabaseClient<Database> {
  * Usa type assertion controlado para tabelas conhecidas mas não tipadas.
  * 
  * @example
- * const { data } = await fromUntypedTable(supabase, 'avatars_3d').select('*')
+ * const { data } = await fromUntypedTable(supabase, 'avatars').select('*')
  */
 export function fromUntypedTable<T = Record<string, unknown>>(
   client: SupabaseClient<Database>,

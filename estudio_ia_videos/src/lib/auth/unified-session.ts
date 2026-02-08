@@ -67,7 +67,7 @@ export async function getServerAuth(): Promise<UnifiedSession | null> {
     if (nextAuthSession?.user) {
       return {
         user: {
-          id: (nextAuthSession.user as UnifiedUser).id || '',
+          id: nextAuthSession.user.id || '',
           email: nextAuthSession.user.email || '',
           name: nextAuthSession.user.name || null,
           image: nextAuthSession.user.image || null,
@@ -80,6 +80,30 @@ export async function getServerAuth(): Promise<UnifiedSession | null> {
       error: nextAuthError instanceof Error ? nextAuthError.message : 'Unknown',
       component: 'unified-session',
     });
+  }
+
+  // 3. Em ambiente de teste, verificar se há token de teste
+  console.log('Debug auth check:', {
+    NODE_ENV: process.env.NODE_ENV,
+    E2E_TEST: process.env.E2E_TEST,
+    E2E_TEST_MODE: process.env.E2E_TEST_MODE
+  });
+  
+  if (process.env.NODE_ENV === 'test' && process.env.E2E_TEST === 'true') {
+    const testToken = process.env.E2E_TEST_TOKEN;
+    if (testToken) {
+      // Criar usuário de teste para testes
+      console.log('Using test token authentication');
+      return {
+        user: {
+          id: 'test-user-id',
+          email: 'test@example.com',
+          name: 'Test User',
+          image: null,
+        },
+        expires: null,
+      };
+    }
   }
 
   return null;

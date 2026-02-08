@@ -48,7 +48,7 @@ export async function GET(
 
     // Buscar avatar com dados relacionados
     const { data: avatarData, error } = await supabase
-      .from('avatars_3d')
+      .from('avatars')
       .select(`
         *,
         projects:project_id (
@@ -90,7 +90,7 @@ export async function GET(
 
     // Atualizar último acesso
     await supabase
-      .from('avatars_3d')
+      .from('avatars')
       .update({ updated_at: new Date().toISOString() })
       .eq('id', avatarId)
 
@@ -133,7 +133,7 @@ export async function PUT(
 
     // Verificar se avatar existe e permissões
     const { data: avatarData } = await supabase
-      .from('avatars_3d')
+      .from('avatars')
       .select(`
         *,
         projects:project_id (
@@ -172,7 +172,7 @@ export async function PUT(
     // Se mudando nome, verificar conflitos
     if (validatedData.name && validatedData.name !== avatar.name) {
       const { data: existingAvatarConflict } = await supabase
-        .from('avatars_3d')
+        .from('avatars')
         .select('id')
         .eq("project_id", avatar.projectId ?? '')
         .eq('name', validatedData.name)
@@ -240,7 +240,7 @@ export async function PUT(
 
     // Atualizar avatar
     const { data: updatedAvatar, error: updateError } = await supabase
-      .from('avatars_3d')
+      .from('avatars')
       .update(updateData as Record<string, unknown>)
       .eq('id', avatarId)
       .select()
@@ -304,7 +304,7 @@ export async function DELETE(
 
     // Verificar se avatar existe e permissões
     const { data: avatarDataDel } = await supabase
-      .from('avatars_3d')
+      .from('avatars')
       .select(`
         *,
         projects:project_id (
@@ -352,7 +352,7 @@ export async function DELETE(
 
     // Excluir avatar
     const { error: deleteError } = await supabase
-      .from('avatars_3d')
+      .from('avatars')
       .delete()
       .eq('id', avatarId)
 

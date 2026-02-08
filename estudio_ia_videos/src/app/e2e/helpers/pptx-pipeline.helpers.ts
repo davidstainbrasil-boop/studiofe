@@ -240,8 +240,8 @@ export async function cleanupTestData(
 
     if (projectId) {
       // Clean up project and related data
-      await supabase.from('slides').delete().eq('projectId', projectId);
-      await supabase.from('timelines').delete().eq('projectId', projectId);
+      await supabase.from('slides').delete().eq('project_id', projectId);
+      await supabase.from('timelines').delete().eq('project_id', projectId);
       await supabase.from('projects').delete().eq('id', projectId);
       logger.info(`Cleaned up project: ${projectId}`);
     }

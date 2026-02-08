@@ -22,7 +22,7 @@ export async function bootstrapSlidesFromPptx(
   supabase: SupabaseClient<Database>,
   projectId: string,
   sourcePath: string,
-  previousSettings?: Database['public']['Tables']['projects']['Row']['settings'],
+  previousMetadata?: Database['public']['Tables']['projects']['Row']['metadata'],
 ): Promise<BootstrapSlidesResult> {
   const download = await supabase.storage.from(ASSETS_BUCKET).download(sourcePath)
 
@@ -46,9 +46,9 @@ export async function bootstrapSlidesFromPptx(
   }
 
   const payload: Database['public']['Tables']['slides']['Insert'][] = slides.map((slide, index) => ({
-    projectId: projectId,
+    project_id: projectId,
     title: (slide.title || '').slice(0, 200),
-    content: buildSlideContent(slide.textContent, slide.notes),
+    content: JSON.stringify(buildSlideContent(slide.textContent, slide.notes)),
     order_index: index,
     duration: null,
   }))
@@ -56,7 +56,7 @@ export async function bootstrapSlidesFromPptx(
   const { error: deleteError } = await supabase
     .from('slides')
     .delete()
-    .eq("projectId", projectId)
+    .eq("project_id", projectId)
   if (deleteError) {
     return {
       ok: false,
@@ -74,13 +74,13 @@ export async function bootstrapSlidesFromPptx(
     }
   }
 
-  const baseSettings =
-    previousSettings && typeof previousSettings === 'object' && !Array.isArray(previousSettings)
-      ? (previousSettings as Record<string, unknown>)
+  const baseMetadata =
+    previousMetadata && typeof previousMetadata === 'object' && !Array.isArray(previousMetadata)
+      ? (previousMetadata as Record<string, unknown>)
       : {}
 
-  const mergedSettings: Record<string, unknown> = {
-    ...baseSettings,
+  const mergedMetadata: Record<string, unknown> = {
+    ...baseMetadata,
     source_pptx_path: sourcePath,
     parsed_slide_count: slides.length,
     last_parsed_at: new Date().toISOString(),
@@ -88,7 +88,7 @@ export async function bootstrapSlidesFromPptx(
 
   const projectUpdate: Database['public']['Tables']['projects']['Update'] = {
     status: 'draft',
-    settings: mergedSettings as Json,
+    metadata: mergedMetadata as Json,
     updated_at: new Date().toISOString(),
   }
 

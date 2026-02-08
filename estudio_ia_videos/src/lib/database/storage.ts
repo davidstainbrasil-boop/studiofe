@@ -205,7 +205,7 @@ export async function uploadFile(
     return { success: true, file: storageFile, url };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Upload failed';
-    logger.error('[Storage] Erro no upload:', message instanceof Error ? message : new Error(String(message)));
+    logger.error('[Storage] Erro no upload:', new Error(message));
     return { success: false, error: message };
   }
 }

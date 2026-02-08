@@ -2,7 +2,7 @@
  * API Route para Integração Upload-Notificações
  */
 
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { notificationManager } from '@lib/notifications/notification-manager';
 import { getWebSocketServer } from '@lib/notifications/websocket-server';
 import { logger } from '@lib/logger';

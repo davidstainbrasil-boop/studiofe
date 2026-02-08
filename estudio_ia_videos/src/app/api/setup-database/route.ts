@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
         name: 'Projeto de Teste',
         description: 'Projeto criado durante setup do banco',
         status: 'draft',
-        userId: 'test-user-setup',
+        user_id: 'test-user-setup',
         settings: {
           width: 1920,
           height: 1080,

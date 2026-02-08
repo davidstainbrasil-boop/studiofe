@@ -69,6 +69,8 @@
     "playwright.prod.config.ts",
     "**/_archived",
     "**/_archived/**",
+    "_app_legacy",
+    "_app_legacy/**",
     "src/app/_archived",
     "src/app/scripts/archive",
     "src/app/tests_disabled",

@@ -15,7 +15,15 @@ const QUEUE_NAME = process.env.RENDER_QUEUE_NAME || 'render-jobs';
 // Estado de conexão Redis
 let isRedisConnected = false;
 
-// Criar conexão Redis
+// Configuração de conexão BullMQ v5
+const connection: ConnectionOptions = {
+  host: process.env.REDIS_HOST || 'localhost',
+  port: parseInt(process.env.REDIS_PORT || '6379'),
+  password: process.env.REDIS_PASSWORD || undefined,
+  maxRetriesPerRequest: 3,
+};
+
+// Cliente Redis para operações diretas (se necessário)
 const redisClient = new Redis(REDIS_URL, {
   maxRetriesPerRequest: null,
   enableReadyCheck: false,
@@ -24,9 +32,6 @@ const redisClient = new Redis(REDIS_URL, {
     return delay;
   }
 });
-
-// Cast para ConnectionOptions (ioredis versões são compatíveis em runtime)
-const connection = redisClient as unknown as ConnectionOptions;
 
 // Log de conexão e tracking de estado
 redisClient.on('connect', () => {

@@ -42,7 +42,7 @@ export default function AdminUsersPage() {
                     setUsers(data.users);
                 }
             } catch (err) {
-                logger.error(err);
+                logger.error(String(err));
             } finally {
                 setLoading(false);
             }

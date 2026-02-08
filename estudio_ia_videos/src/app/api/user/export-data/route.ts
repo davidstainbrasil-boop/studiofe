@@ -65,7 +65,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // Fetch user profile
     const { data: profile } = await supabase
       .from('users')
-      .select('id, email, name, role, createdAt, updatedAt')
+      .select('id, email, name, role, created_at, updated_at')
       .eq('id', user.id)
       .single();
 
@@ -82,9 +82,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (options.includeProjects) {
       const { data: projectData } = await supabase
         .from('projects')
-        .select('id, name, description, status, createdAt, updatedAt')
-        .eq("userId", user.id)
-        .order("createdAt", { ascending: false });
+        .select('id, name, description, status, created_at, updated_at')
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
       projects = (projectData as ProjectRecord[]) || [];
     }
 
@@ -94,9 +94,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       // Avoid deep instantiation by separating the chain
       const rendersTable = supabase.from('render_jobs');
       const { data: renderData } = await rendersTable
-        .select('id, status, progress, createdAt, completedAt, outputUrl')
-        .eq("userId", user.id)
-        .order("createdAt", { ascending: false }) as unknown as { data: Record<string, unknown>[] | null };
+        .select('id, status, progress, created_at, completed_at, output_url')
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false }) as unknown as { data: Record<string, unknown>[] | null };
       renders = renderData || [];
     }
 
@@ -106,9 +106,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       const projectIds: string[] = projects.map(p => p.id);
       const { data: slideData } = await supabase
         .from('slides')
-        .select('id, projectId, order_index, title, content, createdAt')
-        .in("projectId", projectIds)
-        .order("orderIndex", { ascending: true });
+        .select('id, project_id, order_index, title, content, created_at')
+        .in("project_id", projectIds)
+        .order("order_index", { ascending: true });
       slides = (slideData as Record<string, unknown>[]) || [];
     }
 

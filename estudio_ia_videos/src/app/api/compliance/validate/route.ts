@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     // Verificar se o projeto existe e pertence ao usuário
     const { data: project, error: projectError } = await supabase
       .from('projects')
-      .select("userId")
+      .select("user_id")
       .eq('id', projectId)
       .single();
 
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Projeto não encontrado' }, { status: 404 });
     }
 
-    if (project.userId !== user.id) {
+    if (project.user_id !== user.id) {
       return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
     }
 
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     const { error: insertError } = await supabase
       .from('nr_compliance_records' as never)
       .insert({
-        projectId: projectId,
+        project_id: projectId,
         nr: nrType,
         nrName: nrType,
         status: result.passed ? 'compliant' : 'non_compliant',
@@ -157,7 +157,7 @@ export async function GET(request: NextRequest) {
     // Verificar permissão
     const { data: project, error: projectError } = await supabase
       .from('projects')
-      .select("userId")
+      .select("user_id")
       .eq('id', projectId)
       .single();
 
@@ -165,7 +165,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Projeto não encontrado' }, { status: 404 });
     }
 
-    if (project.userId !== user.id) {
+    if (project.user_id !== user.id) {
       return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
     }
 

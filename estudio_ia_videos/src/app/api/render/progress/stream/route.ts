@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
     .eq('id', jobId)
     .single();
 
-  if (jobError || !job) {
+  if (jobError || !job || !job.project_id) {
     return new Response(JSON.stringify({ error: 'Job não encontrado' }), {
       status: 404,
       headers: { 'Content-Type': 'application/json' }
@@ -68,11 +68,11 @@ export async function GET(request: NextRequest) {
   // Verificar permissão (dono do job ou admin)
   const { data: project } = await supabase
     .from('projects')
-    .select('userId')
-    .eq('id', job.projectId)
+    .select('user_id')
+    .eq('id', job.project_id)
     .single();
 
-  if (project?.userId !== user.id) {
+  if (project?.user_id !== user.id) {
     // Verificar se é admin - simplificado para evitar erro de schema
     // Na produção, usar tabela de roles adequada
     const isAdmin = false; // TODO: implementar verificação de admin
@@ -146,7 +146,7 @@ export async function GET(request: NextRequest) {
           sendUpdate(update);
 
           // Se completou ou falhou, fechar stream
-          if (['completed', 'failed', 'cancelled'].includes(currentJob.status)) {
+          if (currentJob.status && ['completed', 'failed', 'cancelled'].includes(currentJob.status)) {
             clearInterval(intervalId);
             setTimeout(() => {
               controller.close();

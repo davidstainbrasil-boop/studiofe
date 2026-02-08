@@ -49,13 +49,13 @@ class HealthCheckService {
     }
   }
 
-  /**
-   * Check Redis connectivity
-   */
+/**
+ * Check Redis connectivity
+ */
   async checkRedis(): Promise<ServiceHealth> {
     const start = Date.now();
     try {
-      const Redis = (await import('ioredis')).default;
+      const { default: Redis } = await import('ioredis');
       const redis = new Redis(process.env.REDIS_URL || 'redis://127.0.0.1:6379', {
         connectTimeout: 5000,
         lazyConnect: true

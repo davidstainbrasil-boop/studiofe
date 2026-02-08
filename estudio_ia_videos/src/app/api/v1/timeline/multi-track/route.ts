@@ -64,13 +64,13 @@ interface ProjectCollaborator {
 
 interface TimelineRecord {
   id: string;
-  projectId: string;
+  project_id: string;
   version: number;
   tracks: unknown; // JSON
   settings: unknown; // JSON
   total_duration: number;
-  createdAt: string;
-  updatedAt: string | null;
+  created_at: string;
+  updated_at: string | null;
 }
 
 export async function POST(request: NextRequest) {
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
     let hasPermission = projectData.user_id === user.id;
     if (!hasPermission) {
         const { data: collaborator } = await supabase
-            .from('collaborators')
+            .from('project_collaborators')
             .select('role')
             .eq("project_id", projectId)
             .eq("user_id", user.id)
@@ -198,7 +198,7 @@ export async function POST(request: NextRequest) {
         const { data, error } = await supabase
             .from('timelines')
             .insert({
-                projectId: projectId,
+                project_id: projectId,
                 tracks: tracks,
                 settings: toJsonValue(settings),
                 total_duration: Math.ceil(totalDuration || 0),
@@ -242,12 +242,12 @@ export async function POST(request: NextRequest) {
       success: true,
       data: {
         id: timeline.id,
-        projectId: timeline.projectId,
+        projectId: timeline.project_id,
         version: timeline.version,
         totalDuration: timeline.total_duration,
         tracks: timeline.tracks,
         settings: timeline.settings,
-        updatedAt: timeline.updatedAt,
+        updatedAt: timeline.updated_at,
         analytics,
       },
       message: 'Timeline salva com sucesso',
@@ -327,14 +327,14 @@ export async function GET(request: NextRequest) {
     }
 
     // Type assertion for the joined query result
-    const timeline = timelineData as unknown as TimelineRecord & { projects: { id: string; name: string; status: string; userId: string } };
+    const timeline = timelineData as unknown as TimelineRecord & { projects: { id: string; name: string; status: string; user_id: string } };
     const project = timeline.projects;
 
     // Check access
-    let hasPermission = project.userId === user.id;
+    let hasPermission = project.user_id === user.id;
     if (!hasPermission) {
         const { data: collaborator } = await supabase
-            .from('collaborators')
+            .from('project_collaborators')
             .select('role')
             .eq("project_id", projectId)
             .eq("user_id", user.id)
@@ -358,14 +358,14 @@ export async function GET(request: NextRequest) {
       success: true,
       data: {
         id: timeline.id,
-        projectId: timeline.projectId,
+        projectId: timeline.project_id,
         projectName: project.name,
         tracks: timeline.tracks,
         settings: timeline.settings,
         totalDuration: timeline.total_duration,
         version: timeline.version,
-        createdAt: timeline.createdAt,
-        updatedAt: timeline.updatedAt,
+        createdAt: timeline.created_at,
+        updatedAt: timeline.updated_at,
       },
       message: 'Timeline carregada com sucesso',
     });
@@ -433,7 +433,7 @@ export async function DELETE(request: NextRequest) {
     let hasPermission = projectData.user_id === user.id;
     if (!hasPermission) {
         const { data: collaborator } = await supabase
-            .from('collaborators')
+            .from('project_collaborators')
             .select('role')
             .eq("project_id", projectId)
             .eq("user_id", user.id)
@@ -526,7 +526,7 @@ export async function PATCH(request: NextRequest) {
     let hasPermission = projectData.user_id === user.id;
     if (!hasPermission) {
         const { data: collaborator } = await supabase
-            .from('collaborators')
+            .from('project_collaborators')
             .select('role')
             .eq("project_id", projectId)
             .eq("user_id", user.id)
@@ -616,12 +616,12 @@ export async function PATCH(request: NextRequest) {
       success: true,
       data: {
         id: timelineRecord.id,
-        projectId: timelineRecord.projectId,
+        projectId: timelineRecord.project_id,
         version: timelineRecord.version,
         totalDuration: timelineRecord.total_duration,
         tracks: timelineRecord.tracks,
         settings: timelineRecord.settings,
-        updatedAt: timelineRecord.updatedAt,
+        updatedAt: timelineRecord.updated_at,
         analytics,
       },
       message: 'Timeline atualizada parcialmente com sucesso',

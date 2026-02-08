@@ -9,11 +9,11 @@ export async function listProjectsByOwner(ownerId: string): Promise<Project[]> {
   const { data, error } = await supabase
     .from('projects')
     .select('*')
-    .eq("userId", ownerId)
-    .order("createdAt", { ascending: false })
+    .eq("user_id", ownerId)
+    .order("created_at", { ascending: false })
 
   if (error) {
-    logger.error('Supabase projects error:', error.message instanceof Error ? error.message : new Error(String(error.message)))
+    logger.error('Supabase projects error:', new Error(String(error.message)))
     throw new Error(`Failed to list projects: ${error.message}`)
   }
 
@@ -32,7 +32,7 @@ export async function getProjectById(projectId: string): Promise<Project | null>
     if (error.code === 'PGRST116') {
       return null
     }
-    logger.error('Supabase project error:', error.message instanceof Error ? error.message : new Error(String(error.message)))
+    logger.error('Supabase project error:', new Error(String(error.message)))
     throw new Error(`Failed to get project: ${error.message}`)
   }
 
@@ -42,7 +42,7 @@ export async function getProjectById(projectId: string): Promise<Project | null>
 export async function createProject(input: CreateProjectInput): Promise<Project> {
   const supabase = getServiceRoleClient() as SupabaseClient<Database>
   const payload = {
-    userId: input.ownerId,
+    user_id: input.ownerId,
     name: input.name,
     description: input.description ?? null,
     status: 'draft' as const,

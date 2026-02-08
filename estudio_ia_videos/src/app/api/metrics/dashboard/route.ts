@@ -119,7 +119,7 @@ export async function GET(req: NextRequest) {
         const { data: projects, error: projectsError } = await supabase
           .from('projects')
           .select('id, name, status, createdAt, updatedAt, metadata')
-          .eq('userId', userId)
+          .eq('user_id', userId)
 
         if (projectsError) {
           logger.warn('Failed to fetch projects', { error: projectsError.message, component: 'API: metrics/dashboard' })
@@ -138,7 +138,7 @@ export async function GET(req: NextRequest) {
         const { data: renderJobs, error: jobsError } = await supabase
           .from('render_jobs')
           .select('id, status, createdAt, completedAt, projectId')
-          .eq('userId', userId)
+          .eq('user_id', userId)
           .gte('createdAt', startDate.toISOString())
 
         if (jobsError) {

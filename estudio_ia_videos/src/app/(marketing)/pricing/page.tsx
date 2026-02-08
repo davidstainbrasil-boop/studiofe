@@ -120,7 +120,7 @@ function PricingContent() {
     checkUser();
 
     // Check for success/error in URL params
-    const upgradeStatus = searchParams.get('upgrade');
+    const upgradeStatus = searchParams?.get('upgrade');
     if (upgradeStatus === 'success') {
       // Show success message
       setError(null);

@@ -95,10 +95,22 @@ describe('GET /api/analytics/render-stats', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
+    
+    // Re-configurar o mock do NextAuth após limpar
+    jest.mock('next-auth', () => ({
+      getServerSession: jest.fn().mockResolvedValue(null),
+      getToken: jest.fn().mockResolvedValue({ sub: 'test-user-id' }),
+      encode: jest.fn(),
+      decode: jest.fn(),
+    }))
   })
 
   it('retorna 401 quando não autenticado', async () => {
-    getServerSession.mockResolvedValueOnce(null)
+    // Mock específico para este teste: garantir que NextAuth retorna null
+    const { getServerSession } = require('next-auth');
+    
+    getServerSession.mockResolvedValueOnce(null);
+    
     const resp = await routeGET(makeReq('timeRange=1h'))
     expect(resp.status).toBe(401)
   })

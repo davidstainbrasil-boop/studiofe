@@ -138,7 +138,7 @@ export type SupabaseTable =
   | 'analytics_events'
   | 'roles'
   | 'permissions'
-  | 'avatars_3d'
+  | 'avatars'
   | 'templates'
   | 'timelines'
   | 'pptx_uploads'

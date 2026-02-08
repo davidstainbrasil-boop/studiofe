@@ -6,8 +6,7 @@
  */
 
 import JSZip from 'jszip';
-import { logger } from '@/lib/logger';
-import { Logger } from '@lib/logger';
+import { Logger } from '@/lib/logger';
 
 const logger = new Logger('scorm-export');
 

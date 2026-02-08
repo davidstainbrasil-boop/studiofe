@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
     const { data: project, error: projectError } = await supabaseAdmin
       .from('projects')
       .insert({
-        userId: user.id,
+        user_id: user.id,
         name: file.name.replace('.pptx', ''),
         status: 'processing', // Or 'draft'
         type: 'pptx',
@@ -158,7 +158,7 @@ export async function POST(request: NextRequest) {
             }
             
             return {
-                projectId: project.id,
+                project_id: project.id,
                 order_index: index,
                 title: `Slide ${slide.slideNumber}`,
                 content: { text: textContent || `Slide ${slide.slideNumber}` }, 

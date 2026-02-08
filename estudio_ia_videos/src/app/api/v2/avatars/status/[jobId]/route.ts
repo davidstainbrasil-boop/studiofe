@@ -42,7 +42,7 @@ export async function GET(
       .eq('id', jobId)
       .single()
 
-    if (jobError || !job) {
+    if (jobError || !job || !job.project_id) {
       return NextResponse.json(
         { error: 'Job not found', jobId },
         { status: 404 }
@@ -53,7 +53,7 @@ export async function GET(
     const { data: projectOwner } = await supabase
       .from('projects')
       .select('user_id')
-      .eq('id', job.projectId)
+      .eq('id', job.project_id)
       .single() as { data: { user_id: string } | null; error: unknown }
 
     if (!projectOwner || projectOwner.user_id !== user.id) {
@@ -86,7 +86,7 @@ export async function GET(
     }
 
     // 5. Calculate duration
-    const startTime = new Date(job.createdAt).getTime()
+    const startTime = new Date(job.created_at).getTime()
     const endTime = job.completed_at ? new Date(job.completed_at).getTime() : Date.now()
     const duration = endTime - startTime
 
@@ -101,7 +101,7 @@ export async function GET(
         jobId: job.id,
         status: detailedStatus.status,
         progress: detailedStatus.progress || job.progress || 0,
-        createdAt: job.createdAt,
+        createdAt: job.created_at,
         completedAt: job.completed_at,
         duration,
         output: {
@@ -164,7 +164,7 @@ export async function DELETE(
       .eq('id', jobId)
       .single()
 
-    if (jobError || !job) {
+    if (jobError || !job || !job.project_id) {
       return NextResponse.json(
         { error: 'Job not found', jobId },
         { status: 404 }
@@ -175,7 +175,7 @@ export async function DELETE(
     const { data: projectData } = await supabase
       .from('projects')
       .select('user_id')
-      .eq('id', job.projectId)
+      .eq('id', job.project_id)
       .single() as { data: { user_id: string } | null; error: unknown }
 
     if (!projectData || projectData.user_id !== user.id) {

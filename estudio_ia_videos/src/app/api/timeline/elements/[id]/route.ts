@@ -262,7 +262,7 @@ export async function PUT(
       await supabase
         .from('project_history')
         .insert({
-          projectId: projectId,
+          project_id: projectId,
           user_id: user.id,
           action: 'update',
           entity_type: 'timeline_element',
@@ -286,7 +286,7 @@ export async function PUT(
               transitions: element.transitions
             }
           } as Record<string, unknown>,
-          createdAt: new Date().toISOString()
+          created_at: new Date().toISOString()
         })
     }
 
@@ -387,7 +387,7 @@ export async function DELETE(
       await supabase
         .from('project_history')
         .insert({
-          projectId: existingElement.project_id,
+          project_id: existingElement.project_id,
           user_id: user.id,
           action: 'delete',
           entity_type: 'timeline_element',

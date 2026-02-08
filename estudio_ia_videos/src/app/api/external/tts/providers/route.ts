@@ -147,7 +147,7 @@ export async function GET(request: NextRequest) {
         enabled: provider.enabled,
         config: provider.config,
         pricing: provider.pricing,
-        createdAt: new Date().toISOString(),
+        created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       }))
 
@@ -247,7 +247,7 @@ export async function POST(request: NextRequest) {
         enabled: providerData.enabled,
         config: providerData.config || {},
         pricing: providerData.pricing || {},
-        createdAt: new Date().toISOString(),
+        created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })
       .select()
@@ -260,8 +260,8 @@ export async function POST(request: NextRequest) {
       await supabaseAdmin
         .from('analytics_events')
         .insert({
-          userId: session.user.id,
-          eventType: 'tts_provider_created',
+          user_id: session.user.id,
+          event_type: 'tts_provider_created',
           event_data: {
             category: 'external_apis',
             action: 'tts_provider_created',

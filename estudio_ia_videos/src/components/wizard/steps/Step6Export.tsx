@@ -102,7 +102,7 @@ export function Step6Export({ videoData }: { videoData: any }) {
                     throw new Error(data.error);
                 }
             } catch (e) {
-                logger.error(e);
+                logger.error(String(e));
                 setError(e instanceof Error ? e.message : "Erro desconhecido");
                 setStatus('failed');
                 hasStartedRef.current = false; // Allow retry if needed?

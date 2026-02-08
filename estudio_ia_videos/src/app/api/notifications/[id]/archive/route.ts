@@ -29,10 +29,10 @@ export async function PATCH(
       .from('notifications')
       .update({
         status: 'archived',
-        updatedAt: new Date().toISOString()
+        updated_at: new Date().toISOString()
       })
       .eq('id', notificationId)
-      .eq("userId", session.user.id)
+      .eq("user_id", session.user.id)
       .select()
       .single()
 
@@ -51,13 +51,13 @@ export async function PATCH(
       await supabaseAdmin
         .from('analytics_events')
         .insert({
-          userId: session.user.id,
-          eventType: 'notification_archived',
-          eventData: {
+          user_id: session.user.id,
+          event_type: 'notification_archived',
+          event_data: {
             notification_id: notificationId,
             timestamp: new Date().toISOString()
           },
-          createdAt: new Date().toISOString()
+          created_at: new Date().toISOString()
         })
     } catch (analyticsError) {
       logger.warn('Failed to log notification archive action', { component: 'API: notifications/[id]/archive' })

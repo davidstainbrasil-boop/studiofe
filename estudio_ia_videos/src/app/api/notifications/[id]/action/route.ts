@@ -39,7 +39,7 @@ export async function POST(
       .from('notifications')
       .select('*')
       .eq('id', notificationId)
-      .eq("userId", session.user.id)
+      .eq("user_id", session.user.id)
       .single()
 
     if (fetchError) {
@@ -163,10 +163,10 @@ export async function POST(
               .update({
                 status: 'pending',
                 errorMessage: null,
-                updatedAt: new Date().toISOString()
+                updated_at: new Date().toISOString()
               })
               .eq('id', (notification.metadata as unknown as NotificationMetadata).render_id!)
-              .eq("userId", session.user.id)
+              .eq("user_id", session.user.id)
 
             if (retryError) throw retryError
 
@@ -194,7 +194,7 @@ export async function POST(
       .from('notifications')
       .update({
         status: 'read',
-        updatedAt: new Date().toISOString()
+        updated_at: new Date().toISOString()
       })
       .eq('id', notificationId)
 
@@ -207,15 +207,15 @@ export async function POST(
       await supabaseAdmin
         .from('analytics_events')
         .insert({
-          userId: session.user.id,
-          eventType: `notification_action_${action}`,
+          user_id: session.user.id,
+          event_type: `notification_action_${action}`,
           event_data: {
             notification_id: notificationId,
             action_type: action,
             success: actionResult.success,
             timestamp: new Date().toISOString()
           } as Record<string, unknown>,
-          createdAt: new Date().toISOString()
+          created_at: new Date().toISOString()
         })
     } catch (analyticsError) {
       logger.warn('Failed to log notification action', { component: 'API: notifications/[id]/action' })

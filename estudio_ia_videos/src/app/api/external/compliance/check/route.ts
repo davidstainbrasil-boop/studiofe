@@ -424,9 +424,9 @@ export async function POST(request: NextRequest) {
       await supabaseAdmin
         .from('analytics_events')
         .insert({
-          userId: session.user.id,
-          eventType: 'external_api_compliance_check',
-          eventData: {
+          user_id: session.user.id,
+          event_type: 'external_api_compliance_check',
+          event_data: {
             category: 'external_apis',
             action: 'compliance_checked',
             content_type: params.content_type,

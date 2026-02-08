@@ -23,25 +23,25 @@ export async function PATCH(
     // Verify ownership via project
     const { data: job, error: jobError } = await supabase
       .from('render_jobs')
-      .select("projectId")
+      .select("project_id")
       .eq('id', jobId)
       .single()
 
-    if (jobError || !job) {
+    if (jobError || !job || !job.project_id) {
       return NextResponse.json({ error: 'Job not found', code: 'JOB_NOT_FOUND' }, { status: 404 })
     }
 
     const { data: project, error: projectError } = await supabase
       .from('projects')
-      .select("userId")
-      .eq('id', job.projectId)
+      .select("user_id")
+      .eq('id', job.project_id)
       .single()
 
     if (projectError || !project) {
       return NextResponse.json({ error: 'Project not found', code: 'PROJECT_NOT_FOUND' }, { status: 404 })
     }
 
-    if (project.userId !== user.id) {
+    if (project.user_id !== user.id) {
       return NextResponse.json({ error: 'Forbidden', code: 'FORBIDDEN' }, { status: 403 })
     }
 

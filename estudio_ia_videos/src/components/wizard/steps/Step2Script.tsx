@@ -114,7 +114,7 @@ export function Step2Script({ onNext, initialValue }: Step2ScriptProps) {
                                                     setScript("Erro ao gerar roteiro. Tente novamente.");
                                                 }
                                             } catch (e) {
-                                                logger.error(e);
+                                                logger.error(String(e));
                                                 setScript("Erro de conexão. Verifique sua internet.");
                                             } finally {
                                                 setIsGenerating(false);

@@ -365,8 +365,8 @@ export async function POST(request: NextRequest) {
       await supabaseAdmin
         .from('analytics_events')
         .insert({
-          userId: session.user.id,
-          eventType: 'tts_generated',
+          user_id: session.user.id,
+          event_type: 'tts_generated',
           event_data: {
             category: 'external_apis',
             action: 'tts_generated',

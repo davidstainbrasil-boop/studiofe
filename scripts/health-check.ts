@@ -80,7 +80,7 @@ async function checkRedis(): Promise<HealthCheckResult> {
   
   // Test Redis connectivity directly with ioredis
   try {
-    const Redis = (await import('ioredis')).default
+    const { default: Redis } = await import('ioredis')
     const client = new Redis({
       host: process.env.REDIS_HOST || '127.0.0.1',
       port: parseInt(process.env.REDIS_PORT || '6379'),

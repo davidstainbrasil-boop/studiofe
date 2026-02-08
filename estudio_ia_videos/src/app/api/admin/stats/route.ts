@@ -68,13 +68,13 @@ export async function GET(_request: NextRequest) {
         
          const { data: events, error } = await supabaseAdmin
             .from('analytics_events')
-            .select('userId') // Correct casing from Schema
+            .select('user_id') // Correct casing from Schema
             .gte('created_at', oneHourAgo);
             
         if (error) {
             logger.warn('Failed to fetch active sessions', { error });
         } else {
-             const uniqueUsers = new Set(events?.map(e => e.userId).filter(Boolean));
+             const uniqueUsers = new Set(events?.map(e => e.user_id).filter(Boolean));
              activeSessions = uniqueUsers.size;
         }
     } catch (e) {

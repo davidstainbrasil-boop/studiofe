@@ -26,7 +26,15 @@ jest.mock('next/server', () => {
       async json() {
         return typeof this.body === 'string' ? JSON.parse(this.body) : this.body
       }
-    }
+    },
+    // Mock cookies API for Next.js
+    cookies: jest.fn().mockImplementation(() => ({
+      get: jest.fn().mockReturnValue({ value: 'test-cookie-value' }),
+      set: jest.fn(),
+      delete: jest.fn(),
+      has: jest.fn().mockReturnValue(false),
+      clear: jest.fn(),
+    }))
   }
 })
 
@@ -46,8 +54,105 @@ jest.mock('next-auth/jwt', () => ({
 
 require('@testing-library/jest-dom')
 
+// Mock Next.js cookies API that might be called directly
+jest.mock('next/headers', () => ({
+  cookies: jest.fn().mockImplementation(() => ({
+    get: jest.fn().mockImplementation((name) => ({ 
+      name, 
+      value: name.includes('sb-access-token') ? 'mock-access-token' : 'mock-cookie-value' 
+    })),
+    set: jest.fn(),
+    delete: jest.fn(),
+    has: jest.fn().mockReturnValue(false),
+    clear: jest.fn(),
+  })),
+}))
+
+// Mock Supabase client with complete auth methods
+jest.mock('@/lib/supabase/server', () => ({
+  createClient: jest.fn().mockImplementation(() => ({
+    auth: {
+      getUser: jest.fn().mockResolvedValue({
+        data: { 
+          user: { 
+            id: 'test-user-id', 
+            email: 'test@example.com',
+            user_metadata: { full_name: 'Test User', avatar_url: null }
+          } 
+        },
+        error: null
+      }),
+      onAuthStateChange: jest.fn().mockReturnValue({ data: { subscription: { unsubscribe: jest.fn() } } }),
+      signInWithPassword: jest.fn(),
+      signOut: jest.fn(),
+      refreshSession: jest.fn(),
+      updateUser: jest.fn(),
+    },
+    from: jest.fn().mockReturnValue({
+      select: jest.fn().mockResolvedValue({ data: [], error: null }),
+      insert: jest.fn().mockResolvedValue({ data: {}, error: null }),
+      update: jest.fn().mockResolvedValue({ data: {}, error: null }),
+      delete: jest.fn().mockResolvedValue({ data: {}, error: null }),
+      eq: jest.fn().mockReturnThis(),
+      order: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis(),
+      single: jest.fn().mockResolvedValue({ data: {}, error: null }),
+    }),
+    storage: {
+      from: jest.fn().mockReturnValue({
+        upload: jest.fn().mockResolvedValue({ data: { path: 'test-path' }, error: null }),
+        download: jest.fn().mockResolvedValue({ data: new Blob(), error: null }),
+        getPublicUrl: jest.fn().mockReturnValue({ data: { publicUrl: 'https://test-url.com' } }),
+        remove: jest.fn().mockResolvedValue({ data: {}, error: null }),
+      })
+    }
+  })),
+  supabaseAdmin: jest.fn().mockReturnValue({
+    from: jest.fn().mockReturnValue({
+      select: jest.fn().mockResolvedValue({ data: [], error: null }),
+      insert: jest.fn().mockResolvedValue({ data: {}, error: null }),
+      update: jest.fn().mockResolvedValue({ data: {}, error: null }),
+      delete: jest.fn().mockResolvedValue({ data: {}, error: null }),
+      eq: jest.fn().mockReturnThis(),
+      order: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis(),
+      single: jest.fn().mockResolvedValue({ data: {}, error: null }),
+    }),
+  }),
+  getSupabaseForRequest: jest.fn().mockReturnValue({
+    auth: {
+      getUser: jest.fn().mockResolvedValue({
+        data: { 
+          user: { 
+            id: 'test-user-id', 
+            email: 'test@example.com',
+            user_metadata: { full_name: 'Test User', avatar_url: null }
+          } 
+        },
+        error: null
+      }),
+      onAuthStateChange: jest.fn().mockReturnValue({ data: { subscription: { unsubscribe: jest.fn() } } }),
+    },
+    from: jest.fn().mockReturnValue({
+      select: jest.fn().mockResolvedValue({ data: [], error: null }),
+      insert: jest.fn().mockResolvedValue({ data: {}, error: null }),
+      update: jest.fn().mockResolvedValue({ data: {}, error: null }),
+      delete: jest.fn().mockResolvedValue({ data: {}, error: null }),
+      eq: jest.fn().mockReturnThis(),
+      order: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis(),
+      single: jest.fn().mockResolvedValue({ data: {}, error: null }),
+    }),
+  }),
+  fromUntypedTable: jest.fn().mockReturnValue({
+    select: jest.fn().mockResolvedValue({ data: [], error: null }),
+  }),
+}))
+
 // Mock environment variables
 process.env.NODE_ENV = 'test'
+process.env.E2E_TEST = 'true'
+process.env.E2E_TEST_TOKEN = 'test-token'
 process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test_db'
 process.env.AWS_ACCESS_KEY_ID = 'test-access-key'
 process.env.AWS_SECRET_ACCESS_KEY = 'test-secret-key'
@@ -60,15 +165,16 @@ process.env.AUDIO2FACE_API_URL = 'http://localhost:8011' // Keep localhost for t
 process.env.REDIS_URL = 'redis://localhost:6379' // Keep localhost for tests
 
 
-// Mock console methods to reduce noise in tests
-// global.console = {
-//   ...console,
-//   log: jest.fn(),
-//   debug: jest.fn(),
-//   info: jest.fn(),
-//   warn: jest.fn(),
-//   error: jest.fn(),
-// }
+// Mock console methods to reduce noise in tests (keep errors for debugging)
+global.console = {
+  ...console,
+  log: jest.fn(),
+  debug: jest.fn(),
+  info: jest.fn(),
+  warn: jest.fn(),
+  // Keep error for debugging real issues
+  error: console.error,
+}
 
 
 // Mock File and Blob for browser APIs
@@ -108,6 +214,29 @@ if (typeof Blob !== 'undefined') {
     }
   }
 }
+
+// Mock Redis (ioredis) to prevent connection issues in tests
+jest.mock('ioredis', () => {
+  const mockRedis = {
+    get: jest.fn().mockResolvedValue(null),
+    set: jest.fn().mockResolvedValue('OK'),
+    setex: jest.fn().mockResolvedValue('OK'),
+    del: jest.fn().mockResolvedValue(1),
+    exists: jest.fn().mockResolvedValue(0),
+    expire: jest.fn().mockResolvedValue(1),
+    keys: jest.fn().mockResolvedValue([]),
+    flushall: jest.fn().mockResolvedValue('OK'),
+    on: jest.fn(),
+    disconnect: jest.fn(),
+    quit: jest.fn(),
+    ping: jest.fn().mockResolvedValue('PONG'),
+    connect: jest.fn().mockResolvedValue('OK'),
+    eval: jest.fn().mockResolvedValue(1),
+    status: 'ready',
+  };
+  
+  return jest.fn().mockImplementation(() => mockRedis);
+})
 
 // Mock fetch
 global.fetch = jest.fn((url) => {

@@ -39,7 +39,7 @@ export default function AdminActivityPage() {
                     setLogs(data.logs);
                 }
             } catch (err) {
-                logger.error(err);
+                logger.error(String(err));
             } finally {
                 setLoading(false);
             }

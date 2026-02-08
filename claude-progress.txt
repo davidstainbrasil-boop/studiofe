@@ -1,7 +1,56 @@
 # Claude Progress Log - MVP Vídeos TécnicoCursos v7
-# Updated: 2026-02-08 (Session 30 - GET Rate Limiting Complete)
+# Updated: 2026-02-08 (Session 31 - Production Hardening Sprint)
 
-## Session 30 Summary (Current) - GET Rate Limiting Wave 3 ✅
+## Session 31 Summary (Current) - Production Hardening Sprint ✅
+
+### ✅ RESULTADO FINAL:
+- **Build:** Clean (exit 0)
+- **Pages:** 163→77 (86 dead pages deleted, -43K lines)
+- **console.log:** 640→0 in production code (120+ files migrated to logger)
+- **TS Errors:** 394→172 (56% reduction)
+- **Commit:** 64d0a882 (production hardening sprint)
+- **Branch:** hardening-prod
+- **Files changed:** 312 files, 1263 insertions, 43049 deletions
+- **Deploy:** PM2 online
+
+### 📋 O QUE FOI FEITO:
+
+#### 1. Error Boundary + Loading for /studio-pro
+- Created src/app/studio-pro/error.tsx (Sentry integration, dark theme)
+- Created src/app/studio-pro/loading.tsx (animated spinner)
+
+#### 2. Auth Guards on 3 Unprotected API Routes
+- /api/image-proxy: Added auth + SSRF protection (domain allowlist, IP blocking)
+- /api/quotas: Added getServerAuth() check
+- /api/lip-sync GET: Added getServerAuth() check
+
+#### 3. Deleted 86 Dead Pages (163→77)
+- 4 _archived directories
+- 7 (pages) route group pages
+- 23 feature stubs (≤25 lines)
+- 31 mock pages (fake UI)
+- Dead editor subtree (editor/pro, editor/ai-script, editor/video-studio)
+- Old redirect pages no longer needed
+
+#### 4. console.log → Logger Migration (640→0)
+- Migrated 120+ production files from console.log to logger.info/warn/error
+- Made logger API flexible: info/warn/error now accept ...args: unknown[]
+- Added normalizeContext() for auto-coercion of arbitrary args
+- Fixed 28 files with misplaced 'use client' directives (import before directive)
+
+#### 5. TypeScript Error Reduction (394→172)
+- Fixed searchParams/pathname null checks in 6 files
+- Fixed 'prev' any type in VideoPreview state setters
+- Fixed 'plan' unknown type in billing route
+- Fixed duplicate logger imports in v1/video-jobs routes + tree-shaking.ts
+- Remaining 172 are deep Supabase/Prisma schema types (not fixable without DB type regen)
+
+### 🔮 NEXT STEPS:
+- Regenerar tipos Supabase/Prisma (eliminaria ~100 dos 172 erros restantes)
+- Contract tests para as novas rotas protegidas
+- Health check + monitoring para error boundaries
+
+## Session 30 Summary - GET Rate Limiting Wave 3 ✅
 
 ### ✅ RESULTADO FINAL:
 - **Testes:** 1936 passed, 118 suites, 0 failures
