@@ -53,26 +53,26 @@ function normalizePathname(pathname: string): string {
 }
 
 function getLegacyStudioRedirect(pathname: string): string | null {
-  if (pathname === '/dashboard') return '/studio';
-  if (pathname === '/dashboard/projects') return '/studio/projects';
+  if (pathname === '/dashboard') return '/studio-pro';
+  if (pathname === '/dashboard/projects') return '/studio-pro';
   if (pathname.startsWith('/dashboard/projects/')) {
-    return pathname.replace('/dashboard/projects', '/studio/projects');
+    return '/studio-pro';
   }
-  if (pathname === '/dashboard/editor') return '/studio/editor';
+  if (pathname === '/dashboard/editor') return '/studio-pro';
   if (pathname.startsWith('/dashboard/editor/')) {
-    return pathname.replace('/dashboard/editor', '/studio/editor');
+    return '/studio-pro';
   }
-  if (pathname === '/dashboard/render') return '/studio/render';
+  if (pathname === '/dashboard/render') return '/studio-pro';
   if (pathname.startsWith('/dashboard/render/')) {
-    return pathname.replace('/dashboard/render', '/studio/render');
+    return '/studio-pro';
   }
   if (pathname === '/dashboard/timeline' || pathname.startsWith('/dashboard/timeline/')) {
-    return '/studio/editor';
+    return '/studio-pro';
   }
-  if (pathname === '/dashboard/upload') return '/studio/pptx';
-  if (pathname === '/render-dashboard') return '/studio/render';
+  if (pathname === '/dashboard/upload') return '/studio-pro';
+  if (pathname === '/render-dashboard') return '/studio-pro';
   if (pathname.startsWith('/editor/video-studio/')) {
-    return pathname.replace('/editor/video-studio', '/studio/editor');
+    return '/studio-pro';
   }
   return null;
 }
@@ -84,6 +84,7 @@ export async function middleware(request: NextRequest) {
   const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/register');
   const isProtectedRoute =
     pathname.startsWith('/dashboard') ||
+    pathname.startsWith('/studio-pro') ||
     pathname.startsWith('/studio') ||
     pathname.startsWith('/editor') ||
     pathname.startsWith('/projects') ||
@@ -246,7 +247,7 @@ export async function middleware(request: NextRequest) {
 
     // If user is logged in and tries to access auth routes, redirect to studio
     if (session && isAuthRoute) {
-      return NextResponse.redirect(new URL('/studio', request.url));
+      return NextResponse.redirect(new URL('/studio-pro', request.url));
     }
 
     // If user is NOT logged in and tries to access protected routes, redirect to login

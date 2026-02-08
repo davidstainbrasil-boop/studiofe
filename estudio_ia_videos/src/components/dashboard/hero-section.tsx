@@ -28,7 +28,7 @@ export function HeroSection({ userName = 'Usuário' }: HeroSectionProps) {
           <Button 
             size="lg" 
             className="gap-2"
-            onClick={() => router.push('/editor-canvas')}
+            onClick={() => router.push('/studio-pro')}
           >
             <PlusCircle className="h-5 w-5" />
             Novo Vídeo

@@ -14,7 +14,7 @@ export default function TemplatesPage() {
     localStorage.setItem('selectedTemplate', JSON.stringify(template));
     
     // Navigate to editor with template
-    router.push(`/editor?template=${template.id}`);
+    router.push(`/studio-pro?template=${template.id}`);
     
     toast.success(`Template "${template.name}" selecionado!`);
   };

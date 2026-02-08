@@ -98,7 +98,7 @@ export const navigationUnified: NavItem[] = [
             id: 'canvas-editor-pro',
             title: 'Canvas Editor Pro',
             icon: Edit3,
-            href: '/canvas-editor-pro',
+            href: '/studio-pro',
             status: 'production',
             badge: 'V3'
           },
@@ -536,7 +536,7 @@ export const navigationUnified: NavItem[] = [
             id: 'editor-animaker-demo',
             title: 'Animaker Clone Demo',
             icon: Edit3,
-            href: '/editor-animaker',
+            href: '/studio-pro',
             status: 'lab',
             badge: 'Mockup'
           }

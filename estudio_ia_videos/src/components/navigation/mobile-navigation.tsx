@@ -73,7 +73,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: 'Criar',
     items: [
       { id: 'upload', label: 'Upload PPTX', href: '/upload', icon: Upload },
-      { id: 'editor', label: 'Editor', href: '/editor', icon: Palette },
+      { id: 'editor', label: 'Studio Pro', href: '/studio-pro', icon: Palette },
       { id: 'tts', label: 'Narração IA', href: '/tts', icon: Mic },
     ],
   },

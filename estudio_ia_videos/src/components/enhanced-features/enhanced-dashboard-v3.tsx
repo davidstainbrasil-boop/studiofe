@@ -417,13 +417,13 @@ export default function EnhancedDashboardV3() {
                   </Button>
                 </Link>
                 
-                <Link href="/canvas-editor-pro">
+                <Link href="/studio-pro">
                   <Button 
                     className="w-full h-20 flex flex-col space-y-1 bg-indigo-600 hover:bg-indigo-700"
                   >
                     <ImageIcon className="h-6 w-6" />
-                    <span className="text-sm font-medium">Canvas Editor</span>
-                    <span className="text-xs opacity-90">Pro V3</span>
+                    <span className="text-sm font-medium">Studio Pro</span>
+                    <span className="text-xs opacity-90">Editor Visual</span>
                   </Button>
                 </Link>
                 

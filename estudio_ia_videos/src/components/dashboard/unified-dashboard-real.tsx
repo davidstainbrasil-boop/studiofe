@@ -297,12 +297,12 @@ export default function UnifiedDashboardReal() {
 
   const handleViewProject = (projectId: string) => {
     toast.success(`Visualizando projeto: ${projectId}`)
-    router.push(`/projects/${projectId}`)
+    router.push(`/studio-pro?projectId=${projectId}`)
   }
 
   const handleEditProject = (projectId: string) => {
     toast.success(`Editando projeto: ${projectId}`)
-    router.push(`/projects/${projectId}/edit`)
+    router.push(`/studio-pro?projectId=${projectId}`)
   }
 
   const handleDownloadProject = (projectId: string) => {
@@ -557,10 +557,10 @@ export default function UnifiedDashboardReal() {
               <Sparkles className="h-5 w-5 text-yellow-500" />
               Editor Profissional
             </h3>
-            <Link href="/canvas-editor-pro">
+            <Link href="/studio-pro">
               <Button variant="default" className="h-auto p-4 flex flex-col gap-2 w-full hover:bg-primary/90 transition-colors">
                 <Edit className="h-8 w-8 text-white" />
-                <span className="font-semibold">Canvas Editor Pro</span>
+                <span className="font-semibold">Studio Pro</span>
                 <span className="text-xs text-primary-foreground/80 text-center">
                   Editor visual avançado com timeline e animações
                 </span>

@@ -148,7 +148,7 @@ export default function AIScriptGenerator({ projectId }: { projectId?: string })
 
       if (result.success && result.projectId) {
         toast.success('Projeto criado! Redirecionando...', { id: toastId });
-        router.push(`/editor/timeline/${result.projectId}`);
+        router.push(`/studio-pro?projectId=${result.projectId}`);
       } else {
         throw new Error(result.error || 'Erro ao criar projeto');
       }

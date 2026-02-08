@@ -52,7 +52,7 @@ export function RecentProjects({ loading, projects = [] }: RecentProjectsProps) 
               Comece criando seu primeiro vídeo de treinamento
             </p>
             <Button asChild>
-              <Link href="/editor-canvas" prefetch={false}>
+              <Link href="/studio-pro" prefetch={false}>
                 Criar Primeiro Vídeo
               </Link>
             </Button>
@@ -97,7 +97,7 @@ export function RecentProjects({ loading, projects = [] }: RecentProjectsProps) 
                     className="opacity-0 group-hover:opacity-100 transition-opacity"
                     asChild
                   >
-                    <Link href={`/editor-canvas?project=${project.id}`} prefetch={false}>
+                    <Link href={`/studio-pro?projectId=${project.id}`} prefetch={false}>
                       <Play className="h-5 w-5" />
                     </Link>
                   </Button>

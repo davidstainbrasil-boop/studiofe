@@ -34,7 +34,7 @@ const navItems = [
 
 const createItems = [
     { href: '/ppt-to-video', label: 'PPT → Vídeo', icon: Upload, badge: 'Novo' },
-    { href: '/editor-pro', label: 'Editor Pro', icon: Wand2 },
+    { href: '/studio-pro', label: 'Editor Pro', icon: Wand2 },
     { href: '/ai-avatars', label: 'AI Avatars', icon: Bot, badge: 'IA' },
     { href: '/voice-studio', label: 'Voice Studio', icon: Volume2, badge: '30+' },
 ];

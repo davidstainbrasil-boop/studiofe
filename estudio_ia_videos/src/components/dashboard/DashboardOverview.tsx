@@ -72,7 +72,7 @@ const quickActionsConfig = [
     title: 'Canvas Editor Professional',
     description: 'Editor profissional com Fabric.js + GSAP',
     icon: Star,
-    href: '/canvas-editor-professional',
+    href: '/studio-pro',
     color: 'primary',
     status: 'active',
     featured: true

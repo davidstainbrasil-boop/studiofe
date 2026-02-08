@@ -178,7 +178,7 @@ export default function PPTXUploadComponent({
         description: `${result.slidesCount || 0} slides extraídos`,
         action: (!disableAutoRedirect && result.projectId) ? {
           label: 'Abrir Editor',
-          onClick: () => router.push(`/studio/${result.projectId}`)
+          onClick: () => router.push(`/studio-pro?projectId=${result.projectId}`)
         } : undefined
       });
 
@@ -213,7 +213,7 @@ export default function PPTXUploadComponent({
 
   const goToEditor = () => {
     if (processingResult?.projectId) {
-      router.push(`/studio/${processingResult.projectId}`);
+      router.push(`/studio-pro?projectId=${processingResult.projectId}`);
     }
   };
 

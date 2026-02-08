@@ -46,7 +46,7 @@ export function AdminSidebar() {
             </nav>
 
             <div className="p-4 border-t">
-                <Link href="/studio">
+                <Link href="/studio-pro">
                     <Button variant="outline" className="w-full justify-start gap-3">
                         <Home className="w-4 h-4" />
                         Back to Studio

@@ -118,7 +118,7 @@ export const TemplateSystem: React.FC<TemplateSystemProps> = ({ className }) => 
         description: "Redirecting to editor...",
       });
 
-      router.push(`/editor/timeline/${project.id}`);
+      router.push(`/studio-pro?projectId=${project.id}`);
       
     } catch (error) {
       logger.error('Failed to create project', error instanceof Error ? error : new Error(String(error)), { component: 'TemplateSystem', action: 'handleUseTemplate' });

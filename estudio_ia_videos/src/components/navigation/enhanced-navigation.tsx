@@ -85,10 +85,10 @@ const navigationItems: NavigationItem[] = [
         badge: 'PREMIUM'
       },
       {
-        title: 'Canvas Editor Pro V3',
-        href: '/canvas-editor-pro',
+        title: 'Studio Pro',
+        href: '/studio-pro',
         icon: Palette,
-        badge: 'V3'
+        badge: 'PRO'
       },
       {
         title: 'Video Pipeline',

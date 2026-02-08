@@ -303,7 +303,7 @@ export default function DashboardUnifiedProduction() {
               <Button 
                 variant="outline" 
                 className="w-full border-indigo-500/20 hover:border-indigo-500/40"
-                onClick={() => router.push('/editor')}
+                onClick={() => router.push('/studio-pro')}
               >
                 Editor Padrão
               </Button>

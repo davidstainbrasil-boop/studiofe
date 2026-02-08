@@ -83,13 +83,13 @@ export function CreateProjectDialog({ trigger, open, onOpenChange }: CreateProje
             setName('')
 
             if (type === 'pptx') {
-                router.push(`/studio/${data.id}`)
+                router.push(`/studio-pro?projectId=${data.id}`)
             } else if (type === 'talking-photo') {
-                router.push(`/studio/${data.id}`)
+                router.push(`/studio-pro?projectId=${data.id}`)
             } else if (type === 'ai-generated') {
-                router.push(`/studio/${data.id}`)
+                router.push(`/studio-pro?projectId=${data.id}`)
             } else {
-                router.push(`/studio/${data.id}`)
+                router.push(`/studio-pro?projectId=${data.id}`)
             }
 
             router.refresh()

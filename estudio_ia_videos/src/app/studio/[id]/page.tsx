@@ -80,7 +80,7 @@ export default function StudioMasterPage() {
                     <h2 className="text-red-600 text-xl font-bold mb-2">Error Loading Project</h2>
                     <p className="text-slate-600 mb-4">{error}</p>
                     <button
-                        onClick={() => router.push('/editor')}
+                        onClick={() => router.push('/studio-pro')}
                         className="px-4 py-2 bg-slate-900 text-white rounded hover:bg-slate-800 transition-colors"
                     >
                         Return to Dashboard
@@ -117,7 +117,7 @@ export default function StudioMasterPage() {
                     <div className="text-center">
                         <h1 className="text-2xl font-bold mb-2">Unsupported Project Type</h1>
                         <p className="text-slate-500">Type: {projectData.type}</p>
-                        <button onClick={() => router.push('/editor')} className="mt-4 text-blue-600 hover:underline">Go Back</button>
+                        <button onClick={() => router.push('/studio-pro')} className="mt-4 text-blue-600 hover:underline">Go Back</button>
                     </div>
                 </div>
             );

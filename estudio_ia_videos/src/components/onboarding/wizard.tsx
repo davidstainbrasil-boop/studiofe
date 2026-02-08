@@ -136,9 +136,9 @@ export function OnboardingWizard({
       
       // Redirect to editor with the data
       if (data.creationMethod === 'template' && data.selectedTemplate) {
-        router.push(`/dashboard/editor?template=${data.selectedTemplate}&voice=${data.selectedVoice}`);
+        router.push(`/studio-pro?template=${data.selectedTemplate}&voice=${data.selectedVoice}`);
       } else {
-        router.push(`/dashboard/editor?voice=${data.selectedVoice}`);
+        router.push(`/studio-pro?voice=${data.selectedVoice}`);
       }
     } catch (error) {
       console.error('Erro ao completar onboarding:', error);

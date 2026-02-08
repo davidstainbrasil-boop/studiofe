@@ -222,7 +222,7 @@ export default function DashboardReal() {
 
   const handleViewProject = async (projectId: string) => {
     try {
-      router.push(`/studio/${projectId}`)
+      router.push(`/studio-pro?projectId=${projectId}`)
     } catch (error) {
       toast.error('Erro ao abrir projeto')
     }
@@ -520,8 +520,8 @@ export default function DashboardReal() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
-            {/* Unified Studio - NOVO HUB PROFISSIONAL */}
-            <Link href="/unified-studio" className="contents">
+            {/* Studio Pro - HUB PROFISSIONAL */}
+            <Link href="/studio-pro" className="contents">
               <Button
                 variant="outline"
                 className="p-6 h-auto flex-col gap-3 hover:bg-gradient-to-br hover:from-purple-50 hover:to-blue-50 hover:border-purple-300 border-none shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group bg-white"
@@ -588,8 +588,8 @@ export default function DashboardReal() {
               </Button>
             </Link>
 
-            {/* PPTX Editor Real */}
-            <Link href="/studio" className="contents">
+            {/* Editor Visual Studio Pro */}
+            <Link href="/studio-pro" className="contents">
               <Button
                 variant="outline"
                 className="p-6 h-auto flex-col gap-3 hover:bg-orange-50/50 border-none shadow-md hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group bg-white"

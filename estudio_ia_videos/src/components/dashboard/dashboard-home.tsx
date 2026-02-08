@@ -290,7 +290,7 @@ export default function DashboardHome() {
 
               <div className="flex items-center gap-4">
                 <Button
-                  onClick={() => router.push('/editor')}
+                  onClick={() => router.push('/studio-pro')}
                   className="bg-gradient-to-r from-blue-600 to-purple-600"
                 >
                   <Plus className="w-4 h-4 mr-2" />
@@ -607,7 +607,7 @@ export default function DashboardHome() {
               <Button
                 variant="outline"
                 className="p-6 h-auto flex-col gap-3 hover:bg-blue-50 hover:border-blue-200"
-                onClick={() => router.push('/editor')}
+                onClick={() => router.push('/studio-pro')}
               >
                 <Plus className="w-8 h-8 text-blue-600" />
                 <div className="text-center">
@@ -661,7 +661,7 @@ export default function DashboardHome() {
               <Button
                 variant="outline"
                 className="p-6 h-auto flex-col gap-3 hover:bg-emerald-50 hover:border-emerald-200 relative"
-                onClick={() => router.push('/editor')}
+                onClick={() => router.push('/studio-pro')}
               >
                 <div className="absolute top-2 right-2">
                   <Badge className="bg-emerald-600 text-white text-xs">IA</Badge>
@@ -691,7 +691,7 @@ export default function DashboardHome() {
               <Button
                 variant="outline"
                 className="p-6 h-auto flex-col gap-3 hover:bg-indigo-50 hover:border-indigo-200 relative"
-                onClick={() => router.push('/editor')}
+                onClick={() => router.push('/studio-pro')}
               >
                 <div className="absolute top-2 right-2">
                   <Badge className="bg-indigo-600 text-white text-xs">SPRINT 1</Badge>
@@ -1088,7 +1088,7 @@ export default function DashboardHome() {
                       {project.status === 'draft' && (
                         <Button
                           size="sm"
-                          onClick={() => router.push(`/editor?project=${project.id}`)}
+                          onClick={() => router.push(`/studio-pro?projectId=${project.id}`)}
                         >
                           Continuar Edição
                         </Button>
@@ -1117,7 +1117,7 @@ export default function DashboardHome() {
                 <p className="text-gray-600 mb-6">
                   Crie seu primeiro vídeo de treinamento com IA
                 </p>
-                <Button onClick={() => router.push('/editor')}>
+                <Button onClick={() => router.push('/studio-pro')}>
                   <Plus className="w-4 h-4 mr-2" />
                   Criar Primeiro Projeto
                 </Button>
