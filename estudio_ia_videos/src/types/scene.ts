@@ -55,6 +55,9 @@ export interface Scene extends CanvasScene {
   /** Background music for this scene */
   musicConfig?: SceneMusicConfig;
 
+  /** Lottie/animation effects applied to this scene */
+  effects?: Array<{ type: string; name: string; lottieId: string }>;
+
   /** Notes (internal, not shown in video) */
   notes?: string;
 }

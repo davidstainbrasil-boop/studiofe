@@ -54,11 +54,17 @@ import { ShortcutsHelpPanel } from '@components/studio-unified/ShortcutsHelpPane
 import { LayersPanel } from '@components/studio-unified/LayersPanel';
 import { AlignmentToolbar } from '@components/studio-unified/AlignmentToolbar';
 import { SceneConfigPanel } from '@components/studio-unified/SceneConfigPanel';
-import { LottieEffectsPanel } from '@components/studio-unified/LottieEffectsPanel';
-import { MediaLibraryPanel } from '@components/studio-unified/MediaLibraryPanel';
 import dynamic from 'next/dynamic';
 
-// Lazy-load Remotion (heavy dependency, SSR-incompatible)
+// Lazy-load browser-only components (WaveSurfer, Lottie, Remotion)
+const LottieEffectsPanel = dynamic(
+  () => import('@components/studio-unified/LottieEffectsPanel').then(m => ({ default: m.LottieEffectsPanel })),
+  { ssr: false, loading: () => <div className="flex-1 flex items-center justify-center text-muted-foreground text-xs">Carregando efeitos...</div> }
+);
+const MediaLibraryPanel = dynamic(
+  () => import('@components/studio-unified/MediaLibraryPanel').then(m => ({ default: m.MediaLibraryPanel })),
+  { ssr: false, loading: () => <div className="flex-1 flex items-center justify-center text-muted-foreground text-xs">Carregando mídia...</div> }
+);
 const RemotionScenePreview = dynamic(
   () => import('@components/studio-unified/RemotionScenePreview').then(m => ({ default: m.RemotionScenePreview })),
   { ssr: false, loading: () => <div className="flex-1 flex items-center justify-center text-muted-foreground"><Monitor className="h-8 w-8 animate-pulse" /></div> }
@@ -752,7 +758,7 @@ export default function StudioProPage() {
         } as Partial<Scene>);
       }
     },
-    [activeSceneId],
+    [activeSceneId, handleUpdateScene],
   );
 
   // Double-click text element handler
