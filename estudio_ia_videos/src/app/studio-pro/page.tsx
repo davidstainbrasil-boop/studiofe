@@ -35,6 +35,8 @@ import {
   Undo2,
   Redo2,
   Upload,
+  Film,
+  Monitor,
 } from 'lucide-react';
 import { cn } from '@lib/utils';
 import { toast } from 'sonner';
@@ -52,6 +54,15 @@ import { ShortcutsHelpPanel } from '@components/studio-unified/ShortcutsHelpPane
 import { LayersPanel } from '@components/studio-unified/LayersPanel';
 import { AlignmentToolbar } from '@components/studio-unified/AlignmentToolbar';
 import { SceneConfigPanel } from '@components/studio-unified/SceneConfigPanel';
+import { LottieEffectsPanel } from '@components/studio-unified/LottieEffectsPanel';
+import { MediaLibraryPanel } from '@components/studio-unified/MediaLibraryPanel';
+import dynamic from 'next/dynamic';
+
+// Lazy-load Remotion (heavy dependency, SSR-incompatible)
+const RemotionScenePreview = dynamic(
+  () => import('@components/studio-unified/RemotionScenePreview').then(m => ({ default: m.RemotionScenePreview })),
+  { ssr: false, loading: () => <div className="flex-1 flex items-center justify-center text-muted-foreground"><Monitor className="h-8 w-8 animate-pulse" /></div> }
+);
 import { useKeyboardShortcuts, COMMON_SHORTCUTS } from '@hooks/useKeyboardShortcuts';
 import { useHistory } from '@hooks/useHistory';
 import { useEditorStore } from '@/lib/stores/editor-store';
@@ -146,6 +157,7 @@ export default function StudioProPage() {
   const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
   const [rightPanelTab, setRightPanelTab] = useState<'properties' | 'layers' | 'scene'>('layers');
   const [projectName, setProjectName] = useState('Untitled Project');
+  const [previewMode, setPreviewMode] = useState<'canvas' | 'remotion'>('canvas');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const initialScene = useMemo(() => createScene(1), []);
   const emptyScene = useMemo<CanvasScene>(
@@ -704,6 +716,43 @@ export default function StudioProPage() {
       toast.success('Text added to canvas');
     },
     [handleAddCanvasElement, canvasScene.width, canvasScene.height, canvasScene.elements.length],
+  );
+
+  // Media selection handler (from MediaLibraryPanel)
+  const handleSelectMedia = useCallback(
+    (media: { name: string; url: string; type: string; width: number; height: number }) => {
+      handleAddCanvasElement({
+        type: 'image',
+        name: media.name,
+        src: media.url,
+        x: canvasScene.width / 2 - 200,
+        y: canvasScene.height / 2 - 150,
+        width: 400,
+        height: 300,
+        rotation: 0,
+        scaleX: 1,
+        scaleY: 1,
+        opacity: 1,
+        locked: false,
+        visible: true,
+        draggable: true,
+        zIndex: canvasScene.elements.length,
+      });
+    },
+    [handleAddCanvasElement, canvasScene.width, canvasScene.height, canvasScene.elements.length],
+  );
+
+  // Lottie effect handler (from LottieEffectsPanel)
+  const handleAddLottieEffect = useCallback(
+    (effect: { id: string; name: string; category: string }) => {
+      // Store effect config on active scene
+      if (activeSceneId) {
+        handleUpdateScene(activeSceneId, {
+          effects: [{ type: effect.category, name: effect.name, lottieId: effect.id }],
+        } as Partial<Scene>);
+      }
+    },
+    [activeSceneId],
   );
 
   // Double-click text element handler
@@ -1512,13 +1561,10 @@ export default function StudioProPage() {
               </TabsContent>
 
               <TabsContent value="media" className="flex-1 m-0">
-                <div className="flex items-center justify-center h-full text-muted-foreground">
-                  <div className="text-center">
-                    <Image className="h-12 w-12 mx-auto mb-4" />
-                    <p className="text-sm">Media Library</p>
-                    <p className="text-xs">Coming soon</p>
-                  </div>
-                </div>
+                <MediaLibraryPanel
+                  onSelectMedia={handleSelectMedia}
+                  className="h-full"
+                />
               </TabsContent>
 
               <TabsContent value="text" className="flex-1 m-0 overflow-y-auto">
@@ -1668,13 +1714,10 @@ export default function StudioProPage() {
               </TabsContent>
 
               <TabsContent value="effects" className="flex-1 m-0">
-                <div className="flex items-center justify-center h-full text-muted-foreground">
-                  <div className="text-center">
-                    <Zap className="h-12 w-12 mx-auto mb-4" />
-                    <p className="text-sm">Efeitos & Transições</p>
-                    <p className="text-xs">Em breve - Fade, Slide, Zoom</p>
-                  </div>
-                </div>
+                <LottieEffectsPanel
+                  onAddEffect={handleAddLottieEffect}
+                  className="h-full"
+                />
               </TabsContent>
             </Tabs>
           </div>
@@ -1761,23 +1804,52 @@ export default function StudioProPage() {
                     <Button variant="ghost" size="icon">
                       <Maximize className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon">
-                      <Eye className="h-4 w-4" />
-                    </Button>
+                    {/* Preview Mode Toggle: Canvas (edit) vs Remotion (preview) */}
+                    <div className="flex items-center bg-muted rounded-md p-0.5">
+                      <Button
+                        variant={previewMode === 'canvas' ? 'secondary' : 'ghost'}
+                        size="sm"
+                        className="h-6 px-2 text-[10px]"
+                        onClick={() => setPreviewMode('canvas')}
+                        title="Canvas Editor"
+                      >
+                        <Eye className="h-3 w-3 mr-1" />
+                        Editar
+                      </Button>
+                      <Button
+                        variant={previewMode === 'remotion' ? 'secondary' : 'ghost'}
+                        size="sm"
+                        className="h-6 px-2 text-[10px]"
+                        onClick={() => setPreviewMode('remotion')}
+                        title="Remotion Preview"
+                      >
+                        <Film className="h-3 w-3 mr-1" />
+                        Preview
+                      </Button>
+                    </div>
                   </div>
                 </div>
 
-                {/* Interactive Canvas */}
-                <InteractiveCanvas
-                  scene={activeSceneId ? canvasScene : emptyScene}
-                  selectedElementIds={selectedCanvasElementIds}
-                  onSelectElement={handleSelectCanvasElement}
-                  onUpdateElement={handleUpdateCanvasElement}
-                  onDeleteElement={handleDeleteCanvasElement}
-                  onAddElement={handleAddCanvasElement}
-                  onDoubleClickElement={handleDoubleClickTextElement}
-                  className="flex-1"
-                />
+                {/* Canvas or Remotion Preview */}
+                {previewMode === 'canvas' ? (
+                  <InteractiveCanvas
+                    scene={activeSceneId ? canvasScene : emptyScene}
+                    selectedElementIds={selectedCanvasElementIds}
+                    onSelectElement={handleSelectCanvasElement}
+                    onUpdateElement={handleUpdateCanvasElement}
+                    onDeleteElement={handleDeleteCanvasElement}
+                    onAddElement={handleAddCanvasElement}
+                    onDoubleClickElement={handleDoubleClickTextElement}
+                    className="flex-1"
+                  />
+                ) : (
+                  <RemotionScenePreview
+                    scenes={scenes}
+                    activeSceneId={activeSceneId || undefined}
+                    mode="single"
+                    className="flex-1"
+                  />
+                )}
               </div>
             </ResizablePanel>
 

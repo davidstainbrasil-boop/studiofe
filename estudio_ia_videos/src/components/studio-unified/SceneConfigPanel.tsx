@@ -48,6 +48,14 @@ import {
 } from 'lucide-react';
 import { cn } from '@lib/utils';
 import { toast } from 'sonner';
+import dynamic from 'next/dynamic';
+
+// Lazy-load WaveSurfer (heavy audio lib)
+const AudioWaveformPlayer = dynamic(
+  () => import('./AudioWaveformPlayer').then(m => ({ default: m.AudioWaveformPlayer })),
+  { ssr: false, loading: () => <div className="h-16 bg-muted/50 rounded animate-pulse" /> }
+);
+
 import type {
   Scene,
   SceneVoiceConfig,
@@ -515,6 +523,17 @@ export function SceneConfigPanel({ scene, onUpdateScene, className }: SceneConfi
                     <AlertCircle className="h-3 w-3" />
                     Erro na geração. Tente novamente.
                   </div>
+                )}
+
+                {/* Audio Waveform Player (WaveSurfer.js) */}
+                {scene.audioUrl && (
+                  <AudioWaveformPlayer
+                    audioUrl={scene.audioUrl}
+                    height={48}
+                    waveColor="#6366f1"
+                    progressColor="#4f46e5"
+                    compact
+                  />
                 )}
               </div>
             </AccordionContent>
