@@ -1957,3 +1957,33 @@ Fluxo funcionando: PPTX → Slides → TTS → Render → MP4
 - 54/54 features passing
 - Server healthy (DB + Storage OK)
 - studio-pro: 347kB bundle (dynamic loading)
+
+## Session 31 Summary - Navigation Unification (CRITICAL FIX) ✅
+
+### Problem Found
+- Dashboard NEVER linked to /studio-pro (the ONLY functional editor)
+- ~50 navigation links across 26 files all pointed to 11 dead routes
+- Dead routes: /editor, /editor-canvas, /editor-pro, /canvas-editor-pro, 
+  /canvas-editor-professional, /unified-studio, /editor/timeline/*, etc.
+- Users literally COULD NOT reach the real editor
+
+### Changes Made (commit 39ebfa06)
+1. Fixed ~50 navigation links across 26 files → all point to /studio-pro
+2. Converted 5 dead pages to simple redirects to /studio-pro:
+   - /editor, /editor-pro, /editor-canvas, /canvas-editor-pro, /unified-studio
+3. Fixed middleware:
+   - Legacy redirects → /studio-pro  
+   - /studio-pro added to protected routes
+   - Post-login redirect → /studio-pro
+4. Fixed studio/[id]/page.tsx error buttons
+5. Result: -1422 lines of dead code removed
+
+### Files Modified (26 total)
+- 8 dashboard components (dashboard-real, dashboard-home, create-project-dialog, etc)
+- 5 navigation components (Sidebar, AdminSidebar, mobile-nav, enhanced-nav, etc)
+- 6 functional components (PPTXUpload, ai-script-gen, template-system, wizard, etc)
+- 5 page.tsx redirects (editor, editor-pro, editor-canvas, canvas-editor-pro, unified-studio)
+- 1 middleware.ts
+- 1 studio/[id]/page.tsx
+
+### Build: ✅ (exit 0) | Deploy: ✅ (PM2 online) | Push: ✅ (hardening-prod)
