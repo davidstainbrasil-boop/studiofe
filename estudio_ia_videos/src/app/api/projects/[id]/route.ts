@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { getSupabaseForRequest } from '@lib/supabase/server'
 import { logger } from '@lib/logger'
 import { applyRateLimit } from '@/lib/rate-limit'
+import { sanitizeInput } from '@lib/middleware/security'
 
 // Type definitions for PPTX slides and timeline elements
 interface PptxSlide {
@@ -234,7 +235,10 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
     
-    const body = await request.json()
+    const rawBody = await request.json()
+    
+    // Sanitizar inputs contra XSS
+    const body = sanitizeInput(rawBody) as Record<string, unknown>;
     
     // Validação dos dados
     const validationResult = UpdateProjectSchema.safeParse(body)

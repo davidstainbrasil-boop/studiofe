@@ -5,9 +5,9 @@ import { logger } from '@lib/logger';
 import { randomUUID } from 'crypto';
 import { cachedQuery, CacheTier } from '@lib/cache/redis-cache';
 import { rateLimit, getUserTier } from '@/middleware/rate-limiter';
-import { getSupabaseForRequest } from '@lib/supabase/server';
 import { applyRateLimit } from '@/lib/rate-limit';
 import { getServerAuth } from '@lib/auth/unified-session';
+import { sanitizeInput } from '@lib/middleware/security';
 
 // Schema de validação para projetos
 const ProjectSchema = z.object({
@@ -35,18 +35,24 @@ export async function GET(request: NextRequest) {
     const rateLimitBlocked = await applyRateLimit(request, 'projects-get', 60);
     if (rateLimitBlocked) return rateLimitBlocked;
 
+    // Auth obrigatório
+    const session = await getServerAuth();
+    if (!session?.user?.id) {
+      return NextResponse.json({
+        success: false,
+        error: 'Usuário não autenticado',
+        timestamp: new Date().toISOString()
+      }, { status: 401 });
+    }
+    const user = session.user;
+
     // Apply rate limiting
-    const supabase = getSupabaseForRequest(request);
-    const { data: { user } } = await supabase.auth.getUser();
+    const tier = await getUserTier(user.id);
+    const rateLimitResponse = await rateLimit(request, user.id, tier);
 
-    if (user) {
-      const tier = await getUserTier(user.id);
-      const rateLimitResponse = await rateLimit(request, user.id, tier);
-
-      if (rateLimitResponse) {
-        logger.warn('Projects list rate limit exceeded', { userId: user.id, tier });
-        return rateLimitResponse;
-      }
+    if (rateLimitResponse) {
+      logger.warn('Projects list rate limit exceeded', { userId: user.id, tier });
+      return rateLimitResponse;
     }
 
     const { searchParams } = new URL(request.url)
@@ -55,7 +61,8 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status')
     const type = searchParams.get('type')
     const search = searchParams.get('search')
-    const userId = searchParams.get("userId") || user?.id // Use auth user if available
+    // Sempre usar o ID do user autenticado (ignora userId da query para segurança)
+    const userId = user.id
 
     // Build where clause
     interface WhereClause {
@@ -135,7 +142,10 @@ export async function GET(request: NextRequest) {
 // POST - Criar novo projeto (usando Prisma)
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
+    const rawBody = await request.json()
+    
+    // Sanitizar inputs contra XSS
+    const body = sanitizeInput(rawBody) as Record<string, unknown>;
     
     // Obter user ID do auth unificado (Supabase cookies)
     const session = await getServerAuth();

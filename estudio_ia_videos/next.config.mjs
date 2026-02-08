@@ -21,7 +21,7 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ['lucide-react', 'date-fns', 'recharts'],
   },
-  webpack: (config) => {
+  webpack: (config, { nextRuntime }) => {
     config.externals = [...(config.externals || []), { canvas: 'canvas' }];
 
     // NUCLEAR FIX: Disable ALL minification.
@@ -33,6 +33,15 @@ const nextConfig = {
       ...config.resolve,
       extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],
     };
+
+    // FIX: Edge Runtime (middleware) does NOT allow eval().
+    // Sentry/webpack may set devtool to 'eval-source-map' which wraps every
+    // module in eval() calls. Force 'source-map' for edge runtime to avoid
+    // EvalError: "Code generation from strings disallowed for this context"
+    if (nextRuntime === 'edge') {
+      config.devtool = 'source-map';
+    }
+
     return config;
   },
   compiler: {
