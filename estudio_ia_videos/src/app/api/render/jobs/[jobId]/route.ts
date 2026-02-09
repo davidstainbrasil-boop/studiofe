@@ -9,18 +9,13 @@ export async function GET(
   { params }: { params: { jobId: string } }
 ) {
   try {
-    // Support x-user-id header for local dev/testing (fallback to Supabase auth)
-    let userId = request.headers.get('x-user-id');
-
-    if (!userId) {
-      const supabase = getSupabaseForRequest(request)
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (!user) {
-        return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 })
-      }
-      userId = user.id;
+    // Secure auth - x-user-id BLOCKED in production
+    const { getAuthenticatedUserId } = await import('@lib/auth/safe-auth');
+    const authResult = await getAuthenticatedUserId(request);
+    if (!authResult.authenticated) {
+      return NextResponse.json({ error: authResult.error, code: 'AUTH_REQUIRED' }, { status: 401 });
     }
+    const userId = authResult.userId;
 
     const { jobId } = params
 
@@ -76,18 +71,13 @@ export async function DELETE(
     const blocked = await applyRateLimit(request, 'render-job', 20);
     if (blocked) return blocked;
 
-    // Support x-user-id header for local dev/testing
-    let userId = request.headers.get('x-user-id');
-
-    if (!userId) {
-      const supabase = getSupabaseForRequest(request)
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (!user) {
-        return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 })
-      }
-      userId = user.id;
+    // Secure auth - x-user-id BLOCKED in production
+    const { getAuthenticatedUserId } = await import('@lib/auth/safe-auth');
+    const authResult = await getAuthenticatedUserId(request);
+    if (!authResult.authenticated) {
+      return NextResponse.json({ error: authResult.error, code: 'AUTH_REQUIRED' }, { status: 401 });
     }
+    const userId = authResult.userId;
 
     const { jobId } = params
 

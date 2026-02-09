@@ -16,21 +16,16 @@ export async function POST(req: NextRequest) {
     const blocked = await applyRateLimit(req, 'studio-export', 5);
     if (blocked) return blocked;
 
-    // Autenticação
-    let userId = req.headers.get('x-user-id');
-    
-    if (!userId) {
-      const supabase = getSupabaseForRequest(req);
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-      if (authError || !user) {
-        return NextResponse.json(
-          { error: 'Não autenticado' },
-          { status: 401 }
-        );
-      }
-      userId = user.id;
+    // Autenticação segura - x-user-id BLOCKED em produção
+    const { getAuthenticatedUserId } = await import('@lib/auth/safe-auth');
+    const authResult = await getAuthenticatedUserId(req);
+    if (!authResult.authenticated) {
+      return NextResponse.json(
+        { error: authResult.error },
+        { status: 401 }
+      );
     }
+    const userId = authResult.userId;
 
     const body = await req.json();
     const { project, config } = body as {

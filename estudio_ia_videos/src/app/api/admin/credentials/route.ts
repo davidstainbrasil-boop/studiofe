@@ -7,15 +7,21 @@ import { getRequiredEnv, getOptionalEnv } from '@lib/env';
 import { logger } from '@lib/logger';
 import { applyRateLimit } from '@/lib/rate-limit';
 
-// Chave de criptografia (em produção, usar variável de ambiente segura)
-const ENCRYPTION_KEY = getOptionalEnv('CREDENTIALS_ENCRYPTION_KEY', 'mvp-encryption-key-2024-secure');
+// Chave de criptografia - OBRIGATÓRIO em produção via variável de ambiente
+const ENCRYPTION_KEY = (() => {
+  const key = process.env.CREDENTIALS_ENCRYPTION_KEY;
+  if (!key && process.env.NODE_ENV === 'production') {
+    throw new Error('CREDENTIALS_ENCRYPTION_KEY é obrigatório em produção');
+  }
+  return key || 'dev-only-encryption-key-not-for-production';
+})();
 
 // Caminho do arquivo de credenciais
 const CREDENTIALS_FILE = getOptionalEnv('CREDENTIALS_FILE', '.credentials.encrypted');
 
 function encrypt(text: string): string {
   const algorithm = 'aes-256-cbc';
-  const key = crypto.scryptSync(ENCRYPTION_KEY, 'salt', 32);
+  const key = crypto.scryptSync(ENCRYPTION_KEY, ENCRYPTION_KEY.substring(0, 16), 32);
   const iv = crypto.randomBytes(16);
   const cipher = crypto.createCipheriv(algorithm, key, iv);
   let encrypted = cipher.update(text, 'utf8', 'hex');
@@ -26,7 +32,7 @@ function encrypt(text: string): string {
 function decrypt(encryptedText: string): string {
   try {
     const algorithm = 'aes-256-cbc';
-    const key = crypto.scryptSync(ENCRYPTION_KEY, 'salt', 32);
+    const key = crypto.scryptSync(ENCRYPTION_KEY, ENCRYPTION_KEY.substring(0, 16), 32);
     const [ivHex, encrypted] = encryptedText.split(':');
     const iv = Buffer.from(ivHex, 'hex');
     const decipher = crypto.createDecipheriv(algorithm, key, iv);
@@ -100,10 +106,22 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Chaves que NUNCA devem ser retornadas em texto plano
+    const SENSITIVE_KEYS = ['KEY', 'SECRET', 'PASSWORD', 'TOKEN', 'DSN', 'DATABASE_URL'];
+    
+    // Separar valores seguros de sensíveis
+    const safeValues: Record<string, string> = {};
+    for (const [key, value] of Object.entries(mergedCredentials)) {
+      const isSensitive = SENSITIVE_KEYS.some(sk => key.toUpperCase().includes(sk));
+      if (!isSensitive) {
+        safeValues[key] = value;
+      }
+    }
+
     return NextResponse.json({
       credentials: maskedCredentials,
-      // Enviar valores reais apenas para campos não sensíveis
-      values: mergedCredentials
+      // SEGURANÇA: Apenas valores NÃO sensíveis são retornados em texto plano
+      values: safeValues
     });
 
   } catch (error) {

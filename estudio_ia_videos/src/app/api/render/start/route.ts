@@ -208,22 +208,16 @@ export async function POST(req: NextRequest) {
     const blocked = await applyRateLimit(req, 'render-start', 10);
     if (blocked) return blocked;
 
-    const supabase = getSupabaseForRequest(req);
-
-    // Support x-user-id header for local dev (fallback to Supabase auth)
-    let userId = req.headers.get('x-user-id');
-    
-    if (!userId) {
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-      if (authError || !user) {
-        return NextResponse.json(
-          { error: 'Não autenticado' },
-          { status: 401 }
-        );
-      }
-      userId = user.id;
+    // Secure auth - x-user-id BLOCKED in production
+    const { getAuthenticatedUserId } = await import('@lib/auth/safe-auth');
+    const authResult = await getAuthenticatedUserId(req);
+    if (!authResult.authenticated) {
+      return NextResponse.json(
+        { error: authResult.error },
+        { status: 401 }
+      );
     }
+    const userId = authResult.userId;
 
     const userPlan = await resolveUserPlan(userId);
 

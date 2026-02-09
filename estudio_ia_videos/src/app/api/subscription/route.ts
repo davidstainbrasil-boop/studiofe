@@ -50,15 +50,18 @@ export async function GET(req: NextRequest) {
     const rateLimitBlocked = await applyRateLimit(req, 'subscription-get', 30);
     if (rateLimitBlocked) return rateLimitBlocked;
 
-    const { searchParams } = new URL(req.url)
-    const userId = searchParams.get('userId')
-
-    if (!userId) {
+    // Autenticação obrigatória - impedir IDOR
+    const { getAuthenticatedUserId } = await import('@lib/auth/safe-auth');
+    const authResult = await getAuthenticatedUserId(req);
+    if (!authResult.authenticated) {
       return NextResponse.json(
-        { error: 'userId é obrigatório' },
-        { status: 400 }
-      )
+        { error: authResult.error },
+        { status: 401 }
+      );
     }
+    
+    // Usar userId do token autenticado (não do query param)
+    const userId = authResult.userId;
 
     // Buscar subscription
     const { data: subscription, error: subError } = await supabase

@@ -12,21 +12,16 @@ import { randomUUID } from 'crypto';
 
 export async function POST(req: NextRequest) {
   try {
-    // Autenticação
-    let userId = req.headers.get('x-user-id');
-    
-    if (!userId) {
-      const supabase = getSupabaseForRequest(req);
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-      if (authError || !user) {
-        // Fallback para dev sem auth
-        userId = 'demo-user';
-        logger.warn('No auth, using demo-user', { component: 'StudioSave' });
-      } else {
-        userId = user.id;
-      }
+    // Autenticação segura - x-user-id BLOCKED em produção
+    const { getAuthenticatedUserId } = await import('@lib/auth/safe-auth');
+    const authResult = await getAuthenticatedUserId(req);
+    if (!authResult.authenticated) {
+      return NextResponse.json(
+        { error: authResult.error },
+        { status: 401 }
+      );
     }
+    const userId = authResult.userId;
 
     const body = await req.json();
     const { projectId, name, snapshot } = body;

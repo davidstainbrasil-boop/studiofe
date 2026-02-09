@@ -16,15 +16,16 @@ import { logger } from '@lib/logger';
  */
 export async function POST(request: NextRequest) {
   try {
-    // Get user from session (implement your auth here)
-    const userId = request.headers.get('X-User-ID');
-
-    if (!userId) {
+    // Secure auth - x-user-id BLOCKED in production
+    const { getAuthenticatedUserId } = await import('@lib/auth/safe-auth');
+    const authResult = await getAuthenticatedUserId(request);
+    if (!authResult.authenticated) {
       return NextResponse.json(
-        { success: false, error: 'Authentication required' },
+        { success: false, error: authResult.error },
         { status: 401 }
       );
     }
+    const userId = authResult.userId;
 
     const body = await request.json();
     const { name, plan } = body;
@@ -73,14 +74,15 @@ export async function POST(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
   try {
-    const userId = request.headers.get('X-User-ID');
-
-    if (!userId) {
+    const { getAuthenticatedUserId } = await import('@lib/auth/safe-auth');
+    const authResult = await getAuthenticatedUserId(request);
+    if (!authResult.authenticated) {
       return NextResponse.json(
-        { success: false, error: 'Authentication required' },
+        { success: false, error: authResult.error },
         { status: 401 }
       );
     }
+    const userId = authResult.userId;
 
     const body = await request.json();
     const { key_id } = body;

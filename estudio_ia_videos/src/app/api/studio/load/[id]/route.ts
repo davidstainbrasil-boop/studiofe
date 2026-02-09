@@ -40,22 +40,17 @@ export async function GET(
         );
     }
 
-    // Autenticação
-    let userId = req.headers.get('x-user-id');
-    
-    if (!userId) {
-      const supabase = getSupabaseForRequest(req);
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-      if (authError || !user) {
-        logger.warn('Unauthorized access attempt', { component: 'StudioLoad', projectId });
-        return NextResponse.json(
-          { error: 'Não autorizado. Faça login novamente.' },
-          { status: 401 }
-        );
-      }
-      userId = user.id;
+    // Autenticação segura - x-user-id BLOCKED em produção
+    const { getAuthenticatedUserId } = await import('@lib/auth/safe-auth');
+    const authResult = await getAuthenticatedUserId(req);
+    if (!authResult.authenticated) {
+      logger.warn('Unauthorized access attempt', { component: 'StudioLoad', projectId });
+      return NextResponse.json(
+        { error: 'Não autorizado. Faça login novamente.' },
+        { status: 401 }
+      );
     }
+    const userId = authResult.userId;
 
     // Busca projeto
     const project = await prisma.projects.findUnique({

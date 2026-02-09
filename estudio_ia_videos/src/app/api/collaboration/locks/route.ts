@@ -86,14 +86,16 @@ export async function POST(req: NextRequest) {
       );
     }
     
-    // Get user ID from header or session
-    const userId = req.headers.get('x-user-id');
-    if (!userId) {
+    // Secure auth - x-user-id BLOCKED in production
+    const { getAuthenticatedUserId } = await import('@lib/auth/safe-auth');
+    const authResult = await getAuthenticatedUserId(req);
+    if (!authResult.authenticated) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
       );
     }
+    const userId = authResult.userId;
     
     const { projectId, trackId, userName, userColor } = parsed.data;
     
@@ -151,14 +153,16 @@ export async function DELETE(req: NextRequest) {
       );
     }
     
-    const userId = req.headers.get('x-user-id');
-    if (!userId) {
+    const { getAuthenticatedUserId } = await import('@lib/auth/safe-auth');
+    const authResult2 = await getAuthenticatedUserId(req);
+    if (!authResult2.authenticated) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
       );
     }
-    
+    const userId = authResult2.userId;
+
     const { projectId, trackId } = parsed.data;
     
     const released = await lockService.releaseLock(projectId, trackId, userId);

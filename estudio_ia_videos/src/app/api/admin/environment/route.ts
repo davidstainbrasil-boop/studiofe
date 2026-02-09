@@ -7,12 +7,18 @@ import { getRequiredEnv, getOptionalEnv } from '@lib/env';
 import { logger } from '@lib/logger';
 import { applyRateLimit } from '@/lib/rate-limit';
 
-const ENCRYPTION_KEY = getOptionalEnv('CREDENTIALS_ENCRYPTION_KEY', 'mvp-encryption-key-2024-secure');
+const ENCRYPTION_KEY = (() => {
+  const key = process.env.CREDENTIALS_ENCRYPTION_KEY;
+  if (!key && process.env.NODE_ENV === 'production') {
+    throw new Error('CREDENTIALS_ENCRYPTION_KEY é obrigatório em produção');
+  }
+  return key || 'dev-only-encryption-key-not-for-production';
+})();
 const ENV_FILE = '.env.production';
 
 function encrypt(text: string): string {
   const algorithm = 'aes-256-cbc';
-  const key = crypto.scryptSync(ENCRYPTION_KEY, 'salt', 32);
+  const key = crypto.scryptSync(ENCRYPTION_KEY, ENCRYPTION_KEY.substring(0, 16), 32);
   const iv = crypto.randomBytes(16);
   const cipher = crypto.createCipheriv(algorithm, key, iv);
   let encrypted = cipher.update(text, 'utf8', 'hex');
