@@ -252,6 +252,7 @@ async function getUsagePatterns(userId: string, timeRange: Date) {
     // Calculate most active hours
     const hourCounts = new Array(24).fill(0);
     events.forEach((event) => {
+      if (!event.createdAt) return;
       const hour = new Date(event.createdAt).getHours();
       hourCounts[hour]++;
     });

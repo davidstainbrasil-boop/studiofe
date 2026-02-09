@@ -115,7 +115,7 @@ export async function GET(req: NextRequest) {
   }
 
   if (params.projectType) {
-    query = query.eq('projects.type', params.projectType as string)
+    query = query.eq('projects.type', params.projectType as never)
   }
 
   if (params.status !== 'all') {

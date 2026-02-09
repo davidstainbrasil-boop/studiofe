@@ -30,7 +30,7 @@ export class TemplatesRepository {
    * Cria um novo template
    */
   async create(data: CreateTemplateData) {
-    return prisma.templates.create({
+    return (prisma.nr_templates.create as any)({
       data: {
         name: data.name,
         description: data.description,
@@ -41,7 +41,7 @@ export class TemplatesRepository {
         // isPremium não existe no schema templates, removido
         is_public: data.isPublic !== undefined ? data.isPublic : true,
         created_by: data.createdBy,
-      },
+      } as any,
       include: {
         users: {
           select: {
@@ -49,7 +49,7 @@ export class TemplatesRepository {
             email: true,
           },
         },
-      },
+      } as any,
     });
   }
 
@@ -57,7 +57,7 @@ export class TemplatesRepository {
    * Busca um template por ID
    */
   async findById(id: string) {
-    return prisma.templates.findUnique({
+    return (prisma.nr_templates.findUnique as any)({
       where: { id },
       include: {
         users: {
@@ -66,7 +66,7 @@ export class TemplatesRepository {
             email: true,
           },
         },
-      },
+      } as any,
     });
   }
 
@@ -76,9 +76,9 @@ export class TemplatesRepository {
   async findMany(filters?: TemplateFilters, options?: {
     limit?: number;
     offset?: number;
-    orderBy?: Prisma.templatesOrderByWithRelationInput;
+    orderBy?: Prisma.nr_templatesOrderByWithRelationInput;
   }) {
-    const where: Prisma.templatesWhereInput = {};
+    const where: any = {};
 
     if (filters?.category) where.category = filters.category;
     if (filters?.isPublic !== undefined) where.is_public = filters.isPublic;
@@ -90,11 +90,11 @@ export class TemplatesRepository {
       ];
     }
 
-    return prisma.templates.findMany({
+    return (prisma.nr_templates.findMany as any)({
       where,
       take: options?.limit,
       skip: options?.offset,
-      orderBy: options?.orderBy || { usage_count: 'desc' },
+      orderBy: (options?.orderBy || { usage_count: 'desc' }) as any,
       include: {
         users: {
           select: {
@@ -103,7 +103,7 @@ export class TemplatesRepository {
             
           },
         },
-      },
+      } as any,
     });
   }
 
@@ -111,12 +111,12 @@ export class TemplatesRepository {
    * Busca templates públicos
    */
   async findPublic(limit?: number) {
-    return prisma.templates.findMany({
+    return (prisma.nr_templates.findMany as any)({
       where: {
         is_public: true,
-      },
+      } as any,
       take: limit,
-      orderBy: { usage_count: 'desc' },
+      orderBy: { usage_count: 'desc' } as any,
       include: {
         users: {
           select: {
@@ -125,7 +125,7 @@ export class TemplatesRepository {
             
           },
         },
-      },
+      } as any,
     });
   }
 
@@ -133,13 +133,13 @@ export class TemplatesRepository {
    * Incrementa o contador de uso
    */
   async incrementUsage(id: string) {
-    return prisma.templates.update({
+    return (prisma.nr_templates.update as any)({
       where: { id },
       data: {
         usage_count: {
           increment: 1,
         },
-      },
+      } as any,
     });
   }
 
@@ -147,7 +147,7 @@ export class TemplatesRepository {
    * Atualiza um template
    */
   async update(id: string, data: Partial<CreateTemplateData>) {
-    return prisma.templates.update({
+    return (prisma.nr_templates.update as any)({
       where: { id },
       data: {
         name: data.name,
@@ -158,7 +158,7 @@ export class TemplatesRepository {
         metadata: data.templateData,
         // isPremium removido
         is_public: data.isPublic,
-      },
+      } as any,
     });
   }
 
@@ -166,7 +166,7 @@ export class TemplatesRepository {
    * Deleta um template
    */
   async delete(id: string) {
-    return prisma.templates.delete({
+    return prisma.nr_templates.delete({
       where: { id },
     });
   }
@@ -175,8 +175,8 @@ export class TemplatesRepository {
    * Conta templates por categoria
    */
   async countByCategory() {
-    return prisma.templates.groupBy({
-      by: ['category'],
+    return (prisma.nr_templates.groupBy as any)({
+      by: ['category'] as any,
       _count: true,
     });
   }
@@ -185,9 +185,9 @@ export class TemplatesRepository {
    * Busca templates mais usados
    */
   async findMostUsed(limit: number = 10) {
-    return prisma.templates.findMany({
+    return (prisma.nr_templates.findMany as any)({
       take: limit,
-      orderBy: { usage_count: 'desc' },
+      orderBy: { usage_count: 'desc' } as any,
       include: {
         users: {
           select: {
@@ -196,7 +196,7 @@ export class TemplatesRepository {
             
           },
         },
-      },
+      } as any,
     });
   }
 }

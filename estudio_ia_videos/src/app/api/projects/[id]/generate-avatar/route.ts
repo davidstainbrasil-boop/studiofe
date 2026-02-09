@@ -5,6 +5,7 @@ import { getDIDService } from '@lib/services/avatar/did-service';
 import { logger } from '@lib/logger';
 import { randomUUID } from 'crypto';
 import { applyRateLimit } from '@/lib/rate-limit';
+import type { Json } from '@lib/supabase/database.types';
 
 // Default avatar image if none provided
 const DEFAULT_AVATAR = 'https://img.freepik.com/free-photo/portrait-white-man-isolated_53876-40306.jpg';
@@ -171,7 +172,7 @@ export async function POST(
 
         await supabase
             .from('timelines')
-            .update({ tracks: tracks })
+            .update({ tracks: tracks as unknown as Json })
             .eq('id', timeline.id);
     }
 

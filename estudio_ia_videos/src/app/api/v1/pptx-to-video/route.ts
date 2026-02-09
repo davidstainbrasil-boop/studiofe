@@ -177,12 +177,13 @@ async function handleRequest(request: NextRequest, apiKey: APIKey): Promise<Next
       body: JSON.stringify({
         projectId,
         jobId,
-        slides: extractResult.slides.map((slide: { id?: string; slideNumber?: number; title?: string; content?: string; notes?: string; imageUrl?: string }, i: number) => ({
+        slides: extractResult.slides.map((slide: { id?: string; slideNumber?: number; title?: string; content?: string; notes?: string; images?: string[] }, i: number) => ({
           id: slide.id || `slide-${i + 1}`,
           slideNumber: slide.slideNumber || i + 1,
           title: slide.title || `Slide ${i + 1}`,
           content: slide.content || '',
           notes: slide.notes || slide.content || '',
+          imageUrl: slide.images?.[0],
           duration: 5,
         })),
         settings: {

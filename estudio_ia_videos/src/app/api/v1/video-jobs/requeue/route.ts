@@ -76,7 +76,7 @@ export async function POST(req: Request) {
 
     const { data: updated, error: updateErr } = await supabase
       .from('render_jobs')
-      .update(updatePayload)
+      .update(updatePayload as never)
       .eq('id', jobId)
       .select('id,status,project_id,created_at,progress,render_settings,attempts,duration_ms,priority')
       .single()

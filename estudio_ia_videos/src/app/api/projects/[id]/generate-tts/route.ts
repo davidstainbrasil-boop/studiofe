@@ -4,7 +4,8 @@ import { getSupabaseForRequest } from '@lib/supabase/server';
 import { generateAndUploadTTSAudio } from '@lib/elevenlabs-service';
 import { logger } from '@lib/logger';
 import { applyRateLimit } from '@/lib/rate-limit';
-import { prisma } from '@lib/prisma'; // Using Prisma for easier JSON manipulation if Supabase client is tricky for deep JSON updates
+import { prisma } from '@lib/prisma';
+import type { Json } from '@lib/supabase/database.types';
 
 export async function POST(
   request: NextRequest,
@@ -132,7 +133,7 @@ export async function POST(
 
       await supabase
         .from('timelines')
-        .update({ tracks: tracks })
+        .update({ tracks: tracks as unknown as Json })
         .eq('id', timeline.id);
     }
 

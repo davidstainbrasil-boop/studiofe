@@ -232,7 +232,7 @@ export function RemotionScenePreview({
     return (
       <div className={cn('relative', className)}>
         <Player
-          component={SceneComposition as React.ComponentType<Record<string, unknown>>}
+          component={SceneComposition as unknown as React.ComponentType<Record<string, unknown>>}
           inputProps={{ scene: activeScene }}
           durationInFrames={Math.max(1, Math.round(activeScene.duration * 30))}
           compositionWidth={1920}
@@ -256,7 +256,7 @@ export function RemotionScenePreview({
   return (
     <div className={cn('relative', className)}>
       <Player
-        component={MultiSceneComposition as React.ComponentType<Record<string, unknown>>}
+        component={MultiSceneComposition as unknown as React.ComponentType<Record<string, unknown>>}
         inputProps={{ scenes }}
         durationInFrames={Math.max(1, Math.round(totalDuration * 30))}
         compositionWidth={1920}

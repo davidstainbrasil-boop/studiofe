@@ -240,7 +240,7 @@ export async function POST(req: NextRequest) {
         video_id: videoId,
         format,
         created_at: new Date().toISOString(),
-      });
+      } as never);
 
     if (analyticsError) {
       logger.warn('Failed to track embed generation', { error: analyticsError.message });

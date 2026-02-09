@@ -214,7 +214,7 @@ export async function PUT(
       const { data: existingSlide } = await supabase
         .from('pptx_slides')
         .select('id')
-        .eq('upload_id', slide.upload_id)
+        .eq('upload_id', slide.upload_id as string)
         .eq('slide_number', validatedData.slide_number)
         .neq('id', slideId)
         .single()
@@ -375,18 +375,18 @@ export async function DELETE(
     const { data: slideCount } = await supabase
       .from('pptx_slides')
       .select('id', { count: 'exact' })
-      .eq('upload_id', slide.upload_id)
+      .eq('upload_id', slide.upload_id as string)
 
     await supabase
       .from('pptx_uploads')
       .update({ slide_count: slideCount?.length || 0 })
-      .eq('id', slide.upload_id)
+      .eq('id', slide.upload_id as string)
 
     // Reordenar slides restantes
     const { data: remainingSlides } = await supabase
       .from('pptx_slides')
       .select('id, slide_number')
-      .eq('upload_id', slide.upload_id)
+      .eq('upload_id', slide.upload_id as string)
       .gt('slide_number', slide.slide_number)
       .order('slide_number')
 

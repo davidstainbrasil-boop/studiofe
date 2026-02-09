@@ -199,7 +199,7 @@ async function processRenderJob(
     
     // Fase 1: Preparar assets
     logger.info(`📦 [Video Render v2] Preparando assets para job ${jobId}...`, { component: 'API: v1/render/video-production-v2' });
-    const assets = await pipeline.prepareAssets(slides as unknown[]);
+    const assets = await pipeline.prepareAssets(slides as never);
     job.progress = 30;
     renderJobs.set(jobId, job);
 

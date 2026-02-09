@@ -164,7 +164,7 @@ export async function GET(req: Request) {
     const { limit: dbLimit, offset, status: statusFilter, projectId, sortBy, sortOrder } = queryParams;
     const sortColumn = sortBy === "updatedAt" ? "updated_at" : sortBy === 'status' ? 'status' : "created_at";
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call -- Supabase dynamic query builder
-    let query = supabase.from('render_jobs' as never)
+    let query = supabase.from('render_jobs')
       .select('id,status,project_id,created_at,updated_at,progress,render_settings,attempts,duration_ms')
       .eq("user_id", userId)
       .order(sortColumn, { ascending: sortOrder === 'asc' })

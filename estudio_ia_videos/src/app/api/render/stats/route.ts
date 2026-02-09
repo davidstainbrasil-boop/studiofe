@@ -59,8 +59,8 @@ export async function GET(req: NextRequest) {
     let averageRenderTime = 0;
     if (recentJobs && recentJobs.length > 0) {
       const totalTime = recentJobs.reduce((sum, job) => {
-        const start = new Date(job.started_at).getTime();
-        const end = new Date(job.completed_at).getTime();
+        const start = new Date(job.started_at!).getTime();
+        const end = new Date(job.completed_at!).getTime();
         return sum + (end - start);
       }, 0);
       averageRenderTime = totalTime / recentJobs.length / 1000; // seconds

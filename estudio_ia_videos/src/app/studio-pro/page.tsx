@@ -750,11 +750,11 @@ export default function StudioProPage() {
 
   // Lottie effect handler (from LottieEffectsPanel)
   const handleAddLottieEffect = useCallback(
-    (effect: { id: string; name: string; category: string }) => {
+    (effect: { id: string; name: string; type: string; source: string | Record<string, unknown> }) => {
       // Store effect config on active scene
       if (activeSceneId) {
         handleUpdateScene(activeSceneId, {
-          effects: [{ type: effect.category, name: effect.name, lottieId: effect.id }],
+          effects: [{ type: effect.type, name: effect.name, lottieId: effect.id }],
         } as Partial<Scene>);
       }
     },

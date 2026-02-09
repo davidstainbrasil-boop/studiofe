@@ -1,7 +1,105 @@
 # Claude Progress Log - MVP Vídeos TécnicoCursos v7
-# Updated: 2026-02-08 (Session 31 - Production Hardening Sprint)
+# Updated: 2026-02-09 (Session 33 - PPTX Pipeline Re-Audit + console.log Cleanup)
 
-## Session 31 Summary (Current) - Production Hardening Sprint ✅
+## Session 33 Summary (Current) - Re-Audit PPTX→Video Pipeline ✅
+
+### ✅ RESULTADO FINAL:
+- **TS Errors (nossos arquivos):** 0 novos
+- **TS Errors (total):** 1 pré-existente (video-jobs/requeue priority type)
+- **Testes:** 115 suites passed, 1913 tests OK, 3 failed (pré-existentes)
+- **console.log em prod:** 0 (era 2 em unified-session.ts)
+- **Placeholders/mocks no pipeline:** 0 (17 MP3s fake removidos)
+- **Branch:** hardening-prod
+
+### 📋 O QUE FOI FEITO:
+
+#### 1. Remoção de 17 MP3 Placeholders
+- TODOS os arquivos em public/audio/library/*.mp3 tinham hash idêntico (170d73c2dbc7a57f536fd9e264d4a00c)
+- TODOS tinham 3.03s (catálogo dizia 150-360s) — PROIBIDO por AGENTS.md §2.3
+- Removidos fisicamente e URLs no DEFAULT_TRACKS zeradas para ''
+- Adicionado comentário com 3 alternativas para habilitar música real (Pixabay API, upload real, Supabase Storage)
+- generate/route.ts: adicionado guard `track && track.url` para skip gracioso
+
+#### 2. API v1 Upload — Persistência em pptx_uploads + pptx_slides
+- Spec (openspec/specs/e2e-pptx-integration) exige registros no DB
+- Adicionado INSERT em pptx_uploads (id=processingId, status='completed', slide_count)
+- Adicionado INSERT em pptx_slides (slide_number, title, content, duration, notes, properties JSONB)
+- Usa supabaseAdmin para bypass RLS
+- Non-blocking: erros de DB logados mas não falham a resposta
+
+#### 3. Limpeza console.log em Produção
+- Auditoria completa: 4 arquivos retornados, apenas 1 com chamadas reais
+- unified-session.ts L86/L96: console.log → logger.debug (só loga em dev)
+- Resultado final: 0 console.* em código de produção (fora do módulo logger)
+
+### 📋 COMPONENTES AUDITADOS (Confirmados REAL, sem alteração):
+- pptx/upload/route.ts — REAL ✅
+- PPTXToVideoWizardV2.tsx — REAL ✅ (envia imageUrl)
+- tts-service-real.ts — REAL ✅ (respeita voiceId)
+- ffmpeg-renderer.ts — REAL ✅ (download HTTP audio/images)
+
+### ⚠️ PENDÊNCIAS CONHECIDAS (fora do pipeline, não corrigidas):
+- /api/v1/tts/generate/route.ts: generateMockTTS + example.com (não usado pelo pipeline)
+- /api/v1/avatar/generate/route.ts: mockDelay com isProduction guard
+- TS error em video-jobs/requeue/route.ts:79 (priority type 'normal' vs 'medium')
+
+
+
+### ✅ RESULTADO FINAL:
+- **Build:** Clean (exit 0)
+- **TS Errors:** 172→154 (com tipos CORRETOS do DB real)
+- **database.types.ts:** 946→4838 linhas, 23→91 tabelas (do DB real)
+- **types.ts:** 713→25 linhas (re-export em vez de cópia manual)
+- **Commit:** 26176868
+- **Branch:** hardening-prod
+- **Files changed:** 81 files, 5154 insertions, 2583 deletions
+- **Deploy:** PM2 online
+
+### 📋 O QUE FOI FEITO:
+
+#### 1. Regeneração de Tipos Supabase (Live DB)
+- Executei `npx supabase gen types` contra DIRECT_DATABASE_URL
+- Resultado: 91 tabelas mapeadas (antes eram 23 manuais)
+- Tipos agora snake_case (antes era camelCase ERRADO)
+- Arquivo: src/lib/supabase/database.types.ts
+
+#### 2. Correção camelCase→snake_case em ~60 arquivos
+- userId → user_id em .eq(), .select(), .insert()
+- projectId → project_id em render_jobs, timeline queries
+- createdAt → created_at, updatedAt → updated_at
+- eventType → event_type, eventData → event_data
+- owner_id → user_id (tabela projects)
+- Tabelas: avatars_3d→avatars, collaborators→project_collaborators
+
+#### 3. Reescrita de types.ts
+- De: 713 linhas com Database interface manual duplicada
+- Para: 25 linhas com re-export de database.types.ts + aliases
+- Aliases: Project, Slide, RenderJob, Avatar3D, User, etc.
+
+#### 4. Exclusão de _app_legacy do tsconfig
+- Adicionado ao exclude (eliminou 17 erros de código legado)
+
+#### 5. Correções diversas (~27 fixes em 22 arquivos)
+- 10 casts unknown→string
+- 6 correções instanceof
+- 5 guards string|null→string
+- Enum 'in_progress'→'in-progress', NextResponse import, logger conflict
+
+### 📊 ERROS TS RESTANTES (154):
+- ~54 TS2769: Rotas consultando tabelas que não existem no DB (mock/stub routes)
+- ~30: Rotas de notificações (tabela não existe)
+- ~20: Rotas de API externa (tabelas não existem)
+- ~50: Prisma/type mismatches (precisa sync Prisma schema)
+
+### 🎯 PRÓXIMOS PASSOS:
+1. Eliminar rotas stub que consultam tabelas inexistentes
+2. Sync Prisma schema com Supabase (se Prisma estiver em uso)
+3. Fix remaining 154 TS errors (meta: <100)
+4. Contract tests validation
+
+---
+
+## Session 31 Summary - Production Hardening Sprint ✅
 
 ### ✅ RESULTADO FINAL:
 - **Build:** Clean (exit 0)

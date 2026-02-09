@@ -8,6 +8,7 @@ import { getSupabaseForRequest } from '@lib/supabase/server'
 import { z } from 'zod'
 import { logger } from '@lib/logger'
 import { applyRateLimit } from '@/lib/rate-limit'
+import type { Json } from '@lib/supabase/database.types'
 
 // Validation schema for render settings
 const RenderSettingsSchema = z.object({
@@ -86,7 +87,7 @@ export async function GET(request: NextRequest) {
 
     // Get user's render settings
     const { data: settings, error } = await supabase
-      .from('user_render_settings' as never)
+      .from('user_render_settings')
       .select('*')
       .eq("user_id", user.id)
       .single()
@@ -98,10 +99,10 @@ export async function GET(request: NextRequest) {
     // If no settings exist, create default settings
     if (!settings) {
       const { data: newSettings, error: createError } = await supabase
-        .from('user_render_settings' as never)
+        .from('user_render_settings')
         .insert({
           user_id: user.id,
-          settings: defaultSettings,
+          settings: defaultSettings as unknown as Json,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
@@ -158,7 +159,7 @@ export async function PATCH(request: NextRequest) {
 
     // Get current settings
     const { data: currentSettings, error: fetchError } = await supabase
-      .from('user_render_settings' as never)
+      .from('user_render_settings')
       .select('*')
       .eq("user_id", user.id)
       .single()
@@ -174,10 +175,10 @@ export async function PATCH(request: NextRequest) {
       updatedSettings = { ...defaultSettings, ...settingsUpdate }
       
       const { data: newSettings, error: createError } = await supabase
-        .from('user_render_settings' as never)
+        .from('user_render_settings')
         .insert({
           user_id: user.id,
-          settings: updatedSettings,
+          settings: updatedSettings as unknown as Json,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
@@ -204,9 +205,9 @@ export async function PATCH(request: NextRequest) {
       }
 
       const { data: updated, error: updateError } = await supabase
-        .from('user_render_settings' as never)
+        .from('user_render_settings')
         .update({
-          settings: updatedSettings,
+          settings: updatedSettings as unknown as Json,
           updated_at: new Date().toISOString()
         })
         .eq("user_id", user.id)
@@ -282,10 +283,10 @@ export async function DELETE(request: NextRequest) {
 
     // Reset to default settings
     const { data: resetSettings, error } = await supabase
-      .from('user_render_settings' as never)
+      .from('user_render_settings')
       .upsert({
         user_id: user.id,
-        settings: defaultSettings,
+        settings: defaultSettings as unknown as Json,
         updated_at: new Date().toISOString()
       })
       .select()

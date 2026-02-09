@@ -3,7 +3,7 @@ import { getSupabaseForRequest } from '@lib/supabase/server'
 import { z } from 'zod'
 import { Prisma } from '@prisma/client'
 import { logger } from '@lib/logger'
-import { type Json } from '@lib/supabase/types'
+import type { Json } from '@lib/supabase/database.types';
 import { applyRateLimit } from '@/lib/rate-limit';
 
 // Interfaces para tipagem de queries
@@ -231,12 +231,14 @@ export async function POST(request: NextRequest) {
       name: validatedData.name,
       type: validatedData.type,
       order_index: validatedData.orderIndex,
-      color: validatedData.color,
       height: validatedData.height || 80,
       visible: validatedData.visible !== false,
       locked: validatedData.locked || false,
       muted: validatedData.muted || false,
-      properties: (validatedData.properties || {}) as Json
+      metadata: {
+        color: validatedData.color,
+        properties: validatedData.properties || {}
+      } as unknown as Json
     }
     const { data: trackData, error } = await supabase
       .from('timeline_tracks')
@@ -266,7 +268,7 @@ export async function POST(request: NextRequest) {
         description: `Track "${track.name}" criada`,
         changes: {
           created_track: track
-        } as Record<string, unknown>
+        } as unknown as Json
       })
 
     return NextResponse.json(track, { status: 201 })
@@ -389,7 +391,7 @@ export async function PUT(request: NextRequest) {
         description: 'Tracks reordenadas',
         changes: {
           reordered_tracks: tracks
-        } as Record<string, unknown>
+        } as unknown as Json
       })
 
     return NextResponse.json({ message: 'Tracks reordenadas com sucesso' })

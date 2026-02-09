@@ -96,7 +96,7 @@ export function SubtitlesPanel() {
             input.click();
 
         } catch (e) {
-            logger.error(e);
+            logger.error(String(e));
             toast.error('Erro ao iniciar processo');
             setIsGenerating(false);
         }

@@ -66,6 +66,7 @@ interface Slide {
   title: string;
   content: string;
   notes: string;
+  imageUrl?: string;
   duration: number;
 }
 
@@ -73,7 +74,7 @@ interface UploadResult {
   success?: boolean;
   message?: string;
   projectId: string;
-  slides: Slide[];
+  slides: Array<Slide & { images?: string[] }>;
   metadata: {
     title: string;
     totalSlides: number;
@@ -155,6 +156,7 @@ export function PPTXToVideoWizardV2() {
         ...s,
         id: `slide-${i + 1}`,
         slideNumber: i + 1,
+        imageUrl: s.images?.[0] || s.imageUrl,
       })));
       setProjectTitle(data.metadata?.title || file.name.replace('.pptx', ''));
       setState('configure');
@@ -209,6 +211,7 @@ export function PPTXToVideoWizardV2() {
             title: s.title,
             content: s.content,
             notes: s.notes || s.content,
+            imageUrl: s.imageUrl,
             duration: s.duration,
           })),
           settings: {

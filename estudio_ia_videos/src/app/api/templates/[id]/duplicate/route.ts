@@ -20,7 +20,7 @@ export async function POST(
     const { name } = body;
 
     // Buscar template original no banco
-    const originalTemplate = await prisma.templates.findUnique({
+    const originalTemplate: any = await prisma.nr_templates.findUnique({
       where: { id },
     });
 
@@ -35,7 +35,7 @@ export async function POST(
     const newId = randomUUID();
     const newName = name || `${originalTemplate.name} (Cópia)`;
 
-    const duplicatedTemplate = await prisma.templates.create({
+    const duplicatedTemplate = await (prisma.nr_templates.create as any)({
       data: {
         id: newId,
         name: newName,
@@ -48,7 +48,7 @@ export async function POST(
         is_public: false, // Cópias são privadas por padrão
         created_by: originalTemplate.created_by, // Mantém o mesmo criador
         usage_count: 0,
-      },
+      } as any,
     });
 
     logger.info(`Template duplicado com sucesso: ${id} -> ${newId}`, { component: 'API: templates/[id]/duplicate' });

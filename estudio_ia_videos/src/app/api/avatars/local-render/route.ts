@@ -204,7 +204,7 @@ export async function GET(request: NextRequest) {
             ...job,
             jobData: job.renderSettings || {},
             errorMessage: job.errorMessage || null
-          } as ProcessingQueueRecord;
+          } as unknown as ProcessingQueueRecord;
         }
       } catch {
         job = null;
@@ -218,20 +218,21 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const jobData = (job.jobData ?? {}) as AvatarJobData;
+    const jobRecord = job as ProcessingQueueRecord;
+    const jobData = (jobRecord.jobData ?? {}) as AvatarJobData;
 
     return NextResponse.json({
       success: true,
-      jobId: job.id,
-      status: job.status,
-      progress: job.progress,
+      jobId: jobRecord.id,
+      status: jobRecord.status,
+      progress: jobRecord.progress,
       currentStage: jobData.currentStage,
       estimatedTime: jobData.estimatedTime,
       videoUrl: jobData.videoUrl,
       thumbnail: jobData.thumbnail,
-      error: job.errorMessage,
-      createdAt: job.createdAt,
-      updatedAt: job.updatedAt
+      error: jobRecord.errorMessage,
+      createdAt: jobRecord.createdAt,
+      updatedAt: jobRecord.updatedAt
     });
 
   } catch (error) {
@@ -294,7 +295,7 @@ async function processAvatarRendering(
         return {
           ...job,
           jobData: job.renderSettings || {}
-        } as ProcessingQueueRecord;
+        } as unknown as ProcessingQueueRecord;
       }
       return null;
     }
@@ -302,7 +303,7 @@ async function processAvatarRendering(
 
   try {
     // Recuperar job atual para manter dados
-    const currentJob = await getJob();
+    const currentJob = await getJob() as ProcessingQueueRecord | null;
     let currentData: AvatarJobData = (currentJob?.jobData ?? {}) as AvatarJobData;
 
     // ETAPA 1: Gerar áudio TTS

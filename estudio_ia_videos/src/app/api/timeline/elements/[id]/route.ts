@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseForRequest } from '@lib/supabase/server'
 import { z } from 'zod'
 import { logger } from '@lib/logger';
+import type { Json } from '@lib/supabase/database.types';
 import { applyRateLimit } from '@/lib/rate-limit';
 
 // Type for timeline element with track and project info
@@ -285,7 +286,7 @@ export async function PUT(
               effects: element.effects,
               transitions: element.transitions
             }
-          } as Record<string, unknown>,
+          } as unknown as Json,
           created_at: new Date().toISOString()
         })
     }

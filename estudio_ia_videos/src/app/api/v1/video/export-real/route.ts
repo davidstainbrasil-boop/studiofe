@@ -113,7 +113,7 @@ export async function GET(request: NextRequest) {
         }
         return NextResponse.json({
           success: true,
-          history: (jobs as ExportJob[]).map((j: ExportJob) => ({
+          history: (jobs as unknown as ExportJob[]).map((j: ExportJob) => ({
             id: j.id,
             status: j.status,
             progress: j.progress,

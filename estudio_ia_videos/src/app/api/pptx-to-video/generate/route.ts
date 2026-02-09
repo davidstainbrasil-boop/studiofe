@@ -348,7 +348,7 @@ async function generateVideoAsync(
         const musicLibrary = getMusicLibrary();
         const track = musicLibrary.getTrack(settings.musicId);
 
-        if (track) {
+        if (track && track.url) {
           const mixer = new AudioMixer();
           const mixResult = await mixer.mixVideoWithMusic({
             videoPath: finalVideoPath,

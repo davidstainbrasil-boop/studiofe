@@ -184,7 +184,7 @@ export async function DELETE(request: NextRequest) {
     // Cancelar job (se ainda estiver em processamento)
     // Por enquanto, apenas marcar como cancelado no banco
     const { error } = await (supabase
-      .from('tts_jobs' as never) as ReturnType<typeof supabase.from>)
+      .from('tts_jobs'))
       .update({ 
         status: 'cancelled',
         updatedAt: new Date().toISOString()

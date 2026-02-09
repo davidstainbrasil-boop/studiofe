@@ -7,7 +7,7 @@ import { applyRateLimit } from '@/lib/rate-limit';
 interface RoleRow { role: string; description?: string }
 
 async function buildUserContext(userId: string): Promise<UserContext> {
-  const { data: rolesData } = await supabaseAdmin.from('user_roles' as never).select('role').eq('user_id', userId) as unknown as { data: RoleRow[] | null };
+  const { data: rolesData } = await supabaseAdmin.from('user_roles').select('role').eq('user_id', userId) as unknown as { data: RoleRow[] | null };
   const roles = ((rolesData || []) as unknown as RoleRow[]).map((r) => r.role) as UserContext['roles'];
   return { id: userId, roles: roles.length ? roles : ['viewer'] };
 }

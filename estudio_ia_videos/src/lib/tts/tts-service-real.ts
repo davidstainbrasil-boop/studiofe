@@ -419,14 +419,29 @@ export class TTSServiceReal {
 
   /**
    * Fallback usando Edge TTS (Microsoft) - Gratuito
+   * Respeita voiceId/voice do request (ex: pt-BR-FranciscaNeural)
    */
   private async generateWithEdgeTTS(request: TTSGenerateRequest): Promise<Buffer> {
     // Usar comando edge-tts via CLI
     const tempFile = path.join(os.tmpdir(), `tts-${Date.now()}.mp3`)
     
-    const voice = request.language === 'pt-BR' || !request.language
-      ? 'pt-BR-AntonioNeural'
-      : 'en-US-ChristopherNeural'
+    // Priorizar voiceId direto, depois voice (que pode ser preset), depois default
+    let voice: string
+    if (request.voiceId && request.voiceId.includes('Neural')) {
+      // Se voiceId é um nome de voz Edge TTS direto (ex: pt-BR-FranciscaNeural)
+      voice = request.voiceId
+    } else if (request.voice && request.voice.includes('Neural')) {
+      voice = request.voice
+    } else if (request.voiceId) {
+      // Pode ser um preset NR — resolver para ID real
+      const resolved = this.resolveVoiceId(request.voiceId)
+      // Se o resolved parece ser Edge TTS (contém Neural), usar diretamente
+      voice = resolved.includes('Neural') ? resolved : 'pt-BR-AntonioNeural'
+    } else {
+      voice = request.language === 'pt-BR' || !request.language
+        ? 'pt-BR-AntonioNeural'
+        : 'en-US-ChristopherNeural'
+    }
 
     const { exec } = await import('child_process')
     const { promisify } = await import('util')

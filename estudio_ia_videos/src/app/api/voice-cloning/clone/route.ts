@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
         // Tenta buscar usuário atual se houver auth (aqui assumindo sistema sem auth no request por enquanto ou mock user)
         // Em produção real, pegariamos session.user.id
         
-        const voiceProfile = await prisma.voice_profiles.create({
+        const voiceProfile = await (prisma as any).voice_profiles.create({
             data: {
                 name: cloneResponse.voice_id ? name : `Clone - ${name}`, // Fallback name logic
                 display_name: name,
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
                 sample_audio_url: 'https://api.elevenlabs.io/v1/voices/' + cloneResponse.voice_id, // Link para API como ref
                 training_data_url: cloneResponse.voice_id, // Store ElevenLabs voice_id here
             }
-        }).catch(err => {
+        }).catch((err: unknown) => {
             logger.error('Erro ao salvar voice_profile no banco local', err);
             // Não falha a requisição se salvou na ElevenLabs
         });

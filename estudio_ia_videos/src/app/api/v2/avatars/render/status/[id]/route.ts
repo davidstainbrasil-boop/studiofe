@@ -86,9 +86,9 @@ export async function GET(
     // Buscar informações do avatar do Supabase (já que não está no Prisma types)
     // Cast 'avatar_models' to any to avoid literal type check error if table not in generated types
     const { data: avatarData } = await supabase
-      .from('avatar_models' as never)
+      .from('avatar_models')
       .select('id, name, display_name, category')
-      .eq('id', job.avatarModelId)
+      .eq('id', job.avatarModelId as string)
       .single();
     
     // Safety check for avatarData

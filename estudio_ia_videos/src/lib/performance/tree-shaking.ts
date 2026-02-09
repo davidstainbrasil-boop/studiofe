@@ -127,7 +127,7 @@ export const deadCodeElimination = {
    */
   debugLog: (...args: unknown[]): void => {
     if (process.env.NODE_ENV === 'development') {
-      logger.info(...args);
+      logger.info(args.map(String).join(' '));
     }
     // Em produção, este código será completamente removido
   },

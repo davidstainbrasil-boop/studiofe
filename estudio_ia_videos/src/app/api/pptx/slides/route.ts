@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import type { Json } from '@lib/supabase/database.types'
 import { getSupabaseForRequest } from '@lib/supabase/server'
 import { z } from 'zod'
 import { logger } from '@lib/logger'
@@ -201,10 +202,8 @@ export async function POST(request: NextRequest) {
       .from('pptx_slides')
       .insert({
         ...validatedData,
-        transition_type: validatedData.transitionType,
-        thumbnail_url: validatedData.thumbnailUrl,
-        properties: validatedData.properties as Record<string, unknown>
-      })
+        properties: validatedData.properties as unknown as Json
+      } as never)
       .select()
       .single()
 

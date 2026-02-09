@@ -92,12 +92,12 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    const avatars = await prisma.avatar_models.findMany({
+    const avatars = (await prisma.avatar_models.findMany({
         where: whereClause as never,
         skip: (page - 1) * limit,
         take: limit,
-        orderBy: { updated_at: 'desc' } // Ordenar por mais recente
-    });
+        orderBy: { updated_at: 'desc' } as any // Ordenar por mais recente
+    })) as any[];
 
     const totalCount = await prisma.avatar_models.count({ where: whereClause as never });
 
@@ -106,11 +106,11 @@ export async function GET(request: NextRequest) {
 
     // Obter categorias e qualidades disponíveis
     // Usando distinct do Prisma
-    const categoriesData = await prisma.avatar_models.findMany({
-      where: { is_active: true },
-      select: { avatar_type: true },
-      distinct: ['avatar_type']
-    })
+    const categoriesData = (await prisma.avatar_models.findMany({
+      where: { is_active: true } as any,
+      select: { avatar_type: true } as any,
+      distinct: ['avatar_type'] as any
+    })) as any[]
 
     const categories = categoriesData.map(item => item.avatar_type).filter(Boolean);
     const qualities = ['standard', 'high', 'ultra']; // Hardcoded pois não está no schema
@@ -217,9 +217,9 @@ export async function POST(request: NextRequest) {
     switch (action) {
       case 'preview': {
         // Buscar avatar usando Prisma
-        const avatarData = await prisma.avatar_models.findFirst({
-          where: { id: avatarId, is_active: true }
-        })
+        const avatarData = (await prisma.avatar_models.findFirst({
+          where: { id: avatarId, is_active: true } as any
+        })) as any
 
         if (!avatarData) {
           return NextResponse.json({
@@ -271,10 +271,9 @@ export async function POST(request: NextRequest) {
         }
 
         // Verificar se o avatar existe usando Prisma
-        const avatarData = await prisma.avatar_models.findFirst({
-          where: { id: avatarId, is_active: true },
-          select: { id: true, name: true, supports_audio2face: true }
-        })
+        const avatarData = (await prisma.avatar_models.findFirst({
+          where: { id: avatarId, is_active: true } as any
+        })) as any
 
         if (!avatarData) {
           return NextResponse.json({

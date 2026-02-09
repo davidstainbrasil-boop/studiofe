@@ -54,7 +54,7 @@ function getEnabledFeatures(): string[] {
   return features;
 }
 
-export async function GET(req: NextRequest): Promise<NextResponse<VersionInfo>> {
+export async function GET(req: NextRequest) {
     const rateLimitBlocked = await applyRateLimit(req, 'system-version-get', 60);
     if (rateLimitBlocked) return rateLimitBlocked;
 

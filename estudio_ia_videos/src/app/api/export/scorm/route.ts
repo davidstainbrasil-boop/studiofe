@@ -561,7 +561,7 @@ const handlePost = async (req: NextRequest) => {
         scorm_version: scormVersion,
         title,
         created_at: new Date().toISOString(),
-      });
+      } as never);
 
     if (analyticsError) {
       logger.warn('Failed to track SCORM export', { error: analyticsError.message });

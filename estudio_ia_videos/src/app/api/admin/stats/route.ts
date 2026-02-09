@@ -115,7 +115,7 @@ async function getBillingStats() {
     });
 
     const userPlans = await prisma.users.groupBy({
-        by: ['plan_tier'] as never, // Cast to never to avoid Enum issues if not fully regenerated
+        by: ['plan_tier'],
         _count: {
             id: true
         }
@@ -126,7 +126,7 @@ async function getBillingStats() {
     return {
         totalRenders: usageAgg._sum.rendersCount || 0,
         totalStorageUsed: usageAgg._sum.storageUsedBytes || 0,
-        plans: (userPlans as PlanGroup[]).reduce((acc: Record<string, number>, curr: PlanGroup) => {
+        plans: (userPlans as unknown as PlanGroup[]).reduce((acc: Record<string, number>, curr: PlanGroup) => {
             acc[curr.plan_tier || 'free'] = curr._count.id;
             return acc;
         }, {} as Record<string, number>)

@@ -104,7 +104,7 @@ export function UserActivityLog({ userId, limit = 20, showFilters = false }: Use
                         {formatEventType(event.event_type)}
                       </p>
                       <span className="text-xs text-muted-foreground">
-                        {formatDistanceToNow(new Date(event.created_at), { addSuffix: true, locale: ptBR })}
+                        {event.created_at ? formatDistanceToNow(new Date(event.created_at), { addSuffix: true, locale: ptBR }) : 'Agora'}
                       </span>
                     </div>
                     <p className="text-xs text-muted-foreground line-clamp-2">

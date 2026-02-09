@@ -38,7 +38,7 @@ export class TemplateApplier {
         };
     } else {
         // Try Generic Templates
-        const genTemplate = await prisma.templates.findUnique({ where: { id: templateId } });
+        const genTemplate: any = await prisma.nr_templates.findUnique({ where: { id: templateId } });
         if (genTemplate) {
              const metadata = genTemplate.metadata as any || {};
              const settings = genTemplate.settings as any || {};

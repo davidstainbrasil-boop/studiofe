@@ -4,6 +4,7 @@ import { getSupabaseForRequest } from '@lib/supabase/server'
 import { z } from 'zod'
 import { logger } from '@lib/logger';
 import { applyRateLimit } from '@/lib/rate-limit';
+import type { Json } from '@lib/supabase/database.types';
 
 // Type interfaces for Supabase query results
 interface ProjectPermissions {
@@ -290,14 +291,15 @@ export async function POST(request: NextRequest) {
       .insert({
         ...insertData,
         track_id: trackId,
-        thumbnail_url: thumbnailUrl,
-        file_size: fileSize,
-        mime_type: mimeType,
+        project_id: projectId,
         properties: {
           ...defaultProperties,
           effects: validatedData.effects || [],
-          transitions: validatedData.transitions || {}
-        } as Record<string, unknown>
+          transitions: validatedData.transitions || {},
+          thumbnail_url: thumbnailUrl,
+          file_size: fileSize,
+          mime_type: mimeType,
+        } as unknown as Json
       })
       .select()
       .single()
@@ -324,7 +326,7 @@ export async function POST(request: NextRequest) {
         description: `Elemento ${element.type || 'desconhecido'} adicionado à timeline`,
         changes: {
           created_element: element
-        } as Record<string, unknown>
+        } as unknown as Json
       })
 
     return NextResponse.json(element, { status: 201 })
@@ -479,7 +481,7 @@ export async function PUT(request: NextRequest) {
               duration: existingElement.duration
             },
             new_data: updateData
-          } as Record<string, unknown>
+          } as unknown as Json
         })
     }
 

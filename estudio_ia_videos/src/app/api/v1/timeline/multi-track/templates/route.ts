@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create template
-    const template = await prisma.timeline_templates.create({
+    const template = await (prisma as any).timeline_templates.create({
       data: {
         id: crypto.randomUUID(),
         name,
@@ -120,7 +120,7 @@ export async function GET(request: NextRequest) {
 
     // Get specific template
     if (templateId) {
-      const template = await prisma.timeline_templates.findUnique({
+      const template = await (prisma as any).timeline_templates.findUnique({
         where: { id: templateId },
         include: {
           users: {
@@ -192,7 +192,7 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    const templates = await prisma.timeline_templates.findMany({
+    const templates = await (prisma as any).timeline_templates.findMany({
       where,
       include: {
         users: {
@@ -211,7 +211,7 @@ export async function GET(request: NextRequest) {
       skip: offset,
     });
 
-    const total = await prisma.timeline_templates.count({ where });
+    const total = await (prisma as any).timeline_templates.count({ where });
 
     return NextResponse.json({
       success: true,
@@ -282,7 +282,7 @@ export async function PUT(request: NextRequest) {
     logger.info(`📋 Aplicando template ${templateId} ao projeto ${projectId}...`, { component: 'API: v1/timeline/multi-track/templates' })
 
     // Get template
-    const template = await prisma.timeline_templates.findUnique({
+    const template = await (prisma as any).timeline_templates.findUnique({
       where: { id: templateId },
     });
 
@@ -337,7 +337,7 @@ export async function PUT(request: NextRequest) {
     });
 
     // Increment template usage count
-    await prisma.timeline_templates.update({
+    await (prisma as any).timeline_templates.update({
       where: { id: templateId },
       data: {
         usageCount: { increment: 1 },
@@ -394,7 +394,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Get template to check ownership
-    const template = await prisma.timeline_templates.findUnique({
+    const template = await (prisma as any).timeline_templates.findUnique({
       where: { id: templateId },
     });
 
@@ -413,7 +413,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Delete template
-    await prisma.timeline_templates.delete({
+    await (prisma as any).timeline_templates.delete({
       where: { id: templateId },
     });
 

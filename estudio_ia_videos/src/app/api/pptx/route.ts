@@ -8,6 +8,7 @@ import { getSupabaseForRequest } from '@lib/supabase/server';
 import { createClient } from '@supabase/supabase-js';
 import { supabaseAdmin } from '@lib/services/server';
 import { logger } from '@lib/logger';
+import type { Json } from '@lib/supabase/database.types';
 import { getRequiredEnv } from '@lib/env';
 import type { CompletePPTXData, CompleteSlideData } from '@lib/pptx/parsers/advanced-parser';
 import { applyRateLimit } from '@/lib/rate-limit';
@@ -84,9 +85,9 @@ export async function POST(request: NextRequest) {
       .insert({
         user_id: user.id,
         name: file.name.replace('.pptx', ''),
-        status: 'processing', // Or 'draft'
+        status: 'draft',
         type: 'pptx',
-        metadata: settings
+        metadata: settings as unknown as Json
       })
       .select()
       .single();
@@ -178,7 +179,7 @@ export async function POST(request: NextRequest) {
     if (slidesToInsert.length > 0) {
       const { error: slidesError } = await supabaseAdmin
         .from('slides')
-        .insert(slidesToInsert as Record<string, unknown>[]);
+        .insert(slidesToInsert as never);
 
       if (slidesError) {
         logger.error('Failed to insert slides:', new Error(slidesError.message), { component: 'API: pptx' });

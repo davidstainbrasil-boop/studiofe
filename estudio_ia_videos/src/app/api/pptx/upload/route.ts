@@ -4,7 +4,7 @@ import { PptxUploader } from '@/lib/storage/pptx-uploader';
 import { rateLimit, getUserTier } from '@/middleware/rate-limiter';
 import { getSupabaseForRequest } from '@lib/supabase/server';
 import { prisma } from '@lib/prisma';
-import { randomUUID } from 'crypto';
+import { Prisma } from '@prisma/client';
 import PPTXProcessorReal from '@lib/pptx/pptx-processor-real';
 import { AppError, getUserMessage, normalizeError } from '@lib/error-handling';
 import { getRequiredEnv } from '@lib/env';
@@ -105,13 +105,10 @@ export async function POST(req: NextRequest) {
         uploadError instanceof Error ? uploadError : new Error(String(uploadError)),
       );
 
-      // Fallback: create a mock upload result
-      result = {
-        success: true,
-        fileId: `fallback-${randomUUID()}`,
-        url: `/uploads/${file.name}`,
-        message: 'Upload completed with fallback',
-      };
+      return NextResponse.json(
+        { error: 'Falha no upload do arquivo PPTX.', code: 'UPLOAD_FAILED' },
+        { status: 500 },
+      );
     }
 
     // Extract Slides Content
@@ -129,27 +126,17 @@ export async function POST(req: NextRequest) {
         extractError instanceof Error ? extractError : new Error(String(extractError)),
       );
 
-      // Create fallback extraction with mock slides
-      extraction = {
-        success: true,
-        slides: [
-          {
-            title: 'Slide 1',
-            content: 'Conteúdo do slide 1',
-            images: [],
-            notes: '',
-          },
-          {
-            title: 'Slide 2',
-            content: 'Conteúdo do slide 2',
-            images: [],
-            notes: '',
-          },
-        ],
-        metadata: { title: file.name, totalSlides: 2 },
-        extractionStats: { processingTime: 1.0 },
-      };
-      logger.info('Using fallback slide content');
+      return NextResponse.json(
+        { error: 'Falha ao extrair conteúdo do PPTX.', code: 'EXTRACT_FAILED' },
+        { status: 500 },
+      );
+    }
+
+    if (!extraction.success || extraction.slides.length === 0) {
+      return NextResponse.json(
+        { error: 'Nenhum slide encontrado no arquivo PPTX.', code: 'EXTRACT_EMPTY' },
+        { status: 400 },
+      );
     }
 
     // Create Project in DB if new
@@ -169,7 +156,7 @@ export async function POST(req: NextRequest) {
             metadata: {
               created_via: 'upload_api',
               original_filename: file.name,
-              extraction_stats: extraction.extractionStats as Record<string, unknown>,
+              extraction_stats: extraction.extractionStats as unknown as Prisma.InputJsonValue,
             },
           },
         });
@@ -225,7 +212,7 @@ export async function POST(req: NextRequest) {
         // Inserir novos slides
         const { error: insertError, data: insertedSlides } = await supabaseAdmin
           .from('slides')
-          .insert(slidesToInsert as Record<string, unknown>[])
+          .insert(slidesToInsert as never)
           .select();
 
         if (insertError) {

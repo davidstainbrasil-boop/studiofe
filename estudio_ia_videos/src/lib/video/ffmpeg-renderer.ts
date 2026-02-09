@@ -11,6 +11,9 @@ import { join } from 'path';
 import { randomUUID } from 'crypto';
 import { PIPELINE_TIMEOUTS } from '../config/timeout-config';
 import { logger } from '@/lib/logger';
+import { pipeline } from 'stream/promises';
+import { createWriteStream } from 'fs';
+import { Readable } from 'stream';
 
 const execAsync = promisify(exec);
 
@@ -80,22 +83,68 @@ async function ensureDirectories() {
 }
 
 /**
+ * Downloads an HTTP image to a local file. Returns local path or null on failure.
+ */
+async function downloadImageToLocal(url: string, destPath: string): Promise<string | null> {
+  try {
+    if (url.startsWith('/') && !url.startsWith('//')) {
+      const localPath = join(process.cwd(), 'public', url);
+      if (existsSync(localPath)) return localPath;
+      return null;
+    }
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      const response = await fetch(url);
+      if (!response.ok || !response.body) return null;
+      const nodeStream = Readable.fromWeb(response.body as import('stream/web').ReadableStream);
+      await pipeline(nodeStream, createWriteStream(destPath));
+      return destPath;
+    }
+    return existsSync(url) ? url : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Gera uma imagem de slide usando ImageMagick/convert
+ * Se backgroundImage existir, usa a imagem real do PPTX como fundo.
  */
 async function generateSlideImage(
   slide: SlideData,
   outputPath: string,
   config: RenderConfig
 ): Promise<boolean> {
+  const { width, height } = config;
+
+  // 1. Se o slide tem backgroundImage real, usar como base
+  if (slide.backgroundImage) {
+    const bgImagePath = join(
+      outputPath.replace(/[^/]+$/, ''),
+      `bg_${slide.id || Date.now()}.png`
+    );
+    const localBgPath = await downloadImageToLocal(slide.backgroundImage, bgImagePath);
+
+    if (localBgPath) {
+      try {
+        // Resize/crop the background image to canvas size and output as slide PNG
+        const command = `ffmpeg -y -i '${localBgPath}' -vf "scale=${width}:${height}:force_original_aspect_ratio=decrease,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2:color=black" -frames:v 1 '${outputPath}'`;
+        await execAsync(command, { timeout: 30000 });
+        if (existsSync(outputPath)) {
+          logger.info('[Render] Used real slide background image', { slideId: slide.id });
+          return true;
+        }
+      } catch (bgError) {
+        logger.warn('[Render] Failed to use background image, falling back to drawtext', { error: String(bgError) });
+      }
+    }
+  }
+
+  // 2. Fallback: gerar imagem com texto via ImageMagick
   try {
-    const { width, height } = config;
     const bgColor = slide.backgroundColor || '#1a1a2e';
-    
-    // Texto formatado
     const title = slide.title.replace(/'/g, "'\\''").substring(0, 100);
     const content = slide.content.replace(/'/g, "'\\''").substring(0, 500);
 
-    // Usar convert do ImageMagick para criar imagem
     const command = `convert -size ${width}x${height} xc:'${bgColor}' \
       -gravity North -pointsize 72 -fill white -font DejaVu-Sans-Bold \
       -annotate +0+100 '${title}' \
@@ -106,9 +155,7 @@ async function generateSlideImage(
     await execAsync(command, { timeout: 30000 });
     return existsSync(outputPath);
   } catch (error) {
-    logger.warn(`[Render] Erro ao gerar imagem do slide, usando fallback:`, error);
-    // Fallback: criar imagem simples com FFmpeg
-    const { width, height } = config;
+    logger.warn(`[Render] Erro ao gerar imagem do slide, usando fallback FFmpeg:`, error);
     const bgColor = slide.backgroundColor || '#1a1a2e';
     const hexColor = bgColor.replace('#', '');
     
@@ -271,14 +318,35 @@ export async function renderVideo(
     const hasAnyAvatar = slides.some((s) => s.avatarVideoPath);
     const mergedPip = { ...DEFAULT_PIP, ...pipConfig };
 
-    // Resolve per-slide audio paths
-    const resolveAudioPath = (audioUrl?: string): string | null => {
+    // Resolve per-slide audio paths (supports HTTP URLs by downloading to local temp)
+    const resolveAudioPath = async (audioUrl: string | undefined, jobDirPath: string, index: number): Promise<string | null> => {
       if (!audioUrl) return null;
-      if (audioUrl.startsWith('/')) {
+      // Local path relative to public/
+      if (audioUrl.startsWith('/') && !audioUrl.startsWith('//')) {
         const localPath = join(process.cwd(), 'public', audioUrl);
         return existsSync(localPath) ? localPath : null;
       }
-      return null;
+      // HTTP(S) URL — download to jobDir
+      if (audioUrl.startsWith('http://') || audioUrl.startsWith('https://')) {
+        try {
+          const ext = audioUrl.includes('.wav') ? '.wav' : '.mp3';
+          const localPath = join(jobDirPath, `audio_${index.toString().padStart(3, '0')}${ext}`);
+          const response = await fetch(audioUrl);
+          if (!response.ok || !response.body) {
+            logger.warn('[Render] Failed to download audio URL', { audioUrl, status: response.status });
+            return null;
+          }
+          const nodeStream = Readable.fromWeb(response.body as import('stream/web').ReadableStream);
+          await pipeline(nodeStream, createWriteStream(localPath));
+          logger.info('[Render] Downloaded audio to local', { audioUrl, localPath });
+          return localPath;
+        } catch (dlError) {
+          logger.warn('[Render] Audio download error', { audioUrl, error: String(dlError) });
+          return null;
+        }
+      }
+      // Absolute local path
+      return existsSync(audioUrl) ? audioUrl : null;
     };
 
     // 4. Renderizar vídeo final
@@ -295,7 +363,7 @@ export async function renderVideo(
       for (let i = 0; i < slides.length; i++) {
         const slide = slides[i];
         const segmentPath = join(jobDir, `segment_${i.toString().padStart(3, '0')}.mp4`);
-        const slideAudioPath = resolveAudioPath(slide.audioUrl);
+        const slideAudioPath = await resolveAudioPath(slide.audioUrl, jobDir, i);
 
         if (slide.avatarVideoPath && existsSync(slide.avatarVideoPath)) {
           // Render slide + avatar PIP
@@ -377,11 +445,9 @@ export async function renderVideo(
 
         for (let i = 0; i < audioUrls.length; i++) {
           const audioUrl = audioUrls[i]!;
-          if (audioUrl.startsWith('/')) {
-            const localAudioPath = join(process.cwd(), 'public', audioUrl);
-            if (existsSync(localAudioPath)) {
-              audioPaths.push(localAudioPath);
-            }
+          const resolved = await resolveAudioPath(audioUrl, jobDir, 1000 + i);
+          if (resolved) {
+            audioPaths.push(resolved);
           }
         }
 

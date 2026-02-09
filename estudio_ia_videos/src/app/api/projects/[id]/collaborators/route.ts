@@ -102,7 +102,7 @@ export async function GET(
       )
     }
 
-    const collaboratorRecords = (collaboratorsData || []) as CollaboratorRecord[]
+    const collaboratorRecords = (collaboratorsData || []) as unknown as CollaboratorRecord[]
 
     // Buscar dados dos usuários colaboradores
     const collaboratorUserIds = collaboratorRecords.map((c) => c.user_id)

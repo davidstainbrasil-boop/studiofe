@@ -152,8 +152,12 @@ export async function PUT(
     }
 
     // Type the avatar with joined project for PUT
-    type AvatarWithProjectPut = typeof avatarData & {
+    type AvatarWithProjectPut = Record<string, unknown> & {
+      name: string;
       projectId: string | null;
+      ready_player_me_url?: string;
+      properties?: Record<string, unknown>;
+      voice_settings?: Record<string, unknown>;
       projects: { owner_id: string; collaborators: string[] | null } | null;
     };
     const avatar = avatarData as unknown as AvatarWithProjectPut;
@@ -241,7 +245,7 @@ export async function PUT(
     // Atualizar avatar
     const { data: updatedAvatar, error: updateError } = await supabase
       .from('avatars')
-      .update(updateData as Record<string, unknown>)
+      .update(updateData as unknown as Record<string, unknown>)
       .eq('id', avatarId)
       .select()
       .single()

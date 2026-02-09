@@ -83,17 +83,18 @@ export async function getServerAuth(): Promise<UnifiedSession | null> {
   }
 
   // 3. Em ambiente de teste, verificar se há token de teste
-  console.log('Debug auth check:', {
+  logger.debug('Auth check env', {
     NODE_ENV: process.env.NODE_ENV,
     E2E_TEST: process.env.E2E_TEST,
-    E2E_TEST_MODE: process.env.E2E_TEST_MODE
+    E2E_TEST_MODE: process.env.E2E_TEST_MODE,
+    component: 'unified-session',
   });
   
   if (process.env.NODE_ENV === 'test' && process.env.E2E_TEST === 'true') {
     const testToken = process.env.E2E_TEST_TOKEN;
     if (testToken) {
       // Criar usuário de teste para testes
-      console.log('Using test token authentication');
+      logger.debug('Using test token authentication', { component: 'unified-session' });
       return {
         user: {
           id: 'test-user-id',

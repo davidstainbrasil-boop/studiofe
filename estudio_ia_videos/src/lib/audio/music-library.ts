@@ -74,7 +74,13 @@ export interface MusicPlaylist {
 // Default Music Library
 // =============================================================================
 
-// Curated list of royalty-free tracks suitable for NR training videos
+// Curated catalog of royalty-free tracks suitable for NR training videos.
+// IMPORTANT: Local MP3 files were placeholder sine tones (identical 3.03s).
+// Removed in compliance with AGENTS.md §2.3 (no mocks in production).
+// To enable background music use one of:
+//   A) Set PIXABAY_API_KEY and use ExtendedMusicLibrary for real Pixabay audio
+//   B) Upload real licensed MP3s to public/audio/library/ matching the filenames
+//   C) Move real assets to Supabase Storage and replace URLs below
 const DEFAULT_TRACKS: MusicTrack[] = [
   // Corporate/Training
   {
@@ -85,8 +91,8 @@ const DEFAULT_TRACKS: MusicTrack[] = [
     mood: ['professional', 'inspiring'],
     duration: 180,
     bpm: 110,
-    url: '/audio/library/corporate-success.mp3',
-    previewUrl: '/audio/library/previews/corporate-success-preview.mp3',
+    url: '',
+    previewUrl: '',
     license: 'royalty-free',
     tags: ['business', 'presentation', 'success', 'achievement'],
     isLoop: true,
@@ -99,7 +105,7 @@ const DEFAULT_TRACKS: MusicTrack[] = [
     mood: ['professional', 'modern'],
     duration: 150,
     bpm: 100,
-    url: '/audio/library/professional-edge.mp3',
+    url: '',
     license: 'royalty-free',
     tags: ['corporate', 'business', 'clean', 'minimal'],
     isLoop: true,
@@ -112,7 +118,7 @@ const DEFAULT_TRACKS: MusicTrack[] = [
     mood: ['friendly', 'calm'],
     duration: 210,
     bpm: 90,
-    url: '/audio/library/learning-journey.mp3',
+    url: '',
     license: 'royalty-free',
     tags: ['education', 'learning', 'training', 'e-learning'],
     isLoop: true,
@@ -125,7 +131,7 @@ const DEFAULT_TRACKS: MusicTrack[] = [
     mood: ['serious', 'professional'],
     duration: 180,
     bpm: 85,
-    url: '/audio/library/safety-first.mp3',
+    url: '',
     license: 'royalty-free',
     tags: ['safety', 'serious', 'attention', 'important'],
     isLoop: true,
@@ -139,7 +145,7 @@ const DEFAULT_TRACKS: MusicTrack[] = [
     mood: ['inspiring', 'energetic'],
     duration: 200,
     bpm: 120,
-    url: '/audio/library/rise-up.mp3',
+    url: '',
     license: 'royalty-free',
     tags: ['motivation', 'inspiring', 'uplifting', 'achievement'],
     isLoop: false,
@@ -152,7 +158,7 @@ const DEFAULT_TRACKS: MusicTrack[] = [
     mood: ['inspiring', 'modern'],
     duration: 240,
     bpm: 115,
-    url: '/audio/library/new-horizons.mp3',
+    url: '',
     license: 'royalty-free',
     tags: ['future', 'innovation', 'progress', 'growth'],
     isLoop: true,
@@ -166,7 +172,7 @@ const DEFAULT_TRACKS: MusicTrack[] = [
     mood: ['calm', 'minimal'],
     duration: 300,
     bpm: 70,
-    url: '/audio/library/soft-focus.mp3',
+    url: '',
     license: 'royalty-free',
     tags: ['background', 'ambient', 'subtle', 'peaceful'],
     isLoop: true,
@@ -179,7 +185,7 @@ const DEFAULT_TRACKS: MusicTrack[] = [
     mood: ['calm', 'professional'],
     duration: 360,
     bpm: 60,
-    url: '/audio/library/concentration.mp3',
+    url: '',
     license: 'royalty-free',
     tags: ['focus', 'study', 'concentration', 'work'],
     isLoop: true,
@@ -193,7 +199,7 @@ const DEFAULT_TRACKS: MusicTrack[] = [
     mood: ['modern', 'energetic'],
     duration: 180,
     bpm: 125,
-    url: '/audio/library/digital-future.mp3',
+    url: '',
     license: 'royalty-free',
     tags: ['technology', 'digital', 'innovation', 'tech'],
     isLoop: true,
@@ -206,7 +212,7 @@ const DEFAULT_TRACKS: MusicTrack[] = [
     mood: ['modern', 'inspiring'],
     duration: 210,
     bpm: 118,
-    url: '/audio/library/innovation-lab.mp3',
+    url: '',
     license: 'royalty-free',
     tags: ['science', 'research', 'discovery', 'progress'],
     isLoop: true,
@@ -220,7 +226,7 @@ const DEFAULT_TRACKS: MusicTrack[] = [
     mood: ['dramatic', 'serious'],
     duration: 240,
     bpm: 95,
-    url: '/audio/library/story-unfolds.mp3',
+    url: '',
     license: 'royalty-free',
     tags: ['documentary', 'storytelling', 'narrative', 'drama'],
     isLoop: false,
@@ -233,7 +239,7 @@ const DEFAULT_TRACKS: MusicTrack[] = [
     mood: ['serious', 'modern'],
     duration: 200,
     bpm: 105,
-    url: '/audio/library/industrial-pulse.mp3',
+    url: '',
     license: 'royalty-free',
     tags: ['industry', 'factory', 'work', 'machinery'],
     isLoop: true,
@@ -247,7 +253,7 @@ const DEFAULT_TRACKS: MusicTrack[] = [
     mood: ['friendly', 'energetic'],
     duration: 180,
     bpm: 130,
-    url: '/audio/library/bright-day.mp3',
+    url: '',
     license: 'royalty-free',
     tags: ['happy', 'positive', 'cheerful', 'bright'],
     isLoop: true,
@@ -260,7 +266,7 @@ const DEFAULT_TRACKS: MusicTrack[] = [
     mood: ['inspiring', 'friendly'],
     duration: 195,
     bpm: 122,
-    url: '/audio/library/team-spirit.mp3',
+    url: '',
     license: 'royalty-free',
     tags: ['teamwork', 'collaboration', 'together', 'unity'],
     isLoop: true,
@@ -274,7 +280,7 @@ const DEFAULT_TRACKS: MusicTrack[] = [
     mood: ['calm', 'minimal'],
     duration: 300,
     bpm: 65,
-    url: '/audio/library/peaceful-mind.mp3',
+    url: '',
     license: 'royalty-free',
     tags: ['relaxing', 'peaceful', 'serene', 'quiet'],
     isLoop: true,
@@ -287,7 +293,7 @@ const DEFAULT_TRACKS: MusicTrack[] = [
     mood: ['calm', 'classic'],
     duration: 270,
     bpm: 75,
-    url: '/audio/library/gentle-flow.mp3',
+    url: '',
     license: 'royalty-free',
     tags: ['soft', 'gentle', 'flowing', 'smooth'],
     isLoop: true,
@@ -350,10 +356,31 @@ export class MusicLibrary {
   }
 
   /**
-   * Get track by ID
+   * Get track by ID.
+   * Also maps frontend IDs (e.g. 'corporate-1') to library IDs (e.g. 'corp-01').
    */
   getTrack(id: string): MusicTrack | undefined {
-    return this.tracks.get(id);
+    const direct = this.tracks.get(id);
+    if (direct) return direct;
+
+    // Map frontend wizard IDs to actual library tracks
+    const aliasMap: Record<string, string> = {
+      'corporate-1': 'corp-01',
+      'corporate-2': 'corp-02',
+      'upbeat-1': 'uplift-01',
+      'upbeat-2': 'uplift-02',
+      'calm-1': 'amb-01',
+      'calm-2': 'amb-02',
+      'inspiring-1': 'motiv-01',
+      'inspiring-2': 'motiv-02',
+      'tech-1': 'tech-01',
+      'tech-2': 'tech-02',
+      'training-1': 'train-01',
+      'training-2': 'train-02',
+    };
+
+    const resolved = aliasMap[id];
+    return resolved ? this.tracks.get(resolved) : undefined;
   }
 
   /**

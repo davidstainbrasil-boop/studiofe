@@ -174,7 +174,7 @@ async function getHandler(req: NextRequest) {
           label: reportData.period.label,
           status: 'success',
           ...reportData
-        } as Prisma.InputJsonValue
+        } as unknown as Prisma.InputJsonValue
       }
     });
 

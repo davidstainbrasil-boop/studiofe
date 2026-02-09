@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
 
     // Verificar se avatar existe no Supabase (avatar_models pode não existir no schema tipado)
     const { data: avatar, error: avatarError } = await (supabaseClient
-      .from('avatar_models' as never) as ReturnType<typeof supabaseClient.from>)
+      .from('avatar_models'))
       .select('*')
       .eq('id', avatarId)
       .eq("is_active", true)
@@ -257,7 +257,7 @@ export async function POST(request: NextRequest) {
 
          // Look up source image for this D-ID avatar
          const { data: avatarRecord } = await (supabaseClient
-            .from('avatar_models' as never) as ReturnType<typeof supabaseClient.from>)
+            .from('avatar_models'))
             .select('imageUrl')
             .eq('id', avatarId)
             .single();

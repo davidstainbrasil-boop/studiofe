@@ -30,11 +30,11 @@ export async function GET(req: NextRequest) {
     // Fetch aggregated stats from database
     // Using 'never' cast to avoid Supabase type issues with select options
     const projectsResult = await supabase
-      .from('projects' as never)
+      .from('projects')
       .select('id', { count: 'exact', head: true })
     
     const usersResult = await supabase
-      .from('profiles' as never)
+      .from('users')
       .select('id', { count: 'exact', head: true })
     
     const renderJobsResult = await supabase
@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
     
     // Calculate render stats
     const renderJobs = renderJobsResult.data || []
-    const completedJobs = renderJobs.filter((j: { status: string }) => j.status === 'completed')
+    const completedJobs = renderJobs.filter((j) => j.status === 'completed')
     // Estimate hours based on completed jobs (average 5 min per job)
     const totalRenderHours = Math.round(completedJobs.length * 5 / 60)
     

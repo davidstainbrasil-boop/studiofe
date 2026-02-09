@@ -12,7 +12,7 @@ import { addVideoJob } from '@lib/queue/render-queue'
 import { randomUUID } from 'crypto'
 import { logger } from '@lib/logger'
 import { applyRateLimit } from '@/lib/rate-limit'
-import type { JobStatus } from '@prisma/client'
+import type { JobStatus, Prisma } from '@prisma/client'
 import { getServerAuth } from '@lib/auth/unified-session';
 
 // Validation schemas
@@ -234,7 +234,7 @@ export async function POST(request: NextRequest) {
             job_id: createdJob.id,
             type: jobData.type,
             settings: renderJobData
-          } as Record<string, unknown>
+          } as unknown as Prisma.InputJsonValue
         }
       })
     } catch (historyError) {

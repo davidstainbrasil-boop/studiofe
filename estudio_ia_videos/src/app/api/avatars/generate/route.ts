@@ -159,6 +159,9 @@ class Avatar3DGenerator {
       })
 
       // 1. Obter modelo 3D do Ready Player Me
+      if (!avatarData.readyPlayerMeUrl) {
+        throw new Error('Avatar readyPlayerMeUrl is not configured');
+      }
       const modelResponse = await fetch(avatarData.readyPlayerMeUrl, {
         headers: { 'Accept': 'model/gltf-binary' }
       })

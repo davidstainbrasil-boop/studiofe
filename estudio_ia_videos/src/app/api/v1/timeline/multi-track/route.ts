@@ -9,6 +9,7 @@ import { AnalyticsTracker } from '@lib/analytics/analytics-tracker';
 import { logger } from '@lib/logger';
 import { toJsonValue } from '@lib/prisma-helpers';
 import { applyRateLimit } from '@/lib/rate-limit';
+import type { Json } from '@lib/supabase/database.types';
 
 // Types for Timeline structures
 interface Keyframe {
@@ -165,7 +166,7 @@ export async function POST(request: NextRequest) {
             .from('timelines')
             .update({
                 tracks: tracks,
-                settings: toJsonValue(settings),
+                settings: toJsonValue(settings) as unknown as Json,
                 total_duration: Math.ceil(totalDuration || 0),
                 version: newVersion,
                 updated_at: new Date().toISOString()
@@ -199,8 +200,8 @@ export async function POST(request: NextRequest) {
             .from('timelines')
             .insert({
                 project_id: projectId,
-                tracks: tracks,
-                settings: toJsonValue(settings),
+                tracks: tracks as unknown as Json,
+                settings: toJsonValue(settings) as unknown as Json,
                 total_duration: Math.ceil(totalDuration || 0),
                 version: 1
             })

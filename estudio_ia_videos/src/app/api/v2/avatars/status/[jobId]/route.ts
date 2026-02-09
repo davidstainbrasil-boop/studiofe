@@ -86,7 +86,7 @@ export async function GET(
     }
 
     // 5. Calculate duration
-    const startTime = new Date(job.created_at).getTime()
+    const startTime = new Date(job.created_at!).getTime()
     const endTime = job.completed_at ? new Date(job.completed_at).getTime() : Date.now()
     const duration = endTime - startTime
 

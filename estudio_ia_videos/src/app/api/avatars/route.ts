@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const project = projectData as { owner_id: string; collaborators: string[] | null }
+    const project = projectData as unknown as { owner_id: string; collaborators: string[] | null }
 
     const hasPermission = project.owner_id === user.id || 
                          project.collaborators?.includes(user.id)
@@ -194,7 +194,7 @@ export async function POST(request: NextRequest) {
         modelUrl: avatarData.modelUrl,
         thumbnailUrl: avatarData.thumbnailUrl,
         metadata: avatarData.metadata
-      } as Record<string, unknown>)
+      } as never)
       .select()
       .single()
 
@@ -314,7 +314,7 @@ export async function PUT(request: NextRequest) {
       )
     }
 
-    const project = projectData as { owner_id: string; collaborators: string[] | null; settings: Record<string, unknown> | null }
+    const project = projectData as unknown as { owner_id: string; collaborators: string[] | null; settings: Record<string, unknown> | null }
 
     const hasPermission = project.owner_id === user.id || 
                          project.collaborators?.includes(user.id)
@@ -338,7 +338,7 @@ export async function PUT(request: NextRequest) {
 
     const { error: updateError } = await supabase
       .from('projects')
-      .update({ settings: updatedSettings })
+      .update({ settings: updatedSettings } as never)
       .eq('id', project_id)
 
     if (updateError) {

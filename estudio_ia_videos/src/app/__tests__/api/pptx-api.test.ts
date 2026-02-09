@@ -12,9 +12,11 @@ jest.mock('@/lib/storage/pptx-uploader');
 jest.mock('@/lib/pptx/pptx-processor-real', () => ({
   extract: jest.fn().mockResolvedValue({
     success: true,
-    slides: [],
-    metadata: { title: 'Test Project' },
-    extractionStats: {}
+    slides: [
+      { slideNumber: 1, title: 'Slide 1', content: 'Content 1', notes: '', images: [], duration: 5, layout: 'default', animations: [], shapes: 0, textBlocks: 1 },
+    ],
+    metadata: { title: 'Test Project', author: '', totalSlides: 1, application: '', dimensions: { width: 1920, height: 1080 } },
+    extractionStats: { textBlocks: 1, images: 0, shapes: 0, charts: 0, tables: 0 }
   })
 }));
 
@@ -49,8 +51,10 @@ jest.mock('@supabase/supabase-js', () => ({
     from: jest.fn(() => ({
       delete: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
-      then: jest.fn().mockImplementation((cb) => cb()),
-      insert: jest.fn().mockResolvedValue({ error: null })
+      then: jest.fn().mockImplementation((cb: () => void) => cb()),
+      insert: jest.fn().mockReturnValue({
+        select: jest.fn().mockResolvedValue({ error: null, data: [] })
+      })
     }))
   }))
 }));

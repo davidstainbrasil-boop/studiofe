@@ -426,14 +426,14 @@ async function handleGetDashboard(): Promise<NextResponse> {
 async function handleGetStats(): Promise<NextResponse> {
   // Buscar estatísticas do banco (system_stats e tts_jobs podem não existir no schema)
   const { data: systemStats } = await (supabase
-    .from('system_stats' as never) as ReturnType<typeof supabase.from>)
+    .from('system_stats'))
     .select('*')
     .order("createdAt", { ascending: false })
     .limit(1)
     .single()
 
   const { data: ttsStats } = await (supabase
-    .from('tts_jobs' as never) as ReturnType<typeof supabase.from>)
+    .from('tts_jobs'))
     .select('status, engine, processing_time')
     .gte("createdAt", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
 

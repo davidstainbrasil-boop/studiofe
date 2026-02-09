@@ -10,6 +10,165 @@ datasource db {
   schemas   = ["auth", "public"]
 }
 
+// ==================== Public Schema Enums ====================
+
+enum project_type {
+  pptx
+  template_nr   @map("template-nr")
+  talking_photo @map("talking-photo")
+  custom
+  ai_generated  @map("ai-generated")
+
+  @@schema("public")
+}
+
+enum project_status {
+  draft
+  in_progress @map("in-progress")
+  review
+  completed
+  archived
+  error
+
+  @@schema("public")
+}
+
+enum JobStatus {
+  pending
+  processing
+  completed
+  failed
+  cancelled
+  queued
+
+  @@schema("public")
+}
+
+enum PriorityLevel {
+  low
+  medium
+  high
+  urgent
+
+  @@schema("public")
+}
+
+enum video_quality {
+  p360
+  p480
+  p720
+  p1080
+  p1440
+  p2160
+
+  @@schema("public")
+}
+
+enum render_status {
+  pending
+  queued
+  processing
+  completed
+  failed
+  cancelled
+
+  @@schema("public")
+}
+
+enum analytics_event_type {
+  project_created
+  project_updated
+  project_deleted
+  project_viewed
+  project_shared
+  project_duplicated
+  version_created
+  collaboration_added
+
+  @@schema("public")
+}
+
+enum collaboration_role {
+  owner
+  editor
+  viewer
+  reviewer
+
+  @@schema("public")
+}
+
+// ==================== Auth Schema Enums ====================
+
+enum aal_level {
+  aal1
+  aal2
+  aal3
+
+  @@schema("auth")
+}
+
+enum code_challenge_method {
+  s256
+  plain
+
+  @@schema("auth")
+}
+
+enum factor_type {
+  totp
+  webauthn
+  phone
+
+  @@schema("auth")
+}
+
+enum factor_status {
+  unverified
+  verified
+
+  @@schema("auth")
+}
+
+enum one_time_token_type {
+  confirmation_token
+  reauthentication_token
+  recovery_token
+  email_change_token_new
+  email_change_token_current
+  phone_change_token
+
+  @@schema("auth")
+}
+
+enum oauth_authorization_status {
+  pending
+  approved
+  revoked
+
+  @@schema("auth")
+}
+
+enum oauth_client_type {
+  public
+  confidential
+
+  @@schema("auth")
+}
+
+enum oauth_registration_type {
+  auto
+  manual
+
+  @@schema("auth")
+}
+
+enum oauth_response_type {
+  code
+  token
+
+  @@schema("auth")
+}
+
 model analytics_events {
   id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId    String?   @map("user_id") @db.Uuid
@@ -28,21 +187,21 @@ model analytics_events {
 }
 
 model webhooks {
-  id                  String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId              String              @map("user_id") @db.Uuid
-  url                 String              @db.Text
-  secret              String              @db.Text
-  events              Json                @default("[]")
-  active              Boolean             @default(true)
-  retryInterval       Int?                @map("retry_interval")
-  totalDeliveries     Int                 @default(0) @map("total_deliveries")
-  successfulDeliveries Int                @default(0) @map("successful_deliveries")
-  failedDeliveries    Int                 @default(0) @map("failed_deliveries")
-  lastDeliveryAt      DateTime?           @map("last_delivery_at") @db.Timestamptz(6)
-  createdAt           DateTime?           @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt           DateTime?           @default(now()) @map("updated_at") @db.Timestamptz(6)
-  deliveries          webhook_deliveries[]
-  users               users               @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id                   String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId               String               @map("user_id") @db.Uuid
+  url                  String               @db.Text
+  secret               String               @db.Text
+  events               Json                 @default("[]")
+  active               Boolean              @default(true)
+  retryInterval        Int?                 @map("retry_interval")
+  totalDeliveries      Int                  @default(0) @map("total_deliveries")
+  successfulDeliveries Int                  @default(0) @map("successful_deliveries")
+  failedDeliveries     Int                  @default(0) @map("failed_deliveries")
+  lastDeliveryAt       DateTime?            @map("last_delivery_at") @db.Timestamptz(6)
+  createdAt            DateTime?            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime?            @default(now()) @map("updated_at") @db.Timestamptz(6)
+  deliveries           webhook_deliveries[]
+  users                users                @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([userId], map: "idx_webhooks_user_id")
   @@index([active], map: "idx_webhooks_active")
@@ -198,7 +357,6 @@ model projects {
   createdAt             DateTime?               @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt             DateTime?               @default(now()) @map("updated_at") @db.Timestamptz(6)
   lastAccessedAt        DateTime?               @default(now()) @map("last_accessed_at") @db.Timestamptz(6)
-  comments              comments[]
   pptx_uploads          pptx_uploads[]
   project_analytics     project_analytics[]
   project_collaborators project_collaborators[]
@@ -293,28 +451,28 @@ model slides {
 }
 
 model assets {
-  id           String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  title        String             @db.VarChar(255)
-  type         String             @db.VarChar(50)
-  url          String             @db.Text
-  thumbnailUrl String?            @map("thumbnail_url")
-  source       String             @db.VarChar(50)
-  category     String?            @db.VarChar(100)
+  id           String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  title        String    @db.VarChar(255)
+  type         String    @db.VarChar(50)
+  url          String    @db.Text
+  thumbnailUrl String?   @map("thumbnail_url")
+  source       String    @db.VarChar(50)
+  category     String?   @db.VarChar(100)
   tags         String[]
-  license      String?            @db.VarChar(50)
+  license      String?   @db.VarChar(50)
   width        Int?
   height       Int?
   duration     Int?
   size         Int?
-  favorites    Int                @default(0)
-  authorName   String?            @map("author_name")
-  authorUrl    String?            @map("author_url")
-  metadata     Json?              @default("{}")
-  createdAt    DateTime?          @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt    DateTime?          @default(now()) @map("updated_at") @db.Timestamptz(6)
-  collectionId String?            @map("collection_id") @db.Uuid
-  
-  collection   asset_collections? @relation(fields: [collectionId], references: [id], onDelete: SetNull)
+  favorites    Int       @default(0)
+  authorName   String?   @map("author_name")
+  authorUrl    String?   @map("author_url")
+  metadata     Json?     @default("{}")
+  createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
+  collectionId String?   @map("collection_id") @db.Uuid
+
+  collection asset_collections? @relation(fields: [collectionId], references: [id], onDelete: SetNull)
 
   @@index([type])
   @@index([source])
@@ -331,58 +489,58 @@ model asset_collections {
   userId      String?   @map("user_id") @db.Uuid
   createdAt   DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
-  
-  assets      assets[]
+
+  assets assets[]
 
   @@schema("public")
 }
 
 model scenes {
-  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  projectId       String    @map("project_id") @db.Uuid
-  orderIndex      Int       @map("order_index")
-  name            String    @default("Nova Cena") @db.VarChar(255)
-  duration        Int       @default(5000)
-  startTime       Int       @default(0) @map("start_time")
+  id         String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId  String @map("project_id") @db.Uuid
+  orderIndex Int    @map("order_index")
+  name       String @default("Nova Cena") @db.VarChar(255)
+  duration   Int    @default(5000)
+  startTime  Int    @default(0) @map("start_time")
 
   // Visual Track
-  backgroundType  String?   @default("color") @map("background_type") @db.VarChar(50)
-  backgroundColor String?   @default("#1a1a1a") @map("background_color") @db.VarChar(50)
-  backgroundImage String?   @map("background_image")
-  backgroundVideo String?   @map("background_video")
-  visualElements  Json?     @default("[]") @map("visual_elements")
+  backgroundType  String? @default("color") @map("background_type") @db.VarChar(50)
+  backgroundColor String? @default("#1a1a1a") @map("background_color") @db.VarChar(50)
+  backgroundImage String? @map("background_image")
+  backgroundVideo String? @map("background_video")
+  visualElements  Json?   @default("[]") @map("visual_elements")
 
   // Avatar Track
-  avatarId        String?   @map("avatar_id") @db.VarChar(255)
-  avatarProvider  String?   @map("avatar_provider") @db.VarChar(50)
-  avatarPosition  Json?     @default("{\"x\": 50, \"y\": 50, \"scale\": 1, \"rotation\": 0}") @map("avatar_position")
-  avatarScript    String?   @map("avatar_script")
-  avatarEmotion   String?   @default("neutral") @map("avatar_emotion") @db.VarChar(50)
-  avatarSettings  Json?     @default("{}") @map("avatar_settings")
+  avatarId       String? @map("avatar_id") @db.VarChar(255)
+  avatarProvider String? @map("avatar_provider") @db.VarChar(50)
+  avatarPosition Json?   @default("{\"x\": 50, \"y\": 50, \"scale\": 1, \"rotation\": 0}") @map("avatar_position")
+  avatarScript   String? @map("avatar_script")
+  avatarEmotion  String? @default("neutral") @map("avatar_emotion") @db.VarChar(50)
+  avatarSettings Json?   @default("{}") @map("avatar_settings")
 
   // Text/Subtitle Track
-  textElements    Json?     @default("[]") @map("text_elements")
-  subtitles       Json?     @default("{}") @map("subtitles")
+  textElements Json? @default("[]") @map("text_elements")
+  subtitles    Json? @default("{}") @map("subtitles")
 
   // Audio Track
-  voiceConfig     Json?     @default("{}") @map("voice_config")
-  backgroundMusic String?   @map("background_music")
-  musicVolume     Float?    @default(0.3) @map("music_volume") @db.Real
-  ducking         Boolean?  @default(true)
-  soundEffects    Json?     @default("[]") @map("sound_effects")
+  voiceConfig     Json?    @default("{}") @map("voice_config")
+  backgroundMusic String?  @map("background_music")
+  musicVolume     Float?   @default(0.3) @map("music_volume") @db.Real
+  ducking         Boolean? @default(true)
+  soundEffects    Json?    @default("[]") @map("sound_effects")
 
   // Animation & Transitions
-  transitionIn    Json?     @default("{\"type\": \"fade\", \"duration\": 500}") @map("transition_in")
-  transitionOut   Json?     @default("{\"type\": \"fade\", \"duration\": 500}") @map("transition_out")
-  animations      Json?     @default("[]")
+  transitionIn  Json? @default("{\"type\": \"fade\", \"duration\": 500}") @map("transition_in")
+  transitionOut Json? @default("{\"type\": \"fade\", \"duration\": 500}") @map("transition_out")
+  animations    Json? @default("[]")
 
   // Metadata
-  thumbnailUrl    String?   @map("thumbnail_url")
-  notes           String?
-  locked          Boolean?  @default(false)
-  version         Int?      @default(1)
-  createdAt       DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt       DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
+  thumbnailUrl String?   @map("thumbnail_url")
+  notes        String?
+  locked       Boolean?  @default(false)
+  version      Int?      @default(1)
+  createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
 
   @@index([projectId], map: "idx_scenes_project_id")
   @@index([projectId, orderIndex], map: "idx_scenes_project_order")
@@ -392,15 +550,15 @@ model scenes {
 }
 
 model timelines {
-  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  projectId     String?   @unique @map("project_id") @db.Uuid
-  tracks        Json?     @default("[]")
-  settings      Json?     @default("{}")
-  totalDuration Int?      @default(0) @map("total_duration")
-  version       Int?      @default(1)
-  createdAt     DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt     DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
-  projects      projects? @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id                 String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId          String?              @unique @map("project_id") @db.Uuid
+  tracks             Json?                @default("[]")
+  settings           Json?                @default("{}")
+  totalDuration      Int?                 @default(0) @map("total_duration")
+  version            Int?                 @default(1)
+  createdAt          DateTime?            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime?            @default(now()) @map("updated_at") @db.Timestamptz(6)
+  projects           projects?            @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   // Relações para novos modelos
   timeline_snapshots timeline_snapshots[]
   timeline_presence  timeline_presence[]
@@ -430,58 +588,58 @@ model user_progress {
 }
 
 model users {
-  id               String             @id @db.Uuid
-  email            String             @unique @db.VarChar(255)
-  name             String?            @db.VarChar(255)
-  avatarUrl        String?            @map("avatar_url")
-  role             String?            @default("user") @db.VarChar(50)
-  createdAt        DateTime?          @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt        DateTime?          @default(now()) @map("updated_at") @db.Timestamptz(6)
-  metadata         Json?              @default("{}")
-  plan_tier        String?            @default("free") @db.VarChar(50)
-  analytics_events analytics_events[]
-  courses          courses[]
-  project_history  project_history[]
-  render_jobs      render_jobs[]
-  transcriptions   transcriptions[]
-  webhooks         webhooks[]
-  user_progress    user_progress[]
-  user_usage       user_usage[]
-  users            auth_users         @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id                   String                 @id @db.Uuid
+  email                String                 @unique @db.VarChar(255)
+  name                 String?                @db.VarChar(255)
+  avatarUrl            String?                @map("avatar_url")
+  role                 String?                @default("user") @db.VarChar(50)
+  createdAt            DateTime?              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime?              @default(now()) @map("updated_at") @db.Timestamptz(6)
+  metadata             Json?                  @default("{}")
+  plan_tier            String?                @default("free") @db.VarChar(50)
+  analytics_events     analytics_events[]
+  courses              courses[]
+  project_history      project_history[]
+  render_jobs          render_jobs[]
+  transcriptions       transcriptions[]
+  webhooks             webhooks[]
+  user_progress        user_progress[]
+  user_usage           user_usage[]
+  users                auth_users             @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   // Relações para novos modelos
-  timeline_templates    timeline_templates[]
-  timeline_snapshots    timeline_snapshots[]
-  timeline_presence     timeline_presence[]
-  timeline_track_locks  timeline_track_locks[]
-  voice_models          voice_models[]
-  voice_clones        voice_clones[]
-  video_exports       video_exports[]
-  generated_videos    generated_videos[]
+  timeline_snapshots   timeline_snapshots[]
+  timeline_presence    timeline_presence[]
+  timeline_track_locks timeline_track_locks[]
+  voice_models         voice_models[]
+  voice_clones         voice_clones[]
+  video_exports        video_exports[]
+  generated_videos     generated_videos[]
+  avatar_models        avatar_models[]
 
   @@index([email], map: "idx_users_email")
   @@schema("public")
 }
 
 model transcriptions {
-  id                        String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId                    String           @map("user_id") @db.Uuid
-  projectId                 String?          @map("project_id") @db.Uuid
-  audioPath                 String?          @map("audio_path")
-  language                  String           @db.VarChar(20)
+  id                        String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId                    String            @map("user_id") @db.Uuid
+  projectId                 String?           @map("project_id") @db.Uuid
+  audioPath                 String?           @map("audio_path")
+  language                  String            @db.VarChar(20)
   duration                  Float?
   confidence                Float?
-  wordCount                 Int?             @map("word_count")
-  segments                  Json             @default("[]")
-  karaokeEnabled            Boolean          @default(false) @map("karaoke_enabled")
-  speakerDiarizationEnabled Boolean          @default(false) @map("speaker_diarization_enabled")
-  srtUrl                    String?          @map("srt_url")
-  vttUrl                    String?          @map("vtt_url")
-  karaokeUrl                String?          @map("karaoke_url")
-  createdAt                 DateTime?        @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt                 DateTime?        @default(now()) @map("updated_at") @db.Timestamptz(6)
+  wordCount                 Int?              @map("word_count")
+  segments                  Json              @default("[]")
+  karaokeEnabled            Boolean           @default(false) @map("karaoke_enabled")
+  speakerDiarizationEnabled Boolean           @default(false) @map("speaker_diarization_enabled")
+  srtUrl                    String?           @map("srt_url")
+  vttUrl                    String?           @map("vtt_url")
+  karaokeUrl                String?           @map("karaoke_url")
+  createdAt                 DateTime?         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                 DateTime?         @default(now()) @map("updated_at") @db.Timestamptz(6)
   subtitle_tracks           subtitle_tracks[]
-  users                     users            @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  projects                  projects?        @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users                     users             @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  projects                  projects?         @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([userId], map: "idx_transcriptions_user_id")
   @@index([projectId], map: "idx_transcriptions_project_id")
@@ -489,15 +647,15 @@ model transcriptions {
 }
 
 model subtitle_tracks {
-  id               String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  transcriptionId  String         @map("transcription_id") @db.Uuid
-  language         String         @db.VarChar(20)
-  segments         Json           @default("[]")
-  srtUrl           String?        @map("srt_url")
-  vttUrl           String?        @map("vtt_url")
-  createdAt        DateTime?      @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt        DateTime?      @default(now()) @map("updated_at") @db.Timestamptz(6)
-  transcriptions   transcriptions @relation(fields: [transcriptionId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  transcriptionId String         @map("transcription_id") @db.Uuid
+  language        String         @db.VarChar(20)
+  segments        Json           @default("[]")
+  srtUrl          String?        @map("srt_url")
+  vttUrl          String?        @map("vtt_url")
+  createdAt       DateTime?      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime?      @default(now()) @map("updated_at") @db.Timestamptz(6)
+  transcriptions  transcriptions @relation(fields: [transcriptionId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([transcriptionId], map: "idx_subtitle_tracks_transcription_id")
   @@schema("public")
@@ -934,8 +1092,6 @@ model auth_users {
   sessions                                                      sessions[]
   avatar_analytics                                              avatar_analytics[]
   avatar_models                                                 avatar_models[]
-  avatar_analytics                                              avatar_analytics[]
-  comments                                                      comments[]
   project_analytics                                             project_analytics[]
   project_collaborators_project_collaborators_invited_byTousers project_collaborators[] @relation("project_collaborators_invited_byTousers")
   project_collaborators_project_collaborators_user_idTousers    project_collaborators[] @relation("project_collaborators_user_idTousers")
@@ -943,12 +1099,10 @@ model auth_users {
   project_tags                                                  project_tags[]
   project_versions_project_versions_created_byTousers           project_versions[]      @relation("project_versions_created_byTousers")
   projects                                                      projects[]
-  templates                                                     templates[]
   user_render_settings                                          user_render_settings?
   user_roles_user_roles_assigned_byTousers                      user_roles[]            @relation("user_roles_assigned_byTousers")
   user_roles_user_roles_user_idTousers                          user_roles[]            @relation("user_roles_user_idTousers")
   users                                                         users?
-  voice_profiles                                                voice_profiles[]
 
   @@index([instance_id])
   @@index([is_anonymous])
@@ -1175,6 +1329,7 @@ model avatar_analytics {
   id              String         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   user_id         String?        @db.Uuid
   avatar_model_id String?        @db.Uuid
+  avatar_id       String?        @db.Uuid
   render_job_id   String?        @db.Uuid
   event_type      String         @db.VarChar(100)
   event_data      Json?
@@ -1183,7 +1338,7 @@ model avatar_analytics {
   session_id      String?        @db.VarChar(255)
   created_at      DateTime?      @default(now()) @db.Timestamptz(6)
   avatar_models   avatar_models? @relation(fields: [avatar_model_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  avatars_3d      avatars_3d?   @relation(fields: [avatar_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  avatars_3d      avatars_3d?    @relation(fields: [avatar_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   render_jobs     render_jobs?   @relation(fields: [render_job_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   users           auth_users?    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
@@ -1195,22 +1350,25 @@ model avatar_analytics {
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model avatar_models {
-  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name        String    @db.VarChar(255)
-  description String?
-  category    String?   @db.VarChar(100)
-  config      Json      @default("{}")
-  tracks      Json?     @default("[]")
-  settings    Json?     @default("{}")
-  metadata    Json?     @default("{}")
-  thumbnailUrl String?  @map("thumbnail_url")
-  totalDuration Int?    @default(0) @map("total_duration")
-  usageCount  Int?      @default(0) @map("usage_count")
-  isPublic    Boolean   @default(false) @map("is_public")
-  userId      String?   @map("user_id") @db.Uuid
-  createdAt   DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
-  users       users?    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id               String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name             String             @db.VarChar(255)
+  description      String?
+  category         String?            @db.VarChar(100)
+  config           Json               @default("{}")
+  tracks           Json?              @default("[]")
+  settings         Json?              @default("{}")
+  metadata         Json?              @default("{}")
+  thumbnailUrl     String?            @map("thumbnail_url")
+  totalDuration    Int?               @default(0) @map("total_duration")
+  usageCount       Int?               @default(0) @map("usage_count")
+  isPublic         Boolean            @default(false) @map("is_public")
+  userId           String?            @map("user_id") @db.Uuid
+  createdAt        DateTime?          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime?          @default(now()) @map("updated_at") @db.Timestamptz(6)
+  users            users?             @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  auth_users       auth_users?        @relation(fields: [auth_usersId], references: [id])
+  auth_usersId     String?            @db.Uuid
+  avatar_analytics avatar_analytics[]
 
   @@index([userId], map: "idx_avatar_models_user_id")
   @@index([category], map: "idx_avatar_models_category")
@@ -1218,24 +1376,25 @@ model avatar_models {
 }
 
 model avatars_3d {
-  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name                String    @db.VarChar(255)
-  slug                String    @unique @db.VarChar(255)
-  category            String    @db.VarChar(50)
-  appearance          Json      @default("{}")
-  modelUrl            String    @map("model_url") @db.VarChar(500)
-  modelType            String    @map("model_type") @default("ready_player_me") @db.VarChar(50)
-  modelQuality        String    @map("model_quality") @default("hd") @db.VarChar(20)
-  animations          Json      @default("{}")
-  blendShapes         Json      @map("blend_shapes") @default("{}")
-  voiceCompatibility   String[]  @map("voice_compatibility") @default([])
-  specializations     String[]  @default([])
-  premium             Boolean   @default(false)
-  isPublic            Boolean   @map("is_public") @default(true)
-  popularityScore     Decimal   @map("popularity_score") @default(0.00) @db.Decimal(3, 2)
-  createdBy           String?   @map("created_by") @db.VarChar(255)
-  createdAt           DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt           DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
+  id                 String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name               String             @db.VarChar(255)
+  slug               String             @unique @db.VarChar(255)
+  category           String             @db.VarChar(50)
+  appearance         Json               @default("{}")
+  modelUrl           String             @map("model_url") @db.VarChar(500)
+  modelType          String             @default("ready_player_me") @map("model_type") @db.VarChar(50)
+  modelQuality       String             @default("hd") @map("model_quality") @db.VarChar(20)
+  animations         Json               @default("{}")
+  blendShapes        Json               @default("{}") @map("blend_shapes")
+  voiceCompatibility String[]           @default([]) @map("voice_compatibility")
+  specializations    String[]           @default([])
+  premium            Boolean            @default(false)
+  isPublic           Boolean            @default(true) @map("is_public")
+  popularityScore    Decimal            @default(0.00) @map("popularity_score") @db.Decimal(3, 2)
+  createdBy          String?            @map("created_by") @db.VarChar(255)
+  createdAt          DateTime?          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime?          @default(now()) @map("updated_at") @db.Timestamptz(6)
+  avatar_analytics   avatar_analytics[]
 
   @@index([category], map: "idx_avatars_3d_category")
   @@index([slug], map: "idx_avatars_3d_slug")
@@ -1245,19 +1404,19 @@ model avatars_3d {
 }
 
 model timeline_snapshots {
-  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  timelineId  String    @map("timeline_id") @db.Uuid
-  name        String?   @db.VarChar(255)
-  description String?
-  version     Int?      @default(1)
-  data        Json      @default("{}")
-  tracks      Json?     @default("[]")
-  settings    Json?     @default("{}")
-  totalDuration Int?    @default(0) @map("total_duration")
-  userId      String?   @map("user_id") @db.Uuid
-  createdAt   DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
-  timelines   timelines @relation(fields: [timelineId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  users       users?    @relation(fields: [userId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  timelineId    String    @map("timeline_id") @db.Uuid
+  name          String?   @db.VarChar(255)
+  description   String?
+  version       Int?      @default(1)
+  data          Json      @default("{}")
+  tracks        Json?     @default("[]")
+  settings      Json?     @default("{}")
+  totalDuration Int?      @default(0) @map("total_duration")
+  userId        String?   @map("user_id") @db.Uuid
+  createdAt     DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  timelines     timelines @relation(fields: [timelineId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users         users?    @relation(fields: [userId], references: [id], onDelete: SetNull, onUpdate: NoAction)
 
   @@index([timelineId], map: "idx_timeline_snapshots_timeline_id")
   @@index([userId], map: "idx_timeline_snapshots_user_id")
@@ -1265,15 +1424,15 @@ model timeline_snapshots {
 }
 
 model timeline_presence {
-  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  timelineId  String    @map("timeline_id") @db.Uuid
-  userId      String    @map("user_id") @db.Uuid
-  cursorPosition Json?  @map("cursor_position")
-  lastActivity DateTime? @default(now()) @map("last_activity") @db.Timestamptz(6)
-  lastSeenAt  DateTime? @default(now()) @map("last_seen_at") @db.Timestamptz(6)
-  isActive    Boolean   @default(true) @map("is_active")
-  timelines   timelines @relation(fields: [timelineId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  users       users     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  timelineId     String    @map("timeline_id") @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  cursorPosition Json?     @map("cursor_position")
+  lastActivity   DateTime? @default(now()) @map("last_activity") @db.Timestamptz(6)
+  lastSeenAt     DateTime? @default(now()) @map("last_seen_at") @db.Timestamptz(6)
+  isActive       Boolean   @default(true) @map("is_active")
+  timelines      timelines @relation(fields: [timelineId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users          users     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([timelineId, userId])
   @@index([timelineId], map: "idx_timeline_presence_timeline_id")
@@ -1281,15 +1440,15 @@ model timeline_presence {
 }
 
 model timeline_track_locks {
-  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  projectId  String    @map("project_id") @db.Uuid
-  trackId    String    @map("track_id") @db.VarChar(255)
-  userId     String    @map("user_id") @db.Uuid
-  expiresAt  DateTime  @default(dbgenerated("(NOW() + interval '30 minutes')")) @map("expires_at") @db.Timestamptz(6)
-  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt  DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  projects   projects  @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  users      users     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId String   @map("project_id") @db.Uuid
+  trackId   String   @map("track_id") @db.VarChar(255)
+  userId    String   @map("user_id") @db.Uuid
+  expiresAt DateTime @default(dbgenerated("(NOW() + interval '30 minutes')")) @map("expires_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  projects  projects @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users     users    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([projectId, trackId], name: "unique_track_lock")
   @@index([projectId], map: "idx_timeline_track_locks_project")
@@ -1299,20 +1458,20 @@ model timeline_track_locks {
 }
 
 model voice_models {
-  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name         String    @db.VarChar(255)
-  provider     String    @db.VarChar(100)
-  voiceId      String    @map("voice_id") @db.VarChar(255)
-  language     String?   @default("pt-BR") @db.VarChar(10)
-  gender       String?   @db.VarChar(20)
-  style        String?   @db.VarChar(100)
-  previewUrl   String?   @map("preview_url")
-  isCustom     Boolean   @default(false) @map("is_custom")
-  userId       String?   @map("user_id") @db.Uuid
-  metadata     Json?     @default("{}")
-  createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt    DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
-  users        users?    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name       String    @db.VarChar(255)
+  provider   String    @db.VarChar(100)
+  voiceId    String    @map("voice_id") @db.VarChar(255)
+  language   String?   @default("pt-BR") @db.VarChar(10)
+  gender     String?   @db.VarChar(20)
+  style      String?   @db.VarChar(100)
+  previewUrl String?   @map("preview_url")
+  isCustom   Boolean   @default(false) @map("is_custom")
+  userId     String?   @map("user_id") @db.Uuid
+  metadata   Json?     @default("{}")
+  createdAt  DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
+  users      users?    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([provider], map: "idx_voice_models_provider")
   @@index([userId], map: "idx_voice_models_user_id")
@@ -1320,17 +1479,17 @@ model voice_models {
 }
 
 model voice_clones {
-  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name         String    @db.VarChar(255)
-  userId       String    @map("user_id") @db.Uuid
-  provider     String    @db.VarChar(100)
-  externalId   String?   @map("external_id") @db.VarChar(255)
-  sampleUrl    String?   @map("sample_url")
-  status       String    @default("pending") @db.VarChar(50)
-  metadata     Json?     @default("{}")
-  createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt    DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
-  users        users     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name       String    @db.VarChar(255)
+  userId     String    @map("user_id") @db.Uuid
+  provider   String    @db.VarChar(100)
+  externalId String?   @map("external_id") @db.VarChar(255)
+  sampleUrl  String?   @map("sample_url")
+  status     String    @default("pending") @db.VarChar(50)
+  metadata   Json?     @default("{}")
+  createdAt  DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
+  users      users     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([userId], map: "idx_voice_clones_user_id")
   @@schema("public")

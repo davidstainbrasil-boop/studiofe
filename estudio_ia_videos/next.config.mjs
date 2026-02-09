@@ -2,14 +2,14 @@ import { withSentryConfig } from '@sentry/nextjs';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // output: 'standalone',
+  output: 'standalone',
   reactStrictMode: true,
-  swcMinify: false, // Disable SWC Minification (Runtime Bugs)
+  swcMinify: true,
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: true, // TODO: fix ESLint errors separately
   },
   images: {
     formats: ['image/avif', 'image/webp'],
@@ -24,9 +24,8 @@ const nextConfig = {
   webpack: (config, { nextRuntime }) => {
     config.externals = [...(config.externals || []), { canvas: 'canvas' }];
 
-    // NUCLEAR FIX: Disable ALL minification.
-    // This avoids Terser 'token_error' (build time) AND SWC 'TypeError' (runtime).
-    config.optimization.minimize = false;
+    // SWC minification enabled via swcMinify: true
+    // config.optimization.minimize is left at default (true for production)
 
     // Ensure proper module resolution for static assets
     config.resolve = {
