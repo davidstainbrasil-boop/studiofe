@@ -2,6 +2,7 @@ import { parse } from 'csv-parse/sync';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { logger } from '@lib/logger';
+import { isProduction } from '@lib/utils/mock-guard';
 
 export interface VariableDataRow {
   [key: string]: string | number | boolean;
@@ -430,6 +431,10 @@ export class VariableDataEngine {
     // 2. Replace images/videos
     // 3. Apply color changes
     // 4. Generate the final video
+
+    if (isProduction()) {
+      throw new Error('Variable data video generation is not yet implemented for production. Requires FFmpeg integration.');
+    }
 
     logger.info(`Generating video with variables:`, { component: 'VariableDataEngine', variables });
     logger.info(`Template text: ${templateText}`, { component: 'VariableDataEngine' });

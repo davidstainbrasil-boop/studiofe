@@ -8,7 +8,7 @@ import { logger } from '@lib/logger'
 import { applyRateLimit } from '@/lib/rate-limit'
 import { getServerAuth } from '@lib/auth/unified-session'
 import { db } from '@lib/db'
-import { mockDelay, isProduction } from '@lib/utils/mock-guard'
+import { mockDelay, isProduction, notImplementedResponse } from '@lib/utils/mock-guard'
 
 // Interfaces
 interface RenderRequest {
@@ -406,6 +406,8 @@ const renderPipeline = new UnifiedRenderPipeline()
 // API Handlers
 export async function POST(request: NextRequest) {
   try {
+    if (isProduction()) return notImplementedResponse('render-unified', 'Real render pipeline via FFmpeg/BullMQ at /api/render/start');
+
     const blocked = await applyRateLimit(request, 'render-unified', 10);
     if (blocked) return blocked;
 

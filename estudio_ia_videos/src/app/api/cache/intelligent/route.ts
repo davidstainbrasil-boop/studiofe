@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@lib/logger';
-import { mockDelay, isProduction } from '@lib/utils/mock-guard';
+import { mockDelay, isProduction, notImplementedResponse } from '@lib/utils/mock-guard';
 import { getServerAuth } from '@lib/auth/unified-session';
 // import { MonitoringService } from '@lib/monitoring/monitoring-service';
 import { applyRateLimit } from '@/lib/rate-limit';
@@ -204,6 +204,10 @@ class IntelligentCacheSystem {
 }
 
 export async function GET(request: NextRequest) {
+  if (isProduction()) {
+    return notImplementedResponse('cache-intelligent', 'Real intelligent cache system pending');
+  }
+
   try {
     const rateLimitBlocked = await applyRateLimit(request, 'cache-intelligent-get', 60);
     if (rateLimitBlocked) return rateLimitBlocked;
@@ -307,6 +311,10 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  if (isProduction()) {
+    return notImplementedResponse('cache-intelligent', 'Real intelligent cache system pending');
+  }
+
   const session = await getServerAuth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
@@ -374,6 +382,10 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  if (isProduction()) {
+    return notImplementedResponse('cache-intelligent', 'Real intelligent cache system pending');
+  }
+
   const session = await getServerAuth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
@@ -449,6 +461,10 @@ export async function DELETE(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+  if (isProduction()) {
+    return notImplementedResponse('cache-intelligent', 'Real intelligent cache system pending');
+  }
+
   const session = await getServerAuth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });

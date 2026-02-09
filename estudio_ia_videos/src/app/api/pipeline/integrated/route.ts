@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@lib/logger';
-import { mockDelay, isProduction } from '@lib/utils/mock-guard';
+import { mockDelay, isProduction, notImplementedResponse } from '@lib/utils/mock-guard';
 import { getServerAuth } from '@lib/auth/unified-session';
 // Using inline implementations instead of external modules
 // import { IntegratedTTSAvatarPipeline } from '@lib/pipeline/integrated-tts-avatar-pipeline';
@@ -115,6 +115,10 @@ class IntegratedTTSAvatarPipeline {
 }
 
 export async function POST(request: NextRequest) {
+  if (isProduction()) {
+    return notImplementedResponse('pipeline-integrated', 'Real TTS+Avatar integrated pipeline pending');
+  }
+
   // Auth guard
   const session = await getServerAuth();
   if (!session?.user?.id) {

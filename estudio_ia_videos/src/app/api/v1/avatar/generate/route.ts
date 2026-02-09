@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@lib/logger';
-import { mockDelay, isProduction } from '@lib/utils/mock-guard';
+import { mockDelay, isProduction, notImplementedResponse } from '@lib/utils/mock-guard';
 import { getServerAuth } from '@lib/auth/unified-session';
 import { applyRateLimit } from '@/lib/rate-limit';
 
@@ -35,6 +35,10 @@ interface AvatarRequest {
 }
 
 export async function POST(request: NextRequest) {
+  if (isProduction()) {
+    return notImplementedResponse('v1-avatar-generate', 'Real avatar generation pending integration');
+  }
+
   const session = await getServerAuth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });

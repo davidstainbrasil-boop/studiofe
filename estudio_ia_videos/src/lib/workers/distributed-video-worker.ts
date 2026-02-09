@@ -5,6 +5,7 @@
 
 import { Job } from 'bullmq'
 import { logger } from '@/lib/logger';
+import { isProduction } from '@lib/utils/mock-guard';
 import { exec } from 'child_process'
 import { promisify } from 'util'
 import { writeFile, unlink, mkdir, readFile } from 'fs/promises'
@@ -502,6 +503,10 @@ export class DistributedVideoWorker {
     options: VideoRenderJobData['options'],
     onProgress?: (progress: number) => void
   ): Promise<string> {
+    if (isProduction()) {
+      throw new Error('Avatar video rendering is not yet implemented for production. Requires Remotion/FFmpeg integration.');
+    }
+
     // This would integrate with Remotion or FFmpeg
     // For now, return a placeholder path
     const outputPath = join(this.tempDir, `avatar-${Date.now()}.mp4`)

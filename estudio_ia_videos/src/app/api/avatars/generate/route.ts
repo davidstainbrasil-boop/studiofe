@@ -11,7 +11,7 @@ import { workflowManager } from '@lib/workflow/unified-workflow-manager'
 import { promises as fs } from 'fs'
 import { z } from 'zod'
 import { Prisma } from '@prisma/client'
-import { mockDelay, isProduction } from '@lib/utils/mock-guard'
+import { mockDelay, isProduction, notImplementedResponse } from '@lib/utils/mock-guard'
 import { applyRateLimit } from '@/lib/rate-limit'
 
 // Schemas de validação
@@ -284,6 +284,10 @@ const avatar3DGenerator = new Avatar3DGenerator()
 
 // POST - Gerar avatar 3D
 export async function POST(request: NextRequest) {
+  if (isProduction()) {
+    return notImplementedResponse('avatars-generate', 'Real avatar 3D generation via D-ID/HeyGen pending integration');
+  }
+
   try {
     const blocked = await applyRateLimit(request, 'avatars-gen', 5);
     if (blocked) return blocked;

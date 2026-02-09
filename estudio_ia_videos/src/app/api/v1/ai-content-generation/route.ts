@@ -1,11 +1,15 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@lib/logger'
-import { isProduction } from '@lib/utils/mock-guard'
+import { isProduction, notImplementedResponse } from '@lib/utils/mock-guard'
 import { getServerAuth } from '@lib/auth/unified-session';
 import { applyRateLimit } from '@/lib/rate-limit';
 
 export async function GET(request: NextRequest) {
+  if (isProduction()) {
+    return notImplementedResponse('ai-content-generation', 'Real AI content generation pending');
+  }
+
   try {
     const aiModels = [
       {
@@ -83,6 +87,10 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  if (isProduction()) {
+    return notImplementedResponse('ai-content-generation', 'Real AI content generation pending');
+  }
+
   const session = await getServerAuth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });

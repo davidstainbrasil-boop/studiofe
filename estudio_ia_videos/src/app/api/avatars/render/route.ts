@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerAuth } from '@lib/auth/unified-session'
 import { logger } from '@lib/logger'
-import { mockDelay, isProduction } from '@lib/utils/mock-guard'
+import { mockDelay, isProduction, notImplementedResponse } from '@lib/utils/mock-guard'
 import { applyRateLimit } from '@/lib/rate-limit'
 
 // Interfaces
@@ -571,6 +571,8 @@ const avatarRenderer = new Avatar3DRenderer()
 // API Handlers
 export async function POST(request: NextRequest) {
   try {
+    if (isProduction()) return notImplementedResponse('avatars-render', 'Real avatar rendering via D-ID/Audio2Face pending integration');
+
     const blocked = await applyRateLimit(request, 'avatars-render', 5);
     if (blocked) return blocked;
 

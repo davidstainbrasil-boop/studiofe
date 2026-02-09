@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@lib/logger';
-import { mockDelay, isProduction } from '@lib/utils/mock-guard';
+import { mockDelay, isProduction, notImplementedResponse } from '@lib/utils/mock-guard';
 import { getServerAuth } from '@lib/auth/unified-session';
 import { applyRateLimit } from '@/lib/rate-limit';
 // Using inline implementations instead of external modules
@@ -284,6 +284,10 @@ function getDefaultVoiceId(provider: string, language: string): string {
 }
 
 export async function POST(request: NextRequest) {
+  if (isProduction()) {
+    return notImplementedResponse('avatars-generate-speech', 'Real avatar speech generation pending integration');
+  }
+
   const startTime = Date.now();
   
   // Auth guard

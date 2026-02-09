@@ -9,6 +9,7 @@ import { ElevenLabsProvider } from '@/lib/tts/elevenlabs-provider';
 import { SupabaseStorageService } from '@/lib/storage/supabase-storage.service';
 import { getServerAuth } from '@lib/auth/unified-session';
 import { applyRateLimit } from '@/lib/rate-limit';
+import { isProduction } from '@lib/utils/mock-guard';
 
 const logger = createLogger('TTSGenerateAPI');
 
@@ -71,11 +72,23 @@ export async function POST(request: NextRequest) {
         break;
 
       case 'mock':
+        if (isProduction()) {
+          return NextResponse.json(
+            { error: 'Mock TTS provider is not available in production' },
+            { status: 400 }
+          );
+        }
         audioResult = await generateMockTTS(text);
         break;
 
       default:
-        audioResult = generateMockTTS(text); // Fallback
+        if (isProduction()) {
+          return NextResponse.json(
+            { error: `TTS provider '${provider}' is not configured. Available: elevenlabs` },
+            { status: 400 }
+          );
+        }
+        audioResult = generateMockTTS(text); // Fallback only in dev
         break;
     }
 
@@ -112,6 +125,10 @@ async function generateWithElevenLabs(text: string, voice?: string, speed?: numb
   const apiKey = process.env.ELEVENLABS_API_KEY;
 
   if (!apiKey) {
+    if (isProduction()) {
+      logger.error('ElevenLabs API key not configured in production');
+      throw new Error('ElevenLabs API key is not configured');
+    }
     logger.warn('⚠️ ElevenLabs API key não configurada, usando mock');
     return generateMockTTS(text);
   }

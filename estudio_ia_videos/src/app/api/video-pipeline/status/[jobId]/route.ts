@@ -3,12 +3,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@lib/logger'
 import { getServerAuth } from '@lib/auth/unified-session';
 import { applyRateLimit } from '@/lib/rate-limit';
+import { isProduction, notImplementedResponse } from '@lib/utils/mock-guard';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { jobId: string } }
 ) {
   try {
+    if (isProduction()) return notImplementedResponse('video-pipeline-status', 'Real job status tracking via DB/Redis pending implementation');
+
     const rateLimitBlocked = await applyRateLimit(request, 'video-pipeline-status-get', 60);
     if (rateLimitBlocked) return rateLimitBlocked;
 
