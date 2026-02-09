@@ -1,9 +1,30 @@
 /**
  * 📝 Professional Logger Service
  * Centralized logging with levels, formatting, and production-ready features
+ *
+ * IMPORTANT: Sentry is loaded dynamically to avoid pulling @sentry/node
+ * into client-side bundles (which causes webpack to hang).
  */
 
-import * as Sentry from '@sentry/nextjs';
+// Lazy-loaded Sentry reference (server-side only)
+let _sentry: typeof import('@sentry/nextjs') | null = null;
+let _sentryLoading = false;
+
+function getSentry(): typeof import('@sentry/nextjs') | null {
+  if (_sentry) return _sentry;
+  // Only load Sentry on the server side (where @sentry/node is available)
+  if (typeof window === 'undefined' && !_sentryLoading) {
+    _sentryLoading = true;
+    try {
+      // Use require for synchronous loading on server
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      _sentry = require('@sentry/nextjs');
+    } catch {
+      _sentry = null;
+    }
+  }
+  return _sentry;
+}
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error'
 
@@ -103,16 +124,20 @@ class Logger {
     const formatted = this.formatMessage(entry)
 
     // In production, send to logging service (e.g., Sentry, LogRocket)
+    // Sentry is only available server-side (lazy-loaded to avoid client bundle issues)
     if (!this.isDevelopment) {
-      if (level === 'error' && error) {
-        Sentry.captureException(error, {
-          extra: { ...context, message }
-        });
-      } else if (level === 'error' || level === 'warn') {
-        Sentry.captureMessage(message, {
-          level: level === 'warn' ? 'warning' : 'error',
-          extra: context
-        });
+      const sentry = getSentry();
+      if (sentry) {
+        if (level === 'error' && error) {
+          sentry.captureException(error, {
+            extra: { ...context, message }
+          });
+        } else if (level === 'error' || level === 'warn') {
+          sentry.captureMessage(message, {
+            level: level === 'warn' ? 'warning' : 'error',
+            extra: context
+          });
+        }
       }
     }
 

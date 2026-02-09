@@ -80,10 +80,15 @@ jest.mock('@/lib/supabase/admin', () => {
 
 jest.mock('@/lib/rate-limit');
 
+// Mock unified-session for auth control in tests
+jest.mock('@lib/auth/unified-session', () => ({
+  getServerAuth: jest.fn()
+}))
+
 const { GET: routeGET } = require('../../api/analytics/render-stats/route')
 
 describe('GET /api/analytics/render-stats', () => {
-  const { getServerSession } = require('next-auth')
+  const { getServerAuth } = require('@lib/auth/unified-session')
 
   function makeReq(query: string = ''): any {
     const url = `http://localhost/api/analytics/render-stats${query ? '?' + query : ''}`
@@ -95,28 +100,19 @@ describe('GET /api/analytics/render-stats', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
-    
-    // Re-configurar o mock do NextAuth após limpar
-    jest.mock('next-auth', () => ({
-      getServerSession: jest.fn().mockResolvedValue(null),
-      getToken: jest.fn().mockResolvedValue({ sub: 'test-user-id' }),
-      encode: jest.fn(),
-      decode: jest.fn(),
-    }))
+    // Default: autenticado
+    getServerAuth.mockResolvedValue({ user: { id: 'u1', email: 'u1@test.com', name: 'User 1' } })
   })
 
   it('retorna 401 quando não autenticado', async () => {
-    // Mock específico para este teste: garantir que NextAuth retorna null
-    const { getServerSession } = require('next-auth');
-    
-    getServerSession.mockResolvedValueOnce(null);
+    // Mock específico para este teste: retorna null = não autenticado
+    getServerAuth.mockResolvedValueOnce(null);
     
     const resp = await routeGET(makeReq('timeRange=1h'))
     expect(resp.status).toBe(401)
   })
 
   it('retorna métricas básicas e X-Cache MISS na primeira chamada', async () => {
-    getServerSession.mockResolvedValue({ user: { id: 'u1' } })
     const resp: any = await routeGET(makeReq('timeRange=1h&includeErrors=true&includePerformance=true'))
     expect(resp.status).toBe(200)
     const json = await resp.json()
@@ -129,7 +125,6 @@ describe('GET /api/analytics/render-stats', () => {
   })
 
   it('segunda chamada mesma URL retorna X-Cache HIT', async () => {
-    getServerSession.mockResolvedValue({ user: { id: 'u1' } })
     const validUuid = '123e4567-e89b-12d3-a456-426614174000'
     const req = makeReq(`timeRange=1h&includeErrors=true&includePerformance=true&userId=${validUuid}`)
     const first: any = await routeGET(req)

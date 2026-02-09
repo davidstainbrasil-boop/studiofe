@@ -202,23 +202,6 @@ function PricingContent() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
-      {/* Header */}
-      <header className="border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-950/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="text-xl font-bold text-slate-900 dark:text-white">
-            Studio<span className="text-violet-600">IA</span>
-          </Link>
-          <div className="flex items-center gap-4">
-            <Link href="/login">
-              <Button variant="ghost">Entrar</Button>
-            </Link>
-            <Link href="/register">
-              <Button>Criar Conta</Button>
-            </Link>
-          </div>
-        </div>
-      </header>
-
       {/* Hero */}
       <section className="px-6 py-20 text-center">
         <div className="max-w-3xl mx-auto space-y-6">

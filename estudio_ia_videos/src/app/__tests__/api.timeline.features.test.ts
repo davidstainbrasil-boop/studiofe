@@ -156,6 +156,9 @@ jest.mock('next-auth', () => ({
   getServerSession: jest.fn().mockResolvedValue({ user: { id: 'u1' } })
 }))
 jest.mock('@/lib/auth/auth-config', () => ({ authConfig: {} }))
+jest.mock('@lib/auth/unified-session', () => ({
+  getServerAuth: jest.fn().mockResolvedValue({ user: { id: 'u1', email: 'u1@test.com', name: 'User 1' } })
+}))
 
 function makeRequest(method: string, url: string, body?: unknown): NextRequest {
   const headers: HeadersInit = { 'content-type': 'application/json' }
@@ -200,8 +203,8 @@ describe('Timeline Advanced Features', () => {
       expect(res1.status).toBe(200)
 
       // Now try to lock with a different user (mock different session)
-      const { getServerSession } = require('next-auth')
-      getServerSession.mockResolvedValueOnce({ user: { id: 'u2' } })
+      const { getServerAuth } = require('@lib/auth/unified-session')
+      getServerAuth.mockResolvedValueOnce({ user: { id: 'u2', email: 'u2@test.com', name: 'User 2' } })
 
       const lockReq2 = makeRequest('POST', '/api/v1/timeline/multi-track/collaborate', {
         projectId: 'p-conflict',
