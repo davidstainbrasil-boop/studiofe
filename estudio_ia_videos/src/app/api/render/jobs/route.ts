@@ -125,19 +125,8 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    // For local dev, use a demo user or require proper auth header
-    const authHeader = request.headers.get('authorization')
-    let userId = 'demo-user-id' // Default for development
-    
-    if (authHeader) {
-      // Extract user from JWT if provided (simplified for local)
-      // In production, this would validate the token
-      const token = authHeader.replace('Bearer ', '')
-      if (token) {
-        // For now, use the token as user_id for local development
-        userId = token.length > 36 ? 'auth-user' : token
-      }
-    }
+    // Use authenticated user from session (already validated above)
+    const userId = session.user.id;
 
     const body = await request.json()
     const jobData = RenderJobCreateSchema.parse(body)

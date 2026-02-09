@@ -74,6 +74,7 @@ function formatUptime(seconds: number): string {
 }
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
+  try {
     const rateLimitBlocked = await applyRateLimit(request, 'system-info-get', 60);
     if (rateLimitBlocked) return rateLimitBlocked;
 
@@ -141,4 +142,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       'Cache-Control': 'no-store',
     },
   });
+  } catch (error) {
+    const { logger } = await import('@lib/logger');
+    logger.error('Error in system/info', error instanceof Error ? error : new Error(String(error)), { component: 'API: system/info' });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
 }

@@ -72,6 +72,7 @@ function getTimeRangeFilter(range: TimeRange): Date {
 }
 
 export async function GET(req: NextRequest) {
+  try {
     const rateLimitBlocked = await applyRateLimit(req, 'analytics-render-stats-get', 60);
     if (rateLimitBlocked) return rateLimitBlocked;
 
@@ -178,4 +179,8 @@ export async function GET(req: NextRequest) {
   const response = NextResponse.json(payload)
   response.headers.set('X-Cache', 'MISS')
   return response
+  } catch (error) {
+    logger.error('Error in render-stats', error instanceof Error ? error : new Error(String(error)), { component: 'API: analytics/render-stats' });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
 }

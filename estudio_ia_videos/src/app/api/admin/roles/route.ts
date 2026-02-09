@@ -4,6 +4,8 @@ import { assertCan, UserContext } from '@lib/rbac';
 import { supabaseAdmin, fromUntypedTable } from '@lib/supabase/server';
 import { applyRateLimit } from '@/lib/rate-limit';
 
+import { logger } from '@lib/logger';
+
 interface RoleRow { role: string; description?: string }
 
 async function buildUserContext(userId: string): Promise<UserContext> {
@@ -13,6 +15,7 @@ async function buildUserContext(userId: string): Promise<UserContext> {
 }
 
 export async function GET(req: NextRequest) {
+  try {
     const rateLimitBlocked = await applyRateLimit(req, 'admin-roles-get', 30);
     if (rateLimitBlocked) return rateLimitBlocked;
 
@@ -23,9 +26,14 @@ export async function GET(req: NextRequest) {
   const { data, error } = await fromUntypedTable<RoleRow>(supabaseAdmin, 'roles').select('role, description');
   if (error) return NextResponse.json({ error: 'Falha ao listar roles' }, { status: 500 });
   return NextResponse.json({ roles: data });
+  } catch (error) {
+    logger.error('Error in GET /api/admin/roles', error instanceof Error ? error : new Error(String(error)), { component: 'API: admin/roles' });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
 }
 
 export async function POST(req: NextRequest) {
+  try {
   const session = await getServerAuth();
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const ctx = await buildUserContext(session.user.id);
@@ -37,5 +45,9 @@ export async function POST(req: NextRequest) {
   const { error: insErr } = await (rolesTable as unknown as { upsert: (data: RoleRow) => Promise<{ error: Error | null }> }).upsert({ role, description: description || '' });
   if (insErr) return NextResponse.json({ error: 'Falha ao criar/atualizar role' }, { status: 500 });
   return NextResponse.json({ created: role });
+  } catch (error) {
+    logger.error('Error in POST /api/admin/roles', error instanceof Error ? error : new Error(String(error)), { component: 'API: admin/roles' });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
 }
 

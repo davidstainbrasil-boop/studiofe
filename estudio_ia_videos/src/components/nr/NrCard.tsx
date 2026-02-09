@@ -24,7 +24,7 @@ export function NrCard({ t }: { t: Template }) {
     try {
       const res = await fetch('/app/api/projects/from-nr', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-user-id': 'demo-user' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nr_number: t.nr_number }),
       })
       if (!res.ok) {

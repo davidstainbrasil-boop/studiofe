@@ -5,7 +5,6 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseForRequest } from '@lib/supabase/server';
 import { logger } from '@lib/logger';
 import { applyRateLimit } from '@/lib/rate-limit';
 import { prepareStudioExportPayload } from '@lib/render/studio-render-adapter';
@@ -61,11 +60,15 @@ export async function POST(req: NextRequest) {
 
     // Chama endpoint de render existente
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.NODE_ENV === 'production' ? 'https://cursostecno.com.br' : 'http://localhost:3000');
+    // Propagate cookies from original request for proper auth in internal call
+    const cookieHeader = req.headers.get('cookie') || '';
+    const authHeader = req.headers.get('authorization') || '';
     const renderResponse = await fetch(`${baseUrl}/api/render/start`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-user-id': userId
+        ...(cookieHeader ? { 'cookie': cookieHeader } : {}),
+        ...(authHeader ? { 'authorization': authHeader } : {}),
       },
       body: JSON.stringify(renderPayload)
     });

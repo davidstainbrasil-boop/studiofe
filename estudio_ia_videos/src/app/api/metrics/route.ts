@@ -14,6 +14,7 @@ export const revalidate = 0
  * - format: 'prometheus' (default) | 'json'
  */
 export async function GET(request: Request) {
+  try {
     const rateLimitBlocked = await applyRateLimit(request, 'metrics-get', 60);
     if (rateLimitBlocked) return rateLimitBlocked;
 
@@ -54,5 +55,8 @@ export async function GET(request: Request) {
       'Cache-Control': 'no-store',
     },
   })
+  } catch (error) {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
 }
 

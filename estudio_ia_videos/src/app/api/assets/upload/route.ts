@@ -14,12 +14,10 @@ export async function POST(req: NextRequest) {
     const supabase = getSupabaseForRequest(req);
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    // Fallback for development/demo
-    const userId = user?.id || 'demo-user';
-    
-    if (authError && !userId) {
+    if (authError || !user) {
        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    const userId = user.id;
 
     const formData = await req.formData();
     const file = formData.get('file') as File;

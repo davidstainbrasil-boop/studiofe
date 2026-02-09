@@ -15,11 +15,10 @@ export async function GET(req: NextRequest) {
     const supabase = getSupabaseForRequest(req);
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    const userId = user?.id || 'demo-user';
-
-    if (authError && !userId) {
+    if (authError || !user) {
        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    const userId = user.id;
 
     const searchParams = req.nextUrl.searchParams;
     const typeFilter = searchParams.get('type'); // image, video, audio
