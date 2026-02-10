@@ -1,33 +1,62 @@
 # Claude Progress Log - MVP Vídeos TécnicoCursos v7
-# Updated: 2026-02-09 (Session 33 - PPTX Pipeline Re-Audit + console.log Cleanup)
+# Updated: 2026-02-09 (Session 34 - SECURITY HARDENING + PRODUCTION DEPLOY)
 
-## Session 33 Summary (Current) - Re-Audit PPTX→Video Pipeline ✅
+## Session 34 Summary (Current) - Security Hardening + Production Deploy ✅
 
 ### ✅ RESULTADO FINAL:
-- **TS Errors (nossos arquivos):** 0 novos
-- **TS Errors (total):** 1 pré-existente (video-jobs/requeue priority type)
-- **Testes:** 115 suites passed, 1913 tests OK, 3 failed (pré-existentes)
-- **console.log em prod:** 0 (era 2 em unified-session.ts)
-- **Placeholders/mocks no pipeline:** 0 (17 MP3s fake removidos)
-- **Branch:** hardening-prod
+- **TS Errors:** 0
+- **Testes:** 118 suites passed, 1921 tests OK, 0 failed
+- **Build Next.js:** SUCCESS (production standalone)
+- **Production:** ALL 9 public routes returning HTTP 200
+- **Security vulnerabilities fixed:** 4 CRITICAL + 2 WARNING + 9 additional
+- **Branch:** hardening-prod → main (deployed)
 
 ### 📋 O QUE FOI FEITO:
 
-#### 1. Remoção de 17 MP3 Placeholders
-- TODOS os arquivos em public/audio/library/*.mp3 tinham hash idêntico (170d73c2dbc7a57f536fd9e264d4a00c)
-- TODOS tinham 3.03s (catálogo dizia 150-360s) — PROIBIDO por AGENTS.md §2.3
-- Removidos fisicamente e URLs no DEFAULT_TRACKS zeradas para ''
-- Adicionado comentário com 3 alternativas para habilitar música real (Pixabay API, upload real, Supabase Storage)
-- generate/route.ts: adicionado guard `track && track.url` para skip gracioso
+#### 1. CRITICAL SECURITY FIXES (4)
+- **C1: x-user-id auth bypass** - 11 API routes accepted `x-user-id` header in production
+  - Created centralized `safe-auth.ts` helper with env-gated dev bypass
+  - Applied to: render/start, render/jobs, studio/save, studio/export, studio/load,
+    pptx/generate-video, collaboration/locks, v1/auth/api-key
+- **C2: Credentials API plaintext leak** - admin/credentials returned ALL env vars (inc. secrets)
+  - Added SENSITIVE_KEYS filter, only non-sensitive values returned in `values`
+- **C3: Hardcoded encryption key** - default fallback 'mvp-encryption-key-2024-secure'
+  - Made lazy (getEncryptionKey function), throws at request time in production
+  - Replaced static 'salt' with key-derived salt
+- **C4: Subscription IDOR** - /api/subscription accepted userId as query param without auth
+  - Now requires Supabase auth, uses token userId
 
-#### 2. API v1 Upload — Persistência em pptx_uploads + pptx_slides
-- Spec (openspec/specs/e2e-pptx-integration) exige registros no DB
-- Adicionado INSERT em pptx_uploads (id=processingId, status='completed', slide_count)
-- Adicionado INSERT em pptx_slides (slide_number, title, content, duration, notes, properties JSONB)
-- Usa supabaseAdmin para bypass RLS
-- Non-blocking: erros de DB logados mas não falham a resposta
+#### 2. ADDITIONAL SECURITY FIXES (9)
+- Remove `demo-user-id` fallback from render/jobs POST
+- Remove `demo-user` fallback from assets/list and assets/upload
+- Remove hardcoded `x-user-id: 'demo-user'` from NrCard.tsx component
+- Fix studio/export internal fetch (forward cookies instead of x-user-id)
+- Require METRICS_TOKEN for /api/metrics in production
+- Add try/catch to 4 unprotected routes (analytics/render-stats, admin/roles, system/info, metrics)
 
-#### 3. Limpeza console.log em Produção
+#### 3. BUG FIXES
+- Fix `await verifyJWT()` in timeline-websocket.ts (was missing await on Promise)
+- Fix lazy CREDENTIALS_ENCRYPTION_KEY validation (was failing at build time)
+
+#### 4. PRODUCTION DEPLOY
+- Build: `next build` success (standalone, type-checked)
+- Deploy: PM2 restart estudio-ia
+- Verified: /, /pricing, /blog, /login, /register, /terms, /privacy, /auth/forgot-password, /api/health → all 200
+
+#### 5. PREVIOUS SESSION FIXES (carried forward)
+- /pricing HTTP 500: Fixed logger.ts Sentry static import → lazy require() server-only
+- /blog HTTP 404: Created blog landing page
+- Static assets 400: Removed Content-Type overrides from vercel.json + next.config.mjs
+- 3 test failures: Fixed auth mocks (getServerAuth)
+- WebSocket module: Created timeline-websocket.ts
+
+### 📊 COMMITS:
+- `e4914764` fix: resolve static assets 400, /pricing 500, /blog 404
+- `2617e7c6` security: fix 4 critical vulnerabilities
+- `93b96681` security: fix remaining production vulnerabilities (round 2)
+- `5ffec3dd` fix: lazy encryption key validation + await verifyJWT
+
+
 - Auditoria completa: 4 arquivos retornados, apenas 1 com chamadas reais
 - unified-session.ts L86/L96: console.log → logger.debug (só loga em dev)
 - Resultado final: 0 console.* em código de produção (fora do módulo logger)
