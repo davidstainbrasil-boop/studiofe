@@ -8,18 +8,19 @@ import { logger } from '@lib/logger';
 import { applyRateLimit } from '@/lib/rate-limit';
 
 // Chave de criptografia - OBRIGATÓRIO em produção via variável de ambiente
-const ENCRYPTION_KEY = (() => {
+function getEncryptionKey(): string {
   const key = process.env.CREDENTIALS_ENCRYPTION_KEY;
   if (!key && process.env.NODE_ENV === 'production') {
     throw new Error('CREDENTIALS_ENCRYPTION_KEY é obrigatório em produção');
   }
   return key || 'dev-only-encryption-key-not-for-production';
-})();
+}
 
 // Caminho do arquivo de credenciais
 const CREDENTIALS_FILE = getOptionalEnv('CREDENTIALS_FILE', '.credentials.encrypted');
 
 function encrypt(text: string): string {
+  const ENCRYPTION_KEY = getEncryptionKey();
   const algorithm = 'aes-256-cbc';
   const key = crypto.scryptSync(ENCRYPTION_KEY, ENCRYPTION_KEY.substring(0, 16), 32);
   const iv = crypto.randomBytes(16);
@@ -31,6 +32,7 @@ function encrypt(text: string): string {
 
 function decrypt(encryptedText: string): string {
   try {
+    const ENCRYPTION_KEY = getEncryptionKey();
     const algorithm = 'aes-256-cbc';
     const key = crypto.scryptSync(ENCRYPTION_KEY, ENCRYPTION_KEY.substring(0, 16), 32);
     const [ivHex, encrypted] = encryptedText.split(':');

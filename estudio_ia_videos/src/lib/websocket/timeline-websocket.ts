@@ -58,7 +58,7 @@ export function initializeWebSocket(httpServer: HttpServer): SocketIOServer {
 
     try {
       const { verifyJWT } = await import('@lib/auth/jwt');
-      const payload = verifyJWT(token);
+      const payload = await verifyJWT(token);
 
       if (!payload) {
         logger.warn('Invalid token', { socketId: socket.id });
