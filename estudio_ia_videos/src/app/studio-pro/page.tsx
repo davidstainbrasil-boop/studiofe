@@ -6,7 +6,8 @@
  * Integra todos os componentes: Avatar Library, Properties Panel, Asset Library, etc.
  */
 
-import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Button } from '@components/ui/button';
 import { Separator } from '@components/ui/separator';
 import { Label } from '@components/ui/label';
@@ -30,6 +31,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Folder,
+  FolderOpen,
   Clock,
   Zap,
   Undo2,
@@ -54,6 +56,7 @@ import { ShortcutsHelpPanel } from '@components/studio-unified/ShortcutsHelpPane
 import { LayersPanel } from '@components/studio-unified/LayersPanel';
 import { AlignmentToolbar } from '@components/studio-unified/AlignmentToolbar';
 import { SceneConfigPanel } from '@components/studio-unified/SceneConfigPanel';
+import { ProjectBrowser } from '@components/studio-unified/ProjectBrowser';
 import dynamic from 'next/dynamic';
 
 // Lazy-load browser-only components (WaveSurfer, Lottie, Remotion)
@@ -71,7 +74,6 @@ const RemotionScenePreview = dynamic(
 );
 import { useKeyboardShortcuts, COMMON_SHORTCUTS } from '@hooks/useKeyboardShortcuts';
 import { useHistory } from '@hooks/useHistory';
-import { useEditorStore } from '@/lib/stores/editor-store';
 import type { Scene } from '@/types/scene';
 import type { Scene as VideoProjectScene, CanvasElement as VideoProjectCanvasElement } from '@/types/video-project';
 import { importPPTX } from '@lib/pptx/pptx-to-scenes';
@@ -152,7 +154,16 @@ const mapImportedScene = (scene: VideoProjectScene, index: number): Scene => ({
 // MAIN COMPONENT
 // ============================================================================
 
-export default function StudioProPage() {
+function StudioProPageInner() {
+  // Router & URL params
+  const searchParams = useSearchParams();
+  const urlProjectId = searchParams?.get('project') ?? null;
+
+  // Project state
+  const [projectId, setProjectId] = useState<string | null>(urlProjectId);
+  const [projectLoading, setProjectLoading] = useState(!!urlProjectId);
+  const [isDirty, setIsDirty] = useState(false);
+
   // State
   const [isPlaying, setIsPlaying] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -199,6 +210,7 @@ export default function StudioProPage() {
   });
   const [selectedCanvasElementIds, setSelectedCanvasElementIds] = useState<string[]>([]);
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [showProjectBrowser, setShowProjectBrowser] = useState(false);
   const [clipboard, setClipboard] = useState<CanvasElement[]>([]); // Clipboard for copy/paste
   const [elementGroups, setElementGroups] = useState<Map<string, string[]>>(new Map()); // groupId -> elementIds[]
   const setCanvasScene = useCallback(
@@ -260,6 +272,13 @@ export default function StudioProPage() {
     fileInputRef.current?.click();
   }, []);
 
+  const handleOpenProject = useCallback((openProjectId: string) => {
+    // Navigate to studio-pro with project param (triggers reload with project loading)
+    const newUrl = new URL(window.location.href);
+    newUrl.searchParams.set('project', openProjectId);
+    window.location.href = newUrl.toString();
+  }, []);
+
   const handlePPTXImport = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
@@ -316,54 +335,141 @@ export default function StudioProPage() {
     }
   }, [scenes, activeSceneId, canvasScene.id, clear, emptyScene, setCanvasSceneInternal]);
 
+  // Load project from URL ?project=xxx
+  useEffect(() => {
+    if (!urlProjectId) return;
+
+    const loadProject = async () => {
+      setProjectLoading(true);
+      try {
+        const res = await fetch(`/api/studio/load?projectId=${urlProjectId}`);
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || 'Projeto não encontrado');
+        }
+
+        const data = await res.json();
+        const snapshot = data.snapshot;
+
+        if (snapshot?.scenes?.length > 0) {
+          const loadedScenes: Scene[] = snapshot.scenes.map((s: Scene) => ({
+            id: s.id || `scene-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            name: s.name || 'Scene',
+            elements: s.elements || [],
+            backgroundColor: s.backgroundColor || '#1a1a1a',
+            width: s.width || 1920,
+            height: s.height || 1080,
+            duration: s.duration || 5,
+            transition: s.transition || 'fade',
+            script: s.script,
+            voiceConfig: s.voiceConfig,
+            avatarConfig: s.avatarConfig,
+            musicConfig: s.musicConfig,
+            audioUrl: s.audioUrl,
+            effects: s.effects,
+          }));
+
+          setScenes(loadedScenes);
+          setActiveSceneId(snapshot.activeSceneId || loadedScenes[0].id);
+          setCanvasSceneInternal(loadedScenes[0]);
+          clear();
+        }
+
+        if (data.name) {
+          setProjectName(data.name);
+        }
+
+        setProjectId(urlProjectId);
+        setIsDirty(false);
+        toast.success(`Projeto "${data.name || 'carregado'}" aberto`);
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'Erro ao carregar projeto');
+      } finally {
+        setProjectLoading(false);
+      }
+    };
+
+    loadProject();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlProjectId]);
+
+  // Mark dirty on scene changes (skip initial render)
+  const isInitialMount = useRef(true);
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    setIsDirty(true);
+  }, [scenes]);
+
   // Handlers
   const handlePlay = useCallback(() => {
     setIsPlaying(!isPlaying);
     toast.success(isPlaying ? 'Paused' : 'Playing');
   }, [isPlaying]);
 
-  // Real save via Supabase (editor-store)
-  const editorStore = useEditorStore();
-
+  // Real save via /api/studio/save (snapshot-based with version history)
   const handleSave = useCallback(async () => {
-    const projectId = editorStore.project?.id;
-    if (!projectId) {
-      // Create a new project first
-      try {
-        const res = await fetch('/api/projects', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: projectName,
-            scenes: scenes.map((s) => ({
-              id: s.id,
-              name: s.name,
-              duration: s.duration,
-              elements: s.elements,
-              script: s.script,
-              voiceConfig: s.voiceConfig,
-              avatarConfig: s.avatarConfig,
-              musicConfig: s.musicConfig,
-            })),
-          }),
-        });
-        if (!res.ok) throw new Error('Failed to create project');
-        const data = await res.json();
-        toast.success(`Projeto "${projectName}" salvo (ID: ${data.id || 'criado'})`);
-      } catch (error) {
-        toast.error('Erro ao salvar projeto');
+    try {
+      // Build snapshot with all scene data
+      const snapshot = {
+        scenes: scenes.map((s) => ({
+          id: s.id,
+          name: s.name,
+          duration: s.duration,
+          elements: s.elements,
+          backgroundColor: s.backgroundColor,
+          width: s.width,
+          height: s.height,
+          transition: s.transition,
+          script: s.script,
+          voiceConfig: s.voiceConfig,
+          avatarConfig: s.avatarConfig,
+          musicConfig: s.musicConfig,
+          audioUrl: s.audioUrl,
+          effects: s.effects,
+        })),
+        activeSceneId,
+        settings: {
+          resolution: { width: 1920, height: 1080 },
+          fps: 30,
+        },
+        savedAt: new Date().toISOString(),
+      };
+
+      const res = await fetch('/api/studio/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId: projectId || undefined,
+          name: projectName,
+          snapshot,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Falha ao salvar');
       }
-      return;
+
+      const data = await res.json();
+
+      // Store projectId for subsequent saves
+      if (data.projectId && !projectId) {
+        setProjectId(data.projectId);
+        // Update URL without navigation
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.set('project', data.projectId);
+        window.history.replaceState({}, '', newUrl.toString());
+      }
+
+      setIsDirty(false);
+      toast.success(`Projeto "${projectName}" salvo!`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Erro ao salvar projeto');
     }
-    toast.promise(
-      editorStore.saveProject(projectId),
-      {
-        loading: 'Salvando projeto...',
-        success: 'Projeto salvo com sucesso!',
-        error: 'Erro ao salvar projeto',
-      },
-    );
-  }, [editorStore, projectName, scenes]);
+  }, [projectId, projectName, scenes, activeSceneId]);
 
   const handleExport = useCallback(async () => {
     try {
@@ -1461,6 +1567,17 @@ export default function StudioProPage() {
     ],
   });
 
+  if (projectLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-background">
+        <div className="text-center space-y-4">
+          <div className="animate-spin h-8 w-8 border-2 border-purple-500 border-t-transparent rounded-full mx-auto" />
+          <p className="text-muted-foreground text-sm">Carregando projeto...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-screen flex flex-col bg-background">
       {/* Top Bar */}
@@ -1475,6 +1592,7 @@ export default function StudioProPage() {
             <Folder className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm font-medium">
               {projectName}
+              {isDirty && <span className="text-yellow-500 ml-1">●</span>}
               <span className="text-xs text-muted-foreground ml-2">
                 {formatDuration(totalDuration)}
               </span>
@@ -1490,6 +1608,10 @@ export default function StudioProPage() {
             onChange={handlePPTXImport}
             className="hidden"
           />
+          <Button variant="ghost" size="sm" onClick={() => setShowProjectBrowser(true)}>
+            <FolderOpen className="h-4 w-4 mr-2" />
+            Abrir
+          </Button>
           <Button variant="ghost" size="sm">
             <Clock className="h-4 w-4 mr-2" />
             History
@@ -1998,6 +2120,29 @@ export default function StudioProPage() {
 
       {/* Shortcuts Help Panel */}
       <ShortcutsHelpPanel isOpen={showShortcuts} onClose={() => setShowShortcuts(false)} />
+
+      {/* Project Browser Dialog */}
+      <ProjectBrowser
+        isOpen={showProjectBrowser}
+        onClose={() => setShowProjectBrowser(false)}
+        onOpenProject={handleOpenProject}
+      />
     </div>
+  );
+}
+
+// Wrap in Suspense for useSearchParams SSR compatibility
+export default function StudioProPage() {
+  return (
+    <Suspense fallback={
+      <div className="h-screen flex items-center justify-center bg-background">
+        <div className="text-center space-y-4">
+          <div className="animate-spin h-8 w-8 border-2 border-purple-500 border-t-transparent rounded-full mx-auto" />
+          <p className="text-muted-foreground text-sm">Carregando Studio Pro...</p>
+        </div>
+      </div>
+    }>
+      <StudioProPageInner />
+    </Suspense>
   );
 }
