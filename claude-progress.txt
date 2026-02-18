@@ -1,7 +1,72 @@
 # Claude Progress Log - MVP Vídeos TécnicoCursos v7
-# Updated: 2026-02-09 (Session 34 - SECURITY HARDENING + PRODUCTION DEPLOY)
+# Updated: 2026-02-18 (Session 31 - HOTFIX CRÍTICO MIME TYPE)
 
-## Session 34 Summary (Current) - Security Hardening + Production Deploy ✅
+## Session 31 Summary (CURRENT) - Hotfix Crítico MIME Type em Produção 🔴🚨
+
+### 🚨 PROBLEMA CRÍTICO IDENTIFICADO:
+Em produção (cursostecno.com.br), assets estáticos retornando `text/html` ao invés de MIME types corretos:
+- CSS: "Refused to apply style... MIME type 'text/html'"  
+- JS: "Refused to execute script... MIME type 'text/html'"
+- Status: 400 (Bad Request) e 404 (Not Found)
+- **Impacto:** Aplicação COMPLETAMENTE QUEBRADA em produção
+
+### ✅ HOTFIX APLICADO (commit ff05a6c0):
+
+**Causa Raiz:**
+- Matcher do middleware permitindo interceptação de `/_next/static/*`
+- Regex negativo não excluía corretamente assets estáticos
+- Early return tardio (após operações que podem falhar)
+
+**Correção (src/middleware.ts):**
+1. **Matcher corrigido** (linha ~276):
+   ```typescript
+   '/((?!_next/static|_next/image|_next/data|api/auth/|favicon\\.ico|.*\\.(?:css|js|map|...)).*)'
+   ```
+   - Exclusões explícitas: `_next/static`, `_next/image`, `_next/data`
+   - Extensões: `.css`, `.js`, `.map`, `.svg`, etc.
+
+2. **Early return PRIMEIRA coisa** (linha ~143):
+   ```typescript
+   if (pathname.startsWith('/_next/static') || 
+       pathname.startsWith('/_next/image') || ...) {
+     return NextResponse.next();  // Bypass IMEDIATO
+   }
+   ```
+
+3. **Catch block melhorado** (linha ~237):
+   - Logs estruturados para debug
+   - Segunda camada de proteção para assets
+
+### 📊 VALIDAÇÃO:
+- ✅ Type check: 0 erros
+- ✅ Build test: PASSOU (Middleware 82.6 kB, todas rotas OK)
+- ✅ Commit: ff05a6c0 em main
+- ⏳ **PENDENTE: Push para GitHub** (sem conectividade de rede)
+
+### 📝 DOCUMENTAÇÃO CRIADA:
+- `docs/hotfixes/2026-02-18-fix-mime-type-errors.md` - Análise técnica completa
+- `docs/hotfixes/DEPLOY_GUIDE_2026-02-18.md` - Guia passo-a-passo de deploy
+- `scripts/deploy-hotfix-mime.sh` - Script automatizado de deploy
+
+### 🚀 PRÓXIMOS PASSOS (URGENTE):
+```bash
+./scripts/deploy-hotfix-mime.sh
+# OU manualmente:
+git push origin main
+# Aguardar build no Vercel (2-5 min)
+# Testar: cursostecno.com.br (F12 → Console → zero erros MIME)
+```
+
+### 📌 COMMITS:
+- `faa87188` style: format deploy guide with proper spacing
+- `e62c5b9c` docs: adiciona guia completo de deploy do hotfix MIME type
+- `1a4ad69a` docs: validacao completa do hotfix MIME type - build test PASSOU
+- `44bc50ad` fix: hotfix critico - MIME type errors em producao
+- `ff05a6c0` fix(critical): apply MIME type hotfix to production (MAIN - pronto para deploy)
+
+---
+
+## Session 34 Summary - Security Hardening + Production Deploy ✅
 
 ### ✅ RESULTADO FINAL:
 - **TS Errors:** 0
