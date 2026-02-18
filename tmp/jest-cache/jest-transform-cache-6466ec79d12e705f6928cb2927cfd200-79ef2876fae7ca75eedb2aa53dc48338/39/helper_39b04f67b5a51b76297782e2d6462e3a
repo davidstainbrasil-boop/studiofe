@@ -1,0 +1,12 @@
+8f152212c60cb405a7a1ee1e317d5a22
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.resolveFetch = void 0;
+const resolveFetch = (customFetch) => {
+    if (customFetch) {
+        return (...args) => customFetch(...args);
+    }
+    return (...args) => fetch(...args);
+};
+exports.resolveFetch = resolveFetch;
+//# sourceMappingURL=helper.js.map

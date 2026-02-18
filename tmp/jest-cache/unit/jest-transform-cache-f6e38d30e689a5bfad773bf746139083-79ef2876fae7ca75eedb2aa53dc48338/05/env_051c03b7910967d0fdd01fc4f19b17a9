@@ -1,0 +1,114 @@
+e26a65ac0666b448bb110ded188d19a8
+"use strict";
+/**
+ * Environment Variables Helpers
+ *
+ * Helpers para obter e validar variáveis de ambiente de forma segura.
+ * Previne crashes em runtime por variáveis não configuradas.
+ */
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getRequiredEnv = getRequiredEnv;
+exports.getOptionalEnv = getOptionalEnv;
+exports.getEnvAsNumber = getEnvAsNumber;
+exports.getEnvAsBoolean = getEnvAsBoolean;
+exports.requireEnvInProd = requireEnvInProd;
+/**
+ * Obtém variável de ambiente obrigatória
+ * Lança erro imediatamente se variável não estiver configurada
+ *
+ * @param key - Nome da variável de ambiente
+ * @returns Valor da variável (nunca undefined/null)
+ * @throws Error se variável não estiver configurada
+ *
+ * @example
+ * ```typescript
+ * const url = getRequiredEnv('NEXT_PUBLIC_SUPABASE_URL');
+ * ```
+ */
+function getRequiredEnv(key) {
+    const value = process.env[key];
+    if (!value) {
+        throw new Error(`❌ Variável de ambiente obrigatória não encontrada: ${key}\n` +
+            `   Verifique seu arquivo .env.local e documentação de configuração.\n` +
+            `   Consulte: PRODUCTION_ENV_TEMPLATE.md para lista completa de variáveis.`);
+    }
+    return value;
+}
+/**
+ * Obtém variável de ambiente opcional
+ * Retorna valor padrão se variável não estiver configurada
+ *
+ * @param key - Nome da variável de ambiente
+ * @param defaultValue - Valor padrão se variável não existir
+ * @returns Valor da variável ou valor padrão
+ *
+ * @example
+ * ```typescript
+ * const port = getOptionalEnv('PORT', '3000');
+ * ```
+ */
+function getOptionalEnv(key, defaultValue = '') {
+    return process.env[key] || defaultValue;
+}
+/**
+ * Obtém variável de ambiente como número
+ *
+ * @param key - Nome da variável de ambiente
+ * @param defaultValue - Valor padrão se variável não existir ou não for número
+ * @returns Número ou valor padrão
+ *
+ * @example
+ * ```typescript
+ * const port = getEnvAsNumber('PORT', 3000);
+ * ```
+ */
+function getEnvAsNumber(key, defaultValue) {
+    const value = process.env[key];
+    if (!value)
+        return defaultValue;
+    const parsed = parseInt(value, 10);
+    return isNaN(parsed) ? defaultValue : parsed;
+}
+/**
+ * Obtém variável de ambiente como boolean
+ *
+ * @param key - Nome da variável de ambiente
+ * @param defaultValue - Valor padrão se variável não existir
+ * @returns Boolean ou valor padrão
+ *
+ * @example
+ * ```typescript
+ * const enabled = getEnvAsBoolean('FEATURE_ENABLED', false);
+ * ```
+ */
+function getEnvAsBoolean(key, defaultValue = false) {
+    const value = process.env[key];
+    if (!value)
+        return defaultValue;
+    return value.toLowerCase() === 'true' || value === '1';
+}
+/**
+ * Obtém variável de ambiente com fallback apenas em desenvolvimento.
+ * Em produção, lança erro se a variável não estiver configurada.
+ * Em dev, retorna o devFallback.
+ *
+ * @param key - Nome da variável de ambiente
+ * @param devFallback - Valor de fallback para desenvolvimento
+ * @returns Valor da variável ou fallback (dev only)
+ * @throws Error em produção se variável não estiver configurada
+ *
+ * @example
+ * ```typescript
+ * const appUrl = requireEnvInProd('NEXT_PUBLIC_APP_URL', 'http://localhost:3000');
+ * ```
+ */
+function requireEnvInProd(key, devFallback) {
+    const value = process.env[key];
+    if (value)
+        return value;
+    if (process.env.NODE_ENV !== 'production')
+        return devFallback;
+    throw new Error(`❌ Variável de ambiente ${key} é obrigatória em produção.\n` +
+        `   Configure via painel do hosting provider ou secrets manager.`);
+}
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3Jvb3QvX01WUF9WaWRlb19UZWNuaWNvQ3Vyc29zX3Y3L2VzdHVkaW9faWFfdmlkZW9zL3NyYy9saWIvZW52LnRzIiwibWFwcGluZ3MiOiI7QUFBQTs7Ozs7R0FLRzs7QUFlSCx3Q0FZQztBQWVELHdDQUVDO0FBY0Qsd0NBTUM7QUFjRCwwQ0FLQztBQWlCRCw0Q0FRQztBQTFHRDs7Ozs7Ozs7Ozs7O0dBWUc7QUFDSCxTQUFnQixjQUFjLENBQUMsR0FBVztJQUN4QyxNQUFNLEtBQUssR0FBRyxPQUFPLENBQUMsR0FBRyxDQUFDLEdBQUcsQ0FBQyxDQUFDO0lBRS9CLElBQUksQ0FBQyxLQUFLLEVBQUUsQ0FBQztRQUNYLE1BQU0sSUFBSSxLQUFLLENBQ2Isc0RBQXNELEdBQUcsSUFBSTtZQUM3RCx1RUFBdUU7WUFDdkUsMkVBQTJFLENBQzVFLENBQUM7SUFDSixDQUFDO0lBRUQsT0FBTyxLQUFLLENBQUM7QUFDZixDQUFDO0FBRUQ7Ozs7Ozs7Ozs7OztHQVlHO0FBQ0gsU0FBZ0IsY0FBYyxDQUFDLEdBQVcsRUFBRSxlQUF1QixFQUFFO0lBQ25FLE9BQU8sT0FBTyxDQUFDLEdBQUcsQ0FBQyxHQUFHLENBQUMsSUFBSSxZQUFZLENBQUM7QUFDMUMsQ0FBQztBQUVEOzs7Ozs7Ozs7OztHQVdHO0FBQ0gsU0FBZ0IsY0FBYyxDQUFDLEdBQVcsRUFBRSxZQUFvQjtJQUM5RCxNQUFNLEtBQUssR0FBRyxPQUFPLENBQUMsR0FBRyxDQUFDLEdBQUcsQ0FBQyxDQUFDO0lBQy9CLElBQUksQ0FBQyxLQUFLO1FBQUUsT0FBTyxZQUFZLENBQUM7SUFFaEMsTUFBTSxNQUFNLEdBQUcsUUFBUSxDQUFDLEtBQUssRUFBRSxFQUFFLENBQUMsQ0FBQztJQUNuQyxPQUFPLEtBQUssQ0FBQyxNQUFNLENBQUMsQ0FBQyxDQUFDLENBQUMsWUFBWSxDQUFDLENBQUMsQ0FBQyxNQUFNLENBQUM7QUFDL0MsQ0FBQztBQUVEOzs7Ozs7Ozs7OztHQVdHO0FBQ0gsU0FBZ0IsZUFBZSxDQUFDLEdBQVcsRUFBRSxlQUF3QixLQUFLO0lBQ3hFLE1BQU0sS0FBSyxHQUFHLE9BQU8sQ0FBQyxHQUFHLENBQUMsR0FBRyxDQUFDLENBQUM7SUFDL0IsSUFBSSxDQUFDLEtBQUs7UUFBRSxPQUFPLFlBQVksQ0FBQztJQUVoQyxPQUFPLEtBQUssQ0FBQyxXQUFXLEVBQUUsS0FBSyxNQUFNLElBQUksS0FBSyxLQUFLLEdBQUcsQ0FBQztBQUN6RCxDQUFDO0FBRUQ7Ozs7Ozs7Ozs7Ozs7O0dBY0c7QUFDSCxTQUFnQixnQkFBZ0IsQ0FBQyxHQUFXLEVBQUUsV0FBbUI7SUFDL0QsTUFBTSxLQUFLLEdBQUcsT0FBTyxDQUFDLEdBQUcsQ0FBQyxHQUFHLENBQUMsQ0FBQztJQUMvQixJQUFJLEtBQUs7UUFBRSxPQUFPLEtBQUssQ0FBQztJQUN4QixJQUFJLE9BQU8sQ0FBQyxHQUFHLENBQUMsUUFBUSxLQUFLLFlBQVk7UUFBRSxPQUFPLFdBQVcsQ0FBQztJQUM5RCxNQUFNLElBQUksS0FBSyxDQUNiLDBCQUEwQixHQUFHLCtCQUErQjtRQUM1RCxpRUFBaUUsQ0FDbEUsQ0FBQztBQUNKLENBQUMiLCJuYW1lcyI6W10sInNvdXJjZXMiOlsiL3Jvb3QvX01WUF9WaWRlb19UZWNuaWNvQ3Vyc29zX3Y3L2VzdHVkaW9faWFfdmlkZW9zL3NyYy9saWIvZW52LnRzIl0sInNvdXJjZXNDb250ZW50IjpbIi8qKlxuICogRW52aXJvbm1lbnQgVmFyaWFibGVzIEhlbHBlcnNcbiAqIFxuICogSGVscGVycyBwYXJhIG9idGVyIGUgdmFsaWRhciB2YXJpw6F2ZWlzIGRlIGFtYmllbnRlIGRlIGZvcm1hIHNlZ3VyYS5cbiAqIFByZXZpbmUgY3Jhc2hlcyBlbSBydW50aW1lIHBvciB2YXJpw6F2ZWlzIG7Do28gY29uZmlndXJhZGFzLlxuICovXG5cbi8qKlxuICogT2J0w6ltIHZhcmnDoXZlbCBkZSBhbWJpZW50ZSBvYnJpZ2F0w7NyaWFcbiAqIExhbsOnYSBlcnJvIGltZWRpYXRhbWVudGUgc2UgdmFyacOhdmVsIG7Do28gZXN0aXZlciBjb25maWd1cmFkYVxuICogXG4gKiBAcGFyYW0ga2V5IC0gTm9tZSBkYSB2YXJpw6F2ZWwgZGUgYW1iaWVudGVcbiAqIEByZXR1cm5zIFZhbG9yIGRhIHZhcmnDoXZlbCAobnVuY2EgdW5kZWZpbmVkL251bGwpXG4gKiBAdGhyb3dzIEVycm9yIHNlIHZhcmnDoXZlbCBuw6NvIGVzdGl2ZXIgY29uZmlndXJhZGFcbiAqIFxuICogQGV4YW1wbGVcbiAqIGBgYHR5cGVzY3JpcHRcbiAqIGNvbnN0IHVybCA9IGdldFJlcXVpcmVkRW52KCdORVhUX1BVQkxJQ19TVVBBQkFTRV9VUkwnKTtcbiAqIGBgYFxuICovXG5leHBvcnQgZnVuY3Rpb24gZ2V0UmVxdWlyZWRFbnYoa2V5OiBzdHJpbmcpOiBzdHJpbmcge1xuICBjb25zdCB2YWx1ZSA9IHByb2Nlc3MuZW52W2tleV07XG4gIFxuICBpZiAoIXZhbHVlKSB7XG4gICAgdGhyb3cgbmV3IEVycm9yKFxuICAgICAgYOKdjCBWYXJpw6F2ZWwgZGUgYW1iaWVudGUgb2JyaWdhdMOzcmlhIG7Do28gZW5jb250cmFkYTogJHtrZXl9XFxuYCArXG4gICAgICBgICAgVmVyaWZpcXVlIHNldSBhcnF1aXZvIC5lbnYubG9jYWwgZSBkb2N1bWVudGHDp8OjbyBkZSBjb25maWd1cmHDp8Ojby5cXG5gICtcbiAgICAgIGAgICBDb25zdWx0ZTogUFJPRFVDVElPTl9FTlZfVEVNUExBVEUubWQgcGFyYSBsaXN0YSBjb21wbGV0YSBkZSB2YXJpw6F2ZWlzLmBcbiAgICApO1xuICB9XG4gIFxuICByZXR1cm4gdmFsdWU7XG59XG5cbi8qKlxuICogT2J0w6ltIHZhcmnDoXZlbCBkZSBhbWJpZW50ZSBvcGNpb25hbFxuICogUmV0b3JuYSB2YWxvciBwYWRyw6NvIHNlIHZhcmnDoXZlbCBuw6NvIGVzdGl2ZXIgY29uZmlndXJhZGFcbiAqIFxuICogQHBhcmFtIGtleSAtIE5vbWUgZGEgdmFyacOhdmVsIGRlIGFtYmllbnRlXG4gKiBAcGFyYW0gZGVmYXVsdFZhbHVlIC0gVmFsb3IgcGFkcsOjbyBzZSB2YXJpw6F2ZWwgbsOjbyBleGlzdGlyXG4gKiBAcmV0dXJucyBWYWxvciBkYSB2YXJpw6F2ZWwgb3UgdmFsb3IgcGFkcsOjb1xuICogXG4gKiBAZXhhbXBsZVxuICogYGBgdHlwZXNjcmlwdFxuICogY29uc3QgcG9ydCA9IGdldE9wdGlvbmFsRW52KCdQT1JUJywgJzMwMDAnKTtcbiAqIGBgYFxuICovXG5leHBvcnQgZnVuY3Rpb24gZ2V0T3B0aW9uYWxFbnYoa2V5OiBzdHJpbmcsIGRlZmF1bHRWYWx1ZTogc3RyaW5nID0gJycpOiBzdHJpbmcge1xuICByZXR1cm4gcHJvY2Vzcy5lbnZba2V5XSB8fCBkZWZhdWx0VmFsdWU7XG59XG5cbi8qKlxuICogT2J0w6ltIHZhcmnDoXZlbCBkZSBhbWJpZW50ZSBjb21vIG7Dum1lcm9cbiAqIFxuICogQHBhcmFtIGtleSAtIE5vbWUgZGEgdmFyacOhdmVsIGRlIGFtYmllbnRlXG4gKiBAcGFyYW0gZGVmYXVsdFZhbHVlIC0gVmFsb3IgcGFkcsOjbyBzZSB2YXJpw6F2ZWwgbsOjbyBleGlzdGlyIG91IG7Do28gZm9yIG7Dum1lcm9cbiAqIEByZXR1cm5zIE7Dum1lcm8gb3UgdmFsb3IgcGFkcsOjb1xuICogXG4gKiBAZXhhbXBsZVxuICogYGBgdHlwZXNjcmlwdFxuICogY29uc3QgcG9ydCA9IGdldEVudkFzTnVtYmVyKCdQT1JUJywgMzAwMCk7XG4gKiBgYGBcbiAqL1xuZXhwb3J0IGZ1bmN0aW9uIGdldEVudkFzTnVtYmVyKGtleTogc3RyaW5nLCBkZWZhdWx0VmFsdWU6IG51bWJlcik6IG51bWJlciB7XG4gIGNvbnN0IHZhbHVlID0gcHJvY2Vzcy5lbnZba2V5XTtcbiAgaWYgKCF2YWx1ZSkgcmV0dXJuIGRlZmF1bHRWYWx1ZTtcbiAgXG4gIGNvbnN0IHBhcnNlZCA9IHBhcnNlSW50KHZhbHVlLCAxMCk7XG4gIHJldHVybiBpc05hTihwYXJzZWQpID8gZGVmYXVsdFZhbHVlIDogcGFyc2VkO1xufVxuXG4vKipcbiAqIE9idMOpbSB2YXJpw6F2ZWwgZGUgYW1iaWVudGUgY29tbyBib29sZWFuXG4gKiBcbiAqIEBwYXJhbSBrZXkgLSBOb21lIGRhIHZhcmnDoXZlbCBkZSBhbWJpZW50ZVxuICogQHBhcmFtIGRlZmF1bHRWYWx1ZSAtIFZhbG9yIHBhZHLDo28gc2UgdmFyacOhdmVsIG7Do28gZXhpc3RpclxuICogQHJldHVybnMgQm9vbGVhbiBvdSB2YWxvciBwYWRyw6NvXG4gKiBcbiAqIEBleGFtcGxlXG4gKiBgYGB0eXBlc2NyaXB0XG4gKiBjb25zdCBlbmFibGVkID0gZ2V0RW52QXNCb29sZWFuKCdGRUFUVVJFX0VOQUJMRUQnLCBmYWxzZSk7XG4gKiBgYGBcbiAqL1xuZXhwb3J0IGZ1bmN0aW9uIGdldEVudkFzQm9vbGVhbihrZXk6IHN0cmluZywgZGVmYXVsdFZhbHVlOiBib29sZWFuID0gZmFsc2UpOiBib29sZWFuIHtcbiAgY29uc3QgdmFsdWUgPSBwcm9jZXNzLmVudltrZXldO1xuICBpZiAoIXZhbHVlKSByZXR1cm4gZGVmYXVsdFZhbHVlO1xuICBcbiAgcmV0dXJuIHZhbHVlLnRvTG93ZXJDYXNlKCkgPT09ICd0cnVlJyB8fCB2YWx1ZSA9PT0gJzEnO1xufVxuXG4vKipcbiAqIE9idMOpbSB2YXJpw6F2ZWwgZGUgYW1iaWVudGUgY29tIGZhbGxiYWNrIGFwZW5hcyBlbSBkZXNlbnZvbHZpbWVudG8uXG4gKiBFbSBwcm9kdcOnw6NvLCBsYW7Dp2EgZXJybyBzZSBhIHZhcmnDoXZlbCBuw6NvIGVzdGl2ZXIgY29uZmlndXJhZGEuXG4gKiBFbSBkZXYsIHJldG9ybmEgbyBkZXZGYWxsYmFjay5cbiAqXG4gKiBAcGFyYW0ga2V5IC0gTm9tZSBkYSB2YXJpw6F2ZWwgZGUgYW1iaWVudGVcbiAqIEBwYXJhbSBkZXZGYWxsYmFjayAtIFZhbG9yIGRlIGZhbGxiYWNrIHBhcmEgZGVzZW52b2x2aW1lbnRvXG4gKiBAcmV0dXJucyBWYWxvciBkYSB2YXJpw6F2ZWwgb3UgZmFsbGJhY2sgKGRldiBvbmx5KVxuICogQHRocm93cyBFcnJvciBlbSBwcm9kdcOnw6NvIHNlIHZhcmnDoXZlbCBuw6NvIGVzdGl2ZXIgY29uZmlndXJhZGFcbiAqXG4gKiBAZXhhbXBsZVxuICogYGBgdHlwZXNjcmlwdFxuICogY29uc3QgYXBwVXJsID0gcmVxdWlyZUVudkluUHJvZCgnTkVYVF9QVUJMSUNfQVBQX1VSTCcsICdodHRwOi8vbG9jYWxob3N0OjMwMDAnKTtcbiAqIGBgYFxuICovXG5leHBvcnQgZnVuY3Rpb24gcmVxdWlyZUVudkluUHJvZChrZXk6IHN0cmluZywgZGV2RmFsbGJhY2s6IHN0cmluZyk6IHN0cmluZyB7XG4gIGNvbnN0IHZhbHVlID0gcHJvY2Vzcy5lbnZba2V5XTtcbiAgaWYgKHZhbHVlKSByZXR1cm4gdmFsdWU7XG4gIGlmIChwcm9jZXNzLmVudi5OT0RFX0VOViAhPT0gJ3Byb2R1Y3Rpb24nKSByZXR1cm4gZGV2RmFsbGJhY2s7XG4gIHRocm93IG5ldyBFcnJvcihcbiAgICBg4p2MIFZhcmnDoXZlbCBkZSBhbWJpZW50ZSAke2tleX0gw6kgb2JyaWdhdMOzcmlhIGVtIHByb2R1w6fDo28uXFxuYCArXG4gICAgYCAgIENvbmZpZ3VyZSB2aWEgcGFpbmVsIGRvIGhvc3RpbmcgcHJvdmlkZXIgb3Ugc2VjcmV0cyBtYW5hZ2VyLmBcbiAgKTtcbn1cbiJdLCJ2ZXJzaW9uIjozfQ==

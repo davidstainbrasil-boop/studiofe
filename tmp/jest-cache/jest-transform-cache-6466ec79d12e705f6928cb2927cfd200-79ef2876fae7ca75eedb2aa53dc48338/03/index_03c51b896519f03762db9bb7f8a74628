@@ -1,0 +1,2 @@
+e7d7ee3d6bce38854295465a72d76da6
+module.exports = require('node-gyp-build-optional-packages')(__dirname);

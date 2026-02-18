@@ -1,0 +1,9 @@
+feat: improve feature #64 - Stock Media Library tests + fallback fix
+
+- Added 37 unit tests for StockMediaService in stock-media.test.ts
+- Tests cover: cache, providers, rate limits, Pexels/Pixabay search,
+  fallback behavior, error handling, pagination, attribution
+- Fixed fallback logic: now tries next provider when current returns 0 items
+  (previously only fell through on exceptions)
+- All 603 tests passing, 0 TS errors
+- Feature #64 marked as passes: true (65/83 complete)

@@ -1,0 +1,4 @@
+Status: blocked
+Escopo concluído: validação de timeline + integração local de TTS/lip-sync por turno no endpoint de render da cena + gate de falha de assets locais + testes de regressão.
+Bloqueio: execução de teste runtime no host atual depende de rg/bwrap/socat.
+Próximo comando: cd estudio_ia_videos && npx jest -c jest.config.cjs src/__tests__/api/avatar-scenes/render.route.test.ts --runInBand

@@ -1,0 +1,4 @@
+[2026-02-14 23:24:00] tentativa de execução: npm run precheck:t4:avatar-scenes
+[2026-02-14 23:24:00] bloqueio antes da execução do script: sandbox runtime indisponível
+[2026-02-14 23:24:00] dependências ausentes no host: rg, bwrap, socat
+[2026-02-14 23:24:00] ação de retomada: T4_PROJECT_ID=<uuid-real> npm run run:t4:avatar-scenes

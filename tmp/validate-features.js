@@ -1,0 +1,12 @@
+const fs = require('fs');
+const d = JSON.parse(fs.readFileSync('feature_list.json', 'utf8'));
+console.log('Total features:', d.features.length);
+console.log('Header total:', d.total_features);
+console.log('Header completed:', d.completed_features);
+const ids = d.features.map(f => f.id);
+console.log('IDs range:', Math.min(...ids), '-', Math.max(...ids));
+const falses = d.features.filter(f => f.passes === false);
+console.log('Pending:', falses.length);
+console.log('Pending IDs:', falses.map(f => f.id).join(', '));
+const phase3 = d.features.filter(f => f.phase === 3);
+console.log('Phase 3 features:', phase3.length);

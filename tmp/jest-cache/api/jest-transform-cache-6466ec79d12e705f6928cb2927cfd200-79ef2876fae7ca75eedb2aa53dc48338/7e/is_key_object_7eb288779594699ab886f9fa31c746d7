@@ -1,0 +1,8 @@
+9754a797636bd8c7b807d461b4b7e4e4
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const crypto_1 = require("crypto");
+const util = require("util");
+exports.default = util.types.isKeyObject
+    ? (obj) => util.types.isKeyObject(obj)
+    : (obj) => obj != null && obj instanceof crypto_1.KeyObject;

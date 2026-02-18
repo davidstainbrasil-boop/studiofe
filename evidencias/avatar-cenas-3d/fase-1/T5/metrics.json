@@ -1,0 +1,13 @@
+{
+  "task": "T5",
+  "success": false,
+  "status": "blocked",
+  "blockReason": "missing-sandbox-deps-rg-bwrap-socat",
+  "implemented": true,
+  "testsAdded": true,
+  "localTtsIntegrated": true,
+  "localLipSyncIntegrated": true,
+  "localAssetGateEnabled": true,
+  "runtimeTestExecuted": false,
+  "lastUpdated": "2026-02-15T00:24:00.000Z"
+}

@@ -1,0 +1,10 @@
+{
+  "task": "T1",
+  "success": false,
+  "durationMs": 0,
+  "costEstimate": 0,
+  "status": "blocked",
+  "blockReason": "sandbox-missing-dependencies-rg-bwrap-socat",
+  "attempts": 2,
+  "lastUpdated": "2026-02-14T20:00:00"
+}

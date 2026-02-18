@@ -1,0 +1,26 @@
+feat: implement slide transitions system (#71)
+
+- Create TransitionEngine with 10 transition presets (none, fade, slideLeft,
+  slideRight, slideUp, slideDown, zoom, dissolve, wipe, wipeLeft) organized
+  in 3 categories (basic, slide, advanced)
+- Add easing functions (easeInOutCubic, easeOutCubic, easeInCubic, lerp)
+- Implement FFmpeg xfade filter generation for render pipeline
+- Include serialization/deserialization and legacy transition normalization
+- Create TransitionPicker UI component with animated preview grid,
+  duration slider (0.3s-2.0s), and category grouping
+- Expand Scene.transition type to support all 10 transition types
+- Add transitionDuration field to Scene type
+- Integrate TransitionPicker into studio-pro right panel (new Trans. tab)
+- Include transition data in save/load/autosave snapshots
+
+Files created:
+- src/lib/render/transitions.ts (TransitionEngine)
+- src/components/editor/TransitionPicker.tsx (UI component)
+- src/__tests__/unit/lib/render/transitions.test.ts (97 tests)
+- src/__tests__/unit/components/editor/transition-picker.test.ts (17 tests)
+
+Files modified:
+- src/types/scene.ts (expanded TransitionType, added transitionDuration)
+- src/app/studio-pro/page.tsx (TransitionPicker integration, 6th tab)
+
+Tests: 974/974 passing (31 suites), TSC clean, Codacy clean

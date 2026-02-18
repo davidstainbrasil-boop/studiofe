@@ -1,0 +1,14 @@
+feat: implement feature #83 - Performance Optimization Bundle
+
+- Web Vitals monitoring via native Performance API (CLS/FID/INP/LCP/FCP/TTFB)
+- Lazy loading utilities for heavy components (three.js, konva, recharts, etc.)
+- Image optimization utilities (srcset, responsive attrs, blur placeholders)
+- WebVitalsReporter client component integrated in root layout
+- Dynamic imports for ChatPanel, SubtitlesEditor, TransitionPicker in studio-pro
+- Bundle analyzer config (conditional via ANALYZE env var)
+- Expanded optimizePackageImports (framer-motion, radix, zod, react-konva)
+- Cache headers for fonts and images (1yr immutable)
+
+Created: 8 files (4 lib + 1 component + 4 tests = 102 new tests)
+Modified: 3 files (next.config.mjs, layout.tsx, studio-pro/page.tsx)
+Tests: 1076/1076 passing (35 suites), TSC clean, Codacy clean

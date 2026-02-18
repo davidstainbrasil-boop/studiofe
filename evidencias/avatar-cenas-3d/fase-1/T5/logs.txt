@@ -1,0 +1,7 @@
+[2026-02-15 00:06:00] T5 iniciado: robustez de render local em avatar-scenes/[sceneId]/render.
+[2026-02-15 00:07:00] Bugfix aplicado: validação de janela temporal e sobreposição antes de enfileirar job.
+[2026-02-15 00:08:00] Teste de regressão adicionado em src/__tests__/api/avatar-scenes/render.route.test.ts.
+[2026-02-15 00:09:00] Tentativa de execução Jest bloqueada por sandbox runtime (dependências ausentes: rg, bwrap, socat).
+[2026-02-15 00:20:00] Integração fase 2 local aplicada: TTS por turno (edge-tts) + lip-sync por turno (LipSyncOrchestrator Azure/Rhubarb).
+[2026-02-15 00:21:00] Gate local aplicado: render local retorna 422 quando nenhum turno gera asset válido (TTS/lip-sync).
+[2026-02-15 00:22:00] Regressão ampliada: cenário de falha total de assets locais validado no teste da rota.

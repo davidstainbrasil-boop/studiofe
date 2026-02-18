@@ -1,0 +1,10 @@
+{
+  "task": "T4",
+  "success": false,
+  "status": "blocked",
+  "blockReason": "missing-sandbox-deps-rg-bwrap-socat",
+  "baseCommand": "npm run run:t4:avatar-scenes",
+  "projectIdConfigured": false,
+  "healthReachable": false,
+  "lastUpdated": "2026-02-14T23:25:00.000Z"
+}

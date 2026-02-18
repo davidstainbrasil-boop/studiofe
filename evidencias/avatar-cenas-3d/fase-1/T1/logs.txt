@@ -1,0 +1,48 @@
+[T1] Logs da execução real serão anexados aqui.
+[2026-02-14 19:56] Precheck de ambiente iniciado.
+[2026-02-14 19:56] Falha: Sandbox dependencies are not available. Required: rg, bwrap, socat.
+[2026-02-14 19:56] Ação: task marcada como bloqueada no handoff.
+[2026-02-14 20:00] Tentativa de auto-instalação bloqueada: o próprio terminal depende de rg/bwrap/socat para iniciar.
+[2026-02-14 20:00] Resultado: bloqueio de infraestrutura confirmado, sem avanço técnico em T1.
+[2026-02-14 20:18] Progresso paralelo aplicado: removido fallback DEMO_SCENE_AVATARS em SceneConfigPanel.
+[2026-02-14 20:18] Resultado: UI de cena usa somente `/api/avatars` real; sem mock/fake de avatar na seleção.
+[2026-02-14 20:28] Progresso paralelo aplicado: API `/api/avatars` reescrita para schema real da tabela `avatars`.
+[2026-02-14 20:28] Resultado: removidas referências inválidas a project/user/modelUrl; GET/POST agora persistem/listam campos compatíveis com banco.
+[2026-02-14 20:35] Progresso paralelo aplicado: criado teste `src/__tests__/api/avatars/route.test.ts` cobrindo GET/POST.
+[2026-02-14 20:35] Validação: runner retornou "No tests found in the files" para caminho informado; sem erros de análise estática nos arquivos alterados.
+[2026-02-14 20:38] Ajuste aplicado: SceneConfigPanel passou a solicitar `/api/avatars?include_private=true&limit=100`.
+[2026-02-14 20:38] Resultado: usuários autenticados no Studio recebem catálogo completo (público + privado autorizado).
+[2026-02-14 20:41] Correção aplicada no teste de rota: import alterado para caminho relativo compatível com TS/Jest.
+[2026-02-14 20:41] Validação: `src/__tests__/api/avatars/route.test.ts` sem erros de compilação.
+[2026-02-14 20:52] Implementada API real `GET/POST /api/avatar-scenes` com persistência em `projects.metadata.studioSnapshot`.
+[2026-02-14 20:52] Implementada sincronização automática no `Studio Pro` (save) para enviar turnos de diálogo de cenas com avatar.
+[2026-02-14 20:52] Adicionado teste de rota `src/__tests__/api/avatar-scenes/route.test.ts` (validação estática sem erros).
+[2026-02-14 21:02] Implementado endpoint `POST /api/avatar-scenes/[sceneId]/render` para enfileirar render por cena de diálogo.
+[2026-02-14 21:02] Adicionado teste `src/__tests__/api/avatar-scenes/render.route.test.ts` e corrigido import relativo.
+[2026-02-14 21:02] Validação estática: rota e testes sem erros de compilação.
+[2026-02-14 21:10] Integrado botão `Render Cena` no Studio Pro para chamar endpoint de render por cena ativa.
+[2026-02-14 21:10] Validação estática: `studio-pro/page.tsx` sem erros após integração.
+[2026-02-14 21:18] Ajuste crítico aplicado: render por cena agora cria registro real em `render_jobs` antes de enfileirar.
+[2026-02-14 21:18] Em falha de enqueue, job é marcado como `failed` com erro persistido (rollback operacional).
+[2026-02-14 21:24] Implementado `PUT /api/avatar-scenes` para atualização explícita de cena existente.
+[2026-02-14 21:24] Testes atualizados para cobrir PUT (sucesso e cena inexistente).
+[2026-02-14 21:46] Progresso paralelo aplicado: `AvatarLibraryPanel` agora sem fallback DEMO e com cards `draggable` enviando payload padronizado `application/x-tc-avatar`.
+[2026-02-14 21:46] Progresso paralelo aplicado: `studio-pro/page.tsx` recebeu handlers `onDragOver/onDrop` no canvas, criando avatar na posição real do drop.
+[2026-02-14 21:46] Validação: diagnósticos sem erro nos arquivos alterados e análise Codacy limpa para ambos os arquivos.
+[2026-02-14 22:03] Implementado vínculo automático de metadados de avatar nos turnos sincronizados em `/api/avatar-scenes`.
+[2026-02-14 22:03] API `avatar-scenes` agora aceita/persiste `voiceId`, `engine` e `style` por turno.
+[2026-02-14 22:03] `studio-pro/page.tsx` atualizado para enviar `voiceId/engine/style` no `save`; teste de rota expandido para validar persistência desses campos.
+[2026-02-14 22:18] `SceneConfigPanel` recebeu editor real de conversa multi-avatar via `ConversationBuilder`.
+[2026-02-14 22:18] Diálogos do editor agora são normalizados em `scene.avatarDialog.turns` e sincronizados no `save` para `/api/avatar-scenes`.
+[2026-02-14 22:18] Validação: `get_errors` sem erros nos arquivos alterados e Codacy limpo para os arquivos de código/documentação desta etapa.
+[2026-02-14 22:29] Validação temporal de turnos implementada no backend (`/api/avatar-scenes`): payload com sobreposição agora retorna 400.
+[2026-02-14 22:29] Validação temporal de turnos implementada no `SceneConfigPanel`: editor bloqueia save de conversa quando houver conflito de intervalos.
+[2026-02-14 22:29] Teste de rota expandido para cenário de sobreposição e rejeição explícita.
+[2026-02-14 22:41] Smoke contratual T4 adicionado na suíte de rota: `POST + GET` para `sceneId` com 2 avatares e 4 turnos.
+[2026-02-14 22:41] Validação esperada no smoke: 4 turnos persistidos, 2 participantes distintos e janelas temporais consistentes após leitura.
+[2026-02-14 22:41] Bloqueio remanescente para Gate REAL: execução em runtime real ainda depende do bootstrap de infraestrutura do host.
+[2026-02-14 23:10] Implementado runner operacional `scripts/run-t4-avatar-scenes-smoke.mjs` com geração automática de artefatos em `evidencias/avatar-cenas-3d/fase-1/T4`.
+[2026-02-14 23:10] Adicionado comando `npm run smoke:t4:avatar-scenes` para execução reproduzível do Gate REAL da T4.
+[2026-02-14 23:10] Estado atual: bloqueado para execução real por ausência de runtime funcional e parâmetros operacionais (`T4_PROJECT_ID` + autenticação válida).
+[2026-02-14 23:13] Tentativa de execução do runner T4 via terminal falhou antes de iniciar script: sandbox host sem dependências (`rg`, `bwrap`, `socat`).
+[2026-02-14 23:13] Resultado: Gate REAL permanece bloqueado por infraestrutura externa ao código.

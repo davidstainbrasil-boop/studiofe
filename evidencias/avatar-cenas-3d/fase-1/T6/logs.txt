@@ -1,0 +1,4 @@
+[placeholder] trilha inicial criada para T6
+[runtime] comando: npm run run:t6:render-local
+[runtime] resultado: bloqueado antes do script por dependências de sandbox ausentes
+[runtime] erro: Required: ripgrep (rg), bubblewrap (bwrap), and socat

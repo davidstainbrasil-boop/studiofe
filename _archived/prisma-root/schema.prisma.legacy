@@ -1,0 +1,275 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  password      String?   // Optional for OAuth users
+  role          Role      @default(USER)
+  avatar        String?
+  emailVerified DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  projects      Project[]
+  videos        Video[]
+  notifications Notification[]
+  sessions      Session[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  userId      String
+  templateId  String?
+  settings    Json?    // Store project settings
+  status      ProjectStatus @default(DRAFT)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  videos  Video[]
+  shares  ProjectShare[]
+
+  @@map("projects")
+}
+
+model Video {
+  id          String     @id @default(cuid())
+  title       String
+  description String?
+  projectId   String?
+  userId      String
+  url         String?
+  thumbnail   String?
+  duration    Float?
+  fileSize    Int?
+  quality     VideoQuality @default(MEDIUM)
+  status      VideoStatus  @default(PROCESSING)
+  settings    Json?       // Store video settings
+  metadata    Json?       // Store additional metadata
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Relations
+  user    User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project?            @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  shares  VideoShare[]
+
+  @@map("videos")
+}
+
+model Template {
+  id          String       @id @default(cuid())
+  name        String
+  description String
+  category    String
+  style       String
+  language    String
+  colors      Json         // Store color scheme
+  fonts       Json         // Store font settings
+  isPremium   Boolean      @default(false)
+  isPublic    Boolean      @default(true)
+  downloads   Int          @default(0)
+  rating      Float?       @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  // Relations
+  usages TemplateUsage[]
+
+  @@map("templates")
+}
+
+model TemplateUsage {
+  id         String   @id @default(cuid())
+  templateId String
+  userId     String
+  usedAt     DateTime @default(now())
+
+  @@unique([templateId, userId])
+  @@map("template_usages")
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  data      Json?            // Additional data
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+model ProjectShare {
+  id        String     @id @default(cuid())
+  projectId String
+  userId    String?    // Optional for public shares
+  token     String?    // Share token for public access
+  permission SharePermission @default(READ)
+  createdAt DateTime   @default(now())
+  expiresAt DateTime?  // Optional expiration
+
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@map("project_shares")
+}
+
+model VideoShare {
+  id        String     @id @default(cuid())
+  videoId   String
+  userId    String?    // Optional for public shares
+  token     String?    // Share token for public access
+  permission SharePermission @default(READ)
+  createdAt DateTime   @default(now())
+  expiresAt DateTime?  // Optional expiration
+
+  // Relations
+  video Video @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@map("video_shares")
+}
+
+model Analytics {
+  id        String   @id @default(cuid())
+  userId    String
+  event     String
+  data      Json?    // Event data
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@map("analytics")
+}
+
+model Subscription {
+  id        String           @id @default(cuid())
+  userId    String           @unique
+  plan      SubscriptionPlan @default(FREE)
+  status    SubscriptionStatus @default(ACTIVE)
+  startDate DateTime         @default(now())
+  endDate   DateTime?
+  stripeId  String?          // Stripe subscription ID
+
+  @@map("subscriptions")
+}
+
+// Enums
+enum Role {
+  USER
+  ADMIN
+  MODERATOR
+}
+
+enum ProjectStatus {
+  DRAFT
+  PROCESSING
+  COMPLETED
+  ARCHIVED
+}
+
+enum VideoStatus {
+  PROCESSING
+  COMPLETED
+  FAILED
+  ARCHIVED
+}
+
+enum VideoQuality {
+  LOW
+  MEDIUM
+  HIGH
+  ULTRA
+}
+
+enum NotificationType {
+  INFO
+  SUCCESS
+  WARNING
+  ERROR
+  VIDEO_COMPLETED
+  PROJECT_SHARED
+  TEMPLATE_PURCHASED
+}
+
+enum SharePermission {
+  READ
+  WRITE
+  ADMIN
+}
+
+enum SubscriptionPlan {
+  FREE
+  PRO
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+  PENDING
+}

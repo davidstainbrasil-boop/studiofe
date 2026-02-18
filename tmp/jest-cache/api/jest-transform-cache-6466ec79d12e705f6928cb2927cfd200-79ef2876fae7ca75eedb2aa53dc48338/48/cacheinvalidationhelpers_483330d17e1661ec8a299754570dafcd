@@ -1,0 +1,259 @@
+fefd6433c4021f6021a9e66367075c7b
+"use strict";
+/**
+ * Cache Invalidation Helpers
+ *
+ * Convenience functions for invalidating cache after data mutations.
+ * Use these functions after CREATE, UPDATE, DELETE operations to ensure cache consistency.
+ *
+ * Usage:
+ * ```typescript
+ * import { invalidateProjectCache, invalidateUserCache } from '@lib/cache/cache-invalidation-helpers';
+ *
+ * // After updating a project
+ * await prisma.projects.update({ ... });
+ * await invalidateProjectCache(projectId);
+ * ```
+ */
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.invalidateCachePattern = exports.invalidateCacheKey = void 0;
+exports.invalidateProjectCache = invalidateProjectCache;
+exports.invalidateUserCache = invalidateUserCache;
+exports.invalidateUserProjectsListCache = invalidateUserProjectsListCache;
+exports.invalidateUserTierCache = invalidateUserTierCache;
+exports.invalidateProjectCollaboratorsCache = invalidateProjectCollaboratorsCache;
+exports.invalidateAllCache = invalidateAllCache;
+exports.batchInvalidate = batchInvalidate;
+exports.invalidateAfterProjectUpdate = invalidateAfterProjectUpdate;
+exports.invalidateAfterCollaboratorChange = invalidateAfterCollaboratorChange;
+exports.invalidateAfterSubscriptionChange = invalidateAfterSubscriptionChange;
+const redis_cache_1 = require("./redis-cache");
+const logger_1 = require("@lib/logger");
+/**
+ * Invalidate all cache keys related to a specific project
+ *
+ * Clears:
+ * - project:${projectId}:owner
+ * - project:${projectId}:collaborator:*
+ * - project:${projectId}:*
+ */
+async function invalidateProjectCache(projectId) {
+    try {
+        await (0, redis_cache_1.invalidatePattern)(`project:${projectId}:*`);
+        logger_1.logger.info('Project cache invalidated', { projectId });
+    }
+    catch (error) {
+        logger_1.logger.error('Failed to invalidate project cache', error instanceof Error ? error : new Error(String(error)), { projectId });
+    }
+}
+/**
+ * Invalidate all cache keys related to a specific user
+ *
+ * Clears:
+ * - user:${userId}:tier
+ * - user:${userId}:*
+ * - projects:list:${userId}:*
+ */
+async function invalidateUserCache(userId) {
+    try {
+        await Promise.all([
+            (0, redis_cache_1.invalidatePattern)(`user:${userId}:*`),
+            (0, redis_cache_1.invalidatePattern)(`projects:list:${userId}:*`)
+        ]);
+        logger_1.logger.info('User cache invalidated', { userId });
+    }
+    catch (error) {
+        logger_1.logger.error('Failed to invalidate user cache', error instanceof Error ? error : new Error(String(error)), { userId });
+    }
+}
+/**
+ * Invalidate all projects list cache for a specific user
+ *
+ * Use when:
+ * - User creates a new project
+ * - User deletes a project
+ * - Project list changes
+ *
+ * Clears: projects:list:${userId}:*
+ */
+async function invalidateUserProjectsListCache(userId) {
+    try {
+        await (0, redis_cache_1.invalidatePattern)(`projects:list:${userId}:*`);
+        logger_1.logger.info('User projects list cache invalidated', { userId });
+    }
+    catch (error) {
+        logger_1.logger.error('Failed to invalidate user projects list cache', error instanceof Error ? error : new Error(String(error)), { userId });
+    }
+}
+/**
+ * Invalidate user tier cache (after subscription change)
+ *
+ * Use when:
+ * - User upgrades/downgrades subscription
+ * - User subscription expires
+ * - Admin changes user tier
+ *
+ * Clears: user:${userId}:tier
+ */
+async function invalidateUserTierCache(userId) {
+    try {
+        await (0, redis_cache_1.invalidate)(`user:${userId}:tier`);
+        logger_1.logger.info('User tier cache invalidated', { userId });
+    }
+    catch (error) {
+        logger_1.logger.error('Failed to invalidate user tier cache', error instanceof Error ? error : new Error(String(error)), { userId });
+    }
+}
+/**
+ * Invalidate collaborator cache for a project
+ *
+ * Use when:
+ * - Collaborator added to project
+ * - Collaborator removed from project
+ * - Collaborator permissions changed
+ *
+ * Clears: project:${projectId}:collaborator:*
+ */
+async function invalidateProjectCollaboratorsCache(projectId) {
+    try {
+        await (0, redis_cache_1.invalidatePattern)(`project:${projectId}:collaborator:*`);
+        logger_1.logger.info('Project collaborators cache invalidated', { projectId });
+    }
+    catch (error) {
+        logger_1.logger.error('Failed to invalidate project collaborators cache', error instanceof Error ? error : new Error(String(error)), { projectId });
+    }
+}
+/**
+ * Invalidate all cache (nuclear option - use sparingly)
+ *
+ * Use when:
+ * - Major data migration
+ * - Cache corruption suspected
+ * - Emergency flush needed
+ *
+ * ⚠️ WARNING: This will clear ALL cached data
+ */
+async function invalidateAllCache() {
+    try {
+        await (0, redis_cache_1.invalidatePattern)('*');
+        logger_1.logger.warn('ALL cache invalidated - nuclear option used');
+    }
+    catch (error) {
+        logger_1.logger.error('Failed to invalidate all cache', error instanceof Error ? error : new Error(String(error)));
+    }
+}
+/**
+ * Batch invalidation helper
+ *
+ * Use when invalidating multiple related entities at once
+ *
+ * Example:
+ * ```typescript
+ * await batchInvalidate({
+ *   projects: ['project-1', 'project-2'],
+ *   users: ['user-1']
+ * });
+ * ```
+ */
+async function batchInvalidate(entities) {
+    var _a, _b, _c, _d;
+    try {
+        const promises = [];
+        if (entities.projects) {
+            promises.push(...entities.projects.map(id => invalidateProjectCache(id)));
+        }
+        if (entities.users) {
+            promises.push(...entities.users.map(id => invalidateUserCache(id)));
+        }
+        if (entities.userProjectLists) {
+            promises.push(...entities.userProjectLists.map(id => invalidateUserProjectsListCache(id)));
+        }
+        if (entities.userTiers) {
+            promises.push(...entities.userTiers.map(id => invalidateUserTierCache(id)));
+        }
+        await Promise.all(promises);
+        logger_1.logger.info('Batch cache invalidation complete', {
+            projects: ((_a = entities.projects) === null || _a === void 0 ? void 0 : _a.length) || 0,
+            users: ((_b = entities.users) === null || _b === void 0 ? void 0 : _b.length) || 0,
+            userProjectLists: ((_c = entities.userProjectLists) === null || _c === void 0 ? void 0 : _c.length) || 0,
+            userTiers: ((_d = entities.userTiers) === null || _d === void 0 ? void 0 : _d.length) || 0,
+        });
+    }
+    catch (error) {
+        logger_1.logger.error('Failed batch cache invalidation', error instanceof Error ? error : new Error(String(error)));
+    }
+}
+/**
+ * Smart invalidation after project update
+ *
+ * Automatically invalidates all related cache keys
+ *
+ * Use after:
+ * - prisma.projects.update()
+ * - prisma.projects.delete()
+ *
+ * @param projectId - Project ID that was updated/deleted
+ * @param userId - Optional user ID if known (more efficient)
+ */
+async function invalidateAfterProjectUpdate(projectId, userId) {
+    try {
+        const promises = [
+            invalidateProjectCache(projectId)
+        ];
+        if (userId) {
+            promises.push(invalidateUserProjectsListCache(userId));
+        }
+        await Promise.all(promises);
+        logger_1.logger.info('Cache invalidated after project update', { projectId, userId });
+    }
+    catch (error) {
+        logger_1.logger.error('Failed to invalidate cache after project update', error instanceof Error ? error : new Error(String(error)), { projectId, userId });
+    }
+}
+/**
+ * Smart invalidation after collaborator change
+ *
+ * Invalidates project and user caches for all affected users
+ *
+ * Use after:
+ * - Adding collaborator
+ * - Removing collaborator
+ * - Changing collaborator permissions
+ */
+async function invalidateAfterCollaboratorChange(projectId, userIds) {
+    try {
+        await Promise.all([
+            invalidateProjectCollaboratorsCache(projectId),
+            ...userIds.map(userId => invalidateUserProjectsListCache(userId))
+        ]);
+        logger_1.logger.info('Cache invalidated after collaborator change', { projectId, userIds });
+    }
+    catch (error) {
+        logger_1.logger.error('Failed to invalidate cache after collaborator change', error instanceof Error ? error : new Error(String(error)), { projectId, userIds });
+    }
+}
+/**
+ * Smart invalidation after subscription change
+ *
+ * Invalidates user tier cache and rate limiting may reset
+ *
+ * Use after:
+ * - User upgrades subscription
+ * - User downgrades subscription
+ * - Subscription expires
+ */
+async function invalidateAfterSubscriptionChange(userId) {
+    try {
+        await invalidateUserTierCache(userId);
+        logger_1.logger.info('Cache invalidated after subscription change', { userId });
+    }
+    catch (error) {
+        logger_1.logger.error('Failed to invalidate cache after subscription change', error instanceof Error ? error : new Error(String(error)), { userId });
+    }
+}
+// Export commonly used functions
+var redis_cache_2 = require("./redis-cache");
+// Direct invalidation functions
+Object.defineProperty(exports, "invalidateCacheKey", { enumerable: true, get: function () { return redis_cache_2.invalidate; } });
+Object.defineProperty(exports, "invalidateCachePattern", { enumerable: true, get: function () { return redis_cache_2.invalidatePattern; } });
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3Jvb3QvX01WUF9WaWRlb19UZWNuaWNvQ3Vyc29zX3Y3L2VzdHVkaW9faWFfdmlkZW9zL3NyYy9saWIvY2FjaGUvY2FjaGUtaW52YWxpZGF0aW9uLWhlbHBlcnMudHMiLCJtYXBwaW5ncyI6IjtBQUFBOzs7Ozs7Ozs7Ozs7OztHQWNHOzs7QUFhSCx3REFPQztBQVVELGtEQVVDO0FBWUQsMEVBT0M7QUFZRCwwREFPQztBQVlELGtGQU9DO0FBWUQsZ0RBT0M7QUFlRCwwQ0FvQ0M7QUFjRCxvRUFtQkM7QUFZRCw4RUFjQztBQVlELDhFQU9DO0FBblBELCtDQUE4RDtBQUM5RCx3Q0FBcUM7QUFFckM7Ozs7Ozs7R0FPRztBQUNJLEtBQUssVUFBVSxzQkFBc0IsQ0FBQyxTQUFpQjtJQUM1RCxJQUFJLENBQUM7UUFDSCxNQUFNLElBQUEsK0JBQWlCLEVBQUMsV0FBVyxTQUFTLElBQUksQ0FBQyxDQUFDO1FBQ2xELGVBQU0sQ0FBQyxJQUFJLENBQUMsMkJBQTJCLEVBQUUsRUFBRSxTQUFTLEVBQUUsQ0FBQyxDQUFDO0lBQzFELENBQUM7SUFBQyxPQUFPLEtBQWMsRUFBRSxDQUFDO1FBQ3hCLGVBQU0sQ0FBQyxLQUFLLENBQUMsb0NBQW9DLEVBQUUsS0FBSyxZQUFZLEtBQUssQ0FBQyxDQUFDLENBQUMsS0FBSyxDQUFDLENBQUMsQ0FBQyxJQUFJLEtBQUssQ0FBQyxNQUFNLENBQUMsS0FBSyxDQUFDLENBQUMsRUFBRSxFQUFFLFNBQVMsRUFBRSxDQUFDLENBQUM7SUFDL0gsQ0FBQztBQUNILENBQUM7QUFFRDs7Ozs7OztHQU9HO0FBQ0ksS0FBSyxVQUFVLG1CQUFtQixDQUFDLE1BQWM7SUFDdEQsSUFBSSxDQUFDO1FBQ0gsTUFBTSxPQUFPLENBQUMsR0FBRyxDQUFDO1lBQ2hCLElBQUEsK0JBQWlCLEVBQUMsUUFBUSxNQUFNLElBQUksQ0FBQztZQUNyQyxJQUFBLCtCQUFpQixFQUFDLGlCQUFpQixNQUFNLElBQUksQ0FBQztTQUMvQyxDQUFDLENBQUM7UUFDSCxlQUFNLENBQUMsSUFBSSxDQUFD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LENBQUMsS0FBSyxDQUFDLENBQUMsRUFBRSxFQUFFLE1BQU0sRUFBRSxDQUFDLENBQUM7SUFDOUksQ0FBQztBQUNILENBQUM7QUFFRCxpQ0FBaUM7QUFDakMsNkNBSXVCO0FBSHJCLGdDQUFnQztBQUNoQyxpSEFBQSxVQUFVLE9BQXNCO0FBQ2hDLHFIQUFBLGlCQUFpQixPQUEwQiIsIm5hbWVzIjpbXSwic291cmNlcyI6WyIvcm9vdC9fTVZQX1ZpZGVvX1RlY25pY29DdXJzb3NfdjcvZXN0dWRpb19pYV92aWRlb3Mvc3JjL2xpYi9jYWNoZS9jYWNoZS1pbnZhbGlkYXRpb24taGVscGVycy50cyJdLCJzb3VyY2VzQ29udGVudCI6WyIvKipcbiAqIENhY2hlIEludmFsaWRhdGlvbiBIZWxwZXJzXG4gKlxuICogQ29udmVuaWVuY2UgZnVuY3Rpb25zIGZvciBpbnZhbGlkYXRpbmcgY2FjaGUgYWZ0ZXIgZGF0YSBtdXRhdGlvbnMuXG4gKiBVc2UgdGhlc2UgZnVuY3Rpb25zIGFmdGVyIENSRUFURSwgVVBEQVRFLCBERUxFVEUgb3BlcmF0aW9ucyB0byBlbnN1cmUgY2FjaGUgY29uc2lzdGVuY3kuXG4gKlxuICogVXNhZ2U6XG4gKiBgYGB0eXBlc2NyaXB0XG4gKiBpbXBvcnQgeyBpbnZhbGlkYXRlUHJvamVjdENhY2hlLCBpbnZhbGlkYXRlVXNlckNhY2hlIH0gZnJvbSAnQGxpYi9jYWNoZS9jYWNoZS1pbnZhbGlkYXRpb24taGVscGVycyc7XG4gKlxuICogLy8gQWZ0ZXIgdXBkYXRpbmcgYSBwcm9qZWN0XG4gKiBhd2FpdCBwcmlzbWEucHJvamVjdHMudXBkYXRlKHsgLi4uIH0pO1xuICogYXdhaXQgaW52YWxpZGF0ZVByb2plY3RDYWNoZShwcm9qZWN0SWQpO1xuICogYGBgXG4gKi9cblxuaW1wb3J0IHsgaW52YWxpZGF0ZSwgaW52YWxpZGF0ZVBhdHRlcm4gfSBmcm9tICcuL3JlZGlzLWNhY2hlJztcbmltcG9ydCB7IGxvZ2dlciB9IGZyb20gJ0BsaWIvbG9nZ2VyJztcblxuLyoqXG4gKiBJbnZhbGlkYXRlIGFsbCBjYWNoZSBrZXlzIHJlbGF0ZWQgdG8gYSBzcGVjaWZpYyBwcm9qZWN0XG4gKlxuICogQ2xlYXJzOlxuICogLSBwcm9qZWN0OiR7cHJvamVjdElkfTpvd25lclxuICogLSBwcm9qZWN0OiR7cHJvamVjdElkfTpjb2xsYWJvcmF0b3I6KlxuICogLSBwcm9qZWN0OiR7cHJvamVjdElkfToqXG4gKi9cbmV4cG9ydCBhc3luYyBmdW5jdGlvbiBpbnZhbGlkYXRlUHJvamVjdENhY2hlKHByb2plY3RJZDogc3RyaW5nKTogUHJvbWlzZTx2b2lkPiB7XG4gIHRyeSB7XG4gICAgYXdhaXQgaW52YWxpZGF0ZVBhdHRlcm4oYHByb2plY3Q6JHtwcm9qZWN0SWR9OipgKTtcbiAgICBsb2dnZXIuaW5mbygnUHJvamVjdCBjYWNoZSBpbnZhbGlkYXRlZCcsIHsgcHJvamVjdElkIH0pO1xuICB9IGNhdGNoIChlcnJvcjogdW5rbm93bikge1xuICAgIGxvZ2dlci5lcnJvcignRmFpbGVkIHRvIGludmFsaWRhdGUgcHJvamVjdCBjYWNoZScsIGVycm9yIGluc3RhbmNlb2YgRXJyb3IgPyBlcnJvciA6IG5ldyBFcnJvcihTdHJpbmcoZXJyb3IpKSwgeyBwcm9qZWN0SWQgfSk7XG4gIH1cbn1cblxuLyoqXG4gKiBJbnZhbGlkYXRlIGFsbCBjYWNoZSBrZXlzIHJlbGF0ZWQgdG8gYSBzcGVjaWZpYyB1c2VyXG4gKlxuICogQ2xlYXJzOlxuICogLSB1c2VyOiR7dXNlcklkfTp0aWVyXG4gKiAtIHVzZXI6JHt1c2VySWR9OipcbiAqIC0gcHJvamVjdHM6bGlzdDoke3VzZXJJZH06KlxuICovXG5leHBvcnQgYXN5bmMgZnVuY3Rpb24gaW52YWxpZGF0ZVVzZXJDYWNoZSh1c2VySWQ6IHN0cmluZyk6IFByb21pc2U8dm9pZD4ge1xuICB0cnkge1xuICAgIGF3YWl0IFByb21pc2UuYWxsKFtcbiAgICAgIGludmFsaWRhdGVQYXR0ZXJuKGB1c2VyOiR7dXNlcklkfToqYCksXG4gICAgICBpbnZhbGlkYXRlUGF0dGVybihgcHJvamVjdHM6bGlzdDoke3VzZXJJZH06KmApXG4gICAgXSk7XG4gICAgbG9nZ2VyLmluZm8oJ1VzZXIgY2FjaGUgaW52YWxpZGF0ZWQnLCB7IHVzZXJJZCB9KTtcbiAgfSBjYXRjaCAoZXJyb3I6IHVua25vd24pIHtcbiAgICBsb2dnZXIuZXJyb3IoJ0ZhaWxlZCB0byBpbnZhbGlkYXRlIHVzZXIgY2FjaGUnLCBlcnJvciBpbnN0YW5jZW9mIEVycm9yID8gZXJyb3IgOiBuZXcgRXJyb3IoU3RyaW5nKGVycm9yKSksIHsgdXNlcklkIH0pO1xuICB9XG59XG5cbi8qKlxuICogSW52YWxpZGF0ZSBhbGwgcHJvamVjdHMgbGlzdCBjYWNoZSBmb3IgYSBzcGVjaWZpYyB1c2VyXG4gKlxuICogVXNlIHdoZW46XG4gKiAtIFVzZXIgY3JlYXRlcyBhIG5ldyBwcm9qZWN0XG4gKiAtIFVzZXIgZGVsZXRlcyBhIHByb2plY3RcbiAqIC0gUHJvamVjdCBsaXN0IGNoYW5nZXNcbiAqXG4gKiBDbGVhcnM6IHByb2plY3RzOmxpc3Q6JHt1c2VySWR9OipcbiAqL1xuZXhwb3J0IGFzeW5jIGZ1bmN0aW9uIGludmFsaWRhdGVVc2VyUHJvamVjdHNMaXN0Q2FjaGUodXNlcklkOiBzdHJpbmcpOiBQcm9taXNlPHZvaWQ+IHtcbiAgdHJ5IHtcbiAgICBhd2FpdCBpbnZhbGlkYXRlUGF0dGVybihgcHJvamVjdHM6bGlzdDoke3VzZXJJZH06KmApO1xuICAgIGxvZ2dlci5pbmZvKCdVc2VyIHByb2plY3RzIGxpc3QgY2FjaGUgaW52YWxpZGF0ZWQnLCB7IHVzZXJJZCB9KTtcbiAgfSBjYXRjaCAoZXJyb3I6IHVua25vd24pIHtcbiAgICBsb2dnZXIuZXJyb3IoJ0ZhaWxlZCB0byBpbnZhbGlkYXRlIHVzZXIgcHJvamVjdHMgbGlzdCBjYWNoZScsIGVycm9yIGluc3RhbmNlb2YgRXJyb3IgPyBlcnJvciA6IG5ldyBFcnJvcihTdHJpbmcoZXJyb3IpKSwgeyB1c2VySWQgfSk7XG4gIH1cbn1cblxuLyoqXG4gKiBJbnZhbGlkYXRlIHVzZXIgdGllciBjYWNoZSAoYWZ0ZXIgc3Vic2NyaXB0aW9uIGNoYW5nZSlcbiAqXG4gKiBVc2Ugd2hlbjpcbiAqIC0gVXNlciB1cGdyYWRlcy9kb3duZ3JhZGVzIHN1YnNjcmlwdGlvblxuICogLSBVc2VyIHN1YnNjcmlwdGlvbiBleHBpcmVzXG4gKiAtIEFkbWluIGNoYW5nZXMgdXNlciB0aWVyXG4gKlxuICogQ2xlYXJzOiB1c2VyOiR7dXNlcklkfTp0aWVyXG4gKi9cbmV4cG9ydCBhc3luYyBmdW5jdGlvbiBpbnZhbGlkYXRlVXNlclRpZXJDYWNoZSh1c2VySWQ6IHN0cmluZyk6IFByb21pc2U8dm9pZD4ge1xuICB0cnkge1xuICAgIGF3YWl0IGludmFsaWRhdGUoYHVzZXI6JHt1c2VySWR9OnRpZXJgKTtcbiAgICBsb2dnZXIuaW5mbygnVXNlciB0aWVyIGNhY2hlIGludmFsaWRhdGVkJywgeyB1c2VySWQgfSk7XG4gIH0gY2F0Y2ggKGVycm9yOiB1bmtub3duKSB7XG4gICAgbG9nZ2VyLmVycm9yKCdGYWlsZWQgdG8gaW52YWxpZGF0ZSB1c2VyIHRpZXIgY2FjaGUnLCBlcnJvciBpbnN0YW5jZW9mIEVycm9yID8gZXJyb3IgOiBuZXcgRXJyb3IoU3RyaW5nKGVycm9yKSksIHsgdXNlcklkIH0pO1xuICB9XG59XG5cbi8qKlxuICogSW52YWxpZGF0ZSBjb2xsYWJvcmF0b3IgY2FjaGUgZm9yIGEgcHJvamVjdFxuICpcbiAqIFVzZSB3aGVuOlxuICogLSBDb2xsYWJvcmF0b3IgYWRkZWQgdG8gcHJvamVjdFxuICogLSBDb2xsYWJvcmF0b3IgcmVtb3ZlZCBmcm9tIHByb2plY3RcbiAqIC0gQ29sbGFib3JhdG9yIHBlcm1pc3Npb25zIGNoYW5nZWRcbiAqXG4gKiBDbGVhcnM6IHByb2plY3Q6JHtwcm9qZWN0SWR9OmNvbGxhYm9yYXRvcjoqXG4gKi9cbmV4cG9ydCBhc3luYyBmdW5jdGlvbiBpbnZhbGlkYXRlUHJvamVjdENvbGxhYm9yYXRvcnNDYWNoZShwcm9qZWN0SWQ6IHN0cmluZyk6IFByb21pc2U8dm9pZD4ge1xuICB0cnkge1xuICAgIGF3YWl0IGludmFsaWRhdGVQYXR0ZXJuKGBwcm9qZWN0OiR7cHJvamVjdElkfTpjb2xsYWJvcmF0b3I6KmApO1xuICAgIGxvZ2dlci5pbmZvKCdQcm9qZWN0IGNvbGxhYm9yYXRvcnMgY2FjaGUgaW52YWxpZGF0ZWQnLCB7IHByb2plY3RJZCB9KTtcbiAgfSBjYXRjaCAoZXJyb3I6IHVua25vd24pIHtcbiAgICBsb2dnZXIuZXJyb3IoJ0ZhaWxlZCB0byBpbnZhbGlkYXRlIHByb2plY3QgY29sbGFib3JhdG9ycyBjYWNoZScsIGVycm9yIGluc3RhbmNlb2YgRXJyb3IgPyBlcnJvciA6IG5ldyBFcnJvcihTdHJpbmcoZXJyb3IpKSwgeyBwcm9qZWN0SWQgfSk7XG4gIH1cbn1cblxuLyoqXG4gKiBJbnZhbGlkYXRlIGFsbCBjYWNoZSAobnVjbGVhciBvcHRpb24gLSB1c2Ugc3BhcmluZ2x5KVxuICpcbiAqIFVzZSB3aGVuOlxuICogLSBNYWpvciBkYXRhIG1pZ3JhdGlvblxuICogLSBDYWNoZSBjb3JydXB0aW9uIHN1c3BlY3RlZFxuICogLSBFbWVyZ2VuY3kgZmx1c2ggbmVlZGVkXG4gKlxuICog4pqg77iPIFdBUk5JTkc6IFRoaXMgd2lsbCBjbGVhciBBTEwgY2FjaGVkIGRhdGFcbiAqL1xuZXhwb3J0IGFzeW5jIGZ1bmN0aW9uIGludmFsaWRhdGVBbGxDYWNoZSgpOiBQcm9taXNlPHZvaWQ+IHtcbiAgdHJ5IHtcbiAgICBhd2FpdCBpbnZhbGlkYXRlUGF0dGVybignKicpO1xuICAgIGxvZ2dlci53YXJuKCdBTEwgY2FjaGUgaW52YWxpZGF0ZWQgLSBudWNsZWFyIG9wdGlvbiB1c2VkJyk7XG4gIH0gY2F0Y2ggKGVycm9yOiB1bmtub3duKSB7XG4gICAgbG9nZ2VyLmVycm9yKCdGYWlsZWQgdG8gaW52YWxpZGF0ZSBhbGwgY2FjaGUnLCBlcnJvciBpbnN0YW5jZW9mIEVycm9yID8gZXJyb3IgOiBuZXcgRXJyb3IoU3RyaW5nKGVycm9yKSkpO1xuICB9XG59XG5cbi8qKlxuICogQmF0Y2ggaW52YWxpZGF0aW9uIGhlbHBlclxuICpcbiAqIFVzZSB3aGVuIGludmFsaWRhdGluZyBtdWx0aXBsZSByZWxhdGVkIGVudGl0aWVzIGF0IG9uY2VcbiAqXG4gKiBFeGFtcGxlOlxuICogYGBgdHlwZXNjcmlwdFxuICogYXdhaXQgYmF0Y2hJbnZhbGlkYXRlKHtcbiAqICAgcHJvamVjdHM6IFsncHJvamVjdC0xJywgJ3Byb2plY3QtMiddLFxuICogICB1c2VyczogWyd1c2VyLTEnXVxuICogfSk7XG4gKiBgYGBcbiAqL1xuZXhwb3J0IGFzeW5jIGZ1bmN0aW9uIGJhdGNoSW52YWxpZGF0ZShlbnRpdGllczoge1xuICBwcm9qZWN0cz86IHN0cmluZ1tdO1xuICB1c2Vycz86IHN0cmluZ1tdO1xuICB1c2VyUHJvamVjdExpc3RzPzogc3RyaW5nW107XG4gIHVzZXJUaWVycz86IHN0cmluZ1tdO1xufSk6IFByb21pc2U8dm9pZD4ge1xuICB0cnkge1xuICAgIGNvbnN0IHByb21pc2VzOiBQcm9taXNlPHZvaWQ+W10gPSBbXTtcblxuICAgIGlmIChlbnRpdGllcy5wcm9qZWN0cykge1xuICAgICAgcHJvbWlzZXMucHVzaCguLi5lbnRpdGllcy5wcm9qZWN0cy5tYXAoaWQgPT4gaW52YWxpZGF0ZVByb2plY3RDYWNoZShpZCkpKTtcbiAgICB9XG5cbiAgICBpZiAoZW50aXRpZXMudXNlcnMpIHtcbiAgICAgIHByb21pc2VzLnB1c2goLi4uZW50aXRpZXMudXNlcnMubWFwKGlkID0+IGludmFsaWRhdGVVc2VyQ2FjaGUoaWQpKSk7XG4gICAgfVxuXG4gICAgaWYgKGVudGl0aWVzLnVzZXJQcm9qZWN0TGlzdHMpIHtcbiAgICAgIHByb21pc2VzLnB1c2goLi4uZW50aXRpZXMudXNlclByb2plY3RMaXN0cy5tYXAoaWQgPT4gaW52YWxpZGF0ZVVzZXJQcm9qZWN0c0xpc3RDYWNoZShpZCkpKTtcbiAgICB9XG5cbiAgICBpZiAoZW50aXRpZXMudXNlclRpZXJzKSB7XG4gICAgICBwcm9taXNlcy5wdXNoKC4uLmVudGl0aWVzLnVzZXJUaWVycy5tYXAoaWQgPT4gaW52YWxpZGF0ZVVzZXJUaWVyQ2FjaGUoaWQpKSk7XG4gICAgfVxuXG4gICAgYXdhaXQgUHJvbWlzZS5hbGwocHJvbWlzZXMpO1xuXG4gICAgbG9nZ2VyLmluZm8oJ0JhdGNoIGNhY2hlIGludmFsaWRhdGlvbiBjb21wbGV0ZScsIHtcbiAgICAgIHByb2plY3RzOiBlbnRpdGllcy5wcm9qZWN0cz8ubGVuZ3RoIHx8IDAsXG4gICAgICB1c2VyczogZW50aXRpZXMudXNlcnM/Lmxlbmd0aCB8fCAwLFxuICAgICAgdXNlclByb2plY3RMaXN0czogZW50aXRpZXMudXNlclByb2plY3RMaXN0cz8ubGVuZ3RoIHx8IDAsXG4gICAgICB1c2VyVGllcnM6IGVudGl0aWVzLnVzZXJUaWVycz8ubGVuZ3RoIHx8IDAsXG4gICAgfSk7XG4gIH0gY2F0Y2ggKGVycm9yOiB1bmtub3duKSB7XG4gICAgbG9nZ2VyLmVycm9yKCdGYWlsZWQgYmF0Y2ggY2FjaGUgaW52YWxpZGF0aW9uJywgZXJyb3IgaW5zdGFuY2VvZiBFcnJvciA/IGVycm9yIDogbmV3IEVycm9yKFN0cmluZyhlcnJvcikpKTtcbiAgfVxufVxuXG4vKipcbiAqIFNtYXJ0IGludmFsaWRhdGlvbiBhZnRlciBwcm9qZWN0IHVwZGF0ZVxuICpcbiAqIEF1dG9tYXRpY2FsbHkgaW52YWxpZGF0ZXMgYWxsIHJlbGF0ZWQgY2FjaGUga2V5c1xuICpcbiAqIFVzZSBhZnRlcjpcbiAqIC0gcHJpc21hLnByb2plY3RzLnVwZGF0ZSgpXG4gKiAtIHByaXNtYS5wcm9qZWN0cy5kZWxldGUoKVxuICpcbiAqIEBwYXJhbSBwcm9qZWN0SWQgLSBQcm9qZWN0IElEIHRoYXQgd2FzIHVwZGF0ZWQvZGVsZXRlZFxuICogQHBhcmFtIHVzZXJJZCAtIE9wdGlvbmFsIHVzZXIgSUQgaWYga25vd24gKG1vcmUgZWZmaWNpZW50KVxuICovXG5leHBvcnQgYXN5bmMgZnVuY3Rpb24gaW52YWxpZGF0ZUFmdGVyUHJvamVjdFVwZGF0ZShcbiAgcHJvamVjdElkOiBzdHJpbmcsXG4gIHVzZXJJZD86IHN0cmluZ1xuKTogUHJvbWlzZTx2b2lkPiB7XG4gIHRyeSB7XG4gICAgY29uc3QgcHJvbWlzZXM6IFByb21pc2U8dm9pZD5bXSA9IFtcbiAgICAgIGludmFsaWRhdGVQcm9qZWN0Q2FjaGUocHJvamVjdElkKVxuICAgIF07XG5cbiAgICBpZiAodXNlcklkKSB7XG4gICAgICBwcm9taXNlcy5wdXNoKGludmFsaWRhdGVVc2VyUHJvamVjdHNMaXN0Q2FjaGUodXNlcklkKSk7XG4gICAgfVxuXG4gICAgYXdhaXQgUHJvbWlzZS5hbGwocHJvbWlzZXMpO1xuXG4gICAgbG9nZ2VyLmluZm8oJ0NhY2hlIGludmFsaWRhdGVkIGFmdGVyIHByb2plY3QgdXBkYXRlJywgeyBwcm9qZWN0SWQsIHVzZXJJZCB9KTtcbiAgfSBjYXRjaCAoZXJyb3I6IHVua25vd24pIHtcbiAgICBsb2dnZXIuZXJyb3IoJ0ZhaWxlZCB0byBpbnZhbGlkYXRlIGNhY2hlIGFmdGVyIHByb2plY3QgdXBkYXRlJywgZXJyb3IgaW5zdGFuY2VvZiBFcnJvciA/IGVycm9yIDogbmV3IEVycm9yKFN0cmluZyhlcnJvcikpLCB7IHByb2plY3RJZCwgdXNlcklkIH0pO1xuICB9XG59XG5cbi8qKlxuICogU21hcnQgaW52YWxpZGF0aW9uIGFmdGVyIGNvbGxhYm9yYXRvciBjaGFuZ2VcbiAqXG4gKiBJbnZhbGlkYXRlcyBwcm9qZWN0IGFuZCB1c2VyIGNhY2hlcyBmb3IgYWxsIGFmZmVjdGVkIHVzZXJzXG4gKlxuICogVXNlIGFmdGVyOlxuICogLSBBZGRpbmcgY29sbGFib3JhdG9yXG4gKiAtIFJlbW92aW5nIGNvbGxhYm9yYXRvclxuICogLSBDaGFuZ2luZyBjb2xsYWJvcmF0b3IgcGVybWlzc2lvbnNcbiAqL1xuZXhwb3J0IGFzeW5jIGZ1bmN0aW9uIGludmFsaWRhdGVBZnRlckNvbGxhYm9yYXRvckNoYW5nZShcbiAgcHJvamVjdElkOiBzdHJpbmcsXG4gIHVzZXJJZHM6IHN0cmluZ1tdXG4pOiBQcm9taXNlPHZvaWQ+IHtcbiAgdHJ5IHtcbiAgICBhd2FpdCBQcm9taXNlLmFsbChbXG4gICAgICBpbnZhbGlkYXRlUHJvamVjdENvbGxhYm9yYXRvcnNDYWNoZShwcm9qZWN0SWQpLFxuICAgICAgLi4udXNlcklkcy5tYXAodXNlcklkID0+IGludmFsaWRhdGVVc2VyUHJvamVjdHNMaXN0Q2FjaGUodXNlcklkKSlcbiAgICBdKTtcblxuICAgIGxvZ2dlci5pbmZvKCdDYWNoZSBpbnZhbGlkYXRlZCBhZnRlciBjb2xsYWJvcmF0b3IgY2hhbmdlJywgeyBwcm9qZWN0SWQsIHVzZXJJZHMgfSk7XG4gIH0gY2F0Y2ggKGVycm9yOiB1bmtub3duKSB7XG4gICAgbG9nZ2VyLmVycm9yKCdGYWlsZWQgdG8gaW52YWxpZGF0ZSBjYWNoZSBhZnRlciBjb2xsYWJvcmF0b3IgY2hhbmdlJywgZXJyb3IgaW5zdGFuY2VvZiBFcnJvciA/IGVycm9yIDogbmV3IEVycm9yKFN0cmluZyhlcnJvcikpLCB7IHByb2plY3RJZCwgdXNlcklkcyB9KTtcbiAgfVxufVxuXG4vKipcbiAqIFNtYXJ0IGludmFsaWRhdGlvbiBhZnRlciBzdWJzY3JpcHRpb24gY2hhbmdlXG4gKlxuICogSW52YWxpZGF0ZXMgdXNlciB0aWVyIGNhY2hlIGFuZCByYXRlIGxpbWl0aW5nIG1heSByZXNldFxuICpcbiAqIFVzZSBhZnRlcjpcbiAqIC0gVXNlciB1cGdyYWRlcyBzdWJzY3JpcHRpb25cbiAqIC0gVXNlciBkb3duZ3JhZGVzIHN1YnNjcmlwdGlvblxuICogLSBTdWJzY3JpcHRpb24gZXhwaXJlc1xuICovXG5leHBvcnQgYXN5bmMgZnVuY3Rpb24gaW52YWxpZGF0ZUFmdGVyU3Vic2NyaXB0aW9uQ2hhbmdlKHVzZXJJZDogc3RyaW5nKTogUHJvbWlzZTx2b2lkPiB7XG4gIHRyeSB7XG4gICAgYXdhaXQgaW52YWxpZGF0ZVVzZXJUaWVyQ2FjaGUodXNlcklkKTtcbiAgICBsb2dnZXIuaW5mbygnQ2FjaGUgaW52YWxpZGF0ZWQgYWZ0ZXIgc3Vic2NyaXB0aW9uIGNoYW5nZScsIHsgdXNlcklkIH0pO1xuICB9IGNhdGNoIChlcnJvcjogdW5rbm93bikge1xuICAgIGxvZ2dlci5lcnJvcignRmFpbGVkIHRvIGludmFsaWRhdGUgY2FjaGUgYWZ0ZXIgc3Vic2NyaXB0aW9uIGNoYW5nZScsIGVycm9yIGluc3RhbmNlb2YgRXJyb3IgPyBlcnJvciA6IG5ldyBFcnJvcihTdHJpbmcoZXJyb3IpKSwgeyB1c2VySWQgfSk7XG4gIH1cbn1cblxuLy8gRXhwb3J0IGNvbW1vbmx5IHVzZWQgZnVuY3Rpb25zXG5leHBvcnQge1xuICAvLyBEaXJlY3QgaW52YWxpZGF0aW9uIGZ1bmN0aW9uc1xuICBpbnZhbGlkYXRlIGFzIGludmFsaWRhdGVDYWNoZUtleSxcbiAgaW52YWxpZGF0ZVBhdHRlcm4gYXMgaW52YWxpZGF0ZUNhY2hlUGF0dGVybixcbn0gZnJvbSAnLi9yZWRpcy1jYWNoZSc7XG4iXSwidmVyc2lvbiI6M30=

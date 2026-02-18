@@ -1,0 +1,5 @@
+{
+  "task": "T4",
+  "status": "pending",
+  "note": "Executar npm run smoke:t4:avatar-scenes para gerar request/response real."
+}

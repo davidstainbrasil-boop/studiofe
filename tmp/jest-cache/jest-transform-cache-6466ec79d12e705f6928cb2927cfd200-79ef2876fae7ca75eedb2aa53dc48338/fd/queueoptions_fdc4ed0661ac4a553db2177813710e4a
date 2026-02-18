@@ -1,0 +1,10 @@
+459312ea575cba6e4776202f7b6f088e
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ClientType = void 0;
+var ClientType;
+(function (ClientType) {
+    ClientType["blocking"] = "blocking";
+    ClientType["normal"] = "normal";
+})(ClientType || (exports.ClientType = ClientType = {}));
+//# sourceMappingURL=queue-options.js.map

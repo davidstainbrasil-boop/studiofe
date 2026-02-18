@@ -1,0 +1,12 @@
+{
+  "task": "T6",
+  "success": false,
+  "status": "blocked",
+  "blockReason": "sandbox-dependencies-missing",
+  "missing": [
+    "rg",
+    "bwrap",
+    "socat"
+  ],
+  "note": "Tentativa de npm run run:t6:render-local bloqueada antes da execução do script"
+}

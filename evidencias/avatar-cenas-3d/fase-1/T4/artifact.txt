@@ -1,0 +1,3 @@
+Status: blocked
+Motivo: host sem dependências de sandbox (`rg`, `bwrap`, `socat`)
+Próximo comando atômico: T4_PROJECT_ID=<uuid-real> npm run run:t4:avatar-scenes

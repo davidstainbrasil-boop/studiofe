@@ -1,0 +1,4 @@
+T6 bloqueado em runtime real no host atual.
+Comando tentado: npm run run:t6:render-local
+Erro de infraestrutura: dependências de sandbox ausentes (rg, bwrap, socat).
+Próximo comando após saneamento do host: T6_PROJECT_ID=<uuid-real> npm run run:t6:render-local

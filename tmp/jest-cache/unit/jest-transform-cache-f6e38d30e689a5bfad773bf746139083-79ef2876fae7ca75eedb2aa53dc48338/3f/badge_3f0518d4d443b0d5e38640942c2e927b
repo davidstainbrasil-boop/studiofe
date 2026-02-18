@@ -1,0 +1,76 @@
+6a57323fdefd3d3837e0a62898bfb8fa
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.badgeVariants = void 0;
+exports.Badge = Badge;
+const jsx_runtime_1 = require("react/jsx-runtime");
+const React = __importStar(require("react"));
+const class_variance_authority_1 = require("class-variance-authority");
+const utils_1 = require("@/lib/utils");
+const badgeVariants = (0, class_variance_authority_1.cva)("inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 shadow-sm", {
+    variants: {
+        variant: {
+            default: "border-transparent bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-md shadow-primary/20",
+            secondary: "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:shadow-md",
+            destructive: "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:shadow-md shadow-destructive/20",
+            outline: "text-foreground border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300",
+            success: "border-transparent bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-900/50 dark:text-emerald-300",
+            warning: "border-transparent bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/50 dark:text-amber-300",
+            info: "border-transparent bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/50 dark:text-blue-300",
+            premium: "border-transparent bg-gradient-to-r from-violet-500 to-indigo-500 text-white shadow-md shadow-violet-500/30 hover:shadow-lg hover:shadow-violet-500/40",
+        },
+    },
+    defaultVariants: {
+        variant: "default",
+    },
+});
+exports.badgeVariants = badgeVariants;
+function Badge(_a) {
+    var { className, variant } = _a, props = __rest(_a, ["className", "variant"]);
+    return ((0, jsx_runtime_1.jsx)("div", Object.assign({ className: (0, utils_1.cn)(badgeVariants({ variant }), className) }, props)));
+}
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiL3Jvb3QvX01WUF9WaWRlb19UZWNuaWNvQ3Vyc29zX3Y3L2VzdHVkaW9faWFfdmlkZW9zL3NyYy9jb21wb25lbnRzL3VpL2JhZGdlLnRzeCIsIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7OztBQTJDUyxzQkFBSzs7QUEzQ2QsNkNBQThCO0FBQzlCLHVFQUFpRTtBQUNqRSx1Q0FBZ0M7QUFFaEMsTUFBTSxhQUFhLEdBQUcsSUFBQSw4QkFBRyxFQUN2QixpTUFBaU0sRUFDak07SUFDRSxRQUFRLEVBQUU7UUFDUixPQUFPLEVBQUU7WUFDUCxPQUFPLEVBQ0wsNkdBQTZHO1lBQy9HLFNBQVMsRUFDUCxpR0FBaUc7WUFDbkcsV0FBVyxFQUNULDZIQUE2SDtZQUMvSCxPQUFPLEVBQ0wsb0ZBQW9GO1lBQ3RGLE9BQU8sRUFDTCxzSEFBc0g7WUFDeEgsT0FBTyxFQUNMLDRHQUE0RztZQUM5RyxJQUFJLEVBQ0YsdUdBQXVHO1lBQ3pHLE9BQU8sRUFDTCx3SkFBd0o7U0FDM0o7S0FDRjtJQUNELGVBQWUsRUFBRTtRQUNmLE9BQU8sRUFBRSxTQUFTO0tBQ25CO0NBQ0YsQ0FDRixDQUFBO0FBWWUsc0NBQWE7QUFON0IsU0FBUyxLQUFLLENBQUMsRUFBNEM7UUFBNUMsRUFBRSxTQUFTLEVBQUUsT0FBTyxPQUF3QixFQUFuQixLQUFLLGNBQTlCLHdCQUFnQyxDQUFGO0lBQzNDLE9BQU8sQ0FDTCw4Q0FBSyxTQUFTLEVBQUUsSUFBQSxVQUFFLEVBQUMsYUFBYSxDQUFDLEVBQUUsT0FBTyxFQUFFLENBQUMsRUFBRSxTQUFTLENBQUMsSUFBTSxLQUFLLEVBQUksQ0FDekUsQ0FBQTtBQUNILENBQUMiLCJuYW1lcyI6W10sInNvdXJjZXMiOlsiL3Jvb3QvX01WUF9WaWRlb19UZWNuaWNvQ3Vyc29zX3Y3L2VzdHVkaW9faWFfdmlkZW9zL3NyYy9jb21wb25lbnRzL3VpL2JhZGdlLnRzeCJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgKiBhcyBSZWFjdCBmcm9tIFwicmVhY3RcIlxuaW1wb3J0IHsgY3ZhLCB0eXBlIFZhcmlhbnRQcm9wcyB9IGZyb20gXCJjbGFzcy12YXJpYW5jZS1hdXRob3JpdHlcIlxuaW1wb3J0IHsgY24gfSBmcm9tIFwiQC9saWIvdXRpbHNcIlxuXG5jb25zdCBiYWRnZVZhcmlhbnRzID0gY3ZhKFxuICBcImlubGluZS1mbGV4IGl0ZW1zLWNlbnRlciByb3VuZGVkLWZ1bGwgYm9yZGVyIHB4LTMgcHktMSB0ZXh0LXhzIGZvbnQtc2VtaWJvbGQgdHJhbnNpdGlvbi1hbGwgZHVyYXRpb24tMjAwIGVhc2Utb3V0IGZvY3VzOm91dGxpbmUtbm9uZSBmb2N1czpyaW5nLTIgZm9jdXM6cmluZy1yaW5nIGZvY3VzOnJpbmctb2Zmc2V0LTIgc2hhZG93LXNtXCIsXG4gIHtcbiAgICB2YXJpYW50czoge1xuICAgICAgdmFyaWFudDoge1xuICAgICAgICBkZWZhdWx0OlxuICAgICAgICAgIFwiYm9yZGVyLXRyYW5zcGFyZW50IGJnLXByaW1hcnkgdGV4dC1wcmltYXJ5LWZvcmVncm91bmQgaG92ZXI6YmctcHJpbWFyeS85MCBob3ZlcjpzaGFkb3ctbWQgc2hhZG93LXByaW1hcnkvMjBcIixcbiAgICAgICAgc2Vjb25kYXJ5OlxuICAgICAgICAgIFwiYm9yZGVyLXRyYW5zcGFyZW50IGJnLXNlY29uZGFyeSB0ZXh0LXNlY29uZGFyeS1mb3JlZ3JvdW5kIGhvdmVyOmJnLXNlY29uZGFyeS84MCBob3ZlcjpzaGFkb3ctbWRcIixcbiAgICAgICAgZGVzdHJ1Y3RpdmU6XG4gICAgICAgICAgXCJib3JkZXItdHJhbnNwYXJlbnQgYmctZGVzdHJ1Y3RpdmUgdGV4dC1kZXN0cnVjdGl2ZS1mb3JlZ3JvdW5kIGhvdmVyOmJnLWRlc3RydWN0aXZlLzkwIGhvdmVyOnNoYWRvdy1tZCBzaGFkb3ctZGVzdHJ1Y3RpdmUvMjBcIixcbiAgICAgICAgb3V0bGluZTogXG4gICAgICAgICAgXCJ0ZXh0LWZvcmVncm91bmQgYm9yZGVyLXNsYXRlLTIwMCBiZy13aGl0ZSBob3ZlcjpiZy1zbGF0ZS01MCBob3Zlcjpib3JkZXItc2xhdGUtMzAwXCIsXG4gICAgICAgIHN1Y2Nlc3M6XG4gICAgICAgICAgXCJib3JkZXItdHJhbnNwYXJlbnQgYmctZW1lcmFsZC0xMDAgdGV4dC1lbWVyYWxkLTcwMCBob3ZlcjpiZy1lbWVyYWxkLTIwMCBkYXJrOmJnLWVtZXJhbGQtOTAwLzUwIGRhcms6dGV4dC1lbWVyYWxkLTMwMFwiLFxuICAgICAgICB3YXJuaW5nOlxuICAgICAgICAgIFwiYm9yZGVyLXRyYW5zcGFyZW50IGJnLWFtYmVyLTEwMCB0ZXh0LWFtYmVyLTcwMCBob3ZlcjpiZy1hbWJlci0yMDAgZGFyazpiZy1hbWJlci05MDAvNTAgZGFyazp0ZXh0LWFtYmVyLTMwMFwiLFxuICAgICAgICBpbmZvOlxuICAgICAgICAgIFwiYm9yZGVyLXRyYW5zcGFyZW50IGJnLWJsdWUtMTAwIHRleHQtYmx1ZS03MDAgaG92ZXI6YmctYmx1ZS0yMDAgZGFyazpiZy1ibHVlLTkwMC81MCBkYXJrOnRleHQtYmx1ZS0zMDBcIixcbiAgICAgICAgcHJlbWl1bTpcbiAgICAgICAgICBcImJvcmRlci10cmFuc3BhcmVudCBiZy1ncmFkaWVudC10by1yIGZyb20tdmlvbGV0LTUwMCB0by1pbmRpZ28tNTAwIHRleHQtd2hpdGUgc2hhZG93LW1kIHNoYWRvdy12aW9sZXQtNTAwLzMwIGhvdmVyOnNoYWRvdy1sZyBob3ZlcjpzaGFkb3ctdmlvbGV0LTUwMC80MFwiLFxuICAgICAgfSxcbiAgICB9LFxuICAgIGRlZmF1bHRWYXJpYW50czoge1xuICAgICAgdmFyaWFudDogXCJkZWZhdWx0XCIsXG4gICAgfSxcbiAgfVxuKVxuXG5leHBvcnQgaW50ZXJmYWNlIEJhZGdlUHJvcHNcbiAgZXh0ZW5kcyBSZWFjdC5IVE1MQXR0cmlidXRlczxIVE1MRGl2RWxlbWVudD4sXG4gICAgVmFyaWFudFByb3BzPHR5cGVvZiBiYWRnZVZhcmlhbnRzPiB7fVxuXG5mdW5jdGlvbiBCYWRnZSh7IGNsYXNzTmFtZSwgdmFyaWFudCwgLi4ucHJvcHMgfTogQmFkZ2VQcm9wcykge1xuICByZXR1cm4gKFxuICAgIDxkaXYgY2xhc3NOYW1lPXtjbihiYWRnZVZhcmlhbnRzKHsgdmFyaWFudCB9KSwgY2xhc3NOYW1lKX0gey4uLnByb3BzfSAvPlxuICApXG59XG5cbmV4cG9ydCB7IEJhZGdlLCBiYWRnZVZhcmlhbnRzIH0iXSwidmVyc2lvbiI6M30=

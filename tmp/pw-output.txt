@@ -1,0 +1,2037 @@
+TMPDIR = /root/_MVP_Video_TecnicoCursos_v7/tmp
+E2E_BASE_URL = https://cursostecno.com.br
+
+Running 120 tests using 2 workers
+
+  ✘    1 estudio_ia_videos/src/__tests__/e2e/accessibility.spec.ts:10:7 › Accessibility Basics › Home page has skip-to-content or main landmark (7ms)
+  ✘    2 estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:13:7 › API Render › GET /api/render/start responds with expected structure (44ms)
+  ✘    3 estudio_ia_videos/src/__tests__/e2e/accessibility.spec.ts:25:7 › Accessibility Basics › Images have alt attributes (7ms)
+  ✘    4 estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:23:7 › API Render › POST /api/render/start without body fails gracefully (56ms)
+  ✘    5 estudio_ia_videos/src/__tests__/e2e/accessibility.spec.ts:44:7 › Accessibility Basics › Buttons and links are focusable (8ms)
+  ✘    6 estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:31:7 › API Render › GET /api/render-status without id returns error (59ms)
+  ✘    7 estudio_ia_videos/src/__tests__/e2e/accessibility.spec.ts:58:7 › Accessibility Basics › No auto-playing audio or video (8ms)
+  ✘    8 estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:43:7 › API Import › POST /api/upload without file returns error (45ms)
+  ✘    9 estudio_ia_videos/src/__tests__/e2e/accessibility.spec.ts:70:7 › Responsive Design › Home page renders on mobile viewport (7ms)
+  ✘   10 estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:53:7 › API Import › POST /api/import without data returns error (61ms)
+  ✘   11 estudio_ia_videos/src/__tests__/e2e/accessibility.spec.ts:82:7 › Responsive Design › Home page renders on tablet viewport (7ms)
+  ✘   12 estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:62:7 › API Import › POST /api/pptx/upload without file returns 400 (37ms)
+  ✘   13 estudio_ia_videos/src/__tests__/e2e/accessibility.spec.ts:88:7 › Responsive Design › Home page renders on desktop viewport (8ms)
+  ✘   14 estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:77:7 › API TTS Extended › GET /api/voice/list or /api/voice-library responds (48ms)
+  ✘   15 estudio_ia_videos/src/__tests__/e2e/accessibility.spec.ts:94:7 › Responsive Design › Login page is usable on mobile (6ms)
+  ✘   16 estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:84:7 › API TTS Extended › POST /api/tts/synthesize with invalid voice returns error (43ms)
+  ✘   17 estudio_ia_videos/src/__tests__/e2e/accessibility.spec.ts:110:7 › Dark Mode Support › Page respects prefers-color-scheme: dark (7ms)
+  ✘   18 estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:94:7 › API TTS Extended › POST /api/voice-cloning/generate without auth returns 401 (49ms)
+  ✘   19 estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:13:7 › API Health & System › GET /api/health responds 200 with success (54ms)
+  ✘   20 estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:110:7 › API Monitoring › GET /api/health returns valid JSON (52ms)
+  ✘   21 estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:26:7 › API Health & System › GET /api/render/start responds for smoke test (74ms)
+  ✘   22 estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:123:7 › API Monitoring › GET /api/metrics responds (64ms)
+  ✘   23 estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:35:7 › API Health & System › GET /api/system/status responds (52ms)
+  ✘   24 estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:130:7 › API Monitoring › GET /api/system/status responds for admins (64ms)
+  ✘   25 estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:46:7 › API TTS & Voice › GET /api/tts/voices responds (43ms)
+  ✘   26 estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:142:7 › API Billing Extended › GET /api/subscription without auth returns 401 (39ms)
+  ✘   27 estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:58:7 › API TTS & Voice › POST /api/tts/synthesize without body returns 400 (43ms)
+  ✘   28 estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:150:7 › API Billing Extended › GET /api/billing/usage without auth returns error (53ms)
+  ✘   29 estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:74:7 › API Templates › GET /api/templates responds (64ms)
+  ✘   30 estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:157:7 › API Billing Extended › POST /api/stripe/create-checkout without auth returns error (93ms)
+  ✘   31 estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:80:7 › API Templates › GET /api/nr-templates responds (53ms)
+  ✘   32 estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:167:7 › API Billing Extended › POST /api/stripe/webhook with invalid signature returns 400 (50ms)
+  ✘   33 estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:100:9 › API Auth Protection › GET /api/admin/users requires authentication (218ms)
+  ✘   34 estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:186:7 › API Avatar › GET /api/avatars responds (45ms)
+  ✘   35 estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:100:9 › API Auth Protection › GET /api/admin/stats requires authentication (39ms)
+  ✘   36 estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:192:7 › API Avatar › POST /api/avatar/generate without auth returns error (67ms)
+  ✘   37 estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:100:9 › API Auth Protection › GET /api/admin/metrics requires authentication (58ms)
+  ✘   38 estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:207:7 › API Templates Extended › GET /api/templates returns valid structure (56ms)
+  ✘   39 estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:100:9 › API Auth Protection › POST /api/ai/generate-script requires authentication (53ms)
+  ✘   40 estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:220:7 › API Templates Extended › GET /api/nr-templates returns NR templates (51ms)
+  ✘   41 estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:100:9 › API Auth Protection › GET /api/billing/usage requires authentication (63ms)
+  ✘   42 estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:235:7 › API V1 Versioned › GET /api/v1/voices responds (41ms)
+  ✘   43 estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:122:7 › API Billing › POST /api/stripe/webhook without signature returns 400 (52ms)
+  ✘   44 estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:241:7 › API V1 Versioned › GET /api/v1/video-jobs without auth returns error (42ms)
+  ✘   45 estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:138:7 › Security Headers › API responses include security-related headers or at least no server info leak (45ms)
+  ✘   46 estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:248:7 › API V1 Versioned › GET /api/v1/video-jobs/stats without auth returns error (45ms)
+  ✘   47 estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:151:7 › Security Headers › CORS preflight on API returns appropriate headers (52ms)
+  ✘   48 estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:255:7 › API V1 Versioned › GET /api/v1/avatars responds (64ms)
+  ✘   49 estudio_ia_videos/src/__tests__/e2e/auth-flow.spec.ts:10:7 › Login Flow › Login page renders form elements (8ms)
+  ✘   50 estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:266:7 › API Error Handling › POST with malformed JSON returns 400 (52ms)
+  ✘   51 estudio_ia_videos/src/__tests__/e2e/auth-flow.spec.ts:34:7 › Login Flow › Login form validates empty submission (8ms)
+  ✘   52 estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:276:7 › API Error Handling › Non-existent API route returns 404 (48ms)
+  ✘   53 estudio_ia_videos/src/__tests__/e2e/auth-flow.spec.ts:54:7 › Login Flow › Login page has link to register (7ms)
+  ✘   54 estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:282:7 › API Error Handling › API responds with JSON content-type on errors (54ms)
+  ✘   55 estudio_ia_videos/src/__tests__/e2e/auth-flow.spec.ts:67:7 › Login Flow › Login page has link to forgot password (7ms)
+  ✘   56 estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:22:7 › Blog Listing › Blog page loads without server error (7ms)
+  ✘   57 estudio_ia_videos/src/__tests__/e2e/auth-flow.spec.ts:81:7 › Register Flow › Register page loads (9ms)
+  ✘   58 estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:28:7 › Blog Listing › Blog page has a heading (7ms)
+  ✘   59 estudio_ia_videos/src/__tests__/e2e/auth-flow.spec.ts:91:7 › Register Flow › Register page has name, email, password fields (7ms)
+  ✘   60 estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:34:7 › Blog Listing › Blog page shows article cards (8ms)
+  ✘   61 estudio_ia_videos/src/__tests__/e2e/auth-flow.spec.ts:111:7 › Forgot Password Flow › Forgot password page loads (6ms)
+  ✘   62 estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:42:7 › Blog Listing › Blog article links point to valid slugs (7ms)
+  ✘   63 estudio_ia_videos/src/__tests__/e2e/auth-flow.spec.ts:120:7 › Forgot Password Flow › Forgot password page has email input (9ms)
+  ✘   64 estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:62:7 › Blog Listing › Blog page has meta description for SEO (11ms)
+  ✘   65 estudio_ia_videos/src/__tests__/e2e/auth-flow.spec.ts:141:7 › Auth Redirects › Protected page redirects to login or shows auth required (19ms)
+  ✘   66 estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:75:9 › Blog Articles › Article "como-criar-videos-treinamento-nr" loads without server error (10ms)
+  ✘   67 estudio_ia_videos/src/__tests__/e2e/health.spec.ts:9:7 › App Health › API health endpoint responds (63ms)
+  ✘   68 estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:75:9 › Blog Articles › Article "tendencias-treinamento-corporativo-2026" loads without server error (8ms)
+  ✘   69 estudio_ia_videos/src/__tests__/e2e/health.spec.ts:15:7 › App Health › Render start API responds (41ms)
+  ✘   70 estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:75:9 › Blog Articles › Article "avatares-ia-treinamento" loads without server error (7ms)
+  ✘   71 estudio_ia_videos/src/__tests__/e2e/health.spec.ts:24:7 › Navigation › home page loads (8ms)
+  ✘   72 estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:75:9 › Blog Articles › Article "guia-completo-nr-10-video" loads without server error (7ms)
+  ✘   73 estudio_ia_videos/src/__tests__/e2e/health.spec.ts:30:7 › Navigation › login page accessible (8ms)
+  ✘   74 estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:75:9 › Blog Articles › Article "roi-videos-treinamento-ia" loads without server error (7ms)
+  ✘   75 estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:37:9 › Public Pages › Home (/) loads without server error (11ms)
+  ✘   76 estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:75:9 › Blog Articles › Article "tts-vozes-naturais-portugues" loads without server error (14ms)
+  ✘   77 estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:82:7 › Blog Articles › Article page has heading and content (6ms)
+  ✘   78 estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:37:9 › Public Pages › Login (/login) loads without server error (7ms)
+  ✘   79 estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:94:7 › Blog Articles › Article page has back link to blog listing (7ms)
+  ✘   80 estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:37:9 › Public Pages › Register (/register) loads without server error (8ms)
+  ✘   81 estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:107:7 › Blog Articles › Article page has proper meta tags (19ms)
+  ✘   82 estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:37:9 › Public Pages › Signup (/signup) loads without server error (9ms)
+  ✘   83 estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:119:7 › Blog Navigation › Can navigate from blog listing to article (15ms)
+  ✘   84 estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:37:9 › Public Pages › Pricing (/pricing) loads without server error (11ms)
+  ✘   85 estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:133:7 › Blog Navigation › Non-existent blog article returns 404 (9ms)
+  ✘   86 estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:37:9 › Public Pages › Terms (/terms) loads without server error (7ms)
+  ✘   87 estudio_ia_videos/src/__tests__/e2e/performance.spec.ts:20:9 › Page Load Performance › Home page loads within 8000ms (7ms)
+  ✘   88 estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:37:9 › Public Pages › Privacy (/privacy) loads without server error (6ms)
+  ✘   89 estudio_ia_videos/src/__tests__/e2e/performance.spec.ts:20:9 › Page Load Performance › Login page loads within 6000ms (7ms)
+  ✘   90 estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:37:9 › Public Pages › Help (/help) loads without server error (7ms)
+  ✘   91 estudio_ia_videos/src/__tests__/e2e/performance.spec.ts:20:9 › Page Load Performance › Pricing page loads within 6000ms (9ms)
+  ✘   92 estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:37:9 › Public Pages › Ajuda (/ajuda) loads without server error (6ms)
+  ✘   93 estudio_ia_videos/src/__tests__/e2e/performance.spec.ts:20:9 › Page Load Performance › Blog page loads within 6000ms (8ms)
+  ✘   94 estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:37:9 › Public Pages › Blog (/blog) loads without server error (9ms)
+  ✘   95 estudio_ia_videos/src/__tests__/e2e/performance.spec.ts:37:7 › Resource Sizes › Home page total transfer size is reasonable (7ms)
+  ✘   96 estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:37:9 › Public Pages › Forgot Password (/forgot-password) loads without server error (7ms)
+  ✘   97 estudio_ia_videos/src/__tests__/e2e/performance.spec.ts:59:7 › Resource Sizes › No single resource exceeds 3MB (7ms)
+  ✘   98 estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:42:7 › Public Pages › Home page has a visible heading or hero (8ms)
+  ✘   99 estudio_ia_videos/src/__tests__/e2e/performance.spec.ts:85:7 › Console Errors › Home page has no critical console errors (5ms)
+  ✘  100 estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:49:7 › Public Pages › Login page has email/password inputs (7ms)
+  ✘  101 estudio_ia_videos/src/__tests__/e2e/performance.spec.ts:114:7 › Console Errors › Login page has no critical console errors (10ms)
+  ✘  102 estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:60:7 › Public Pages › Pricing page shows plan cards (10ms)
+  ✘  103 estudio_ia_videos/src/__tests__/e2e/performance.spec.ts:145:7 › Network Health › Home page has no failed critical requests (8ms)
+  ✘  104 estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:81:7 › Error Pages › Non-existent page returns 404 or shows not-found content (5ms)
+  ✘  105 estudio_ia_videos/src/__tests__/e2e/performance.spec.ts:163:7 › Network Health › Static assets load correctly (11ms)
+  ✘  106 estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:107:7 › Cross-page Navigation › Can navigate from home to login (6ms)
+  ✘  107 estudio_ia_videos/src/__tests__/e2e/performance.spec.ts:188:7 › Basic Lighthouse Checks › Home page has charset and viewport meta (7ms)
+  ✘  108 estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:123:7 › Cross-page Navigation › Can navigate from home to pricing (7ms)
+  ✘  109 estudio_ia_videos/src/__tests__/e2e/performance.spec.ts:200:7 › Basic Lighthouse Checks › Critical CSS is loaded (no FOUC) (9ms)
+  ✘  110 estudio_ia_videos/src/__tests__/e2e/seo-meta.spec.ts:10:7 › SEO Meta Tags › Home page has title and description (9ms)
+  ✘  111 estudio_ia_videos/src/__tests__/e2e/performance.spec.ts:209:7 › Basic Lighthouse Checks › Images use modern formats or proper loading (6ms)
+  ✘  112 estudio_ia_videos/src/__tests__/e2e/seo-meta.spec.ts:28:7 › SEO Meta Tags › Home page has Open Graph tags (7ms)
+  ✘  113 estudio_ia_videos/src/__tests__/e2e/seo-meta.spec.ts:48:7 › SEO Meta Tags › Home page has viewport meta tag (6ms)
+  ✘  114 estudio_ia_videos/src/__tests__/e2e/seo-meta.spec.ts:57:7 › SEO Meta Tags › Login page has unique title (6ms)
+  ✘  115 estudio_ia_videos/src/__tests__/e2e/seo-meta.spec.ts:64:7 › SEO Meta Tags › Pricing page has unique title (6ms)
+  ✘  116 estudio_ia_videos/src/__tests__/e2e/seo-meta.spec.ts:71:7 › SEO Meta Tags › Pages have charset meta tag (10ms)
+  ✘  117 estudio_ia_videos/src/__tests__/e2e/seo-meta.spec.ts:77:7 › SEO Meta Tags › Pages have lang attribute on html (6ms)
+  ✘  118 estudio_ia_videos/src/__tests__/e2e/seo-meta.spec.ts:85:7 › PWA Manifest › manifest.json is accessible (48ms)
+  ✘  119 estudio_ia_videos/src/__tests__/e2e/seo-meta.spec.ts:97:7 › PWA Manifest › Home page links to manifest (6ms)
+  ✘  120 estudio_ia_videos/src/__tests__/e2e/seo-meta.spec.ts:109:7 › Favicon & Icons › favicon is accessible (42ms)
+
+
+  1) estudio_ia_videos/src/__tests__/e2e/accessibility.spec.ts:10:7 › Accessibility Basics › Home page has skip-to-content or main landmark 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  2) estudio_ia_videos/src/__tests__/e2e/accessibility.spec.ts:25:7 › Accessibility Basics › Images have alt attributes 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  3) estudio_ia_videos/src/__tests__/e2e/accessibility.spec.ts:44:7 › Accessibility Basics › Buttons and links are focusable 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  4) estudio_ia_videos/src/__tests__/e2e/accessibility.spec.ts:58:7 › Accessibility Basics › No auto-playing audio or video 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  5) estudio_ia_videos/src/__tests__/e2e/accessibility.spec.ts:70:7 › Responsive Design › Home page renders on mobile viewport 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  6) estudio_ia_videos/src/__tests__/e2e/accessibility.spec.ts:82:7 › Responsive Design › Home page renders on tablet viewport 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  7) estudio_ia_videos/src/__tests__/e2e/accessibility.spec.ts:88:7 › Responsive Design › Home page renders on desktop viewport 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  8) estudio_ia_videos/src/__tests__/e2e/accessibility.spec.ts:94:7 › Responsive Design › Login page is usable on mobile 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  9) estudio_ia_videos/src/__tests__/e2e/accessibility.spec.ts:110:7 › Dark Mode Support › Page respects prefers-color-scheme: dark 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  10) estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:13:7 › API Render › GET /api/render/start responds with expected structure 
+
+    Error: apiRequestContext.get: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → GET https://cursostecno.com.br/api/render/start?action=video-test[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+
+
+      12 | test.describe('API Render', () => {
+      13 |   test('GET /api/render/start responds with expected structure', async ({ request }) => {
+    > 14 |     const response = await request.get('/api/render/start?action=video-test');
+         |                                    ^
+      15 |     const status = response.status();
+      16 |     expect(status).toBeLessThan(500);
+      17 |     if (status === 200) {
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:14:36
+
+  11) estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:23:7 › API Render › POST /api/render/start without body fails gracefully 
+
+    Error: apiRequestContext.post: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → POST https://cursostecno.com.br/api/render/start[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+    [2m    - Content-Type: application/json[22m
+    [2m    - content-length: 2[22m
+
+
+      22 |
+      23 |   test('POST /api/render/start without body fails gracefully', async ({ request }) => {
+    > 24 |     const response = await request.post('/api/render/start', {
+         |                                    ^
+      25 |       data: {},
+      26 |       headers: { 'Content-Type': 'application/json' },
+      27 |     });
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:24:36
+
+  12) estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:31:7 › API Render › GET /api/render-status without id returns error 
+
+    Error: apiRequestContext.get: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → GET https://cursostecno.com.br/api/render-status[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+
+
+      30 |
+      31 |   test('GET /api/render-status without id returns error', async ({ request }) => {
+    > 32 |     const response = await request.get('/api/render-status');
+         |                                    ^
+      33 |     const status = response.status();
+      34 |     // Should return 400 or 404 for missing id, not 500
+      35 |     expect(status).toBeLessThan(500);
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:32:36
+
+  13) estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:43:7 › API Import › POST /api/upload without file returns error 
+
+    Error: apiRequestContext.post: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → POST https://cursostecno.com.br/api/upload[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+    [2m    - Content-Type: application/json[22m
+    [2m    - content-length: 2[22m
+
+
+      42 | test.describe('API Import', () => {
+      43 |   test('POST /api/upload without file returns error', async ({ request }) => {
+    > 44 |     const response = await request.post('/api/upload', {
+         |                                    ^
+      45 |       data: {},
+      46 |       headers: { 'Content-Type': 'application/json' },
+      47 |     });
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:44:36
+
+  14) estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:53:7 › API Import › POST /api/import without data returns error 
+
+    Error: apiRequestContext.post: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → POST https://cursostecno.com.br/api/import[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+    [2m    - Content-Type: application/json[22m
+    [2m    - content-length: 2[22m
+
+
+      52 |
+      53 |   test('POST /api/import without data returns error', async ({ request }) => {
+    > 54 |     const response = await request.post('/api/import', {
+         |                                    ^
+      55 |       data: {},
+      56 |       headers: { 'Content-Type': 'application/json' },
+      57 |     });
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:54:36
+
+  15) estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:62:7 › API Import › POST /api/pptx/upload without file returns 400 
+
+    Error: apiRequestContext.post: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → POST https://cursostecno.com.br/api/pptx/upload[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+    [2m    - Content-Type: application/json[22m
+    [2m    - content-length: 2[22m
+
+
+      61 |
+      62 |   test('POST /api/pptx/upload without file returns 400', async ({ request }) => {
+    > 63 |     const response = await request.post('/api/pptx/upload', {
+         |                                    ^
+      64 |       data: {},
+      65 |       headers: { 'Content-Type': 'application/json' },
+      66 |     });
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:63:36
+
+  16) estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:77:7 › API TTS Extended › GET /api/voice/list or /api/voice-library responds 
+
+    Error: apiRequestContext.get: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → GET https://cursostecno.com.br/api/voice-library[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+
+
+      76 | test.describe('API TTS Extended', () => {
+      77 |   test('GET /api/voice/list or /api/voice-library responds', async ({ request }) => {
+    > 78 |     const listResponse = await request.get('/api/voice-library');
+         |                                        ^
+      79 |     const status = listResponse.status();
+      80 |     // Either works or needs auth
+      81 |     expect(status).toBeLessThan(500);
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:78:40
+
+  17) estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:84:7 › API TTS Extended › POST /api/tts/synthesize with invalid voice returns error 
+
+    Error: apiRequestContext.post: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → POST https://cursostecno.com.br/api/tts/synthesize[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+    [2m    - Content-Type: application/json[22m
+    [2m    - content-length: 43[22m
+
+
+      83 |
+      84 |   test('POST /api/tts/synthesize with invalid voice returns error', async ({ request }) => {
+    > 85 |     const response = await request.post('/api/tts/synthesize', {
+         |                                    ^
+      86 |       data: { text: 'test', voice: 'invalid-voice-xyz' },
+      87 |       headers: { 'Content-Type': 'application/json' },
+      88 |     });
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:85:36
+
+  18) estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:94:7 › API TTS Extended › POST /api/voice-cloning/generate without auth returns 401 
+
+    Error: apiRequestContext.post: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → POST https://cursostecno.com.br/api/voice-cloning/generate[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+    [2m    - Content-Type: application/json[22m
+    [2m    - content-length: 15[22m
+
+
+      93 |
+      94 |   test('POST /api/voice-cloning/generate without auth returns 401', async ({ request }) => {
+    > 95 |     const response = await request.post('/api/voice-cloning/generate', {
+         |                                    ^
+      96 |       data: { text: 'test' },
+      97 |       headers: { 'Content-Type': 'application/json' },
+      98 |     });
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:95:36
+
+  19) estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:110:7 › API Monitoring › GET /api/health returns valid JSON 
+
+    Error: apiRequestContext.get: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → GET https://cursostecno.com.br/api/health[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+
+
+      109 | test.describe('API Monitoring', () => {
+      110 |   test('GET /api/health returns valid JSON', async ({ request }) => {
+    > 111 |     const response = await request.get('/api/health');
+          |                                    ^
+      112 |     const status = response.status();
+      113 |     if (status === 200) {
+      114 |       const body = await response.json();
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:111:36
+
+  20) estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:123:7 › API Monitoring › GET /api/metrics responds 
+
+    Error: apiRequestContext.get: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → GET https://cursostecno.com.br/api/metrics[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+
+
+      122 |
+      123 |   test('GET /api/metrics responds', async ({ request }) => {
+    > 124 |     const response = await request.get('/api/metrics');
+          |                                    ^
+      125 |     const status = response.status();
+      126 |     // Metrics may require auth or may be public
+      127 |     expect(status).toBeLessThan(500);
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:124:36
+
+  21) estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:130:7 › API Monitoring › GET /api/system/status responds for admins 
+
+    Error: apiRequestContext.get: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → GET https://cursostecno.com.br/api/system/status[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+
+
+      129 |
+      130 |   test('GET /api/system/status responds for admins', async ({ request }) => {
+    > 131 |     const response = await request.get('/api/system/status');
+          |                                    ^
+      132 |     const status = response.status();
+      133 |     // Should require auth, so 401/403 expected
+      134 |     expect(status).toBeLessThan(500);
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:131:36
+
+  22) estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:142:7 › API Billing Extended › GET /api/subscription without auth returns 401 
+
+    Error: apiRequestContext.get: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → GET https://cursostecno.com.br/api/subscription[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+
+
+      141 | test.describe('API Billing Extended', () => {
+      142 |   test('GET /api/subscription without auth returns 401', async ({ request }) => {
+    > 143 |     const response = await request.get('/api/subscription');
+          |                                    ^
+      144 |     const status = response.status();
+      145 |     // Should require authentication
+      146 |     expect(status).not.toBe(200);
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:143:36
+
+  23) estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:150:7 › API Billing Extended › GET /api/billing/usage without auth returns error 
+
+    Error: apiRequestContext.get: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → GET https://cursostecno.com.br/api/billing/usage[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+
+
+      149 |
+      150 |   test('GET /api/billing/usage without auth returns error', async ({ request }) => {
+    > 151 |     const response = await request.get('/api/billing/usage');
+          |                                    ^
+      152 |     const status = response.status();
+      153 |     expect(status).not.toBe(200);
+      154 |     expect(status).toBeLessThan(500);
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:151:36
+
+  24) estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:157:7 › API Billing Extended › POST /api/stripe/create-checkout without auth returns error 
+
+    Error: apiRequestContext.post: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → POST https://cursostecno.com.br/api/stripe/create-checkout[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+    [2m    - Content-Type: application/json[22m
+    [2m    - content-length: 24[22m
+
+
+      156 |
+      157 |   test('POST /api/stripe/create-checkout without auth returns error', async ({ request }) => {
+    > 158 |     const response = await request.post('/api/stripe/create-checkout', {
+          |                                    ^
+      159 |       data: { priceId: 'price_test' },
+      160 |       headers: { 'Content-Type': 'application/json' },
+      161 |     });
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:158:36
+
+  25) estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:167:7 › API Billing Extended › POST /api/stripe/webhook with invalid signature returns 400 
+
+    Error: apiRequestContext.post: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → POST https://cursostecno.com.br/api/stripe/webhook[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+    [2m    - Content-Type: application/json[22m
+    [2m    - stripe-signature: invalid_signature_123[22m
+    [2m    - content-length: 37[22m
+
+
+      166 |
+      167 |   test('POST /api/stripe/webhook with invalid signature returns 400', async ({ request }) => {
+    > 168 |     const response = await request.post('/api/stripe/webhook', {
+          |                                    ^
+      169 |       data: JSON.stringify({ type: 'checkout.session.completed' }),
+      170 |       headers: {
+      171 |         'Content-Type': 'application/json',
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:168:36
+
+  26) estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:186:7 › API Avatar › GET /api/avatars responds 
+
+    Error: apiRequestContext.get: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → GET https://cursostecno.com.br/api/avatars[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+
+
+      185 | test.describe('API Avatar', () => {
+      186 |   test('GET /api/avatars responds', async ({ request }) => {
+    > 187 |     const response = await request.get('/api/avatars');
+          |                                    ^
+      188 |     const status = response.status();
+      189 |     expect(status).toBeLessThan(500);
+      190 |   });
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:187:36
+
+  27) estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:192:7 › API Avatar › POST /api/avatar/generate without auth returns error 
+
+    Error: apiRequestContext.post: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → POST https://cursostecno.com.br/api/avatar/generate[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+    [2m    - Content-Type: application/json[22m
+    [2m    - content-length: 15[22m
+
+
+      191 |
+      192 |   test('POST /api/avatar/generate without auth returns error', async ({ request }) => {
+    > 193 |     const response = await request.post('/api/avatar/generate', {
+          |                                    ^
+      194 |       data: { text: 'test' },
+      195 |       headers: { 'Content-Type': 'application/json' },
+      196 |     });
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:193:36
+
+  28) estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:207:7 › API Templates Extended › GET /api/templates returns valid structure 
+
+    Error: apiRequestContext.get: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → GET https://cursostecno.com.br/api/templates[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+
+
+      206 | test.describe('API Templates Extended', () => {
+      207 |   test('GET /api/templates returns valid structure', async ({ request }) => {
+    > 208 |     const response = await request.get('/api/templates');
+          |                                    ^
+      209 |     const status = response.status();
+      210 |     expect(status).toBeLessThan(500);
+      211 |     if (status === 200) {
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:208:36
+
+  29) estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:220:7 › API Templates Extended › GET /api/nr-templates returns NR templates 
+
+    Error: apiRequestContext.get: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → GET https://cursostecno.com.br/api/nr-templates[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+
+
+      219 |
+      220 |   test('GET /api/nr-templates returns NR templates', async ({ request }) => {
+    > 221 |     const response = await request.get('/api/nr-templates');
+          |                                    ^
+      222 |     const status = response.status();
+      223 |     expect(status).toBeLessThan(500);
+      224 |     if (status === 200) {
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:221:36
+
+  30) estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:235:7 › API V1 Versioned › GET /api/v1/voices responds 
+
+    Error: apiRequestContext.get: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → GET https://cursostecno.com.br/api/v1/voices[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+
+
+      234 | test.describe('API V1 Versioned', () => {
+      235 |   test('GET /api/v1/voices responds', async ({ request }) => {
+    > 236 |     const response = await request.get('/api/v1/voices');
+          |                                    ^
+      237 |     const status = response.status();
+      238 |     expect(status).toBeLessThan(500);
+      239 |   });
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:236:36
+
+  31) estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:241:7 › API V1 Versioned › GET /api/v1/video-jobs without auth returns error 
+
+    Error: apiRequestContext.get: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → GET https://cursostecno.com.br/api/v1/video-jobs[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+
+
+      240 |
+      241 |   test('GET /api/v1/video-jobs without auth returns error', async ({ request }) => {
+    > 242 |     const response = await request.get('/api/v1/video-jobs');
+          |                                    ^
+      243 |     const status = response.status();
+      244 |     expect(status).not.toBe(200);
+      245 |     expect(status).toBeLessThan(500);
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:242:36
+
+  32) estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:248:7 › API V1 Versioned › GET /api/v1/video-jobs/stats without auth returns error 
+
+    Error: apiRequestContext.get: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → GET https://cursostecno.com.br/api/v1/video-jobs/stats[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+
+
+      247 |
+      248 |   test('GET /api/v1/video-jobs/stats without auth returns error', async ({ request }) => {
+    > 249 |     const response = await request.get('/api/v1/video-jobs/stats');
+          |                                    ^
+      250 |     const status = response.status();
+      251 |     expect(status).not.toBe(200);
+      252 |     expect(status).toBeLessThan(500);
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:249:36
+
+  33) estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:255:7 › API V1 Versioned › GET /api/v1/avatars responds 
+
+    Error: apiRequestContext.get: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → GET https://cursostecno.com.br/api/v1/avatars[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+
+
+      254 |
+      255 |   test('GET /api/v1/avatars responds', async ({ request }) => {
+    > 256 |     const response = await request.get('/api/v1/avatars');
+          |                                    ^
+      257 |     const status = response.status();
+      258 |     expect(status).toBeLessThan(500);
+      259 |   });
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:256:36
+
+  34) estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:266:7 › API Error Handling › POST with malformed JSON returns 400 
+
+    Error: apiRequestContext.post: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → POST https://cursostecno.com.br/api/tts/synthesize[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+    [2m    - Content-Type: application/json[22m
+    [2m    - content-length: 18[22m
+
+
+      265 | test.describe('API Error Handling', () => {
+      266 |   test('POST with malformed JSON returns 400', async ({ request }) => {
+    > 267 |     const response = await request.post('/api/tts/synthesize', {
+          |                                    ^
+      268 |       data: 'this is not JSON',
+      269 |       headers: { 'Content-Type': 'application/json' },
+      270 |     });
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:267:36
+
+  35) estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:276:7 › API Error Handling › Non-existent API route returns 404 
+
+    Error: apiRequestContext.get: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → GET https://cursostecno.com.br/api/this-route-does-not-exist-xyz[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+
+
+      275 |
+      276 |   test('Non-existent API route returns 404', async ({ request }) => {
+    > 277 |     const response = await request.get('/api/this-route-does-not-exist-xyz');
+          |                                    ^
+      278 |     const status = response.status();
+      279 |     expect(status).toBe(404);
+      280 |   });
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:277:36
+
+  36) estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:282:7 › API Error Handling › API responds with JSON content-type on errors 
+
+    Error: apiRequestContext.get: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → GET https://cursostecno.com.br/api/this-route-does-not-exist-xyz[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+
+
+      281 |
+      282 |   test('API responds with JSON content-type on errors', async ({ request }) => {
+    > 283 |     const response = await request.get('/api/this-route-does-not-exist-xyz');
+          |                                    ^
+      284 |     const contentType = response.headers()['content-type'] || '';
+      285 |     // Error responses should indicate they are not HTML pages
+      286 |     // Accept JSON or text responses
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:283:36
+
+  37) estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:13:7 › API Health & System › GET /api/health responds 200 with success 
+
+    Error: apiRequestContext.get: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → GET https://cursostecno.com.br/api/health[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+
+
+      12 | test.describe('API Health & System', () => {
+      13 |   test('GET /api/health responds 200 with success', async ({ request }) => {
+    > 14 |     const response = await request.get('/api/health');
+         |                                    ^
+      15 |     const status = response.status();
+      16 |     // Health endpoint should exist and return success
+      17 |     if (status === 200) {
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:14:36
+
+  38) estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:26:7 › API Health & System › GET /api/render/start responds for smoke test 
+
+    Error: apiRequestContext.get: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → GET https://cursostecno.com.br/api/render/start?action=video-test[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+
+
+      25 |
+      26 |   test('GET /api/render/start responds for smoke test', async ({ request }) => {
+    > 27 |     const response = await request.get('/api/render/start?action=video-test');
+         |                                    ^
+      28 |     expect(response.status()).toBeLessThan(500);
+      29 |     if (response.status() === 200) {
+      30 |       const body = await response.json();
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:27:36
+
+  39) estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:35:7 › API Health & System › GET /api/system/status responds 
+
+    Error: apiRequestContext.get: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → GET https://cursostecno.com.br/api/admin/system/status[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+
+
+      34 |
+      35 |   test('GET /api/system/status responds', async ({ request }) => {
+    > 36 |     const response = await request.get('/api/admin/system/status');
+         |                                    ^
+      37 |     // Admin routes may require auth — a 401 or 403 is fine
+      38 |     expect([200, 401, 403]).toContain(response.status());
+      39 |   });
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:36:36
+
+  40) estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:46:7 › API TTS & Voice › GET /api/tts/voices responds 
+
+    Error: apiRequestContext.get: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → GET https://cursostecno.com.br/api/tts/voices[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+
+
+      45 | test.describe('API TTS & Voice', () => {
+      46 |   test('GET /api/tts/voices responds', async ({ request }) => {
+    > 47 |     const response = await request.get('/api/tts/voices');
+         |                                    ^
+      48 |     const status = response.status();
+      49 |     expect(status).toBeLessThan(500);
+      50 |
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:47:36
+
+  41) estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:58:7 › API TTS & Voice › POST /api/tts/synthesize without body returns 400 
+
+    Error: apiRequestContext.post: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → POST https://cursostecno.com.br/api/tts/synthesize[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+    [2m    - Content-Type: application/json[22m
+    [2m    - content-length: 2[22m
+
+
+      57 |
+      58 |   test('POST /api/tts/synthesize without body returns 400', async ({ request }) => {
+    > 59 |     const response = await request.post('/api/tts/synthesize', {
+         |                                    ^
+      60 |       data: {},
+      61 |       headers: { 'Content-Type': 'application/json' },
+      62 |     });
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:59:36
+
+  42) estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:74:7 › API Templates › GET /api/templates responds 
+
+    Error: apiRequestContext.get: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → GET https://cursostecno.com.br/api/templates[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+
+
+      73 | test.describe('API Templates', () => {
+      74 |   test('GET /api/templates responds', async ({ request }) => {
+    > 75 |     const response = await request.get('/api/templates');
+         |                                    ^
+      76 |     const status = response.status();
+      77 |     expect(status).toBeLessThan(500);
+      78 |   });
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:75:36
+
+  43) estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:80:7 › API Templates › GET /api/nr-templates responds 
+
+    Error: apiRequestContext.get: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → GET https://cursostecno.com.br/api/nr-templates[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+
+
+      79 |
+      80 |   test('GET /api/nr-templates responds', async ({ request }) => {
+    > 81 |     const response = await request.get('/api/nr-templates');
+         |                                    ^
+      82 |     const status = response.status();
+      83 |     expect(status).toBeLessThan(500);
+      84 |   });
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:81:36
+
+  44) estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:100:9 › API Auth Protection › GET /api/admin/users requires authentication 
+
+    Error: apiRequestContext.get: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → GET https://cursostecno.com.br/api/admin/users[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+
+
+      101 |       let response;
+      102 |       if (route.method === 'GET') {
+    > 103 |         response = await request.get(route.path);
+          |                                  ^
+      104 |       } else {
+      105 |         response = await request.post(route.path, {
+      106 |           data: {},
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:103:34
+
+  45) estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:100:9 › API Auth Protection › GET /api/admin/stats requires authentication 
+
+    Error: apiRequestContext.get: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → GET https://cursostecno.com.br/api/admin/stats[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+
+
+      101 |       let response;
+      102 |       if (route.method === 'GET') {
+    > 103 |         response = await request.get(route.path);
+          |                                  ^
+      104 |       } else {
+      105 |         response = await request.post(route.path, {
+      106 |           data: {},
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:103:34
+
+  46) estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:100:9 › API Auth Protection › GET /api/admin/metrics requires authentication 
+
+    Error: apiRequestContext.get: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → GET https://cursostecno.com.br/api/admin/metrics[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+
+
+      101 |       let response;
+      102 |       if (route.method === 'GET') {
+    > 103 |         response = await request.get(route.path);
+          |                                  ^
+      104 |       } else {
+      105 |         response = await request.post(route.path, {
+      106 |           data: {},
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:103:34
+
+  47) estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:100:9 › API Auth Protection › POST /api/ai/generate-script requires authentication 
+
+    Error: apiRequestContext.post: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → POST https://cursostecno.com.br/api/ai/generate-script[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+    [2m    - Content-Type: application/json[22m
+    [2m    - content-length: 2[22m
+
+
+      103 |         response = await request.get(route.path);
+      104 |       } else {
+    > 105 |         response = await request.post(route.path, {
+          |                                  ^
+      106 |           data: {},
+      107 |           headers: { 'Content-Type': 'application/json' },
+      108 |         });
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:105:34
+
+  48) estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:100:9 › API Auth Protection › GET /api/billing/usage requires authentication 
+
+    Error: apiRequestContext.get: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → GET https://cursostecno.com.br/api/billing/usage[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+
+
+      101 |       let response;
+      102 |       if (route.method === 'GET') {
+    > 103 |         response = await request.get(route.path);
+          |                                  ^
+      104 |       } else {
+      105 |         response = await request.post(route.path, {
+      106 |           data: {},
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:103:34
+
+  49) estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:122:7 › API Billing › POST /api/stripe/webhook without signature returns 400 
+
+    Error: apiRequestContext.post: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → POST https://cursostecno.com.br/api/stripe/webhook[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+    [2m    - Content-Type: application/json[22m
+    [2m    - content-length: 15[22m
+
+
+      121 | test.describe('API Billing', () => {
+      122 |   test('POST /api/stripe/webhook without signature returns 400', async ({ request }) => {
+    > 123 |     const response = await request.post('/api/stripe/webhook', {
+          |                                    ^
+      124 |       data: JSON.stringify({ type: 'test' }),
+      125 |       headers: { 'Content-Type': 'application/json' },
+      126 |     });
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:123:36
+
+  50) estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:138:7 › Security Headers › API responses include security-related headers or at least no server info leak 
+
+    Error: apiRequestContext.get: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → GET https://cursostecno.com.br/api/health[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+
+
+      137 | test.describe('Security Headers', () => {
+      138 |   test('API responses include security-related headers or at least no server info leak', async ({ request }) => {
+    > 139 |     const response = await request.get('/api/health');
+          |                                    ^
+      140 |     const headers = response.headers();
+      141 |     // Should NOT leak server info
+      142 |     const serverHeader = headers['server'];
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:139:36
+
+  51) estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:151:7 › Security Headers › CORS preflight on API returns appropriate headers 
+
+    Error: apiRequestContext.fetch: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → OPTIONS https://cursostecno.com.br/api/health[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+
+
+      150 |
+      151 |   test('CORS preflight on API returns appropriate headers', async ({ request }) => {
+    > 152 |     const response = await request.fetch('/api/health', {
+          |                                    ^
+      153 |       method: 'OPTIONS',
+      154 |     });
+      155 |     // OPTIONS should not crash
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:152:36
+
+  52) estudio_ia_videos/src/__tests__/e2e/auth-flow.spec.ts:10:7 › Login Flow › Login page renders form elements 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  53) estudio_ia_videos/src/__tests__/e2e/auth-flow.spec.ts:34:7 › Login Flow › Login form validates empty submission 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  54) estudio_ia_videos/src/__tests__/e2e/auth-flow.spec.ts:54:7 › Login Flow › Login page has link to register 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  55) estudio_ia_videos/src/__tests__/e2e/auth-flow.spec.ts:67:7 › Login Flow › Login page has link to forgot password 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  56) estudio_ia_videos/src/__tests__/e2e/auth-flow.spec.ts:81:7 › Register Flow › Register page loads 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  57) estudio_ia_videos/src/__tests__/e2e/auth-flow.spec.ts:91:7 › Register Flow › Register page has name, email, password fields 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  58) estudio_ia_videos/src/__tests__/e2e/auth-flow.spec.ts:111:7 › Forgot Password Flow › Forgot password page loads 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  59) estudio_ia_videos/src/__tests__/e2e/auth-flow.spec.ts:120:7 › Forgot Password Flow › Forgot password page has email input 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  60) estudio_ia_videos/src/__tests__/e2e/auth-flow.spec.ts:141:7 › Auth Redirects › Protected page redirects to login or shows auth required 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  61) estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:22:7 › Blog Listing › Blog page loads without server error 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  62) estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:28:7 › Blog Listing › Blog page has a heading 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  63) estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:34:7 › Blog Listing › Blog page shows article cards 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  64) estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:42:7 › Blog Listing › Blog article links point to valid slugs 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  65) estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:62:7 › Blog Listing › Blog page has meta description for SEO 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  66) estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:75:9 › Blog Articles › Article "como-criar-videos-treinamento-nr" loads without server error 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  67) estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:75:9 › Blog Articles › Article "tendencias-treinamento-corporativo-2026" loads without server error 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  68) estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:75:9 › Blog Articles › Article "avatares-ia-treinamento" loads without server error 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  69) estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:75:9 › Blog Articles › Article "guia-completo-nr-10-video" loads without server error 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  70) estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:75:9 › Blog Articles › Article "roi-videos-treinamento-ia" loads without server error 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  71) estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:75:9 › Blog Articles › Article "tts-vozes-naturais-portugues" loads without server error 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  72) estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:82:7 › Blog Articles › Article page has heading and content 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  73) estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:94:7 › Blog Articles › Article page has back link to blog listing 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  74) estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:107:7 › Blog Articles › Article page has proper meta tags 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  75) estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:119:7 › Blog Navigation › Can navigate from blog listing to article 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  76) estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:133:7 › Blog Navigation › Non-existent blog article returns 404 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  77) estudio_ia_videos/src/__tests__/e2e/health.spec.ts:9:7 › App Health › API health endpoint responds 
+
+    Error: apiRequestContext.get: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → GET https://cursostecno.com.br/api/health[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+
+
+       8 | test.describe('App Health', () => {
+       9 |   test('API health endpoint responds', async ({ request }) => {
+    > 10 |     const response = await request.get('/api/health');
+         |                                    ^
+      11 |     // Pode ser 200 ou 404 dependendo se a rota existe
+      12 |     expect([200, 404]).toContain(response.status());
+      13 |   });
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/health.spec.ts:10:36
+
+  78) estudio_ia_videos/src/__tests__/e2e/health.spec.ts:15:7 › App Health › Render start API responds 
+
+    Error: apiRequestContext.get: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → GET https://cursostecno.com.br/api/render/start?action=video-test[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+
+
+      14 |
+      15 |   test('Render start API responds', async ({ request }) => {
+    > 16 |     const response = await request.get('/api/render/start?action=video-test');
+         |                                    ^
+      17 |     expect(response.status()).toBe(200);
+      18 |     const body = await response.json();
+      19 |     expect(body.success).toBe(true);
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/health.spec.ts:16:36
+
+  79) estudio_ia_videos/src/__tests__/e2e/health.spec.ts:24:7 › Navigation › home page loads ───────
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  80) estudio_ia_videos/src/__tests__/e2e/health.spec.ts:30:7 › Navigation › login page accessible ─
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  81) estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:37:9 › Public Pages › Home (/) loads without server error 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  82) estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:37:9 › Public Pages › Login (/login) loads without server error 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  83) estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:37:9 › Public Pages › Register (/register) loads without server error 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  84) estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:37:9 › Public Pages › Signup (/signup) loads without server error 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  85) estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:37:9 › Public Pages › Pricing (/pricing) loads without server error 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  86) estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:37:9 › Public Pages › Terms (/terms) loads without server error 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  87) estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:37:9 › Public Pages › Privacy (/privacy) loads without server error 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  88) estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:37:9 › Public Pages › Help (/help) loads without server error 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  89) estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:37:9 › Public Pages › Ajuda (/ajuda) loads without server error 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  90) estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:37:9 › Public Pages › Blog (/blog) loads without server error 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  91) estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:37:9 › Public Pages › Forgot Password (/forgot-password) loads without server error 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  92) estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:42:7 › Public Pages › Home page has a visible heading or hero 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  93) estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:49:7 › Public Pages › Login page has email/password inputs 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  94) estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:60:7 › Public Pages › Pricing page shows plan cards 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  95) estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:81:7 › Error Pages › Non-existent page returns 404 or shows not-found content 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  96) estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:107:7 › Cross-page Navigation › Can navigate from home to login 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  97) estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:123:7 › Cross-page Navigation › Can navigate from home to pricing 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  98) estudio_ia_videos/src/__tests__/e2e/performance.spec.ts:20:9 › Page Load Performance › Home page loads within 8000ms 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  99) estudio_ia_videos/src/__tests__/e2e/performance.spec.ts:20:9 › Page Load Performance › Login page loads within 6000ms 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  100) estudio_ia_videos/src/__tests__/e2e/performance.spec.ts:20:9 › Page Load Performance › Pricing page loads within 6000ms 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  101) estudio_ia_videos/src/__tests__/e2e/performance.spec.ts:20:9 › Page Load Performance › Blog page loads within 6000ms 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  102) estudio_ia_videos/src/__tests__/e2e/performance.spec.ts:37:7 › Resource Sizes › Home page total transfer size is reasonable 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  103) estudio_ia_videos/src/__tests__/e2e/performance.spec.ts:59:7 › Resource Sizes › No single resource exceeds 3MB 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  104) estudio_ia_videos/src/__tests__/e2e/performance.spec.ts:85:7 › Console Errors › Home page has no critical console errors 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  105) estudio_ia_videos/src/__tests__/e2e/performance.spec.ts:114:7 › Console Errors › Login page has no critical console errors 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  106) estudio_ia_videos/src/__tests__/e2e/performance.spec.ts:145:7 › Network Health › Home page has no failed critical requests 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  107) estudio_ia_videos/src/__tests__/e2e/performance.spec.ts:163:7 › Network Health › Static assets load correctly 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  108) estudio_ia_videos/src/__tests__/e2e/performance.spec.ts:188:7 › Basic Lighthouse Checks › Home page has charset and viewport meta 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  109) estudio_ia_videos/src/__tests__/e2e/performance.spec.ts:200:7 › Basic Lighthouse Checks › Critical CSS is loaded (no FOUC) 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  110) estudio_ia_videos/src/__tests__/e2e/performance.spec.ts:209:7 › Basic Lighthouse Checks › Images use modern formats or proper loading 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  111) estudio_ia_videos/src/__tests__/e2e/seo-meta.spec.ts:10:7 › SEO Meta Tags › Home page has title and description 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  112) estudio_ia_videos/src/__tests__/e2e/seo-meta.spec.ts:28:7 › SEO Meta Tags › Home page has Open Graph tags 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  113) estudio_ia_videos/src/__tests__/e2e/seo-meta.spec.ts:48:7 › SEO Meta Tags › Home page has viewport meta tag 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  114) estudio_ia_videos/src/__tests__/e2e/seo-meta.spec.ts:57:7 › SEO Meta Tags › Login page has unique title 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  115) estudio_ia_videos/src/__tests__/e2e/seo-meta.spec.ts:64:7 › SEO Meta Tags › Pricing page has unique title 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  116) estudio_ia_videos/src/__tests__/e2e/seo-meta.spec.ts:71:7 › SEO Meta Tags › Pages have charset meta tag 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  117) estudio_ia_videos/src/__tests__/e2e/seo-meta.spec.ts:77:7 › SEO Meta Tags › Pages have lang attribute on html 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  118) estudio_ia_videos/src/__tests__/e2e/seo-meta.spec.ts:85:7 › PWA Manifest › manifest.json is accessible 
+
+    Error: apiRequestContext.get: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → GET https://cursostecno.com.br/manifest.json[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+
+
+      84 | test.describe('PWA Manifest', () => {
+      85 |   test('manifest.json is accessible', async ({ request }) => {
+    > 86 |     const response = await request.get('/manifest.json');
+         |                                    ^
+      87 |     expect(response.status()).toBe(200);
+      88 |     const body = await response.json();
+      89 |     expect(body.name).toBeTruthy();
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/seo-meta.spec.ts:86:36
+
+  119) estudio_ia_videos/src/__tests__/e2e/seo-meta.spec.ts:97:7 › PWA Manifest › Home page links to manifest 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1194/chrome-linux/headless_shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  120) estudio_ia_videos/src/__tests__/e2e/seo-meta.spec.ts:109:7 › Favicon & Icons › favicon is accessible 
+
+    Error: apiRequestContext.get: getaddrinfo EAI_AGAIN cursostecno.com.br
+    Call log:
+    [2m  - → GET https://cursostecno.com.br/favicon.ico[22m
+    [2m    - user-agent: Playwright/1.56.1 (x64; ubuntu 24.04) node/20.20[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+
+
+      108 | test.describe('Favicon & Icons', () => {
+      109 |   test('favicon is accessible', async ({ request }) => {
+    > 110 |     const response = await request.get('/favicon.ico');
+          |                                    ^
+      111 |     // favicon should exist — 200 or 204
+      112 |     expect(response.status()).toBeLessThan(500);
+      113 |   });
+        at /root/_MVP_Video_TecnicoCursos_v7/estudio_ia_videos/src/__tests__/e2e/seo-meta.spec.ts:110:36
+
+  120 failed
+    estudio_ia_videos/src/__tests__/e2e/accessibility.spec.ts:10:7 › Accessibility Basics › Home page has skip-to-content or main landmark 
+    estudio_ia_videos/src/__tests__/e2e/accessibility.spec.ts:25:7 › Accessibility Basics › Images have alt attributes 
+    estudio_ia_videos/src/__tests__/e2e/accessibility.spec.ts:44:7 › Accessibility Basics › Buttons and links are focusable 
+    estudio_ia_videos/src/__tests__/e2e/accessibility.spec.ts:58:7 › Accessibility Basics › No auto-playing audio or video 
+    estudio_ia_videos/src/__tests__/e2e/accessibility.spec.ts:70:7 › Responsive Design › Home page renders on mobile viewport 
+    estudio_ia_videos/src/__tests__/e2e/accessibility.spec.ts:82:7 › Responsive Design › Home page renders on tablet viewport 
+    estudio_ia_videos/src/__tests__/e2e/accessibility.spec.ts:88:7 › Responsive Design › Home page renders on desktop viewport 
+    estudio_ia_videos/src/__tests__/e2e/accessibility.spec.ts:94:7 › Responsive Design › Login page is usable on mobile 
+    estudio_ia_videos/src/__tests__/e2e/accessibility.spec.ts:110:7 › Dark Mode Support › Page respects prefers-color-scheme: dark 
+    estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:13:7 › API Render › GET /api/render/start responds with expected structure 
+    estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:23:7 › API Render › POST /api/render/start without body fails gracefully 
+    estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:31:7 › API Render › GET /api/render-status without id returns error 
+    estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:43:7 › API Import › POST /api/upload without file returns error 
+    estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:53:7 › API Import › POST /api/import without data returns error 
+    estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:62:7 › API Import › POST /api/pptx/upload without file returns 400 
+    estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:77:7 › API TTS Extended › GET /api/voice/list or /api/voice-library responds 
+    estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:84:7 › API TTS Extended › POST /api/tts/synthesize with invalid voice returns error 
+    estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:94:7 › API TTS Extended › POST /api/voice-cloning/generate without auth returns 401 
+    estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:110:7 › API Monitoring › GET /api/health returns valid JSON 
+    estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:123:7 › API Monitoring › GET /api/metrics responds 
+    estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:130:7 › API Monitoring › GET /api/system/status responds for admins 
+    estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:142:7 › API Billing Extended › GET /api/subscription without auth returns 401 
+    estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:150:7 › API Billing Extended › GET /api/billing/usage without auth returns error 
+    estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:157:7 › API Billing Extended › POST /api/stripe/create-checkout without auth returns error 
+    estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:167:7 › API Billing Extended › POST /api/stripe/webhook with invalid signature returns 400 
+    estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:186:7 › API Avatar › GET /api/avatars responds 
+    estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:192:7 › API Avatar › POST /api/avatar/generate without auth returns error 
+    estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:207:7 › API Templates Extended › GET /api/templates returns valid structure 
+    estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:220:7 › API Templates Extended › GET /api/nr-templates returns NR templates 
+    estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:235:7 › API V1 Versioned › GET /api/v1/voices responds 
+    estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:241:7 › API V1 Versioned › GET /api/v1/video-jobs without auth returns error 
+    estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:248:7 › API V1 Versioned › GET /api/v1/video-jobs/stats without auth returns error 
+    estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:255:7 › API V1 Versioned › GET /api/v1/avatars responds 
+    estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:266:7 › API Error Handling › POST with malformed JSON returns 400 
+    estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:276:7 › API Error Handling › Non-existent API route returns 404 
+    estudio_ia_videos/src/__tests__/e2e/api-extended.spec.ts:282:7 › API Error Handling › API responds with JSON content-type on errors 
+    estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:13:7 › API Health & System › GET /api/health responds 200 with success 
+    estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:26:7 › API Health & System › GET /api/render/start responds for smoke test 
+    estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:35:7 › API Health & System › GET /api/system/status responds 
+    estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:46:7 › API TTS & Voice › GET /api/tts/voices responds 
+    estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:58:7 › API TTS & Voice › POST /api/tts/synthesize without body returns 400 
+    estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:74:7 › API Templates › GET /api/templates responds 
+    estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:80:7 › API Templates › GET /api/nr-templates responds 
+    estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:100:9 › API Auth Protection › GET /api/admin/users requires authentication 
+    estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:100:9 › API Auth Protection › GET /api/admin/stats requires authentication 
+    estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:100:9 › API Auth Protection › GET /api/admin/metrics requires authentication 
+    estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:100:9 › API Auth Protection › POST /api/ai/generate-script requires authentication 
+    estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:100:9 › API Auth Protection › GET /api/billing/usage requires authentication 
+    estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:122:7 › API Billing › POST /api/stripe/webhook without signature returns 400 
+    estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:138:7 › Security Headers › API responses include security-related headers or at least no server info leak 
+    estudio_ia_videos/src/__tests__/e2e/api-smoke.spec.ts:151:7 › Security Headers › CORS preflight on API returns appropriate headers 
+    estudio_ia_videos/src/__tests__/e2e/auth-flow.spec.ts:10:7 › Login Flow › Login page renders form elements 
+    estudio_ia_videos/src/__tests__/e2e/auth-flow.spec.ts:34:7 › Login Flow › Login form validates empty submission 
+    estudio_ia_videos/src/__tests__/e2e/auth-flow.spec.ts:54:7 › Login Flow › Login page has link to register 
+    estudio_ia_videos/src/__tests__/e2e/auth-flow.spec.ts:67:7 › Login Flow › Login page has link to forgot password 
+    estudio_ia_videos/src/__tests__/e2e/auth-flow.spec.ts:81:7 › Register Flow › Register page loads 
+    estudio_ia_videos/src/__tests__/e2e/auth-flow.spec.ts:91:7 › Register Flow › Register page has name, email, password fields 
+    estudio_ia_videos/src/__tests__/e2e/auth-flow.spec.ts:111:7 › Forgot Password Flow › Forgot password page loads 
+    estudio_ia_videos/src/__tests__/e2e/auth-flow.spec.ts:120:7 › Forgot Password Flow › Forgot password page has email input 
+    estudio_ia_videos/src/__tests__/e2e/auth-flow.spec.ts:141:7 › Auth Redirects › Protected page redirects to login or shows auth required 
+    estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:22:7 › Blog Listing › Blog page loads without server error 
+    estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:28:7 › Blog Listing › Blog page has a heading 
+    estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:34:7 › Blog Listing › Blog page shows article cards 
+    estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:42:7 › Blog Listing › Blog article links point to valid slugs 
+    estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:62:7 › Blog Listing › Blog page has meta description for SEO 
+    estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:75:9 › Blog Articles › Article "como-criar-videos-treinamento-nr" loads without server error 
+    estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:75:9 › Blog Articles › Article "tendencias-treinamento-corporativo-2026" loads without server error 
+    estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:75:9 › Blog Articles › Article "avatares-ia-treinamento" loads without server error 
+    estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:75:9 › Blog Articles › Article "guia-completo-nr-10-video" loads without server error 
+    estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:75:9 › Blog Articles › Article "roi-videos-treinamento-ia" loads without server error 
+    estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:75:9 › Blog Articles › Article "tts-vozes-naturais-portugues" loads without server error 
+    estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:82:7 › Blog Articles › Article page has heading and content 
+    estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:94:7 › Blog Articles › Article page has back link to blog listing 
+    estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:107:7 › Blog Articles › Article page has proper meta tags 
+    estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:119:7 › Blog Navigation › Can navigate from blog listing to article 
+    estudio_ia_videos/src/__tests__/e2e/blog-content.spec.ts:133:7 › Blog Navigation › Non-existent blog article returns 404 
+    estudio_ia_videos/src/__tests__/e2e/health.spec.ts:9:7 › App Health › API health endpoint responds 
+    estudio_ia_videos/src/__tests__/e2e/health.spec.ts:15:7 › App Health › Render start API responds 
+    estudio_ia_videos/src/__tests__/e2e/health.spec.ts:24:7 › Navigation › home page loads ─────────
+    estudio_ia_videos/src/__tests__/e2e/health.spec.ts:30:7 › Navigation › login page accessible ───
+    estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:37:9 › Public Pages › Home (/) loads without server error 
+    estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:37:9 › Public Pages › Login (/login) loads without server error 
+    estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:37:9 › Public Pages › Register (/register) loads without server error 
+    estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:37:9 › Public Pages › Signup (/signup) loads without server error 
+    estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:37:9 › Public Pages › Pricing (/pricing) loads without server error 
+    estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:37:9 › Public Pages › Terms (/terms) loads without server error 
+    estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:37:9 › Public Pages › Privacy (/privacy) loads without server error 
+    estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:37:9 › Public Pages › Help (/help) loads without server error 
+    estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:37:9 › Public Pages › Ajuda (/ajuda) loads without server error 
+    estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:37:9 › Public Pages › Blog (/blog) loads without server error 
+    estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:37:9 › Public Pages › Forgot Password (/forgot-password) loads without server error 
+    estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:42:7 › Public Pages › Home page has a visible heading or hero 
+    estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:49:7 › Public Pages › Login page has email/password inputs 
+    estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:60:7 › Public Pages › Pricing page shows plan cards 
+    estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:81:7 › Error Pages › Non-existent page returns 404 or shows not-found content 
+    estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:107:7 › Cross-page Navigation › Can navigate from home to login 
+    estudio_ia_videos/src/__tests__/e2e/navigation.spec.ts:123:7 › Cross-page Navigation › Can navigate from home to pricing 
+    estudio_ia_videos/src/__tests__/e2e/performance.spec.ts:20:9 › Page Load Performance › Home page loads within 8000ms 
+    estudio_ia_videos/src/__tests__/e2e/performance.spec.ts:20:9 › Page Load Performance › Login page loads within 6000ms 
+    estudio_ia_videos/src/__tests__/e2e/performance.spec.ts:20:9 › Page Load Performance › Pricing page loads within 6000ms 
+    estudio_ia_videos/src/__tests__/e2e/performance.spec.ts:20:9 › Page Load Performance › Blog page loads within 6000ms 
+    estudio_ia_videos/src/__tests__/e2e/performance.spec.ts:37:7 › Resource Sizes › Home page total transfer size is reasonable 
+    estudio_ia_videos/src/__tests__/e2e/performance.spec.ts:59:7 › Resource Sizes › No single resource exceeds 3MB 
+    estudio_ia_videos/src/__tests__/e2e/performance.spec.ts:85:7 › Console Errors › Home page has no critical console errors 
+    estudio_ia_videos/src/__tests__/e2e/performance.spec.ts:114:7 › Console Errors › Login page has no critical console errors 
+    estudio_ia_videos/src/__tests__/e2e/performance.spec.ts:145:7 › Network Health › Home page has no failed critical requests 
+    estudio_ia_videos/src/__tests__/e2e/performance.spec.ts:163:7 › Network Health › Static assets load correctly 
+    estudio_ia_videos/src/__tests__/e2e/performance.spec.ts:188:7 › Basic Lighthouse Checks › Home page has charset and viewport meta 
+    estudio_ia_videos/src/__tests__/e2e/performance.spec.ts:200:7 › Basic Lighthouse Checks › Critical CSS is loaded (no FOUC) 
+    estudio_ia_videos/src/__tests__/e2e/performance.spec.ts:209:7 › Basic Lighthouse Checks › Images use modern formats or proper loading 
+    estudio_ia_videos/src/__tests__/e2e/seo-meta.spec.ts:10:7 › SEO Meta Tags › Home page has title and description 
+    estudio_ia_videos/src/__tests__/e2e/seo-meta.spec.ts:28:7 › SEO Meta Tags › Home page has Open Graph tags 
+    estudio_ia_videos/src/__tests__/e2e/seo-meta.spec.ts:48:7 › SEO Meta Tags › Home page has viewport meta tag 
+    estudio_ia_videos/src/__tests__/e2e/seo-meta.spec.ts:57:7 › SEO Meta Tags › Login page has unique title 
+    estudio_ia_videos/src/__tests__/e2e/seo-meta.spec.ts:64:7 › SEO Meta Tags › Pricing page has unique title 
+    estudio_ia_videos/src/__tests__/e2e/seo-meta.spec.ts:71:7 › SEO Meta Tags › Pages have charset meta tag 
+    estudio_ia_videos/src/__tests__/e2e/seo-meta.spec.ts:77:7 › SEO Meta Tags › Pages have lang attribute on html 
+    estudio_ia_videos/src/__tests__/e2e/seo-meta.spec.ts:85:7 › PWA Manifest › manifest.json is accessible 
+    estudio_ia_videos/src/__tests__/e2e/seo-meta.spec.ts:97:7 › PWA Manifest › Home page links to manifest 
+    estudio_ia_videos/src/__tests__/e2e/seo-meta.spec.ts:109:7 › Favicon & Icons › favicon is accessible 

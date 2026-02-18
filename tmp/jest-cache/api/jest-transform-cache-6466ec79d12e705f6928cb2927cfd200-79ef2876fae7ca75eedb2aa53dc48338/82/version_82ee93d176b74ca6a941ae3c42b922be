@@ -1,0 +1,6 @@
+5f201bac58e8432bbefdf3c46bfe6e76
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.VERSION = void 0;
+exports.VERSION = '0.8.0';
+//# sourceMappingURL=version.js.map
