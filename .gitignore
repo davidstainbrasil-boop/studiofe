@@ -16,6 +16,17 @@ PUSH_TO_GITHUB.sh
 
 # Testing
 /coverage
+.jest-cache/
+tmp/jest-cache/
+tmp/jest_0/
+
+# Codacy CLI cache
+.codacy/
+
+# Temporary scripts
+EMERGENCY_FIX.sh
+FIX_V2.sh
+test_writable
 
 # Next.js build output
 /.next/
