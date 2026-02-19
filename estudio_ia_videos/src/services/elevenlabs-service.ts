@@ -117,11 +117,13 @@ interface ElevenLabsModelResponse {
 }
 
 interface ElevenLabsApiErrorDetail {
-  detail?: {
-    message?: string;
-    status?: string;
-    retry_after?: number;
-  } | string;
+  detail?:
+    | {
+        message?: string;
+        status?: string;
+        retry_after?: number;
+      }
+    | string;
 }
 
 interface RateLimitInfo {
@@ -145,7 +147,7 @@ const DEFAULT_MAX_RETRIES = 3;
 const MAX_CHARS_PER_REQUEST = 5000;
 const CIRCUIT_BREAKER_THRESHOLD = 5;
 const CIRCUIT_BREAKER_RESET_MS = 60_000;
-const COST_PER_1000_CHARS = 0.30;
+const COST_PER_1000_CHARS = 0.3;
 const DEFAULT_VOICE_ID = 'EXAVITQu4vr4xnSDxMaL'; // Bella — good for PT-BR
 
 const DEFAULT_VOICE_SETTINGS: VoiceSettings = {
@@ -177,11 +179,7 @@ export class ElevenLabsService implements TTSProvider {
 
   constructor(config: ElevenLabsConfig) {
     if (!config.apiKey) {
-      throw new TTSError(
-        'ElevenLabs API key is required',
-        'elevenlabs',
-        'MISSING_API_KEY',
-      );
+      throw new TTSError('ElevenLabs API key is required', 'elevenlabs', 'MISSING_API_KEY');
     }
     this.apiKey = config.apiKey;
     this.modelId = config.modelId ?? DEFAULT_MODEL;
@@ -249,8 +247,7 @@ export class ElevenLabsService implements TTSProvider {
       };
     } catch (error: unknown) {
       if (error instanceof TTSError) throw error;
-      const message =
-        error instanceof Error ? error.message : 'Unknown ElevenLabs error';
+      const message = error instanceof Error ? error.message : 'Unknown ElevenLabs error';
       return { success: false, error: message };
     }
   }
@@ -284,9 +281,7 @@ export class ElevenLabsService implements TTSProvider {
       headers: {
         'Content-Type': 'application/json',
         'xi-api-key': this.apiKey,
-        Accept: request.outputFormat
-          ? `audio/${request.outputFormat}`
-          : 'audio/mpeg',
+        Accept: request.outputFormat ? `audio/${request.outputFormat}` : 'audio/mpeg',
       },
       body,
     });
@@ -324,6 +319,22 @@ export class ElevenLabsService implements TTSProvider {
     }
 
     return { audioChunks, totalCharacters };
+  }
+
+  /**
+   * Backward-compatible alias for synthesizeLong.
+   * Splits long text into chunks and returns one Buffer per chunk.
+   */
+  async textToSpeechLong({
+    text,
+    voiceId,
+    chunkSize,
+  }: {
+    text: string;
+    voiceId: string;
+    chunkSize?: number;
+  }): Promise<ElevenLabsLongTTSResult> {
+    return this.synthesizeLong({ text, voiceId, chunkSize });
   }
 
   /** GET /v1/voices */
@@ -395,19 +406,14 @@ export class ElevenLabsService implements TTSProvider {
    * fetch() wrapper with exponential-backoff retry, circuit breaker, timeout
    * and rate-limit awareness.
    */
-  private async fetchWithRetry(
-    url: string,
-    options: RequestInit,
-  ): Promise<Response> {
+  private async fetchWithRetry(url: string, options: RequestInit): Promise<Response> {
     this.checkCircuitBreaker();
 
     if (this.isRateLimited()) {
       throw new RateLimitError(
         'Proactively rate-limited — remaining requests below safety margin',
         'elevenlabs',
-        this._rateLimitInfo?.resetMs
-          ? Math.ceil(this._rateLimitInfo.resetMs / 1000)
-          : 60,
+        this._rateLimitInfo?.resetMs ? Math.ceil(this._rateLimitInfo.resetMs / 1000) : 60,
       );
     }
 
@@ -416,10 +422,7 @@ export class ElevenLabsService implements TTSProvider {
     for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(
-          () => controller.abort(),
-          this.timeoutMs,
-        );
+        const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
 
         const response = await fetch(url, {
           ...options,
@@ -435,9 +438,9 @@ export class ElevenLabsService implements TTSProvider {
         }
 
         // Handle specific HTTP errors
-        const errorBody = await response
+        const errorBody = (await response
           .json()
-          .catch(() => ({}) as ElevenLabsApiErrorDetail) as ElevenLabsApiErrorDetail;
+          .catch(() => ({}) as ElevenLabsApiErrorDetail)) as ElevenLabsApiErrorDetail;
         const ttsError = this.parseApiError(response.status, errorBody);
 
         // Non-retryable errors — throw immediately
@@ -466,10 +469,7 @@ export class ElevenLabsService implements TTSProvider {
             true,
           );
         } else if (!(error instanceof TTSError)) {
-          lastError =
-            error instanceof Error
-              ? error
-              : new Error(String(error));
+          lastError = error instanceof Error ? error : new Error(String(error));
         } else {
           lastError = error;
         }
@@ -555,14 +555,9 @@ export class ElevenLabsService implements TTSProvider {
     return this._rateLimitInfo.remaining < this.rateLimitMargin;
   }
 
-  private parseApiError(
-    status: number,
-    body: ElevenLabsApiErrorDetail,
-  ): TTSError {
+  private parseApiError(status: number, body: ElevenLabsApiErrorDetail): TTSError {
     const detailMsg =
-      typeof body.detail === 'string'
-        ? body.detail
-        : body.detail?.message ?? `HTTP ${status}`;
+      typeof body.detail === 'string' ? body.detail : (body.detail?.message ?? `HTTP ${status}`);
 
     switch (status) {
       case 401:
@@ -577,22 +572,10 @@ export class ElevenLabsService implements TTSProvider {
       case 404:
         return new VoiceNotFoundError(detailMsg, 'elevenlabs');
       case 422:
-        return new TTSError(
-          `Validation error: ${detailMsg}`,
-          'elevenlabs',
-          'VALIDATION',
-          false,
-        );
+        return new TTSError(`Validation error: ${detailMsg}`, 'elevenlabs', 'VALIDATION', false);
       case 429: {
-        const retryAfter =
-          typeof body.detail === 'object'
-            ? body.detail?.retry_after ?? 60
-            : 60;
-        return new RateLimitError(
-          `Rate limit exceeded: ${detailMsg}`,
-          'elevenlabs',
-          retryAfter,
-        );
+        const retryAfter = typeof body.detail === 'object' ? (body.detail?.retry_after ?? 60) : 60;
+        return new RateLimitError(`Rate limit exceeded: ${detailMsg}`, 'elevenlabs', retryAfter);
       }
       default:
         // 5xx or unknown → retryable
@@ -662,7 +645,7 @@ export class ElevenLabsService implements TTSProvider {
   private estimateDuration(text: string): number {
     // ~150 words / minute → seconds
     const words = text.trim().split(/\s+/).length;
-    return Math.round(((words / 150) * 60) * 100) / 100;
+    return Math.round((words / 150) * 60 * 100) / 100;
   }
 
   private mapApiVoiceToTTSVoice(v: ElevenLabsApiVoice): TTSVoice {
@@ -683,9 +666,7 @@ export class ElevenLabsService implements TTSProvider {
     return 'en';
   }
 
-  private inferGender(
-    labels: Record<string, string>,
-  ): 'male' | 'female' | 'neutral' {
+  private inferGender(labels: Record<string, string>): 'male' | 'female' | 'neutral' {
     const gender = (labels['gender'] ?? '').toLowerCase();
     if (gender === 'male') return 'male';
     if (gender === 'female') return 'female';
@@ -723,9 +704,7 @@ export function getElevenLabsService(): ElevenLabsService {
  * Create a new ElevenLabsService with explicit config.
  * Useful for testing or multi-tenant scenarios.
  */
-export function createElevenLabsService(
-  config: ElevenLabsConfig,
-): ElevenLabsService {
+export function createElevenLabsService(config: ElevenLabsConfig): ElevenLabsService {
   return new ElevenLabsService(config);
 }
 

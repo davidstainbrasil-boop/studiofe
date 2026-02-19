@@ -1,17 +1,40 @@
 /**
  * Tests for render status API route
- * Tests: real Supabase lookup, 404 handling, error responses
+ * Tests: Prisma lookup, auth, 404 handling, error responses
  */
 
-const mockFrom = jest.fn();
-const mockSelect = jest.fn();
-const mockEq = jest.fn();
-const mockSingle = jest.fn();
+const mockFindUnique = jest.fn();
+const mockFindFirst = jest.fn();
 
-jest.mock('@/lib/supabase/server', () => ({
-  createClient: jest.fn().mockResolvedValue({
-    from: mockFrom,
+jest.mock('@lib/auth/safe-auth', () => ({
+  getAuthenticatedUserId: jest.fn().mockResolvedValue({
+    authenticated: true,
+    userId: 'test-user-123',
+    status: 200,
   }),
+}));
+
+jest.mock('@lib/prisma', () => ({
+  prisma: {
+    render_jobs: {
+      findUnique: mockFindUnique,
+    },
+    project_collaborators: {
+      findFirst: mockFindFirst,
+    },
+  },
+}));
+
+jest.mock('@lib/queue/render-queue', () => ({
+  getVideoJobStatus: jest.fn().mockResolvedValue({
+    status: 'completed',
+    progress: 100,
+    error: null,
+  }),
+}));
+
+jest.mock('@/lib/rate-limit', () => ({
+  applyRateLimit: jest.fn().mockResolvedValue(null),
 }));
 
 jest.mock('@/lib/logger', () => ({
@@ -32,31 +55,30 @@ const createRequest = (jobId: string) => {
 describe('GET /api/render/status/[jobId]', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-
-    mockFrom.mockReturnValue({ select: mockSelect });
-    mockSelect.mockReturnValue({ eq: mockEq });
-    mockEq.mockReturnValue({ single: mockSingle });
+    mockFindFirst.mockResolvedValue(null); // not a collaborator by default
   });
 
   it('should return job status when found', async () => {
-    const mockJob = {
+    // Owner === auth user → canViewJob passes
+    mockFindUnique.mockResolvedValue({
       id: 'job-123',
+      projectId: 'project-123',
       status: 'completed',
       progress: 100,
-      output_url: 'https://storage.example.com/video.mp4',
-      error_message: null,
-      created_at: '2026-01-01T00:00:00Z',
-      started_at: '2026-01-01T00:00:01Z',
-      completed_at: '2026-01-01T00:01:00Z',
-      render_settings: {},
-    };
+      outputUrl: 'https://storage.example.com/video.mp4',
+      errorMessage: null,
+      createdAt: new Date('2026-01-01T00:00:00Z'),
+      startedAt: new Date('2026-01-01T00:00:01Z'),
+      completedAt: new Date('2026-01-01T00:01:00Z'),
+      estimatedDuration: null,
+      renderSettings: {},
+      settings: null,
+      projects: { userId: 'test-user-123' },
+    });
 
-    mockSingle.mockResolvedValue({ data: mockJob, error: null });
-
-    const response = await GET(
-      createRequest('job-123'),
-      { params: Promise.resolve({ jobId: 'job-123' }) }
-    );
+    const response = await GET(createRequest('job-123'), {
+      params: Promise.resolve({ jobId: 'job-123' }),
+    });
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -68,15 +90,11 @@ describe('GET /api/render/status/[jobId]', () => {
   });
 
   it('should return 404 when job not found', async () => {
-    mockSingle.mockResolvedValue({
-      data: null,
-      error: { message: 'Row not found', code: 'PGRST116' },
-    });
+    mockFindUnique.mockResolvedValue(null);
 
-    const response = await GET(
-      createRequest('nonexistent'),
-      { params: Promise.resolve({ jobId: 'nonexistent' }) }
-    );
+    const response = await GET(createRequest('nonexistent'), {
+      params: Promise.resolve({ jobId: 'nonexistent' }),
+    });
     const data = await response.json();
 
     expect(response.status).toBe(404);
@@ -85,24 +103,32 @@ describe('GET /api/render/status/[jobId]', () => {
   });
 
   it('should return processing job with progress', async () => {
-    const mockJob = {
+    mockFindUnique.mockResolvedValue({
       id: 'job-456',
+      projectId: 'project-456',
       status: 'processing',
       progress: 65,
-      output_url: null,
-      error_message: null,
-      created_at: '2026-01-01T00:00:00Z',
-      started_at: '2026-01-01T00:00:01Z',
-      completed_at: null,
-      render_settings: {},
-    };
+      outputUrl: null,
+      errorMessage: null,
+      createdAt: new Date('2026-01-01T00:00:00Z'),
+      startedAt: new Date('2026-01-01T00:00:01Z'),
+      completedAt: null,
+      estimatedDuration: null,
+      renderSettings: {},
+      settings: null,
+      projects: { userId: 'test-user-123' },
+    });
 
-    mockSingle.mockResolvedValue({ data: mockJob, error: null });
+    const { getVideoJobStatus } = jest.requireMock('@lib/queue/render-queue');
+    (getVideoJobStatus as jest.Mock).mockResolvedValueOnce({
+      status: 'active',
+      progress: 65,
+      error: null,
+    });
 
-    const response = await GET(
-      createRequest('job-456'),
-      { params: Promise.resolve({ jobId: 'job-456' }) }
-    );
+    const response = await GET(createRequest('job-456'), {
+      params: Promise.resolve({ jobId: 'job-456' }),
+    });
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -112,12 +138,11 @@ describe('GET /api/render/status/[jobId]', () => {
   });
 
   it('should handle database errors', async () => {
-    mockSingle.mockRejectedValue(new Error('Connection refused'));
+    mockFindUnique.mockRejectedValue(new Error('Connection refused'));
 
-    const response = await GET(
-      createRequest('job-789'),
-      { params: Promise.resolve({ jobId: 'job-789' }) }
-    );
+    const response = await GET(createRequest('job-789'), {
+      params: Promise.resolve({ jobId: 'job-789' }),
+    });
     const data = await response.json();
 
     expect(response.status).toBe(500);

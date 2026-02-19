@@ -1,4 +1,3 @@
-
 import { POST as pptxUploadHandler } from '@/app/api/pptx/upload/route';
 import { PptxUploader } from '@/lib/storage/pptx-uploader';
 import { NextRequest } from 'next/server';
@@ -13,20 +12,37 @@ jest.mock('@/lib/pptx/pptx-processor-real', () => ({
   extract: jest.fn().mockResolvedValue({
     success: true,
     slides: [
-      { slideNumber: 1, title: 'Slide 1', content: 'Content 1', notes: '', images: [], duration: 5, layout: 'default', animations: [], shapes: 0, textBlocks: 1 },
+      {
+        slideNumber: 1,
+        title: 'Slide 1',
+        content: 'Content 1',
+        notes: '',
+        images: [],
+        duration: 5,
+        layout: 'default',
+        animations: [],
+        shapes: 0,
+        textBlocks: 1,
+      },
     ],
-    metadata: { title: 'Test Project', author: '', totalSlides: 1, application: '', dimensions: { width: 1920, height: 1080 } },
-    extractionStats: { textBlocks: 1, images: 0, shapes: 0, charts: 0, tables: 0 }
-  })
+    metadata: {
+      title: 'Test Project',
+      author: '',
+      totalSlides: 1,
+      application: '',
+      dimensions: { width: 1920, height: 1080 },
+    },
+    extractionStats: { textBlocks: 1, images: 0, shapes: 0, charts: 0, tables: 0 },
+  }),
 }));
 
 // Mock Prisma
 jest.mock('@/lib/prisma', () => ({
   prisma: {
     projects: {
-      create: jest.fn().mockResolvedValue({ id: 'mock-project-id' })
-    }
-  }
+      create: jest.fn().mockResolvedValue({ id: 'mock-project-id' }),
+    },
+  },
 }));
 
 // Mock do Supabase
@@ -49,20 +65,19 @@ jest.mock('@lib/supabase/server', () => ({
 jest.mock('@supabase/supabase-js', () => ({
   createClient: jest.fn(() => ({
     from: jest.fn(() => ({
-      delete: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      then: jest.fn().mockImplementation((cb: () => void) => cb()),
+      delete: jest.fn().mockReturnValue({
+        eq: jest.fn().mockResolvedValue({ error: null, data: [] }),
+      }),
       insert: jest.fn().mockReturnValue({
-        select: jest.fn().mockResolvedValue({ error: null, data: [] })
-      })
-    }))
-  }))
+        select: jest.fn().mockResolvedValue({ error: null, data: [] }),
+      }),
+    })),
+  })),
 }));
 
 const mockPptxUploader = PptxUploader as jest.MockedClass<typeof PptxUploader>;
 
 describe('API Route: /api/pptx/upload', () => {
-
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -81,7 +96,7 @@ describe('API Route: /api/pptx/upload', () => {
       },
       cookies: {
         get: (name: string) => ({ value: 'true' }),
-        getAll: () => [{ name: 'dev_bypass', value: 'true' }]
+        getAll: () => [{ name: 'dev_bypass', value: 'true' }],
       },
     } as unknown as NextRequest;
 
@@ -108,7 +123,7 @@ describe('API Route: /api/pptx/upload', () => {
     });
     const formData = new FormData();
     formData.append('file', blob, 'test.pptx');
-    formData.append('projectId', 'test-project-id');
+    formData.append('projectId', '12345678-1234-1234-a234-123456789012');
 
     // 3. Criar o request
     const request = {
@@ -122,7 +137,7 @@ describe('API Route: /api/pptx/upload', () => {
       },
       cookies: {
         get: (name: string) => undefined,
-        getAll: () => []
+        getAll: () => [],
       },
     } as unknown as NextRequest;
 
@@ -133,11 +148,11 @@ describe('API Route: /api/pptx/upload', () => {
     // 5. Assertivas
     expect(response.status).toBe(200);
     expect(body).toMatchObject(mockUploadResult);
-    
+
     expect(mockPptxUploader.prototype.upload).toHaveBeenCalledTimes(1);
     const uploadCallArgs = mockPptxUploader.prototype.upload.mock.calls[0][0];
     expect(uploadCallArgs.userId).toBe('mock-user-id');
-    expect(uploadCallArgs.projectId).toBe('test-project-id');
+    expect(uploadCallArgs.projectId).toBe('12345678-1234-1234-a234-123456789012');
     expect(uploadCallArgs.file.name).toBe('test.pptx');
     expect(uploadCallArgs.file.size).toBe(17);
   });
@@ -148,7 +163,9 @@ describe('API Route: /api/pptx/upload', () => {
     const errorMessage = 'Falha no upload do arquivo para o storage.';
     mockPptxUploader.prototype.upload.mockRejectedValue(new Error(errorMessage));
 
-    const fakeFile = new File(['content'], 'test.pptx', { type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' });
+    const fakeFile = new File(['content'], 'test.pptx', {
+      type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    });
     const formData = new FormData();
     formData.append('file', fakeFile);
 
@@ -162,7 +179,7 @@ describe('API Route: /api/pptx/upload', () => {
       },
       cookies: {
         get: (name: string) => ({ value: 'true' }),
-        getAll: () => [{ name: 'dev_bypass', value: 'true' }]
+        getAll: () => [{ name: 'dev_bypass', value: 'true' }],
       },
     } as unknown as NextRequest;
 
