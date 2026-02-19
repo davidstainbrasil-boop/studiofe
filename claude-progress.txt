@@ -1,7 +1,52 @@
 # Claude Progress Log - MVP Vídeos TécnicoCursos v7
-# Updated: 2026-02-18 (Session 31 - HOTFIX CRÍTICO MIME TYPE)
+# Updated: 2026-02-19 (Session 35 - ElevenLabs TTS Consolidation + Cleanup)
 
-## Session 31 Summary (CURRENT) - Hotfix Crítico MIME Type em Produção 🔴🚨
+## Session 35 Summary (CURRENT) - ElevenLabs TTS Consolidation + Housekeeping
+
+### ✅ RESULTADO:
+- **TSC:** 0 erros (limpo)
+- **Testes:** 118 suites, 1973 passed, 3 failed (pré-existentes rhubarb), 16 skipped
+- **Feature list:** 54/54 completas (0 pendentes)
+
+### 📋 O QUE FOI FEITO:
+
+#### 1. Commitado trabalho da sessão anterior (ElevenLabs TTS)
+Sessão anterior criou mas NÃO commitou 3 arquivos. Commitados nesta sessão:
+- **src/services/elevenlabs-service.ts** (725 lines): Serviço consolidado ElevenLabs TTS
+  - Implementa TTSProvider interface
+  - URL correta: POST /v1/text-to-speech/{voiceId} (bug corrigido do provider antigo)
+  - Retry com exponential backoff (3 tentativas)
+  - Circuit breaker (5 falhas → 60s cooldown)
+  - Rate limit awareness via xi-ratelimit-* headers
+  - Long text chunking (max 5000 chars, sentence-aware)
+  - Cost estimation, zero `any` types
+  - Error mapping correto (401→auth, 402→credits, 429→rate, 404→voice)
+- **src/types/elevenlabs.ts** (48 lines): Re-exports de tipos para UI
+- **src/__tests__/unit/services/elevenlabs-service.test.ts** (984 lines, 55 testes): Suite completa
+
+#### 2. Fix jest.config.cjs
+- Adicionado `cacheDirectory` para ambientes com /tmp read-only
+
+#### 3. Atualizado .gitignore
+- Adicionados: .jest-cache/, tmp/jest-cache/, tmp/jest_0/, .codacy/, EMERGENCY_FIX.sh, FIX_V2.sh, test_writable
+
+#### 4. Commitados .github/agents/ e .github/prompts/
+- 12 agent definitions + 11 prompt templates para workflow AI
+
+### 📌 COMMITS:
+- `ef81decb` feat: consolidated ElevenLabs TTS service + agents/prompts
+- `5d27cf92` chore: update .gitignore with jest-cache, codacy, temp scripts
+
+### 📝 NOTAS PARA O PRÓXIMO AGENT:
+- Todas as 54 features estão completas (passes: true)
+- Os 3 testes falhando são do rhubarb-lip-sync (binário com I/O error) — pré-existentes
+- Providers antigos (elevenlabs-provider-real.ts, elevenlabs-provider.ts) ainda existem
+  - Considerar deprecar ou migrar callers para o novo src/services/elevenlabs-service.ts
+- Branch: main
+
+---
+
+## Session 31 Summary - Hotfix Crítico MIME Type em Produção 🔴🚨
 
 ### 🚨 PROBLEMA CRÍTICO IDENTIFICADO:
 Em produção (cursostecno.com.br), assets estáticos retornando `text/html` ao invés de MIME types corretos:
