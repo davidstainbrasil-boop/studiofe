@@ -21,6 +21,11 @@ export interface RenderJob {
   error?: string;
 }
 
+export interface CreateJobResult {
+  id: string;
+  reused: boolean;
+}
+
 export class JobManager {
   constructor() {
     // Prisma client is imported directly, no initialization needed
@@ -48,7 +53,11 @@ export class JobManager {
     }
   }
   
-  async createJob(userId: string, projectId: string, idempotencyKey?: string): Promise<string> {
+  private async createOrReuseJobRecord(
+    userId: string,
+    projectId: string,
+    idempotencyKey?: string
+  ): Promise<CreateJobResult> {
     // Check for idempotency key first (if provided)
     if (idempotencyKey) {
       const existingByKey = await prisma.render_jobs.findUnique({
@@ -60,7 +69,7 @@ export class JobManager {
         logger.info(`Idempotency: Returning existing job ${existingByKey.id} for key ${idempotencyKey}`, {
           component: 'JobManager'
         });
-        return existingByKey.id;
+        return { id: existingByKey.id, reused: true };
       }
     }
 
@@ -80,7 +89,7 @@ export class JobManager {
       logger.info(`Time-based idempotency: Returning existing pending job ${existingByTime.id} for project ${projectId}`, {
         component: 'JobManager'
       });
-      return existingByTime.id;
+      return { id: existingByTime.id, reused: true };
     }
 
     // Create new job
@@ -103,23 +112,37 @@ export class JobManager {
       projectId
     });
 
+    return { id: job.id, reused: false };
+  }
+
+  async createJobWithoutQueue(userId: string, projectId: string, idempotencyKey?: string): Promise<CreateJobResult> {
+    return this.createOrReuseJobRecord(userId, projectId, idempotencyKey);
+  }
+
+  async createJob(userId: string, projectId: string, idempotencyKey?: string): Promise<string> {
+    const { id: jobId, reused } = await this.createOrReuseJobRecord(userId, projectId, idempotencyKey);
+
+    if (reused) {
+      return jobId;
+    }
+
     // Add to BullMQ
     try {
       const { addVideoJob } = await import('@lib/queue/render-queue');
       await addVideoJob({
-        jobId: job.id,
+        jobId,
         projectId,
         userId
       });
-      logger.info('Pushed job to BullMQ', { jobId: job.id });
+      logger.info('Pushed job to BullMQ', { jobId });
     } catch (queueError) {
-      logger.error('Failed to push job to BullMQ', queueError as Error, { jobId: job.id });
+      logger.error('Failed to push job to BullMQ', queueError as Error, { jobId });
       // We should probably mark the DB job as failed_enqueue here
-      await this.markAsFailedEnqueue(job.id, queueError instanceof Error ? queueError.message : 'Queue error');
+      await this.markAsFailedEnqueue(jobId, queueError instanceof Error ? queueError.message : 'Queue error');
       throw queueError;
     }
 
-    return job.id;
+    return jobId;
   }
 
   async markAsFailedEnqueue(jobId: string, error: string): Promise<void> {
@@ -234,6 +257,19 @@ export class JobManager {
 
   async completeJob(jobId: string, outputUrl: string): Promise<void> {
     try {
+      const current = await prisma.render_jobs.findUnique({
+        where: { id: jobId },
+        select: { status: true }
+      });
+
+      if (current?.status === 'cancelled') {
+        logger.info('Skipping completeJob update because job is cancelled', {
+          component: 'JobManager',
+          jobId
+        });
+        return;
+      }
+
       await prisma.render_jobs.update({
         where: { id: jobId },
         data: {
@@ -266,6 +302,19 @@ export class JobManager {
   
   async failJob(jobId: string, errorMessage: string): Promise<void> {
     try {
+      const current = await prisma.render_jobs.findUnique({
+        where: { id: jobId },
+        select: { status: true }
+      });
+
+      if (current?.status === 'cancelled') {
+        logger.info('Skipping failJob update because job is cancelled', {
+          component: 'JobManager',
+          jobId
+        });
+        return;
+      }
+
       await prisma.render_jobs.update({
         where: { id: jobId },
         data: {

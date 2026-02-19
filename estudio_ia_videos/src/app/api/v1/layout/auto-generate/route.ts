@@ -2,9 +2,10 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@lib/logger'
-import { mockDelay, isProduction, notImplementedResponse } from '@lib/utils/mock-guard'
+import { mockDelay, isProduction } from '@lib/utils/mock-guard'
 import { getServerAuth } from '@lib/auth/unified-session';
 import { applyRateLimit } from '@/lib/rate-limit';
+import { prisma } from '@lib/prisma';
 
 interface LayoutElement {
   id: string
@@ -47,13 +48,10 @@ export async function POST(request: NextRequest) {
       existingElements: LayoutElement[]
     } = body
 
-    // REGRA DO REPO: mocks proibidos em producao
-    if (isProduction()) {
-      return notImplementedResponse('layout-auto-generate', 'AI layout generation integration pending')
-    }
-
     // Development only: simulate AI generation
-    await mockDelay(2000, 'layout-auto-generate')
+    if (!isProduction()) {
+      await mockDelay(2000, 'layout-auto-generate')
+    }
     
     // Gerar layout baseado nas configurações
     const spacing = settings?.spacing || 20
@@ -207,6 +205,25 @@ export async function POST(request: NextRequest) {
     
     // Calcular score de qualidade do layout
     const qualityScore = calculateLayoutScore(generatedElements, settings)
+
+    if (isProduction()) {
+      prisma.analytics_events.create({
+        data: {
+          userId: session.user.id,
+          eventType: 'layout_auto_generate',
+          eventData: {
+            contentType,
+            elementsGenerated: generatedElements.length,
+            qualityScore
+          }
+        }
+      }).catch((error: unknown) => {
+        logger.warn('Failed to register layout_auto_generate event', {
+          component: 'API: v1/layout/auto-generate',
+          error: error instanceof Error ? error.message : String(error)
+        });
+      });
+    }
     
     return NextResponse.json({
       success: true,
@@ -276,4 +293,3 @@ export async function GET(req: NextRequest) {
     ]
   })
 }
-

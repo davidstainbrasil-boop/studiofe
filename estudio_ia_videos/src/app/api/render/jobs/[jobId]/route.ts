@@ -55,7 +55,16 @@ export async function GET(
     // Remove project data from response
     const { projects: _, ...jobData } = job
 
-    return NextResponse.json({ success: true, data: jobData, job: jobData })
+    return NextResponse.json({
+      success: true,
+      status: jobData.status,
+      progress: jobData.progress || 0,
+      videoUrl: jobData.outputUrl || undefined,
+      output_url: jobData.outputUrl || undefined,
+      error: jobData.errorMessage || undefined,
+      data: jobData,
+      job: jobData,
+    })
 
   } catch (error) {
     logger.error('Error fetching render job', error instanceof Error ? error : new Error(String(error)), { component: 'API: render/jobs/[jobId]' })

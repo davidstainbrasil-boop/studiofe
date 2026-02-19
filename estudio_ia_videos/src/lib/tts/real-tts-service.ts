@@ -11,7 +11,7 @@ import {
   TTSFactory,
   TTSUtils
 } from './tts-provider-abstraction';
-import { ElevenLabsProviderReal } from './elevenlabs-provider-real';
+import { ElevenLabsService } from '@/services/elevenlabs-service';
 import { GoogleCloudProviderReal } from './google-cloud-provider-real';
 import { AudioStorageManager } from './audio-storage-manager';
 import { logger } from '@/lib/monitoring/logger';
@@ -29,8 +29,13 @@ export class RealTTSService {
   initialize(config: TTSConfig): void {
     try {
       // Register real providers
-      TTSFactory.registerProvider(TTSProviderType.ELEVENLABS, new ElevenLabsProviderReal(config.elevenlabs?.apiKey || ''));
-      
+      if (config.elevenlabs?.apiKey) {
+        TTSFactory.registerProvider(
+          TTSProviderType.ELEVENLABS,
+          new ElevenLabsService({ apiKey: config.elevenlabs.apiKey }),
+        );
+      }
+
       if (config.googleCloud?.credentials) {
         TTSFactory.registerProvider(
           TTSProviderType.GOOGLE_CLOUD,

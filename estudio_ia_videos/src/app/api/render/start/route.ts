@@ -7,14 +7,15 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@lib/prisma';
-import { getSupabaseForRequest, supabaseAdmin } from '@lib/supabase/server';
-import { addVideoJob } from '@lib/queue/render-queue';
+import { supabaseAdmin } from '@lib/supabase/server';
+import { addVideoJob, isQueueAvailable } from '@lib/queue/render-queue';
 import { jobManager } from '@lib/render/job-manager';
 import { logger } from '@lib/logger';
 import { rateLimit, getUserTier } from '@/middleware/rate-limiter';
 import { applyRateLimit } from '@/lib/rate-limit';
 import { cachedQuery, CacheTier, invalidatePattern } from '@lib/cache/redis-cache';
 import crypto from 'crypto';
+import { healthCheckService } from '@lib/monitoring/health-check';
 // Local type definitions replacing missing module
 type QueueRenderConfig = any;
 type QueueRenderSlide = any;
@@ -45,6 +46,37 @@ interface RenderSlide {
   avatar_config?: Record<string, unknown>;
 }
 
+async function loadProjectSlides(projectId: string): Promise<Array<Record<string, unknown>>> {
+  const slides = await prisma.slides.findMany({
+    where: { projectId },
+    orderBy: { orderIndex: 'asc' },
+    select: {
+      id: true,
+      title: true,
+      content: true,
+      duration: true,
+      backgroundImage: true,
+      audioConfig: true,
+    },
+  });
+
+  return slides.map((slide) => {
+    const audioConfig = (slide.audioConfig || {}) as Record<string, unknown>;
+    const audioUrlCandidate = audioConfig.audioUrl || audioConfig.url || audioConfig.src;
+
+    return {
+      id: slide.id,
+      title: slide.title,
+      content: slide.content,
+      duration: slide.duration || 5,
+      imageUrl: slide.backgroundImage || '',
+      audioUrl: typeof audioUrlCandidate === 'string' ? audioUrlCandidate : undefined,
+      transition: 'fade',
+      transitionDuration: 0.5,
+    };
+  });
+}
+
 type PlanTier = 'free' | 'pro' | 'business';
 
 const PLAN_RANK: Record<PlanTier, number> = {
@@ -71,6 +103,26 @@ const PLAN_LIMITS: Record<PlanTier, Pick<RenderConfig, 'width' | 'height' | 'qua
   pro: { width: 1920, height: 1080, quality: 'high' },
   business: { width: 3840, height: 2160, quality: 'ultra' },
 };
+
+interface BillingPlanRow {
+  id: string
+  name: string
+  video_limit: number
+}
+
+interface SubscriptionRow {
+  user_id: string
+  plan_id: string
+  status: string
+  videos_used_this_month: number
+}
+
+interface VideoLimitState {
+  canCreate: boolean
+  videosUsed: number
+  videoLimit: number
+  planName: string
+}
 
 function getRequiredPlanForRender(
   width: number,
@@ -128,70 +180,107 @@ async function resolveUserPlan(userId: string): Promise<PlanTier> {
   }
 }
 
+async function getUserVideoLimitState(userId: string): Promise<VideoLimitState> {
+  try {
+    const { data: subscriptionData, error: subError } = await supabaseAdmin
+      .from('subscriptions' as never)
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
+    const subscription = subscriptionData as SubscriptionRow | null;
+
+    if (subError || !subscription) {
+      return {
+        canCreate: true,
+        videosUsed: 0,
+        videoLimit: 2,
+        planName: 'Free',
+      };
+    }
+
+    const { data: planData } = await supabaseAdmin
+      .from('plans' as never)
+      .select('*')
+      .eq('id', subscription.plan_id)
+      .single();
+
+    const plan = planData as BillingPlanRow | null;
+    const videosUsed = subscription.videos_used_this_month || 0;
+    const videoLimit = typeof plan?.video_limit === 'number' ? plan.video_limit : 2;
+    const isUnlimited = videoLimit === -1;
+
+    return {
+      canCreate: isUnlimited || videosUsed < videoLimit,
+      videosUsed,
+      videoLimit,
+      planName: plan?.name || 'Free',
+    };
+  } catch (error) {
+    logger.warn('Falha ao verificar limite de vídeos diretamente no banco', {
+      userId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+
+    return {
+      canCreate: true,
+      videosUsed: 0,
+      videoLimit: 2,
+      planName: 'Free',
+    };
+  }
+}
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const action = searchParams.get('action');
+    const queueAvailable = isQueueAvailable();
+    const ffmpegHealth = await healthCheckService.checkFFmpeg();
+    const ffmpegAvailable = ffmpegHealth.status === 'healthy';
+    const pipelineStatus = queueAvailable && ffmpegAvailable ? 'operational' : 'degraded';
 
-    if (action === 'video-pipeline') {
-      return NextResponse.json({
-        success: true,
-        message: 'Video pipeline endpoint working!',
-        endpoint: '/api/render/start?action=video-pipeline',
-        methods: ['GET', 'POST'],
-        timestamp: new Date().toISOString()
-      });
-    }
-
-    // Video test endpoint
-    if (action === 'video-test') {
-      return NextResponse.json({
-        success: true,
-        message: 'Video Test API is working!',
-        endpoint: '/api/render/start?action=video-test',
-        timestamp: new Date().toISOString(),
-        status: 'operational',
-        pipeline_status: 'ready',
-        ffmpeg_available: true,
-        render_queue_status: 'operational'
-      });
-    }
-
-    // Create video job
     if (action === 'create-video-job') {
-      const project_id = searchParams.get("projectId");
-      const preset_id = searchParams.get('preset_id');
-      
-      if (project_id && preset_id) {
-        const job_id = `job_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        
-        return NextResponse.json({
-          success: true,
-          job_id,
-          status: 'queued',
-          project_id,
-          preset_id,
-          message: 'Video render job created successfully',
-          endpoint: '/api/render/start?action=create-video-job',
-          createdAt: new Date().toISOString(),
-          estimated_completion: new Date(Date.now() + 60000).toISOString()
-        });
-      } else {
-        return NextResponse.json({
-          error: 'project_id and preset_id are required',
-          usage: '/api/render/start?action=create-video-job&project_id=PROJECT_ID&preset_id=PRESET_ID'
-        }, { status: 400 });
-      }
+      return NextResponse.json(
+        {
+          error: 'Ação não suportada via GET. Use POST /api/render/start para criar job real.',
+          code: 'METHOD_NOT_ALLOWED',
+        },
+        { status: 405 }
+      );
+    }
+
+    if (action === 'video-pipeline' || action === 'video-test') {
+      return NextResponse.json({
+        success: true,
+        message: 'Render pipeline status',
+        endpoint: '/api/render/start',
+        methods: ['GET', 'POST'],
+        timestamp: new Date().toISOString(),
+        status: pipelineStatus,
+        pipeline_status: pipelineStatus,
+        ffmpeg_available: ffmpegAvailable,
+        render_queue_status: queueAvailable ? 'operational' : 'unavailable',
+        diagnostics: {
+          ffmpeg: ffmpegHealth.message,
+        },
+      });
     }
 
     return NextResponse.json({
       success: true,
-      message: 'Render start endpoint',
-      available_actions: ['video-pipeline', 'video-test', 'create-video-job'],
+      message: 'Render start endpoint (real mode)',
+      status: pipelineStatus,
+      available_actions: ['video-pipeline', 'video-test'],
       usage: {
         video_pipeline: '/api/render/start?action=video-pipeline',
         video_test: '/api/render/start?action=video-test',
-        create_video_job: '/api/render/start?action=create-video-job&project_id=PROJECT_ID&preset_id=PRESET_ID'
+        create_video_job: 'POST /api/render/start'
+      },
+      diagnostics: {
+        ffmpeg_available: ffmpegAvailable,
+        render_queue_available: queueAvailable,
+        ffmpeg_message: ffmpegHealth.message,
       }
     });
 
@@ -225,28 +314,29 @@ export async function POST(req: NextRequest) {
     // VERIFICAÇÃO DE LIMITE DE VÍDEOS (MONETIZAÇÃO)
     // ========================================
     try {
-      const limitResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/user/video-limit?userId=${userId}`
-      );
-      const limitData = await limitResponse.json();
-      
-      if (!limitData.can_create) {
-        logger.warn('User hit video limit', { userId, videosUsed: limitData.videos_used, limit: limitData.video_limit });
+      const limitState = await getUserVideoLimitState(userId as string);
+
+      if (!limitState.canCreate) {
+        logger.warn('User hit video limit', {
+          userId,
+          videosUsed: limitState.videosUsed,
+          limit: limitState.videoLimit,
+        });
+
         return NextResponse.json(
-          { 
+          {
             error: 'Limite de vídeos atingido',
             code: 'VIDEO_LIMIT_EXCEEDED',
-            videosUsed: limitData.videos_used,
-            videoLimit: limitData.video_limit,
-            planName: limitData.plan_name,
-            upgradeUrl: '/pricing'
+            videosUsed: limitState.videosUsed,
+            videoLimit: limitState.videoLimit,
+            planName: limitState.planName,
+            upgradeUrl: '/pricing',
           },
           { status: 402 } // Payment Required
         );
       }
     } catch (limitError) {
-      // Em caso de erro na verificação, permitir (fail-open)
-      // mas logar para investigação
+      // Em caso de erro na verificação, permitir (fail-open) e registrar
       logger.warn('Failed to check video limit, allowing render', { userId, error: limitError });
     }
 
@@ -261,18 +351,11 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { projectId, slides, config } = body;
+    const { projectId, slides: inputSlides, config } = body;
 
     if (!projectId) {
       return NextResponse.json(
         { error: 'projectId obrigatório' },
-        { status: 400 }
-      );
-    }
-
-    if (!slides || !Array.isArray(slides) || slides.length === 0) {
-      return NextResponse.json(
-        { error: 'slides obrigatórios (array não vazio)' },
         { status: 400 }
       );
     }
@@ -363,6 +446,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const sourceSlides = Array.isArray(inputSlides) && inputSlides.length > 0
+      ? inputSlides
+      : await loadProjectSlides(projectId);
+
+    if (!Array.isArray(sourceSlides) || sourceSlides.length === 0) {
+      return NextResponse.json(
+        { error: 'Nenhum slide disponível para renderização' },
+        { status: 400 }
+      );
+    }
+
     // Configuração real do FFmpeg
     const renderConfig: RenderConfig = {
       width,
@@ -378,10 +472,10 @@ export async function POST(req: NextRequest) {
     };
 
     // Validar slides
-    const validatedSlides = slides.map((slide: Record<string, unknown>, index: number) => ({
+    const validatedSlides = sourceSlides.map((slide: Record<string, unknown>, index: number) => ({
       id: (slide.id as string) || `slide_${index}`,
       orderIndex: index,
-      imageUrl: (slide.imageUrl as string) || '',
+      imageUrl: (slide.imageUrl as string) || (slide.backgroundImage as string) || '',
       audioUrl: slide.audioUrl as string | undefined,
       duration: (slide.duration as number) || 5,
       transition: (slide.transition as 'fade' | 'none') || 'fade',
@@ -415,9 +509,26 @@ export async function POST(req: NextRequest) {
     let dbJobId: string | null = null;
 
     try {
-      // 1. Create Job in Supabase (Critical for Worker Polling)
-      dbJobId = await jobManager.createJob(userId as string, projectId, idempotencyKey);
+      // 1. Create Job in DB only (queue enqueue is handled below in this transaction)
+      const createResult = await jobManager.createJobWithoutQueue(userId as string, projectId, idempotencyKey);
+      dbJobId = createResult.id;
       logger.info('Job criado no Supabase', { ...logContext, jobId: dbJobId });
+
+      // If idempotency returned an existing queued/processing job, don't enqueue again
+      if (createResult.reused) {
+        logger.info('Retornando job existente por idempotência', { ...logContext, jobId: dbJobId });
+        return NextResponse.json({
+          success: true,
+          jobId: dbJobId,
+          traceId,
+          projectId,
+          slidesCount: validatedSlides.length,
+          config: renderConfig,
+          idempotent: true,
+          message: 'Job de renderização já existente retornado com sucesso',
+          statusUrl: `/api/render/status?jobId=${dbJobId}`
+        });
+      }
 
       // 2. Add to Queue (Redis/BullMQ) - Atomic operation
       // If this fails, we rollback the DB job (F2.3)
@@ -511,5 +622,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-
-

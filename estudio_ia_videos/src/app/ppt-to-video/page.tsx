@@ -95,22 +95,6 @@ const TEMPLATES = [
     { id: 'custom', name: 'Personalizado', colors: ['#000000', '#666666', '#ffffff'] },
 ];
 
-// Fallback voices if API fails
-const FALLBACK_VOICES: VoiceOption[] = [
-    { id: 'pt-BR-FranciscaNeural', name: 'Francisca', gender: 'F', language: 'pt-BR', preview: '🇧🇷', popular: true },
-    { id: 'pt-BR-AntonioNeural', name: 'Antonio', gender: 'M', language: 'pt-BR', preview: '🇧🇷', popular: true },
-    { id: 'pt-BR-ThalitaNeural', name: 'Thalita', gender: 'F', language: 'pt-BR', preview: '🇧🇷' },
-    { id: 'pt-BR-ValerioNeural', name: 'Valério', gender: 'M', language: 'pt-BR', preview: '🇧🇷' },
-];
-
-// Fallback avatars if API fails
-const FALLBACK_AVATARS: AvatarOption[] = [
-    { id: 'professional-m', name: 'Marco', style: 'Profissional', gender: 'M' },
-    { id: 'professional-f', name: 'Julia', style: 'Profissional', gender: 'F' },
-    { id: 'casual-m', name: 'Diego', style: 'Casual', gender: 'M' },
-    { id: 'casual-f', name: 'Carla', style: 'Casual', gender: 'F' },
-];
-
 export default function PPTtoVideoWizard() {
     // Use the real hook for PPT processing
     const {
@@ -170,8 +154,15 @@ export default function PPTtoVideoWizard() {
                 const response = await fetch('/api/voice/generate');
                 if (response.ok) {
                     const data = await response.json();
-                    if (data.success && data.data?.length > 0) {
-                        const mappedVoices: VoiceOption[] = data.data.map((v: any) => ({
+                    const rawVoices = Array.isArray(data?.data)
+                        ? data.data
+                        : [
+                            ...(Array.isArray(data?.data?.elevenLabs) ? data.data.elevenLabs : []),
+                            ...(Array.isArray(data?.data?.azure) ? data.data.azure : []),
+                        ];
+
+                    if (data.success && rawVoices.length > 0) {
+                        const mappedVoices: VoiceOption[] = rawVoices.map((v: any) => ({
                             id: v.id || v.voiceId,
                             name: v.name || v.displayName,
                             gender: v.gender === 'Female' || v.gender === 'F' ? 'F' : 'M',
@@ -185,17 +176,20 @@ export default function PPTtoVideoWizard() {
                         const brVoice = mappedVoices.find(v => v.language?.includes('pt-BR'));
                         if (brVoice) setSelectedVoice(brVoice.id);
                     } else {
-                        setVoices(FALLBACK_VOICES);
-                        setSelectedVoice(FALLBACK_VOICES[0].id);
+                        setVoices([]);
+                        setSelectedVoice('');
+                        toast.error('Nenhuma voz disponível no provedor configurado.');
                     }
                 } else {
-                    setVoices(FALLBACK_VOICES);
-                    setSelectedVoice(FALLBACK_VOICES[0].id);
+                    setVoices([]);
+                    setSelectedVoice('');
+                    toast.error('Falha ao carregar vozes reais.');
                 }
             } catch (err) {
-                logger.warn('Failed to fetch voices, using fallback:', err);
-                setVoices(FALLBACK_VOICES);
-                setSelectedVoice(FALLBACK_VOICES[0].id);
+                logger.warn('Failed to fetch voices:', err);
+                setVoices([]);
+                setSelectedVoice('');
+                toast.error('Erro ao buscar vozes dos provedores.');
             } finally {
                 setLoadingVoices(false);
             }
@@ -211,25 +205,31 @@ export default function PPTtoVideoWizard() {
                 const response = await fetch('/api/avatars');
                 if (response.ok) {
                     const data = await response.json();
-                    if (data.data?.length > 0) {
-                        const mappedAvatars: AvatarOption[] = data.data.map((a: any) => ({
+                    const rawAvatars = Array.isArray(data?.data)
+                        ? data.data
+                        : Array.isArray(data?.avatars)
+                            ? data.avatars
+                            : [];
+
+                    if (rawAvatars.length > 0) {
+                        const mappedAvatars: AvatarOption[] = rawAvatars.map((a: any) => ({
                             id: a.id,
                             name: a.name,
                             style: a.style || 'Profissional',
                             gender: a.gender === 'female' || a.gender === 'F' ? 'F' : 'M',
-                            thumbnail: a.thumbnail || a.ready_player_me_url,
+                            thumbnail: a.thumbnail || a.thumbnail_url || a.ready_player_me_url,
                             avatar_type: a.avatar_type,
                         }));
                         setAvatars(mappedAvatars);
                     } else {
-                        setAvatars(FALLBACK_AVATARS);
+                        setAvatars([]);
                     }
                 } else {
-                    setAvatars(FALLBACK_AVATARS);
+                    setAvatars([]);
                 }
             } catch (err) {
-                logger.warn('Failed to fetch avatars, using fallback:', err);
-                setAvatars(FALLBACK_AVATARS);
+                logger.warn('Failed to fetch avatars:', err);
+                setAvatars([]);
             } finally {
                 setLoadingAvatars(false);
             }

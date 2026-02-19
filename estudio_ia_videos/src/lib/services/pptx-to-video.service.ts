@@ -15,7 +15,7 @@ export interface PptxToVideoOptions {
   file: File;
   projectName: string;
   voiceId?: string;
-  ttsProvider?: 'elevenlabs' | 'azure' | 'google' | 'mock';
+  ttsProvider?: 'elevenlabs' | 'azure' | 'google';
   avatarId?: string;
   resolution?: '720p' | '1080p' | '4k';
   generateSubtitles?: boolean;

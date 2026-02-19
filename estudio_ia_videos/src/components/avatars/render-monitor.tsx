@@ -409,11 +409,12 @@ export default function RenderMonitor({
   // Função para cancelar job
   const handleCancelJob = async (jobId: string) => {
     try {
-      const response = await fetch(`/api/v2/avatars/render/${jobId}/cancel`, {
+      const response = await fetch(`/api/v2/avatars/render/status/${jobId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-        }
+        },
+        body: JSON.stringify({ action: 'cancel' })
       });
 
       if (response.ok) {
@@ -465,11 +466,12 @@ export default function RenderMonitor({
   // Função para reprocessar job
   const handleReprocess = async (jobId: string) => {
     try {
-      const response = await fetch(`/api/v2/avatars/render/${jobId}/reprocess`, {
+      const response = await fetch(`/api/v2/avatars/render/status/${jobId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-        }
+        },
+        body: JSON.stringify({ action: 'retry' })
       });
 
       if (response.ok) {

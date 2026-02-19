@@ -1,46 +1,36 @@
-/**
+c/**
  * 🎬 Studio State Snapshot API
- * POST: Criar snapshot do estado atual
- * GET: Listar snapshots do projeto
- * 
- * NOTA: Esta API utiliza a tabela 'project_snapshots' que pode não existir no schema atual.
- * A funcionalidade de snapshots é uma feature adicional que será implementada no futuro.
+ * POST: Criar snapshot real do estado atual
+ * GET: Listar snapshots reais do projeto
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
-import { createClient, fromUntypedTable } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import { v4 as uuidv4 } from 'uuid';
 import { applyRateLimit } from '@/lib/rate-limit';
-
-// ============================================================================
-// Types
-// ============================================================================
 
 interface SnapshotRecord {
   id: string;
   project_id: string;
   user_id: string;
-  name: string;
+  name: string | null;
   description: string | null;
-  state: Record<string, unknown>;
+  version: number;
+  snapshot_type: string;
+  is_bookmarked: boolean;
+  file_size: number;
   created_at: string;
 }
-
-// ============================================================================
-// Schemas
-// ============================================================================
 
 const createSnapshotSchema = z.object({
   projectId: z.string().uuid(),
   name: z.string().min(1).max(100).optional(),
   description: z.string().max(500).optional(),
+  snapshotType: z.string().min(1).max(50).optional(),
+  bookmark: z.boolean().optional(),
 });
-
-// ============================================================================
-// POST - Create Snapshot
-// ============================================================================
 
 export async function POST(request: NextRequest) {
   try {
@@ -54,10 +44,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { projectId, name, description } = parsed.data;
+    const { projectId, name, description, snapshotType, bookmark } = parsed.data;
     const supabase = createClient();
 
-    // Verify user is authenticated
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       return NextResponse.json(
@@ -66,10 +55,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get project and verify ownership
     const { data: project, error: projectError } = await supabase
       .from('projects')
-      .select('user_id, metadata, name')
+      .select('*')
       .eq('id', projectId)
       .single();
 
@@ -87,47 +75,89 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create snapshot using untyped table helper
-    const snapshotId = uuidv4();
-    const snapshotName = name || `Snapshot ${new Date().toLocaleString()}`;
+    // Get latest version
+    const { data: latestRows, error: latestError } = await supabase
+      .from('project_version_snapshots')
+      .select('version')
+      .eq('project_id', projectId)
+      .eq('user_id', user.id)
+      .order('version', { ascending: false })
+      .limit(1);
 
-    try {
-      const snapshotTable = fromUntypedTable<SnapshotRecord>(supabase, 'project_snapshots');
-      const { error: snapshotError } = await snapshotTable.insert({
-        id: snapshotId,
-        project_id: projectId,
-        user_id: user.id,
-        name: snapshotName,
-        description: description || null,
-        state: project.metadata || {},
-        created_at: new Date().toISOString(),
-      });
-
-      if (snapshotError) {
-        throw snapshotError;
-      }
-    } catch (snapshotErr) {
-      // If table doesn't exist, return graceful error
-      logger.warn('Snapshots feature not available', { projectId });
+    if (latestError) {
+      logger.error('Failed to fetch latest snapshot version', latestError);
       return NextResponse.json(
-        { error: 'Snapshots feature not configured. Table may not exist.' },
-        { status: 501 }
+        { error: 'Failed to compute snapshot version' },
+        { status: 500 }
       );
     }
 
-    logger.info('Snapshot created', { 
-      snapshotId, 
-      projectId, 
+    const nextVersion = (latestRows?.[0]?.version || 0) + 1;
+    const snapshotId = uuidv4();
+    const snapshotName = name || `Snapshot v${nextVersion}`;
+    const createdAt = new Date().toISOString();
+
+    const projectState = {
+      project: {
+        id: project.id,
+        name: project.name,
+        description: project.description,
+        type: project.type,
+        status: project.status,
+        metadata: project.metadata || {},
+        render_settings: project.render_settings || {},
+        updated_at: project.updated_at,
+      },
+    };
+
+    const serializedState = JSON.stringify(projectState);
+    const fileSize = Buffer.byteLength(serializedState, 'utf8');
+
+    const { error: insertError } = await supabase
+      .from('project_version_snapshots')
+      .insert({
+        id: snapshotId,
+        project_id: projectId,
+        user_id: user.id,
+        version: nextVersion,
+        name: snapshotName,
+        description: description || null,
+        snapshot_type: snapshotType || 'manual',
+        is_bookmarked: bookmark ?? false,
+        file_size: fileSize,
+        project_state: projectState,
+        scenes_state: ((project.metadata as any)?.scenes || []),
+        timeline_state: ((project.metadata as any)?.timeline || null),
+        created_at: createdAt,
+        checksum: null,
+        delta_from_prev: null,
+        restored_at: null
+      });
+
+    if (insertError) {
+      logger.error('Failed to insert snapshot', insertError);
+      return NextResponse.json(
+        { error: 'Failed to create snapshot' },
+        { status: 500 }
+      );
+    }
+
+    logger.info('Snapshot created', {
+      snapshotId,
+      projectId,
       userId: user.id,
+      version: nextVersion
     });
 
     return NextResponse.json({
       success: true,
       data: {
         id: snapshotId,
+        version: nextVersion,
         name: snapshotName,
         description: description || null,
-        createdAt: new Date().toISOString(),
+        snapshotType: snapshotType || 'manual',
+        createdAt
       },
     });
   } catch (error) {
@@ -138,10 +168,6 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
-// ============================================================================
-// GET - List Snapshots
-// ============================================================================
 
 export async function GET(request: NextRequest) {
   try {
@@ -160,7 +186,6 @@ export async function GET(request: NextRequest) {
 
     const supabase = createClient();
 
-    // Verify user is authenticated
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       return NextResponse.json(
@@ -169,10 +194,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Verify project ownership
     const { data: project, error: projectError } = await supabase
       .from('projects')
-      .select('user_id')
+      .select('id, user_id')
       .eq('id', projectId)
       .single();
 
@@ -190,37 +214,35 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get snapshots using untyped table helper
-    try {
-      const snapshotTable = fromUntypedTable<SnapshotRecord>(supabase, 'project_snapshots');
-      const { data: snapshots, error: snapshotsError } = await snapshotTable
-        .select('id, name, description, created_at')
-        .eq('project_id', projectId)
-        .order('created_at', { ascending: false })
-        .limit(50);
+    const { data: snapshots, error: snapshotsError } = await supabase
+      .from('project_version_snapshots')
+      .select('id, name, description, version, snapshot_type, is_bookmarked, file_size, created_at')
+      .eq('project_id', projectId)
+      .eq('user_id', user.id)
+      .order('version', { ascending: false })
+      .limit(50);
 
-      if (snapshotsError) {
-        throw snapshotsError;
-      }
-
-      return NextResponse.json({
-        success: true,
-        data: (snapshots || []).map((s: { id: string; name: string; description: string | null; created_at: string }) => ({
-          id: s.id,
-          name: s.name,
-          description: s.description,
-          createdAt: s.created_at,
-        })),
-      });
-    } catch (snapshotsErr) {
-      // If table doesn't exist, return empty array
-      logger.warn('Snapshots feature not available');
-      return NextResponse.json({
-        success: true,
-        data: [],
-        warning: 'Snapshots feature not configured',
-      });
+    if (snapshotsError) {
+      logger.error('Failed to list snapshots', snapshotsError);
+      return NextResponse.json(
+        { error: 'Failed to list snapshots' },
+        { status: 500 }
+      );
     }
+
+    return NextResponse.json({
+      success: true,
+      data: (snapshots || []).map((s) => ({
+        id: s.id,
+        version: s.version,
+        name: s.name,
+        description: s.description,
+        snapshotType: s.snapshot_type,
+        isBookmarked: s.is_bookmarked,
+        fileSize: s.file_size,
+        createdAt: s.created_at,
+      })),
+    });
   } catch (error) {
     logger.error('Snapshot list error', error instanceof Error ? error : undefined);
     return NextResponse.json(
@@ -229,3 +251,4 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+

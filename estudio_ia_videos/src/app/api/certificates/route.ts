@@ -6,7 +6,7 @@ import { getRequiredEnv } from '@lib/env';
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '@lib/logger';
 import { applyRateLimit } from '@/lib/rate-limit';
-import { isProduction, notImplementedResponse } from '@lib/utils/mock-guard';
+import { isProduction } from '@lib/utils/mock-guard';
 
 // Global mock store for development/testing when DB is down
 declare global {
@@ -18,10 +18,6 @@ if (!global.mockCertificates) {
 }
 
 export async function POST(request: NextRequest) {
-  if (isProduction()) {
-    return notImplementedResponse('certificates', 'Real certificate generation with PDF/Supabase pending');
-  }
-
   try {
     const blocked = await applyRateLimit(request, 'certs', 10);
     if (blocked) return blocked;
@@ -102,8 +98,8 @@ export async function POST(request: NextRequest) {
       , { component: 'API: certificates' });
       
       const err = dbError as { code?: string; message?: string };
-      // Fallback: Store in memory
-      if (err.code === 'P2010' || err.code === 'P2021' || err.message?.includes('does not exist') || err.message?.includes('Tenant or user not found')) {
+      // Fallback em memória permitido apenas fora de produção
+      if (!isProduction() && (err.code === 'P2010' || err.code === 'P2021' || err.message?.includes('does not exist') || err.message?.includes('Tenant or user not found'))) {
         logger.warn('Certificate table missing or DB error', {
           component: 'API: certificates'
         });

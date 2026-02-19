@@ -4,7 +4,7 @@
  * Manages multiple TTS providers, fallback strategies, and caching.
  */
 
-import { ElevenLabsProvider, ElevenLabsConfig } from './providers/elevenlabs';
+import { ElevenLabsService, ElevenLabsConfig } from '@/services/elevenlabs-service';
 import { AzureTTSProvider, AzureConfig } from './providers/azure';
 import { logger } from '@lib/logger';
 
@@ -38,7 +38,7 @@ export interface GenerateResult {
 }
 
 export class TTSManager {
-  private elevenlabs?: ElevenLabsProvider;
+  private elevenlabs?: ElevenLabsService;
   private azure?: AzureTTSProvider;
   private preferredProvider: 'elevenlabs' | 'azure';
   private enableCache: boolean;
@@ -46,9 +46,12 @@ export class TTSManager {
   private memoryCache: Map<string, Buffer>;
 
   constructor(config: TTSManagerConfig) {
-    if (config.elevenlabs) {
-      this.elevenlabs = new ElevenLabsProvider(config.elevenlabs);
+    if (config.elevenlabs?.apiKey) {
+      this.elevenlabs = new ElevenLabsService(config.elevenlabs);
+    } else if (config.elevenlabs) {
+      throw new Error('ElevenLabs API key is required');
     }
+
     if (config.azure) {
       this.azure = new AzureTTSProvider(config.azure);
     }
@@ -57,6 +60,7 @@ export class TTSManager {
     this.enableFallback = config.enableFallback ?? true;
     this.memoryCache = new Map();
   }
+
 
   async generateAudio(options: GenerateOptions): Promise<GenerateResult> {
     const providerName = options.provider || this.preferredProvider;
@@ -102,14 +106,21 @@ export class TTSManager {
     }
   }
 
-  private async generateWithProvider(providerName: string, options: GenerateOptions): Promise<Buffer> {
+  private async generateWithProvider(
+    providerName: string,
+    options: GenerateOptions,
+  ): Promise<Buffer> {
     if (providerName === 'elevenlabs') {
-      if (!this.elevenlabs) throw new Error('ElevenLabs provider not configured');
-      const result = await this.elevenlabs.textToSpeech({
+      if (!this.elevenlabs)
+        throw new Error('ElevenLabs provider not configured');
+      const result = await this.elevenlabs.generateSpeech({
         text: options.text,
-        voiceId: options.voiceId
+        voiceId: options.voiceId,
       });
-      return result.audio;
+      if (!result.success || !result.audioBuffer) {
+        throw new Error(result.error || 'ElevenLabs failed');
+      }
+      return result.audioBuffer;
     } else if (providerName === 'azure') {
       if (!this.azure) throw new Error('Azure provider not configured');
       // Azure provider implementation in this file is simplified, assuming textToSpeech returns Buffer
@@ -122,11 +133,20 @@ export class TTSManager {
 
   async getVoices(providerName: 'elevenlabs' | 'azure'): Promise<Voice[]> {
     if (providerName === 'elevenlabs') {
-      if (!this.elevenlabs) throw new Error('ElevenLabs provider not configured');
-      return await this.elevenlabs.getVoices() as unknown as Voice[];
+      if (!this.elevenlabs)
+        throw new Error('ElevenLabs provider not configured');
+      const voices = await this.elevenlabs.getAvailableVoices();
+      return voices.map((v) => ({
+        id: v.id,
+        name: v.name,
+        provider: 'elevenlabs',
+        language: v.language,
+        gender: v.gender,
+        previewUrl: v.preview_url,
+      }));
     } else if (providerName === 'azure') {
       if (!this.azure) throw new Error('Azure provider not configured');
-      return await this.azure.getVoices() as unknown as Voice[];
+      return (await this.azure.getVoices()) as unknown as Voice[];
     }
     throw new Error(`Unknown provider: ${providerName}`);
   }

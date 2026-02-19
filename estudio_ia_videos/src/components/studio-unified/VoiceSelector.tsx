@@ -29,11 +29,12 @@ export function VoiceSelector({ value, onChange, label = "Voz da Narração" }: 
             const res = await fetch('/api/voice/generate')
             const json = await res.json()
             if (json.success) {
-                // Merge Azure and ElevenLabs
-                const allVoices = [
-                    ...(json.data.elevenLabs || []).map((v: any) => ({ ...v, provider: 'elevenlabs' })),
-                    ...(json.data.azure || []).map((v: any) => ({ ...v, provider: 'azure' }))
-                ]
+                const allVoices = Array.isArray(json?.data)
+                    ? json.data
+                    : [
+                        ...(json?.data?.elevenLabs || []).map((v: any) => ({ ...v, provider: v.provider || 'elevenlabs' })),
+                        ...(json?.data?.azure || []).map((v: any) => ({ ...v, provider: v.provider || 'azure' }))
+                    ]
                 setVoices(allVoices)
             }
         } catch (error) {

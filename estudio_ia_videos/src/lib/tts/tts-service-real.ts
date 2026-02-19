@@ -9,7 +9,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
-import { ElevenLabsProvider, type TTSRequest as ElevenLabsTTSRequest } from './providers/elevenlabs'
+import { ElevenLabsService } from '@/services/elevenlabs-service'
 import { Logger } from '@lib/logger'
 import crypto from 'crypto'
 import path from 'path'
@@ -101,7 +101,7 @@ export const NR_VOICE_PRESETS: Record<string, { voiceId: string; provider: strin
 
 export class TTSServiceReal {
   private supabase: ReturnType<typeof createClient>
-  private elevenLabs: ElevenLabsProvider | null = null
+  private elevenLabs: ElevenLabsService | null = null
   private cacheDir: string
   private storageBucket: string = 'tts-audio'
 
@@ -119,11 +119,11 @@ export class TTSServiceReal {
     // Inicializar ElevenLabs se API key disponível
     const elevenLabsKey = process.env.ELEVENLABS_API_KEY
     if (elevenLabsKey) {
-      this.elevenLabs = new ElevenLabsProvider({
+      this.elevenLabs = new ElevenLabsService({
         apiKey: elevenLabsKey,
         modelId: 'eleven_multilingual_v2'
       })
-      logger.info('ElevenLabs provider initialized', { component: 'TTSServiceReal' })
+      logger.info('ElevenLabs service initialized', { component: 'TTSServiceReal' })
     }
 
     // Diretório de cache local
@@ -145,25 +145,28 @@ export class TTSServiceReal {
           characters: 0,
           provider: 'none',
           cached: false,
-          error: 'Texto vazio não é permitido'
+          error: 'Texto vazio não é permitido',
         }
       }
 
       // Gerar hash para cache
       const cacheKey = this.generateCacheKey(request)
-      
+
       // Verificar cache no storage
       if (request.cacheEnabled !== false) {
         const cachedUrl = await this.checkCache(cacheKey)
         if (cachedUrl) {
-          logger.info('TTS cache hit', { cacheKey, component: 'TTSServiceReal' })
+          logger.info('TTS cache hit', {
+            cacheKey,
+            component: 'TTSServiceReal',
+          })
           return {
             success: true,
             audioUrl: cachedUrl,
             characters: request.text.length,
             provider: request.provider || 'cached',
             cached: true,
-            cost: 0
+            cost: 0,
           }
         }
       }
@@ -173,25 +176,32 @@ export class TTSServiceReal {
       let audioBuffer: Buffer
       let usedProvider: string
 
-      if (provider === 'elevenlabs' || (provider === 'auto' && this.elevenLabs)) {
-        // Usar ElevenLabs
+      if (
+        provider === 'elevenlabs' ||
+        (provider === 'auto' && this.elevenLabs)
+      ) {
         if (!this.elevenLabs) {
-          throw new Error('ElevenLabs API key não configurada')
+          throw new Error('ElevenLabs provider missing')
         }
+        const voiceId =
+          request.voiceId ||
+          this.resolveVoiceId(request.voice || 'narrador-profissional')
 
-        const voiceId = this.resolveVoiceId(request.voice || request.voiceId || 'narrador-profissional')
-        
-        const result = await this.elevenLabs.textToSpeech({
+        const response = await this.elevenLabs.generateSpeech({
           text: request.text,
           voiceId,
-          stability: request.stability ?? 0.5,
-          similarityBoost: request.similarityBoost ?? 0.75,
+          speed: request.speed,
         })
 
-        audioBuffer = result.audio
-        usedProvider = 'elevenlabs'
+        if (!response.success || !response.audioBuffer) {
+          throw new Error(response.error || 'ElevenLabs unknown error')
+        }
 
+        audioBuffer = response.audioBuffer
+        usedProvider = 'elevenlabs'
       } else if (provider === 'edge' || provider === 'auto') {
+
+
         // Fallback para Edge TTS (gratuito)
         audioBuffer = await this.generateWithEdgeTTS(request)
         usedProvider = 'edge'
@@ -304,19 +314,21 @@ export class TTSServiceReal {
     // Buscar vozes do ElevenLabs se disponível
     if (this.elevenLabs) {
       try {
-        const elevenLabsVoices = await this.elevenLabs.getVoices()
+        const elevenLabsVoices = await this.elevenLabs.getAvailableVoices()
         for (const voice of elevenLabsVoices) {
           voices.push({
-            id: voice.voiceId,
+            id: voice.id,
             name: voice.name,
             language: 'multilingual',
-            gender: 'neutral',
+            gender: voice.gender || 'neutral',
             provider: 'elevenlabs',
-            previewUrl: voice.previewUrl
+            previewUrl: voice.preview_url,
           })
         }
       } catch (error) {
-        logger.warn('Failed to fetch ElevenLabs voices', { component: 'TTSServiceReal' })
+        logger.warn('Failed to fetch ElevenLabs voices', {
+          component: 'TTSServiceReal',
+        })
       }
     }
 
@@ -326,16 +338,23 @@ export class TTSServiceReal {
   /**
    * Verifica créditos/quota disponível
    */
-  async checkQuota(): Promise<{ used: number; limit: number; remaining: number; provider: string }> {
+  async checkQuota(): Promise<{
+    used: number
+    limit: number
+    remaining: number
+    provider: string
+  }> {
     if (this.elevenLabs) {
       try {
         const info = await this.elevenLabs.getSubscriptionInfo()
         return {
           ...info,
-          provider: 'elevenlabs'
+          provider: 'elevenlabs',
         }
       } catch (error) {
-        logger.warn('Failed to check ElevenLabs quota', { component: 'TTSServiceReal' })
+        logger.warn('Failed to check ElevenLabs quota', {
+          component: 'TTSServiceReal',
+        })
       }
     }
 

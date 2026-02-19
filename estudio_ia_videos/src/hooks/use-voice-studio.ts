@@ -53,7 +53,15 @@ export function useVoiceStudio(): UseVoiceStudioReturn {
             const response = await fetch('/api/voice/generate');
             if (!response.ok) throw new Error('Failed to fetch voices');
             const data = await response.json();
-            setVoices(data.data || []);
+
+            const voiceList = Array.isArray(data?.data)
+                ? data.data
+                : [
+                    ...(Array.isArray(data?.data?.elevenLabs) ? data.data.elevenLabs : []),
+                    ...(Array.isArray(data?.data?.azure) ? data.data.azure : []),
+                ];
+
+            setVoices(voiceList);
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Erro ao carregar vozes';
             setError(message);

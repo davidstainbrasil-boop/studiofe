@@ -221,6 +221,29 @@ export async function POST(request: NextRequest) {
       userCredits,
     );
 
+    if (renderResult.status === 'failed') {
+      logger.error('[API: v2/avatars/generate] Render provider failed', undefined, {
+        userId: effectiveUser.id,
+        provider: renderResult.metadata?.provider,
+        jobId: renderResult.jobId,
+        error: renderResult.error,
+      });
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Avatar render failed',
+          message: renderResult.error || 'Provider returned failed status',
+          data: {
+            jobId: renderResult.jobId,
+            status: renderResult.status,
+            provider: renderResult.metadata?.provider,
+          },
+        },
+        { status: 502 },
+      );
+    }
+
     // 10. Deduct credits (if not PLACEHOLDER) - store in metadata
     if (cost.credits > 0) {
       const updatedMetadata = {

@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
 
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
-    let projectId = formData.get('projectId') as string;
+    let projectId = (formData.get('projectId') as string | null)?.trim() || '';
 
     if (!file) {
       logger.warn('No file found in the upload request');
@@ -87,17 +87,26 @@ export async function POST(req: NextRequest) {
 
     // Upload File first
     const uploader = new PptxUploader();
-    const isNewProject = !projectId || projectId === 'mock-project-id';
+    const isValidUuid = (value: string) =>
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+    const isNewProject = !projectId || !isValidUuid(projectId);
+
+    if (projectId && !isValidUuid(projectId)) {
+      logger.warn('Invalid projectId received in upload request, creating new project', {
+        projectId,
+        userId: user.id,
+      });
+    }
     
     // Para novos projetos, vamos deixar o DB gerar o UUID
     // O ID será retornado após a criação no Prisma
     const tempProjectId = isNewProject ? null : projectId;
+    const extractionProjectId = tempProjectId || `temp-${Date.now()}`;
 
     let result;
     try {
       // Para upload, usamos um ID temporário se for novo projeto
-      const uploadProjectId = tempProjectId || `temp-${Date.now()}`;
-      result = await uploader.upload({ file, userId: user.id, projectId: uploadProjectId });
+      result = await uploader.upload({ file, userId: user.id, projectId: extractionProjectId });
       logger.info('File uploaded successfully via service', { result, userId: user.id });
     } catch (uploadError) {
       logger.error(
@@ -118,7 +127,7 @@ export async function POST(req: NextRequest) {
     let extraction;
     try {
       // Pass projectId to allow image uploads to correct path
-      extraction = await PPTXProcessorReal.extract(buffer, projectId);
+      extraction = await PPTXProcessorReal.extract(buffer, extractionProjectId);
       logger.info('PPTX extracted', { slideCount: extraction.slides.length });
     } catch (extractError) {
       logger.error(
@@ -239,10 +248,31 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    const normalizedSlides = extraction.slides.map((slide: {
+      slideNumber?: number;
+      title?: string;
+      content?: string;
+      notes?: string;
+      duration?: number;
+      images?: string[];
+    }, index: number) => ({
+      id: `slide-${slide.slideNumber ?? index + 1}`,
+      slideNumber: slide.slideNumber ?? index + 1,
+      title: slide.title || `Slide ${index + 1}`,
+      content: slide.content || '',
+      notes: slide.notes || '',
+      duration: slide.duration || 5,
+      imageUrl: slide.images?.[0] || '',
+      images: slide.images || [],
+    }));
+
     return NextResponse.json({
       ...result,
       projectId,
       slidesCount: extraction.slides.length || 0,
+      totalSlides: extraction.slides.length || 0,
+      title: extraction.metadata?.title || file.name.replace(/\.[^/.]+$/, ''),
+      slides: normalizedSlides,
     });
   } catch (error) {
     const err = error instanceof Error ? error : new Error(String(error));

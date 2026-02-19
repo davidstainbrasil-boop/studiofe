@@ -1,16 +1,71 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@lib/logger'
-import { isProduction, notImplementedResponse } from '@lib/utils/mock-guard'
+import { isProduction } from '@lib/utils/mock-guard'
 import { getServerAuth } from '@lib/auth/unified-session';
 import { applyRateLimit } from '@/lib/rate-limit';
+import { GET as getV1AIContentGenerate, POST as postV1AIContentGenerate } from '@/app/api/v1/ai-content/generate/route';
+
+function buildForwardHeaders(source: NextRequest): Headers {
+  const headers = new Headers();
+  const cookie = source.headers.get('cookie');
+  const authorization = source.headers.get('authorization');
+  const testUserId = source.headers.get('x-user-id');
+
+  headers.set('content-type', 'application/json');
+  if (cookie) headers.set('cookie', cookie);
+  if (authorization) headers.set('authorization', authorization);
+  if (testUserId) headers.set('x-user-id', testUserId);
+
+  return headers;
+}
 
 export async function GET(request: NextRequest) {
-  if (isProduction()) {
-    return notImplementedResponse('ai-content-generation', 'Real AI content generation pending');
-  }
-
   try {
+    if (isProduction()) {
+      const targetRequest = new NextRequest(new URL('/api/v1/ai-content/generate', request.url), {
+        method: 'GET',
+        headers: buildForwardHeaders(request),
+      });
+
+      const targetResponse = await getV1AIContentGenerate(targetRequest);
+      const targetData = await targetResponse.json();
+
+      if (!targetResponse.ok || !targetData?.success) {
+        return NextResponse.json(
+          { success: false, error: targetData?.error || 'Falha ao obter capacidades de IA' },
+          { status: targetResponse.status || 500 }
+        );
+      }
+
+      const models = Array.isArray(targetData.data?.models) ? targetData.data.models : [];
+      const contentTypes = Array.isArray(targetData.data?.contentTypes) ? targetData.data.contentTypes : [];
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          models,
+          templates: contentTypes.map((item: { id: string; name: string; duration?: string }) => ({
+            id: item.id,
+            title: item.name,
+            category: 'AI Content',
+            nr_compliance: [],
+            industry: [],
+            complexity: 'intermediate',
+            estimatedDuration: item.duration || 'N/A',
+            ai_confidence: null
+          })),
+          system_status: {
+            active_models: models.length,
+            average_accuracy: null,
+            total_templates: contentTypes.length
+          }
+        },
+        capabilities: targetData.data,
+        timestamp: new Date().toISOString()
+      });
+    }
+
     const aiModels = [
       {
         id: 'gpt-nr-specialist',
@@ -87,10 +142,6 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  if (isProduction()) {
-    return notImplementedResponse('ai-content-generation', 'Real AI content generation pending');
-  }
-
   const session = await getServerAuth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
@@ -109,6 +160,64 @@ export async function POST(request: NextRequest) {
       duration, 
       customPrompt 
     } = body
+
+    if (isProduction()) {
+      if (!contentType || !nrFocus || !industry) {
+        return NextResponse.json(
+          { success: false, error: 'Missing required fields' },
+          { status: 400 }
+        );
+      }
+
+      const prompt = customPrompt || `Gerar conteúdo ${contentType} para ${nrFocus} no setor ${industry}`;
+      const targetPayload = {
+        prompt,
+        options: {
+          nrType: String(nrFocus),
+          audience: String(industry),
+          type: String(contentType),
+          duration: typeof duration === 'number' ? duration : 10,
+          includeQuiz: String(contentType).toLowerCase().includes('quiz'),
+          includeImages: String(contentType).toLowerCase().includes('presentation') || String(contentType).toLowerCase().includes('slide'),
+          complexity: complexity || 'intermediate'
+        }
+      };
+
+      const targetRequest = new NextRequest(new URL('/api/v1/ai-content/generate', request.url), {
+        method: 'POST',
+        headers: buildForwardHeaders(request),
+        body: JSON.stringify(targetPayload)
+      });
+
+      const targetResponse = await postV1AIContentGenerate(targetRequest);
+      const targetData = await targetResponse.json();
+
+      if (!targetResponse.ok || !targetData?.success) {
+        return NextResponse.json(
+          { success: false, error: targetData?.error || 'Falha na geração de conteúdo' },
+          { status: targetResponse.status || 500 }
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: 'Conteúdo gerado com sucesso',
+        data: {
+          id: `gen_${Date.now()}`,
+          type: contentType,
+          nr_focus: nrFocus,
+          industry,
+          complexity: complexity || 'intermediate',
+          duration: duration || 10,
+          customPrompt,
+          status: 'completed',
+          progress: 100,
+          estimatedTime: 0,
+          createdAt: new Date().toISOString(),
+          output: targetData.data
+        }
+      });
+    }
 
     // Validate required fields
     if (!contentType || !nrFocus || !industry) {
@@ -157,4 +266,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-

@@ -26,7 +26,11 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { prompt, type, parameters } = body;
+    const { prompt, type, parameters } = body as {
+      prompt?: string;
+      type?: 'script' | 'quiz' | 'image' | 'video' | string;
+      parameters?: Record<string, unknown>;
+    };
 
     if (!prompt) {
       return NextResponse.json(
@@ -49,77 +53,113 @@ export async function POST(req: NextRequest) {
     }
 
     const openai = new OpenAI({ apiKey });
-    const model = parameters?.model || 'gpt-4o'; // Usar modelo mais recente se disponível
+    const model = typeof parameters?.model === 'string' ? parameters.model : 'gpt-4o-mini';
+    const generationType = type || 'text';
 
-    let content: string | null = null;
-    let analysis = {
-        quality: 0,
-        engagement: 0,
-        clarity: 0,
-        compliance: 0
-    };
+    let content: unknown = null;
+    let providerUsage: Record<string, unknown> = {};
 
     const startTime = Date.now();
 
-    if (type === 'script') {
-        const completion = await openai.chat.completions.create({
-            model: model,
-            messages: [
-                { role: "system", content: "Você é um especialista em roteiros de vídeo educacionais e técnicos. Crie um roteiro detalhado, separado por cenas, com falas para narrador e descrições visuais." },
-                { role: "user", content: prompt }
-            ],
-            temperature: 0.7,
-        });
-        content = completion.choices[0].message.content;
-        
-        // Simulação de análise baseada em metadados reais da resposta (tokens, finish reason)
-        // Em um sistema mais avançado, faríamos uma segunda chamada para analisar o roteiro gerado
-        analysis = {
-            quality: 95, // Assumindo alta qualidade do GPT-4
-            engagement: 85,
-            clarity: 90,
-            compliance: 100
-        };
+    if (generationType === 'script') {
+      const completion = await openai.chat.completions.create({
+        model,
+        messages: [
+          {
+            role: 'system',
+            content:
+              'Você é um especialista em roteiros de vídeo educacionais e técnicos. Crie um roteiro detalhado, separado por cenas, com falas para narrador e descrições visuais.'
+          },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.7
+      });
+      content = completion.choices[0]?.message?.content || '';
+      providerUsage = {
+        finishReason: completion.choices[0]?.finish_reason || null,
+        usage: completion.usage || null
+      };
+    } else if (generationType === 'quiz') {
+      const completion = await openai.chat.completions.create({
+        model,
+        messages: [
+          {
+            role: 'system',
+            content:
+              'Crie um quiz em JSON com a chave "questions", cada item contendo "question", "options" (array), "correct" e "explanation".'
+          },
+          { role: 'user', content: prompt }
+        ],
+        response_format: { type: 'json_object' },
+        temperature: 0.5
+      });
 
-    } else if (type === 'quiz') {
-        const completion = await openai.chat.completions.create({
-            model: model,
-            messages: [
-                { role: "system", content: "Crie um quiz de múltipla escolha no formato JSON array. Exemplo: [{ 'q': 'Pergunta?', 'options': ['A', 'B', 'C'], 'correct': 'A' }]" },
-                { role: "user", content: prompt }
-            ],
-            response_format: { type: "json_object" },
-            temperature: 0.5,
-        });
-        const jsonContent = completion.choices[0].message.content;
-        content = jsonContent ? JSON.parse(jsonContent) : [];
-        analysis.quality = 90;
+      const jsonContent = completion.choices[0]?.message?.content || '{}';
+      content = JSON.parse(jsonContent);
+      providerUsage = {
+        finishReason: completion.choices[0]?.finish_reason || null,
+        usage: completion.usage || null
+      };
+    } else if (generationType === 'image') {
+      const imageModel =
+        typeof parameters?.model === 'string'
+          ? parameters.model
+          : process.env.OPENAI_IMAGE_MODEL || 'gpt-image-1';
+      const size =
+        typeof parameters?.size === 'string' ? parameters.size : '1024x1024';
+      const quality =
+        typeof parameters?.quality === 'string' ? parameters.quality : 'auto';
 
-    } else if (type === 'image' || type === 'video') {
-         return NextResponse.json(
-            { error: `Geração de ${type} via OpenAI (DALL-E/Sora) ainda não implementada neste endpoint específico.` },
-            { status: 501 }
-        );
+      const imageResult = await openai.images.generate({
+        model: imageModel,
+        prompt,
+        size: size as '1024x1024' | '1024x1536' | '1536x1024' | 'auto',
+        quality: quality as 'high' | 'medium' | 'low' | 'auto'
+      });
+
+      const firstImage = imageResult.data?.[0];
+      if (!firstImage) {
+        throw new Error('OpenAI did not return image data');
+      }
+
+      content = {
+        imageUrl: firstImage.url || null,
+        b64Json: firstImage.b64_json || null
+      };
+      providerUsage = {
+        model: imageModel,
+        revisedPrompt: firstImage.revised_prompt || null
+      };
+    } else if (generationType === 'video') {
+      return NextResponse.json(
+        {
+          error: 'Tipo de geração não suportado neste endpoint',
+          code: 'UNSUPPORTED_GENERATION_TYPE',
+          supportedTypes: ['script', 'quiz', 'image', 'text']
+        },
+        { status: 422 }
+      );
     } else {
-        // Fallback genérico
-        const completion = await openai.chat.completions.create({
-            model: model,
-            messages: [
-                { role: "user", content: prompt }
-            ],
-        });
-        content = completion.choices[0].message.content;
+      const completion = await openai.chat.completions.create({
+        model,
+        messages: [{ role: 'user', content: prompt }]
+      });
+      content = completion.choices[0]?.message?.content || '';
+      providerUsage = {
+        finishReason: completion.choices[0]?.finish_reason || null,
+        usage: completion.usage || null
+      };
     }
 
     const result = {
       id: randomUUID(),
-      content: content,
+      type: generationType,
+      content,
       metadata: {
-        tokens: Math.floor(prompt.length / 4), // Estimativa ou pegar do usage da API
-        model: model,
+        model,
         processingTime: Date.now() - startTime
       },
-      analysis: analysis
+      providerUsage
     };
 
     return NextResponse.json(result);
@@ -129,12 +169,13 @@ export async function POST(req: NextRequest) {
       component: 'API: ai/generate'
     });
     
-    // Tratar erros da OpenAI
-    if ((error as unknown as { response?: { data: { error: { message: string } } } }).response) {
-         return NextResponse.json(
-            { error: `Erro no provedor de IA: ${(error as unknown as { response: { data: { error: { message: string } } } }).response.data.error.message}` },
-            { status: 502 }
-        );
+    const providerError = error as { status?: number; message?: string };
+    if (providerError.status) {
+      const mappedStatus = providerError.status >= 500 ? 502 : providerError.status;
+      return NextResponse.json(
+        { error: `Erro no provedor de IA: ${providerError.message || 'unknown error'}` },
+        { status: mappedStatus }
+      );
     }
 
     return NextResponse.json(

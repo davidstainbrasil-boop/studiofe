@@ -34,7 +34,7 @@ interface Subscription {
  * Verifica o limite de vídeos do usuário
  * 
  * Query params:
- * - userId: ID do usuário (obrigatório)
+ * - userId: opcional (apenas para compatibilidade; o endpoint usa o usuário autenticado)
  */
 export async function GET(req: NextRequest) {
     const rateLimitBlocked = await applyRateLimit(req, 'user-video-limit-get', 30);
@@ -47,12 +47,13 @@ export async function GET(req: NextRequest) {
 
   try {
     const { searchParams } = new URL(req.url);
-    const userId = searchParams.get('userId');
+    const requestedUserId = searchParams.get('userId');
+    const userId = session.user.id;
 
-    if (!userId) {
+    if (requestedUserId && requestedUserId !== userId) {
       return NextResponse.json(
-        { error: 'userId é obrigatório' },
-        { status: 400 }
+        { error: 'Forbidden', code: 'FORBIDDEN' },
+        { status: 403 }
       );
     }
 

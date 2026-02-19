@@ -68,7 +68,7 @@ interface RenderJob {
   id: string;
   avatarId: string;
   avatarName: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
   progress: number;
   estimatedTime: number;
   startTime: string;
@@ -264,29 +264,32 @@ export default function AvatarStudio({ selectedAvatar, onAvatarChange }: AvatarS
         const data = await response.json();
         
         if (data.success) {
-          const jobUpdate = data.data;
+          const statusPayload = data.data?.job ?? data.data;
+          const outputPayload = data.data?.output ?? statusPayload?.output;
           
           setRenderJobs(prev => prev.map(job => 
             job.id === jobId 
               ? {
                   ...job,
-                  status: jobUpdate.status,
-                  progress: jobUpdate.progress,
-                  output: jobUpdate.output,
-                  error: jobUpdate.error,
-                  endTime: jobUpdate.endTime
+                  status: statusPayload.status,
+                  progress: statusPayload.progress ?? 0,
+                  output: outputPayload,
+                  error: statusPayload.error,
+                  endTime: statusPayload.endTime
                 }
               : job
           ));
           
           // Parar monitoramento se job terminou
-          if (['completed', 'failed'].includes(jobUpdate.status)) {
+          if (['completed', 'failed', 'cancelled'].includes(statusPayload.status)) {
             clearInterval(interval);
             
-            if (jobUpdate.status === 'completed') {
+            if (statusPayload.status === 'completed') {
               toast.success(`Renderização concluída! Job ${jobId}`);
-            } else if (jobUpdate.status === 'failed') {
-              toast.error(`Renderização falhou: ${jobUpdate.error}`);
+            } else if (statusPayload.status === 'failed') {
+              toast.error(`Renderização falhou: ${statusPayload.error}`);
+            } else if (statusPayload.status === 'cancelled') {
+              toast.info(`Renderização cancelada: ${jobId}`);
             }
           }
         }
@@ -302,15 +305,20 @@ export default function AvatarStudio({ selectedAvatar, onAvatarChange }: AvatarS
   // Função para cancelar job
   const handleCancelJob = async (jobId: string) => {
     try {
-      const response = await fetch(`/api/v2/avatars/render/${jobId}/cancel`, {
-        method: 'POST'
+      const response = await fetch(`/api/v2/avatars/render/status/${jobId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'cancel' })
       });
       
       if (response.ok) {
         setRenderJobs(prev => prev.map(job => 
-          job.id === jobId ? { ...job, status: 'failed', error: 'Cancelado pelo usuário' } : job
+          job.id === jobId ? { ...job, status: 'cancelled', error: 'Cancelado pelo usuário' } : job
         ));
         toast.success('Job cancelado com sucesso');
+      } else {
+        const payload = await response.json().catch(() => ({}));
+        toast.error(payload?.error?.message || 'Erro ao cancelar job');
       }
     } catch (error) {
       logger.error('Erro ao cancelar job', error instanceof Error ? error : new Error(String(error)), { component: 'AvatarStudio', jobId });

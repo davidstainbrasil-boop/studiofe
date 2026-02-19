@@ -1,7 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth/admin-middleware';
-import { getOptionalEnv } from '@lib/env';
 import { applyRateLimit } from '@/lib/rate-limit';
+import { healthCheckService, type ServiceHealth } from '@lib/monitoring/health-check';
+
+type BasicStatus = 'healthy' | 'degraded' | 'unhealthy';
+type ConfigurableStatus = BasicStatus | 'not_configured';
+
+function toBasicStatus(status: ServiceHealth['status']): BasicStatus {
+  if (status === 'healthy' || status === 'degraded' || status === 'unhealthy') {
+    return status;
+  }
+  return 'degraded';
+}
 
 export async function GET(request: NextRequest) {
     const rateLimitBlocked = await applyRateLimit(request, 'admin-system-status-get', 30);
@@ -11,59 +21,60 @@ export async function GET(request: NextRequest) {
   if (!isAdmin) return authResponse!;
 
   const status = {
-    database: 'unhealthy' as 'healthy' | 'degraded' | 'unhealthy',
-    redis: 'not_configured' as 'healthy' | 'degraded' | 'unhealthy' | 'not_configured',
-    api: 'healthy' as 'healthy' | 'degraded' | 'unhealthy',
-    storage: 'healthy' as 'healthy' | 'degraded' | 'unhealthy',
+    database: 'unhealthy' as BasicStatus,
+    redis: 'not_configured' as ConfigurableStatus,
+    api: 'healthy' as BasicStatus,
+    storage: 'not_configured' as ConfigurableStatus,
+    ffmpeg: 'unhealthy' as BasicStatus,
   };
 
-  // Verificar Database (Supabase)
-  try {
-    const supabaseUrl = getOptionalEnv('NEXT_PUBLIC_SUPABASE_URL');
-    if (supabaseUrl) {
-      const res = await fetch(`${supabaseUrl}/rest/v1/`, {
-        method: 'HEAD',
-        headers: {
-          'apikey': getOptionalEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY'),
-        }
-      });
-      status.database = res.ok ? 'healthy' : 'degraded';
-    }
-  } catch {
-    status.database = 'unhealthy';
+  const hasRedisConfig = Boolean(process.env.REDIS_URL || process.env.REDIS_HOST);
+  const hasAwsStorageConfig = Boolean(
+    process.env.AWS_ACCESS_KEY_ID &&
+    process.env.AWS_SECRET_ACCESS_KEY &&
+    process.env.AWS_REGION
+  );
+  const hasSupabaseStorageConfig = Boolean(
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+  const hasStorageConfig = hasAwsStorageConfig || hasSupabaseStorageConfig;
+
+  const [databaseHealth, redisHealth, storageHealth, ffmpegHealth] = await Promise.all([
+    healthCheckService.checkDatabase(),
+    hasRedisConfig ? healthCheckService.checkRedis() : Promise.resolve(null),
+    hasStorageConfig ? healthCheckService.checkStorage() : Promise.resolve(null),
+    healthCheckService.checkFFmpeg(),
+  ]);
+
+  status.database = toBasicStatus(databaseHealth.status);
+  status.redis = hasRedisConfig && redisHealth ? toBasicStatus(redisHealth.status) : 'not_configured';
+  status.storage = hasStorageConfig && storageHealth ? toBasicStatus(storageHealth.status) : 'not_configured';
+  status.ffmpeg = toBasicStatus(ffmpegHealth.status);
+
+  const coreStatuses: BasicStatus[] = [
+    status.database,
+    status.ffmpeg,
+    status.redis === 'not_configured' ? 'degraded' : status.redis,
+    status.storage === 'not_configured' ? 'degraded' : status.storage,
+  ];
+
+  if (coreStatuses.includes('unhealthy')) {
+    status.api = 'unhealthy';
+  } else if (coreStatuses.includes('degraded')) {
+    status.api = 'degraded';
+  } else {
+    status.api = 'healthy';
   }
 
-  // Verificar Redis
-  try {
-    const redisUrl = getOptionalEnv('REDIS_URL');
-    if (redisUrl && redisUrl !== 'redis://redis:6379') {
-      // Em ambiente de produção, tentar conectar
-      status.redis = 'healthy';
-    } else if (redisUrl) {
-      status.redis = 'healthy'; // Assume que está configurado localmente
-    }
-  } catch {
-    status.redis = 'unhealthy';
-  }
-
-  // API está sempre healthy se chegou aqui
-  status.api = 'healthy';
-
-  // Storage
-  try {
-    const awsKey = getOptionalEnv('AWS_ACCESS_KEY_ID');
-    if (awsKey) {
-      status.storage = 'healthy';
-    } else {
-      // Verifica Supabase Storage
-      const supabaseUrl = getOptionalEnv('NEXT_PUBLIC_SUPABASE_URL');
-      if (supabaseUrl) {
-        status.storage = 'healthy';
-      }
-    }
-  } catch {
-    status.storage = 'degraded';
-  }
-
-  return NextResponse.json(status);
+  return NextResponse.json({
+    ...status,
+    checkedAt: new Date().toISOString(),
+    details: {
+      database: databaseHealth.message,
+      redis: redisHealth?.message,
+      storage: storageHealth?.message,
+      ffmpeg: ffmpegHealth.message,
+    },
+  });
 }

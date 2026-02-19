@@ -208,14 +208,27 @@ export class ElevenLabsService implements TTSProvider {
     const voiceId = request.voiceId ?? DEFAULT_VOICE_ID;
     const text = request.text.trim();
 
+    // Map speed to style (0.0 = normal, higher = faster/more emotional)
+    let voiceSettings: Partial<VoiceSettings> | undefined;
+
+    if (request.speed !== undefined) {
+      // logic: style = Math.max(0, (request.speed - 1) * 0.5)
+      const style = Math.max(0, (request.speed - 1) * 0.5);
+      voiceSettings = { style };
+    }
+
     try {
       let audioBuffer: Buffer;
 
       if (text.length > MAX_CHARS_PER_REQUEST) {
-        const result = await this.synthesizeLong({ text, voiceId });
+        const result = await this.synthesizeLong({
+          text,
+          voiceId,
+          voiceSettings,
+        });
         audioBuffer = Buffer.concat(result.audioChunks);
       } else {
-        const result = await this.synthesize({ text, voiceId });
+        const result = await this.synthesize({ text, voiceId, voiceSettings });
         audioBuffer = result.audio;
       }
 

@@ -13,6 +13,15 @@ export interface AudioGenerationParams {
   provider: AudioProvider
 }
 
+interface VoiceListItem {
+  id: string
+  name: string
+  category: string
+  provider: AudioProvider
+  locale?: string
+  gender?: string
+}
+
 export class AudioGeneratorFactory {
   private elevenLabs: ElevenLabsService
   private azure: AzureVisemeEngine
@@ -40,20 +49,77 @@ export class AudioGeneratorFactory {
 
   /**
    * Get available voices from all providers
-   * Merges Azure static list (stubbed) and ElevenLabs dynamic list
+   * Uses real provider APIs
    */
   async getAvailableVoices() {
-    const elevenLabsVoices = await this.elevenLabs.getVoices()
-    
-    // Azure voices (simplified list for now)
-    const azureVoices = [
-        { id: 'pt-BR-FranciscaNeural', name: 'Francisca (Azure)', category: 'standard', provider: 'azure' },
-        { id: 'pt-BR-AntonioNeural', name: 'Antonio (Azure)', category: 'standard', provider: 'azure' }
-    ]
+    const [elevenLabsVoices, azureVoices] = await Promise.all([
+      this.elevenLabs.getVoices(),
+      this.getAzureVoices(),
+    ])
 
     return {
-        elevenLabs: elevenLabsVoices,
-        azure: azureVoices
+      elevenLabs: elevenLabsVoices.map((voice) => ({
+        ...voice,
+        provider: AudioProvider.ELEVENLABS,
+      })),
+      azure: azureVoices,
+    }
+  }
+
+  private async getAzureVoices(): Promise<VoiceListItem[]> {
+    const key = process.env.AZURE_SPEECH_KEY || process.env.AZURE_TTS_KEY
+    const region = process.env.AZURE_SPEECH_REGION || process.env.AZURE_TTS_REGION || process.env.AZURE_REGION
+
+    if (!key || !region) {
+      logger.warn('Azure voice listing skipped: missing credentials')
+      return []
+    }
+
+    try {
+      const response = await fetch(
+        `https://${region}.tts.speech.microsoft.com/cognitiveservices/voices/list`,
+        {
+          method: 'GET',
+          headers: {
+            'Ocp-Apim-Subscription-Key': key,
+          },
+          cache: 'no-store',
+        }
+      )
+
+      if (!response.ok) {
+        const details = await response.text()
+        throw new Error(`Azure voices list failed: HTTP ${response.status} - ${details.slice(0, 200)}`)
+      }
+
+      const voices = await response.json() as Array<{
+        ShortName?: string
+        DisplayName?: string
+        Locale?: string
+        Gender?: string
+        VoiceType?: string
+      }>
+
+      const prioritized = voices
+        .filter((voice) => typeof voice.ShortName === 'string' && typeof voice.DisplayName === 'string')
+        .filter((voice) => {
+          const locale = voice.Locale || ''
+          return locale.startsWith('pt-BR') || locale.startsWith('pt-PT') || locale.startsWith('en-US')
+        })
+        .slice(0, 120)
+        .map((voice) => ({
+          id: voice.ShortName as string,
+          name: voice.DisplayName as string,
+          category: voice.VoiceType || 'standard',
+          provider: AudioProvider.AZURE,
+          locale: voice.Locale,
+          gender: voice.Gender,
+        }))
+
+      return prioritized
+    } catch (error) {
+      logger.error('Failed to fetch Azure voices', error as Error)
+      return []
     }
   }
 }

@@ -4,31 +4,29 @@ import { z } from 'zod'
 import { logger } from '@lib/logger'
 import { applyRateLimit } from '@/lib/rate-limit'
 
-// Schema de validação para atualização de avatar
 const updateAvatarSchema = z.object({
   name: z.string().min(1).max(100).optional(),
+  provider: z.string().min(1).optional(),
+  external_id: z.string().optional(),
+  preview_url: z.string().url().optional(),
+  thumbnail_url: z.string().url().optional(),
+  gender: z.string().optional(),
+  style: z.string().optional(),
+  category: z.string().optional(),
+  is_public: z.boolean().optional(),
+  is_premium: z.boolean().optional(),
+  metadata: z.record(z.unknown()).optional(),
   ready_player_me_url: z.string().url().optional(),
   avatar_type: z.enum(['full_body', 'half_body', 'head_only']).optional(),
-  gender: z.enum(['male', 'female', 'other']).optional(),
-  style: z.enum(['realistic', 'cartoon', 'anime']).optional(),
-  animations: z.array(z.object({
-    name: z.string(),
-    type: z.enum(['idle', 'talking', 'gesture', 'emotion', 'custom']),
-    duration: z.number().positive(),
-    loop: z.boolean().default(false),
-    fileUrl: z.string().url().optional()
-  })).optional(),
-  voiceSettings: z.object({
-    voiceId: z.string().optional(),
-    language: z.string().optional(),
-    speed: z.number().min(0.5).max(2.0).optional(),
-    pitch: z.number().min(-20).max(20).optional(),
-    volume: z.number().min(0).max(1).optional()
-  }).optional(),
-  properties: z.record(z.unknown()).optional()
-})
+  properties: z.record(z.unknown()).optional(),
+  voiceSettings: z.record(z.unknown()).optional(),
+}).passthrough()
 
-// GET - Obter detalhes de um avatar específico
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+// GET - Obter detalhes de um avatar
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -39,63 +37,48 @@ export async function GET(
 
     if (authError || !user) {
       return NextResponse.json(
-        { error: 'Não autorizado' },
+        { error: 'Nao autorizado' },
         { status: 401 }
       )
     }
 
     const avatarId = params.id
 
-    // Buscar avatar com dados relacionados
     const { data: avatarData, error } = await supabase
       .from('avatars')
-      .select(`
-        *,
-        projects:project_id (
-          id,
-          name,
-          owner_id,
-          collaborators,
-          is_public
-        )
-      `)
+      .select('*')
       .eq('id', avatarId)
-      .single()
+      .maybeSingle()
 
-    if (error || !avatarData) {
+    if (error) {
+      logger.error(
+        'Erro ao buscar avatar',
+        error instanceof Error ? error : new Error(String(error)),
+        { component: 'API: avatars/[id]' }
+      )
       return NextResponse.json(
-        { error: 'Avatar não encontrado' },
+        { error: 'Erro interno do servidor' },
+        { status: 500 }
+      )
+    }
+
+    if (!avatarData) {
+      return NextResponse.json(
+        { error: 'Avatar nao encontrado' },
         { status: 404 }
       )
     }
 
-    // Type the avatar data with joined project
-    type AvatarWithProject = typeof avatarData & {
-      projects: { id: string; name: string; owner_id: string; collaborators: string[] | null; isPublic: boolean } | null;
-    };
-    const avatar = avatarData as AvatarWithProject;
-
-    // Verificar permissões
-    const project = avatar.projects
-    const hasPermission = project?.owner_id === user.id || 
-                         project?.collaborators?.includes(user.id) ||
-                         project?.isPublic
-
-    if (!hasPermission) {
-      return NextResponse.json(
-        { error: 'Sem permissão para acessar este avatar' },
-        { status: 403 }
-      )
-    }
-
-    // Atualizar último acesso
     await supabase
       .from('avatars')
-      .update({ updated_at: new Date().toISOString() })
+      .update({ updated_at: new Date().toISOString() } as never)
       .eq('id', avatarId)
 
-    return NextResponse.json({ avatar })
-
+    return NextResponse.json({
+      success: true,
+      avatar: avatarData,
+      data: avatarData,
+    })
   } catch (error) {
     const err = error instanceof Error ? error : new Error(String(error))
     logger.error('Erro ao buscar avatar', err, { component: 'API: avatars/[id]' })
@@ -112,166 +95,99 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const blocked = await applyRateLimit(request, 'avatars-id', 20);
-    if (blocked) return blocked;
+    const blocked = await applyRateLimit(request, 'avatars-id', 20)
+    if (blocked) return blocked
 
     const supabase = getSupabaseForRequest(request)
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
     if (authError || !user) {
       return NextResponse.json(
-        { error: 'Não autorizado' },
+        { error: 'Nao autorizado' },
         { status: 401 }
       )
     }
 
     const avatarId = params.id
     const body = await request.json()
-
-    // Validar dados
     const validatedData = updateAvatarSchema.parse(body)
 
-    // Verificar se avatar existe e permissões
-    const { data: avatarData } = await supabase
+    const { data: currentAvatar, error: currentAvatarError } = await supabase
       .from('avatars')
-      .select(`
-        *,
-        projects:project_id (
-          owner_id,
-          collaborators
-        )
-      `)
+      .select('*')
       .eq('id', avatarId)
-      .single()
+      .maybeSingle()
 
-    if (!avatarData) {
+    if (currentAvatarError) {
+      logger.error(
+        'Erro ao verificar avatar',
+        currentAvatarError instanceof Error ? currentAvatarError : new Error(String(currentAvatarError)),
+        { component: 'API: avatars/[id]' }
+      )
       return NextResponse.json(
-        { error: 'Avatar não encontrado' },
+        { error: 'Erro interno do servidor' },
+        { status: 500 }
+      )
+    }
+
+    if (!currentAvatar) {
+      return NextResponse.json(
+        { error: 'Avatar nao encontrado' },
         { status: 404 }
       )
     }
 
-    // Type the avatar with joined project for PUT
-    type AvatarWithProjectPut = Record<string, unknown> & {
-      name: string;
-      projectId: string | null;
-      ready_player_me_url?: string;
-      properties?: Record<string, unknown>;
-      voice_settings?: Record<string, unknown>;
-      projects: { owner_id: string; collaborators: string[] | null } | null;
-    };
-    const avatar = avatarData as unknown as AvatarWithProjectPut;
-
-    const project = avatar.projects as unknown as Record<string, unknown>
-    const hasPermission = project?.owner_id === user.id ||
-                         (project?.collaborators as string[])?.includes(user.id)
-
-    if (!hasPermission) {
-      return NextResponse.json(
-        { error: 'Sem permissão para atualizar este avatar' },
-        { status: 403 }
-      )
+    const metadata = {
+      ...(isRecord(currentAvatar.metadata) ? currentAvatar.metadata : {}),
+      ...(isRecord(validatedData.metadata) ? validatedData.metadata : {}),
+      ...(isRecord(validatedData.properties) ? { properties: validatedData.properties } : {}),
+      ...(isRecord(validatedData.voiceSettings) ? { voiceSettings: validatedData.voiceSettings } : {}),
+      ...(validatedData.avatar_type ? { avatar_type: validatedData.avatar_type } : {}),
+      ...(validatedData.ready_player_me_url ? { ready_player_me_url: validatedData.ready_player_me_url } : {}),
+      updated_by: user.id,
     }
 
-    // Se mudando nome, verificar conflitos
-    if (validatedData.name && validatedData.name !== avatar.name) {
-      const { data: existingAvatarConflict } = await supabase
-        .from('avatars')
-        .select('id')
-        .eq("project_id", avatar.projectId ?? '')
-        .eq('name', validatedData.name)
-        .neq('id', avatarId)
-        .single()
-
-      if (existingAvatarConflict) {
-        return NextResponse.json(
-          { error: `Já existe um avatar com nome "${validatedData.name}" neste projeto` },
-          { status: 409 }
-        )
-      }
-    }
-
-    // Preparar dados para atualização
-    interface AvatarUpdateData {
-      name?: string;
-      ready_player_me_url?: string;
-      avatar_type?: 'full_body' | 'half_body' | 'head_only';
-      gender?: 'male' | 'female' | 'other';
-      style?: 'realistic' | 'cartoon' | 'anime';
-      animations?: unknown[];
-      voice_settings?: Record<string, unknown>;
-      properties?: Record<string, unknown>;
-      model_url?: string;
-      thumbnail_url?: string;
-      metadata?: Record<string, unknown>;
-      updated_at: string;
-    }
-
-    const updateData: AvatarUpdateData = {
-      ...validatedData,
-      updated_at: new Date().toISOString()
-    }
-
-    // Se mudando URL do Ready Player Me, buscar novos dados
-    if (validatedData.ready_player_me_url && validatedData.ready_player_me_url !== avatar.ready_player_me_url) {
-      if (!isValidReadyPlayerMeUrl(validatedData.ready_player_me_url)) {
-        return NextResponse.json(
-          { error: 'URL do Ready Player Me inválida' },
-          { status: 400 }
-        )
-      }
-
-      const avatarData = await fetchReadyPlayerMeData(validatedData.ready_player_me_url)
-      updateData.model_url = avatarData.model_url
-      updateData.thumbnail_url = avatarData.thumbnail_url
-      updateData.metadata = avatarData.metadata
-    }
-
-    // Mesclar propriedades e configurações de voz se fornecidas
-    if (validatedData.properties && avatar.properties) {
-      updateData.properties = {
-        ...(avatar.properties as Record<string, unknown>),
-        ...validatedData.properties
-      }
-    }
-
-    if (validatedData.voiceSettings && avatar.voice_settings) {
-      updateData.voice_settings = {
-        ...(avatar.voice_settings as Record<string, unknown>),
-        ...validatedData.voiceSettings
-      }
-    }
-
-    // Atualizar avatar
     const { data: updatedAvatar, error: updateError } = await supabase
       .from('avatars')
-      .update(updateData as unknown as Record<string, unknown>)
+      .update({
+        name: validatedData.name,
+        provider: validatedData.provider,
+        external_id: validatedData.external_id,
+        preview_url: validatedData.preview_url || validatedData.ready_player_me_url,
+        thumbnail_url: validatedData.thumbnail_url,
+        gender: validatedData.gender,
+        style: validatedData.style,
+        category: validatedData.category || validatedData.avatar_type,
+        is_public: validatedData.is_public,
+        is_premium: validatedData.is_premium,
+        metadata,
+        updated_at: new Date().toISOString(),
+      } as never)
       .eq('id', avatarId)
       .select()
       .single()
 
-    if (updateError) {
-      const err = updateError instanceof Error ? updateError : new Error(String(updateError))
-      logger.error('Erro ao atualizar avatar', err, { component: 'API: avatars/[id]' })
+    if (updateError || !updatedAvatar) {
+      logger.error(
+        'Erro ao atualizar avatar',
+        updateError instanceof Error ? updateError : new Error(String(updateError)),
+        { component: 'API: avatars/[id]' }
+      )
       return NextResponse.json(
         { error: 'Erro ao atualizar avatar' },
         { status: 500 }
       )
     }
 
-    // Registrar no histórico (project_history table not typed yet)
-    await supabase
-      .from('projects')
-      .select('id')
-      .eq('id', avatar.projectId ?? '')
-      .single() // Just validate project exists, history logging can be done via trigger
-
-    return NextResponse.json({ avatar: updatedAvatar })
-
+    return NextResponse.json({
+      success: true,
+      avatar: updatedAvatar,
+      data: updatedAvatar,
+    })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Dados inválidos', details: error.errors },
+        { error: 'Dados invalidos', details: error.errors },
         { status: 400 }
       )
     }
@@ -291,95 +207,67 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const blocked = await applyRateLimit(request, 'avatars-id', 20);
-    if (blocked) return blocked;
+    const blocked = await applyRateLimit(request, 'avatars-id', 20)
+    if (blocked) return blocked
 
     const supabase = getSupabaseForRequest(request)
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
     if (authError || !user) {
       return NextResponse.json(
-        { error: 'Não autorizado' },
+        { error: 'Nao autorizado' },
         { status: 401 }
       )
     }
 
     const avatarId = params.id
 
-    // Verificar se avatar existe e permissões
-    const { data: avatarDataDel } = await supabase
+    const { data: avatarData, error: avatarError } = await supabase
       .from('avatars')
-      .select(`
-        *,
-        projects:project_id (
-          owner_id,
-          collaborators
-        )
-      `)
+      .select('id, name')
       .eq('id', avatarId)
-      .single()
+      .maybeSingle()
 
-    if (!avatarDataDel) {
+    if (avatarError) {
+      logger.error(
+        'Erro ao buscar avatar para exclusao',
+        avatarError instanceof Error ? avatarError : new Error(String(avatarError)),
+        { component: 'API: avatars/[id]' }
+      )
       return NextResponse.json(
-        { error: 'Avatar não encontrado' },
+        { error: 'Erro interno do servidor' },
+        { status: 500 }
+      )
+    }
+
+    if (!avatarData) {
+      return NextResponse.json(
+        { error: 'Avatar nao encontrado' },
         { status: 404 }
       )
     }
 
-    // Type the avatar with joined project for DELETE
-    type AvatarWithProjectDel = typeof avatarDataDel & {
-      projectId: string | null;
-      projects: { owner_id: string; collaborators: string[] | null } | null;
-    };
-    const avatarDel = avatarDataDel as unknown as AvatarWithProjectDel;
-
-    const projectDel = avatarDel.projects as unknown as Record<string, unknown>
-    const hasPermission = projectDel?.owner_id === user.id || 
-                         (projectDel?.collaborators as string[])?.includes(user.id)
-
-    if (!hasPermission) {
-      return NextResponse.json(
-        { error: 'Sem permissão para excluir este avatar' },
-        { status: 403 }
-      )
-    }
-
-    // Verificar se avatar está sendo usado em elementos da timeline
-    // Note: timeline_elements table not typed, using raw query pattern
-    const { count: usedCount } = await supabase
-      .from('render_jobs')
-      .select('id', { count: 'exact', head: true })
-      .eq("project_id", avatarDel.projectId ?? '')
-
-    // Skip timeline check for now since table not typed
-    // In production, this would check timeline_elements
-
-    // Excluir avatar
     const { error: deleteError } = await supabase
       .from('avatars')
       .delete()
       .eq('id', avatarId)
 
     if (deleteError) {
-      const err = deleteError instanceof Error ? deleteError : new Error(String(deleteError))
-      logger.error('Erro ao excluir avatar', err, { component: 'API: avatars/[id]' })
+      logger.error(
+        'Erro ao excluir avatar',
+        deleteError instanceof Error ? deleteError : new Error(String(deleteError)),
+        { component: 'API: avatars/[id]' }
+      )
       return NextResponse.json(
         { error: 'Erro ao excluir avatar' },
         { status: 500 }
       )
     }
 
-    // Log deletion (project_history table not typed, skip for now)
-    logger.info(`Avatar ${avatarDel.name} excluído`, {
-      component: 'API: avatars/[id]',
-      avatarId,
-      projectId: avatarDel.projectId
+    return NextResponse.json({
+      success: true,
+      message: `Avatar "${avatarData.name}" excluido com sucesso`,
     })
-
-    return NextResponse.json({ 
-      message: 'Avatar excluído com sucesso' 
-    })
-
   } catch (error) {
     const err = error instanceof Error ? error : new Error(String(error))
     logger.error('Erro ao excluir avatar', err, { component: 'API: avatars/[id]' })
@@ -387,36 +275,5 @@ export async function DELETE(
       { error: 'Erro interno do servidor' },
       { status: 500 }
     )
-  }
-}
-
-// Função para validar URL do Ready Player Me
-function isValidReadyPlayerMeUrl(url: string): boolean {
-  try {
-    const urlObj = new URL(url)
-    return urlObj.hostname.includes('readyplayer.me') || 
-           urlObj.hostname.includes('models.readyplayer.me')
-  } catch {
-    return false
-  }
-}
-
-// Função para buscar dados do Ready Player Me (simulada)
-async function fetchReadyPlayerMeData(url: string) {
-  // Em produção, isso faria uma requisição real para a API do Ready Player Me
-  const avatarId = url.split('/').pop()?.split('.')[0] || 'default'
-
-  return {
-    model_url: `https://models.readyplayer.me/${avatarId}.glb`,
-    thumbnail_url: `https://models.readyplayer.me/${avatarId}.png`,
-    metadata: {
-      id: avatarId,
-      createdAt: new Date().toISOString(),
-      body_type: 'fullbody',
-      outfit: 'casual',
-      hair_color: '#8B4513',
-      skin_color: '#FDBCB4',
-      eye_color: '#4A90E2'
-    }
   }
 }

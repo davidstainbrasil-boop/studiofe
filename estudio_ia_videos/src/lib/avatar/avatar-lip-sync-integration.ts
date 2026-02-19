@@ -40,6 +40,7 @@ export interface AvatarAnimation {
     hasHeadMovement: boolean
     phonemeCount: number
     quality: string
+    originalText?: string
   }
 }
 
@@ -143,7 +144,8 @@ export class AvatarLipSyncIntegration {
           hasBreathing: facialAnimation.metadata.hasBreathing,
           hasHeadMovement: facialAnimation.metadata.hasHeadMovement,
           phonemeCount: lipSyncResult.result.phonemes?.length || 0,
-          quality: avatarConfig.quality
+          quality: avatarConfig.quality,
+          originalText: text || undefined
         }
       }
 

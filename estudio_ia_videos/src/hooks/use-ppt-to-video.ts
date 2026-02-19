@@ -96,17 +96,14 @@ export function usePPTToVideo(): UsePPTToVideoReturn {
             const formData = new FormData();
             formData.append('file', file);
 
-            // Upload with progress simulation (real XHR would be better)
-            const progressInterval = setInterval(() => {
-                setUploadProgress(prev => Math.min(prev + 10, 90));
-            }, 200);
+            // Start progress before request; final value is set after response.
+            setUploadProgress(15);
 
             const response = await fetch('/api/pptx/upload', {
                 method: 'POST',
                 body: formData,
             });
 
-            clearInterval(progressInterval);
             setUploadProgress(100);
 
             if (!response.ok) {
@@ -190,14 +187,15 @@ export function usePPTToVideo(): UsePPTToVideoReturn {
             if (!response.ok) throw new Error('Failed to get render status');
             
             const data = await response.json();
+            const payload = data?.data || data?.job || data;
             
             const job: RenderJob = {
                 id: jobId,
-                status: data.status,
-                progress: data.progress || 0,
-                videoUrl: data.videoUrl || data.output_url,
-                error: data.error,
-                estimatedTime: data.estimatedTime,
+                status: payload.status,
+                progress: payload.progress || 0,
+                videoUrl: payload.videoUrl || payload.outputUrl || payload.output_url,
+                error: payload.error,
+                estimatedTime: payload.estimatedTime,
             };
             
             setRenderProgress(job.progress);

@@ -6,9 +6,10 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@lib/logger';
-import { mockDelay, isProduction, notImplementedResponse } from '@lib/utils/mock-guard';
+import { mockDelay, isProduction } from '@lib/utils/mock-guard';
 import { getServerAuth } from '@lib/auth/unified-session';
 import { applyRateLimit } from '@/lib/rate-limit';
+import { POST as postTtsGenerate } from '@/app/api/tts/generate/route';
 // Using inline implementations instead of external modules
 // import { EnhancedTTSService, EnhancedTTSConfig } from '@lib/enhanced-tts-service';
 // import { UnifiedAvatarPipeline } from '@lib/unified-avatar-pipeline';
@@ -152,7 +153,7 @@ interface GenerateSpeechResponse {
   phonemes?: unknown[];
   lipSyncData?: Record<string, unknown>;
   metadata?: {
-    quality: number;
+    quality?: number;
     processingTime: number;
     provider: string;
     language: string;
@@ -283,11 +284,21 @@ function getDefaultVoiceId(provider: string, language: string): string {
   return voiceMap[provider]?.[language] || voiceMap.synthetic[language];
 }
 
-export async function POST(request: NextRequest) {
-  if (isProduction()) {
-    return notImplementedResponse('avatars-generate-speech', 'Real avatar speech generation pending integration');
-  }
+function buildForwardHeaders(source: NextRequest): Headers {
+  const headers = new Headers();
+  const cookie = source.headers.get('cookie');
+  const authorization = source.headers.get('authorization');
+  const testUserId = source.headers.get('x-user-id');
 
+  headers.set('content-type', 'application/json');
+  if (cookie) headers.set('cookie', cookie);
+  if (authorization) headers.set('authorization', authorization);
+  if (testUserId) headers.set('x-user-id', testUserId);
+
+  return headers;
+}
+
+export async function POST(request: NextRequest) {
   const startTime = Date.now();
   
   // Auth guard
@@ -337,6 +348,57 @@ export async function POST(request: NextRequest) {
       ...body,
       voiceId: body.voiceId || getDefaultVoiceId(body.provider || DEFAULT_CONFIG.provider, body.language || DEFAULT_CONFIG.language)
     };
+
+    if (isProduction()) {
+      const ttsRequest = new NextRequest(new URL('/api/tts/generate', request.url), {
+        method: 'POST',
+        headers: buildForwardHeaders(request),
+        body: JSON.stringify({
+          text: config.text,
+          voice: config.voiceId,
+          language: config.language,
+          speed: config.speed,
+          pitch: config.pitch,
+          engine: config.provider
+        })
+      });
+
+      const ttsResponse = await postTtsGenerate(ttsRequest);
+      const ttsPayload = await ttsResponse.json();
+
+      if (!ttsResponse.ok || !ttsPayload?.success) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: ttsPayload?.error || 'Falha ao gerar áudio',
+            details: ttsPayload?.message || ttsPayload?.details || null
+          },
+          { status: ttsResponse.status || 500 }
+        );
+      }
+
+      const data = ttsPayload.data || {};
+      const response: GenerateSpeechResponse = {
+        success: true,
+        audioUrl: data.audioUrl,
+        duration: data.duration || estimateDuration(config.text, config.speed),
+        provider: data.engine || config.provider,
+        avatarId: config.avatarId,
+        text: config.text,
+        voiceId: data.voice || config.voiceId,
+        phonemes: data.visemes || [],
+        lipSyncData: data.lipSyncMetadata,
+        metadata: {
+          processingTime: Date.now() - startTime,
+          provider: data.engine || config.provider || 'unknown',
+          language: config.language || DEFAULT_CONFIG.language,
+          textLength: config.text.length,
+          estimatedDuration: estimateDuration(config.text, config.speed)
+        }
+      };
+
+      return NextResponse.json(response);
+    }
     
     logger.info(`🎤 Gerando speech para texto: "${config.text.substring(0, 50)}..." (${config.text.length} chars)`, { component: 'API: avatars/generate-speech' })
     logger.info(`📋 Configuração: provider=${config.provider}, voice=${config.voiceId}, quality=${config.quality}`, { component: 'API: avatars/generate-speech' })
@@ -560,4 +622,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-

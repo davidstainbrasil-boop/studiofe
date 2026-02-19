@@ -6,8 +6,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerAuth } from '@lib/auth/unified-session'
 import { logger } from '@lib/logger'
-import { mockDelay, isProduction, notImplementedResponse } from '@lib/utils/mock-guard'
+import { mockDelay, isProduction } from '@lib/utils/mock-guard'
 import { applyRateLimit } from '@/lib/rate-limit'
+import { POST as postV2AvatarRender } from '@/app/api/v2/avatars/render/route'
+import { GET as getV2AvatarRenderStatus } from '@/app/api/v2/avatars/render/status/[id]/route'
 
 // Interfaces
 interface AvatarRenderRequest {
@@ -568,17 +570,84 @@ class Avatar3DRenderer {
 // Global instance
 const avatarRenderer = new Avatar3DRenderer()
 
+function buildForwardHeaders(source: NextRequest, contentType: string = 'application/json'): Headers {
+  const headers = new Headers();
+  const cookie = source.headers.get('cookie');
+  const authorization = source.headers.get('authorization');
+  const testUserId = source.headers.get('x-user-id');
+
+  headers.set('content-type', contentType);
+  if (cookie) headers.set('cookie', cookie);
+  if (authorization) headers.set('authorization', authorization);
+  if (testUserId) headers.set('x-user-id', testUserId);
+
+  return headers;
+}
+
+function mapLanguage(lang?: string): string {
+  if (!lang) return 'pt-BR';
+  return ['pt-BR', 'en-US', 'es-ES'].includes(lang) ? lang : 'pt-BR';
+}
+
 // API Handlers
 export async function POST(request: NextRequest) {
   try {
-    if (isProduction()) return notImplementedResponse('avatars-render', 'Real avatar rendering via D-ID/Audio2Face pending integration');
-
     const blocked = await applyRateLimit(request, 'avatars-render', 5);
     if (blocked) return blocked;
 
     const session = await getServerAuth()
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    if (isProduction()) {
+      const body = await request.json();
+      const avatarId = body.avatarId || body.avatarConfig?.model;
+      const text = body.script || body.audioText || body.text || '';
+
+      if (!avatarId || !text) {
+        return NextResponse.json({
+          error: 'avatarId e script/text são obrigatórios',
+          code: 'VALIDATION_ERROR'
+        }, { status: 400 });
+      }
+
+      const mappedPayload = {
+        avatarId,
+        animation: body.animation || 'talking',
+        text,
+        language: mapLanguage(body.language),
+        resolution: body.resolution || '1080p',
+        quality: body.quality || 'hyperreal',
+        realTimeLipSync: body.lipSyncEnabled !== false,
+        audio2FaceEnabled: true
+      };
+
+      const v2Request = new NextRequest(new URL('/api/v2/avatars/render', request.url), {
+        method: 'POST',
+        headers: buildForwardHeaders(request),
+        body: JSON.stringify(mappedPayload)
+      });
+
+      const v2Response = await postV2AvatarRender(v2Request);
+      const v2Payload = await v2Response.json();
+
+      if (!v2Response.ok || !v2Payload?.success) {
+        return NextResponse.json({
+          error: v2Payload?.error?.message || v2Payload?.error || 'Falha ao iniciar render de avatar',
+          code: v2Payload?.error?.code || 'AVATAR_RENDER_START_FAILED',
+          details: v2Payload?.error?.details || null
+        }, { status: v2Response.status || 500 });
+      }
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          jobId: v2Payload.data?.jobId,
+          status: v2Payload.data?.status || 'processing',
+          statusUrl: v2Payload.data?.output?.statusUrl
+        }
+      });
     }
 
     const body: AvatarRenderRequest = await request.json()
@@ -626,6 +695,39 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ 
         error: 'Job ID is required' 
       }, { status: 400 })
+    }
+
+    if (isProduction()) {
+      const statusRequest = new NextRequest(new URL(`/api/v2/avatars/render/status/${jobId}`, request.url), {
+        method: 'GET',
+        headers: buildForwardHeaders(request)
+      });
+
+      const statusResponse = await getV2AvatarRenderStatus(statusRequest, { params: { id: jobId } });
+      const statusPayload = await statusResponse.json();
+
+      if (!statusResponse.ok || !statusPayload?.success) {
+        return NextResponse.json({
+          error: statusPayload?.error?.message || statusPayload?.error || 'Erro ao buscar status',
+          code: statusPayload?.error?.code || 'AVATAR_RENDER_STATUS_FAILED'
+        }, { status: statusResponse.status || 500 });
+      }
+
+      const job = statusPayload.data?.job || {};
+      const output = statusPayload.data?.output || {};
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          id: job.id || jobId,
+          status: job.status,
+          progress: job.progress ?? 0,
+          videoUrl: output.videoUrl || null,
+          thumbnailUrl: output.thumbnailUrl || null,
+          duration: job.duration || 0,
+          error: job.error || null
+        }
+      });
     }
 
     const renderJob = avatarRenderer.getRenderJob(jobId)

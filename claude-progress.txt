@@ -2273,3 +2273,35 @@ Fluxo funcionando: PPTX → Slides → TTS → Render → MP4
 - 1 studio/[id]/page.tsx
 
 ### Build: ✅ (exit 0) | Deploy: ✅ (PM2 online) | Push: ✅ (hardening-prod)
+
+## Session 36 Summary - ElevenLabs Legacy Migration + Cleanup ✅
+
+### ✅ RESULTADO:
+- **Testes:** 55 testes específicos para ElevenLabsService passando.
+- **TS Errors:** Zero erros de TypeScript.
+- **Migration:** `ElevenLabsProvider` e `ElevenLabsProviderReal` (legados) migrados para `ElevenLabsService`.
+- **Cleanup:** Arquivos depreciados removidos.
+
+### 📋 O QUE FOI FEITO:
+
+#### 1. Migração de Serviço TTS
+- Refatoração completa de `src/lib/tts/real-tts-service.ts` para usar o novo `ElevenLabsService`.
+- Atualização da rota API `src/app/api/v1/tts/generate/route.ts` para usar o novo serviço consolidado.
+- Mapeamento aprimorado: Parâmetro `speed` agora mapeia corretamente para `voiceSettings.style` (0.0-1.0).
+
+#### 2. Limpeza de Código Legado
+- Removidos arquivos obsoletos:
+  - `src/lib/providers/elevenlabs-provider.ts`
+  - `src/lib/providers/elevenlabs-provider-real.ts`
+- Isso elimina código duplicado e garante que todo o TTS passe pelo serviço novo, mais robusto e testado.
+
+#### 3. Verificação
+- Testes unitários confirmam comportamento correto do `ElevenLabsService`, incluindo retry, rate limit e circuit breaker.
+- Sem regressões detectadas no build ou type-check.
+
+### 📌 COMMITS:
+- Migração e cleanup do ElevenLabs.
+
+### 📝 NOTAS:
+- Sistema de TTS agora está unificado.
+- Próximos passos podem focar em otimizações de cache ou suporte a mais vozes, mas a base técnica está sólida.

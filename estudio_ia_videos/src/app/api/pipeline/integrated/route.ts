@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@lib/logger';
-import { mockDelay, isProduction, notImplementedResponse } from '@lib/utils/mock-guard';
+import { mockDelay, isProduction } from '@lib/utils/mock-guard';
 import { getServerAuth } from '@lib/auth/unified-session';
 // Using inline implementations instead of external modules
 // import { IntegratedTTSAvatarPipeline } from '@lib/pipeline/integrated-tts-avatar-pipeline';
 // import { MonitoringService } from '@lib/monitoring/monitoring-service';
 import { applyRateLimit } from '@/lib/rate-limit';
+import { integratedPipeline, type PipelineInput } from '@lib/pipeline/integrated-pipeline';
+import { prisma } from '@lib/prisma';
 
 // Inline implementations
 class MonitoringService {
@@ -114,11 +116,75 @@ class IntegratedTTSAvatarPipeline {
   }
 }
 
-export async function POST(request: NextRequest) {
-  if (isProduction()) {
-    return notImplementedResponse('pipeline-integrated', 'Real TTS+Avatar integrated pipeline pending');
-  }
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
 
+function mapQuality(value: unknown): PipelineInput['render_settings']['quality'] {
+  const quality = String(value || '').toLowerCase();
+  if (quality === 'low') return 'low';
+  if (quality === 'high') return 'high';
+  if (quality === 'ultra') return 'ultra';
+  return 'medium';
+}
+
+function mapFormat(value: unknown): PipelineInput['render_settings']['format'] {
+  const format = String(value || '').toLowerCase();
+  if (format === 'webm') return 'webm';
+  if (format === 'gif') return 'gif';
+  return 'mp4';
+}
+
+function mapEngine(value: unknown): PipelineInput['voice_config']['engine'] {
+  const engine = String(value || '').toLowerCase();
+  if (engine === 'google') return 'google';
+  if (engine === 'azure') return 'azure';
+  if (engine === 'aws') return 'aws';
+  return 'elevenlabs';
+}
+
+function buildPipelineInput(request: NextRequest, text: string, config: Record<string, unknown>): PipelineInput {
+  const tts = asRecord(config.tts);
+  const avatar = asRecord(config.avatar);
+  const video = asRecord(config.video);
+  const processing = asRecord(config.processing);
+  const origin = new URL(request.url).origin;
+
+  return {
+    text,
+    voice_config: {
+      engine: mapEngine(tts.engine),
+      voice_id: String(tts.voiceId || tts.voice || '21m00Tcm4TlvDq8ikWAM'),
+      settings: tts
+    },
+    avatar_config: {
+      modelUrl: String(avatar.modelUrl || `${origin}/api/avatars/models`),
+      animations: Array.isArray(avatar.animations) ? avatar.animations.map(String) : undefined,
+      materials: Array.isArray(avatar.materials) ? avatar.materials : undefined,
+      lighting: avatar.lighting,
+      camera: avatar.camera,
+      environment: avatar.environment
+    },
+    render_settings: {
+      width: Number(video.width || 1280),
+      height: Number(video.height || 720),
+      fps: Number(video.fps || 30),
+      quality: mapQuality(video.quality || avatar.quality),
+      format: mapFormat(video.format),
+      duration_limit: Number(video.durationLimit || 0) || undefined
+    },
+    options: {
+      cache_enabled: Boolean(processing.enableCache ?? true),
+      priority_processing: Boolean(processing.priority === 'high' || processing.priority === 'urgent'),
+      quality_optimization: Boolean(processing.enableOptimizations ?? true),
+      real_time_preview: Boolean(processing.realTimePreview ?? false)
+    }
+  };
+}
+
+export async function POST(request: NextRequest) {
   // Auth guard
   const session = await getServerAuth();
   if (!session?.user?.id) {
@@ -139,6 +205,24 @@ export async function POST(request: NextRequest) {
 
     // Use server-side userId
     const userId = session.user.id;
+
+    if (isProduction()) {
+      const pipelineInput = buildPipelineInput(request, text, asRecord(config));
+      const priority = String(asRecord(config).processing && asRecord(asRecord(config).processing).priority || 'normal');
+      const jobId = await integratedPipeline.createJob(userId, pipelineInput, priority);
+      const job = await integratedPipeline.getJobStatus(jobId);
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          jobId,
+          status: job?.status || 'queued',
+          processImmediately: Boolean(processImmediately),
+          statusUrl: `/api/pipeline/${jobId}`,
+          output: job?.output || null
+        }
+      });
+    }
 
     // Validações
     if (!text || typeof text !== 'string') {
@@ -258,6 +342,99 @@ export async function GET(request: NextRequest) {
     const jobId = searchParams.get('jobId');
     const userId = session.user.id;
 
+    if (isProduction()) {
+      switch (action) {
+        case 'status':
+          if (!jobId) {
+            return NextResponse.json(
+              { error: 'jobId é obrigatório para consultar status' },
+              { status: 400 }
+            );
+          }
+
+          {
+            const job = await integratedPipeline.getJobStatus(jobId);
+            if (!job) {
+              return NextResponse.json(
+                { error: 'Job não encontrado' },
+                { status: 404 }
+              );
+            }
+
+            return NextResponse.json({
+              success: true,
+              data: {
+                jobId: job.id,
+                status: job.status,
+                progress: job.progress,
+                results: job.output || null,
+                error: job.error || null,
+                createdAt: job.createdAt,
+                updatedAt: job.completed_at || job.started_at || job.createdAt,
+                estimatedDuration: job.metadata.estimated_duration,
+                actualDuration: null
+              }
+            });
+          }
+
+        case 'user-jobs':
+          {
+            const jobs = await prisma.render_jobs.findMany({
+              where: { userId },
+              orderBy: { createdAt: 'desc' },
+              take: 20,
+              select: {
+                id: true,
+                status: true,
+                progress: true,
+                createdAt: true,
+                updatedAt: true,
+                completedAt: true,
+                estimatedDuration: true,
+                actualDuration: true,
+                outputUrl: true,
+                errorMessage: true
+              }
+            });
+
+            return NextResponse.json({
+              success: true,
+              data: {
+                jobs,
+                total: jobs.length
+              }
+            });
+          }
+
+        case 'stats':
+          {
+            const [queuedJobs, processingJobs, completedJobs, failedJobs] = await Promise.all([
+              prisma.render_jobs.count({ where: { status: 'queued' } }),
+              prisma.render_jobs.count({ where: { status: 'processing' } }),
+              prisma.render_jobs.count({ where: { status: 'completed' } }),
+              prisma.render_jobs.count({ where: { status: 'failed' } })
+            ]);
+
+            return NextResponse.json({
+              success: true,
+              data: {
+                queuedJobs,
+                processingJobs,
+                completedJobs,
+                failedJobs,
+                totalJobs: queuedJobs + processingJobs + completedJobs + failedJobs
+              }
+            });
+          }
+
+        default:
+          return NextResponse.json(
+            { error: 'Ação não reconhecida. Use: status, user-jobs, ou stats' },
+            { status: 400 }
+          );
+      }
+    }
+
     const pipeline = IntegratedTTSAvatarPipeline.getInstance();
 
     switch (action) {
@@ -352,6 +529,56 @@ export async function PUT(request: NextRequest) {
         { error: 'jobId é obrigatório' },
         { status: 400 }
       );
+    }
+
+    if (isProduction()) {
+      switch (action) {
+        case 'process':
+          {
+            const job = await integratedPipeline.getJobStatus(jobId);
+            if (!job) {
+              return NextResponse.json(
+                { error: 'Job não encontrado' },
+                { status: 404 }
+              );
+            }
+
+            return NextResponse.json({
+              success: true,
+              data: {
+                jobId,
+                status: job.status,
+                message: 'Processamento é automático no pipeline integrado'
+              }
+            });
+          }
+
+        case 'cancel':
+          {
+            const cancelled = await integratedPipeline.cancelJob(jobId);
+            if (!cancelled) {
+              return NextResponse.json(
+                { error: 'Job não pode ser cancelado ou não foi encontrado' },
+                { status: 400 }
+              );
+            }
+
+            return NextResponse.json({
+              success: true,
+              data: {
+                jobId,
+                status: 'cancelled',
+                message: 'Job cancelado com sucesso'
+              }
+            });
+          }
+
+        default:
+          return NextResponse.json(
+            { error: 'Ação não reconhecida. Use: process ou cancel' },
+            { status: 400 }
+          );
+      }
     }
 
     const pipeline = IntegratedTTSAvatarPipeline.getInstance();

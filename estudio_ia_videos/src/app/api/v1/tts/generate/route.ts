@@ -5,17 +5,16 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createLogger } from '@/lib/monitoring/logger';
-import { ElevenLabsProvider } from '@/lib/tts/elevenlabs-provider';
+import { ElevenLabsService } from '@/services/elevenlabs-service';
 import { SupabaseStorageService } from '@/lib/storage/supabase-storage.service';
 import { getServerAuth } from '@lib/auth/unified-session';
 import { applyRateLimit } from '@/lib/rate-limit';
-import { isProduction } from '@lib/utils/mock-guard';
 
 const logger = createLogger('TTSGenerateAPI');
 
 interface TTSRequest {
   text: string;
-  provider: 'elevenlabs' | 'azure' | 'google' | 'mock';
+  provider: 'elevenlabs' | 'azure' | 'google';
   voice?: string;
   speed?: number;
   pitch?: number;
@@ -64,41 +63,32 @@ export async function POST(request: NextRequest) {
       language,
     });
 
-    let audioResult;
+    let audioResult: { audioUrl: string; duration: number };
 
     switch (provider) {
       case 'elevenlabs':
         audioResult = await generateWithElevenLabs(text, voice, speed);
         break;
 
-      case 'mock':
-        if (isProduction()) {
-          return NextResponse.json(
-            { error: 'Mock TTS provider is not available in production' },
-            { status: 400 }
-          );
-        }
-        audioResult = await generateMockTTS(text);
+      case 'azure':
+        audioResult = await generateAzureTTS(text, voice, speed, pitch, format, language);
+        break;
+
+      case 'google':
+        audioResult = await generateGoogleTTS(text, voice, speed, pitch, format, language);
         break;
 
       default:
-        if (isProduction()) {
-          return NextResponse.json(
-            { error: `TTS provider '${provider}' is not configured. Available: elevenlabs` },
-            { status: 400 }
-          );
-        }
-        audioResult = generateMockTTS(text); // Fallback only in dev
-        break;
+        return NextResponse.json(
+          { error: `Provider '${provider}' inválido. Use: elevenlabs, azure ou google` },
+          { status: 400 }
+        );
     }
-
-    // Verificar se audioResult tem a estrutura esperada
-    const audioData = await audioResult;
 
     return NextResponse.json({
       success: true,
-      audioUrl: audioData.audioUrl,
-      duration: audioData.duration,
+      audioUrl: audioResult.audioUrl,
+      duration: audioResult.duration,
       provider,
       settings: {
         voice,
@@ -113,8 +103,16 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Erro interno do servidor';
     logger.error('❌ Erro na API TTS', error as Error);
-    return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
+
+    const statusCode =
+      errorMessage.includes('não configurada') ||
+      errorMessage.includes('not configured')
+        ? 503
+        : 500;
+
+    return NextResponse.json({ error: errorMessage }, { status: statusCode });
   }
 }
 
@@ -125,130 +123,57 @@ async function generateWithElevenLabs(text: string, voice?: string, speed?: numb
   const apiKey = process.env.ELEVENLABS_API_KEY;
 
   if (!apiKey) {
-    if (isProduction()) {
-      logger.error('ElevenLabs API key not configured in production');
-      throw new Error('ElevenLabs API key is not configured');
-    }
-    logger.warn('⚠️ ElevenLabs API key não configurada, usando mock');
-    return generateMockTTS(text);
-  }
-
-  try {
-    const elevenLabs = new ElevenLabsProvider(apiKey);
-
-    const result = await elevenLabs.generateSpeech({
-      text,
-      voice_id: voice,
-      voice_settings: {
-        stability: 0.5,
-        similarity_boost: 0.8,
-        style: speed ? (speed - 1) * 0.5 : 0.0, // Converter speed para style
-        use_speaker_boost: true,
-      },
-    });
-
-    if (!result.success) {
-      logger.warn('⚠️ ElevenLabs falhou, usando mock', { error: result.error });
-      return generateMockTTS(text);
-    }
-
-    // Upload real para Supabase Storage
-    try {
-      const storage = new SupabaseStorageService();
-      const filename = `tts-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.mp3`;
-
-      const uploadResult = await storage.uploadAudio(result.audioBuffer!, filename);
-
-      if (uploadResult.error) {
-        logger.warn('⚠️ Upload falhou, usando URL temporária', { error: uploadResult.error });
-        // Fallback para URL temporária
-        return {
-          success: true,
-          audioUrl: `https://storage.example.com/temp/${filename}`,
-          duration: result.duration,
-          provider: 'elevenlabs-temp',
-        };
-      }
-
-      return {
-        success: true,
-        audioUrl: uploadResult.url,
-        duration: result.duration,
-        provider: 'elevenlabs-real',
-      };
-    } catch (storageError) {
-      logger.warn('⚠️ Storage não disponível, usando mock', { error: storageError });
-      return {
-        success: true,
-        audioUrl: `https://storage.example.com/mock/tts-${Date.now()}.mp3`,
-        duration: result.duration,
-        provider: 'elevenlabs-mock',
-      };
-    }
-  } catch (error) {
-    logger.error('❌ Erro ElevenLabs, fallback para mock', error as Error);
-    return generateMockTTS(text);
-  }
-}
-
-async function generateElevenLabsTTS(
-  text: string,
-  voice?: string,
-  speed?: number,
-  format?: string,
-) {
-  const apiKey = process.env.ELEVENLABS_API_KEY;
-
-  if (!apiKey) {
     throw new Error('ElevenLabs API key não configurada');
   }
 
-  const voiceId = voice || 'pNInz6obpgDQGcFmaJgB'; // Voz padrão Adam
-
   try {
-    const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
-      method: 'POST',
-      headers: {
-        Accept: 'audio/mpeg',
-        'Content-Type': 'application/json',
-        'xi-api-key': apiKey,
-      },
-      body: JSON.stringify({
-        text,
-        model_id: 'eleven_multilingual_v2',
-        voiceSettings: {
-          stability: 0.5,
-          similarity_boost: 0.5,
-          style: speed || 1.0,
-          use_speaker_boost: true,
-        },
-      }),
+    const elevenLabs = new ElevenLabsService({ apiKey });
+
+    const result = await elevenLabs.generateSpeech({
+      text,
+      voiceId: voice,
+      speed,
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`ElevenLabs API error: ${response.status} - ${errorText}`);
+    if (!result.success || !result.audioBuffer) {
+      throw new Error(result.error || 'Falha ao gerar áudio com ElevenLabs');
     }
 
-    // Converter audio para base64
-    const audioBuffer = await response.arrayBuffer();
-    const audioBase64 = Buffer.from(audioBuffer).toString('base64');
-    const audioUrl = `data:audio/mpeg;base64,${audioBase64}`;
+    const estimatedDuration =
+      result.duration || Math.ceil((text.split(' ').length / 150) * 60);
+    const inlineAudioUrl = `data:audio/mpeg;base64,${result.audioBuffer.toString(
+      'base64',
+    )}`;
 
-    // Estimar duração (aproximadamente 150 palavras por minuto)
-    const wordCount = text.split(' ').length;
-    const estimatedDuration = (wordCount / 150) * 60; // em segundos
+    try {
+      const storage = new SupabaseStorageService();
+      const filename = `tts-${Date.now()}-${Math.random().toString(36).slice(2, 11)}.mp3`;
+      const uploadResult = await storage.uploadAudio(result.audioBuffer, filename);
+
+      if (!uploadResult.error && uploadResult.url) {
+        return {
+          audioUrl: uploadResult.url,
+          duration: estimatedDuration,
+        };
+      }
+
+      logger.warn('Upload TTS falhou; retornando áudio inline', {
+        component: 'API: v1/tts/generate',
+        error: uploadResult.error || 'unknown',
+      });
+    } catch (storageError) {
+      logger.warn('Storage indisponível para upload TTS; retornando áudio inline', {
+        component: 'API: v1/tts/generate',
+        error: storageError instanceof Error ? storageError.message : String(storageError),
+      });
+    }
 
     return {
-      audioUrl,
+      audioUrl: inlineAudioUrl,
       duration: estimatedDuration,
     };
   } catch (error) {
-    logger.error(
-      'ElevenLabs TTS Error',
-      error instanceof Error ? error : new Error(String(error)),
-      { component: 'API: v1/tts/generate' },
-    );
+    logger.error('❌ Erro ElevenLabs', error as Error);
     throw error;
   }
 }
@@ -389,38 +314,12 @@ async function generateGoogleTTS(
   }
 }
 
-async function generateMockTTS(text: string, voice?: string, speed?: number, format?: string) {
-  /**
-   * Provider Mock para testes - Gera audio fake mas válido
-   */
-
-  // Simular processamento
-  await new Promise((resolve) => setTimeout(resolve, 100));
-
-  // Calcular duração estimada (150 palavras por minuto)
-  const wordCount = text.split(' ').length;
-  const estimatedDuration = Math.max((wordCount / 150) * 60, 1); // mínimo 1 segundo
-
-  const audioUrl = `data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA`;
-
-  logger.info(`🎭 Mock TTS gerado: ${wordCount} palavras, ${estimatedDuration}s`, {
-    component: 'MockTTS',
-    voice,
-    format,
-  });
-
-  return {
-    audioUrl,
-    duration: estimatedDuration,
-  };
-}
-
 export async function GET(req: NextRequest) {
     const rateLimitBlocked = await applyRateLimit(req, 'v1-tts-generate-get', 60);
     if (rateLimitBlocked) return rateLimitBlocked;
 
   return NextResponse.json({
-    providers: ['elevenlabs', 'azure', 'google', 'mock'],
+    providers: ['elevenlabs', 'azure', 'google'],
     voices: {
       elevenlabs: [
         { id: 'pNInz6obpgDQGcFmaJgB', name: 'Adam (English)' },

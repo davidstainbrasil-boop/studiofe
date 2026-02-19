@@ -67,23 +67,38 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check API key availability
-    const openaiKey = process.env.OPENAI_API_KEY;
-    const claudeKey = process.env.ANTHROPIC_API_KEY;
+    if (projectId) {
+      const { data: project, error: projectError } = await supabase
+        .from('projects')
+        .select('id, user_id')
+        .eq('id', projectId)
+        .single();
 
-    if (!openaiKey && !claudeKey) {
-      // Return mock response in development
-      if (process.env.NODE_ENV === 'development') {
-        return NextResponse.json({
-          success: true,
-          message: getMockResponse(message),
-          suggestions: getMockSuggestions(message),
-        });
+      if (projectError || !project) {
+        return NextResponse.json(
+          { error: 'Project not found' },
+          { status: 404 }
+        );
       }
 
+      if (project.user_id !== user.id) {
+        return NextResponse.json(
+          { error: 'Access denied' },
+          { status: 403 }
+        );
+      }
+    }
+
+    const openaiKey = process.env.OPENAI_API_KEY?.trim();
+    const claudeKey = process.env.ANTHROPIC_API_KEY?.trim();
+
+    if (!openaiKey && !claudeKey) {
       return NextResponse.json(
-        { error: 'AI service not configured' },
-        { status: 501 }
+        {
+          error: 'Nenhum provedor de IA configurado',
+          code: 'AI_PROVIDER_NOT_CONFIGURED'
+        },
+        { status: 503 }
       );
     }
 
@@ -98,13 +113,11 @@ export async function POST(request: NextRequest) {
       const result = await callOpenAI(openaiKey, systemPrompt, message, history);
       response = result.message;
       suggestions = result.suggestions;
-    } else if (claudeKey) {
-      const result = await callClaude(claudeKey, systemPrompt, message, history);
+    } else {
+      // TypeScript knows claudeKey must be defined here due to the check above
+      const result = await callClaude(claudeKey!, systemPrompt, message, history);
       response = result.message;
       suggestions = result.suggestions;
-    } else {
-      response = getMockResponse(message);
-      suggestions = getMockSuggestions(message);
     }
 
     logger.info('AI chat response generated', { 
@@ -186,7 +199,7 @@ async function callOpenAI(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'gpt-4-turbo-preview',
+      model: process.env.OPENAI_CHAT_MODEL || 'gpt-4o-mini',
       messages,
       max_tokens: 1500,
       temperature: 0.7,
@@ -194,7 +207,8 @@ async function callOpenAI(
   });
 
   if (!response.ok) {
-    throw new Error(`OpenAI API error: ${response.status}`);
+    const errorBody = await response.text();
+    throw new Error(`OpenAI API error: ${response.status} - ${errorBody}`);
   }
 
   const data = await response.json();
@@ -213,10 +227,12 @@ async function callClaude(
   history?: ChatMessage[]
 ): Promise<{ message: string; suggestions: AISuggestion[] }> {
   const messages = [
-    ...(history || []).map(m => ({
-      role: m.role === 'assistant' ? 'assistant' as const : 'user' as const,
-      content: m.content,
-    })),
+    ...(history || [])
+      .filter((m) => m.role !== 'system')
+      .map((m) => ({
+        role: m.role === 'assistant' ? 'assistant' as const : 'user' as const,
+        content: m.content,
+      })),
     { role: 'user' as const, content: message },
   ];
 
@@ -228,7 +244,7 @@ async function callClaude(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'claude-3-sonnet-20240229',
+      model: process.env.ANTHROPIC_MODEL || 'claude-3-5-sonnet-latest',
       max_tokens: 1500,
       system: systemPrompt,
       messages,
@@ -236,7 +252,8 @@ async function callClaude(
   });
 
   if (!response.ok) {
-    throw new Error(`Claude API error: ${response.status}`);
+    const errorBody = await response.text();
+    throw new Error(`Claude API error: ${response.status} - ${errorBody}`);
   }
 
   const data = await response.json();
@@ -277,82 +294,6 @@ function extractSuggestions(content: string): AISuggestion[] {
         confidence: 0.6,
       });
     }
-  }
-
-  return suggestions;
-}
-
-function getMockResponse(message: string): string {
-  const lowerMessage = message.toLowerCase();
-
-  if (lowerMessage.includes('roteiro') || lowerMessage.includes('script')) {
-    return `Entendido! Para criar um roteiro eficaz para vídeos de NR, sugiro a seguinte estrutura:
-
-1. **Introdução** (30s): Apresente o tema e sua importância
-2. **Objetivos** (15s): Liste os pontos de aprendizado
-3. **Conteúdo principal** (3-5min): Desenvolva os tópicos
-4. **Exemplos práticos** (1-2min): Mostre casos reais
-5. **Resumo** (30s): Recapitule os pontos principais
-6. **Avaliação** (opcional): Quiz ou perguntas
-
-Quer que eu desenvolva alguma dessas seções?`;
-  }
-
-  if (lowerMessage.includes('corte') || lowerMessage.includes('edição')) {
-    return `Para edição profissional de vídeos técnicos, recomendo:
-
-- **Cortes limpos**: Evite transições muito elaboradas em conteúdo técnico
-- **Ritmo**: Mantenha clipes entre 5-15 segundos para manter atenção
-- **B-roll**: Use imagens de apoio para ilustrar conceitos
-- **Texto em tela**: Destaque termos técnicos importantes
-
-Posso ajudar a identificar os melhores pontos de corte no seu vídeo atual.`;
-  }
-
-  if (lowerMessage.includes('legenda') || lowerMessage.includes('subtitle')) {
-    return `Para legendas em vídeos técnicos:
-
-- **Sincronização**: Use a ferramenta de auto-legendas do Studio
-- **Formatação**: Fonte clara, tamanho adequado (18-24pt)
-- **Posição**: Centralizado na parte inferior
-- **Tempo**: Mínimo de 2 segundos por frase
-- **Termos técnicos**: Revise a transcrição de siglas e termos específicos
-
-Quer que eu gere legendas automáticas para o projeto?`;
-  }
-
-  return `Olá! Sou o assistente de IA do Studio.
-
-Posso ajudar você com:
-- 📝 Criação e melhoria de roteiros
-- ✂️ Sugestões de cortes e edição
-- 🎨 Recomendações de efeitos visuais
-- 📊 Análise de conteúdo
-- 📝 Geração de legendas
-
-Como posso ajudar no seu projeto de vídeo?`;
-}
-
-function getMockSuggestions(message: string): AISuggestion[] {
-  const lowerMessage = message.toLowerCase();
-  const suggestions: AISuggestion[] = [];
-
-  if (lowerMessage.includes('roteiro')) {
-    suggestions.push({
-      type: 'script',
-      title: 'Gerar estrutura de roteiro',
-      description: 'Criar estrutura profissional para vídeo NR',
-      confidence: 0.85,
-    });
-  }
-
-  if (lowerMessage.includes('melhora') || lowerMessage.includes('qualidade')) {
-    suggestions.push({
-      type: 'optimization',
-      title: 'Otimizar vídeo',
-      description: 'Aplicar melhorias automáticas de qualidade',
-      confidence: 0.75,
-    });
   }
 
   return suggestions;

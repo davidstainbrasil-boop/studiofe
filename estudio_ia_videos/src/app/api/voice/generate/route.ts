@@ -6,6 +6,15 @@ import { logger } from '@/lib/logger'
 import { applyRateLimit } from '@/lib/rate-limit';
 
 const factory = new AudioGeneratorFactory()
+const VALID_PROVIDERS = new Set<string>([AudioProvider.AZURE, AudioProvider.ELEVENLABS, 'AZURE', 'ELEVENLABS']);
+
+function normalizeProvider(value: unknown): AudioProvider | null {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === AudioProvider.AZURE) return AudioProvider.AZURE;
+  if (normalized === AudioProvider.ELEVENLABS) return AudioProvider.ELEVENLABS;
+  return null;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -19,10 +28,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { text, voiceId, provider = AudioProvider.AZURE } = await req.json()
+    const payload = await req.json()
+    const { text, voiceId } = payload
+    const providerInput = payload?.provider ?? AudioProvider.AZURE
 
     if (!text || !voiceId) {
         return NextResponse.json({ error: 'Missing text or voiceId' }, { status: 400 })
+    }
+
+    if (!VALID_PROVIDERS.has(String(providerInput))) {
+      return NextResponse.json(
+        { error: `Invalid provider. Use '${AudioProvider.AZURE}' or '${AudioProvider.ELEVENLABS}'` },
+        { status: 400 }
+      )
+    }
+
+    const provider = normalizeProvider(providerInput)
+    if (!provider) {
+      return NextResponse.json(
+        { error: `Invalid provider. Use '${AudioProvider.AZURE}' or '${AudioProvider.ELEVENLABS}'` },
+        { status: 400 }
+      )
     }
 
     // Generate Audio
@@ -57,6 +83,9 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
+    const blocked = await applyRateLimit(req, 'voice-gen-get', 60);
+    if (blocked) return blocked;
+
     // List voices
     try {
         const voices = await factory.getAvailableVoices()

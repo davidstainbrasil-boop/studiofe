@@ -148,11 +148,20 @@ const MOCK_MODELS_RESPONSE = [
   },
 ];
 
+// Mock setTimeout to avoid waiting for retries
+jest.useFakeTimers();
+
 // ═══════════════════════════════════════════════════════════════════════════════
 //  Tests
 // ═══════════════════════════════════════════════════════════════════════════════
 
 describe('ElevenLabsService', () => {
+
+  // Bypass sleep delay for faster tests
+  beforeEach(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    jest.spyOn(ElevenLabsService.prototype as any, 'sleep').mockResolvedValue(undefined);
+  });
   // ─── Constructor ─────────────────────────────────────────────────────────
 
   describe('constructor', () => {

@@ -4,11 +4,11 @@
  */
 
 import { logger } from '@lib/logger';
-import { ElevenLabsProvider } from '@lib/tts/providers/elevenlabs';
+import { ElevenLabsService } from '@/services/elevenlabs-service';
 
 // Configuração do Provider (deve vir de var de ambiente)
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY || '';
-const elevenLabs = new ElevenLabsProvider({ apiKey: ELEVENLABS_API_KEY });
+const elevenLabs = new ElevenLabsService({ apiKey: ELEVENLABS_API_KEY });
 
 export interface VoiceProfile {
   id: string;
@@ -126,40 +126,45 @@ export class VoiceCloning {
 
     try {
       // Usar o provider existente para síntese
-      const result = await elevenLabs.textToSpeech({
+      const result = await elevenLabs.synthesize({
         text: options.text,
-        voiceId: options.profileId, // profileId é o voiceId da ElevenLabs
-        stability: 0.5,
-        similarityBoost: 0.75,
-        style: options.emotion === 'happy' ? 0.8 : 0, // Mapeamento básico de estilo
+        voiceId: options.profileId,
+        voiceSettings: {
+          stability: 0.5,
+          similarity_boost: 0.75,
+          style: options.emotion === 'happy' ? 0.8 : 0, // Mapeamento básico de estilo
+        },
       });
 
       return {
         audio: result.audio,
-        alignment: result.alignment
+        // alignment not supported in consolidated service yet
       };
     } catch (error) {
       logger.error('Synthesis failed', error instanceof Error ? error : new Error(String(error)), { component: 'VoiceCloning' });
       throw error;
     }
   }
-  
+
   async listProfiles(): Promise<VoiceProfile[]> {
     try {
       if (!ELEVENLABS_API_KEY) return [];
-      
-      const voices = await elevenLabs.getVoices();
+
+      const response = await elevenLabs.fetchVoices();
       // Filtrar apenas vozes clonadas se possível, ou retornar todas
-      return voices.filter(v => v.category === 'cloned').map(v => ({
-        id: v.voiceId,
-        voiceId: v.voiceId,
-        name: v.name,
-        sampleAudioPath: v.previewUrl || '',
-        characteristics: { pitch: 1, speed: 1, timbre: 'cloned' },
-        status: 'ready',
-        qualityScore: 1
-      }));
+      return response.voices
+        .filter((v) => v.category === 'cloned')
+        .map((v) => ({
+          id: v.voice_id,
+          voiceId: v.voice_id,
+          name: v.name,
+          sampleAudioPath: v.preview_url || '',
+          characteristics: { pitch: 1, speed: 1, timbre: 'cloned' },
+          status: 'ready',
+          qualityScore: 1,
+        }));
     } catch (error) {
+
       logger.error('Failed to list profiles', error instanceof Error ? error : new Error(String(error)), { component: 'VoiceCloning' });
       return [];
     }

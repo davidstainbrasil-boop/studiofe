@@ -53,6 +53,13 @@ interface RenderSettingsData {
   [key: string]: unknown;
 }
 
+function resolveJobOwnerId(job: { userId: string | null; renderSettings: unknown }): string | null {
+  if (job.userId) return job.userId;
+
+  const settings = (job.renderSettings || {}) as Record<string, unknown>;
+  return typeof settings.userId === 'string' ? settings.userId : null;
+}
+
 const rateLimiterGet = createRateLimiter(rateLimitPresets.render);
 export async function GET(
   request: NextRequest,
@@ -65,6 +72,10 @@ export async function GET(
   try {
     const jobId = params.id
     const supabase = getSupabaseForRequest(request);
+    const session = await getServerAuth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+    }
     
     logger.info(`📊 API v2: Verificando status do job ${jobId}`, { component: 'API: v2/avatars/render/status/[id]' })
 
@@ -81,6 +92,17 @@ export async function GET(
           code: 'JOB_NOT_FOUND'
         }
       }, { status: 404 })
+    }
+
+    const ownerId = resolveJobOwnerId(job);
+    if (!ownerId || ownerId !== session.user.id) {
+      return NextResponse.json({
+        success: false,
+        error: {
+          message: 'Acesso negado a este job',
+          code: 'FORBIDDEN'
+        }
+      }, { status: 403 });
     }
 
     // Buscar informações do avatar do Supabase (já que não está no Prisma types)
@@ -301,6 +323,17 @@ export async function POST(
       }, { status: 404 })
     }
 
+    const ownerId = resolveJobOwnerId(job);
+    if (!ownerId || ownerId !== session.user.id) {
+      return NextResponse.json({
+        success: false,
+        error: {
+          message: 'Acesso negado a este job',
+          code: 'FORBIDDEN'
+        }
+      }, { status: 403 });
+    }
+
     switch (action) {
       case 'cancel':
         if (job.status !== 'processing' && job.status !== 'pending' && job.status !== 'queued') {
@@ -431,6 +464,17 @@ export async function DELETE(
           code: 'JOB_NOT_FOUND'
         }
       }, { status: 404 })
+    }
+
+    const ownerId = resolveJobOwnerId(job);
+    if (!ownerId || ownerId !== session.user.id) {
+      return NextResponse.json({
+        success: false,
+        error: {
+          message: 'Acesso negado a este job',
+          code: 'FORBIDDEN'
+        }
+      }, { status: 403 });
     }
 
     // Não permitir remoção de jobs em processamento

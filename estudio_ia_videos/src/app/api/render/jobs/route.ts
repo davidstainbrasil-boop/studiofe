@@ -30,9 +30,31 @@ const RenderJobCreateSchema = z.object({
 const RenderJobQuerySchema = z.object({
   status: z.string().optional(),
   projectId: z.string().optional(),
+  project_id: z.string().optional(),
   limit: z.string().transform(val => parseInt(val) || 50).optional(),
   offset: z.string().transform(val => parseInt(val) || 0).optional()
 })
+
+const VALID_JOB_STATUSES: JobStatus[] = ['pending', 'queued', 'processing', 'completed', 'failed', 'cancelled'];
+
+function mapStatusFilters(rawStatus: string | undefined): JobStatus[] | null {
+  if (!rawStatus) return null;
+
+  const tokens = rawStatus
+    .split(',')
+    .map((token) => token.trim().toLowerCase())
+    .filter(Boolean);
+
+  const expanded = tokens.flatMap((token) => {
+    if (token === 'active') return ['pending', 'queued', 'processing'] as JobStatus[];
+    if (token === 'error') return ['failed'] as JobStatus[];
+    if (VALID_JOB_STATUSES.includes(token as JobStatus)) return [token as JobStatus];
+    return [];
+  });
+
+  if (expanded.length === 0) return null;
+  return Array.from(new Set(expanded));
+}
 
 export async function GET(request: NextRequest) {
   const session = await getServerAuth();
@@ -44,19 +66,34 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const query = RenderJobQuerySchema.parse(Object.fromEntries(searchParams))
 
-    // Build where clause
-    const whereClause: {
-      projectId?: string
-      status?: { in: JobStatus[] }
-    } = {}
-    
-    if (query.projectId) {
-      whereClause.projectId = query.projectId
+    const accessWhere: Prisma.render_jobsWhereInput = {
+      OR: [
+        { userId: session.user.id },
+        { projects: { userId: session.user.id } },
+        {
+          projects: {
+            project_collaborators: {
+              some: { user_id: session.user.id }
+            }
+          }
+        }
+      ]
     }
 
-    if (query.status) {
-      const statuses = query.status.split(',') as JobStatus[]
-      whereClause.status = { in: statuses }
+    const andClauses: Prisma.render_jobsWhereInput[] = [accessWhere]
+    
+    const projectFilter = query.projectId || query.project_id
+    if (projectFilter) {
+      andClauses.push({ projectId: projectFilter })
+    }
+
+    const statuses = mapStatusFilters(query.status)
+    if (statuses && statuses.length > 0) {
+      andClauses.push({ status: { in: statuses } })
+    }
+
+    const whereClause: Prisma.render_jobsWhereInput = {
+      AND: andClauses
     }
 
     // Get jobs using Prisma
@@ -144,6 +181,27 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    let hasPermission = project.userId === userId
+
+    if (!hasPermission) {
+      const collaborator = await prisma.project_collaborators.findFirst({
+        where: {
+          project_id: jobData.projectId,
+          user_id: userId
+        },
+        select: { role: true }
+      })
+
+      hasPermission = Boolean(collaborator?.role && ['owner', 'editor'].includes(collaborator.role))
+    }
+
+    if (!hasPermission) {
+      return NextResponse.json(
+        { success: false, error: 'Forbidden', code: 'FORBIDDEN' },
+        { status: 403 }
+      )
+    }
+
     // Check for active renders
     const activeRender = await prisma.render_jobs.findFirst({
       where: {
@@ -179,7 +237,7 @@ export async function POST(request: NextRequest) {
     }
 
     const jobId = randomUUID()
-    const effectiveUserId = project.userId || userId
+    const effectiveUserId = userId
 
     // Insert job using Prisma
     const createdJob = await prisma.render_jobs.create({

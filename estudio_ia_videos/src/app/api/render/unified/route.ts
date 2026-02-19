@@ -7,8 +7,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@lib/logger'
 import { applyRateLimit } from '@/lib/rate-limit'
 import { getServerAuth } from '@lib/auth/unified-session'
-import { db } from '@lib/db'
-import { mockDelay, isProduction, notImplementedResponse } from '@lib/utils/mock-guard'
+import { mockDelay, isProduction } from '@lib/utils/mock-guard'
+import { POST as postRenderStart } from '@/app/api/render/start/route'
+import { GET as getRenderStatusByJobId } from '@/app/api/render/status/[jobId]/route'
 
 // Interfaces
 interface RenderRequest {
@@ -403,11 +404,25 @@ class UnifiedRenderPipeline {
 // Global instance
 const renderPipeline = new UnifiedRenderPipeline()
 
+function buildForwardHeaders(source: NextRequest): Headers {
+  const headers = new Headers();
+  const cookie = source.headers.get('cookie');
+  const authorization = source.headers.get('authorization');
+  const testUserId = source.headers.get('x-user-id');
+  const idempotency = source.headers.get('idempotency-key');
+
+  headers.set('content-type', 'application/json');
+  if (cookie) headers.set('cookie', cookie);
+  if (authorization) headers.set('authorization', authorization);
+  if (testUserId) headers.set('x-user-id', testUserId);
+  if (idempotency) headers.set('idempotency-key', idempotency);
+
+  return headers;
+}
+
 // API Handlers
 export async function POST(request: NextRequest) {
   try {
-    if (isProduction()) return notImplementedResponse('render-unified', 'Real render pipeline via FFmpeg/BullMQ at /api/render/start');
-
     const blocked = await applyRateLimit(request, 'render-unified', 10);
     if (blocked) return blocked;
 
@@ -417,6 +432,54 @@ export async function POST(request: NextRequest) {
     }
 
     const body: RenderRequest = await request.json()
+
+    if (isProduction()) {
+      const startRequest = new NextRequest(new URL('/api/render/start', request.url), {
+        method: 'POST',
+        headers: buildForwardHeaders(request),
+        body: JSON.stringify({
+          projectId: body.projectId,
+          slides: body.slides,
+          config: {
+            resolution: body.renderConfig?.resolution,
+            fps: body.renderConfig?.fps,
+            format: body.renderConfig?.format === 'avi' ? 'mp4' : body.renderConfig?.format,
+            quality:
+              body.renderConfig?.quality === 'draft'
+                ? 'low'
+                : body.renderConfig?.quality === 'standard'
+                  ? 'medium'
+                  : body.renderConfig?.quality,
+            bitrate: body.renderConfig?.bitrate
+          }
+        })
+      });
+
+      const startResponse = await postRenderStart(startRequest);
+      const startPayload = await startResponse.json();
+
+      if (!startResponse.ok || !startPayload?.success) {
+        return NextResponse.json(
+          {
+            error: startPayload?.error || 'Falha ao iniciar renderização',
+            code: startPayload?.code || 'RENDER_START_FAILED',
+            details: startPayload?.details || null
+          },
+          { status: startResponse.status || 500 }
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        renderJob: {
+          id: startPayload.jobId,
+          status: 'queued',
+          progress: 0,
+          currentStage: 'Job enfileirado',
+          estimatedDuration: null
+        }
+      });
+    }
 
     // Validate request
     if (!body.projectId || !body.slides || body.slides.length === 0) {
@@ -465,6 +528,41 @@ export async function GET(request: NextRequest) {
         error: 'Job ID is required',
         code: 'VALIDATION_ERROR'
       }, { status: 400 })
+    }
+
+    if (isProduction()) {
+      const statusRequest = new NextRequest(new URL(`/api/render/status/${jobId}`, request.url), {
+        method: 'GET',
+        headers: buildForwardHeaders(request)
+      });
+
+      const statusResponse = await getRenderStatusByJobId(statusRequest, {
+        params: Promise.resolve({ jobId })
+      });
+      const statusPayload = await statusResponse.json();
+
+      if (!statusResponse.ok || !statusPayload?.success) {
+        return NextResponse.json({
+          error: statusPayload?.error || 'Render job not found',
+          code: statusPayload?.code || 'JOB_NOT_FOUND'
+        }, { status: statusResponse.status || 404 });
+      }
+
+      return NextResponse.json({
+        success: true,
+        renderJob: {
+          id: statusPayload.jobId,
+          projectId: null,
+          status: statusPayload.status,
+          progress: statusPayload.progress ?? 0,
+          currentStage: statusPayload.status,
+          outputUrl: statusPayload.videoUrl || null,
+          errorMessage: statusPayload.error || null,
+          createdAt: statusPayload.createdAt,
+          completedAt: statusPayload.completedAt,
+          estimatedDuration: statusPayload.estimatedDuration || null
+        }
+      });
     }
 
     const renderJob = renderPipeline.getRenderJob(jobId)

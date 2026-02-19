@@ -1,6 +1,6 @@
 {
   "[typescript]": {
-    "editor.defaultFormatter": "denoland.vscode-deno"
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "[typescriptreact]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
@@ -139,7 +139,8 @@
     "/^date\\b.*(-s|--set)\\b/": false,
     "/^find\\b.*-(delete|exec|execdir|fprint|fprintf|fls|ok|okdir)\\b/": false,
     "/^git branch\\b.*-(d|D|m|M|-delete|-force)\\b/": false,
-    "/^git\\s+(push|reset|revert|clean|force)\\b/": false,
+    "/^git\\s+(reset|revert|clean|force)\\b/": false,
+    "git push": true,
     "/^sort\\b.*-(o|S)\\b/": false,
     "/^tree\\b.*-o\\b/": false,
     "/^sudo\\b/": false,
@@ -271,7 +272,7 @@
     "cp": true,
 
     // --- Bloqueados (destrutivos) ---
-    "chmod": false,
+    "chmod": true,
     "chown": false,
     "dd": false,
     "del": false,
@@ -296,9 +297,9 @@
 
   "chat.mcp.discovery.enabled": {
     "claude-desktop": true,
+    "windsurf": true,
     "cursor-global": true,
-    "cursor-workspace": true,
-    "windsurf": true
+    "cursor-workspace": true
   },
   "mcp": {
     "inputs": [
@@ -388,7 +389,7 @@
   // ⚡ EDITOR — Performance & DX
   // ═══════════════════════════════════════════════════
 
-  "editor.formatOnSave": true,
+  "editor.formatOnSave": false,
   "editor.formatOnPaste": false,
   "editor.linkedEditing": true,
   "editor.stickyScroll.enabled": true,

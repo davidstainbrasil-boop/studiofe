@@ -11,8 +11,9 @@ import { workflowManager } from '@lib/workflow/unified-workflow-manager'
 import { promises as fs } from 'fs'
 import { z } from 'zod'
 import { Prisma } from '@prisma/client'
-import { mockDelay, isProduction, notImplementedResponse } from '@lib/utils/mock-guard'
+import { isProduction } from '@lib/utils/mock-guard'
 import { applyRateLimit } from '@/lib/rate-limit'
+import { POST as postV2AvatarGenerate } from '@/app/api/v2/avatars/generate/route'
 
 // Schemas de validação
 const AvatarConfigSchema = z.object({
@@ -282,12 +283,56 @@ class Avatar3DGenerator {
 
 const avatar3DGenerator = new Avatar3DGenerator()
 
+function buildForwardHeaders(source: NextRequest): Headers {
+  const headers = new Headers();
+  const cookie = source.headers.get('cookie');
+  const authorization = source.headers.get('authorization');
+  const testUserId = source.headers.get('x-user-id');
+
+  headers.set('content-type', 'application/json');
+  if (cookie) headers.set('cookie', cookie);
+  if (authorization) headers.set('authorization', authorization);
+  if (testUserId) headers.set('x-user-id', testUserId);
+
+  return headers;
+}
+
+function mapQualityToV2(quality?: string): 'PLACEHOLDER' | 'STANDARD' | 'HIGH' | 'HYPERREAL' {
+  const value = (quality || '').toLowerCase();
+  if (value === 'preview' || value === 'low' || value === 'draft') return 'PLACEHOLDER';
+  if (value === 'high' || value === 'premium') return 'HIGH';
+  if (value === 'ultra' || value === 'cinematic' || value === 'hyperreal') return 'HYPERREAL';
+  return 'STANDARD';
+}
+
+function extractAvatarId(body: Record<string, unknown>): string | undefined {
+  const direct = body.avatarId;
+  if (typeof direct === 'string' && direct.trim()) return direct;
+
+  const avatarConfig = body.avatarConfig as Record<string, unknown> | undefined;
+  if (typeof avatarConfig?.avatarId === 'string' && avatarConfig.avatarId.trim()) return avatarConfig.avatarId;
+  if (typeof avatarConfig?.model === 'string' && avatarConfig.model.trim()) return avatarConfig.model;
+
+  const config = body.config as Record<string, unknown> | undefined;
+  if (typeof config?.avatarId === 'string' && config.avatarId.trim()) return config.avatarId;
+  if (typeof config?.model === 'string' && config.model.trim()) return config.model;
+
+  return undefined;
+}
+
+function extractText(body: Record<string, unknown>): string {
+  const script = body.script;
+  if (typeof script === 'string' && script.trim()) return script;
+
+  const text = body.text;
+  if (typeof text === 'string' && text.trim()) return text;
+
+  return '';
+}
+
 // POST - Gerar avatar 3D
 export async function POST(request: NextRequest) {
-  if (isProduction()) {
-    return notImplementedResponse('avatars-generate', 'Real avatar 3D generation via D-ID/HeyGen pending integration');
-  }
-
+  let requestBody: Record<string, unknown> = {};
   try {
     const blocked = await applyRateLimit(request, 'avatars-gen', 5);
     if (blocked) return blocked;
@@ -297,7 +342,60 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = await request.json()
+    requestBody = await request.json()
+
+    if (isProduction()) {
+      const text = extractText(requestBody);
+      if (!text) {
+        return NextResponse.json({ error: 'Campo text/script é obrigatório' }, { status: 400 });
+      }
+
+      const v2Payload = {
+        text,
+        avatarId: extractAvatarId(requestBody),
+        quality: mapQualityToV2(
+          (requestBody.quality as string | undefined) ||
+          ((requestBody.config as Record<string, unknown> | undefined)?.quality as string | undefined)
+        ),
+        preview: requestBody.type === 'preview' || requestBody.preview === true
+      };
+
+      const v2Request = new NextRequest(new URL('/api/v2/avatars/generate', request.url), {
+        method: 'POST',
+        headers: buildForwardHeaders(request),
+        body: JSON.stringify(v2Payload)
+      });
+
+      const v2Response = await postV2AvatarGenerate(v2Request);
+      const v2Data = await v2Response.json();
+
+      if (!v2Response.ok || !v2Data?.success) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: v2Data?.error || 'Falha na geração de avatar',
+            details: v2Data?.message || v2Data?.details || null
+          },
+          { status: v2Response.status || 500 }
+        );
+      }
+
+      const output = v2Data.data?.output || {};
+      return NextResponse.json({
+        success: true,
+        previewUrl: output.videoUrl || output.statusUrl || null,
+        avatar: {
+          id: v2Data.data?.jobId,
+          status: v2Data.data?.status,
+          video_url: output.videoUrl || null,
+          thumbnail_url: null
+        },
+        data: v2Data.data,
+        message: 'Avatar generation started'
+      });
+    }
+
+    const body = requestBody
     const validatedData = AvatarConfigSchema.parse(body)
 
     // Verificar se o projeto existe e pertence ao usuário
@@ -344,9 +442,9 @@ export async function POST(request: NextRequest) {
     logger.error('Avatar 3D API Error:', error instanceof Error ? error : new Error(String(error)), { component: 'API: avatars/generate' })
     
     // Atualizar workflow para "error"
-    const body = await request.json().catch(() => ({}))
-    if (body.project_id) {
-      await workflowManager.updateWorkflowStep(body.project_id, 'avatar', 'error', { error: error instanceof Error ? error.message : 'Unknown error' })
+    const projectId = typeof requestBody.project_id === 'string' ? requestBody.project_id : null;
+    if (projectId) {
+      await workflowManager.updateWorkflowStep(projectId, 'avatar', 'error', { error: error instanceof Error ? error.message : 'Unknown error' })
     }
     
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

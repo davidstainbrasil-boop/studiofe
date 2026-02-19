@@ -1,9 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@lib/logger';
-import { mockDelay, isProduction, notImplementedResponse } from '@lib/utils/mock-guard';
+import { mockDelay, isProduction } from '@lib/utils/mock-guard';
 import { getServerAuth } from '@lib/auth/unified-session';
 // import { MonitoringService } from '@lib/monitoring/monitoring-service';
 import { applyRateLimit } from '@/lib/rate-limit';
+import {
+  get as cacheGet,
+  set as cacheSet,
+  invalidate as cacheInvalidate,
+  clearAll as clearDistributedCache,
+  getCacheStats as getDistributedCacheStats,
+  ping as pingDistributedCache,
+} from '@lib/cache/redis-cache';
+import {
+  clearAll as clearQueryCaches,
+  getCacheStats as getQueryCacheStats,
+} from '@lib/cache/query-cache';
 
 // Inline monitoring service
 class MonitoringService {
@@ -203,11 +215,80 @@ class IntelligentCacheSystem {
   }
 }
 
-export async function GET(request: NextRequest) {
-  if (isProduction()) {
-    return notImplementedResponse('cache-intelligent', 'Real intelligent cache system pending');
-  }
+const apiPerformance = {
+  startedAt: Date.now(),
+  operations: 0,
+  totalResponseTimeMs: 0,
+};
 
+function trackPerformance(startedAt: number): void {
+  apiPerformance.operations += 1;
+  apiPerformance.totalResponseTimeMs += Math.max(0, Date.now() - startedAt);
+}
+
+function buildRealCacheStats() {
+  const distributed = getDistributedCacheStats();
+  const query = getQueryCacheStats();
+
+  const hits = (distributed.metrics.hits || 0) + (query.metrics.hits || 0);
+  const misses = (distributed.metrics.misses || 0) + (query.metrics.misses || 0);
+  const totalOps = hits + misses;
+
+  const shortKeys = query.caches.short.keys || 0;
+  const mediumKeys = query.caches.medium.keys || 0;
+  const longKeys = query.caches.long.keys || 0;
+  const totalEntries = shortKeys + mediumKeys + longKeys;
+
+  const memoryUsage =
+    (query.caches.short.stats.vsize || 0) +
+    (query.caches.medium.stats.vsize || 0) +
+    (query.caches.long.stats.vsize || 0);
+
+  const uptimeSec = Math.max(1, Math.floor((Date.now() - apiPerformance.startedAt) / 1000));
+  const avgResponseTime = apiPerformance.operations > 0
+    ? Math.round(apiPerformance.totalResponseTimeMs / apiPerformance.operations)
+    : 0;
+  const throughput = Number((apiPerformance.operations / uptimeSec).toFixed(2));
+
+  return {
+    stats: {
+      hits,
+      misses,
+      hitRate: totalOps > 0 ? hits / totalOps : 0,
+      totalEntries,
+      memoryUsage,
+      redisUsage: distributed.isRedisAvailable ? 1 : 0,
+      fileUsage: 0,
+    },
+    layers: {
+      memory: {
+        enabled: true,
+        entries: totalEntries,
+        usage: memoryUsage,
+      },
+      redis: {
+        enabled: true,
+        status: distributed.isRedisAvailable ? 'connected' : 'fallback',
+      },
+      file: {
+        enabled: false,
+        status: 'disabled',
+      },
+    },
+    performance: {
+      hitRate: totalOps > 0 ? hits / totalOps : 0,
+      avgResponseTime,
+      throughput,
+    },
+    raw: {
+      distributed,
+      query,
+    },
+  };
+}
+
+export async function GET(request: NextRequest) {
+  const startedAt = Date.now();
   try {
     const rateLimitBlocked = await applyRateLimit(request, 'cache-intelligent-get', 60);
     if (rateLimitBlocked) return rateLimitBlocked;
@@ -215,6 +296,70 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const action = searchParams.get('action');
     const key = searchParams.get('key');
+
+    if (isProduction()) {
+      switch (action) {
+        case 'get': {
+          if (!key) {
+            return NextResponse.json(
+              { error: 'key é obrigatório para buscar no cache' },
+              { status: 400 }
+            );
+          }
+
+          const value = await cacheGet<unknown>(key);
+          trackPerformance(startedAt);
+
+          return NextResponse.json({
+            success: true,
+            data: {
+              key,
+              value,
+              hit: value !== null,
+              timestamp: new Date().toISOString()
+            }
+          });
+        }
+
+        case 'stats': {
+          const stats = buildRealCacheStats();
+          trackPerformance(startedAt);
+
+          return NextResponse.json({
+            success: true,
+            data: {
+              stats: stats.stats,
+              layers: stats.layers,
+              performance: stats.performance,
+            }
+          });
+        }
+
+        case 'health': {
+          const redisHealthy = await pingDistributedCache();
+          trackPerformance(startedAt);
+
+          return NextResponse.json({
+            success: true,
+            data: {
+              status: redisHealthy ? 'healthy' : 'degraded',
+              layers: {
+                memory: 'healthy',
+                redis: redisHealthy ? 'healthy' : 'fallback',
+                file: 'disabled'
+              },
+              timestamp: new Date().toISOString()
+            }
+          });
+        }
+
+        default:
+          return NextResponse.json(
+            { error: 'Ação não reconhecida. Use: get, stats, ou health' },
+            { status: 400 }
+          );
+      }
+    }
 
     const cache = IntelligentCacheSystem.getInstance();
     const monitoring = MonitoringService.getInstance();
@@ -229,6 +374,7 @@ export async function GET(request: NextRequest) {
         }
 
         const value = await cache.get(key);
+        trackPerformance(startedAt);
         
         monitoring.logEvent('cache_get', {
           key,
@@ -248,6 +394,7 @@ export async function GET(request: NextRequest) {
 
       case 'stats':
         const stats = cache.getStats();
+        trackPerformance(startedAt);
         
         return NextResponse.json({
           success: true,
@@ -277,6 +424,7 @@ export async function GET(request: NextRequest) {
         });
 
       case 'health':
+        trackPerformance(startedAt);
         return NextResponse.json({
           success: true,
           data: {
@@ -311,10 +459,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  if (isProduction()) {
-    return notImplementedResponse('cache-intelligent', 'Real intelligent cache system pending');
-  }
-
+  const startedAt = Date.now();
   const session = await getServerAuth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
@@ -329,6 +474,32 @@ export async function POST(request: NextRequest) {
         { error: 'key e value são obrigatórios' },
         { status: 400 }
       );
+    }
+
+    if (isProduction()) {
+      const cacheEntry: CacheEntry = {
+        key,
+        value,
+        ttl,
+        tags,
+        metadata: {
+          ...metadata,
+          createdAt: new Date().toISOString()
+        }
+      };
+
+      await cacheSet(key, cacheEntry, ttl);
+      trackPerformance(startedAt);
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          key,
+          stored: true,
+          ttl,
+          timestamp: new Date().toISOString()
+        }
+      });
     }
 
     const cache = IntelligentCacheSystem.getInstance();
@@ -348,6 +519,7 @@ export async function POST(request: NextRequest) {
     };
 
     await cache.set(key, cacheEntry, ttl);
+    trackPerformance(startedAt);
 
     monitoring.logEvent('cache_set', {
       key,
@@ -382,10 +554,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  if (isProduction()) {
-    return notImplementedResponse('cache-intelligent', 'Real intelligent cache system pending');
-  }
-
+  const startedAt = Date.now();
   const session = await getServerAuth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
@@ -395,6 +564,52 @@ export async function DELETE(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const action = searchParams.get('action');
     const key = searchParams.get('key');
+
+    if (isProduction()) {
+      switch (action) {
+        case 'delete': {
+          if (!key) {
+            return NextResponse.json(
+              { error: 'key é obrigatório para deletar do cache' },
+              { status: 400 }
+            );
+          }
+
+          const existing = await cacheGet<unknown>(key);
+          await cacheInvalidate(key);
+          trackPerformance(startedAt);
+
+          return NextResponse.json({
+            success: true,
+            data: {
+              key,
+              deleted: existing !== null,
+              timestamp: new Date().toISOString()
+            }
+          });
+        }
+
+        case 'clear': {
+          await clearDistributedCache();
+          clearQueryCaches();
+          trackPerformance(startedAt);
+
+          return NextResponse.json({
+            success: true,
+            data: {
+              cleared: true,
+              timestamp: new Date().toISOString()
+            }
+          });
+        }
+
+        default:
+          return NextResponse.json(
+            { error: 'Ação não reconhecida. Use: delete ou clear' },
+            { status: 400 }
+          );
+      }
+    }
 
     const cache = IntelligentCacheSystem.getInstance();
     const monitoring = MonitoringService.getInstance();
@@ -409,6 +624,7 @@ export async function DELETE(request: NextRequest) {
         }
 
         const deleted = await cache.delete(key);
+        trackPerformance(startedAt);
 
         monitoring.logEvent('cache_delete', {
           key,
@@ -427,6 +643,7 @@ export async function DELETE(request: NextRequest) {
 
       case 'clear':
         await cache.clear();
+        trackPerformance(startedAt);
 
         monitoring.logEvent('cache_clear', {
           timestamp: new Date().toISOString()
@@ -461,10 +678,7 @@ export async function DELETE(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
-  if (isProduction()) {
-    return notImplementedResponse('cache-intelligent', 'Real intelligent cache system pending');
-  }
-
+  const startedAt = Date.now();
   const session = await getServerAuth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
@@ -473,6 +687,39 @@ export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
     const { action, config } = body;
+
+    if (isProduction()) {
+      switch (action) {
+        case 'configure':
+          trackPerformance(startedAt);
+          return NextResponse.json({
+            success: true,
+            data: {
+              configured: false,
+              message: 'Configuração dinâmica de cache não suportada em runtime',
+              timestamp: new Date().toISOString()
+            }
+          });
+
+        case 'optimize':
+          clearQueryCaches();
+          trackPerformance(startedAt);
+          return NextResponse.json({
+            success: true,
+            data: {
+              optimized: true,
+              message: 'Cache local otimizado',
+              timestamp: new Date().toISOString()
+            }
+          });
+
+        default:
+          return NextResponse.json(
+            { error: 'Ação não reconhecida. Use: configure ou optimize' },
+            { status: 400 }
+          );
+      }
+    }
 
     const monitoring = MonitoringService.getInstance();
 
@@ -485,6 +732,7 @@ export async function PUT(request: NextRequest) {
           config,
           timestamp: new Date().toISOString()
         });
+        trackPerformance(startedAt);
 
         return NextResponse.json({
           success: true,
@@ -502,6 +750,7 @@ export async function PUT(request: NextRequest) {
         monitoring.logEvent('cache_optimize', {
           timestamp: new Date().toISOString()
         });
+        trackPerformance(startedAt);
 
         return NextResponse.json({
           success: true,

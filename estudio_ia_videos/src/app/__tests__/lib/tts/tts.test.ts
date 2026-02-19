@@ -3,7 +3,7 @@
  * Cobertura completa de Text-to-Speech
  */
 
-import { ElevenLabsProvider } from '@lib/tts/providers/elevenlabs'
+import { ElevenLabsService } from '@/services/elevenlabs-service'
 import { AzureTTSProvider } from '@lib/tts/providers/azure'
 import { TTSManager } from '@lib/tts/manager'
 
@@ -61,10 +61,10 @@ jest.mock('microsoft-cognitiveservices-speech-sdk', () => ({
 import * as sdk from 'microsoft-cognitiveservices-speech-sdk';
 
 describe('ElevenLabs Provider', () => {
-  let provider: ElevenLabsProvider
+  let provider: ElevenLabsService
 
   beforeEach(() => {
-    provider = new ElevenLabsProvider({
+    provider = new ElevenLabsService({
       apiKey: 'test-api-key',
       modelId: 'eleven_multilingual_v2',
     })
@@ -73,20 +73,23 @@ describe('ElevenLabs Provider', () => {
 
   it('deve gerar áudio com sucesso', async () => {
     const mockAudioBuffer = Buffer.from('fake-audio-data')
-    
+
     ;(global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
+      headers: new Headers({
+        'content-type': 'audio/mpeg',
+        'request-id': 'req-123',
+      }),
       arrayBuffer: async () => mockAudioBuffer,
     })
 
-    const result = await provider.textToSpeech({
+    const result = await provider.generateSpeech({
       text: 'Hello world',
       voiceId: 'test-voice-id',
     })
 
-    expect(result.audio).toBeInstanceOf(Buffer)
-    expect(result.characters).toBe(11)
-    expect(result.format).toBe('mp3')
+    expect(result.success).toBe(true)
+    expect(result.audioBuffer).toBeInstanceOf(Buffer)
   })
 
   it('deve retornar lista de vozes', async () => {
@@ -96,18 +99,23 @@ describe('ElevenLabs Provider', () => {
           voice_id: 'voice1',
           name: 'Voice 1',
           description: 'Test voice',
+          category: 'premade',
+          labels: {},
+          preview_url: null,
+          settings: null,
         },
       ],
     }
 
     ;(global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
+      headers: new Headers(),
       json: async () => mockVoices,
     })
 
-    const voices = await provider.getVoices()
+    const voices = await provider.getAvailableVoices()
     expect(voices).toHaveLength(1)
-    expect(voices[0].voiceId).toBe('voice1')
+    expect(voices[0].id).toBe('voice1')
   })
 
   it('deve obter informações de assinatura', async () => {

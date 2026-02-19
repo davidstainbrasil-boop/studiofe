@@ -1,19 +1,90 @@
-
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@lib/logger'
-import { getServerAuth } from '@lib/auth/unified-session';
 import { applyRateLimit } from '@/lib/rate-limit';
-import { isProduction, notImplementedResponse } from '@lib/utils/mock-guard';
+import { getAuthenticatedUserId } from '@lib/auth/safe-auth';
+import { prisma } from '@lib/prisma';
+import { getVideoJobStatus, removeVideoJob } from '@lib/queue/render-queue';
+import type { JobStatus } from '@prisma/client';
+
+type RouteParams = { params: { jobId: string } }
+
+const EDITOR_ROLES = new Set(['owner', 'editor']);
+
+function queueStateToJobStatus(state: string | undefined): JobStatus | undefined {
+  switch (state) {
+    case 'waiting':
+    case 'delayed':
+      return 'queued';
+    case 'active':
+      return 'processing';
+    case 'completed':
+      return 'completed';
+    case 'failed':
+      return 'failed';
+    default:
+      return undefined;
+  }
+}
+
+function estimateRemainingTimeSeconds(
+  status: JobStatus | undefined,
+  progress: number,
+  estimatedDuration: number | null | undefined
+): number | null {
+  if (status !== 'processing' && status !== 'queued' && status !== 'pending') {
+    return null;
+  }
+
+  if (!estimatedDuration || estimatedDuration <= 0) {
+    return null;
+  }
+
+  const boundedProgress = Math.max(0, Math.min(100, progress));
+  return Math.max(0, Math.round((estimatedDuration * (100 - boundedProgress)) / 100));
+}
+
+async function canViewJob(projectId: string | null | undefined, ownerId: string | null | undefined, userId: string) {
+  if (ownerId === userId) return true;
+  if (!projectId) return false;
+
+  const collaborator = await prisma.project_collaborators.findFirst({
+    where: {
+      project_id: projectId,
+      user_id: userId,
+    },
+    select: { id: true },
+  });
+
+  return Boolean(collaborator);
+}
+
+async function canCancelJob(projectId: string | null | undefined, ownerId: string | null | undefined, userId: string) {
+  if (ownerId === userId) return true;
+  if (!projectId) return false;
+
+  const collaborator = await prisma.project_collaborators.findFirst({
+    where: {
+      project_id: projectId,
+      user_id: userId,
+    },
+    select: { role: true },
+  });
+
+  return Boolean(collaborator?.role && EDITOR_ROLES.has(collaborator.role));
+}
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { jobId: string } }
+  { params }: RouteParams
 ) {
   try {
-    if (isProduction()) return notImplementedResponse('video-pipeline-status', 'Real job status tracking via DB/Redis pending implementation');
-
     const rateLimitBlocked = await applyRateLimit(request, 'video-pipeline-status-get', 60);
     if (rateLimitBlocked) return rateLimitBlocked;
+
+    const auth = await getAuthenticatedUserId(request);
+    if (!auth.authenticated) {
+      return NextResponse.json({ error: auth.error, code: 'AUTH_REQUIRED' }, { status: auth.status });
+    }
 
     const { jobId } = params
 
@@ -24,59 +95,72 @@ export async function GET(
       )
     }
 
-    // In production, this would fetch job status from database/Redis
-    // For now, we'll simulate different job statuses
-    
-    const now = new Date()
-    const createdAt = new Date(now.getTime() - Math.random() * 3600000) // Random time within last hour
-    
-    // Simulate job status based on job ID
-    const jobStatuses = ['queued', 'processing', 'completed', 'failed']
-    const status = jobStatuses[Math.floor(Math.random() * jobStatuses.length)]
-    
-    let progress = 0
-    let completedAt = null
-    let fileUrl = null
-    let fileSize = null
-    let errorMessage = null
+    const job = await prisma.render_jobs.findUnique({
+      where: { id: jobId },
+      select: {
+        id: true,
+        projectId: true,
+        status: true,
+        progress: true,
+        outputUrl: true,
+        errorMessage: true,
+        createdAt: true,
+        startedAt: true,
+        completedAt: true,
+        estimatedDuration: true,
+        durationMs: true,
+        renderSettings: true,
+        settings: true,
+        retryCount: true,
+        maxRetries: true,
+        projects: {
+          select: { userId: true },
+        },
+      },
+    });
 
-    switch (status) {
-      case 'queued':
-        progress = 0
-        break
-      case 'processing':
-        progress = Math.floor(Math.random() * 90 + 5) // 5-95%
-        break
-      case 'completed':
-        progress = 100
-        completedAt = new Date(createdAt.getTime() + 600000).toISOString() // 10 minutes later
-        fileUrl = `https://cdn.estudio-ia-videos.com/renders/${jobId}.mp4`
-        fileSize = Math.floor(Math.random() * 500000000 + 50000000) // 50-550MB
-        break
-      case 'failed':
-        progress = Math.floor(Math.random() * 50 + 10) // 10-60%
-        errorMessage = 'FFmpeg rendering failed: Out of memory'
-        break
+    if (!job) {
+      return NextResponse.json(
+        { error: 'Job not found', code: 'JOB_NOT_FOUND' },
+        { status: 404 }
+      )
     }
 
+    const hasPermission = await canViewJob(job.projectId, job.projects?.userId, auth.userId);
+    if (!hasPermission) {
+      return NextResponse.json(
+        { error: 'Forbidden', code: 'FORBIDDEN' },
+        { status: 403 }
+      );
+    }
+
+    const queueJobStatus = await getVideoJobStatus(job.id);
+    const queueDerivedStatus = queueStateToJobStatus(queueJobStatus.status);
+
+    const effectiveStatus = job.status || queueDerivedStatus || 'pending';
+    const dbProgress = typeof job.progress === 'number' ? job.progress : 0;
+    const queueProgress = typeof queueJobStatus.progress === 'number' ? queueJobStatus.progress : 0;
+    const progress = Math.max(dbProgress, queueProgress);
+
     const jobStatus = {
-      id: jobId,
-      status,
+      id: job.id,
+      status: effectiveStatus,
       progress,
-      createdAt: createdAt.toISOString(),
-      startedAt: status !== 'queued' ? new Date(createdAt.getTime() + 30000).toISOString() : null,
-      completedAt: completedAt,
-      estimated_time_remaining: status === 'processing' ? Math.floor((100 - progress) / 10 * 60) : null, // seconds
-      fileUrl: fileUrl,
-      fileSize: fileSize,
-      errorMessage: errorMessage,
+      createdAt: job.createdAt?.toISOString() || null,
+      startedAt: job.startedAt?.toISOString() || null,
+      completedAt: job.completedAt?.toISOString() || null,
+      estimated_time_remaining: estimateRemainingTimeSeconds(effectiveStatus, progress, job.estimatedDuration),
+      fileUrl: job.outputUrl || null,
+      fileSize: null,
+      errorMessage: job.errorMessage || queueJobStatus.error || null,
       metadata: {
-        preset: 'YouTube Full HD',
-        resolution: '1920x1080',
-        fps: 30,
-        format: 'mp4',
-        codec: 'H.264',
-        bitrate: '8 Mbps'
+        durationMs: job.durationMs,
+        renderSettings: job.renderSettings,
+        settings: job.settings,
+        retryCount: job.retryCount,
+        maxRetries: job.maxRetries,
+        queueStatus: queueJobStatus.status,
+        queueAttemptsMade: queueJobStatus.attemptsMade || 0,
       }
     }
 
@@ -95,25 +179,69 @@ export async function GET(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { jobId: string } }
+  { params }: RouteParams
 ) {
-  const session = await getServerAuth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
-  }
-
   try {
+    const rateLimitBlocked = await applyRateLimit(request, 'video-pipeline-status-delete', 20);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
+    const auth = await getAuthenticatedUserId(request);
+    if (!auth.authenticated) {
+      return NextResponse.json({ error: auth.error, code: 'AUTH_REQUIRED' }, { status: auth.status });
+    }
+
     const { jobId } = params
 
-    // In production, this would:
-    // 1. Cancel the FFmpeg process if running
-    // 2. Remove job from queue
-    // 3. Clean up temporary files
-    // 4. Update job status to 'cancelled'
+    if (!jobId) {
+      return NextResponse.json(
+        { error: 'Job ID is required', code: 'JOB_ID_REQUIRED' },
+        { status: 400 }
+      )
+    }
+
+    const job = await prisma.render_jobs.findUnique({
+      where: { id: jobId },
+      select: {
+        id: true,
+        projectId: true,
+        status: true,
+        projects: {
+          select: { userId: true },
+        },
+      },
+    });
+
+    if (!job) {
+      return NextResponse.json({ error: 'Job not found', code: 'JOB_NOT_FOUND' }, { status: 404 });
+    }
+
+    const hasPermission = await canCancelJob(job.projectId, job.projects?.userId, auth.userId);
+    if (!hasPermission) {
+      return NextResponse.json({ error: 'Forbidden', code: 'FORBIDDEN' }, { status: 403 });
+    }
+
+    if (job.status === 'completed' || job.status === 'failed' || job.status === 'cancelled') {
+      return NextResponse.json({
+        success: true,
+        message: `Job ${jobId} is already finalized with status '${job.status}'`,
+      });
+    }
+
+    await prisma.render_jobs.update({
+      where: { id: jobId },
+      data: {
+        status: 'cancelled',
+        errorMessage: 'Cancelled by user',
+        completedAt: new Date(),
+      },
+    });
+
+    const queueRemoved = await removeVideoJob(jobId);
 
     return NextResponse.json({
       success: true,
-      message: `Job ${jobId} cancelled successfully`
+      message: `Job ${jobId} cancelled successfully`,
+      queueRemoved,
     })
   } catch (error) {
     logger.error('Job cancellation error', error instanceof Error ? error : new Error(String(error)), { component: 'API: video-pipeline/status/[jobId]' })

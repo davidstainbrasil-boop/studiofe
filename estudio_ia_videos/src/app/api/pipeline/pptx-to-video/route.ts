@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
     const file = formData.get('file') as File;
     const projectName = formData.get('projectName') as string || 'Projeto PPTX';
     const voiceId = formData.get('voiceId') as string;
-    const ttsProvider = (formData.get('ttsProvider') as string || 'mock') as 'elevenlabs' | 'azure' | 'google' | 'mock';
+    const ttsProvider = (formData.get('ttsProvider') as string || 'azure') as 'elevenlabs' | 'azure' | 'google';
     const avatarId = formData.get('avatarId') as string;
     const resolution = (formData.get('resolution') as string || '1080p') as '720p' | '1080p' | '4k';
     const generateSubtitles = formData.get('generateSubtitles') === 'true';
@@ -77,6 +77,10 @@ export async function POST(req: NextRequest) {
 
     if (file.size > 50 * 1024 * 1024) { // 50MB
       return NextResponse.json({ error: 'Arquivo muito grande. Máximo: 50MB' }, { status: 400 });
+    }
+
+    if (!['elevenlabs', 'azure', 'google'].includes(ttsProvider)) {
+      return NextResponse.json({ error: 'ttsProvider inválido. Use: elevenlabs, azure ou google' }, { status: 400 });
     }
 
     logger.info('📋 Configurações do pipeline:', {
@@ -154,7 +158,7 @@ export async function GET(req: NextRequest) {
       file: 'File (PPTX, max 50MB)',
       projectName: 'string (opcional)',
       voiceId: 'string (opcional)',
-      ttsProvider: 'elevenlabs | azure | google | mock (padrão: mock)',
+      ttsProvider: 'elevenlabs | azure | google (padrão: azure)',
       avatarId: 'string (opcional)',
       resolution: '720p | 1080p | 4k (padrão: 1080p)',
       generateSubtitles: 'boolean (padrão: false)'
@@ -170,7 +174,7 @@ export async function GET(req: NextRequest) {
       curl -X POST http://localhost:3003/api/pipeline/pptx-to-video \\
         -F "file=@presentation.pptx" \\
         -F "projectName=Treinamento NR-10" \\
-        -F "ttsProvider=mock" \\
+        -F "ttsProvider=azure" \\
         -F "resolution=1080p" \\
         -H "x-user-id: \${DEV_BYPASS_USER_ID}"
     `

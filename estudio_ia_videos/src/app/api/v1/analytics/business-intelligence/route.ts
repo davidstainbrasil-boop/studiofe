@@ -3,99 +3,299 @@ import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@lib/logger'
 import { getServerAuth } from '@lib/auth/unified-session';
 import { applyRateLimit } from '@/lib/rate-limit';
+import { prisma } from '@lib/prisma';
 
-// Mock data for business intelligence
-const generateAnalyticsData = () => {
-  const today = new Date()
-  
+const KNOWN_NR_CODES = ['NR-06', 'NR-10', 'NR-12', 'NR-17', 'NR-33', 'NR-35'];
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+interface BIProject {
+  id: string;
+  name: string;
+  description: string | null;
+  metadata: unknown;
+  isTemplate: boolean | null;
+  createdAt: Date | null;
+}
+
+interface BIRenderJob {
+  id: string;
+  projectId: string | null;
+  status: string | null;
+  durationMs: number | null;
+  createdAt: Date | null;
+  completedAt: Date | null;
+  avatarModelId: string | null;
+}
+
+interface BIEvent {
+  eventType: string;
+  createdAt: Date | null;
+  sessionId: string | null;
+  userId: string | null;
+}
+
+function dateKey(date: Date): string {
+  return date.toISOString().split('T')[0];
+}
+
+function monthKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function round1(value: number): number {
+  return Math.round(value * 10) / 10;
+}
+
+function asObject(value: unknown): Record<string, unknown> {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+  return {};
+}
+
+function detectNRCodes(project: BIProject): string[] {
+  const haystack = `${project.name} ${project.description || ''} ${JSON.stringify(project.metadata || {})}`.toUpperCase();
+  const found = KNOWN_NR_CODES.filter((code) => {
+    const numeric = code.replace('NR-', '');
+    return haystack.includes(code) || haystack.includes(`NR ${numeric}`) || haystack.includes(`NR${numeric}`);
+  });
+  return found;
+}
+
+function countEvents(events: BIEvent[], matcher: (eventType: string) => boolean): number {
+  return events.reduce((sum, event) => sum + (matcher(event.eventType) ? 1 : 0), 0);
+}
+
+async function generateBusinessIntelligenceData(userId: string, days = 30) {
+  const now = new Date();
+  const startDate = new Date(now.getTime() - (days - 1) * DAY_MS);
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const sixMonthsStart = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+  const oneDayAgo = new Date(Date.now() - DAY_MS);
+
+  const [
+    userRecord,
+    monthUsage,
+    projects,
+    renderJobs,
+    analyticsEvents,
+    globalRecentUsers
+  ] = await Promise.all([
+    prisma.users.findUnique({
+      where: { id: userId },
+      select: { metadata: true }
+    }),
+    prisma.user_usage.findFirst({
+      where: {
+        userId,
+        month: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+      },
+      select: {
+        storageUsedBytes: true
+      }
+    }),
+    prisma.projects.findMany({
+      where: { userId },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        metadata: true,
+        isTemplate: true,
+        createdAt: true
+      }
+    }),
+    prisma.render_jobs.findMany({
+      where: {
+        userId,
+        createdAt: { gte: startDate }
+      },
+      select: {
+        id: true,
+        projectId: true,
+        status: true,
+        durationMs: true,
+        createdAt: true,
+        completedAt: true,
+        avatarModelId: true
+      }
+    }),
+    prisma.analytics_events.findMany({
+      where: {
+        userId,
+        createdAt: { gte: sixMonthsStart }
+      },
+      select: {
+        eventType: true,
+        createdAt: true,
+        sessionId: true,
+        userId: true
+      }
+    }),
+    prisma.analytics_events.findMany({
+      where: {
+        createdAt: { gte: oneDayAgo },
+        userId: { not: null }
+      },
+      distinct: ['userId'],
+      select: { userId: true }
+    })
+  ]);
+
+  const typedProjects = projects as BIProject[];
+  const typedRenderJobs = renderJobs as BIRenderJob[];
+  const typedEvents = analyticsEvents as BIEvent[];
+
+  const totalProjects = typedProjects.length;
+  const totalRenders = typedRenderJobs.length;
+  const completedRenders = typedRenderJobs.filter((job) => job.status === 'completed').length;
+  const videosRendering = typedRenderJobs.filter((job) => ['queued', 'pending', 'processing'].includes(String(job.status || ''))).length;
+  const completionRate = totalRenders > 0 ? round1((completedRenders / totalRenders) * 100) : 0;
+
+  const completedDurations = typedRenderJobs
+    .filter((job) => job.status === 'completed' && typeof job.durationMs === 'number' && job.durationMs > 0)
+    .map((job) => job.durationMs as number);
+  const avgRenderTimeMinutes = completedDurations.length > 0
+    ? round1((completedDurations.reduce((sum, value) => sum + value, 0) / completedDurations.length) / 1000 / 60)
+    : 0;
+
+  const metadata = asObject(userRecord?.metadata);
+  const storageLimitBytes = Number(metadata.storage_limit_bytes ?? 10 * 1024 * 1024 * 1024);
+  const storageUsedBytes = Number(monthUsage?.storageUsedBytes ?? 0);
+  const storageUsed = storageLimitBytes > 0
+    ? round1(Math.min(100, (storageUsedBytes / storageLimitBytes) * 100))
+    : 0;
+
+  const downloads = countEvents(typedEvents, (eventType) =>
+    eventType.includes('download') || eventType.includes('export')
+  );
+
+  const projectsPerDay = new Map<string, { date: string; projetos: number; videos: number; visualizacoes: number }>();
+  for (let i = 0; i < days; i++) {
+    const day = new Date(startDate.getTime() + i * DAY_MS);
+    const key = dateKey(day);
+    projectsPerDay.set(key, { date: key, projetos: 0, videos: 0, visualizacoes: 0 });
+  }
+
+  typedProjects.forEach((project) => {
+    if (!project.createdAt) return;
+    const key = dateKey(project.createdAt);
+    const entry = projectsPerDay.get(key);
+    if (entry) entry.projetos += 1;
+  });
+
+  typedRenderJobs.forEach((job) => {
+    if (!job.createdAt) return;
+    const key = dateKey(job.createdAt);
+    const entry = projectsPerDay.get(key);
+    if (entry) entry.videos += 1;
+  });
+
+  typedEvents.forEach((event) => {
+    if (!event.createdAt) return;
+    const key = dateKey(event.createdAt);
+    const entry = projectsPerDay.get(key);
+    if (!entry) return;
+    if (event.eventType.includes('view')) {
+      entry.visualizacoes += 1;
+    }
+  });
+
+  const nrProjects = new Map<string, Set<string>>();
+  KNOWN_NR_CODES.forEach((code) => nrProjects.set(code, new Set<string>()));
+
+  typedProjects.forEach((project) => {
+    const codes = detectNRCodes(project);
+    codes.forEach((code) => nrProjects.get(code)?.add(project.id));
+  });
+
+  const completedProjects = new Set(
+    typedRenderJobs
+      .filter((job) => job.status === 'completed' && job.projectId)
+      .map((job) => String(job.projectId))
+  );
+
+  const complianceData = KNOWN_NR_CODES.map((nr) => {
+    const projectsForNR = Array.from(nrProjects.get(nr) || []);
+    const projetos = projectsForNR.length;
+    const aprovados = projectsForNR.filter((projectId) => completedProjects.has(projectId)).length;
+    const taxa = projetos > 0 ? round1((aprovados / projetos) * 100) : 0;
+
+    return { nr, projetos, aprovados, taxa };
+  }).filter((row) => row.projetos > 0 || row.aprovados > 0);
+
+  const monthlyEngagement = Array.from({ length: 6 }, (_, index) => {
+    const monthDate = new Date(now.getFullYear(), now.getMonth() - (5 - index), 1);
+    const key = monthKey(monthDate);
+    const eventsInMonth = typedEvents.filter((event) => event.createdAt && monthKey(event.createdAt) === key);
+    const sessions = new Set(eventsInMonth.map((event) => event.sessionId || dateKey(event.createdAt || monthDate)));
+    const activeDays = new Set(eventsInMonth.map((event) => dateKey(event.createdAt || monthDate)));
+    const completedDurationsMonth = typedRenderJobs
+      .filter((job) => job.completedAt && monthKey(job.completedAt) === key && typeof job.durationMs === 'number')
+      .map((job) => Number(job.durationMs || 0));
+    const avgMinutes = completedDurationsMonth.length > 0
+      ? round1(completedDurationsMonth.reduce((sum, value) => sum + value, 0) / completedDurationsMonth.length / 1000 / 60)
+      : 0;
+
+    return {
+      periodo: monthDate.toLocaleString('pt-BR', { month: 'short' }).replace('.', ''),
+      usuarios: Math.max(activeDays.size, sessions.size > 0 ? 1 : 0),
+      sessoes: eventsInMonth.length,
+      tempo: avgMinutes
+    };
+  });
+
+  const templateViews = countEvents(typedEvents, (eventType) => eventType.includes('template') && eventType.includes('view'));
+  const templateDownloads = countEvents(typedEvents, (eventType) => eventType.includes('template') && eventType.includes('download'));
+  const videoViews = countEvents(typedEvents, (eventType) => eventType.includes('video') && eventType.includes('view'));
+  const videoDownloads = countEvents(typedEvents, (eventType) => eventType.includes('video') && eventType.includes('download'));
+  const ttsEvents = countEvents(typedEvents, (eventType) => eventType.includes('tts'));
+  const avatarViews = countEvents(typedEvents, (eventType) => eventType.includes('avatar') && eventType.includes('view'));
+  const avatarDownloads = countEvents(typedEvents, (eventType) => eventType.includes('avatar') && eventType.includes('download'));
+
+  const templateCount = typedProjects.filter((project) => project.isTemplate === true).length;
+  const avatarJobs = typedRenderJobs.filter((job) => !!job.avatarModelId).length;
+
   return {
     realTimeMetrics: {
-      activeUsers: Math.floor(Math.random() * 500) + 1500,
-      totalProjects: Math.floor(Math.random() * 200) + 800,
-      videosRendering: Math.floor(Math.random() * 50) + 10,
-      completionRate: Math.random() * 10 + 90, // 90-100%
-      avgRenderTime: Math.random() * 2 + 1.5, // 1.5-3.5s
-      storageUsed: Math.random() * 30 + 70, // 70-100%
-      downloads: Math.floor(Math.random() * 5000) + 15000
+      activeUsers: globalRecentUsers.length,
+      totalProjects,
+      videosRendering,
+      completionRate,
+      avgRenderTime: avgRenderTimeMinutes,
+      storageUsed,
+      downloads
     },
-    projectsData: Array.from({ length: 30 }, (_, i) => ({
-      date: new Date(today.getTime() - (29 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      projetos: Math.floor(Math.random() * 15) + 5,
-      videos: Math.floor(Math.random() * 25) + 10,
-      visualizacoes: Math.floor(Math.random() * 500) + 200,
-    })),
-    complianceData: [
-      { 
-        nr: 'NR-12', 
-        projetos: Math.floor(Math.random() * 50) + 120, 
-        aprovados: function() { return Math.floor(this.projetos * (0.92 + Math.random() * 0.08)) },
-        taxa: function() { return Math.round((this.aprovados() / this.projetos) * 100 * 10) / 10 }
-      },
-      { 
-        nr: 'NR-33', 
-        projetos: Math.floor(Math.random() * 40) + 80, 
-        aprovados: function() { return Math.floor(this.projetos * (0.90 + Math.random() * 0.08)) },
-        taxa: function() { return Math.round((this.aprovados() / this.projetos) * 100 * 10) / 10 }
-      },
-      { 
-        nr: 'NR-35', 
-        projetos: Math.floor(Math.random() * 60) + 140, 
-        aprovados: function() { return Math.floor(this.projetos * (0.93 + Math.random() * 0.07)) },
-        taxa: function() { return Math.round((this.aprovados() / this.projetos) * 100 * 10) / 10 }
-      },
-      { 
-        nr: 'NR-06', 
-        projetos: Math.floor(Math.random() * 30) + 60, 
-        aprovados: function() { return Math.floor(this.projetos * (0.89 + Math.random() * 0.08)) },
-        taxa: function() { return Math.round((this.aprovados() / this.projetos) * 100 * 10) / 10 }
-      },
-      { 
-        nr: 'NR-17', 
-        projetos: Math.floor(Math.random() * 40) + 70, 
-        aprovados: function() { return Math.floor(this.projetos * (0.91 + Math.random() * 0.07)) },
-        taxa: function() { return Math.round((this.aprovados() / this.projetos) * 100 * 10) / 10 }
-      }
-    ].map(nr => ({
-      nr: nr.nr,
-      projetos: nr.projetos,
-      aprovados: nr.aprovados(),
-      taxa: nr.taxa()
-    })),
-    engagementData: [
-      { periodo: 'Jan', usuarios: 1245, sessoes: 3467, tempo: 18.5 },
-      { periodo: 'Fev', usuarios: 1389, sessoes: 4123, tempo: 22.1 },
-      { periodo: 'Mar', usuarios: 1567, sessoes: 4892, tempo: 25.8 },
-      { periodo: 'Abr', usuarios: 1834, sessoes: 5634, tempo: 28.3 },
-      { periodo: 'Mai', usuarios: 2156, sessoes: 6789, tempo: 31.2 },
-      { periodo: 'Jun', usuarios: 2398, sessoes: 7456, tempo: 33.8 }
-    ],
+    projectsData: Array.from(projectsPerDay.values()),
+    complianceData,
+    engagementData: monthlyEngagement,
     contentData: [
-      { 
-        tipo: 'Templates NR', 
-        total: 89, 
-        views: Math.floor(Math.random() * 5000) + 15000, 
-        downloads: Math.floor(Math.random() * 2000) + 4000 
+      {
+        tipo: 'Templates NR',
+        total: templateCount,
+        views: templateViews,
+        downloads: templateDownloads
       },
-      { 
-        tipo: 'Vídeos Produzidos', 
-        total: 234, 
-        views: Math.floor(Math.random() * 10000) + 40000, 
-        downloads: Math.floor(Math.random() * 5000) + 10000 
+      {
+        tipo: 'Vídeos Produzidos',
+        total: completedRenders,
+        views: videoViews,
+        downloads: videoDownloads
       },
-      { 
-        tipo: 'Áudios TTS', 
-        total: 456, 
-        views: Math.floor(Math.random() * 8000) + 20000, 
-        downloads: Math.floor(Math.random() * 3000) + 8000 
+      {
+        tipo: 'Áudios TTS',
+        total: ttsEvents,
+        views: ttsEvents,
+        downloads: countEvents(typedEvents, (eventType) => eventType.includes('tts') && eventType.includes('download'))
       },
-      { 
-        tipo: 'Avatares 3D', 
-        total: 67, 
-        views: Math.floor(Math.random() * 15000) + 30000, 
-        downloads: Math.floor(Math.random() * 2000) + 5000 
+      {
+        tipo: 'Avatares 3D',
+        total: avatarJobs,
+        views: avatarViews,
+        downloads: avatarDownloads
       }
     ]
-  }
+  };
 }
 
 export async function GET(request: NextRequest) {
@@ -103,12 +303,16 @@ export async function GET(request: NextRequest) {
     const rateLimitBlocked = await applyRateLimit(request, 'v1-analytics-business-intelligence-get', 60);
     if (rateLimitBlocked) return rateLimitBlocked;
 
-    // In production, this would fetch real data from database
-    const analyticsData = generateAnalyticsData()
-    
+    const session = await getServerAuth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+    }
+
+    const data = await generateBusinessIntelligenceData(session.user.id, 30);
+
     return NextResponse.json({
       success: true,
-      data: analyticsData,
+      data,
       timestamp: new Date().toISOString()
     })
   } catch (error) {
@@ -127,26 +331,45 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { action, data } = await request.json()
-    
+    const blocked = await applyRateLimit(request, 'v1-analytics-business-intelligence-post', 20);
+    if (blocked) return blocked;
+
+    const { action } = await request.json()
+
     switch (action) {
-      case 'refresh':
-        // Trigger data refresh
-        const refreshedData = generateAnalyticsData()
+      case 'refresh': {
+        const refreshedData = await generateBusinessIntelligenceData(session.user.id, 30);
+        await prisma.analytics_events.create({
+          data: {
+            userId: session.user.id,
+            eventType: 'business_intelligence_refresh',
+            eventData: { source: 'api/v1/analytics/business-intelligence' }
+          }
+        }).catch(() => {});
+
         return NextResponse.json({
           success: true,
           message: 'Data refreshed successfully',
           data: refreshedData
         })
-        
-      case 'export':
-        // Export analytics report
+      }
+
+      case 'export': {
+        await prisma.analytics_events.create({
+          data: {
+            userId: session.user.id,
+            eventType: 'business_intelligence_export_requested',
+            eventData: { source: 'api/v1/analytics/business-intelligence' }
+          }
+        }).catch(() => {});
+
         return NextResponse.json({
           success: true,
           message: 'Report export initiated',
-          downloadUrl: '/api/v1/analytics/export/latest'
+          downloadUrl: '/api/analytics/export?report=business-intelligence'
         })
-        
+      }
+
       default:
         return NextResponse.json(
           { success: false, error: 'Invalid action' },
@@ -161,4 +384,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-
