@@ -5,6 +5,7 @@ const { compilerOptions } = require('./tsconfig.json');
 module.exports = {
   rootDir: '.',
   testEnvironment: 'jsdom',
+  cacheDirectory: '<rootDir>/../tmp/jest-cache',
 
   transform: {
     '^.+\\.(ts|tsx)$': ['ts-jest', {
