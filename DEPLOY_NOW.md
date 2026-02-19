@@ -28,6 +28,7 @@ git push origin main
 ## Teste Pós-Deploy (OBRIGATÓRIO)
 
 ### 1. Console do Browser
+
 ```
 1. Abra: https://cursostecno.com.br
 2. Pressione F12 → aba Console
@@ -36,6 +37,7 @@ git push origin main
 ```
 
 ### 2. Network Tab
+
 ```
 1. F12 → aba Network
 2. Filtre por: CSS, JS
@@ -46,7 +48,9 @@ git push origin main
 ```
 
 ### 3. Navegação
+
 Teste estas páginas:
+
 - ✅ Homepage: https://cursostecno.com.br/
 - ✅ Login: https://cursostecno.com.br/login
 - ✅ Dashboard: https://cursostecno.com.br/studio-pro
@@ -57,18 +61,21 @@ Teste estas páginas:
 ## Se Push Falhar
 
 ### Opção 1: Resolver Conflitos
+
 ```bash
 git pull origin main --rebase
 git push origin main
 ```
 
 ### Opção 2: Deploy via Vercel CLI
+
 ```bash
 cd estudio_ia_videos
 vercel --prod
 ```
 
 ### Opção 3: Force Redeploy no Dashboard
+
 ```
 1. Acesse: https://vercel.com/seu-time/cursostecno/deployments
 2. Clique no último deployment
@@ -95,11 +102,13 @@ git push origin main --force
 ## Monitoramento (Primeiras 24h)
 
 ### Imediato (15 minutos):
+
 - [ ] Console browser: sem erros MIME
 - [ ] Network tab: todos assets 200
 - [ ] Páginas principais carregando
 
 ### Contínuo (24h):
+
 - [ ] Taxa de erro 4xx/5xx: normalizada
 - [ ] Sentry: zero novos erros MIME
 - [ ] Vercel Analytics: taxa de rejeição normal
@@ -111,7 +120,7 @@ git push origin main --force
 
 ```
 faa87188 - style: format deploy guide
-e62c5b9c - docs: guia completo de deploy  
+e62c5b9c - docs: guia completo de deploy
 1a4ad69a - docs: validacao build test PASSOU
 44bc50ad - fix: hotfix critico MIME type
 ff05a6c0 - fix(critical): apply MIME type hotfix to production
@@ -123,9 +132,11 @@ ff05a6c0 - fix(critical): apply MIME type hotfix to production
 ## Arquivos Modificados
 
 **Crítico:**
+
 - `estudio_ia_videos/src/middleware.ts` - Correções do matcher e early return
 
 **Documentação:**
+
 - `docs/hotfixes/2026-02-18-fix-mime-type-errors.md`
 - `docs/hotfixes/DEPLOY_GUIDE_2026-02-18.md`
 - `scripts/deploy-hotfix-mime.sh`
@@ -136,6 +147,7 @@ ff05a6c0 - fix(critical): apply MIME type hotfix to production
 ## Contatos de Emergência
 
 Se houver problemas críticos pós-deploy:
+
 - **Vercel Dashboard**: https://vercel.com/cursostecno
 - **Sentry**: https://sentry.io/cursostecno
 - **Status Page**: Criar se não existir
@@ -146,4 +158,3 @@ Se houver problemas críticos pós-deploy:
 **Data**: 2026-02-18  
 **Urgência**: 🔴 CRÍTICA - Aplicação quebrada em produção  
 **Ação**: Executar deploy IMEDIATAMENTE após validação
-

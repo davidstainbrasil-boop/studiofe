@@ -2,118 +2,480 @@
   "[typescript]": {
     "editor.defaultFormatter": "denoland.vscode-deno"
   },
-  "chat.agent.maxRequests": 300,
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[css]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+
+  // ═══════════════════════════════════════════════════
+  // 🚀 TURBO MODE — COPILOT AGENT MÁXIMA AUTONOMIA
+  // ═══════════════════════════════════════════════════
+
+  // --- Agent Core ---
+  "chat.agent.maxRequests": 500,
+  "github.copilot.chat.agent.autoFix": true,
+  "github.copilot.chat.copilotMemory.enabled": true,
+  "github.copilot.chat.codesearch.enabled": true,
+  "github.copilot.chat.switchAgent.enabled": true,
+  "github.copilot.chat.anthropic.contextEditing.enabled": true,
+
+  // --- Agent Models — Claude para plan + implement ---
+  "github.copilot.chat.planAgent.model": "claude-sonnet-4",
+  "github.copilot.chat.implementAgent.model": "claude-sonnet-4",
+
+  // --- Thinking / Reasoning — Máximo ---
+  "github.copilot.chat.anthropic.thinking.budgetTokens": 32000,
+  "github.copilot.chat.responsesApi.reasoningEffort": "high",
+  "github.copilot.chat.responsesApi.reasoningSummary": "detailed",
+
+  // --- GitHub MCP Server — Full access ---
+  "github.copilot.chat.githubMcpServer.enabled": true,
+  "github.copilot.chat.githubMcpServer.lockdown": false,
+  "github.copilot.chat.githubMcpServer.readonly": false,
+
+  // --- Language Context — TypeScript profundo ---
+  "github.copilot.chat.languageContext.fix.typescript.enabled": true,
+  "github.copilot.chat.languageContext.inline.typescript.enabled": true,
+  "github.copilot.chat.languageContext.typescript.enabled": true,
+  "github.copilot.chat.languageContext.typescript.includeDocumentation": true,
+  "github.copilot.chat.languageContext.typescript.items": "double",
+
+  // --- Code Lens & Tests ---
+  "github.copilot.chat.generateTests.codeLens": true,
+  "github.copilot.chat.setupTests.enabled": true,
+  "typescript.implementationsCodeLens.enabled": true,
+  "typescript.referencesCodeLens.enabled": true,
+
+  // --- Reviews & Suggestions ---
+  "github.copilot.chat.reviewAgent.enabled": true,
+  "github.copilot.chat.reviewSelection.enabled": true,
+
+  // --- Next Edit Suggestions — Tudo ativado ---
+  "github.copilot.nextEditSuggestions.enabled": true,
+  "github.copilot.nextEditSuggestions.extendedRange": true,
+  "github.copilot.nextEditSuggestions.fixes": true,
+
+  // --- Rename ---
+  "github.copilot.renameSuggestions.triggerAutomatically": true,
+
+  // --- Inline Chat / Completions ---
+  "github.copilot.enable": {
+    "*": true,
+    "plaintext": true,
+    "markdown": true,
+    "scminput": true,
+    "yaml": true,
+    "json": true,
+    "jsonc": true,
+    "dockercompose": true,
+    "dockerfile": true,
+    "sql": true,
+    "shellscript": true
+  },
+
+  // --- Instructions & Custom Agents ---
+  "github.copilot.chat.codeGeneration.useInstructionFiles": true,
+  "github.copilot.chat.customInstructionsInSystemMessage": true,
+  "github.copilot.chat.organizationInstructions.enabled": true,
+  "github.copilot.chat.organizationCustomAgents.enabled": true,
+  "github.copilot.chat.useProjectTemplates": true,
+
+  // --- Commit Message ---
+  "github.copilot.chat.commitMessageGeneration.instructions": [
+    {
+      "text": "Use conventional commits format (feat:, fix:, refactor:, chore:, docs:, test:, perf:, ci:). Message in English. Body with bullet points if needed. Max 72 chars for subject line. Reference issue number if available."
+    }
+  ],
+
+  // --- Summarize / History ---
+  "github.copilot.chat.summarizeAgentConversationHistory": true,
+
+  // --- Debug ---
+  "github.copilot.chat.copilotDebugCommand.enabled": true,
+
+  // --- Image Upload ---
+  "github.copilot.chat.imageUpload.enabled": true,
+
+  // --- Background & Cloud Agents ---
+  "github.copilot.chat.agent.backgroundAgent.enabled": true,
+  "github.copilot.chat.agent.claudeAgent.enabled": true,
+  "github.copilot.chat.agent.cloudAgent.enabled": true,
+  "github.copilot.chat.agent.currentEditorContext.enabled": true,
+
+  // --- Anthropic Specific ---
+  "github.copilot.chat.anthropic.useMessagesApi": true,
+  "github.copilot.chat.anthropic.toolSearchTool.enabled": true,
+
+  // --- Websearch — Localização brasileira ---
+  "github.copilot.chat.anthropic.tools.websearch.userLocation": "{\"city\":\"Araraquara\",\"region\":\"São Paulo\",\"country\":\"BR\",\"timezone\":\"America/Sao_Paulo\"}",
+
+  // --- Notebook (se usar Jupyter) ---
+  "github.copilot.chat.notebook.enhancedNextEditSuggestions": true,
+  "github.copilot.chat.newWorkspaceCreation.enabled": true,
+
+  // ═══════════════════════════════════════════════════
+  // 🔐 TERMINAL AUTO-APPROVE — Autonomia com segurança
+  // ═══════════════════════════════════════════════════
+
+  "chat.tools.autoApprove": true,
+  "chat.tools.terminal.autoApproveWorkspaceNpmScripts": true,
+  "chat.tools.terminal.autoApprove": {
+    // --- Bloqueios de segurança (regex) ---
+    "/\\(.+\\)/s": false,
+    "/\\{.+\\}/s": false,
+    "/`.+`/s": false,
+    "/^column\\b.*-c\\s+[0-9]{4,}/": false,
+    "/^date\\b.*(-s|--set)\\b/": false,
+    "/^find\\b.*-(delete|exec|execdir|fprint|fprintf|fls|ok|okdir)\\b/": false,
+    "/^git branch\\b.*-(d|D|m|M|-delete|-force)\\b/": false,
+    "/^git\\s+(push|reset|revert|clean|force)\\b/": false,
+    "/^sort\\b.*-(o|S)\\b/": false,
+    "/^tree\\b.*-o\\b/": false,
+    "/^sudo\\b/": false,
+
+    // --- PowerShell (auto-approve) ---
+    "/^Compare-[a-z0-9]/i": true,
+    "/^Format-[a-z0-9]/i": true,
+    "/^Measure-[a-z0-9]/i": true,
+    "/^Select-[a-z0-9]/i": true,
+    "/^Sort-[a-z0-9]/i": true,
+    "Get-ChildItem": true,
+    "Get-Content": true,
+    "Get-Date": true,
+    "Get-Location": true,
+    "Get-Random": true,
+    "Join-Path": true,
+    "Split-Path": true,
+    "Start-Sleep": true,
+    "Where-Object": true,
+    "Write-Host": true,
+    "Write-Output": true,
+    "Remove": true,
+    "Remove-Item": true,
+
+    // --- PowerShell (bloqueados) ---
+    "Invoke-Expression": false,
+    "Invoke-RestMethod": false,
+    "Invoke-WebRequest": false,
+    "Set-Acl": false,
+    "Set-ItemProperty": false,
+    "Stop-Process": false,
+    "iex": false,
+    "irm": false,
+    "iwr": false,
+
+    // --- Linux/Unix — Read-only & Dev tools (auto-approve) ---
+    "awk": true,
+    "basename": true,
+    "cat": true,
+    "cd": true,
+    "cmp": true,
+    "column": true,
+    "cut": true,
+    "date": true,
+    "df": true,
+    "diff": true,
+    "dirname": true,
+    "du": true,
+    "echo": true,
+    "env": true,
+    "file": true,
+    "find": true,
+    "findstr": true,
+    "grep": true,
+    "head": true,
+    "jq": true,
+    "less": true,
+    "ln": true,
+    "ls": true,
+    "md5sum": true,
+    "mkdir": true,
+    "more": true,
+    "mv": true,
+    "pwd": true,
+    "readlink": true,
+    "realpath": true,
+    "sed": true,
+    "seq": true,
+    "sha256sum": true,
+    "sleep": true,
+    "sort": true,
+    "stat": true,
+    "tail": true,
+    "tee": true,
+    "touch": true,
+    "tr": true,
+    "tree": true,
+    "uniq": true,
+    "wc": true,
+    "which": true,
+    "xargs": true,
+    "yes": true,
+
+    // --- Git (safe operations) ---
+    "git add": true,
+    "git branch": true,
+    "git checkout": true,
+    "git commit": true,
+    "git diff": true,
+    "git fetch": true,
+    "git grep": true,
+    "git log": true,
+    "git merge": true,
+    "git pull": true,
+    "git remote": true,
+    "git show": true,
+    "git stash": true,
+    "git status": true,
+    "git switch": true,
+    "git tag": true,
+
+    // --- Dev tools (auto-approve) ---
+    "node": true,
+    "npm": true,
+    "npx": true,
+    "pnpm": true,
+    "yarn": true,
+    "tsc": true,
+    "tsx": true,
+    "prisma": true,
+    "python": true,
+    "python3": true,
+    "pip": true,
+    "pip3": true,
+    "jest": true,
+    "vitest": true,
+    "playwright": true,
+    "docker": true,
+    "docker-compose": true,
+    "redis-cli": true,
+    "ffmpeg": true,
+    "ffprobe": true,
+    "supabase": true,
+    "curl": true,
+    "wget": true,
+    "tar": true,
+    "unzip": true,
+    "gzip": true,
+    "cp": true,
+
+    // --- Bloqueados (destrutivos) ---
+    "chmod": false,
+    "chown": false,
+    "dd": false,
+    "del": false,
+    "erase": false,
+    "eval": false,
+    "kill": false,
+    "ps": false,
+    "rd": false,
+    "ri": false,
+    "rm": false,
+    "rmdir": false,
+    "sp": false,
+    "spps": false,
+    "taskkill": false,
+    "taskkill.exe": false,
+    "top": false
+  },
+
+  // ═══════════════════════════════════════════════════
+  // 🛡️ MCP SERVERS
+  // ═══════════════════════════════════════════════════
+
   "chat.mcp.discovery.enabled": {
     "claude-desktop": true,
     "cursor-global": true,
     "cursor-workspace": true,
     "windsurf": true
   },
-  "chat.tools.terminal.autoApprove": {
-    "/\\(.+\\)/s": {
-      "approve": false,
-      "matchCommandLine": true
-    },
-    "/\\{.+\\}/s": {
-      "approve": false,
-      "matchCommandLine": true
-    },
-    "/^Compare-[a-z0-9]/i": true,
-    "/^Format-[a-z0-9]/i": true,
-    "/^Measure-[a-z0-9]/i": true,
-    "/^Select-[a-z0-9]/i": true,
-    "/^Sort-[a-z0-9]/i": true,
-    "/^column\\b.*-c\\s+[0-9]{4,}/": false,
-    "/^date\\b.*(-s|--set)\\b/": false,
-    "/^find\\b.*-(delete|exec|execdir|fprint|fprintf|fls|ok|okdir)\\b/": false,
-    "/^git branch\\b.*-(d|D|m|M|-delete|-force)\\b/": false,
-    "/^sort\\b.*-(o|S)\\b/": false,
-    "/^tree\\b.*-o\\b/": false,
-    "/`.+`/s": {
-      "approve": false,
-      "matchCommandLine": true
-    },
-    "Get-ChildItem": true,
-    "Get-Content": true,
-    "Get-Date": true,
-    "Get-Location": true,
-    "Get-Random": true,
-    "Invoke-Expression": false,
-    "Invoke-RestMethod": false,
-    "Invoke-WebRequest": false,
-    "Join-Path": true,
-    "Remove": true,
-    "Remove-Item": true,
-    "Set-Acl": false,
-    "Set-ItemProperty": false,
-    "Split-Path": true,
-    "Start-Sleep": true,
-    "Stop-Process": false,
-    "Where-Object": true,
-    "Write-Host": true,
-    "Write-Output": true,
-    "basename": true,
-    "cat": true,
-    "cd": true,
-    "chmod": false,
-    "chown": false,
-    "cmp": true,
-    "column": true,
-    "curl": false,
-    "cut": true,
-    "date": true,
-    "dd": false,
-    "del": false,
-    "df": true,
-    "dirname": true,
-    "du": true,
-    "echo": true,
-    "erase": false,
-    "eval": false,
-    "file": true,
-    "find": true,
-    "findstr": true,
-    "git branch": true,
-    "git diff": true,
-    "git grep": true,
-    "git log": true,
-    "git show": true,
-    "git status": true,
-    "grep": true,
-    "head": true,
-    "iex": false,
-    "irm": false,
-    "iwr": false,
-    "jq": false,
-    "kill": false,
-    "ls": true,
-    "ps": false,
-    "pwd": true,
-    "rd": false,
-    "readlink": true,
-    "realpath": true,
-    "ri": false,
-    "rm": false,
-    "rmdir": false,
-    "sleep": true,
-    "sort": true,
-    "sp": false,
-    "spps": false,
-    "stat": true,
-    "tail": true,
-    "taskkill": false,
-    "taskkill.exe": false,
-    "top": false,
-    "tr": true,
-    "tree": true,
-    "wc": true,
-    "wget": false,
-    "which": true,
-    "xargs": false
+  "mcp": {
+    "inputs": [
+      {
+        "id": "codacy_token",
+        "type": "promptString",
+        "description": "Codacy Account Token",
+        "password": true
+      },
+      {
+        "id": "testsprite_token",
+        "type": "promptString",
+        "description": "TestSprite API Key",
+        "password": true
+      }
+    ],
+    "servers": {
+      // ── Qualidade & Segurança ──
+      "codacy": {
+        "command": "npx",
+        "args": ["-y", "@codacy/codacy-mcp@latest"],
+        "env": {
+          "CODACY_ACCOUNT_TOKEN": "${input:codacy_token}",
+          "HOME": "/root",
+          "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+        }
+      },
+
+      // ── Testes E2E ──
+      "playwright": {
+        "command": "npx",
+        "args": ["@playwright/mcp@latest", "--headless"],
+        "env": {}
+      },
+
+      // ── QA Automatizado ──
+      "testsprite": {
+        "command": "npx",
+        "args": ["-y", "testsprite-mcp@latest"],
+        "env": {
+          "TESTSPRITE_API_KEY": "${input:testsprite_token}"
+        }
+      },
+
+      // ── Supabase (Auth + Storage + DB + Realtime) ──
+      "supabase": {
+        "command": "npx",
+        "args": ["-y", "@supabase/mcp-server-supabase@latest"],
+        "env": {
+          "SUPABASE_ACCESS_TOKEN": "sb_secret_J5S2Xd1P8XrsxRxY-0WobA_M8t_Yafx"
+        }
+      },
+
+      // ── Stripe (Billing, Subscriptions, Webhooks) ──
+      "stripe": {
+        "command": "npx",
+        "args": ["-y", "@stripe/mcp@latest"],
+        "env": {
+          "STRIPE_SECRET_KEY": "sk_test_51StsqK8BDjjItvcyhJg1hrnsMqPkE7ovQF9W34pBd0CAZZ54S5N52SVefu6Xq6X2Govdz7PiKYjk8FpXWdDh8eBM00nkrmssd3"
+        }
+      },
+
+      // ── Sentry (Error Tracking, Performance) ──
+      "sentry": {
+        "command": "npx",
+        "args": ["-y", "@sentry/mcp-server@latest"],
+        "env": {
+          "SENTRY_AUTH_TOKEN": "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"
+        }
+      },
+
+      // ── Sequential Thinking (Raciocínio complexo) ──
+      "sequential-thinking": {
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
+      },
+
+      // ── Context7 (Documentação atualizada de libs) ──
+      "context7": {
+        "command": "npx",
+        "args": ["-y", "@upstash/context7-mcp@latest"]
+      }
+    }
   },
-  "deno.enablePaths": [
-    "supabase/functions"
+
+  // ═══════════════════════════════════════════════════
+  // ⚡ EDITOR — Performance & DX
+  // ═══════════════════════════════════════════════════
+
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": false,
+  "editor.linkedEditing": true,
+  "editor.stickyScroll.enabled": true,
+  "editor.bracketPairColorization.enabled": true,
+  "editor.guides.bracketPairs": "active",
+  "editor.inlayHints.enabled": "onUnlessPressed",
+  "editor.minimap.enabled": true,
+  "editor.wordWrap": "on",
+  "editor.tabSize": 2,
+  "editor.suggestSelection": "first",
+  "editor.quickSuggestions": {
+    "strings": true,
+    "comments": false,
+    "other": true
+  },
+
+  // ═══════════════════════════════════════════════════
+  // 📁 FILES — Exclusões para performance
+  // ═══════════════════════════════════════════════════
+
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 1000,
+  "files.exclude": {
+    "**/.git": true,
+    "**/.next": true,
+    "**/node_modules": true,
+    "**/_archived": true,
+    "**/storage": true,
+    "**/tmp": true,
+    "**/temp": true,
+    "**/uploads": true,
+    "**/.turbo": true,
+    "**/.cache": true
+  },
+
+  // ═══════════════════════════════════════════════════
+  // 🔍 SEARCH — Respeitar gitignore, excluir ruído
+  // ═══════════════════════════════════════════════════
+
+  "search.exclude": {
+    "**/.next": true,
+    "**/node_modules": true,
+    "**/_archived": true,
+    "**/storage": true,
+    "**/tmp": true,
+    "**/temp": true,
+    "**/uploads": true,
+    "**/build-output*.txt": true,
+    "**/logs": true,
+    "**/.turbo": true,
+    "**/coverage": true,
+    "**/*.min.js": true,
+    "**/*.map": true
+  },
+  "search.useIgnoreFiles": true,
+  "search.followSymlinks": false,
+
+  // ═══════════════════════════════════════════════════
+  // 🧪 TESTING
+  // ═══════════════════════════════════════════════════
+
+  "testing.automaticallyOpenPeekView": "failureInVisibleDocument",
+  "testing.gutterEnabled": true,
+
+  // ═══════════════════════════════════════════════════
+  // 🔧 TYPESCRIPT
+  // ═══════════════════════════════════════════════════
+
+  "typescript.preferences.importModuleSpecifier": "non-relative",
+  "typescript.suggest.autoImports": true,
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "typescript.tsdk": "estudio_ia_videos/node_modules/typescript/lib",
+
+  // ═══════════════════════════════════════════════════
+  // 🎨 TAILWIND
+  // ═══════════════════════════════════════════════════
+
+  "tailwindCSS.experimental.classRegex": [
+    ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],
+    ["cx\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"]
   ],
+
+  // ═══════════════════════════════════════════════════
+  // 🐳 DENO (Supabase Functions only)
+  // ═══════════════════════════════════════════════════
+
+  "deno.enablePaths": ["supabase/functions"],
   "deno.lint": true,
   "deno.unstable": [
     "bare-node-builtins",
@@ -130,18 +492,36 @@
     "http",
     "net"
   ],
+
+  // ═══════════════════════════════════════════════════
+  // 📊 GIT
+  // ═══════════════════════════════════════════════════
+
   "git.ignoreLimitWarning": true,
-  "mcp": {
-    "servers": {
-      "playwright": {
-        "args": [
-          "@playwright/mcp@latest",
-          "--headless"
-        ],
-        "command": "npx",
-        "env": {}
-      }
-    }
-  },
-  "prisma.pinToPrisma6": true
+  "git.autofetch": true,
+  "git.enableSmartCommit": true,
+  "git.confirmSync": false,
+  "scm.defaultViewMode": "tree",
+
+  // ═══════════════════════════════════════════════════
+  // 🖥️ TERMINAL
+  // ═══════════════════════════════════════════════════
+
+  "terminal.integrated.scrollback": 10000,
+  "terminal.integrated.enablePersistentSessions": true,
+
+  // ═══════════════════════════════════════════════════
+  // 🔇 TELEMETRY OFF
+  // ═══════════════════════════════════════════════════
+
+  "telemetry.telemetryLevel": "off",
+  "prisma.pinToPrisma6": true,
+
+  // ═══════════════════════════════════════════════════
+  // 🧩 EXPLORER
+  // ═══════════════════════════════════════════════════
+
+  "explorer.compactFolders": true,
+  "explorer.confirmDelete": false,
+  "explorer.confirmDragAndDrop": false
 }
