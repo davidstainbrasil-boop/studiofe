@@ -127,17 +127,21 @@ export class WebhookSystem {
           const webhook: Webhook = {
             id: record.id,
             url: record.url,
-            events: record.events,
+            events: (record.events || []) as WebhookEvent[],
             secret: record.secret,
             active: record.active,
-            description: record.description || undefined,
-            headers: record.headers || undefined,
-            retryPolicy: record.retry_policy,
-            rateLimiting: record.rate_limiting || undefined,
-            createdAt: new Date(record.created_at),
-            updatedAt: new Date(record.updated_at),
-            lastTriggeredAt: record.last_triggered_at
-              ? new Date(record.last_triggered_at)
+            description: (record as any).description || undefined,
+            headers: (record as any).headers || undefined,
+            retryPolicy: (record as any).retry_policy || {
+              maxRetries: 3,
+              retryDelay: 5000,
+              exponentialBackoff: true,
+            },
+            rateLimiting: (record as any).rate_limiting || undefined,
+            createdAt: new Date(record.created_at || Date.now()),
+            updatedAt: new Date(record.updated_at || Date.now()),
+            lastTriggeredAt: (record as any).last_triggered_at
+              ? new Date((record as any).last_triggered_at)
               : undefined,
             totalDeliveries: record.total_deliveries,
             successfulDeliveries: record.successful_deliveries,
@@ -604,24 +608,79 @@ export class WebhookSystem {
    * Save webhook to database
    */
   private async saveWebhook(webhook: Webhook): Promise<void> {
-    // TODO: Implementar persistência no banco de dados
-    logger.info('[WebhookSystem] Simulating save webhook:', webhook.id);
+    const webhookData: any = {
+      id: webhook.id,
+      url: webhook.url,
+      events: webhook.events,
+      secret: webhook.secret,
+      active: webhook.active,
+      description: webhook.description,
+      headers: webhook.headers,
+      retry_policy: webhook.retryPolicy,
+      rate_limiting: webhook.rateLimiting,
+      created_at: webhook.createdAt.toISOString(),
+      updated_at: webhook.updatedAt.toISOString(),
+      last_triggered_at: webhook.lastTriggeredAt?.toISOString(),
+      total_deliveries: webhook.totalDeliveries,
+      successful_deliveries: webhook.successfulDeliveries,
+      failed_deliveries: webhook.failedDeliveries,
+    };
+
+    const { data, error } = await supabaseAdmin
+      .from('webhooks')
+      .upsert(webhookData, { onConflict: 'id' })
+      .select('id')
+      .single();
+
+    if (error) {
+      logger.error(`[WebhookSystem] Failed to save webhook ${webhook.id}`, {
+        error: error.message,
+      });
+    } else {
+      logger.info(`[WebhookSystem] Successfully saved webhook ${data.id}`);
+    }
   }
 
   /**
    * Remove webhook from database
    */
   private async removeWebhook(webhookId: string): Promise<void> {
-    // TODO: Implementar remoção do banco de dados
-    logger.info('[WebhookSystem] Simulating remove webhook:', webhookId);
+    const { error } = await supabaseAdmin.from('webhooks').delete().match({ id: webhookId });
+
+    if (error) {
+      logger.error(`[WebhookSystem] Failed to remove webhook ${webhookId}`, {
+        error: error.message,
+      });
+    } else {
+      logger.info(`[WebhookSystem] Successfully removed webhook ${webhookId}`);
+    }
   }
 
   /**
    * Save delivery to database
    */
   private async saveDelivery(delivery: WebhookDelivery): Promise<void> {
-    // TODO: Implementar persistência no banco de dados
-    logger.info('[WebhookSystem] Simulating save delivery:', delivery.id);
+    const deliveryData: any = {
+      id: delivery.id,
+      webhook_id: delivery.webhookId,
+      event: delivery.event,
+      payload: delivery.payload as any, // Cast to any to match Supabase's Json type
+      attempt: delivery.attempt,
+      status: delivery.status,
+      status_code: delivery.statusCode,
+      response: delivery.response,
+      error: delivery.error,
+      sent_at: delivery.sentAt?.toISOString(),
+      response_time: delivery.responseTime,
+    };
+
+    const { error } = await supabaseAdmin.from('webhook_deliveries').insert(deliveryData);
+
+    if (error) {
+      logger.error(`[WebhookSystem] Failed to save delivery ${delivery.id}`, {
+        error: error.message,
+      });
+    }
   }
 }
 
