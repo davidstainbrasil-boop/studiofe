@@ -1,4 +1,4 @@
-c/**
+/**
  * 🎬 Studio State Snapshot API
  * POST: Criar snapshot real do estado atual
  * GET: Listar snapshots reais do projeto
@@ -251,4 +251,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-

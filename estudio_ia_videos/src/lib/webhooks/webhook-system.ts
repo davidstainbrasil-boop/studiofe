@@ -3,36 +3,37 @@
  * Sistema completo de webhooks para notificações de eventos em tempo real
  */
 
-import crypto from 'crypto'
-import { logger } from '@/lib/logger'
+import crypto from 'crypto';
+import { logger } from '@/lib/logger';
+import { supabaseAdmin } from '@/lib/supabase/server';
 
 // ============================================================================
 // TYPES & INTERFACES
 // ============================================================================
 
 export interface Webhook {
-  id: string
-  url: string
-  events: WebhookEvent[]
-  secret: string
-  active: boolean
-  description?: string
-  headers?: Record<string, string>
+  id: string;
+  url: string;
+  events: WebhookEvent[];
+  secret: string;
+  active: boolean;
+  description?: string;
+  headers?: Record<string, string>;
   retryPolicy: {
-    maxRetries: number
-    retryDelay: number // milliseconds
-    exponentialBackoff: boolean
-  }
+    maxRetries: number;
+    retryDelay: number; // milliseconds
+    exponentialBackoff: boolean;
+  };
   rateLimiting?: {
-    maxRequests: number
-    windowMs: number
-  }
-  createdAt: Date
-  updatedAt: Date
-  lastTriggeredAt?: Date
-  totalDeliveries: number
-  successfulDeliveries: number
-  failedDeliveries: number
+    maxRequests: number;
+    windowMs: number;
+  };
+  createdAt: Date;
+  updatedAt: Date;
+  lastTriggeredAt?: Date;
+  totalDeliveries: number;
+  successfulDeliveries: number;
+  failedDeliveries: number;
 }
 
 export type WebhookEvent =
@@ -54,42 +55,42 @@ export type WebhookEvent =
   | 'payment.failed'
   | 'analytics.milestone'
   | 'quiz.completed'
-  | 'interaction.tracked'
+  | 'interaction.tracked';
 
 export interface WebhookPayload {
-  id: string
-  event: WebhookEvent
-  timestamp: Date
-  data: any
+  id: string;
+  event: WebhookEvent;
+  timestamp: Date;
+  data: any;
   metadata?: {
-    userId?: string
-    sessionId?: string
-    ip?: string
-  }
+    userId?: string;
+    sessionId?: string;
+    ip?: string;
+  };
 }
 
 export interface WebhookDelivery {
-  id: string
-  webhookId: string
-  event: WebhookEvent
-  payload: WebhookPayload
-  attempt: number
-  status: 'pending' | 'sent' | 'failed' | 'retrying'
-  statusCode?: number
-  response?: string
-  error?: string
-  sentAt?: Date
-  responseTime?: number // milliseconds
+  id: string;
+  webhookId: string;
+  event: WebhookEvent;
+  payload: WebhookPayload;
+  attempt: number;
+  status: 'pending' | 'sent' | 'failed' | 'retrying';
+  statusCode?: number;
+  response?: string;
+  error?: string;
+  sentAt?: Date;
+  responseTime?: number; // milliseconds
 }
 
 export interface WebhookSubscription {
-  webhookId: string
-  events: WebhookEvent[]
+  webhookId: string;
+  events: WebhookEvent[];
   filters?: {
-    userId?: string
-    videoId?: string
-    tags?: string[]
-  }
+    userId?: string;
+    videoId?: string;
+    tags?: string[];
+  };
 }
 
 // ============================================================================
@@ -97,13 +98,58 @@ export interface WebhookSubscription {
 // ============================================================================
 
 export class WebhookSystem {
-  private webhooks: Map<string, Webhook> = new Map()
-  private deliveries: Map<string, WebhookDelivery> = new Map()
-  private deliveryQueue: WebhookDelivery[] = []
+  private webhooks: Map<string, Webhook> = new Map();
+  private deliveries: Map<string, WebhookDelivery> = new Map();
+  private deliveryQueue: WebhookDelivery[] = [];
 
   constructor() {
-    // Start delivery worker
-    this.startDeliveryWorker()
+    this.initialize();
+  }
+
+  private async initialize(): Promise<void> {
+    await this.loadWebhooksFromDB();
+    this.startDeliveryWorker();
+  }
+
+  private async loadWebhooksFromDB(): Promise<void> {
+    try {
+      const { data, error } = await supabaseAdmin.from('webhooks').select('*');
+
+      if (error) {
+        logger.error('[WebhookSystem] Failed to load webhooks from DB:', {
+          error: error.message,
+        });
+        return;
+      }
+
+      if (data) {
+        for (const record of data) {
+          const webhook: Webhook = {
+            id: record.id,
+            url: record.url,
+            events: record.events,
+            secret: record.secret,
+            active: record.active,
+            description: record.description || undefined,
+            headers: record.headers || undefined,
+            retryPolicy: record.retry_policy,
+            rateLimiting: record.rate_limiting || undefined,
+            createdAt: new Date(record.created_at),
+            updatedAt: new Date(record.updated_at),
+            lastTriggeredAt: record.last_triggered_at
+              ? new Date(record.last_triggered_at)
+              : undefined,
+            totalDeliveries: record.total_deliveries,
+            successfulDeliveries: record.successful_deliveries,
+            failedDeliveries: record.failed_deliveries,
+          };
+          this.webhooks.set(webhook.id, webhook);
+        }
+        logger.info(`[WebhookSystem] Loaded ${this.webhooks.size} webhooks from database.`);
+      }
+    } catch (err) {
+      logger.error('[WebhookSystem] Error loading webhooks from DB:', { error: err });
+    }
   }
 
   // ============================================================================
@@ -114,13 +160,13 @@ export class WebhookSystem {
    * Create webhook
    */
   async createWebhook(params: {
-    url: string
-    events: WebhookEvent[]
-    description?: string
-    headers?: Record<string, string>
-    maxRetries?: number
+    url: string;
+    events: WebhookEvent[];
+    description?: string;
+    headers?: Record<string, string>;
+    maxRetries?: number;
   }): Promise<Webhook> {
-    const secret = this.generateSecret()
+    const secret = this.generateSecret();
 
     const webhook: Webhook = {
       id: `webhook-${Date.now()}-${Math.random().toString(36).substring(7)}`,
@@ -133,19 +179,19 @@ export class WebhookSystem {
       retryPolicy: {
         maxRetries: params.maxRetries || 3,
         retryDelay: 5000,
-        exponentialBackoff: true
+        exponentialBackoff: true,
       },
       createdAt: new Date(),
       updatedAt: new Date(),
       totalDeliveries: 0,
       successfulDeliveries: 0,
-      failedDeliveries: 0
-    }
+      failedDeliveries: 0,
+    };
 
-    this.webhooks.set(webhook.id, webhook)
-    await this.saveWebhook(webhook)
+    this.webhooks.set(webhook.id, webhook);
+    await this.saveWebhook(webhook);
 
-    return webhook
+    return webhook;
   }
 
   /**
@@ -153,83 +199,80 @@ export class WebhookSystem {
    */
   async updateWebhook(
     webhookId: string,
-    updates: Partial<Omit<Webhook, 'id' | 'secret' | 'createdAt'>>
+    updates: Partial<Omit<Webhook, 'id' | 'secret' | 'createdAt'>>,
   ): Promise<Webhook> {
-    const webhook = this.webhooks.get(webhookId)
+    const webhook = this.webhooks.get(webhookId);
     if (!webhook) {
-      throw new Error(`Webhook ${webhookId} not found`)
+      throw new Error(`Webhook ${webhookId} not found`);
     }
 
     const updated: Webhook = {
       ...webhook,
       ...updates,
-      updatedAt: new Date()
-    }
+      updatedAt: new Date(),
+    };
 
-    this.webhooks.set(webhookId, updated)
-    await this.saveWebhook(updated)
+    this.webhooks.set(webhookId, updated);
+    await this.saveWebhook(updated);
 
-    return updated
+    return updated;
   }
 
   /**
    * Delete webhook
    */
   async deleteWebhook(webhookId: string): Promise<boolean> {
-    const webhook = this.webhooks.get(webhookId)
+    const webhook = this.webhooks.get(webhookId);
     if (!webhook) {
-      return false
+      return false;
     }
 
-    this.webhooks.delete(webhookId)
-    await this.removeWebhook(webhookId)
+    this.webhooks.delete(webhookId);
+    await this.removeWebhook(webhookId);
 
-    return true
+    return true;
   }
 
   /**
    * List webhooks
    */
-  async listWebhooks(filters?: {
-    active?: boolean
-    event?: WebhookEvent
-  }): Promise<Webhook[]> {
-    let webhooks = Array.from(this.webhooks.values())
+  async listWebhooks(filters?: { active?: boolean; event?: WebhookEvent }): Promise<Webhook[]> {
+    let webhooks = Array.from(this.webhooks.values());
 
     if (filters?.active !== undefined) {
-      webhooks = webhooks.filter(w => w.active === filters.active)
+      webhooks = webhooks.filter((w) => w.active === filters.active);
     }
 
     if (filters?.event) {
-      webhooks = webhooks.filter(w => w.events.includes(filters.event!))
+      webhooks = webhooks.filter((w) => w.events.includes(filters.event!));
     }
 
-    return webhooks
+    return webhooks;
   }
 
   /**
    * Get webhook
    */
   async getWebhook(webhookId: string): Promise<Webhook | null> {
-    return this.webhooks.get(webhookId) || null
+    return this.webhooks.get(webhookId) || null;
   }
 
   /**
    * Regenerate webhook secret
    */
   async regenerateSecret(webhookId: string): Promise<string> {
-    const webhook = this.webhooks.get(webhookId)
+    const webhook = this.webhooks.get(webhookId);
     if (!webhook) {
-      throw new Error(`Webhook ${webhookId} not found`)
+      throw new Error(`Webhook ${webhookId} not found`);
     }
 
-    const newSecret = this.generateSecret()
-    webhook.secret = newSecret
-    webhook.updatedAt = new Date()
+    const newSecret = this.generateSecret();
+    webhook.secret = newSecret;
+    webhook.updatedAt = new Date();
 
-    await this.saveWebhook(webhook)
+    await this.saveWebhook(webhook);
 
-    return newSecret
+    return newSecret;
   }
 
   // ============================================================================
@@ -239,16 +282,19 @@ export class WebhookSystem {
   /**
    * Trigger webhook event
    */
-  async triggerEvent(event: WebhookEvent, data: any, metadata?: WebhookPayload['metadata']): Promise<void> {
+  async triggerEvent(
+    event: WebhookEvent,
+    data: any,
+    metadata?: WebhookPayload['metadata'],
+  ): Promise<void> {
     // Get all webhooks subscribed to this event
-    const subscribedWebhooks = Array.from(this.webhooks.values())
-      .filter(webhook =>
-        webhook.active && webhook.events.includes(event)
-      )
+    const subscribedWebhooks = Array.from(this.webhooks.values()).filter(
+      (webhook) => webhook.active && webhook.events.includes(event),
+    );
 
     if (subscribedWebhooks.length === 0) {
-      logger.info(`[WebhookSystem] No webhooks subscribed to event: ${event}`)
-      return
+      logger.info(`[WebhookSystem] No webhooks subscribed to event: ${event}`);
+      return;
     }
 
     // Create payload
@@ -257,16 +303,18 @@ export class WebhookSystem {
       event,
       timestamp: new Date(),
       data,
-      metadata
-    }
+      metadata,
+    };
 
     // Create delivery for each webhook
     for (const webhook of subscribedWebhooks) {
-      const delivery = this.createDelivery(webhook, payload)
-      this.deliveryQueue.push(delivery)
+      const delivery = this.createDelivery(webhook, payload);
+      this.deliveryQueue.push(delivery);
     }
 
-    logger.info(`[WebhookSystem] Triggered event ${event} for ${subscribedWebhooks.length} webhooks`)
+    logger.info(
+      `[WebhookSystem] Triggered event ${event} for ${subscribedWebhooks.length} webhooks`,
+    );
   }
 
   /**
@@ -279,11 +327,11 @@ export class WebhookSystem {
       event: payload.event,
       payload,
       attempt: 0,
-      status: 'pending'
-    }
+      status: 'pending',
+    };
 
-    this.deliveries.set(delivery.id, delivery)
-    return delivery
+    this.deliveries.set(delivery.id, delivery);
+    return delivery;
   }
 
   // ============================================================================
@@ -295,8 +343,8 @@ export class WebhookSystem {
    */
   private startDeliveryWorker(): void {
     setInterval(async () => {
-      await this.processDeliveryQueue()
-    }, 1000) // Check every second
+      await this.processDeliveryQueue();
+    }, 1000); // Check every second
   }
 
   /**
@@ -304,35 +352,36 @@ export class WebhookSystem {
    */
   private async processDeliveryQueue(): Promise<void> {
     if (this.deliveryQueue.length === 0) {
-      return
+      return;
     }
 
     // Process up to 10 deliveries at a time
-    const batch = this.deliveryQueue.splice(0, 10)
+    const batch = this.deliveryQueue.splice(0, 10);
 
-    await Promise.all(
-      batch.map(delivery => this.deliverWebhook(delivery))
-    )
+    await Promise.all(batch.map((delivery) => this.deliverWebhook(delivery)));
   }
 
   /**
    * Deliver webhook
    */
   private async deliverWebhook(delivery: WebhookDelivery): Promise<void> {
-    const webhook = this.webhooks.get(delivery.webhookId)
+    const webhook = this.webhooks.get(delivery.webhookId);
     if (!webhook) {
-      logger.error(`[WebhookSystem] Webhook ${delivery.webhookId} not found`, new Error('Webhook not found'))
-      return
+      logger.error(
+        `[WebhookSystem] Webhook ${delivery.webhookId} not found`,
+        new Error('Webhook not found'),
+      );
+      return;
     }
 
-    delivery.attempt++
-    delivery.status = delivery.attempt > 1 ? 'retrying' : 'pending'
+    delivery.attempt++;
+    delivery.status = delivery.attempt > 1 ? 'retrying' : 'pending';
 
-    const startTime = Date.now()
+    const startTime = Date.now();
 
     try {
       // Generate signature
-      const signature = this.generateSignature(delivery.payload, webhook.secret)
+      const signature = this.generateSignature(delivery.payload, webhook.secret);
 
       // Send webhook
       const response = await fetch(webhook.url, {
@@ -343,56 +392,64 @@ export class WebhookSystem {
           'X-Webhook-Event': delivery.event,
           'X-Webhook-Delivery-Id': delivery.id,
           'X-Webhook-Timestamp': delivery.payload.timestamp.toISOString(),
-          ...webhook.headers
+          ...webhook.headers,
         },
-        body: JSON.stringify(delivery.payload)
-      })
+        body: JSON.stringify(delivery.payload),
+      });
 
-      const responseTime = Date.now() - startTime
+      const responseTime = Date.now() - startTime;
 
-      delivery.statusCode = response.status
-      delivery.responseTime = responseTime
-      delivery.sentAt = new Date()
+      delivery.statusCode = response.status;
+      delivery.responseTime = responseTime;
+      delivery.sentAt = new Date();
 
       if (response.ok) {
-        delivery.status = 'sent'
-        delivery.response = await response.text()
+        delivery.status = 'sent';
+        delivery.response = await response.text();
 
         // Update webhook stats
-        webhook.totalDeliveries++
-        webhook.successfulDeliveries++
-        webhook.lastTriggeredAt = new Date()
+        webhook.totalDeliveries++;
+        webhook.successfulDeliveries++;
+        webhook.lastTriggeredAt = new Date();
 
-        logger.info(`[WebhookSystem] Delivered ${delivery.event} to ${webhook.url} (${responseTime}ms)`)
+        logger.info(
+          `[WebhookSystem] Delivered ${delivery.event} to ${webhook.url} (${responseTime}ms)`,
+        );
       } else {
-        throw new Error(`HTTP ${response.status}: ${await response.text()}`)
+        throw new Error(`HTTP ${response.status}: ${await response.text()}`);
       }
     } catch (error) {
-      delivery.status = 'failed'
-      delivery.error = error instanceof Error ? error.message : String(error)
+      delivery.status = 'failed';
+      delivery.error = error instanceof Error ? error.message : String(error);
 
-      logger.error(`[WebhookSystem] Delivery failed (attempt ${delivery.attempt}/${webhook.retryPolicy.maxRetries}):`, error instanceof Error ? error : new Error(String(error)))
+      logger.error(
+        `[WebhookSystem] Delivery failed (attempt ${delivery.attempt}/${webhook.retryPolicy.maxRetries}):`,
+        error instanceof Error ? error : new Error(String(error)),
+      );
 
       // Retry logic
       if (delivery.attempt < webhook.retryPolicy.maxRetries) {
         const delay = webhook.retryPolicy.exponentialBackoff
           ? webhook.retryPolicy.retryDelay * Math.pow(2, delivery.attempt - 1)
-          : webhook.retryPolicy.retryDelay
+          : webhook.retryPolicy.retryDelay;
 
         setTimeout(() => {
-          this.deliveryQueue.push(delivery)
-        }, delay)
+          this.deliveryQueue.push(delivery);
+        }, delay);
       } else {
         // Max retries reached
-        webhook.totalDeliveries++
-        webhook.failedDeliveries++
+        webhook.totalDeliveries++;
+        webhook.failedDeliveries++;
 
-        logger.error(`[WebhookSystem] Max retries reached for delivery ${delivery.id}`, new Error('Max retries reached'))
+        logger.error(
+          `[WebhookSystem] Max retries reached for delivery ${delivery.id}`,
+          new Error('Max retries reached'),
+        );
       }
     }
 
     // Save delivery
-    await this.saveDelivery(delivery)
+    await this.saveDelivery(delivery);
   }
 
   // ============================================================================
@@ -403,33 +460,24 @@ export class WebhookSystem {
    * Generate webhook secret
    */
   private generateSecret(): string {
-    return crypto.randomBytes(32).toString('hex')
+    return crypto.randomBytes(32).toString('hex');
   }
 
   /**
    * Generate signature for payload
    */
   private generateSignature(payload: WebhookPayload, secret: string): string {
-    const payloadString = JSON.stringify(payload)
-    return crypto
-      .createHmac('sha256', secret)
-      .update(payloadString)
-      .digest('hex')
+    const payloadString = JSON.stringify(payload);
+    return crypto.createHmac('sha256', secret).update(payloadString).digest('hex');
   }
 
   /**
    * Verify webhook signature
    */
   verifySignature(payload: string, signature: string, secret: string): boolean {
-    const expectedSignature = crypto
-      .createHmac('sha256', secret)
-      .update(payload)
-      .digest('hex')
+    const expectedSignature = crypto.createHmac('sha256', secret).update(payload).digest('hex');
 
-    return crypto.timingSafeEqual(
-      Buffer.from(signature),
-      Buffer.from(expectedSignature)
-    )
+    return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature));
   }
 
   // ============================================================================
@@ -439,55 +487,57 @@ export class WebhookSystem {
   /**
    * Get webhook deliveries
    */
-  async getDeliveries(webhookId: string, options?: {
-    status?: WebhookDelivery['status']
-    limit?: number
-  }): Promise<WebhookDelivery[]> {
-    let deliveries = Array.from(this.deliveries.values())
-      .filter(d => d.webhookId === webhookId)
+  async getDeliveries(
+    webhookId: string,
+    options?: {
+      status?: WebhookDelivery['status'];
+      limit?: number;
+    },
+  ): Promise<WebhookDelivery[]> {
+    let deliveries = Array.from(this.deliveries.values()).filter((d) => d.webhookId === webhookId);
 
     if (options?.status) {
-      deliveries = deliveries.filter(d => d.status === options.status)
+      deliveries = deliveries.filter((d) => d.status === options.status);
     }
 
     // Sort by most recent first
     deliveries.sort((a, b) => {
-      const timeA = a.sentAt?.getTime() || 0
-      const timeB = b.sentAt?.getTime() || 0
-      return timeB - timeA
-    })
+      const timeA = a.sentAt?.getTime() || 0;
+      const timeB = b.sentAt?.getTime() || 0;
+      return timeB - timeA;
+    });
 
     if (options?.limit) {
-      deliveries = deliveries.slice(0, options.limit)
+      deliveries = deliveries.slice(0, options.limit);
     }
 
-    return deliveries
+    return deliveries;
   }
 
   /**
    * Get delivery
    */
   async getDelivery(deliveryId: string): Promise<WebhookDelivery | null> {
-    return this.deliveries.get(deliveryId) || null
+    return this.deliveries.get(deliveryId) || null;
   }
 
   /**
    * Retry delivery
    */
   async retryDelivery(deliveryId: string): Promise<void> {
-    const delivery = this.deliveries.get(deliveryId)
+    const delivery = this.deliveries.get(deliveryId);
     if (!delivery) {
-      throw new Error(`Delivery ${deliveryId} not found`)
+      throw new Error(`Delivery ${deliveryId} not found`);
     }
 
     if (delivery.status === 'sent') {
-      throw new Error('Cannot retry successful delivery')
+      throw new Error('Cannot retry successful delivery');
     }
 
     // Reset attempt count and add back to queue
-    delivery.attempt = 0
-    delivery.status = 'pending'
-    this.deliveryQueue.push(delivery)
+    delivery.attempt = 0;
+    delivery.status = 'pending';
+    this.deliveryQueue.push(delivery);
   }
 
   // ============================================================================
@@ -498,53 +548,52 @@ export class WebhookSystem {
    * Get webhook statistics
    */
   async getWebhookStats(webhookId: string): Promise<{
-    totalDeliveries: number
-    successfulDeliveries: number
-    failedDeliveries: number
-    successRate: number
-    averageResponseTime: number
-    deliveriesByStatus: Record<string, number>
-    recentDeliveries: WebhookDelivery[]
+    totalDeliveries: number;
+    successfulDeliveries: number;
+    failedDeliveries: number;
+    successRate: number;
+    averageResponseTime: number;
+    deliveriesByStatus: Record<string, number>;
+    recentDeliveries: WebhookDelivery[];
   }> {
-    const webhook = this.webhooks.get(webhookId)
+    const webhook = this.webhooks.get(webhookId);
     if (!webhook) {
-      throw new Error(`Webhook ${webhookId} not found`)
+      throw new Error(`Webhook ${webhookId} not found`);
     }
 
-    const deliveries = await this.getDeliveries(webhookId, { limit: 100 })
+    const deliveries = await this.getDeliveries(webhookId, { limit: 100 });
 
     const deliveriesByStatus: Record<string, number> = {
       sent: 0,
       failed: 0,
       pending: 0,
-      retrying: 0
-    }
+      retrying: 0,
+    };
 
-    let totalResponseTime = 0
-    let responseTimeCount = 0
+    let totalResponseTime = 0;
+    let responseTimeCount = 0;
 
-    deliveries.forEach(delivery => {
-      deliveriesByStatus[delivery.status]++
+    deliveries.forEach((delivery) => {
+      deliveriesByStatus[delivery.status]++;
 
       if (delivery.responseTime) {
-        totalResponseTime += delivery.responseTime
-        responseTimeCount++
+        totalResponseTime += delivery.responseTime;
+        responseTimeCount++;
       }
-    })
+    });
 
     return {
       totalDeliveries: webhook.totalDeliveries,
       successfulDeliveries: webhook.successfulDeliveries,
       failedDeliveries: webhook.failedDeliveries,
-      successRate: webhook.totalDeliveries > 0
-        ? (webhook.successfulDeliveries / webhook.totalDeliveries) * 100
-        : 0,
-      averageResponseTime: responseTimeCount > 0
-        ? totalResponseTime / responseTimeCount
-        : 0,
+      successRate:
+        webhook.totalDeliveries > 0
+          ? (webhook.successfulDeliveries / webhook.totalDeliveries) * 100
+          : 0,
+      averageResponseTime: responseTimeCount > 0 ? totalResponseTime / responseTimeCount : 0,
       deliveriesByStatus,
-      recentDeliveries: deliveries.slice(0, 10)
-    }
+      recentDeliveries: deliveries.slice(0, 10),
+    };
   }
 
   // ============================================================================
@@ -555,24 +604,24 @@ export class WebhookSystem {
    * Save webhook to database
    */
   private async saveWebhook(webhook: Webhook): Promise<void> {
-    // TODO: Implement database persistence
-    logger.info('[WebhookSystem] Saving webhook:', webhook.id)
+    // TODO: Implementar persistência no banco de dados
+    logger.info('[WebhookSystem] Simulating save webhook:', webhook.id);
   }
 
   /**
    * Remove webhook from database
    */
   private async removeWebhook(webhookId: string): Promise<void> {
-    // TODO: Implement database deletion
-    logger.info('[WebhookSystem] Removing webhook:', webhookId)
+    // TODO: Implementar remoção do banco de dados
+    logger.info('[WebhookSystem] Simulating remove webhook:', webhookId);
   }
 
   /**
    * Save delivery to database
    */
   private async saveDelivery(delivery: WebhookDelivery): Promise<void> {
-    // TODO: Implement database persistence
-    logger.info('[WebhookSystem] Saving delivery:', delivery.id)
+    // TODO: Implementar persistência no banco de dados
+    logger.info('[WebhookSystem] Simulating save delivery:', delivery.id);
   }
 }
 
@@ -585,41 +634,41 @@ export const WebhookEvents = {
     CREATED: 'video.created' as WebhookEvent,
     PROCESSING: 'video.processing' as WebhookEvent,
     COMPLETED: 'video.completed' as WebhookEvent,
-    FAILED: 'video.failed' as WebhookEvent
+    FAILED: 'video.failed' as WebhookEvent,
   },
   Avatar: {
     RENDERING: 'avatar.rendering' as WebhookEvent,
     COMPLETED: 'avatar.completed' as WebhookEvent,
-    FAILED: 'avatar.failed' as WebhookEvent
+    FAILED: 'avatar.failed' as WebhookEvent,
   },
   Job: {
     QUEUED: 'job.queued' as WebhookEvent,
     STARTED: 'job.started' as WebhookEvent,
     PROGRESS: 'job.progress' as WebhookEvent,
     COMPLETED: 'job.completed' as WebhookEvent,
-    FAILED: 'job.failed' as WebhookEvent
+    FAILED: 'job.failed' as WebhookEvent,
   },
   User: {
     REGISTERED: 'user.registered' as WebhookEvent,
-    UPDATED: 'user.updated' as WebhookEvent
+    UPDATED: 'user.updated' as WebhookEvent,
   },
   Payment: {
     SUCCEEDED: 'payment.succeeded' as WebhookEvent,
-    FAILED: 'payment.failed' as WebhookEvent
+    FAILED: 'payment.failed' as WebhookEvent,
   },
   Analytics: {
-    MILESTONE: 'analytics.milestone' as WebhookEvent
+    MILESTONE: 'analytics.milestone' as WebhookEvent,
   },
   Quiz: {
-    COMPLETED: 'quiz.completed' as WebhookEvent
+    COMPLETED: 'quiz.completed' as WebhookEvent,
   },
   Interaction: {
-    TRACKED: 'interaction.tracked' as WebhookEvent
-  }
-}
+    TRACKED: 'interaction.tracked' as WebhookEvent,
+  },
+};
 
 // ============================================================================
 // SINGLETON INSTANCE
 // ============================================================================
 
-export const webhookSystem = new WebhookSystem()
+export const webhookSystem = new WebhookSystem();

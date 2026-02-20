@@ -35,6 +35,7 @@
           "NEXT_TELEMETRY_DISABLED": "1"
         }
       },
+      "dependsOn": ["redis:start"],
       "isBackground": true,
       "problemMatcher": {
         "pattern": { "regexp": ".", "file": 1, "location": 2, "message": 3 },
@@ -44,7 +45,14 @@
           "endsPattern": "Compiled"
         }
       },
-      "group": "none"
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
     },
     {
       "label": "test",
@@ -54,7 +62,10 @@
         "cwd": "${workspaceFolder}"
       },
       "problemMatcher": [],
-      "group": "test"
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
     },
     {
       "label": "test:watch",
@@ -64,6 +75,20 @@
         "cwd": "${workspaceFolder}"
       },
       "isBackground": true,
+      "problemMatcher": [],
+      "group": "test",
+      "presentation": {
+        "reveal": "silent",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "test:coverage",
+      "type": "shell",
+      "command": "npm test -- --coverage",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
       "problemMatcher": [],
       "group": "test"
     },
@@ -94,8 +119,13 @@
       "options": {
         "cwd": "${workspaceFolder}"
       },
+      "isBackground": true,
       "problemMatcher": [],
-      "group": "none"
+      "group": "none",
+      "presentation": {
+        "reveal": "silent",
+        "panel": "dedicated"
+      }
     },
     {
       "label": "audit:any",
@@ -116,6 +146,26 @@
       },
       "problemMatcher": [],
       "group": "test"
+    },
+    {
+      "label": "validate:env",
+      "type": "shell",
+      "command": "npm run validate:env",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "group": "none"
+    },
+    {
+      "label": "setup:fresh",
+      "type": "shell",
+      "command": "npm install && npm run setup:supabase && npm run validate:env",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "group": "none"
     }
   ]
 }

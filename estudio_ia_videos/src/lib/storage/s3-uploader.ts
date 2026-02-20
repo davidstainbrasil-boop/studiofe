@@ -1,6 +1,7 @@
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 import { v4 as uuidv4 } from 'uuid'
 import { Logger } from '@lib/logger'
+import { isProduction } from '@lib/utils/mock-guard'
 
 const logger = new Logger('S3Uploader')
 
@@ -38,9 +39,25 @@ export async function uploadToS3(
   contentType: string,
   folder: string = 'uploads'
 ): Promise<S3UploadResult> {
+  const isDevelopment = process.env.NODE_ENV === 'development'
+  const isMockStorageEnabled = process.env.MOCK_STORAGE === 'true'
+
+  if (isMockStorageEnabled) {
+    if (isProduction()) {
+      throw new Error('MOCK_STORAGE is forbidden in production')
+    }
+
+    if (!isDevelopment) {
+      throw new Error('MOCK_STORAGE is only allowed in development')
+    }
+
+    logger.warn('MOCK_STORAGE enabled in development. Using mock S3 uploader.')
+    return mockUploadToS3(fileName)
+  }
+
   // Check for credentials
   if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
-    if (process.env.NODE_ENV === 'development') {
+    if (isDevelopment) {
       logger.warn('AWS credentials not found. Using Mock S3 Uploader.')
       return mockUploadToS3(fileName)
     }

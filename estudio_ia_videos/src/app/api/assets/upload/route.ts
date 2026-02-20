@@ -43,20 +43,59 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Storage upload failed', details: uploadError.message }, { status: 500 });
     }
 
-    // 2. Register in Database (storage_files)
-    // TODO: Se storage_files existir no schema Prisma, usar prisma.storage_files.create
-    // Por enquanto, criar registro mockado
-    const dbRecord = {
-      id: randomUUID(),
-      userId: userId,
-      bucket: bucketName,
-      filePath: filePath,
-      originalName: file.name,
-      mimeType: file.type,
-      fileSize: BigInt(file.size),
-      isPublic: false,
-      createdAt: new Date()
-    };
+    // 2. Register in Database (storage_files) - fail-fast when persistence is unavailable
+    const storageFilesModel = (prisma as unknown as {
+      storage_files?: {
+        create(args: {
+          data: {
+            id: string;
+            userId: string;
+            bucket: string;
+            filePath: string;
+            originalName: string;
+            mimeType: string;
+            fileSize: bigint;
+            isPublic: boolean;
+          };
+        }): Promise<{ id: string; originalName: string; mimeType: string }>;
+      };
+    }).storage_files;
+
+    if (!storageFilesModel) {
+      await supabase.storage.from(bucketName).remove([filePath]);
+      logger.error('Storage upload persistence unavailable: Prisma model storage_files not found', {
+        component: 'API: assets/upload',
+      });
+      return NextResponse.json(
+        { error: 'Persistence unavailable for uploaded assets' },
+        { status: 503 },
+      );
+    }
+
+    let dbRecord: { id: string; originalName: string; mimeType: string };
+    try {
+      dbRecord = await storageFilesModel.create({
+        data: {
+          id: randomUUID(),
+          userId,
+          bucket: bucketName,
+          filePath,
+          originalName: file.name,
+          mimeType: file.type,
+          fileSize: BigInt(file.size),
+          isPublic: false,
+        },
+      });
+    } catch (dbError) {
+      await supabase.storage.from(bucketName).remove([filePath]);
+      logger.error('Storage upload persistence failed', dbError as Error, {
+        component: 'API: assets/upload',
+      });
+      return NextResponse.json(
+        { error: 'Failed to persist uploaded asset metadata' },
+        { status: 503 },
+      );
+    }
 
     // 3. Get Public URL (Optional, depending on bucket privacy)
     const { data: { publicUrl } } = supabase.storage.from(bucketName).getPublicUrl(filePath);

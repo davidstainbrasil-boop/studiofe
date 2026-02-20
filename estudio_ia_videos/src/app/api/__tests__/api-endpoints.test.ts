@@ -226,10 +226,10 @@ describe('API Endpoints Tests', () => {
         const response = await generateSpeechPOST(request);
         const data = await response.json();
 
-        expect(response.status).toBe(200); // Changed from 202 to 200 as per implementation
+        expect(response.status).toBe(200);
         expect(data).toHaveProperty('success', true);
-        expect(data).toHaveProperty('audioUrl'); // Route returns audioUrl synchronously, not jobId
-        // expect(data).toHaveProperty('jobId') // Route now returns synchronously without jobId
+        expect(data).toHaveProperty('jobId');
+        expect(data).not.toHaveProperty('audioUrl');
       });
 
       /*
@@ -322,8 +322,24 @@ describe('API Endpoints Tests', () => {
       let createdJobId: string;
 
       beforeAll(async () => {
-        // Use a fixed test job ID — the Prisma mock returns a valid job for any non-'nonexistent-job' ID
-        createdJobId = '12345678-1234-1234-1234-123456789012';
+        const request = new NextRequest('http://localhost:3000/api/avatars/generate-speech', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            text: 'Job de teste para consulta de status',
+            useUnifiedPipeline: true,
+            quality: 'high',
+          }),
+        });
+
+        const response = await generateSpeechPOST(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(200);
+        expect(data).toHaveProperty('jobId');
+        createdJobId = data.jobId;
       });
 
       it('deve retornar status de job válido', async () => {

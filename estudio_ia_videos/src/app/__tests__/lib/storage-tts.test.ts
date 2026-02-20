@@ -1,8 +1,21 @@
+/// <reference types="jest" />
+
+declare global {
+  const jest: any;
+  const describe: any;
+  const it: any;
+  const expect: any;
+}
+
 import { generateTTS } from '@/lib/tts';
 
 jest.mock('@/lib/storage', () => ({
   listFiles: jest.fn().mockResolvedValue([{ name: 'example.mp4', bucket: 'videos', size: 123 }]),
-  uploadFile: jest.fn().mockResolvedValue({ name: 'upload.txt', bucket: 'assets', publicUrl: 'https://stub/upload.txt' }),
+  uploadFile: jest.fn().mockResolvedValue({
+    name: 'upload.txt',
+    bucket: 'assets',
+    publicUrl: 'https://stub/upload.txt',
+  }),
 }));
 
 describe('TTS placeholder', () => {

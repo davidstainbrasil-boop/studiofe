@@ -6,15 +6,12 @@ import { getRequiredEnv } from '@lib/env';
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '@lib/logger';
 import { applyRateLimit } from '@/lib/rate-limit';
-import { isProduction } from '@lib/utils/mock-guard';
 
-// Global mock store for development/testing when DB is down
-declare global {
-  var mockCertificates: Map<string, any>;
-}
-
-if (!global.mockCertificates) {
-  global.mockCertificates = new Map();
+function isMissingSchemaError(error: unknown): boolean {
+  const err = error as { code?: string; message?: string };
+  if (err?.code === 'P2010' || err?.code === 'P2021') return true;
+  const message = err?.message || '';
+  return message.includes('does not exist') || message.includes('Unknown table');
 }
 
 export async function POST(request: NextRequest) {
@@ -73,11 +70,36 @@ export async function POST(request: NextRequest) {
     // Generate unique certificate code
     const code = uuidv4().split('-')[0].toUpperCase();
 
-    // Try to create in DB
-    // TODO: Se certificates não existir no schema Prisma, usar outra tabela ou Supabase diretamente
-    let certificate;
+    // Persist certificate in DB (fail-fast when schema is unavailable)
     try {
-      certificate = await (prisma as unknown as { certificates: { create(args: unknown): Promise<unknown> } }).certificates.create({
+      const certificatesModel = (prisma as unknown as {
+        certificates?: {
+          create(args: {
+            data: {
+              id: string;
+              projectId: string;
+              userId: string;
+              studentName: string;
+              courseName: string;
+              code: string;
+              certificateUrl: string;
+              metadata: { generatedBy: string; version: string };
+            };
+          }): Promise<unknown>;
+        };
+      }).certificates;
+
+      if (!certificatesModel) {
+        logger.error('Certificates persistence unavailable: Prisma model missing', {
+          component: 'API: certificates',
+        });
+        return NextResponse.json(
+          { error: 'Certificate persistence unavailable' },
+          { status: 503 },
+        );
+      }
+
+      const certificate = await certificatesModel.create({
         data: {
           id: uuidv4(),
           projectId,
@@ -94,34 +116,20 @@ export async function POST(request: NextRequest) {
       });
       return NextResponse.json(certificate, { status: 201 });
     } catch (dbError: unknown) {
-      logger.error('Database error creating certificate', dbError instanceof Error ? dbError : new Error(String(dbError))
-      , { component: 'API: certificates' });
-      
-      const err = dbError as { code?: string; message?: string };
-      // Fallback em memória permitido apenas fora de produção
-      if (!isProduction() && (err.code === 'P2010' || err.code === 'P2021' || err.message?.includes('does not exist') || err.message?.includes('Tenant or user not found'))) {
-        logger.warn('Certificate table missing or DB error', {
-          component: 'API: certificates'
-        });
-        
-        const mockCert = {
-          id: uuidv4(),
-          projectId,
-          userId: user.id,
-          studentName,
-          courseName,
-          code,
-          certificateUrl: `https://cert.tecnocursos.com.br/${code}`,
-          issuedAt: new Date().toISOString(),
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        
-        global.mockCertificates.set(code, mockCert);
-        
-        return NextResponse.json(mockCert, { status: 201 });
+      logger.error(
+        'Database error creating certificate',
+        dbError instanceof Error ? dbError : new Error(String(dbError)),
+        { component: 'API: certificates' }
+      );
+
+      if (isMissingSchemaError(dbError)) {
+        return NextResponse.json(
+          { error: 'Certificate persistence unavailable', details: 'Required table is missing in database schema' },
+          { status: 503 }
+        );
       }
-      
+
+      const err = dbError as { message?: string };
       return NextResponse.json(
         { error: 'Failed to create certificate', details: err.message || 'Unknown error' },
         { status: 500 }

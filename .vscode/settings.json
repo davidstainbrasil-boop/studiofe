@@ -17,6 +17,18 @@
   "[markdown]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[html]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[scss]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
 
   // ═══════════════════════════════════════════════════
   // 🚀 TURBO MODE — COPILOT AGENT MÁXIMA AUTONOMIA
@@ -310,77 +322,84 @@
         "password": true
       },
       {
-        "id": "testsprite_token",
+        "id": "supabase_token",
         "type": "promptString",
-        "description": "TestSprite API Key",
+        "description": "Supabase Access Token (Management API)",
+        "password": true
+      },
+      {
+        "id": "stripe_key",
+        "type": "promptString",
+        "description": "Stripe Secret Key (sk_test_... ou rk_test_...)",
+        "password": true
+      },
+      {
+        "id": "sentry_token",
+        "type": "promptString",
+        "description": "Sentry Access Token (org:read, project:read/write, event:write)",
         "password": true
       }
     ],
     "servers": {
-      // ── Qualidade & Segurança ──
+      // ── 📊 Qualidade & Segurança ──
       "codacy": {
         "command": "npx",
         "args": ["-y", "@codacy/codacy-mcp@latest"],
         "env": {
-          "CODACY_ACCOUNT_TOKEN": "${input:codacy_token}",
-          "HOME": "/root",
-          "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+          "CODACY_ACCOUNT_TOKEN": "${input:codacy_token}"
         }
       },
 
-      // ── Testes E2E ──
+      // ── 🎭 Testes E2E (Playwright) ──
       "playwright": {
         "command": "npx",
-        "args": ["@playwright/mcp@latest", "--headless"],
+        "args": ["-y", "@playwright/mcp@latest", "--headless"],
         "env": {}
       },
 
-      // ── QA Automatizado ──
-      "testsprite": {
-        "command": "npx",
-        "args": ["-y", "testsprite-mcp@latest"],
-        "env": {
-          "TESTSPRITE_API_KEY": "${input:testsprite_token}"
-        }
-      },
-
-      // ── Supabase (Auth + Storage + DB + Realtime) ──
+      // ── 🗄️ Supabase (Auth + Storage + DB + Realtime) ──
       "supabase": {
         "command": "npx",
         "args": ["-y", "@supabase/mcp-server-supabase@latest"],
         "env": {
-          "SUPABASE_ACCESS_TOKEN": "sb_secret_J5S2Xd1P8XrsxRxY-0WobA_M8t_Yafx"
+          "SUPABASE_ACCESS_TOKEN": "${input:supabase_token}"
         }
       },
 
-      // ── Stripe (Billing, Subscriptions, Webhooks) ──
+      // ── 💳 Stripe (Billing, Subscriptions, Webhooks) ──
       "stripe": {
         "command": "npx",
         "args": ["-y", "@stripe/mcp@latest"],
         "env": {
-          "STRIPE_SECRET_KEY": "sk_test_51StsqK8BDjjItvcyhJg1hrnsMqPkE7ovQF9W34pBd0CAZZ54S5N52SVefu6Xq6X2Govdz7PiKYjk8FpXWdDh8eBM00nkrmssd3"
+          "STRIPE_SECRET_KEY": "${input:stripe_key}"
         }
       },
 
-      // ── Sentry (Error Tracking, Performance) ──
+      // ── 🐛 Sentry (Error Tracking, Performance) ──
       "sentry": {
         "command": "npx",
         "args": ["-y", "@sentry/mcp-server@latest"],
         "env": {
-          "SENTRY_AUTH_TOKEN": "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"
+          "SENTRY_ACCESS_TOKEN": "${input:sentry_token}"
         }
       },
 
-      // ── Sequential Thinking (Raciocínio complexo) ──
+      // ── 🧠 Sequential Thinking (Raciocínio complexo) ──
       "sequential-thinking": {
         "command": "npx",
         "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
       },
 
-      // ── Context7 (Documentação atualizada de libs) ──
+      // ── 📚 Context7 (Documentação atualizada de libs) ──
       "context7": {
         "command": "npx",
         "args": ["-y", "@upstash/context7-mcp@latest"]
+      },
+
+      // ── 🔀 GitKraken / GitLens (Git avançado) ──
+      "gitkraken": {
+        "command": "npx",
+        "args": ["-y", "gitkraken-mcp-server@latest"]
       }
     }
   },
@@ -389,8 +408,12 @@
   // ⚡ EDITOR — Performance & DX
   // ═══════════════════════════════════════════════════
 
-  "editor.formatOnSave": false,
+  "editor.formatOnSave": true,
   "editor.formatOnPaste": false,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.linkedEditing": true,
   "editor.stickyScroll.enabled": true,
   "editor.bracketPairColorization.enabled": true,
@@ -424,6 +447,29 @@
     "**/.turbo": true,
     "**/.cache": true
   },
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/.next/**": true,
+    "**/node_modules/**": true,
+    "**/storage/**": true,
+    "**/tmp/**": true,
+    "**/temp/**": true,
+    "**/uploads/**": true,
+    "**/coverage/**": true,
+    "**/logs/**": true,
+    "**/_archived/**": true,
+    "**/_src_legacy/**": true,
+    "**/.turbo/**": true,
+    "**/.cache/**": true,
+    "**/dist/**": true
+  },
+  "files.associations": {
+    "*.env.*": "dotenv",
+    ".env": "dotenv",
+    "*.mjs": "javascript",
+    "*.cjs": "javascript"
+  },
 
   // ═══════════════════════════════════════════════════
   // 🔍 SEARCH — Respeitar gitignore, excluir ruído
@@ -433,6 +479,7 @@
     "**/.next": true,
     "**/node_modules": true,
     "**/_archived": true,
+    "**/_src_legacy": true,
     "**/storage": true,
     "**/tmp": true,
     "**/temp": true,
@@ -441,6 +488,10 @@
     "**/logs": true,
     "**/.turbo": true,
     "**/coverage": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/evidencias": true,
+    "**/prisma/migrations": true,
     "**/*.min.js": true,
     "**/*.map": true
   },
@@ -462,6 +513,7 @@
   "typescript.suggest.autoImports": true,
   "typescript.updateImportsOnFileMove.enabled": "always",
   "typescript.tsdk": "estudio_ia_videos/node_modules/typescript/lib",
+  "typescript.tsserver.maxTsServerMemory": 4096,
 
   // ═══════════════════════════════════════════════════
   // 🎨 TAILWIND
@@ -471,6 +523,17 @@
     ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],
     ["cx\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"]
   ],
+  "tailwindCSS.includeLanguages": {
+    "typescriptreact": "html",
+    "javascriptreact": "html"
+  },
+
+  // ═══════════════════════════════════════════════════
+  // 🧩 CSS — Desabilitar validador nativo (Tailwind cuida)
+  // ═══════════════════════════════════════════════════
+
+  "css.validate": false,
+  "scss.validate": false,
 
   // ═══════════════════════════════════════════════════
   // 🐳 DENO (Supabase Functions only)
@@ -524,5 +587,24 @@
 
   "explorer.compactFolders": true,
   "explorer.confirmDelete": false,
-  "explorer.confirmDragAndDrop": false
+  "explorer.confirmDragAndDrop": false,
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.expand": false,
+  "explorer.fileNesting.patterns": {
+    "tsconfig.json": "tsconfig.*.json",
+    "package.json": "package-lock.json, .npmrc, .prettierrc, .eslintrc*, eslint.config.*, .editorconfig",
+    ".env": ".env.*",
+    "tailwind.config.*": "postcss.config.*",
+    "docker-compose.yml": "docker-compose.*.yml, Dockerfile*"
+  },
+
+  // ═══════════════════════════════════════════════════
+  // ✏️ EMMET — Expansão em JSX/TSX
+  // ═══════════════════════════════════════════════════
+
+  "emmet.includeLanguages": {
+    "javascriptreact": "html",
+    "typescriptreact": "html"
+  },
+  "emmet.triggerExpansionOnTab": true
 }

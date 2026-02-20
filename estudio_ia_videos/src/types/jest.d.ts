@@ -1,12 +1,6 @@
-
-import '@testing-library/jest-dom'
-
-declare global {
-  namespace jest {
-    interface Matchers<R> {
-      toBeInTheDocument(): R
-      toHaveClass(className: string): R
-      toHaveTextContent(text: string | RegExp): R
-    }
-  }
-}
+declare const jest: any;
+declare const describe: any;
+declare const it: any;
+declare const expect: any;
+declare const beforeEach: any;
+declare const afterEach: any;
