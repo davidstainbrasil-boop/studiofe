@@ -1,4 +1,50 @@
 # Claude Progress Log - MVP Vídeos TécnicoCursos v7
+# Updated: 2026-02-20 (Session 38 - Implementar 3 TODOs críticos de produção)
+
+## Session 38 Summary (CURRENT) - Implementar TODOs de produção
+
+### ✅ RESULTADO:
+- **TypeScript:** 0 erros
+- **Codacy:** 0 issues nos arquivos editados
+- **Feature list:** 54/54 completas (sem mudança)
+- **Commits:** `5a82e5dc` + `3685fecf`
+
+### 📋 O QUE FOI FEITO:
+
+#### 1. Metrics Dashboard — storage.used e totalViews reais
+**Arquivo:** `src/app/api/metrics/dashboard/route.ts`
+- **totalViews (antes: 0, TODO):** Agora busca count real da tabela `analytics_events`
+  com `event_type IN (video_view, video_play, video_complete)` para o usuário no período
+- **storage.used (antes: 0, TODO):** Agora usa `supabaseAdmin.storage.from(bucket).list(users/userId)`
+  para varrer os buckets `videos`, `renders`, `uploads`, `pptx`, `avatars` e somar `metadata.size`
+- **storageByType:** breakdown por bucket com tamanhos reais
+- `Promise.allSettled` para tolerância a buckets inexistentes
+- Adicionou import de `supabaseAdmin` de `@/lib/supabase/server`
+
+#### 2. Stripe Webhook — notificação de email em pagamento falho
+**Arquivos:** `src/app/api/stripe/webhook/route.ts` + `src/lib/services/email-service.ts`
+- **EmailService:** novo método `sendPaymentFailed(to, invoiceId, retryUrl?)`
+  - Email HTML completo com alerta visual, ID da fatura e botão para `/dashboard/billing`
+  - Texto plano como fallback
+- **handlePaymentFailed:** agora busca email do usuário na tabela `users` e envia email
+  - Erro no envio capturado com `logger.error` sem bloquear o webhook
+
+### ⚠️ FALHA REMANESCENTE (NÃO É BUG DE CÓDIGO):
+- `rhubarb-lip-sync-engine.test.ts`: binário OS com `basic_ios::clear: iostream error`
+
+### Notas para o próximo agent
+- Todos os 54 features: `passes: true` ✅
+- Suite de testes: 1973/1992 passando (única failure: rhubarb binário)
+- TypeScript: 0 erros
+- TODOs produção restantes (ver grep de TODO/FIXME):
+  - `src/lib/analytics/advanced-analytics-system.ts` — newUsers, returningUsers, revenueMetrics zerados
+  - `src/app/api/studio/convert-pptx/route.ts:148` — job status tracking
+  - `src/app/api/v2/avatars/render/route.ts:136` — seleção de perfil de voz
+  - `src/lib/webhooks/webhook-system.ts` — persistência no banco (3 TODOs)
+- Próximas ações: continuar eliminando TODOs de produção
+
+---
+
 # Updated: 2026-02-20 (Session 37 - Fix video-export integration test)
 
 ## Session 37 Summary (CURRENT) - Fix video-export integration test
