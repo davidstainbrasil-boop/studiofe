@@ -11,6 +11,7 @@ import { createClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
 import { headers } from 'next/headers';
 import { applyRateLimit } from '@/lib/rate-limit';
+import { emailService } from '@lib/services/email-service';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2023-10-16',
@@ -288,7 +289,26 @@ async function handlePaymentFailed(invoice: Stripe.Invoice) {
 
   logger.warn('Pagamento falhou', { userId: sub.user_id, invoiceId: invoice.id });
 
-  // TODO: Enviar email de notificação
+  // Buscar email do usuário para notificação
+  try {
+    const { data: userRow } = await supabase
+      .from('users')
+      .select('email')
+      .eq('id', sub.user_id)
+      .single();
+
+    if (userRow?.email) {
+      const retryUrl = `${process.env.NEXT_PUBLIC_APP_URL || ''}/dashboard/billing`;
+      await emailService.sendPaymentFailed(userRow.email, invoice.id, retryUrl);
+      logger.info('Email de pagamento falhou enviado', { userId: sub.user_id, to: userRow.email });
+    }
+  } catch (emailErr) {
+    logger.error(
+      'Falha ao enviar email de pagamento falho',
+      emailErr instanceof Error ? emailErr : new Error(String(emailErr)),
+      { userId: sub.user_id, invoiceId: invoice.id, component: 'API: stripe/webhook' }
+    );
+  }
 }
 
 /**
