@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, supabaseAdmin } from '@/lib/supabase/server'
 import { logger } from '@/lib/logger'
 import { cachedQuery } from '@/lib/cache/redis-cache'
 import { applyRateLimit } from '@/lib/rate-limit';
@@ -194,6 +194,46 @@ export async function GET(req: NextRequest) {
           j.status === 'queued' || j.status === 'processing'
         ).length
 
+        // 6. Views reais: conta eventos de visualização de vídeo na analytics_events
+        let totalViews = 0
+        try {
+          const { count: viewsCount } = await supabase
+            .from('analytics_events')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', userId)
+            .in('event_type', ['video_view', 'video_play', 'video_complete'])
+            .gte('created_at', startDate.toISOString())
+          totalViews = viewsCount || 0
+        } catch (viewsError) {
+          logger.warn('Failed to fetch view count from analytics_events', {
+            error: viewsError instanceof Error ? viewsError.message : String(viewsError),
+            component: 'API: metrics/dashboard'
+          })
+        }
+
+        // 7. Storage real: soma tamanho dos arquivos do usuário nos buckets principais
+        let storageUsed = 0
+        const storageByType: Record<string, number> = {}
+        const bucketsToScan = ['videos', 'renders', 'uploads', 'pptx', 'avatars'] as const
+        await Promise.allSettled(
+          bucketsToScan.map(async (bucket) => {
+            try {
+              const { data: files, error: listError } = await supabaseAdmin.storage
+                .from(bucket)
+                .list(`users/${userId}`, { limit: 1000 })
+              if (listError || !files) return
+              const bucketSize = files.reduce((sum, file) => {
+                const sz = (file.metadata as { size?: number } | null)?.size ?? 0
+                return sum + sz
+              }, 0)
+              storageUsed += bucketSize
+              if (bucketSize > 0) storageByType[bucket] = bucketSize
+            } catch {
+              // Bucket pode não existir — ignorar silenciosamente
+            }
+          })
+        )
+
         return {
           overview: {
             totalProjects: projectList.length,
@@ -201,7 +241,7 @@ export async function GET(req: NextRequest) {
             processingProjects: statusCounts['in-progress'] || 0,
             draftProjects: statusCounts['draft'] || 0,
             totalDuration: Math.round(totalDuration / 60), // em minutos
-            totalViews: 0, // TODO: implementar tracking de views
+            totalViews,
             totalDownloads: completedJobs.length,
             avgProcessingTime
           },
@@ -217,9 +257,9 @@ export async function GET(req: NextRequest) {
             queueLength
           },
           storage: {
-            used: 0, // TODO: calcular uso real do storage
+            used: storageUsed,
             limit: 5 * 1024 * 1024 * 1024, // 5GB
-            byType: {}
+            byType: storageByType
           },
           period,
           dateRange: {
