@@ -42,7 +42,7 @@ REDIS_URL=redis://default:[PASSWORD]@[HOST]:[PORT]
 
 ```bash
 # Production URL of your application
-NEXTAUTH_URL=https://[YOUR_DOMAIN].vercel.app
+NEXTAUTH_URL=https://cursostecno.com.br
 
 # Secure random string (Generate with: openssl rand -base64 32)
 NEXTAUTH_SECRET=[GENERATED_SECRET]

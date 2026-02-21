@@ -3,7 +3,7 @@
 
 **Data**: 03/10/2025  
 **Projeto**: Estúdio IA de Vídeos  
-**URL Produção**: https://treinx.abacusai.app/  
+**URL Produção**: https://cursostecno.com.br/  
 **Responsável**: DeepAgent QA Automation
 
 ---

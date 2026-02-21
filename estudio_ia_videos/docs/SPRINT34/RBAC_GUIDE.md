@@ -345,5 +345,5 @@ Verificar:
 
 ### Support
 
-- Documentação: https://treinx.abacusai.app/docs/rbac
-- Suporte: support@treinx.abacusai.app
+- Documentação: https://cursostecno.com.br/docs/rbac
+- Suporte: support@cursostecno.com.br

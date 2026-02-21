@@ -16,8 +16,8 @@ O sistema agora suporta autenticação enterprise via:
 1. Acesse Okta Admin Console
 2. Crie nova aplicação (OIDC - Web Application)
 3. Configure Redirect URIs:
-   - Sign-in: `https://treinx.abacusai.app/api/auth/sso/okta/callback`
-   - Sign-out: `https://treinx.abacusai.app`
+   - Sign-in: `https://cursostecno.com.br/api/auth/sso/okta/callback`
+   - Sign-out: `https://cursostecno.com.br`
 
 **Variáveis de Ambiente:**
 ```bash
@@ -31,7 +31,7 @@ OKTA_CLIENT_SECRET=your_client_secret
 **Configuração:**
 1. Azure Portal > Azure Active Directory > App registrations
 2. New registration
-3. Configure Redirect URI: `https://treinx.abacusai.app/api/auth/sso/azure/callback`
+3. Configure Redirect URI: `https://cursostecno.com.br/api/auth/sso/azure/callback`
 4. Certificates & secrets > New client secret
 
 **Variáveis de Ambiente:**
@@ -46,7 +46,7 @@ AZURE_CLIENT_SECRET=your-client-secret
 **Configuração:**
 1. Google Cloud Console > APIs & Services > Credentials
 2. Create OAuth 2.0 Client ID
-3. Authorized redirect URIs: `https://treinx.abacusai.app/api/auth/sso/google/callback`
+3. Authorized redirect URIs: `https://cursostecno.com.br/api/auth/sso/google/callback`
 
 **Variáveis de Ambiente:**
 ```bash
@@ -58,7 +58,7 @@ GOOGLE_CLIENT_SECRET=your-client-secret
 
 #### Service Provider (SP) Metadata
 
-URL: `https://treinx.abacusai.app/api/auth/saml/metadata`
+URL: `https://cursostecno.com.br/api/auth/saml/metadata`
 
 **Entity ID:**
 ```
@@ -67,7 +67,7 @@ estudio-ia-videos
 
 **Assertion Consumer Service (ACS) URL:**
 ```
-https://treinx.abacusai.app/api/auth/saml/callback
+https://cursostecno.com.br/api/auth/saml/callback
 ```
 
 **NameID Format:**
@@ -173,7 +173,7 @@ await auditLog.log({
 #### Test SSO Flow
 ```bash
 # Development
-curl -v https://treinx.abacusai.app/api/auth/sso/okta
+curl -v https://cursostecno.com.br/api/auth/sso/okta
 ```
 
 #### Mock Provider (Development)
@@ -295,6 +295,6 @@ async function migrateUsersToSSO() {
 ### Support
 
 For SSO setup assistance:
-- Documentation: https://treinx.abacusai.app/docs/sso
-- Support: support@treinx.abacusai.app
-- Enterprise: enterprise@treinx.abacusai.app
+- Documentation: https://cursostecno.com.br/docs/sso
+- Support: support@cursostecno.com.br
+- Enterprise: enterprise@cursostecno.com.br

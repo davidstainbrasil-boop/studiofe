@@ -30,6 +30,10 @@ jobs:
         working-directory: estudio_ia_videos
         run: npm ci --legacy-peer-deps
 
+      - name: Validate production domain consistency
+        working-directory: estudio_ia_videos
+        run: npm run check:production-domain
+
       - name: Run ESLint
         working-directory: estudio_ia_videos
         run: npm run lint

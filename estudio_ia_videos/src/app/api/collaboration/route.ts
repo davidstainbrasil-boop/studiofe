@@ -8,12 +8,32 @@ import { Server as HTTPServer } from 'http';
 import { CollaborationServer } from '@lib/collaboration/server';
 import { logger } from '@lib/logger';
 import { getServerAuth } from '@lib/auth/unified-session';
+import { requireAdmin } from '@lib/auth/admin-middleware';
 import { applyRateLimit } from '@/lib/rate-limit';
+import { getAppOrigin } from '@/lib/config/app-url';
 
 let collaborationServer: CollaborationServer | null = null;
 let httpServer: HTTPServer | null = null;
 
+function buildWebSocketUrl(): string {
+  const configuredWsUrl = process.env.NEXT_PUBLIC_WS_URL;
+  if (configuredWsUrl) return configuredWsUrl;
+
+  const appOrigin = getAppOrigin();
+  const parsed = new URL(appOrigin);
+  const wsProtocol = parsed.protocol === 'https:' ? 'wss:' : 'ws:';
+  const wsPort = parseInt(process.env.WS_PORT || '3001', 10);
+  const host = wsPort > 0 ? `${parsed.hostname}:${wsPort}` : parsed.host;
+
+  return `${wsProtocol}//${host}`;
+}
+
 export async function GET(req: NextRequest) {
+  const session = await getServerAuth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   try {
     const rateLimitBlocked = await applyRateLimit(req, 'collaboration-get', 60);
     if (rateLimitBlocked) return rateLimitBlocked;
@@ -49,8 +69,8 @@ export async function GET(req: NextRequest) {
       success: true,
       status: 'active',
       config: {
-        wsUrl: process.env.NEXT_PUBLIC_WS_URL || `ws://localhost:3001`,
-        httpUrl: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+        wsUrl: buildWebSocketUrl(),
+        httpUrl: getAppOrigin()
       },
       stats: {
         connectedSockets: stats.connectedSockets,
@@ -79,6 +99,12 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const rateLimitBlocked = await applyRateLimit(req, 'collaboration-post', 30);
+    if (rateLimitBlocked) return rateLimitBlocked;
+
+    const { isAdmin, response } = await requireAdmin(req);
+    if (!isAdmin) return response!;
+
     const body = await req.json();
     
     switch (body.action) {
@@ -89,7 +115,15 @@ export async function POST(req: NextRequest) {
         }
         
         if (httpServer) {
-          httpServer.close();
+          await new Promise<void>((resolve, reject) => {
+            httpServer!.close((error?: Error) => {
+              if (error) {
+                reject(error);
+                return;
+              }
+              resolve();
+            });
+          });
           httpServer = null;
         }
         

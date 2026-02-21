@@ -96,7 +96,7 @@ No dashboard Stripe:
 1. No Stripe Dashboard → **Developers → Webhooks**
 2. Adicionar endpoint:
    ```
-   URL: https://treinx.abacusai.app/api/billing/webhook
+   URL: https://cursostecno.com.br/api/billing/webhook
    Events: customer.subscription.*, invoice.*, payment_intent.*
    ```
 3. Copiar **Signing Secret**: `whsec_xxxxx`

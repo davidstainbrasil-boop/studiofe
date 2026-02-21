@@ -1,9 +1,8 @@
+import { getSecurityAllowedOrigins } from '@/lib/config/app-url'
+
 type HeaderMap = Record<string, string>
 
-const DEFAULT_ALLOWED_ORIGINS = [
-  process.env.NEXT_PUBLIC_SITE_URL || 'https://cursostecno.com.br',
-  'https://cursostecno.com.br' // Domínio de produção
-]
+const DEFAULT_ALLOWED_ORIGINS = getSecurityAllowedOrigins()
 
 export function getSecurityHeaders(isDev = false): HeaderMap {
   const commonHeaders: HeaderMap = {

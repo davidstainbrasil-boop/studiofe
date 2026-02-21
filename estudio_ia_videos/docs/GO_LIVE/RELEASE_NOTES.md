@@ -3,7 +3,7 @@
 
 **Data de Release:** 2025-10-02  
 **Ambiente:** Produção  
-**URL:** https://treinx.abacusai.app
+**URL:** https://cursostecno.com.br
 
 ---
 
@@ -96,7 +96,7 @@
 ## 🚀 Deploy
 
 ### Ambiente de Produção
-- **URL:** https://treinx.abacusai.app
+- **URL:** https://cursostecno.com.br
 - **Infraestrutura:** Abacus AI Cloud
 - **CDN:** Cloudflare
 - **Monitoring:** Sentry
@@ -115,7 +115,7 @@ git push origin main
 # 3. Aguardar pipeline CI/CD re-deploy automático
 
 # 4. Validar health check
-curl https://treinx.abacusai.app/api/health
+curl https://cursostecno.com.br/api/health
 ```
 
 ---
@@ -146,7 +146,7 @@ curl https://treinx.abacusai.app/api/health
 ## 📞 Suporte
 
 **Monitoramento:** https://sentry.io/estudio-ia-videos  
-**Status Page:** https://status.treinx.abacusai.app  
+**Status Page:** https://status.cursostecno.com.br  
 **Slack:** #estudio-ia-alerts  
 **Email:** suporte@treinx.ai
 

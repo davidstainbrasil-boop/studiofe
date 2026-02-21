@@ -41,7 +41,7 @@ Use o header \`Authorization: Bearer <token>\` para endpoints protegidos.
       description: 'Ambiente de Desenvolvimento'
     },
     {
-      url: 'https://tecnicocursos-videos.vercel.app', 
+      url: 'https://cursostecno.com.br', 
       description: 'Ambiente de Produção'
     }
   ],

@@ -26,6 +26,20 @@ interface ProgressUpdate {
   timestamp: string;
 }
 
+async function isAdminUser(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string
+): Promise<boolean> {
+  const { data: profile, error } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', userId)
+    .single();
+
+  if (error || !profile) return false;
+  return profile.role === 'admin' || profile.role === 'super_admin';
+}
+
 export async function GET(request: NextRequest) {
     const rateLimitBlocked = await applyRateLimit(request, 'render-progress-stream-get', 60);
     if (rateLimitBlocked) return rateLimitBlocked;
@@ -72,10 +86,15 @@ export async function GET(request: NextRequest) {
     .eq('id', job.project_id)
     .single();
 
-  if (project?.user_id !== user.id) {
-    // Verificar se é admin - simplificado para evitar erro de schema
-    // Na produção, usar tabela de roles adequada
-    const isAdmin = false; // TODO: implementar verificação de admin
+  if (!project?.user_id) {
+    return new Response(JSON.stringify({ error: 'Projeto do job não encontrado' }), {
+      status: 404,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
+  if (project.user_id !== user.id) {
+    const isAdmin = await isAdminUser(supabase, user.id);
     
     if (!isAdmin) {
       return new Response(JSON.stringify({ error: 'Acesso negado' }), {
@@ -164,6 +183,7 @@ export async function GET(request: NextRequest) {
 
       // Polling a cada 2 segundos
       intervalId = setInterval(fetchProgress, 2000);
+      intervalId.unref?.();
     },
 
     cancel() {

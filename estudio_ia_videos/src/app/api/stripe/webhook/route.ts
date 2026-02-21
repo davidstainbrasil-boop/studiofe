@@ -12,6 +12,7 @@ import { logger } from '@/lib/logger';
 import { headers } from 'next/headers';
 import { applyRateLimit } from '@/lib/rate-limit';
 import { emailService } from '@lib/services/email-service';
+import { getAppOrigin } from '@/lib/config/app-url';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2023-10-16',
@@ -298,7 +299,7 @@ async function handlePaymentFailed(invoice: Stripe.Invoice) {
       .single();
 
     if (userRow?.email) {
-      const retryUrl = `${process.env.NEXT_PUBLIC_APP_URL || ''}/dashboard/billing`;
+      const retryUrl = `${getAppOrigin()}/dashboard/billing`;
       await emailService.sendPaymentFailed(userRow.email, invoice.id, retryUrl);
       logger.info('Email de pagamento falhou enviado', { userId: sub.user_id, to: userRow.email });
     }

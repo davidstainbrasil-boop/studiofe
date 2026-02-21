@@ -108,7 +108,7 @@
 
 #### ISSUE-001: Aplicação não disponível em produção
 - **Severidade**: P0 - BLOCKER
-- **Descrição**: A aplicação não está acessível no domínio https://treinx.abacusai.app/
+- **Descrição**: A aplicação não está acessível no domínio https://cursostecno.com.br/
 - **Status**: 404 em todas as rotas
 - **Impacto**: Bloqueio total de acesso para usuários externos
 - **Ação Requerida**: 
@@ -193,7 +193,7 @@ Todas as APIs listadas acima precisam ser implementadas para suportar as funcion
    - Essas APIs são essenciais para funcionalidades já documentadas
 
 3. **Deploy em Produção** 🚨
-   - Configurar treinx.abacusai.app corretamente
+   - Configurar cursostecno.com.br corretamente
    - Este é o blocker P0 mais crítico
 
 ### 🏗️ Arquitetura & Organização

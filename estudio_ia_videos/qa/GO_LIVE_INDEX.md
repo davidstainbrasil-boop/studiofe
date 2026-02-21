@@ -78,18 +78,18 @@
 ### Passo 2: Validar (2 min)
 ```bash
 # Testar URL
-curl https://treinx.abacusai.app/api/health
+curl https://cursostecno.com.br/api/health
 
 # Acessar no browser
-open https://treinx.abacusai.app
+open https://cursostecno.com.br
 ```
 
 ### Passo 3: Monitorar (ongoing)
 ```bash
 # Acessar dashboards
-https://treinx.abacusai.app/dashboard
-https://treinx.abacusai.app/dashboard/analytics
-https://treinx.abacusai.app/admin
+https://cursostecno.com.br/dashboard
+https://cursostecno.com.br/dashboard/analytics
+https://cursostecno.com.br/admin
 ```
 
 ---
@@ -117,7 +117,7 @@ https://treinx.abacusai.app/admin
 **Setup**:
 1. Criar conta Stripe
 2. Obter API keys (Dashboard → Developers)
-3. Configurar webhook: `https://treinx.abacusai.app/api/webhooks/stripe`
+3. Configurar webhook: `https://cursostecno.com.br/api/webhooks/stripe`
 4. Adicionar keys no painel Abacus
 
 ---
@@ -153,10 +153,10 @@ https://treinx.abacusai.app/admin
 ## 🔗 LINKS ÚTEIS
 
 ### Produção
-- **URL**: https://treinx.abacusai.app
-- **Dashboard**: https://treinx.abacusai.app/dashboard
-- **Admin**: https://treinx.abacusai.app/admin
-- **API Health**: https://treinx.abacusai.app/api/health
+- **URL**: https://cursostecno.com.br
+- **Dashboard**: https://cursostecno.com.br/dashboard
+- **Admin**: https://cursostecno.com.br/admin
+- **API Health**: https://cursostecno.com.br/api/health
 
 ### Configuração
 - **Redis**: https://upstash.com

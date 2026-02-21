@@ -11,6 +11,7 @@ import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
 import { applyRateLimit } from '@/lib/rate-limit';
+import { getAppOrigin, resolveTrustedAppUrl } from '@/lib/config/app-url';
 
 // Inicializa Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
@@ -32,15 +33,15 @@ const PRICE_IDS = {
 };
 
 interface CheckoutRequest {
-  userId: string;
+  userId?: string;
   priceId: keyof typeof PRICE_IDS;
   successUrl?: string;
   cancelUrl?: string;
 }
 
 export async function POST(req: NextRequest) {
-  const session = await getServerAuth();
-  if (!session?.user?.id) {
+  const authSession = await getServerAuth();
+  if (!authSession?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
   }
 
@@ -49,13 +50,23 @@ export async function POST(req: NextRequest) {
     if (blocked) return blocked;
 
     const body = await req.json() as CheckoutRequest;
-    const { userId, priceId, successUrl, cancelUrl } = body;
+    const { userId: requestedUserId, priceId, successUrl, cancelUrl } = body;
+    const userId = authSession.user.id;
+    const appOrigin = getAppOrigin();
+    const successRedirect = resolveTrustedAppUrl(successUrl, {
+      baseOrigin: appOrigin,
+      fallbackPath: '/dashboard?upgrade=success',
+    });
+    const cancelRedirect = resolveTrustedAppUrl(cancelUrl, {
+      baseOrigin: appOrigin,
+      fallbackPath: '/pricing',
+    });
 
     // Validação
-    if (!userId) {
+    if (requestedUserId && requestedUserId !== userId) {
       return NextResponse.json(
-        { error: 'userId é obrigatório' },
-        { status: 400 }
+        { error: 'Operação não permitida para este usuário' },
+        { status: 403 }
       );
     }
 
@@ -117,7 +128,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Criar sessão de checkout
-    const session = await stripe.checkout.sessions.create({
+    const checkoutSession = await stripe.checkout.sessions.create({
       customer: stripeCustomerId,
       mode: 'subscription',
       payment_method_types: ['card'],
@@ -127,8 +138,8 @@ export async function POST(req: NextRequest) {
           quantity: 1,
         },
       ],
-      success_url: successUrl || `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?upgrade=success`,
-      cancel_url: cancelUrl || `${process.env.NEXT_PUBLIC_APP_URL}/pricing`,
+      success_url: successRedirect,
+      cancel_url: cancelRedirect,
       metadata: {
         user_id: userId,
         price_id: priceId,
@@ -144,15 +155,15 @@ export async function POST(req: NextRequest) {
     });
 
     logger.info('Sessão de checkout criada', {
-      sessionId: session.id,
+      sessionId: checkoutSession.id,
       userId,
       priceId,
     });
 
     return NextResponse.json({
       success: true,
-      sessionId: session.id,
-      url: session.url,
+      sessionId: checkoutSession.id,
+      url: checkoutSession.url,
     });
 
   } catch (error) {
@@ -174,17 +185,14 @@ export async function POST(req: NextRequest) {
 }
 
 // GET - Retorna URLs do portal de billing
-export async function GET(req: NextRequest) {
-  try {
-    const { searchParams } = new URL(req.url);
-    const userId = searchParams.get('userId');
+export async function GET() {
+  const session = await getServerAuth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized', code: 'AUTH_REQUIRED' }, { status: 401 });
+  }
 
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'userId é obrigatório' },
-        { status: 400 }
-      );
-    }
+  try {
+    const userId = session.user.id;
 
     // Buscar customer_id
     const { data: subscription, error } = await supabase
@@ -203,7 +211,7 @@ export async function GET(req: NextRequest) {
     // Criar sessão do portal de billing
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: subscription.stripe_customer_id,
-      return_url: `${process.env.NEXT_PUBLIC_APP_URL}/settings`,
+      return_url: `${getAppOrigin()}/settings`,
     });
 
     return NextResponse.json({

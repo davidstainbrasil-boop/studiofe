@@ -10,18 +10,17 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo ""
 
 # URLs de verificação
-DEPLOYMENT_URL="https://estudioiavideos-lpu9uiny6-tecnocursos.vercel.app"
-PROD_URL="https://estudioiavideos-tecnocursos.vercel.app"
-CUSTOM_DOMAIN_URL="https://cursostecno.com.br"
-DASHBOARD="https://vercel.com/tecnocursos/estudio_ia_videos/deployments"
+DEPLOYMENT_URL=${DEPLOYMENT_URL:-""}
+VERCEL_PROD_URL=${VERCEL_PROD_URL:-""}
+CUSTOM_DOMAIN_URL=${CUSTOM_DOMAIN_URL:-"https://cursostecno.com.br"}
+DASHBOARD=${DASHBOARD:-"https://vercel.com/tecnocursos/estudio_ia_videos/deployments"}
 
-# Chunk conhecido em falha atual (pode ser sobrescrito via KNOWN_CHUNK="webpack-*.js")
-KNOWN_CHUNK=${KNOWN_CHUNK:-"webpack-f3e7a65396ba9db2.js"}
+# Chunk monitorado (opcional, útil para validar MIME)
+KNOWN_CHUNK=${KNOWN_CHUNK:-""}
 
 echo "📋 Informações do Deploy:"
-echo "   ID: 66oCAfgorRqEHTXVTELP1WUEPgp5"
-echo "   URL Preview: $DEPLOYMENT_URL"
-echo "   URL Prod: $PROD_URL"
+echo "   URL Preview: ${DEPLOYMENT_URL:-não configurada}"
+echo "   URL Vercel Prod: ${VERCEL_PROD_URL:-não configurada}"
 echo "   Domínio Custom: $CUSTOM_DOMAIN_URL"
 echo ""
 
@@ -117,8 +116,14 @@ check_site() {
     echo ""
 }
 
-check_site "deployment preview" "$DEPLOYMENT_URL"
-check_site "deploy Vercel (produção)" "$PROD_URL"
+if [[ -n "$DEPLOYMENT_URL" ]]; then
+    check_site "deployment preview" "$DEPLOYMENT_URL"
+fi
+
+if [[ -n "$VERCEL_PROD_URL" ]]; then
+    check_site "deploy Vercel (produção)" "$VERCEL_PROD_URL"
+fi
+
 check_site "domínio personalizado" "$CUSTOM_DOMAIN_URL"
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -128,16 +133,17 @@ echo ""
 echo "1. Abra o dashboard:"
 echo "   $DASHBOARD"
 echo ""
-echo "2. Verifique o deployment com ID: 66oCAfgorRqEHTXVTELP1WUEPgp5"
-echo ""
-echo "3. Status possíveis:"
+echo "2. Status possíveis:"
 echo "   ⏳ Building - Aguarde conclusão (5-10 min)"
 echo "   ✅ Ready - Execute: ./validate-mime-fix.sh"
 echo "   ❌ Error - Configure Root Directory e Redeploy"
 echo ""
-echo "4. Se necessário, configure Root Directory:" 
+echo "3. Se necessário, configure Root Directory:" 
 echo "   https://vercel.com/tecnocursos/estudio_ia_videos/settings"
 echo "   Root Directory: estudio_ia_videos"
 echo ""
-echo "5. Utilize a variável KNOWN_CHUNK para monitorar hashes específicos (ex.: KNOWN_CHUNK=webpack-abc123.js ./check-deploy-status.sh)"
+echo "4. Variáveis úteis:"
+echo "   DEPLOYMENT_URL=https://preview-url verifique preview específico"
+echo "   VERCEL_PROD_URL=https://project.vercel.app verifique domínio direto da Vercel"
+echo "   KNOWN_CHUNK=webpack-abc123.js monitore um hash específico"
 echo ""

@@ -2,7 +2,7 @@
 # 🚀 GO LIVE - RELATÓRIO FINAL DE PRODUÇÃO
 
 **Projeto**: Estúdio IA de Vídeos  
-**URL Produção**: https://treinx.abacusai.app/  
+**URL Produção**: https://cursostecno.com.br/  
 **Data**: 03 de Outubro de 2025  
 **Status**: 🟢 PRONTO PARA PRODUÇÃO
 
@@ -75,7 +75,7 @@ curl http://localhost:3000/api/health
 #### Setup
 1. Criar conta: https://stripe.com
 2. Obter chaves API (Dashboard → Developers → API keys)
-3. Configurar webhooks: `https://treinx.abacusai.app/api/webhooks/stripe`
+3. Configurar webhooks: `https://cursostecno.com.br/api/webhooks/stripe`
 4. Criar produtos e preços
 
 #### Configuração
@@ -177,7 +177,7 @@ curl -X POST http://localhost:3000/api/billing/create-subscription \
 - ✅ Background sync
 
 ### Teste
-1. Abrir: https://treinx.abacusai.app
+1. Abrir: https://cursostecno.com.br
 2. Chrome → Install App
 3. Testar offline (DevTools → Network → Offline)
 
@@ -213,7 +213,7 @@ curl -X POST http://localhost:3000/api/billing/create-subscription \
 - [ ] Redis configurado (opcional, fallback funciona)
 - [ ] Stripe configurado (opcional, billing pode ser habilitado depois)
 - [ ] Variáveis de ambiente produção
-- [ ] DNS configurado (treinx.abacusai.app)
+- [ ] DNS configurado (cursostecno.com.br)
 
 ### Testes
 - [x] Build success
@@ -266,10 +266,10 @@ abacus deploy --project estudio-ia-videos --env production
 ./test-production.sh
 
 # Performance audit
-lighthouse https://treinx.abacusai.app --view
+lighthouse https://cursostecno.com.br --view
 
 # Acessibilidade
-axe https://treinx.abacusai.app
+axe https://cursostecno.com.br
 ```
 
 ### 4. Monitoramento (30 min)
@@ -290,9 +290,9 @@ axe https://treinx.abacusai.app
 - **Dúvidas**: support@treinx.com
 
 ### Links Úteis
-- **Dashboard Produção**: https://treinx.abacusai.app/dashboard
-- **Admin Panel**: https://treinx.abacusai.app/admin
-- **API Docs**: https://treinx.abacusai.app/api/docs
+- **Dashboard Produção**: https://cursostecno.com.br/dashboard
+- **Admin Panel**: https://cursostecno.com.br/admin
+- **API Docs**: https://cursostecno.com.br/api/docs
 - **Status Page**: https://status.treinx.com (configurar)
 
 ---

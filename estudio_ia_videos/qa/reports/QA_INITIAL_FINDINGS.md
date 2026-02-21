@@ -2,21 +2,21 @@
 # QA INITIAL FINDINGS - Estúdio IA de Vídeos
 **Data:** 2025-10-03
 **Executor:** DeepAgent QA Automation
-**Ambiente Alvo:** https://treinx.abacusai.app/ (produção)
+**Ambiente Alvo:** https://cursostecno.com.br/ (produção)
 
 ## 🚨 ACHADO CRÍTICO P0 - APLICAÇÃO NÃO DISPONÍVEL EM PRODUÇÃO
 
 ### Descrição
-A aplicação não está acessível no domínio de produção configurado (https://treinx.abacusai.app/).
+A aplicação não está acessível no domínio de produção configurado (https://cursostecno.com.br/).
 
 ### Evidências
 ```bash
 # Todas as rotas testadas retornam 404:
-- https://treinx.abacusai.app/ → 404
-- https://treinx.abacusai.app/dashboard → 404  
-- https://treinx.abacusai.app/login → 404
-- https://treinx.abacusai.app/api/health → 404
-- https://treinx.abacusai.app/api/status → 404
+- https://cursostecno.com.br/ → 404
+- https://cursostecno.com.br/dashboard → 404  
+- https://cursostecno.com.br/login → 404
+- https://cursostecno.com.br/api/health → 404
+- https://cursostecno.com.br/api/status → 404
 ```
 
 ### Severidade
@@ -34,7 +34,7 @@ NEXTAUTH_URL="http://localhost:3000"
 
 ### Ação Recomendada
 1. Verificar se o deploy em produção foi realizado
-2. Configurar DNS/CNAME corretamente para treinx.abacusai.app
+2. Configurar DNS/CNAME corretamente para cursostecno.com.br
 3. Configurar NEXTAUTH_URL para o domínio de produção
 4. Realizar deploy da aplicação
 5. Validar SSL/certificados

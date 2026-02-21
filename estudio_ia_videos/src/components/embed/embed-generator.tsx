@@ -27,6 +27,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { getAppOrigin } from '@/lib/config/app-url';
 
 interface EmbedGeneratorProps {
   videoId: string;
@@ -60,7 +61,7 @@ export function EmbedGenerator({
 
   const baseUrl = typeof window !== 'undefined' 
     ? window.location.origin 
-    : process.env.NEXT_PUBLIC_APP_URL || '';
+    : getAppOrigin();
 
   // Generate embed codes
   const generateHtmlEmbed = () => {

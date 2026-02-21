@@ -18,7 +18,7 @@ Otimizar a entrega de assets estáticos (JavaScript, CSS, imagens, vídeos) atra
 #### A. Adicionar domínio ao Cloudflare
 1. Acessar [Cloudflare Dashboard](https://dash.cloudflare.com)
 2. Clicar em "Add a Site"
-3. Inserir domínio: `treinx.abacusai.app`
+3. Inserir domínio: `cursostecno.com.br`
 4. Selecionar plano: **Free** (ou Pro para features avançadas)
 
 #### B. Atualizar Nameservers
@@ -32,14 +32,14 @@ NS2: dana.ns.cloudflare.com
 | Type | Name | Content | Proxy Status |
 |------|------|---------|--------------|
 | A | @ | 104.21.xx.xx | Proxied |
-| CNAME | www | treinx.abacusai.app | Proxied |
+| CNAME | www | cursostecno.com.br | Proxied |
 
 ---
 
 ### 2. Page Rules
 
 #### A. Cache Everything (Assets Estáticos)
-**URL:** `treinx.abacusai.app/_next/*`
+**URL:** `cursostecno.com.br/_next/*`
 
 **Settings:**
 - Cache Level: **Cache Everything**
@@ -47,7 +47,7 @@ NS2: dana.ns.cloudflare.com
 - Browser Cache TTL: **1 day**
 
 #### B. Cache Vídeos Renderizados
-**URL:** `treinx.abacusai.app/videos/*`
+**URL:** `cursostecno.com.br/videos/*`
 
 **Settings:**
 - Cache Level: **Cache Everything**
@@ -55,7 +55,7 @@ NS2: dana.ns.cloudflare.com
 - Browser Cache TTL: **1 day**
 
 #### C. Bypass Cache (APIs Dinâmicas)
-**URL:** `treinx.abacusai.app/api/*`
+**URL:** `cursostecno.com.br/api/*`
 
 **Settings:**
 - Cache Level: **Bypass**
@@ -201,8 +201,8 @@ async function invalidateCache() {
       },
       body: JSON.stringify({
         files: [
-          'https://treinx.abacusai.app/_next/static/css/app.css',
-          'https://treinx.abacusai.app/_next/static/js/main.js',
+          'https://cursostecno.com.br/_next/static/css/app.css',
+          'https://cursostecno.com.br/_next/static/js/main.js',
         ]
       })
     }
@@ -287,7 +287,7 @@ CLOUDFLARE_API_TOKEN=<api-token>
 Para obter API Token:
 1. Cloudflare Dashboard > My Profile > API Tokens
 2. Create Token > Edit zone DNS
-3. Zone Resources: Include > Specific zone > treinx.abacusai.app
+3. Zone Resources: Include > Specific zone > cursostecno.com.br
 4. Copiar token e adicionar ao GitHub Secrets
 
 ---

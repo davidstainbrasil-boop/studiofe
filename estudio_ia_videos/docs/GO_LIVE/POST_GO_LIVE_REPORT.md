@@ -4,7 +4,7 @@
 **Data do Deploy:** 2025-10-02  
 **Versão:** 4.1.0  
 **Ambiente:** Produção  
-**URL:** https://treinx.abacusai.app
+**URL:** https://cursostecno.com.br
 
 ---
 
@@ -238,7 +238,7 @@ Nenhum rollback foi necessário. Deploy estável desde o início.
 ## 📞 Contato
 
 **Monitoramento:** https://sentry.io/estudio-ia-videos  
-**Status:** https://status.treinx.abacusai.app  
+**Status:** https://status.cursostecno.com.br  
 **Slack:** #estudio-ia-alerts  
 **Email:** suporte@treinx.ai
 

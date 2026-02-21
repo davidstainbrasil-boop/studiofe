@@ -228,7 +228,7 @@ class APIDocumentationGenerator {
           description: 'Ambiente de Desenvolvimento'
         },
         {
-          url: 'https://tecnicocursos-videos.vercel.app',
+          url: 'https://cursostecno.com.br',
           description: 'Ambiente de Produção'
         }
       ],

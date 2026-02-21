@@ -13,7 +13,8 @@
     "type-check": "tsc --noEmit",
     "setup": "npm install && pip install -r requirements.txt",
     "test": "cd estudio_ia_videos && jest -c jest.config.cjs",
-    "test:watch": "cd estudio_ia_videos && jest -c jest.config.cjs --watch"
+    "test:watch": "cd estudio_ia_videos && jest -c jest.config.cjs --watch",
+    "check:production-domain": "bash scripts/check-production-domain-consistency.sh"
   },
   "dependencies": {
     "@aws-sdk/client-polly": "^3.983.0",

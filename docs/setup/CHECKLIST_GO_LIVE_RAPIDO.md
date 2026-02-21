@@ -233,7 +233,7 @@ Status: ⏳ PENDENTE - Validação importante
 - [ ] Selecionar checkpoint: "GO LIVE - Deploy Produção Final"
 - [ ] Confirmar deploy
 - [ ] Aguardar 2-5 minutos
-- [ ] URL: https://treinx.abacusai.app/
+- [ ] URL: https://cursostecno.com.br/
 
 **✅ CHECKPOINT:** Deploy no Abacus concluído
 

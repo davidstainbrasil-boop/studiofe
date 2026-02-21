@@ -3,7 +3,7 @@
 
 **Data:** 03/10/2025  
 **Status:** ✅ CONCLUÍDO  
-**Link:** https://treinx.abacusai.app/
+**Link:** https://cursostecno.com.br/
 
 ---
 
@@ -477,12 +477,12 @@ await syncManager.forceSyncNow();
 ### Testar PWA:
 
 1. **Chrome Mobile:**
-   - Abrir https://treinx.abacusai.app/
+   - Abrir https://cursostecno.com.br/
    - Menu → "Instalar app"
    - Testar offline (modo avião)
 
 2. **iOS Safari:**
-   - Abrir https://treinx.abacusai.app/
+   - Abrir https://cursostecno.com.br/
    - Compartilhar → "Adicionar à Tela Inicial"
    - Testar funcionalidades
 

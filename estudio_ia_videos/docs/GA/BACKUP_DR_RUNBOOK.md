@@ -205,7 +205,7 @@ kubectl wait --for=condition=Ready pod -l app=api --timeout=300s
 kubectl wait --for=condition=Ready pod -l app=workers --timeout=300s
 
 echo "Step 10: Health check..."
-curl -f https://treinx.abacusai.app/api/health
+curl -f https://cursostecno.com.br/api/health
 
 echo "✅ Database restore complete!"
 
@@ -468,7 +468,7 @@ FROM projects;
 
 - AWS Console: https://console.aws.amazon.com
 - Grafana Dashboards: https://grafana.example.com
-- Status Page: https://status.treinx.abacusai.app
+- Status Page: https://status.cursostecno.com.br
 - Runbook Repository: https://github.com/org/runbooks
 
 ### 8.3 Backup Locations

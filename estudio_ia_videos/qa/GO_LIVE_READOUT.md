@@ -2,7 +2,7 @@
 
 **Data**: 03/10/2025  
 **Versão**: Sprint 38 (Production Ready)  
-**URL**: https://treinx.abacusai.app/  
+**URL**: https://cursostecno.com.br/  
 **Status**: ✅ **APROVADO PARA PRODUÇÃO (GO)**
 
 ---

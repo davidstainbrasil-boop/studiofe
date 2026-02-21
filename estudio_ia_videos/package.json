@@ -37,7 +37,8 @@
     "test:performance": "./scripts/test-performance.sh",
     "test:security": "./scripts/security-audit.sh",
     "audit:full": "npm run test:security && npm run test:performance",
-    "check:assets": "node check-assets.mjs https://cursostecno.com.br"
+    "check:assets": "node check-assets.mjs https://cursostecno.com.br",
+    "check:production-domain": "bash ../scripts/check-production-domain-consistency.sh"
   },
   "prisma": {
     "seed": "tsx src/app/scripts/seed.ts"

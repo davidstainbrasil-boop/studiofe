@@ -341,7 +341,7 @@ Adicionar ao `.env`:
 ```bash
 SENTRY_DSN=https://...
 REDIS_URL=redis://...
-CDN_URL=https://cdn.treinx.abacusai.app
+CDN_URL=https://cdn.cursostecno.com.br
 ```
 
 #### 2. Install Dependencies
@@ -435,7 +435,7 @@ git merge main
 git push origin production
 
 # Monitor
-watch -n 5 'curl -s https://treinx.abacusai.app/api/health | jq'
+watch -n 5 'curl -s https://cursostecno.com.br/api/health | jq'
 ```
 
 ---

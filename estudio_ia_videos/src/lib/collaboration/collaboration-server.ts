@@ -6,6 +6,7 @@
 import { Server as SocketIOServer, Socket } from 'socket.io';
 import { Server as HTTPServer } from 'http';
 import { logger } from '@lib/logger';
+import { getAppOrigin } from '@/lib/config/app-url';
 import { lockService } from './lock-service';
 import {
   CollabEvent,
@@ -59,7 +60,7 @@ export class CollaborationServer {
     this.io = new SocketIOServer(server, {
       path: '/api/collaboration',
       cors: {
-        origin: process.env.NEXT_PUBLIC_SITE_URL || '*',
+        origin: getAppOrigin(),
         methods: ['GET', 'POST'],
         credentials: true
       },

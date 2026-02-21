@@ -2,7 +2,7 @@
 # 🚀 GO LIVE - RELATÓRIO CONSOLIDADO FINAL
 
 **Projeto**: Estúdio IA de Vídeos  
-**URL Produção**: https://treinx.abacusai.app/  
+**URL Produção**: https://cursostecno.com.br/  
 **Data**: 03 de Outubro de 2025  
 **Status**: ✅ **PRONTO PARA DEPLOY**
 
@@ -107,7 +107,7 @@ REDIS_URL=redis://default:password@hostname:6379
 
 3. **Teste**:
 ```bash
-curl https://treinx.abacusai.app/api/health
+curl https://cursostecno.com.br/api/health
 # Retorno: {"redis": "connected"}
 ```
 
@@ -121,7 +121,7 @@ curl https://treinx.abacusai.app/api/health
 #### Setup
 1. **Criar conta**: https://stripe.com
 2. **Obter chaves**: Dashboard → Developers → API keys
-3. **Configurar webhook**: `https://treinx.abacusai.app/api/webhooks/stripe`
+3. **Configurar webhook**: `https://cursostecno.com.br/api/webhooks/stripe`
 
 4. **Configuração**:
 ```bash
@@ -198,7 +198,7 @@ STRIPE_WEBHOOK_SECRET=whsec_xxxxx
 - ✅ **Push Notifications**: Ready (config pendente)
 
 ### Teste
-1. Abrir: https://treinx.abacusai.app
+1. Abrir: https://cursostecno.com.br
 2. Chrome → Menu → Install App
 3. Testar offline: DevTools → Network → Offline
 
@@ -278,11 +278,11 @@ abacus deploy --project estudio-ia-videos --env production
 ### Passo 2: Validar Deploy (2 min)
 ```bash
 # Teste de smoke
-curl https://treinx.abacusai.app/api/health
+curl https://cursostecno.com.br/api/health
 # Esperado: {"status":"ok","timestamp":"..."}
 
 # Acessar no browser
-open https://treinx.abacusai.app
+open https://cursostecno.com.br
 ```
 
 ### Passo 3: Configuração Opcional (15-30 min)
@@ -308,7 +308,7 @@ open https://treinx.abacusai.app
 # https://uptimerobot.com
 
 # Validar dashboards de analytics
-# https://treinx.abacusai.app/dashboard/analytics
+# https://cursostecno.com.br/dashboard/analytics
 ```
 
 ---
@@ -405,11 +405,11 @@ open https://treinx.abacusai.app
 - **Docs**: /docs no projeto
 
 ### Links Úteis
-- **Produção**: https://treinx.abacusai.app
-- **Dashboard**: https://treinx.abacusai.app/dashboard
-- **Admin**: https://treinx.abacusai.app/admin
-- **API Health**: https://treinx.abacusai.app/api/health
-- **API Docs**: https://treinx.abacusai.app/api/docs
+- **Produção**: https://cursostecno.com.br
+- **Dashboard**: https://cursostecno.com.br/dashboard
+- **Admin**: https://cursostecno.com.br/admin
+- **API Health**: https://cursostecno.com.br/api/health
+- **API Docs**: https://cursostecno.com.br/api/docs
 
 ---
 

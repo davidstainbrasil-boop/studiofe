@@ -186,7 +186,7 @@
 - [x] Documentação completa
 
 ### Deploy ⏳
-- [ ] Fazer deploy em https://treinx.abacusai.app/
+- [ ] Fazer deploy em https://cursostecno.com.br/
 - [ ] Validar rotas em produção
 - [ ] Validar APIs em produção
 - [ ] Configurar monitoramento (opcional)

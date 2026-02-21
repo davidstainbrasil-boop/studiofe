@@ -11,6 +11,7 @@ import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
 import { applyRateLimit } from '@/lib/rate-limit';
+import { getAppOrigin, resolveTrustedAppUrl } from '@/lib/config/app-url';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2023-10-16',
@@ -20,6 +21,11 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || '',
   process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 );
+
+interface PortalRequest {
+  userId?: string;
+  returnUrl?: string;
+}
 
 export async function POST(req: NextRequest) {
   const session = await getServerAuth();
@@ -31,13 +37,18 @@ export async function POST(req: NextRequest) {
     const blocked = await applyRateLimit(req, 'stripe-portal', 10);
     if (blocked) return blocked;
 
-    const body = await req.json();
-    const { userId, returnUrl } = body;
+    const body = await req.json() as PortalRequest;
+    const { userId: requestedUserId, returnUrl } = body;
+    const userId = session.user.id;
+    const resolvedReturnUrl = resolveTrustedAppUrl(returnUrl, {
+      baseOrigin: getAppOrigin(),
+      fallbackPath: '/dashboard/billing',
+    });
 
-    if (!userId) {
+    if (requestedUserId && requestedUserId !== userId) {
       return NextResponse.json(
-        { error: 'userId é obrigatório' },
-        { status: 400 }
+        { error: 'Operação não permitida para este usuário' },
+        { status: 403 }
       );
     }
 
@@ -59,7 +70,7 @@ export async function POST(req: NextRequest) {
     // Criar sessão do portal
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: subscription.stripe_customer_id,
-      return_url: returnUrl || `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/billing`,
+      return_url: resolvedReturnUrl,
     });
 
     logger.info('Sessão do portal criada', {

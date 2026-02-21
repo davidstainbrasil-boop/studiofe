@@ -221,7 +221,7 @@ GOOGLE_CLIENT_SECRET=***
 ```bash
 NEXT_PUBLIC_VAPID_PUBLIC_KEY=***
 VAPID_PRIVATE_KEY=***
-VAPID_SUBJECT=mailto:admin@treinx.abacusai.app
+VAPID_SUBJECT=mailto:admin@cursostecno.com.br
 ```
 
 ---
@@ -294,9 +294,9 @@ O sistema agora possui capacidades de nível **enterprise**:
 - `SPRINT34_CHANGELOG.md`
 
 **Contato:**
-- Suporte Técnico: support@treinx.abacusai.app
-- Enterprise Sales: enterprise@treinx.abacusai.app
-- Documentação: https://treinx.abacusai.app/docs
+- Suporte Técnico: support@cursostecno.com.br
+- Enterprise Sales: enterprise@cursostecno.com.br
+- Documentação: https://cursostecno.com.br/docs
 
 ---
 

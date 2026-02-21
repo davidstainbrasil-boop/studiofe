@@ -5,6 +5,7 @@
 
 import crypto from 'crypto'
 import { logger } from '@/lib/logger';
+import { getAllowedOriginsFromEnv, getSecurityAllowedOrigins } from '@/lib/config/app-url';
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -110,7 +111,7 @@ export class SecurityAuditSystem {
       },
       cors: {
         enabled: true,
-        origins: process.env.ALLOWED_ORIGINS?.split(',') || (process.env.NODE_ENV === 'production' ? ['https://cursostecno.com.br'] : ['http://localhost:3000']),
+        origins: getAllowedOriginsFromEnv() || getSecurityAllowedOrigins(),
         credentials: true,
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
         ...config?.cors

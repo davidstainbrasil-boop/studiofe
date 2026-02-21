@@ -1,8 +1,9 @@
 
 import { MetadataRoute } from 'next';
+import { getAppOrigin } from '@/lib/config/app-url';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://cursostecno.com.br';
+  const baseUrl = getAppOrigin();
 
   return [
     {

@@ -12,6 +12,7 @@ import { PPTXProcessorReal } from '@/lib/pptx/pptx-processor-real';
 import { logger } from '@lib/logger';
 import { randomUUID } from 'crypto';
 import { getServerAuth } from '@lib/auth/unified-session';
+import { getAppOrigin } from '@/lib/config/app-url';
 
 export const maxDuration = 300;
 
@@ -170,7 +171,7 @@ async function handleRequest(request: NextRequest, apiKey: APIKey): Promise<Next
 
     // Queue the actual video generation via the internal generate endpoint
     // This runs asynchronously - client polls status endpoint
-    const internalBaseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const internalBaseUrl = getAppOrigin();
     fetch(`${internalBaseUrl}/api/pptx-to-video/generate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

@@ -8,6 +8,7 @@ import { Server as HTTPServer } from 'http';
 import { logger } from '@lib/logger';
 import { prisma } from '@lib/prisma';
 import { verifyJWT } from '@lib/auth/jwt';
+import { getAppOrigin } from '@/lib/config/app-url';
 
 interface AuthenticatedSocket extends Socket {
   userId: string;
@@ -69,11 +70,12 @@ class CollaborationServer {
   private io: SocketIOServer;
   private rooms: Map<string, RoomData> = new Map();
   private userSockets: Map<string, Set<string>> = new Map(); // userId -> socketIds
+  private cleanupInterval: NodeJS.Timeout | null = null;
   
   constructor(httpServer: HTTPServer) {
     this.io = new SocketIOServer(httpServer, {
       cors: {
-        origin: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+        origin: getAppOrigin(),
         methods: ["GET", "POST"],
         credentials: true
       },
@@ -537,7 +539,11 @@ class CollaborationServer {
    * Cleanup inactive users and empty rooms
    */
   private startCleanupInterval() {
-    setInterval(() => {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+    }
+
+    this.cleanupInterval = setInterval(() => {
       const now = new Date();
       const timeout = 5 * 60 * 1000; // 5 minutes
 
@@ -561,6 +567,8 @@ class CollaborationServer {
         }
       }
     }, 60000); // Run every minute
+
+    this.cleanupInterval.unref?.();
   }
 
   /**
@@ -580,6 +588,11 @@ class CollaborationServer {
    */
   async shutdown() {
     logger.info('Shutting down collaboration server', { service: 'CollaborationServer' });
+
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+      this.cleanupInterval = null;
+    }
     
     // Save all room states
     for (const [roomId, room] of this.rooms.entries()) {

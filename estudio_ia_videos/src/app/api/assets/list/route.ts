@@ -50,17 +50,28 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to list assets' }, { status: 500 });
     }
 
-    const assets = (files || [])
-      .map((file) => {
+    const assetResults = await Promise.all(
+      (files || []).map(async (file) => {
         const filePath = `${userId}/${file.name}`;
-        const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(filePath);
+        const bucketRef = supabase.storage.from(bucket);
 
         const mimeType = (file.metadata as { mimetype?: string } | null)?.mimetype || null;
         const type = inferAssetType(file.name, mimeType);
 
+        const { data: { publicUrl } } = bucketRef.getPublicUrl(filePath);
+        let url = publicUrl;
+        if (!url) {
+          const signed = await bucketRef.createSignedUrl(filePath, 3600);
+          if (signed.error) {
+            logger.error('Asset List Route Signed URL Error', signed.error, { component: 'API: assets/list' });
+            return null;
+          }
+          url = signed.data.signedUrl;
+        }
+
         return {
           id: file.id || filePath,
-          url: publicUrl,
+          url,
           name: file.name,
           type,
           mimeType,
@@ -68,10 +79,20 @@ export async function GET(req: NextRequest) {
           createdAt: file.created_at || null,
         };
       })
-      .filter((asset) => {
-        if (!typeFilter) return true;
-        return asset.type === typeFilter;
-      });
+    );
+
+    const assets = (assetResults.filter(Boolean) as Array<{
+      id: string;
+      url: string;
+      name: string;
+      type: 'image' | 'video' | 'audio' | 'file';
+      mimeType: string | null;
+      size: number;
+      createdAt: string | null;
+    }>).filter((asset) => {
+      if (!typeFilter) return true;
+      return asset.type === typeFilter;
+    });
 
     return NextResponse.json({
         success: true,

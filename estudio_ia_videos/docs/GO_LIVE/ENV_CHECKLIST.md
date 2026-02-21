@@ -12,8 +12,8 @@
 NODE_ENV=production
 
 # Application URL
-NEXT_PUBLIC_APP_URL=https://treinx.abacusai.app
-NEXTAUTH_URL=https://treinx.abacusai.app
+NEXT_PUBLIC_APP_URL=https://cursostecno.com.br
+NEXTAUTH_URL=https://cursostecno.com.br
 
 # Version (opcional, auto-gerado pelo CI/CD)
 NEXT_PUBLIC_APP_VERSION=4.0.0
@@ -123,7 +123,7 @@ AWS_SECRET_ACCESS_KEY=<secret-key>
 
 ```bash
 # CDN URL (Cloudflare, CloudFront, etc)
-CDN_URL=https://cdn.treinx.abacusai.app
+CDN_URL=https://cdn.cursostecno.com.br
 
 # CDN API Key (para invalidações)
 CDN_API_KEY=<api-key>
@@ -136,7 +136,7 @@ CDN_ZONE_ID=<zone-id>
 
 ```bash
 # CORS Allowed Origins (comma-separated)
-CORS_ALLOWED_ORIGINS=https://treinx.abacusai.app,https://staging.treinx.abacusai.app
+CORS_ALLOWED_ORIGINS=https://cursostecno.com.br,https://staging.cursostecno.com.br
 
 # Rate Limiting
 RATE_LIMIT_WINDOW_MS=60000  # 1 minuto
@@ -149,7 +149,7 @@ RATE_LIMIT_MAX_REQUESTS=60
 
 ```bash
 # WebSocket URL (se diferente do app URL)
-NEXT_PUBLIC_WS_URL=https://treinx.abacusai.app
+NEXT_PUBLIC_WS_URL=https://cursostecno.com.br
 
 # Socket.IO Options
 SOCKET_IO_PATH=/api/socket.io
@@ -165,7 +165,7 @@ SOCKET_IO_TRANSPORTS=websocket,polling
 NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
 
 # Custom Analytics Endpoint (opcional)
-ANALYTICS_ENDPOINT=https://analytics.treinx.abacusai.app
+ANALYTICS_ENDPOINT=https://analytics.cursostecno.com.br
 ```
 
 ---

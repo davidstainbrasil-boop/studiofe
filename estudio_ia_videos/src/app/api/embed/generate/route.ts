@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 import { createClient } from '@/lib/supabase/server';
 import { applyRateLimit } from '@/lib/rate-limit';
+import { getAppOrigin } from '@/lib/config/app-url';
 
 // Generate embed HTML for a video
 function generateEmbedCode(
@@ -203,8 +204,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Get base URL from request
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
-                    `${req.nextUrl.protocol}//${req.nextUrl.host}`;
+    const baseUrl = getAppOrigin({ requestUrl: req.nextUrl, fallbackToRequest: true });
 
     let embedCode: string | OEmbedResponse;
 
@@ -296,8 +296,7 @@ export async function GET(req: NextRequest) {
   }
 
   const videoId = videoIdMatch[1];
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
-                  `${req.nextUrl.protocol}//${req.nextUrl.host}`;
+  const baseUrl = getAppOrigin({ requestUrl: req.nextUrl, fallbackToRequest: true });
 
   // In production, fetch video details from database
   const oembedResponse = generateOEmbedResponse(

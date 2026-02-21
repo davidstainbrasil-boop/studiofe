@@ -8,6 +8,7 @@
 import { Server as HttpServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import { logger } from '@lib/logger';
+import { getAppOrigin } from '@/lib/config/app-url';
 
 /** Event name constants for Socket.IO timeline collaboration */
 export const TimelineEvent = {
@@ -41,7 +42,7 @@ const projectUsers = new Map<string, Map<string, { userName: string; socketId: s
 export function initializeWebSocket(httpServer: HttpServer): SocketIOServer {
   const io = new SocketIOServer(httpServer, {
     cors: {
-      origin: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+      origin: getAppOrigin(),
       methods: ['GET', 'POST'],
     },
     transports: ['websocket', 'polling'],

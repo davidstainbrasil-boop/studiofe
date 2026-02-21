@@ -64,7 +64,7 @@ git merge main
 git push origin production
 
 # 5. Monitor deployment
-watch -n 5 'curl -s https://treinx.abacusai.app/api/health | jq'
+watch -n 5 'curl -s https://cursostecno.com.br/api/health | jq'
 ```
 
 ### Method 2: Tag Rollback
@@ -88,7 +88,7 @@ git reset --hard v3.9.0
 git push origin production --force
 
 # 5. Verify
-curl https://treinx.abacusai.app/api/health
+curl https://cursostecno.com.br/api/health
 ```
 
 ### Method 3: Infrastructure Rollback (Vercel/Railway)
@@ -169,7 +169,7 @@ npx prisma studio
 
 ### 1. Health Check
 ```bash
-curl https://treinx.abacusai.app/api/health | jq
+curl https://cursostecno.com.br/api/health | jq
 ```
 
 Expected response:
@@ -188,15 +188,15 @@ Expected response:
 ### 2. Smoke Tests
 ```bash
 # Homepage
-curl -I https://treinx.abacusai.app
+curl -I https://cursostecno.com.br
 # Expected: 200 OK
 
 # API
-curl https://treinx.abacusai.app/api/projects
+curl https://cursostecno.com.br/api/projects
 # Expected: 200 OK (or 401 if auth required)
 
 # Metrics
-curl https://treinx.abacusai.app/api/metrics | jq '.uptime'
+curl https://cursostecno.com.br/api/metrics | jq '.uptime'
 # Expected: Number (seconds)
 ```
 
@@ -209,7 +209,7 @@ curl https://treinx.abacusai.app/api/metrics | jq '.uptime'
 ### 4. Performance
 ```bash
 # Run Lighthouse
-npx lighthouse https://treinx.abacusai.app --view
+npx lighthouse https://cursostecno.com.br --view
 # Expected: Performance score > 80
 ```
 
@@ -220,13 +220,13 @@ npx lighthouse https://treinx.abacusai.app --view
 ### Key Metrics to Watch
 ```bash
 # 1. Error rate
-watch -n 5 'curl -s https://treinx.abacusai.app/api/metrics | jq ".custom.http_errors"'
+watch -n 5 'curl -s https://cursostecno.com.br/api/metrics | jq ".custom.http_errors"'
 
 # 2. Response time
-watch -n 5 'curl -s https://treinx.abacusai.app/api/metrics | jq ".custom.http_request_duration"'
+watch -n 5 'curl -s https://cursostecno.com.br/api/metrics | jq ".custom.http_request_duration"'
 
 # 3. Active connections
-watch -n 5 'curl -s https://treinx.abacusai.app/api/health | jq ".checks.redis"'
+watch -n 5 'curl -s https://cursostecno.com.br/api/health | jq ".checks.redis"'
 ```
 
 ### Sentry Dashboard

@@ -55,13 +55,13 @@
 ```bash
 # Production .env checklist
 NODE_ENV=production
-NEXT_PUBLIC_APP_URL=https://treinx.abacusai.app
+NEXT_PUBLIC_APP_URL=https://cursostecno.com.br
 
 # Database
 DATABASE_URL=postgresql://...
 
 # Auth
-NEXTAUTH_URL=https://treinx.abacusai.app
+NEXTAUTH_URL=https://cursostecno.com.br
 NEXTAUTH_SECRET=<strong-secret>
 
 # Redis
@@ -83,7 +83,7 @@ AWS_FOLDER_PREFIX=production/
 AWS_REGION=us-east-1
 
 # CDN
-CDN_URL=https://cdn.treinx.abacusai.app
+CDN_URL=https://cdn.cursostecno.com.br
 ```
 
 ### 2. CI/CD Pipeline
@@ -162,7 +162,7 @@ gh release download <version>
 ./deploy.sh --version <stable-version>
 
 # 4. Validar
-curl https://treinx.abacusai.app/api/health
+curl https://cursostecno.com.br/api/health
 ```
 
 ---

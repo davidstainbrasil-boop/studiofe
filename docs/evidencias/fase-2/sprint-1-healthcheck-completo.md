@@ -127,7 +127,7 @@ Arquivos em `app/components/` e `app/dashboard-functional/` com imports quebrado
 
 ### UptimeRobot (externo)
 1. Monitor Type: HTTP(s)
-2. URL: `https://seu-dominio.vercel.app/api/health`
+2. URL: `https://cursostecno.com.br/api/health`
 3. Interval: 5 min
 4. Alert: Slack webhook
 

@@ -9,7 +9,7 @@ Disallow: /_next/
 Disallow: /private/
 
 # Sitemap
-Sitemap: https://treinx.abacusai.app/sitemap.xml
+Sitemap: https://cursostecno.com.br/sitemap.xml
 
 # Crawl-delay para bots específicos
 User-agent: Googlebot

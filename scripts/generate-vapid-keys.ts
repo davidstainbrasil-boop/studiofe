@@ -121,7 +121,7 @@ VAPID_PUBLIC_KEY="${keys.publicKey}"
 VAPID_PRIVATE_KEY="${keys.privateKey}"
 
 # Subject (email de contato do administrador)
-VAPID_SUBJECT="admin@treinx.abacusai.app"
+VAPID_SUBJECT="admin@cursostecno.com.br"
 `;
 
     // Adicionar ao final do arquivo

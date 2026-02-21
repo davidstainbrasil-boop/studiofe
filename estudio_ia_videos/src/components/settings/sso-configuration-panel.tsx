@@ -18,6 +18,7 @@ import { Badge } from '@components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs';
 import { Shield, CheckCircle, AlertCircle, Loader2, Copy } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { getAppOrigin } from '@/lib/config/app-url';
 
 interface SSOConfig {
   id?: string;
@@ -36,6 +37,7 @@ interface Props {
 }
 
 export function SSOConfigurationPanel({ organizationId }: Props) {
+  const appOrigin = getAppOrigin();
   const [config, setConfig] = useState<SSOConfig>({
     provider: 'SAML',
     isActive: false,
@@ -116,7 +118,7 @@ export function SSOConfigurationPanel({ organizationId }: Props) {
   };
 
   const copyMetadata = () => {
-    const metadata = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/saml/metadata/${organizationId}`;
+    const metadata = `${appOrigin}/api/auth/saml/metadata/${organizationId}`;
     navigator.clipboard.writeText(metadata);
     toast.success('URL de metadados copiada!');
   };
@@ -197,7 +199,7 @@ export function SSOConfigurationPanel({ organizationId }: Props) {
                     <div className="flex gap-2">
                       <Input
                         readOnly
-                        value={`${process.env.NEXT_PUBLIC_APP_URL}/api/auth/saml/metadata/${organizationId}`}
+                        value={`${appOrigin}/api/auth/saml/metadata/${organizationId}`}
                       />
                       <Button size="sm" variant="outline" onClick={copyMetadata}>
                         <Copy className="h-4 w-4" />
@@ -232,7 +234,7 @@ export function SSOConfigurationPanel({ organizationId }: Props) {
                   <p className="text-sm">
                     Configure o redirect URI em seu Okta: <br />
                     <code className="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
-                      {process.env.NEXT_PUBLIC_APP_URL}/api/auth/callback/okta
+                      {appOrigin}/api/auth/callback/okta
                     </code>
                   </p>
                 </AlertDescription>
@@ -273,7 +275,7 @@ export function SSOConfigurationPanel({ organizationId }: Props) {
                   <p className="text-sm">
                     Configure o redirect URI no Azure: <br />
                     <code className="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
-                      {process.env.NEXT_PUBLIC_APP_URL}/api/auth/callback/azure-ad
+                      {appOrigin}/api/auth/callback/azure-ad
                     </code>
                   </p>
                 </AlertDescription>
@@ -305,7 +307,7 @@ export function SSOConfigurationPanel({ organizationId }: Props) {
                   <p className="text-sm">
                     Configure o redirect URI no Google Console: <br />
                     <code className="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
-                      {process.env.NEXT_PUBLIC_APP_URL}/api/auth/callback/google
+                      {appOrigin}/api/auth/callback/google
                     </code>
                   </p>
                 </AlertDescription>

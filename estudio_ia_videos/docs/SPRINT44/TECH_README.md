@@ -131,7 +131,7 @@ Automated deployment via GitHub Actions on push to `main`:
 
 ### Health Check
 ```bash
-curl https://treinx.abacusai.app/api/health
+curl https://cursostecno.com.br/api/health
 ```
 
 ### Sentry Dashboard

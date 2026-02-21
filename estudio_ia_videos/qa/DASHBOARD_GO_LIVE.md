@@ -355,10 +355,10 @@ Provider: Stripe (https://stripe.com) - 2.9% + $0.30
 ## 📞 LINKS RÁPIDOS
 
 ```
-🌐 Produção:     https://treinx.abacusai.app
-📊 Dashboard:    https://treinx.abacusai.app/dashboard
-⚙️ Admin:        https://treinx.abacusai.app/admin
-🏥 Health:       https://treinx.abacusai.app/api/health
+🌐 Produção:     https://cursostecno.com.br
+📊 Dashboard:    https://cursostecno.com.br/dashboard
+⚙️ Admin:        https://cursostecno.com.br/admin
+🏥 Health:       https://cursostecno.com.br/api/health
 📚 Docs:         /docs no projeto
 📧 Suporte:      support@treinx.com
 ```

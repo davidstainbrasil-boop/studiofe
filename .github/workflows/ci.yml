@@ -23,6 +23,8 @@ jobs:
           cache: 'npm'
       - name: Install dependencies
         run: npm ci
+      - name: Validate production domain consistency
+        run: npm run check:production-domain
       - name: Type Check
         run: npm run type-check
       - name: Strict Type Check (non-blocking)

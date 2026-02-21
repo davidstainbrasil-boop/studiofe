@@ -8,13 +8,14 @@ import { logger } from "@/lib/logger";
 import { Server as SocketIOServer, Socket } from 'socket.io'
 import { Server as HTTPServer } from 'http'
 import { SocketUser, CursorMoveData, SelectionChangeData } from '@lib/websocket/types'
+import { getAppOrigin } from '@/lib/config/app-url';
 
 export function setupSocketIO(server: HTTPServer) {
   const io = new SocketIOServer(server, {
     path: '/api/socket',
     addTrailingSlash: false,
     cors: {
-      origin: process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXTAUTH_URL || 'https://cursostecno.com.br',
+      origin: getAppOrigin(),
       methods: ['GET', 'POST']
     }
   })

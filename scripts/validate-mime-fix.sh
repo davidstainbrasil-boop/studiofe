@@ -3,28 +3,37 @@
 # 🔍 Script de Validação Pós-Deploy
 # Executa testes automáticos para verificar se o erro MIME foi corrigido
 
-set -e
+set -euo pipefail
 
-DOMAIN="cursostecno.com.br"
-VERCEL_URL="estudioiavideos-j59rbi1bm-tecnocursos.vercel.app"
+PRIMARY_DOMAIN=${PRIMARY_DOMAIN:-"cursostecno.com.br"}
+PREVIEW_DOMAIN=${PREVIEW_DOMAIN:-""}
+PRIMARY_URL="https://${PRIMARY_DOMAIN}"
+
+if [ -n "$PREVIEW_DOMAIN" ]; then
+  PREVIEW_URL="https://${PREVIEW_DOMAIN}"
+else
+  PREVIEW_URL="$PRIMARY_URL"
+fi
 
 echo "🔍 Validando correção do erro MIME Type..."
+echo "   URL principal: ${PRIMARY_URL}"
+echo "   URL de preview: ${PREVIEW_URL}"
 echo ""
 
 # Aguardar propagação
 echo "⏳ Aguardando 30 segundos para propagação..."
 sleep 30
 
-# 1. Testar arquivos estáticos - Vercel URL direto
+# 1. Testar arquivos estáticos
 echo ""
-echo "📦 Teste 1: Arquivos estáticos na Vercel..."
-MAIN_CHUNK=$(curl -s "https://${VERCEL_URL}" | grep -oP '/_next/static/chunks/main-app-[a-zA-Z0-9]+\.js' | head -1)
+echo "📦 Teste 1: Arquivos estáticos na URL de validação..."
+MAIN_CHUNK=$(curl -s "${PREVIEW_URL}" | grep -oP '/_next/static/chunks/main-app-[a-zA-Z0-9]+\.js' | head -1)
 
 if [ -n "$MAIN_CHUNK" ]; then
     echo "   Arquivo encontrado: $MAIN_CHUNK"
     
-    STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://${VERCEL_URL}${MAIN_CHUNK}")
-    CONTENT_TYPE=$(curl -s -I "https://${VERCEL_URL}${MAIN_CHUNK}" | grep -i "content-type" | cut -d: -f2 | xargs)
+    STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${PREVIEW_URL}${MAIN_CHUNK}")
+    CONTENT_TYPE=$(curl -s -I "${PREVIEW_URL}${MAIN_CHUNK}" | grep -i "content-type" | cut -d: -f2 | xargs)
     
     echo "   Status: $STATUS"
     echo "   Content-Type: $CONTENT_TYPE"
@@ -38,9 +47,9 @@ if [ -n "$MAIN_CHUNK" ]; then
 else
     echo "   ⚠️  Não encontrou main-app chunk, testando webpack..."
     
-    WEBPACK_CHUNK=$(curl -s "https://${VERCEL_URL}" | grep -oP '/_next/static/chunks/webpack-[a-zA-Z0-9]+\.js' | head -1)
+    WEBPACK_CHUNK=$(curl -s "${PREVIEW_URL}" | grep -oP '/_next/static/chunks/webpack-[a-zA-Z0-9]+\.js' | head -1)
     if [ -n "$WEBPACK_CHUNK" ]; then
-        STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://${VERCEL_URL}${WEBPACK_CHUNK}")
+        STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${PREVIEW_URL}${WEBPACK_CHUNK}")
         echo "   Webpack Status: $STATUS"
         
         if [ "$STATUS" == "200" ]; then
@@ -57,7 +66,7 @@ fi
 # 2. Testar página principal
 echo ""
 echo "🏠 Teste 2: Página principal..."
-STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://${VERCEL_URL}")
+STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${PREVIEW_URL}")
 echo "   Status: $STATUS"
 
 if [ "$STATUS" == "200" ]; then
@@ -70,8 +79,8 @@ fi
 # 3. Testar domínio customizado (se configurado)
 echo ""
 echo "🌐 Teste 3: Domínio customizado..."
-if curl -s --max-time 5 "https://${DOMAIN}" > /dev/null 2>&1; then
-    STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://${DOMAIN}")
+if curl -s --max-time 5 "${PRIMARY_URL}" > /dev/null 2>&1; then
+    STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${PRIMARY_URL}")
     echo "   Status: $STATUS"
     
     if [ "$STATUS" == "200" ]; then
@@ -86,7 +95,7 @@ fi
 # 4. Verificar se HTML não contém erros óbvios
 echo ""
 echo "📄 Teste 4: Validação de HTML..."
-HTML_CONTENT=$(curl -s "https://${VERCEL_URL}")
+HTML_CONTENT=$(curl -s "${PREVIEW_URL}")
 
 if echo "$HTML_CONTENT" | grep -q "Application error"; then
     echo "   ❌ ERRO: Application error detectado no HTML"
@@ -103,8 +112,8 @@ fi
 # 5. Testar API health (se existir)
 echo ""
 echo "💊 Teste 5: API Health..."
-if curl -s --max-time 5 "https://${VERCEL_URL}/api/health" > /dev/null 2>&1; then
-    API_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://${VERCEL_URL}/api/health")
+if curl -s --max-time 5 "${PREVIEW_URL}/api/health" > /dev/null 2>&1; then
+    API_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${PREVIEW_URL}/api/health")
     echo "   Status: $API_STATUS"
     
     if [ "$API_STATUS" == "200" ]; then
@@ -122,11 +131,11 @@ echo "✅ VALIDAÇÃO CONCLUÍDA COM SUCESSO!"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 echo "🔗 URLs para testar manualmente:"
-echo "   Vercel: https://${VERCEL_URL}"
-echo "   Domínio: https://${DOMAIN} (se configurado)"
+echo "   URL de validação: ${PREVIEW_URL}"
+echo "   Domínio principal: ${PRIMARY_URL}"
 echo ""
 echo "📊 Próximos passos:"
-echo "   1. Abrir https://${VERCEL_URL} no browser"
+echo "   1. Abrir ${PREVIEW_URL} no browser"
 echo "   2. Abrir DevTools (F12) > Console"
 echo "   3. Verificar que NÃO há erros de MIME type"
 echo "   4. Testar navegação entre páginas"

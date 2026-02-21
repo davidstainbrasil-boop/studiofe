@@ -2,7 +2,7 @@
 
 **Data**: 03/10/2025, 03:46 UTC  
 **Projeto**: Estúdio IA de Vídeos  
-**URL**: https://treinx.abacusai.app/  
+**URL**: https://cursostecno.com.br/  
 **Status**: ✅ **PRODUCTION READY - GO LIVE APROVADO**
 
 ---
@@ -177,7 +177,7 @@ Nenhum bug médio real encontrado.
 ## 📝 AÇÕES RECOMENDADAS
 
 ### ✅ FAZER AGORA (Imediato)
-1. **Deploy**: Fazer deploy em produção (https://treinx.abacusai.app/)
+1. **Deploy**: Fazer deploy em produção (https://cursostecno.com.br/)
 2. **Validar**: Testar rotas principais em produção
 3. **Monitorar**: Configurar monitoring básico
 

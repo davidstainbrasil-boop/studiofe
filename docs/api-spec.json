@@ -6,7 +6,7 @@
     "description": "\nSistema profissional de criação de vídeos educacionais com IA.\n\n## Funcionalidades Principais\n- 🎬 Renderização de vídeos a partir de PPTX\n- 📊 Analytics em tempo real\n- 🎤 Text-to-Speech com IA\n- 📚 Compliance com Normas Regulamentadoras\n- 🔒 Autenticação via Supabase\n\n## Autenticação\nUse o header `Authorization: Bearer <token>` para endpoints protegidos.\n    ",
     "contact": {
       "name": "Suporte TécnicoCursos",
-      "email": "suporte@tecnicocursos.com"
+      "email": "suporte@cursostecno.com.br"
     },
     "license": {
       "name": "MIT",
@@ -19,7 +19,7 @@
       "description": "Ambiente de Desenvolvimento"
     },
     {
-      "url": "https://tecnicocursos-videos.vercel.app",
+      "url": "https://cursostecno.com.br",
       "description": "Ambiente de Produção"
     }
   ],

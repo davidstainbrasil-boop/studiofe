@@ -9,6 +9,7 @@ import { logger } from '@lib/logger';
 import { applyRateLimit } from '@/lib/rate-limit';
 import { prepareStudioExportPayload } from '@lib/render/studio-render-adapter';
 import type { TimelineProject } from '@lib/types/timeline-types';
+import { getAppOrigin } from '@/lib/config/app-url';
 
 export async function POST(req: NextRequest) {
   try {
@@ -59,7 +60,7 @@ export async function POST(req: NextRequest) {
     );
 
     // Chama endpoint de render existente
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.NODE_ENV === 'production' ? 'https://cursostecno.com.br' : 'http://localhost:3000');
+    const baseUrl = getAppOrigin();
     // Propagate cookies from original request for proper auth in internal call
     const cookieHeader = req.headers.get('cookie') || '';
     const authHeader = req.headers.get('authorization') || '';

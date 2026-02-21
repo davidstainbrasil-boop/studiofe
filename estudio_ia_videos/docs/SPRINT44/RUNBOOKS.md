@@ -91,7 +91,7 @@ PDF generation with:
 
 **Public Verification**:
 ```
-https://treinx.abacusai.app/api/certificates/verify?tokenId=12345
+https://cursostecno.com.br/api/certificates/verify?tokenId=12345
 ```
 
 ## Review Workflow Operations

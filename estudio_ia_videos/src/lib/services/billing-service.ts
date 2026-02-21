@@ -8,6 +8,14 @@ import { prisma } from '@lib/prisma';
 import { getOptionalEnv, getRequiredEnv } from '@lib/env';
 import Stripe from 'stripe';
 
+function asMetadataRecord(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return {};
+  }
+
+  return value as Record<string, unknown>;
+}
+
 // Plan pricing
 export const PLANS = {
   free: {
@@ -89,7 +97,8 @@ export class BillingService {
       if (!user) throw new Error('User not found');
 
       // Check for existing customer ID
-      let customerId = (user.metadata as any)?.stripeCustomerId;
+      const metadata = asMetadataRecord(user.metadata);
+      let customerId = typeof metadata.stripeCustomerId === 'string' ? metadata.stripeCustomerId : undefined;
 
       // If no customer ID, create one (or let Checkout create it, but better to link explicitely)
       if (!customerId && user.email) {
@@ -103,7 +112,7 @@ export class BillingService {
           await prisma.users.update({
               where: { id: userId },
               data: {
-                  metadata: { ...(user.metadata as object), stripeCustomerId: customerId }
+                  metadata: { ...metadata, stripeCustomerId: customerId }
               }
           });
       }
@@ -213,7 +222,7 @@ export class BillingService {
         select: { metadata: true }
       });
 
-      const currentMetadata = (user?.metadata as Record<string, unknown>) || {};
+      const currentMetadata = asMetadataRecord(user?.metadata);
 
       await prisma.users.update({
         where: { id: userId },
@@ -238,38 +247,37 @@ export class BillingService {
   
   private async updateStripeCustomerId(userId: string, customerId: string): Promise<void> {
       const user = await prisma.users.findUnique({ where: { id: userId }, select: { metadata: true }});
-      const meta = (user?.metadata as any) || {};
-      if (meta.stripeCustomerId !== customerId) {
+      const metadata = asMetadataRecord(user?.metadata);
+      const existingCustomerId =
+        typeof metadata.stripeCustomerId === 'string' ? metadata.stripeCustomerId : undefined;
+
+      if (existingCustomerId !== customerId) {
           await prisma.users.update({
               where: { id: userId },
-              data: { metadata: { ...meta, stripeCustomerId: customerId } }
+              data: { metadata: { ...metadata, stripeCustomerId: customerId } }
           });
       }
   }
   
   private async findUserByCustomerId(customerId: string): Promise<{ id: string } | null> {
-      // Postgres JSONB query
-      // This might require a raw query or specific prisma syntax depending on DB capabilities
-      // For now, scan or assume we have a mapping table if strictly typed.
-      // But let's try standard findFirst with json filter if supported
-      
-      // Since metadata is Json, we might need:
-      // where: { metadata: { path: ['stripeCustomerId'], equals: customerId } }
-      // But prisma Json filtering varies.
-      
-      // Fallback: If we can't query JSON efficiently, we might need a dedicated column.
-      // For MVP, assuming we can find it.
-      
-      // A safe way is to search strictly if we had a column.
-      // Let's assume we can't easily reverse lookup without a dedicated column or index.
-      // We will try raw query if needed, or better, skip implementation detail for now and assume
-      // the schema supports it or we'd add `stripeCustomerId` column.
-      
-      // NOTE: Ideally `stripe_customer_id` should be a column on `users` table.
-      
-      // TODO: Implement proper lookup when stripeCustomerId column is added
-      logger.warn('findUserByCustomerId not fully implemented', { customerId });
-      return null; // Placeholder for reverse lookup logic
+      const user = await prisma.users.findFirst({
+        where: {
+          metadata: {
+            path: ['stripeCustomerId'],
+            equals: customerId
+          }
+        },
+        select: { id: true }
+      });
+
+      if (!user) {
+        logger.warn('No user found for Stripe customer', {
+          component: 'BillingService',
+          customerId
+        });
+      }
+
+      return user;
   }
 
   /**
@@ -285,8 +293,8 @@ export class BillingService {
       select: { metadata: true }
     });
 
-    const metadata = user?.metadata as Record<string, unknown> | null;
-    const customerId = metadata?.stripeCustomerId as string;
+    const metadata = asMetadataRecord(user?.metadata);
+    const customerId = typeof metadata.stripeCustomerId === 'string' ? metadata.stripeCustomerId : null;
 
     if (!customerId) {
       throw new Error('No billing account found');
