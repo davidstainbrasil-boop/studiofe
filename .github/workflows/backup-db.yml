@@ -1,0 +1,50 @@
+name: Database Backup
+
+on:
+  schedule:
+    - cron: '0 5 * * *' # Daily at 5:00 UTC (2:00 BRT)
+  workflow_dispatch:
+
+jobs:
+  backup:
+    name: Backup Supabase Database
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install PostgreSQL Tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Create Backup
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          echo "Starting backup..."
+          pg_dump "$DATABASE_URL" --format=c --file="backup-$(date +%Y-%m-%d-%H%M).dump"
+          echo "Backup created: $(ls -lh *.dump)"
+
+      - name: Encrypt Backup (Optional but recommended)
+        env:
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+        run: |
+          if [ -n "$BACKUP_ENCRYPTION_KEY" ]; then
+            echo "Encrypting backup..."
+            openssl enc -aes-256-cbc -salt -in "backup-*.dump" -out "backup-encrypted.enc" -k "$BACKUP_ENCRYPTION_KEY"
+            rm "backup-*.dump"
+          else
+            echo "Skipping encryption (no key provided)"
+          fi
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-backup-${{ github.sha }}
+          path: |
+            *.dump
+            *.enc
+          retention-days: 90
